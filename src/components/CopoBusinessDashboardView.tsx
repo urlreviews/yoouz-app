@@ -2,7 +2,8 @@ import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
-import { getDisplayViews, getPlaceSlug, getSafeAvatarUrl } from '../utils/placeUtils';
+import { getDisplayViews, getPlaceSlug, getSafeAvatarUrl, resolveSafeAuthor, extractCleanDomain } from '../utils/placeUtils';
+import { generateGoogleLetterAvatarSvg } from '../lib/avatar';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { CopoMessagesView } from './CopoMessagesView';
@@ -876,6 +877,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [isDirectLinkCopied, setIsDirectLinkCopied] = useState(false);
   const [embedDeviceMode, setEmbedDeviceMode] = useState<'desktop' | 'mobile'>('desktop');
   const [embedSnippetType, setEmbedSnippetType] = useState<'seo' | 'standard'>('seo');
+
+  // Embed Preview Interactive Player State (Single Video Carousel matching CopoEmbedView)
+  const [embedPreviewIndex, setEmbedPreviewIndex] = useState<number>(0);
+  const [embedPreviewPlayingId, setEmbedPreviewPlayingId] = useState<string | null>(null);
+  const [embedPreviewMuted, setEmbedPreviewMuted] = useState<boolean>(true);
+  const [embedPreviewPaused, setEmbedPreviewPaused] = useState<boolean>(false);
+  const embedPreviewVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Top header dropdowns & Command Palette
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -3691,115 +3699,253 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </div>
                   </div>
 
-                  {/* 3. Official Dark Mode Widget Preview Card */}
+                  {/* 3. Official Single-Video Widget Preview Card */}
                   <div className="pt-4 border-t border-zinc-800 space-y-3">
-                    <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-                      Preview
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                        Preview
+                      </span>
+                      {displayableWidgetVideos.length > 1 && (
+                        <span className="text-xs text-zinc-400 font-medium">
+                          Swipe or click arrows to view reviews ({displayableWidgetVideos.length} total)
+                        </span>
+                      )}
+                    </div>
 
-                    <div className="w-full max-w-[360px] mx-auto bg-black border border-zinc-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-2xl space-y-3">
-                      {/* Business Header Bar */}
-                      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <CopoBrandLogo
-                            domain={currentPlace.website || currentPlace.id}
-                            name={currentPlace.name}
-                            logoUrl={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl}
-                            className="w-10 h-10 rounded-xl bg-white border border-zinc-200/60 shadow-md shrink-0 flex items-center justify-center p-1.5 overflow-hidden"
-                            imageClassName="w-full h-full object-contain"
-                            fallbackTextClassName="font-bold text-base text-zinc-950"
-                          />
+                    {displayableWidgetVideos.length === 0 ? (
+                      <div className="w-full max-w-[380px] mx-auto bg-black border border-zinc-800 rounded-3xl p-12 text-center text-zinc-500 space-y-2">
+                        <AlertCircle className="w-8 h-8 mx-auto text-zinc-600" />
+                        <p className="text-xs font-medium text-zinc-400">No video reviews found for widget.</p>
+                      </div>
+                    ) : (
+                      (() => {
+                        const safeEmbedIndex = Math.min(embedPreviewIndex, Math.max(0, displayableWidgetVideos.length - 1));
+                        const currentPreviewVideo = displayableWidgetVideos[safeEmbedIndex] || displayableWidgetVideos[0];
+                        const isEmbedPreviewPlaying = embedPreviewPlayingId === currentPreviewVideo?.id;
+                        const safeAuthor = resolveSafeAuthor(currentPreviewVideo, currentUser, allUsers);
+                        const reviewerAvatarUrl =
+                          safeAuthor.avatar ||
+                          currentPreviewVideo?.author?.avatar ||
+                          getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
 
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-sm text-white tracking-tight truncate">
-                                {currentPlace.name}
-                              </span>
-                              <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+                        let caption = (currentPreviewVideo?.caption || currentPreviewVideo?.dishOrItem || "").trim();
+                        if (!caption || /^video review (for|of)\b/i.test(caption)) {
+                          caption = `Video review for ${currentPlace.name}`;
+                        }
+
+                        return (
+                          <div className="relative w-full max-w-[380px] mx-auto aspect-9/14 sm:aspect-9/16 bg-black border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between group/embed select-none">
+                            {/* Background Full-Bleed Video / Poster */}
+                            <div
+                              className="absolute inset-0 w-full h-full bg-black cursor-pointer"
+                              onClick={() => {
+                                if (!currentPreviewVideo) return;
+                                if (embedPreviewPlayingId === currentPreviewVideo.id) {
+                                  setEmbedPreviewPaused((prev) => !prev);
+                                } else {
+                                  setEmbedPreviewPlayingId(currentPreviewVideo.id);
+                                  setEmbedPreviewPaused(false);
+                                }
+                              }}
+                            >
+                              {isEmbedPreviewPlaying ? (
+                                <video
+                                  ref={embedPreviewVideoRef}
+                                  src={currentPreviewVideo.videoUrl}
+                                  poster={
+                                    currentPreviewVideo.thumbnailUrl ||
+                                    currentPreviewVideo.bannerUrl ||
+                                    `https://rev1.b-cdn.net/videos/${currentPreviewVideo.id}.jpg`
+                                  }
+                                  playsInline
+                                  autoPlay
+                                  loop
+                                  muted={embedPreviewMuted}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <img
+                                  src={
+                                    currentPreviewVideo?.thumbnailUrl ||
+                                    currentPreviewVideo?.bannerUrl ||
+                                    `https://rev1.b-cdn.net/videos/${currentPreviewVideo?.id}.jpg`
+                                  }
+                                  alt={currentPreviewVideo?.caption || currentPlace.name}
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              )}
+
+                              {/* Legibility Gradients */}
+                              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
+                              <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10" />
+
+                              {/* Center Play Button */}
+                              {(!isEmbedPreviewPlaying || embedPreviewPaused) && (
+                                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                                  <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
+                                    <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                              <span className="text-xs font-bold text-white">{avgRating}</span>
-                              <span className="text-xs text-zinc-500">•</span>
-                              <span className="text-xs text-zinc-400 font-medium truncate">
-                                {placeVideos.length} {placeVideos.length === 1 ? 'Review' : 'Reviews'}
-                              </span>
+
+                            {/* TOP OVERLAY: Place Badge + Sound Toggle */}
+                            <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
+                              <div className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 text-white shadow-xl min-w-0 max-w-[calc(100%-48px)]">
+                                <CopoBrandLogo
+                                  domain={currentPlace.website || currentPlace.id}
+                                  name={currentPlace.name}
+                                  logoUrl={profileLogoUrl || (currentPlace as any)?.logoUrl || (currentPlace as any)?.imageUrl || verifiedBusinessSession?.logoUrl}
+                                  className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
+                                  imageClassName="w-full h-full object-contain rounded-lg"
+                                  fallbackTextClassName="font-extrabold text-[11px] text-white"
+                                />
+                                <div className="min-w-0 flex-1 py-0.5">
+                                  <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                                    <span className="truncate">{currentPlace.name}</span>
+                                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                                    <span>{avgRating}</span>
+                                    <span className="text-zinc-300 font-normal">
+                                      ({placeVideos.length} {placeVideos.length === 1 ? 'review' : 'reviews'})
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Mute / Unmute Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEmbedPreviewMuted((prev) => !prev);
+                                }}
+                                className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5 cursor-pointer"
+                                title={embedPreviewMuted ? "Unmute" : "Mute"}
+                              >
+                                {embedPreviewMuted ? (
+                                  <VolumeX className="w-3.5 h-3.5 text-white" />
+                                ) : (
+                                  <Volume2 className="w-3.5 h-3.5 text-white" />
+                                )}
+                              </button>
+                            </div>
+
+                            {/* SIDE CHEVRONS (< and >) */}
+                            {displayableWidgetVideos.length > 1 && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmbedPreviewIndex((prev) => (prev > 0 ? prev - 1 : displayableWidgetVideos.length - 1));
+                                    setEmbedPreviewPlayingId(null);
+                                    setEmbedPreviewPaused(false);
+                                  }}
+                                  className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-80 hover:opacity-100 cursor-pointer"
+                                  aria-label="Previous review"
+                                  title="Previous review"
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmbedPreviewIndex((prev) => (prev < displayableWidgetVideos.length - 1 ? prev + 1 : 0));
+                                    setEmbedPreviewPlayingId(null);
+                                    setEmbedPreviewPaused(false);
+                                  }}
+                                  className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-80 hover:opacity-100 cursor-pointer"
+                                  aria-label="Next review"
+                                  title="Next review"
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+
+                            {/* BOTTOM OVERLAY: Reviewer details, stars, timestamp, and caption */}
+                            <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
+                              <div className="flex items-start gap-2.5 min-w-0">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md">
+                                  <img
+                                    src={reviewerAvatarUrl}
+                                    alt={safeAuthor.name}
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      const fallback = generateGoogleLetterAvatarSvg(
+                                        safeAuthor.name || "User",
+                                        64,
+                                        safeAuthor.handle || safeAuthor.name
+                                      );
+                                      if (target.src !== fallback) {
+                                        target.src = fallback;
+                                      }
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="min-w-0 flex flex-col gap-0.5 text-left">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-[13.5px] sm:text-[14px] font-black text-white truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                                      By {safeAuthor.name}
+                                    </span>
+                                    {safeAuthor.isVerified && (
+                                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-0.5">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className={`w-3.5 h-3.5 ${
+                                            i < Math.round(currentPreviewVideo?.rating || 5)
+                                              ? "fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                                              : "fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-white text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] flex items-center gap-1 shrink-0">
+                                      <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                                      <span>{formatRecordedDate(currentPreviewVideo?.recordedAt, currentPreviewVideo?.createdAtMs)}</span>
+                                    </span>
+                                  </div>
+
+                                  <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
+                                    {caption}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Footer: Live sync & Page counter */}
+                              <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                  <span className="text-[11px] font-medium text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                    Live Sync Powered by Yoouz
+                                  </span>
+                                </div>
+
+                                {displayableWidgetVideos.length > 1 && (
+                                  <span className="text-[11px] font-mono font-bold text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] shrink-0">
+                                    {safeEmbedIndex + 1} of {displayableWidgetVideos.length}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-
-                      {/* Video Grid / Layout */}
-                      {displayableWidgetVideos.length === 0 ? (
-                        <div className="py-12 text-center text-zinc-500 space-y-2">
-                          <AlertCircle className="w-8 h-8 mx-auto text-zinc-600" />
-                          <p className="text-xs font-medium text-zinc-400">No video reviews found.</p>
-                        </div>
-                      ) : displayableWidgetVideos.length === 1 ? (
-                        <div className="flex justify-center">
-                          {displayableWidgetVideos.map((v) => (
-                            <div
-                              key={v.id}
-                              onClick={() => handleOpenBusinessVideo(v)}
-                              className="relative w-full max-w-[260px] rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800 cursor-pointer hover:scale-[1.02] transition-transform shadow-md"
-                            >
-                              <img
-                                src={v.thumbnailUrl}
-                                alt={v.dishOrItem || 'Review'}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-1 z-10 border border-white/10">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                <span>{v.rating || 5}</span>
-                              </div>
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2.5 text-white">
-                                <span className="text-xs font-bold leading-tight line-clamp-1">
-                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || (v as any).authorName || 'Steven Akan')}
-                                </span>
-                              </div>
-                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="w-4 h-4 fill-current ml-0.5" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-2.5">
-                          {displayableWidgetVideos.slice(0, 4).map((v) => (
-                            <div
-                              key={v.id}
-                              onClick={() => handleOpenBusinessVideo(v)}
-                              className="relative rounded-2xl overflow-hidden aspect-9/14 bg-zinc-900 group border border-zinc-800 cursor-pointer hover:scale-[1.02] transition-transform shadow-md"
-                            >
-                              <img
-                                src={v.thumbnailUrl}
-                                alt={v.dishOrItem || 'Review'}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-extrabold flex items-center gap-0.5 z-10 border border-white/10">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                <span>{v.rating || 5}</span>
-                              </div>
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
-                                <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                                  {v.dishOrItem && v.dishOrItem !== selectedPlaceId ? v.dishOrItem : (v.author?.name || (v as any).authorName || 'Steven Akan')}
-                                </span>
-                              </div>
-                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-500 pt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                        <span>Live Sync Powered by Yoouz</span>
-                      </div>
-                    </div>
+                        );
+                      })()
+                    )}
                   </div>
 
 
