@@ -4,7 +4,7 @@ import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { Star, Play, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
+import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
 
 export interface CopoEmbedViewProps {
@@ -321,14 +321,39 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     return trimmed;
   }, [currentVideo, displayDomain]);
 
-  const handleTogglePlay = (video: VideoReview) => {
+  // Synchronize video element play/pause state when isVideoPaused or playingVideoId changes
+  useEffect(() => {
+    const el = videoElementRef.current;
+    if (!el) return;
+    if (isVideoPaused || !playingVideoId) {
+      el.pause();
+    } else {
+      el.play().catch(() => {});
+    }
+  }, [isVideoPaused, playingVideoId]);
+
+  const handleTogglePlay = useCallback((video: VideoReview) => {
+    if (!video) return;
     if (playingVideoId === video.id) {
-      setIsVideoPaused((prev) => !prev);
+      if (isVideoPaused) {
+        setIsVideoPaused(false);
+        if (videoElementRef.current) {
+          videoElementRef.current.play().catch(() => {});
+        }
+      } else {
+        setIsVideoPaused(true);
+        if (videoElementRef.current) {
+          videoElementRef.current.pause();
+        }
+      }
     } else {
       setPlayingVideoId(video.id);
       setIsVideoPaused(false);
+      if (videoElementRef.current) {
+        videoElementRef.current.play().catch(() => {});
+      }
     }
-  };
+  }, [playingVideoId, isVideoPaused]);
 
   // Canonical place profile URL on Yoouz (e.g. https://www.yoouz.com/place/lernerandrowe.com or https://www.yoouz.com/)
   const placeProfileUrl = useMemo(() => {
@@ -423,11 +448,17 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-none z-10" />
 
-          {/* Center Luxury Play Button (when paused or not playing) */}
-          {(!isPlaying || isVideoPaused) && (
+          {/* Center Luxury Play / Pause Indicator */}
+          {(!isPlaying || isVideoPaused) ? (
             <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
               <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
                 <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
+              </div>
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none opacity-0 group-hover/embed:opacity-100 transition-opacity duration-200">
+              <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg flex items-center justify-center">
+                <Pause className="w-5 h-5 fill-white text-white" />
               </div>
             </div>
           )}

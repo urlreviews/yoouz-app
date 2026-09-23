@@ -885,6 +885,40 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [embedPreviewPaused, setEmbedPreviewPaused] = useState<boolean>(false);
   const embedPreviewVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Synchronize embed preview video playback on play/pause/video change
+  useEffect(() => {
+    const el = embedPreviewVideoRef.current;
+    if (!el) return;
+    if (embedPreviewPaused || !embedPreviewPlayingId) {
+      el.pause();
+    } else {
+      el.play().catch(() => {});
+    }
+  }, [embedPreviewPaused, embedPreviewPlayingId]);
+
+  const handleToggleEmbedPreviewPlay = useCallback((video: VideoReview) => {
+    if (!video) return;
+    if (embedPreviewPlayingId === video.id) {
+      if (embedPreviewPaused) {
+        setEmbedPreviewPaused(false);
+        if (embedPreviewVideoRef.current) {
+          embedPreviewVideoRef.current.play().catch(() => {});
+        }
+      } else {
+        setEmbedPreviewPaused(true);
+        if (embedPreviewVideoRef.current) {
+          embedPreviewVideoRef.current.pause();
+        }
+      }
+    } else {
+      setEmbedPreviewPlayingId(video.id);
+      setEmbedPreviewPaused(false);
+      if (embedPreviewVideoRef.current) {
+        embedPreviewVideoRef.current.play().catch(() => {});
+      }
+    }
+  }, [embedPreviewPlayingId, embedPreviewPaused]);
+
   // Top header dropdowns & Command Palette
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -3738,15 +3772,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             {/* Background Full-Bleed Video / Poster */}
                             <div
                               className="absolute inset-0 w-full h-full bg-black cursor-pointer"
-                              onClick={() => {
-                                if (!currentPreviewVideo) return;
-                                if (embedPreviewPlayingId === currentPreviewVideo.id) {
-                                  setEmbedPreviewPaused((prev) => !prev);
-                                } else {
-                                  setEmbedPreviewPlayingId(currentPreviewVideo.id);
-                                  setEmbedPreviewPaused(false);
-                                }
-                              }}
+                              onClick={() => currentPreviewVideo && handleToggleEmbedPreviewPlay(currentPreviewVideo)}
                             >
                               {isEmbedPreviewPlaying ? (
                                 <video
@@ -3780,11 +3806,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
                               <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10" />
 
-                              {/* Center Play Button */}
-                              {(!isEmbedPreviewPlaying || embedPreviewPaused) && (
+                              {/* Center Play / Pause Indicator */}
+                              {(!isEmbedPreviewPlaying || embedPreviewPaused) ? (
                                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
                                   <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
                                     <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none opacity-0 group-hover/embed:opacity-100 transition-opacity duration-200">
+                                  <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg flex items-center justify-center">
+                                    <Pause className="w-5 h-5 fill-white text-white" />
                                   </div>
                                 </div>
                               )}
