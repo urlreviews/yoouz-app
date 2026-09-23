@@ -1333,7 +1333,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3 truncate">
                       <Mail className="w-5 h-5 text-zinc-200 shrink-0" />
-                      {place.email && place.email.trim() !== "" ? (
+                      {place.email && place.email.trim() !== "" && !place.email.toLowerCase().includes("@gmail.") && !place.email.toLowerCase().includes("@yahoo.") && !place.email.toLowerCase().includes("@hotmail.") && !place.email.toLowerCase().includes("@outlook.") && !place.email.toLowerCase().includes("@icloud.") ? (
                         <a
                           href={`mailto:${place.email}`}
                           className="text-xs text-zinc-200 hover:text-white hover:underline font-medium truncate"

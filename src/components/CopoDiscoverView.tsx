@@ -10,7 +10,7 @@ import {
   Sparkles,
   MapPin
 } from "lucide-react";
-import { isAuthorMatch, getSafeAvatarUrl } from "../utils/placeUtils";
+import { isAuthorMatch, getSafeAvatarUrl, formatCityCountry } from "../utils/placeUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoDiscoverViewProps {
@@ -611,12 +611,12 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                         </div>
                         
                         {reviewer.author.location ? (
-                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1 truncate">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                            <span className="truncate">{reviewer.author.location}</span>
+                          <p className="text-xs text-zinc-200 font-medium flex items-start gap-1.5 mb-1">
+                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0 mt-0.5" />
+                            <span className="whitespace-normal break-words leading-tight">{formatCityCountry(reviewer.author.location || reviewer.author)}</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1 truncate">
+                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1">
                             <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
                             <span>{t("discover.localContributor", "Local Contributor")}</span>
                           </p>

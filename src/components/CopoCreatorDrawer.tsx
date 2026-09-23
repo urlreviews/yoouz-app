@@ -102,17 +102,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-redirect if this author is a business to maintain a single canonical Place page
+  // Auto-redirect if this author is a official business to maintain a single canonical Place page
   useEffect(() => {
     if (!author?.name || !onOpenPlace) return;
     const authorLower = (author.name || "").toLowerCase().trim();
     const associatedPlaceId =
-      authorLower === "yoouz" || authorLower === "@yoouz" || authorLower === "yoouz.com" || authorLower.includes("yoouz")
+      authorLower === "yoouz" || authorLower === "@yoouz" || authorLower === "yoouz.com"
         ? "yoouz.com"
-        : authorLower === "legal 500" || authorLower === "legal500" || authorLower.includes("legal500")
+        : authorLower === "legal 500" || authorLower === "legal500" || authorLower === "legal500.com"
         ? "legal500.com"
-        : authorLower.includes(".")
-        ? authorLower.replace(/^www\./, "").trim()
         : null;
 
     if (associatedPlaceId) {
@@ -446,9 +444,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? currentUser.banner 
     : (liveUserProfile?.banner || safeCreator.banner || author?.banner);
 
-  const displayName = isOwner && currentUser?.name
+  const rawDisplayName = isOwner && currentUser?.name
     ? currentUser.name
     : (liveUserProfile?.name || safeCreator.name || author.name || "Reviewer");
+  const displayName = rawDisplayName.includes("@") ? rawDisplayName.split("@")[0] : rawDisplayName;
 
   const rawLocation = isOwner && currentUser?.location
     ? currentUser.location

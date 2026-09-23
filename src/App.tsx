@@ -3352,7 +3352,10 @@ export function App() {
   // Preselected drawer place object
   const drawerPlace = useMemo(() => {
     if (!selectedPlaceIdForDrawer) return null;
-    const searchId = selectedPlaceIdForDrawer;
+    const searchId = selectedPlaceIdForDrawer.trim();
+    if (searchId.includes("@") || searchId.startsWith("usr_") || searchId.startsWith("user_")) {
+      return null;
+    }
     let found = places.find(
       (p) =>
         p.id === searchId ||
@@ -3911,6 +3914,46 @@ export function App() {
 
   // Open Place Drawer
   const handleOpenPlaceDrawer = (placeId: string) => {
+    if (!placeId) return;
+    const cleanP = placeId.trim().toLowerCase();
+
+    // STRICT GUARD: User accounts (emails, usr_*, user_*) must NEVER open as place drawers!
+    const isUserAccount =
+      cleanP.includes("@") ||
+      cleanP.startsWith("usr_") ||
+      cleanP.startsWith("user_") ||
+      (allRegisteredUsers || []).some(
+        (u: any) =>
+          (u.email && u.email.toLowerCase().trim() === cleanP) ||
+          (u.userId && u.userId.toLowerCase().trim() === cleanP) ||
+          (u.id && u.id.toLowerCase().trim() === cleanP)
+      );
+
+    if (isUserAccount) {
+      const matchedUser = (allRegisteredUsers || []).find(
+        (u: any) =>
+          (u.email && u.email.toLowerCase().trim() === cleanP) ||
+          (u.userId && u.userId.toLowerCase().trim() === cleanP) ||
+          (u.id && u.id.toLowerCase().trim() === cleanP)
+      );
+      const rawName = matchedUser?.name || cleanP.split("@")[0];
+      const cleanName = rawName.includes("@") ? rawName.split("@")[0] : rawName;
+      const email = matchedUser?.email || (cleanP.includes("@") ? cleanP : undefined);
+      const authorObj: VideoAuthor = {
+        name: cleanName,
+        email: email,
+        userId: matchedUser?.userId || matchedUser?.id || cleanP,
+        id: matchedUser?.id || matchedUser?.userId || cleanP,
+        avatar: matchedUser?.avatar || getSafeAvatarUrl(null, cleanName, cleanP),
+        bio: matchedUser?.bio || "Active Yoouz Member",
+        location: matchedUser?.location || "Global Community",
+        followersCount: matchedUser?.followersCount || 0,
+        isVerified: matchedUser?.isVerified || false,
+      };
+      handleOpenCreatorDrawer(authorObj);
+      return;
+    }
+
     forceMute();
     // Explicitly pause all playing videos across the DOM immediately
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {

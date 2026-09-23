@@ -18,7 +18,7 @@ import {
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
@@ -807,7 +807,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                   <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
                                   <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
                                     <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
-                                    <span className="whitespace-normal break-words">{author.location}</span>
+                                    <span className="whitespace-normal break-words">{formatCityCountry(author.location)}</span>
                                   </span>
                                 </>
                               )}
@@ -915,7 +915,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                 <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
                                 <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
                                   <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
-                                  <span className="whitespace-normal break-words">{follower.location}</span>
+                                  <span className="whitespace-normal break-words">{formatCityCountry(follower.location)}</span>
                                 </span>
                               </>
                             )}

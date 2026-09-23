@@ -1483,23 +1483,19 @@ export function normalizeLocationString(
   let s = (state || "").trim();
   let co = (country || "").trim();
 
-  // If structured fields exist but location is incomplete
-  if (c && co && (!l || l.split(",").length < 2)) {
-    return [c, s, co].filter(Boolean).join(", ");
+  if (c && co) {
+    if (c.toLowerCase() === co.toLowerCase()) return c;
+    return formatCityCountry({ city: c, country: co, location: l });
   }
 
-  // Canonical normalization for Miami Beach / Florida
-  if (/^miami(\s+beach)?,\s*florida$/i.test(l) || /^miami(\s+beach)?,\s*fl$/i.test(l)) {
-    return "Miami Beach, Florida, United States";
-  }
-  if (/miami\s+beach/i.test(l) && !l.toLowerCase().includes("united states")) {
-    return `${l}, United States`;
-  }
-  if (l && !l.toLowerCase().includes("united states") && (l.toLowerCase().endsWith(", fl") || l.toLowerCase().endsWith(", florida"))) {
-    return `${l}, United States`;
+  if (l) {
+    return formatCityCountry(l);
   }
 
-  return l;
+  if (c) return c;
+  if (co) return co;
+
+  return "";
 }
 
 /**
@@ -1512,10 +1508,12 @@ export function formatCityCountry(creator?: {
   city?: string;
   country?: string;
   location?: string;
-} | any): string {
+} | string | any): string {
   if (!creator) return "";
-  const cleanCity = (creator.city || "").trim();
-  const cleanCountry = (creator.country || "").trim();
+  const inputObj = typeof creator === "string" ? { location: creator } : creator;
+
+  const cleanCity = (inputObj.city || "").trim();
+  const cleanCountry = (inputObj.country || "").trim();
   if (
     cleanCity &&
     cleanCountry &&
@@ -1523,23 +1521,40 @@ export function formatCityCountry(creator?: {
     cleanCity.toLowerCase() !== "verified location" &&
     cleanCountry.toLowerCase() !== "online"
   ) {
+    if (cleanCity.toLowerCase() === cleanCountry.toLowerCase()) return cleanCity;
     return `${cleanCity}, ${cleanCountry}`;
   }
 
-  if (creator.location) {
-    const parts = String(creator.location)
-      .split(",")
-      .map((p: string) => p.trim())
-      .filter((p: string) => Boolean(p) && p.toLowerCase() !== "online" && p.toLowerCase() !== "verified location");
+  if (inputObj.location) {
+    const rawLoc = String(inputObj.location).trim();
+    if (rawLoc) {
+      const parts = rawLoc
+        .split(",")
+        .map((p: string) => p.trim())
+        .filter((p: string) => Boolean(p) && p.toLowerCase() !== "online" && p.toLowerCase() !== "verified location");
 
-    if (parts.length >= 3) {
-      return `${parts[0]}, ${parts[parts.length - 1]}`;
-    }
-    if (parts.length === 2) {
-      return `${parts[0]}, ${parts[1]}`;
-    }
-    if (parts.length === 1) {
-      return parts[0];
+      // Filter out redundant city/county/region duplicates e.g., "City of London" when "London" is present
+      const uniqueParts: string[] = [];
+      parts.forEach((p) => {
+        const pLower = p.toLowerCase();
+        const isRedundant = uniqueParts.some((existing) => {
+          const eLower = existing.toLowerCase();
+          return eLower === pLower || (eLower.length > 3 && pLower.includes(eLower)) || (pLower.length > 3 && eLower.includes(pLower));
+        });
+        if (!isRedundant) {
+          uniqueParts.push(p);
+        }
+      });
+
+      if (uniqueParts.length >= 3) {
+        return `${uniqueParts[0]}, ${uniqueParts[uniqueParts.length - 1]}`;
+      }
+      if (uniqueParts.length === 2) {
+        return `${uniqueParts[0]}, ${uniqueParts[1]}`;
+      }
+      if (uniqueParts.length === 1) {
+        return uniqueParts[0];
+      }
     }
   }
 

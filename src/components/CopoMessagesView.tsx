@@ -39,7 +39,7 @@ import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
-import { getSafeAvatarUrl, formatBusinessName } from "../utils/placeUtils";
+import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 
@@ -1166,6 +1166,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     };
   };
 
+  const checkIsBusinessThread = (thread: any) => {
+    if (!thread) return false;
+    const sId = (thread.senderId || "").toLowerCase().trim();
+    const sName = (thread.senderName || "").toLowerCase().trim();
+
+    if (sName === "yoouz" || sId === "yoouz.com" || sId === "yoouz" || sId === "info@yoouz.com") {
+      return true;
+    }
+
+    if (thread.isBusiness === true) {
+      if (!sId.includes("@") && (sId.includes(".") || sId.startsWith("place-"))) return true;
+      if ((places || []).some((p) => (p.id || "").toLowerCase() === sId || (p.website || "").toLowerCase().includes(sId))) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   const handleOpenAuthorProfile = (
     name?: string,
     id?: string,
@@ -1177,6 +1196,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const cleanName = (name || "").toLowerCase().trim();
     const cleanExplicit = (explicitPlaceId || "").toLowerCase().trim();
 
+    // STRICT GUARD: If cleanId contains '@', starts with 'usr_'/'user_', or is NOT a business, ALWAYS open creator drawer!
+    if (cleanId.includes("@") || cleanId.startsWith("usr_") || cleanId.startsWith("user_") || isBiz === false) {
+      const author = resolveAuthor(name, id, avatar);
+      if (author && onOpenCreator) {
+        onOpenCreator(author);
+      }
+      return;
+    }
+
     // 1. Check if clicking Yoouz (Official platform business page)
     const isYoouzBusiness =
       cleanName === "yoouz" ||
@@ -1184,9 +1212,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       cleanName === "yoouz beta" ||
       cleanId === "yoouz" ||
       cleanId === "yoouz.com" ||
-      cleanId === "info@yoouz.com" ||
-      cleanExplicit === "yoouz.com" ||
-      cleanExplicit === "yoouz";
+      cleanId === "info@yoouz.com";
 
     if (isYoouzBusiness) {
       if (onSelectPlace) {
@@ -1195,48 +1221,43 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       }
     }
 
-    // 2. Check if matching any registered place in `places`
-    const matchingPlace = (places || []).find((p) => {
-      const pId = (p.id || "").toLowerCase().trim();
-      const pName = (p.name || "").toLowerCase().trim();
-      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
-        .toLowerCase()
-        .replace(/^https?:\/\//, "")
-        .replace(/^www\./, "")
-        .split("/")[0]
-        .trim();
-      const pSlug = pName.replace(/[^a-z0-9]/g, "");
-      const nSlug = cleanName.replace(/[^a-z0-9]/g, "");
+    // 2. ONLY if explicitly a business account (e.g. isBiz === true AND id/explicitPlaceId is a place/domain format)
+    const isExplicitBusiness = isBiz === true && !cleanId.includes("@") && (cleanId.includes(".") || cleanId.startsWith("place-") || cleanExplicit.length > 0);
+    if (isExplicitBusiness) {
+      const matchingPlace = (places || []).find((p) => {
+        const pId = (p.id || "").toLowerCase().trim();
+        const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
+          .toLowerCase()
+          .replace(/^https?:\/\//, "")
+          .replace(/^www\./, "")
+          .split("/")[0]
+          .trim();
+        return (
+          pId === cleanId ||
+          pDomain === cleanId ||
+          pId === `${cleanId}.com` ||
+          pDomain === `${cleanId}.com` ||
+          (cleanExplicit && (pId === cleanExplicit || pDomain === cleanExplicit))
+        );
+      });
 
-      return (
-        (cleanExplicit && (pId === cleanExplicit || pDomain === cleanExplicit)) ||
-        (cleanId && (pId === cleanId || pDomain === cleanId || pId === `${cleanId}.com` || pDomain === `${cleanId}.com`)) ||
-        pId === cleanName ||
-        pId === `${cleanName}.com` ||
-        pDomain === cleanName ||
-        pDomain === `${cleanName}.com` ||
-        pName === cleanName ||
-        (nSlug.length > 2 && pSlug === nSlug)
-      );
-    });
-
-    if (matchingPlace) {
-      if (onSelectPlace) {
+      if (matchingPlace && onSelectPlace) {
         onSelectPlace(matchingPlace.id);
         return;
       }
-    }
 
-    // 3. If explicitly marked as business or is domain/place ID format
-    if (explicitPlaceId || isBiz || (cleanId && (cleanId.includes(".") || cleanId.startsWith("place-")))) {
-      const targetPlaceId = explicitPlaceId || (cleanId.includes(".") ? cleanId : `${cleanId}.com`);
-      if (onSelectPlace && targetPlaceId) {
-        onSelectPlace(targetPlaceId);
+      if (cleanExplicit && onSelectPlace) {
+        onSelectPlace(cleanExplicit);
+        return;
+      }
+
+      if (!cleanId.includes("@") && (cleanId.includes(".") || cleanId.startsWith("place-")) && onSelectPlace) {
+        onSelectPlace(cleanId);
         return;
       }
     }
 
-    // 4. Otherwise, resolve as a regular creator profile
+    // 3. For all human users/creators (e.g. Ben Blue, Samet, etc.), resolve their author profile and open creator drawer!
     const author = resolveAuthor(name, id, avatar);
     if (author && onOpenCreator) {
       onOpenCreator(author);
@@ -1462,25 +1483,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           <div
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, (thread as any).placeId, (thread as any).isBusiness);
+                              handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, undefined, thread.isBusiness);
                             }}
                             className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                           >
-                            {Boolean(
-                              (thread.senderName && thread.senderName.toLowerCase().trim() === "yoouz") ||
-                              (thread.senderId && (thread.senderId === "yoouz.com" || thread.senderId === "yoouz")) ||
-                              (thread as any).isBusiness === true ||
-                              ((thread as any).isBusiness !== false && (thread as any).placeId) ||
-                              ((thread as any).isBusiness !== false &&
-                                !thread.senderId?.includes("@") &&
-                                !thread.senderId?.startsWith("usr_") &&
-                                !thread.senderId?.startsWith("user_") &&
-                                (places || []).some(
-                                  (p) =>
-                                    (p.id && String(p.id).toLowerCase().trim() === (thread.senderId || "").toLowerCase().trim()) ||
-                                    (p.brandDomain && (thread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                                ))
-                            ) ? (
+                            {checkIsBusinessThread(thread) ? (
                               <CopoBrandLogo
                                 domain={thread.senderId}
                                 name={thread.senderName}
@@ -1512,7 +1519,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, (thread as any).placeId, (thread as any).isBusiness);
+                                  handleOpenAuthorProfile(thread.senderName, thread.senderId, thread.senderAvatar, undefined, thread.isBusiness);
                                 }}
                                 className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
                               >
@@ -1605,24 +1612,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness)}
+                      onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
                       className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                     >
-                      {Boolean(
-                        (activeThread.senderName && activeThread.senderName.toLowerCase().trim() === "yoouz") ||
-                        (activeThread.senderId && (activeThread.senderId === "yoouz.com" || activeThread.senderId === "yoouz")) ||
-                        (activeThread as any).isBusiness === true ||
-                        ((activeThread as any).isBusiness !== false && (activeThread as any).placeId) ||
-                        ((activeThread as any).isBusiness !== false &&
-                          !activeThread.senderId?.includes("@") &&
-                          !activeThread.senderId?.startsWith("usr_") &&
-                          !activeThread.senderId?.startsWith("user_") &&
-                          (places || []).some(
-                            (p) =>
-                              (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
-                              (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                          ))
-                      ) ? (
+                      {checkIsBusinessThread(activeThread) ? (
                         <CopoBrandLogo
                           domain={activeThread.senderId}
                           name={activeThread.senderName}
@@ -1645,7 +1638,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="min-w-0">
                       <button
                         type="button"
-                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness)}
+                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
                         className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white hover:text-zinc-200 cursor-pointer text-left transition-colors"
                       >
                         <span className="truncate">{activeThread.senderName}</span>
@@ -1767,21 +1760,39 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   {/* Introductory profile greeting when conversation has no messages yet */}
                   {activeThreadMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3.5 my-auto animate-in fade-in duration-300">
-                      <div className="relative">
-                        <img
-                          src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
-                          alt={activeThread.senderName}
-                          className="w-20 h-20 rounded-full object-cover border-2 border-zinc-700 shadow-xl"
-                          onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }}
-                        />
+                      <div 
+                        className="relative cursor-pointer hover:opacity-85 transition-opacity"
+                        onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                      >
+                        {checkIsBusinessThread(activeThread) ? (
+                          <CopoBrandLogo
+                            domain={activeThread.senderId}
+                            name={activeThread.senderName}
+                            logoUrl={activeThread.senderAvatar}
+                            className="w-20 h-20 rounded-2xl bg-white p-2 border-2 border-zinc-700 shadow-xl flex items-center justify-center overflow-hidden"
+                            imageClassName="w-full h-full object-contain rounded-lg"
+                            fallbackTextClassName="font-extrabold text-base text-zinc-950"
+                          />
+                        ) : (
+                          <img
+                            src={getSafeAvatarUrl(activeThread.senderAvatar, activeThread.senderName, activeThread.senderId)}
+                            alt={activeThread.senderName}
+                            className="w-20 h-20 rounded-full object-cover border-2 border-zinc-700 shadow-xl"
+                            onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, activeThread.senderName, activeThread.senderId); }}
+                          />
+                        )}
                         <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950" />
                       </div>
 
                       <div className="space-y-1 max-w-sm">
-                        <div className="flex items-center justify-center gap-1.5 font-bold text-base text-white">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness)}
+                          className="flex items-center justify-center gap-1.5 font-bold text-base text-white hover:text-zinc-200 cursor-pointer transition-colors mx-auto"
+                        >
                           <span>{activeThread.senderName}</span>
                           <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
-                        </div>
+                        </button>
                         <p className="text-xs text-zinc-400 font-medium">
                           Active on Yoouz
                         </p>
@@ -1802,27 +1813,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             if (msg.isMe && currentUser) {
                               handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                             } else {
-                              handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness);
+                              handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
                             }
                           }}
                           className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                         >
                           {(() => {
-                            const isBusinessThread = Boolean(
-                              (activeThread.senderName && activeThread.senderName.toLowerCase().trim() === "yoouz") ||
-                              (activeThread.senderId && (activeThread.senderId === "yoouz.com" || activeThread.senderId === "yoouz")) ||
-                              (activeThread as any).isBusiness === true ||
-                              ((activeThread as any).isBusiness !== false && (activeThread as any).placeId) ||
-                              ((activeThread as any).isBusiness !== false &&
-                                !activeThread.senderId?.includes("@") &&
-                                !activeThread.senderId?.startsWith("usr_") &&
-                                !activeThread.senderId?.startsWith("user_") &&
-                                (places || []).some(
-                                  (p) =>
-                                    (p.id && String(p.id).toLowerCase().trim() === (activeThread.senderId || "").toLowerCase().trim()) ||
-                                    (p.brandDomain && (activeThread.senderId || "").toLowerCase().trim() === p.brandDomain.toLowerCase().trim())
-                                ))
-                            );
+                            const isBiz = checkIsBusinessThread(activeThread);
 
                             if (msg.isMe) {
                               return (
@@ -1835,7 +1832,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               );
                             }
 
-                            if (isBusinessThread) {
+                            if (isBiz) {
                               return (
                                 <CopoBrandLogo
                                   domain={activeThread.senderId}
@@ -1865,7 +1862,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                               if (msg.isMe && currentUser) {
                                 handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                               } else {
-                                handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, (activeThread as any).placeId, (activeThread as any).isBusiness);
+                                handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
                               }
                             }}
                             className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
@@ -2451,12 +2448,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           )}
                         </div>
                         {recipient.location ? (
-                          <div className="flex items-center gap-1 text-[11px] text-zinc-400 truncate">
-                            <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
-                            <span className="truncate">{recipient.location}</span>
+                          <div className="flex items-start gap-1 text-[11px] text-zinc-400 mt-0.5">
+                            <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5" />
+                            <span className="whitespace-normal break-words leading-tight">
+                              {formatCityCountry(recipient.location || recipient)}
+                            </span>
                           </div>
                         ) : (
-                          <p className="text-[11px] text-zinc-400 truncate">
+                          <p className="text-[11px] text-zinc-400 whitespace-normal break-words leading-tight mt-0.5">
                             {recipient.bio || (recipient.isBusiness ? "Verified Business" : "Community reviewer")}
                           </p>
                         )}

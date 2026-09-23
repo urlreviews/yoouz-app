@@ -19,7 +19,7 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
-import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { getSafeAvatarUrl, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface GoogleVideoReviewCardProps {
@@ -154,7 +154,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
                   <span className="text-zinc-600">•</span>
                   <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
                     <MapPin className="w-3 h-3 text-zinc-200 shrink-0" />
-                    {review.author.location}
+                    {formatCityCountry(review.author.location)}
                   </span>
                 </>
               )}
