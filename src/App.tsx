@@ -2093,7 +2093,10 @@ export function App() {
               (userId && (senderId === userId || senderEmail === userId));
 
             const isFromOther = !isMeMsg;
-            if (isFromOther && (activeSection !== "messages" || activeThreadId !== t.id)) {
+            const msgTime = Number(lastMsg.createdAtMs || (lastMsg as any).createdAt || 0);
+            const isLiveRecent = msgTime > 0 && (Date.now() - msgTime) < 15000;
+
+            if (isFromOther && isLiveRecent && (activeSection !== "messages" || activeThreadId !== t.id)) {
               const prefs = currentUser?.notificationSettings;
               if (prefs?.enabled === false || prefs?.messages === false) return;
 

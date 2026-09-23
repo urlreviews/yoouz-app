@@ -1579,18 +1579,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             )}
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteConversation(thread);
-                              }}
-                              className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 transition-all active:scale-95 cursor-pointer shrink-0 opacity-0 group-hover:opacity-100"
-                              title={`Delete conversation with ${thread.senderName}`}
-                              aria-label={`Delete conversation with ${thread.senderName}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
                               id={`btn-thread-options-${thread.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2199,17 +2187,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
             {/* Action options */}
             <div className="space-y-1">
-              {/* Mark as Read */}
-              <button
-                type="button"
-                id="btn-options-mark-read"
-                onClick={() => handleMarkAsReadAction(targetActionThread)}
-                className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
-              >
-                <CheckCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Mark as Read</span>
-              </button>
-
               {/* Report option */}
               <button
                 type="button"
@@ -2243,17 +2220,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <span>Block {targetActionThread.senderName}</span>
                 </button>
               )}
-
-              {/* Delete Conversation */}
-              <button
-                type="button"
-                id="btn-options-delete-conversation"
-                onClick={() => handleDeleteConversation(targetActionThread)}
-                className="w-full px-4 py-3 text-left text-sm font-bold text-red-400 hover:bg-zinc-800 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
-              >
-                <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
-                <span>Delete Conversation</span>
-              </button>
             </div>
 
             {/* Cancel button */}
