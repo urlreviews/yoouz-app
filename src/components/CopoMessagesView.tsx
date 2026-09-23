@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { formatRecordedDate } from "../utils/dateUtils";
+import { formatRecordedDate, formatChatMessageTime } from "../utils/dateUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
@@ -62,7 +62,15 @@ interface CopoMessagesViewProps {
     videoUrl?: string,
     customVideoId?: string,
     customMessageId?: string,
-    customCreatedAt?: number
+    customCreatedAt?: number,
+    cardData?: {
+      placeId?: string;
+      placeName?: string;
+      placeAddress?: string;
+      placeCategory?: string;
+      placeRating?: number;
+      placeImage?: string;
+    }
   ) => Promise<void>;
   onMarkThreadRead?: (threadId: string) => void;
   onSelectVideo?: (videoId: string, source?: string) => void;
@@ -145,6 +153,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     setIsMobileThreadViewOpen(true);
   };
 
+  // On desktop, auto-select first thread if none selected and notify parent to keep in sync
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      if (!localSelectedThreadId && !propSelectedThreadId && messages.length > 0) {
+        const firstId = messages[0].id;
+        setLocalSelectedThreadId(firstId);
+        if (onSelectThreadId) onSelectThreadId(firstId);
+        if (onMarkThreadRead) onMarkThreadRead(firstId);
+      }
+    }
+  }, [messages, localSelectedThreadId, propSelectedThreadId, onSelectThreadId, onMarkThreadRead]);
+
   // Sync mobile view state when thread ID changes externally
   useEffect(() => {
     if (propSelectedThreadId) {
@@ -182,6 +202,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [replyText, setReplyText] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showQuickRecommend, setShowQuickRecommend] = useState(false);
+  const [recommendTab, setRecommendTab] = useState<"spots" | "videos">("spots");
   const [recommendSearch, setRecommendSearch] = useState("");
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [actionThread, setActionThread] = useState<CopoMessage | null>(null);
@@ -836,7 +857,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const partnerId = (activeThread?.senderId || "").toLowerCase().trim().replace(/^@/, "");
 
     const matchesPartner =
-      (partnerName && partnerName !== "you" && msgSenderName === partnerName) ||
+      (partnerName && partnerName !== "you" && (msgSenderName === partnerName || (partnerName.length >= 3 && msgSenderName.includes(partnerName)))) ||
       (partnerEmail && (msgSenderEmail === partnerEmail || msgSenderId === partnerEmail)) ||
       (partnerId && (msgSenderId === partnerId || msgSenderEmail === partnerId));
 
@@ -861,7 +882,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
       const t = (m.text || "").trim();
       if (t === "Conversation started" || t === "Direct conversation") return false;
-      return Boolean(t || m.videoThumbnail || m.videoId);
+      return Boolean(t || m.videoThumbnail || m.videoId || m.placeId || m.placeName);
     });
   }, [activeThread?.history]);
 
@@ -873,7 +894,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       (p) =>
         p.name.toLowerCase().includes(q) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.address && p.address.toLowerCase().includes(q))
+        (p.address && p.address.toLowerCase().includes(q)) ||
+        (p.city && p.city.toLowerCase().includes(q))
     );
   }, [places, recommendSearch]);
 
@@ -890,8 +912,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     ).slice(0, 20);
   }, [userVideos, allVideos, recommendSearch]);
 
-  const handleSendText = async (text: string, videoUrl?: string, customVideoId?: string) => {
-    if (!text.trim() && !videoUrl && !customVideoId) return;
+  const handleSendText = async (
+    text: string,
+    videoUrl?: string,
+    customVideoId?: string,
+    cardData?: {
+      placeId?: string;
+      placeName?: string;
+      placeAddress?: string;
+      placeCategory?: string;
+      placeRating?: number;
+      placeImage?: string;
+    }
+  ) => {
+    if (!text.trim() && !videoUrl && !customVideoId && !cardData?.placeId && !cardData?.placeName) return;
     if (!activeThread) return;
 
     if (isSenderBlocked) {
@@ -928,7 +962,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       createdAtMs: nowMs,
       isMe: true,
       videoThumbnail: sanitizedThumb,
-      videoId: customVideoId
+      videoId: customVideoId,
+      placeId: cardData?.placeId,
+      placeName: cardData?.placeName,
+      placeAddress: cardData?.placeAddress,
+      placeCategory: cardData?.placeCategory,
+      placeRating: cardData?.placeRating,
+      placeImage: cardData?.placeImage
     };
 
     const threadHistory = activeThread.history || [];
@@ -994,9 +1034,46 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         sanitizedThumb,
         customVideoId,
         deterministicMsgId,
-        nowMs
+        nowMs,
+        cardData
       );
     }
+  };
+
+  const handleSendPlaceCard = (place: Place) => {
+    if (!place) return;
+    const coverImage = place.bannerUrl || place.ogImage || (place.photos && place.photos[0]) || "";
+    handleSendText(
+      `Check out ${place.name}! ⭐️ ${place.rating || 4.8}/5`,
+      undefined,
+      undefined,
+      {
+        placeId: place.id,
+        placeName: place.name,
+        placeAddress: place.address || place.city || "",
+        placeCategory: place.category || "Spot",
+        placeRating: place.rating || 4.8,
+        placeImage: coverImage
+      }
+    );
+    setShowQuickRecommend(false);
+  };
+
+  const handleSendVideoCard = (vid: VideoReview) => {
+    if (!vid) return;
+    const poster = resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+    handleSendText(
+      `Check out this video review for ${vid.placeName}! ⭐️ ${vid.rating || 5}/5`,
+      poster,
+      vid.id,
+      {
+        placeId: vid.placeId,
+        placeName: vid.placeName,
+        placeRating: vid.rating || 5,
+        placeImage: poster
+      }
+    );
+    setShowQuickRecommend(false);
   };
 
   const handleSendForm = (e: React.FormEvent) => {
@@ -1212,7 +1289,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             bio: matchUser.bio || "",
             location: matchUser.location || "",
             followersCount: matchUser.followersCount || 0,
-            isVerified: matchUser.isVerified !== false,
+            isVerified: Boolean(matchUser.isVerified === true),
           };
         }
         return null;
@@ -1226,7 +1303,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         bio: matchUser.bio || "",
         location: matchUser.location || "",
         followersCount: matchUser.followersCount || 0,
-        isVerified: matchUser.isVerified !== false,
+        isVerified: Boolean(matchUser.isVerified === true),
       };
     }
 
@@ -1264,6 +1341,78 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
     return false;
   };
+
+  const checkIsThreadVerified = useCallback((thread: any): boolean => {
+    if (!thread) return false;
+    const sId = (thread.senderId || "").toLowerCase().trim();
+    const sName = (thread.senderName || "").toLowerCase().trim();
+    const sEmail = (thread.senderEmail || "").toLowerCase().trim();
+
+    // 1. Official Yoouz system account
+    if (sName === "yoouz" || sId === "yoouz.com" || sId === "yoouz" || sEmail === "info@yoouz.com") {
+      return true;
+    }
+
+    // 2. Business thread: verify against claimed/verified places
+    if (checkIsBusinessThread(thread) || thread.isBusiness) {
+      const matchingPlace = (places || []).find(
+        (p) =>
+          (p.id && (p.id.toLowerCase() === sId || p.id.toLowerCase() === thread.placeId?.toLowerCase())) ||
+          (p.website && p.website.toLowerCase().includes(sId)) ||
+          (p.name && p.name.toLowerCase() === sName)
+      );
+      if (matchingPlace) {
+        return Boolean(matchingPlace.isClaimed || matchingPlace.isVerified);
+      }
+      return Boolean(thread.isBusiness);
+    }
+
+    // 3. User / Creator: verify with allUsers or allVideos
+    const matchUser = (allUsers || []).find(
+      (u) =>
+        (u.name && u.name.toLowerCase() === sName) ||
+        (u.userId && u.userId.toLowerCase() === sId) ||
+        (u.id && u.id.toLowerCase() === sId) ||
+        (u.email && u.email.toLowerCase() === sEmail)
+    );
+    if (matchUser && typeof matchUser.isVerified === "boolean") {
+      return matchUser.isVerified;
+    }
+
+    const matchVideo = (allVideos || []).find(
+      (v) =>
+        (v.author?.name && v.author.name.toLowerCase() === sName) ||
+        (v.author?.id && v.author.id.toLowerCase() === sId)
+    );
+    if (matchVideo?.author?.isVerified !== undefined) {
+      return Boolean(matchVideo.author.isVerified);
+    }
+
+    return false;
+  }, [places, allUsers, allVideos]);
+
+  const isPartnerVerified = useMemo(() => {
+    if (!activeThread) return false;
+    return checkIsThreadVerified(activeThread);
+  }, [activeThread, checkIsThreadVerified]);
+
+  const activeThreadPlace = useMemo(() => {
+    if (!activeThread) return null;
+    const sId = (activeThread.senderId || "").toLowerCase().trim();
+    const sName = (activeThread.senderName || "").toLowerCase().trim();
+    const threadPlaceId = (activeThread.placeId || "").toLowerCase().trim();
+
+    return (places || []).find((p) => {
+      const pId = (p.id || "").toLowerCase().trim();
+      const pName = (p.name || "").toLowerCase().trim();
+      const pWeb = (p.website || "").toLowerCase().trim();
+      return (
+        (threadPlaceId && pId === threadPlaceId) ||
+        (sId && (pId === sId || pWeb.includes(sId))) ||
+        (sName && pName === sName)
+      );
+    }) || null;
+  }, [activeThread, places]);
 
   const handleOpenAuthorProfile = (
     name?: string,
@@ -1611,6 +1760,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 className={`text-xs font-black truncate flex items-center gap-1.5 hover:opacity-80 cursor-pointer text-left transition-opacity ${isActive ? "text-white" : "text-zinc-200"}`}
                               >
                                 <span>{thread.senderName}</span>
+                                {checkIsThreadVerified(thread) && (
+                                  <span title="Verified" className="inline-flex items-center">
+                                    <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                                  </span>
+                                )}
                                 {threadBlocked && (
                                   <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-950/60 text-red-400">
                                     Blocked
@@ -1718,7 +1872,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-white hover:text-zinc-200 cursor-pointer text-left transition-colors"
                       >
                         <span className="truncate">{activeThread.senderName}</span>
-                        <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                        {isPartnerVerified && (
+                          <span title="Verified" className="inline-flex items-center">
+                            <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                          </span>
+                        )}
                       </button>
                       <div className="flex items-center gap-2 mt-0.5">
                         {isSenderBlocked ? (
@@ -1802,7 +1960,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         {/* Delete Conversation */}
                         <button
                           id="btn-delete-chat-thread"
-                          onClick={() => handleDeleteConversation(targetActionThread)}
+                          onClick={() => {
+                            setIsOptionsOpen(false);
+                            setShowDeleteConfirmModal(true);
+                          }}
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
@@ -1812,6 +1973,43 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     )}
                   </div>
                 </div>
+
+                {/* Spot Inquiry Context Banner */}
+                {activeThreadPlace && (
+                  <div className="bg-zinc-900/90 border-b border-zinc-800 px-3.5 sm:px-4 py-2 flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-sm">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700/80">
+                        <img
+                          src={activeThreadPlace.bannerUrl || activeThreadPlace.ogImage || (activeThreadPlace.photos && activeThreadPlace.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&auto=format&fit=crop&q=80"}
+                          alt={activeThreadPlace.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&auto=format&fit=crop&q=80";
+                          }}
+                        />
+                      </div>
+                      <div className="truncate">
+                        <span className="text-zinc-400 font-medium">Inquiring about </span>
+                        <span className="text-white font-bold">{activeThreadPlace.name}</span>
+                        {activeThreadPlace.category && (
+                          <span className="text-zinc-400 font-normal"> · {activeThreadPlace.category}</span>
+                        )}
+                        {activeThreadPlace.city && (
+                          <span className="text-zinc-500 font-normal"> · {activeThreadPlace.city}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenPlaceCard(activeThreadPlace.id)}
+                      className="px-2.5 py-1 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-[11px] shrink-0 transition-colors flex items-center gap-1 cursor-pointer active:scale-95"
+                    >
+                      <MapPin className="w-3 h-3 text-emerald-400" />
+                      <span>View Spot</span>
+                      <ChevronRight className="w-3 h-3 text-zinc-400" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Blocked User Notice Banner */}
                 {isSenderBlocked && (
@@ -1867,7 +2065,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           className="flex items-center justify-center gap-1.5 font-bold text-base text-white hover:text-zinc-200 cursor-pointer transition-colors mx-auto"
                         >
                           <span>{activeThread.senderName}</span>
-                          <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                          {isPartnerVerified && (
+                            <span title="Verified" className="inline-flex items-center">
+                              <CheckCircle2 className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                            </span>
+                          )}
                         </button>
                         <p className="text-xs text-zinc-400 font-medium">
                           Active on Yoouz
@@ -1881,12 +2083,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     activeThreadMessages.map((msg) => {
                       const isMe = checkIsMessageFromMe(msg);
                       const isBiz = checkIsBusinessThread(activeThread);
+                      const currentUserName = (currentUser?.name || "").toLowerCase().trim();
+                      const rawSenderName = (msg.senderName || "").trim();
                       const displaySenderName = isMe
                         ? "You"
-                        : (msg.senderName && msg.senderName !== "You" ? msg.senderName : activeThread.senderName);
+                        : (rawSenderName && rawSenderName.toLowerCase() !== currentUserName && rawSenderName.toLowerCase() !== "you"
+                            ? rawSenderName 
+                            : activeThread.senderName);
                       const displayAvatar = isMe
                         ? (currentUser?.avatar || msg.senderAvatar)
-                        : (msg.senderAvatar || activeThread.senderAvatar);
+                        : (activeThread.senderAvatar || msg.senderAvatar);
 
                       return (
                         <div
@@ -1949,13 +2155,19 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                   handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
                                 }
                               }}
-                              className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
+                              className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors flex items-center gap-1"
                             >
-                              {displaySenderName} · {formatRecordedDate(msg.timestamp, msg.createdAtMs)}
+                              <span>{displaySenderName}</span>
+                              {!isMe && isPartnerVerified && (
+                                <span title="Verified" className="inline-flex items-center">
+                                  <CheckCircle2 className="w-2.5 h-2.5 fill-white text-zinc-950 shrink-0" />
+                                </span>
+                              )}
+                              <span>· {formatChatMessageTime(msg.timestamp, msg.createdAtMs)}</span>
                             </button>
                             <div
                               className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl ${
-                                msg.videoThumbnail ? "w-[260px] sm:w-[280px]" : "w-fit max-w-full"
+                                msg.videoThumbnail || msg.placeId || msg.placeName ? "w-[260px] sm:w-[290px]" : "w-fit max-w-full"
                               } ${
                                 isMe
                                   ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
@@ -1964,36 +2176,119 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             >
                             <p className="px-1">{msg.text}</p>
 
-                            {/* Render shared recommendation / video review card inside message bubble */}
-                            {msg.videoThumbnail ? (
-                              <div
-                                onClick={() => handleOpenVideoCard(msg.videoId)}
-                                className="mt-2.5 bg-zinc-950 rounded-xl overflow-hidden shadow-sm cursor-pointer group/card border border-zinc-800 w-full"
-                              >
-                                <div className="relative aspect-[4/5] bg-zinc-900">
-                                  <img
-                                    src={msg.videoThumbnail}
-                                    alt="Recommendation preview"
-                                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      const target = e.currentTarget as HTMLImageElement;
-                                      target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                    }} /> 
-                                  <div className="absolute inset-0 bg-black/20 group-hover/card:bg-black/30 transition-colors flex items-center justify-center">
-                                    <div className="w-12 h-12 rounded-full bg-zinc-800/95 text-white flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
-                                      <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                            {/* Render shared recommendation / video review or place card inside message bubble */}
+                            {(() => {
+                              if (msg.videoThumbnail) {
+                                const matchedVideo = (allVideos || []).find((v) => v.id === msg.videoId) || (userVideos || []).find((v) => v.id === msg.videoId);
+                                const videoPlaceName = matchedVideo?.placeName || msg.placeName;
+                                const videoRating = matchedVideo?.rating || msg.placeRating;
+
+                                return (
+                                  <div
+                                    onClick={() => handleOpenVideoCard(msg.videoId)}
+                                    className="mt-2.5 bg-zinc-950 rounded-2xl overflow-hidden shadow-sm cursor-pointer group/card border border-zinc-800 hover:border-zinc-700 transition-all w-full"
+                                  >
+                                    <div className="relative aspect-[4/5] bg-zinc-900 overflow-hidden">
+                                      <img
+                                        src={msg.videoThumbnail}
+                                        alt="Recommendation preview"
+                                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                      
+                                      {videoRating && (
+                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
+                                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                                          <span>{videoRating}</span>
+                                        </div>
+                                      )}
+
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-12 h-12 rounded-full bg-zinc-800/95 text-white flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform duration-300">
+                                          <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                                        </div>
+                                      </div>
+
+                                      {videoPlaceName && (
+                                        <div className="absolute bottom-2.5 left-3 right-3 text-left">
+                                          <h6 className="text-xs font-black text-white truncate drop-shadow-sm">
+                                            {videoPlaceName}
+                                          </h6>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="px-3 py-2.5 bg-zinc-900/95 flex items-center justify-between gap-2 border-t border-zinc-800">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <Film className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                                        <span className="text-[11px] font-bold text-white truncate">Watch Video Review</span>
+                                      </div>
+                                      <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover/card:translate-x-0.5 transition-transform shrink-0" />
                                     </div>
                                   </div>
-                                </div>
-                                <div className="px-3 py-2.5 bg-zinc-900 flex items-center justify-between gap-2 border-t border-zinc-800">
-                                  <div className="flex items-center gap-1.5">
-                                    <Film className="w-3.5 h-3.5 text-zinc-200" />
-                                    <span className="text-[11px] font-bold text-white">Watch Video Review</span>
+                                );
+                              }
+
+                              if (msg.placeId || msg.placeName) {
+                                const matchedPlace = (places || []).find(
+                                  (p) => p.id === msg.placeId || (p.name && msg.placeName && p.name.toLowerCase() === msg.placeName.toLowerCase())
+                                );
+                                const placeCover = msg.placeImage || matchedPlace?.bannerUrl || matchedPlace?.ogImage || (matchedPlace?.photos && matchedPlace.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+                                const placeTitle = msg.placeName || matchedPlace?.name || "Local Spot";
+                                const placeCat = msg.placeCategory || matchedPlace?.category || "Spot";
+                                const placeRat = msg.placeRating || matchedPlace?.rating || 4.8;
+                                const placeLoc = msg.placeAddress || matchedPlace?.address || matchedPlace?.city || "";
+
+                                return (
+                                  <div
+                                    onClick={() => handleOpenPlaceCard(msg.placeId || matchedPlace?.id)}
+                                    className="mt-2.5 bg-zinc-950 rounded-2xl overflow-hidden shadow-md cursor-pointer group/place border border-zinc-800 hover:border-zinc-700 transition-all w-full"
+                                  >
+                                    <div className="relative aspect-[16/9] bg-zinc-900 overflow-hidden">
+                                      <img
+                                        src={placeCover}
+                                        alt={placeTitle}
+                                        className="w-full h-full object-cover group-hover/place:scale-105 transition-transform duration-500"
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                                      <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm">
+                                        <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                                        <span>{placeRat}</span>
+                                      </div>
+                                      <div className="absolute bottom-2.5 left-3 right-3 text-left">
+                                        <span className="px-1.5 py-0.5 rounded bg-white/20 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider">
+                                          {placeCat}
+                                        </span>
+                                        <h6 className="text-xs font-black text-white truncate drop-shadow-sm mt-0.5">
+                                          {placeTitle}
+                                        </h6>
+                                      </div>
+                                    </div>
+                                    <div className="px-3 py-2 bg-zinc-900/95 flex items-center justify-between gap-2 border-t border-zinc-800">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                        <span className="text-[11px] text-zinc-300 font-medium truncate">{placeLoc || "View Spot Details"}</span>
+                                      </div>
+                                      <span className="text-[10px] font-bold text-white shrink-0 flex items-center gap-0.5 group-hover/place:underline">
+                                        <span>View Spot</span>
+                                        <ChevronRight className="w-3 h-3 text-zinc-400" />
+                                      </span>
+                                    </div>
                                   </div>
-                                </div>
-                              </div>
-                            ) : null}
+                                );
+                              }
+
+                              return null;
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -2055,12 +2350,40 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         </button>
                       </div>
 
+                      {/* Segment Tabs: Places & Spots vs Video Reviews */}
+                      <div className="flex items-center gap-1.5 p-1 bg-zinc-950 rounded-xl border border-zinc-800 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setRecommendTab("spots")}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            recommendTab === "spots"
+                              ? "bg-zinc-800 text-white shadow-xs"
+                              : "text-zinc-400 hover:text-white"
+                          }`}
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Places & Spots</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRecommendTab("videos")}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            recommendTab === "videos"
+                              ? "bg-zinc-800 text-white shadow-xs"
+                              : "text-zinc-400 hover:text-white"
+                          }`}
+                        >
+                          <Film className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Video Reviews</span>
+                        </button>
+                      </div>
+
                       {/* Search in tray */}
                       <div className="relative shrink-0">
-                        <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-200" />
+                        <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-400" />
                         <input
                           type="text"
-                          placeholder="Search your uploaded reviews..."
+                          placeholder={recommendTab === "spots" ? "Search places, categories, or cities..." : "Search video reviews or creators..."}
                           value={recommendSearch}
                           onChange={(e) => setRecommendSearch(e.target.value)}
                           className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-8 pr-3 py-2 rounded-xl border border-zinc-800 focus:outline-none focus:border-white/50 font-medium"
@@ -2069,65 +2392,115 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
                       {/* Scrollable list of items to share */}
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                        {filteredUserVideosForRecommend.length === 0 ? (
-                          <div className="p-6 text-center text-zinc-200 space-y-1.5">
-                            <Film className="w-7 h-7 mx-auto text-zinc-600" />
-                            <p className="text-xs font-bold text-white">No recorded reviews yet</p>
-                            <p className="text-[10px] text-zinc-200">
-                              You haven't recorded any video reviews to share.
-                            </p>
-                          </div>
+                        {recommendTab === "spots" ? (
+                          filteredPlacesForRecommend.length === 0 ? (
+                            <div className="p-6 text-center text-zinc-400 space-y-1.5">
+                              <MapPin className="w-7 h-7 mx-auto text-zinc-600" />
+                              <p className="text-xs font-bold text-white">No places found</p>
+                              <p className="text-[10px] text-zinc-400">
+                                Try searching for another restaurant, cafe, or venue.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {filteredPlacesForRecommend.map((place) => {
+                                const cover = place.bannerUrl || place.ogImage || (place.photos && place.photos[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+                                return (
+                                  <div
+                                    key={`rec-place-${place.id}`}
+                                    onClick={() => handleSendPlaceCard(place)}
+                                    className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
+                                        <img
+                                          src={cover}
+                                          alt={place.name}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                          referrerPolicy="no-referrer"
+                                          onError={(e) => {
+                                            const target = e.currentTarget as HTMLImageElement;
+                                            target.src = "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&auto=format&fit=crop&q=80";
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h6 className="text-xs font-black text-white group-hover:text-white truncate">
+                                          {place.name}
+                                        </h6>
+                                        <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
+                                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                                          <span>{place.rating || 4.8} · {place.category || "Spot"}</span>
+                                        </p>
+                                        {(place.city || place.address) && (
+                                          <p className="text-[9px] text-zinc-500 truncate mt-0.5">
+                                            {place.city || place.address}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
+                                      Share
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )
                         ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            {filteredUserVideosForRecommend.map((vid) => (
-                              <div
-                                key={`user-vid-rec-${vid.id}`}
-                                onClick={() => {
-                                  const poster = resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                  handleSendText(
-                                    `Check out this video review for ${vid.placeName}! ⭐️ ${vid.rating || 5}/5`,
-                                    poster,
-                                    vid.id
-                                  );
-                                  setShowQuickRecommend(false);
-                                }}
-                                className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
-                                    <img
-                                      src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
-                                      alt={vid.placeName}
-                                      className="w-full h-full object-cover"
-                                      referrerPolicy="no-referrer"
-                                      onError={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        if (vid.author?.avatar && target.src !== vid.author.avatar) {
-                                          target.src = vid.author.avatar;
-                                        } else {
-                                          target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
-                                        }
-                                      }} /> 
-                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                      <Play className="w-3.5 h-3.5 fill-white text-white" />
+                          filteredUserVideosForRecommend.length === 0 ? (
+                            <div className="p-6 text-center text-zinc-400 space-y-1.5">
+                              <Film className="w-7 h-7 mx-auto text-zinc-600" />
+                              <p className="text-xs font-bold text-white">No video reviews found</p>
+                              <p className="text-[10px] text-zinc-400">
+                                Try searching for another place or creator.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {filteredUserVideosForRecommend.map((vid) => (
+                                <div
+                                  key={`user-vid-rec-${vid.id}`}
+                                  onClick={() => handleSendVideoCard(vid)}
+                                  className="p-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3 text-left group"
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
+                                      <img
+                                        src={resolveVideoPosterUrl(vid) || vid.author?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"}
+                                        alt={vid.placeName}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          if (vid.author?.avatar && target.src !== vid.author.avatar) {
+                                            target.src = vid.author.avatar;
+                                          } else {
+                                            target.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80";
+                                          }
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                        <Play className="w-3.5 h-3.5 fill-white text-white" />
+                                      </div>
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h6 className="text-xs font-black text-white group-hover:text-white truncate">
+                                        {vid.placeName}
+                                      </h6>
+                                      <p className="text-[10px] text-zinc-300 truncate flex items-center gap-1 mt-0.5">
+                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                                        <span>{vid.rating || 5} · {vid.author?.name || "Verified Review"}</span>
+                                      </p>
                                     </div>
                                   </div>
-                                  <div className="min-w-0">
-                                    <h6 className="text-xs font-black text-white group-hover:text-white truncate">
-                                      {vid.placeName}
-                                    </h6>
-                                    <p className="text-[10px] text-zinc-200 truncate flex items-center gap-1 mt-0.5">
-                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                                      <span>{vid.rating || 5} · {vid.author?.name || "Verified Review"}</span>
-                                    </p>
-                                  </div>
+                                  <span className="px-2.5 py-1 bg-zinc-800 text-white group-hover:bg-white group-hover:text-black transition-colors rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
+                                    Share
+                                  </span>
                                 </div>
-                                <span className="px-2.5 py-1 bg-zinc-800 text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs">
-                                  Share
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          )
                         )}
                       </div>
                     </div>
@@ -2261,6 +2634,30 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
             {/* Action options */}
             <div className="space-y-1">
+              {/* Mark as read option */}
+              <button
+                type="button"
+                id="btn-options-mark-read"
+                onClick={() => {
+                  if (onMarkThreadRead && targetActionThread) {
+                    onMarkThreadRead(targetActionThread.id);
+                  }
+                  if (targetActionThread) {
+                    const updated = messages.map((m) =>
+                      m.id === targetActionThread.id ? { ...m, unreadCount: 0 } : m
+                    );
+                    onUpdateMessages?.(updated);
+                  }
+                  setIsOptionsOpen(false);
+                  setActionThread(null);
+                  showToast("Marked as read");
+                }}
+                className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+              >
+                <CheckCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>Mark as Read</span>
+              </button>
+
               {/* Report option */}
               <button
                 type="button"
@@ -2294,6 +2691,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <span>Block {targetActionThread.senderName}</span>
                 </button>
               )}
+
+              {/* Delete Conversation */}
+              <button
+                type="button"
+                id="btn-options-delete-thread"
+                onClick={() => {
+                  setIsOptionsOpen(false);
+                  setShowDeleteConfirmModal(true);
+                }}
+                className="w-full px-4 py-3 text-left text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
+              >
+                <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
+                <span>Delete Conversation</span>
+              </button>
             </div>
 
             {/* Cancel button */}

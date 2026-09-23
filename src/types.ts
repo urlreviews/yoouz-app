@@ -326,5 +326,11 @@ export interface CopoMessage {
     isMe: boolean;
     videoThumbnail?: string;
     videoId?: string;
+    placeId?: string;
+    placeName?: string;
+    placeAddress?: string;
+    placeCategory?: string;
+    placeRating?: number;
+    placeImage?: string;
   }[];
 }

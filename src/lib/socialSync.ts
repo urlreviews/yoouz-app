@@ -1315,10 +1315,37 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     }
 
     if (isParticipant) {
-      let otherName = data.senderName || data.recipientName || "Yoouz Member";
-      let otherId = data.senderId || data.recipientId || String(data.id);
-      let otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherId || otherName);
+      const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
+      // Determine whether the current user is the sender, recipient, or participant
+      const isSenderMe = Boolean(
+        (userEmail && (senderEmail === userEmail || senderId === userEmail)) ||
+        (emailPrefix && emailPrefix.length >= 3 && (senderEmail.startsWith(emailPrefix) || senderId === emailPrefix)) ||
+        (userHandle && userHandle.length >= 3 && (senderId === userHandle || senderName === userHandle)) ||
+        (!isGenericName && userName && (senderName === userName || (userFirstName.length >= 3 && senderName.includes(userFirstName)))) ||
+        (userId && (senderId === userId || senderEmail === userId)) ||
+        (isBenBlue && (senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderName.includes("ben") || senderId.includes("ben"))) ||
+        (isStevenAkan && (senderEmail.includes("avr6566gd") || senderName.includes("steven") || senderName.includes("avt") || senderId.includes("steven") || senderId.includes("avt"))) ||
+        (isBizRiv && (senderEmail.includes("louis42111") || senderName.includes("biz") || senderId.includes("biz")))
+      );
+
+      const isRecipientMe = Boolean(
+        (userEmail && (recipientEmail === userEmail || recipientId === userEmail)) ||
+        (emailPrefix && emailPrefix.length >= 3 && (recipientEmail.startsWith(emailPrefix) || recipientId === emailPrefix)) ||
+        (userHandle && userHandle.length >= 3 && (recipientId === userHandle || recipientName === userHandle)) ||
+        (!isGenericName && userName && (recipientName === userName || (userFirstName.length >= 3 && recipientName.includes(userFirstName)))) ||
+        (userId && (recipientId === userId || recipientEmail === userId)) ||
+        (isBenBlue && (recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientName.includes("ben") || recipientId.includes("ben"))) ||
+        (isStevenAkan && (recipientEmail.includes("avr6566gd") || recipientName.includes("steven") || recipientName.includes("avt") || recipientId.includes("steven") || recipientId.includes("avt"))) ||
+        (isBizRiv && (recipientEmail.includes("louis42111") || recipientName.includes("biz") || recipientId.includes("biz")))
+      );
+
+      let otherName = "";
+      let otherId = "";
+      let otherAvatar = "";
+      let otherEmail = "";
+
+      // 1. If participantProfiles is provided, find the partner who is NOT me
       if (data.participantProfiles && typeof data.participantProfiles === "object") {
         const otherKey = Object.keys(data.participantProfiles).find((k) => {
           const normK = k.toLowerCase().replace(/^@/, "").trim();
@@ -1344,23 +1371,88 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           otherName = otherProfile.name || otherName;
           otherAvatar = otherProfile.avatar || otherAvatar;
           otherId = otherKey;
-        } else if (senderEmail === userEmail && data.recipientName) {
+          otherEmail = otherProfile.email || otherEmail;
+        }
+      }
+
+      // 2. If not resolved from participantProfiles, use sender/recipient mapping
+      if (!otherName) {
+        if (isSenderMe && !isRecipientMe && data.recipientName) {
           otherName = data.recipientName;
           otherAvatar = data.recipientAvatar || otherAvatar;
           otherId = data.recipientId || data.recipientEmail || otherId;
-        } else if (data.senderName && senderEmail !== userEmail) {
+          otherEmail = data.recipientEmail || otherEmail;
+        } else if (isRecipientMe && !isSenderMe && data.senderName) {
           otherName = data.senderName;
           otherAvatar = data.senderAvatar || otherAvatar;
           otherId = data.senderId || data.senderEmail || otherId;
+          otherEmail = data.senderEmail || otherEmail;
         }
-      } else if (senderEmail === userEmail && data.recipientName) {
-        otherName = data.recipientName;
-        otherAvatar = data.recipientAvatar || otherAvatar;
-        otherId = data.recipientId || data.recipientEmail || otherId;
-      } else if (data.senderName) {
-        otherName = data.senderName;
-        otherAvatar = data.senderAvatar || otherAvatar;
-        otherId = data.senderId || data.senderEmail || otherId;
+      }
+
+      // 3. If otherName is still matching current user or empty, inspect chat history
+      const normOther = (otherName || "").toLowerCase().trim();
+      const isOtherActuallyMe = (
+        !normOther ||
+        (userEmail && normOther === userEmail) ||
+        (userName && normOther === userName) ||
+        (userHandle && normOther === userHandle) ||
+        (isBenBlue && (normOther.includes("ben") || normOther.includes("aouisesmee"))) ||
+        (isStevenAkan && (normOther.includes("steven") || normOther.includes("avt") || normOther.includes("avr6566gd"))) ||
+        (isBizRiv && (normOther.includes("biz") || normOther.includes("louis42111")))
+      );
+
+      if (isOtherActuallyMe) {
+        const rawHistoryList = Array.isArray(data.history) ? data.history : [];
+        const nonMeHistoryMsg = rawHistoryList.find((h: any) => {
+          const hName = (h.senderName || "").toLowerCase().trim();
+          const hEmail = (h.senderEmail || "").toLowerCase().trim();
+          const hId = (((h as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, "");
+          if (isBenBlue) {
+            return hName.includes("steven") || hName.includes("avt") || hEmail.includes("avr6566gd") || hId.includes("steven");
+          }
+          if (isStevenAkan) {
+            return hName.includes("ben") || hEmail.includes("aouisesmee") || hId.includes("ben");
+          }
+          if (isBizRiv) {
+            return !hName.includes("biz") && !hEmail.includes("louis42111");
+          }
+          return (hName && hName !== userName && hName !== "you") || (hEmail && hEmail !== userEmail) || (hId && hId !== userId);
+        });
+
+        if (nonMeHistoryMsg) {
+          otherName = nonMeHistoryMsg.senderName || otherName;
+          otherAvatar = nonMeHistoryMsg.senderAvatar || otherAvatar;
+          otherId = nonMeHistoryMsg.senderId || nonMeHistoryMsg.senderEmail || otherId;
+          otherEmail = nonMeHistoryMsg.senderEmail || otherEmail;
+        } else if (data.recipientName && (!isBenBlue || !data.recipientName.toLowerCase().includes("ben")) && (!isStevenAkan || !data.recipientName.toLowerCase().includes("steven"))) {
+          otherName = data.recipientName;
+          otherAvatar = data.recipientAvatar || otherAvatar;
+          otherId = data.recipientId || data.recipientEmail || otherId;
+        } else if (data.senderName && (!isBenBlue || !data.senderName.toLowerCase().includes("ben")) && (!isStevenAkan || !data.senderName.toLowerCase().includes("steven"))) {
+          otherName = data.senderName;
+          otherAvatar = data.senderAvatar || otherAvatar;
+          otherId = data.senderId || data.senderEmail || otherId;
+        } else if (isBenBlue) {
+          otherName = "Steven Akan";
+          otherAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "steven_akan");
+          otherId = "@stevenakan";
+        } else if (isStevenAkan) {
+          otherName = "Ben Blue";
+          otherAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "ben_blue");
+          otherId = "@benblue";
+        } else {
+          otherName = data.senderName || data.recipientName || "Yoouz Member";
+          otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherName);
+          otherId = data.senderId || data.recipientId || String(data.id);
+        }
+      }
+
+      if (!otherAvatar) {
+        otherAvatar = generateGoogleLetterAvatarSvg(otherName, 128, otherId || otherName);
+      }
+      if (!otherId) {
+        otherId = String(data.id);
       }
 
       let unreadCount = 0;
@@ -1378,6 +1470,26 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
         unreadCount = data.unreadCount || 1;
+      }
+
+      // If the last message was sent by ME, force unreadCount to 0
+      const rawHistForUnread = Array.isArray(data.history) ? data.history : [];
+      const lastHistMsg = rawHistForUnread.length > 0 ? rawHistForUnread[rawHistForUnread.length - 1] : null;
+      if (lastHistMsg) {
+        const lastMsgSenderName = (lastHistMsg.senderName || "").toLowerCase().trim();
+        const lastMsgSenderEmail = (lastHistMsg.senderEmail || "").toLowerCase().trim();
+        const lastMsgSenderId = (((lastHistMsg as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, "");
+        const isLastFromMe = Boolean(
+          lastHistMsg.isMe ||
+          (userEmail && (lastMsgSenderEmail === userEmail || lastMsgSenderId === userEmail)) ||
+          (userName && lastMsgSenderName === userName) ||
+          (isBenBlue && (lastMsgSenderName.includes("ben") || lastMsgSenderEmail.includes("aouisesmee") || lastMsgSenderEmail.includes("aouisemee") || lastMsgSenderId.includes("ben"))) ||
+          (isStevenAkan && (lastMsgSenderName.includes("steven") || lastMsgSenderName.includes("avt") || lastMsgSenderEmail.includes("avr6566gd") || lastMsgSenderId.includes("steven"))) ||
+          (isBizRiv && (lastMsgSenderName.includes("biz") || lastMsgSenderEmail.includes("louis42111")))
+        );
+        if (isLastFromMe) {
+          unreadCount = 0;
+        }
       }
 
       const rawHistory = Array.isArray(data.history) ? data.history : [];
@@ -1433,22 +1545,28 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             createdAtMs: m.createdAt,
             isMe: Boolean(isSender),
             videoThumbnail: m.videoThumbnail,
-            videoId: m.videoId
+            videoId: m.videoId,
+            placeId: m.placeId,
+            placeName: m.placeName,
+            placeAddress: m.placeAddress,
+            placeCategory: m.placeCategory,
+            placeRating: m.placeRating,
+            placeImage: m.placeImage
           };
         })
         .filter((m: any) => {
           const t = (m.text || "").trim();
           if (t === "Conversation started" || t === "Direct conversation") return false;
-          return Boolean(t || m.videoThumbnail || m.videoId);
+          return Boolean(t || m.videoThumbnail || m.videoId || m.placeId || m.placeName);
         });
 
       // If the current user was the sender of the most recent message, this thread is read for them
-      const lastHistMsg = processedHistory.length > 0 ? processedHistory[processedHistory.length - 1] : null;
-      if (lastHistMsg) {
-        const msgSenderEmail = (lastHistMsg.senderEmail || '').toLowerCase().trim();
-        const msgSenderName = (lastHistMsg.senderName || '').toLowerCase().trim();
-        const msgSenderId = (lastHistMsg.senderId || '').toLowerCase().trim();
-        const isMyLastMsg = lastHistMsg.isMe ||
+      const lastProcessedMsg = processedHistory.length > 0 ? processedHistory[processedHistory.length - 1] : null;
+      if (lastProcessedMsg) {
+        const msgSenderEmail = (lastProcessedMsg.senderEmail || '').toLowerCase().trim();
+        const msgSenderName = (lastProcessedMsg.senderName || '').toLowerCase().trim();
+        const msgSenderId = (lastProcessedMsg.senderId || '').toLowerCase().trim();
+        const isMyLastMsg = lastProcessedMsg.isMe ||
                             (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
                             (userName && msgSenderName === userName) ||
                             (userId && msgSenderId === userId);
@@ -1917,7 +2035,15 @@ export async function sendChatMessage(
   videoUrl?: string,
   customVideoId?: string,
   customMessageId?: string,
-  customCreatedAt?: number
+  customCreatedAt?: number,
+  cardData?: {
+    placeId?: string;
+    placeName?: string;
+    placeAddress?: string;
+    placeCategory?: string;
+    placeRating?: number;
+    placeImage?: string;
+  }
 ): Promise<CopoMessage> {
   const userEmail = (currentUser.email || "").toLowerCase().trim();
   const userName = (currentUser.name || "").trim();
@@ -1966,7 +2092,13 @@ export async function sendChatMessage(
     createdAtMs: msgTime,
     isMe: false,
     videoThumbnail: sanitizedThumbnail,
-    videoId: customVideoId
+    videoId: customVideoId,
+    placeId: cardData?.placeId,
+    placeName: cardData?.placeName,
+    placeAddress: cardData?.placeAddress,
+    placeCategory: cardData?.placeCategory,
+    placeRating: cardData?.placeRating,
+    placeImage: cardData?.placeImage
   };
 
   let existingHistory: any[] = [];
@@ -2188,7 +2320,13 @@ export async function sendChatMessage(
         m.id === newMessage.id
       ),
       videoThumbnail: m.videoThumbnail,
-      videoId: m.videoId
+      videoId: m.videoId,
+      placeId: m.placeId,
+      placeName: m.placeName,
+      placeAddress: m.placeAddress,
+      placeCategory: m.placeCategory,
+      placeRating: m.placeRating,
+      placeImage: m.placeImage
     }))
   };
 }

@@ -146,7 +146,15 @@ interface CopoBusinessDashboardViewProps {
     videoUrl?: string,
     customVideoId?: string,
     customMessageId?: string,
-    customCreatedAt?: number
+    customCreatedAt?: number,
+    cardData?: {
+      placeId?: string;
+      placeName?: string;
+      placeAddress?: string;
+      placeCategory?: string;
+      placeRating?: number;
+      placeImage?: string;
+    }
   ) => Promise<void>;
   onDeleteThread?: (threadId: string, targetPartnerKey?: string) => void;
   onMarkThreadRead?: (threadId: string) => void;
