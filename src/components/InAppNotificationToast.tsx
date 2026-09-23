@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MessageSquare, Bell, Heart, UserPlus, Bookmark, Repeat2, Mail, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
+import { NotificationPreferences } from "../types";
 
 export interface InAppToastPayload {
   id: string;
@@ -20,6 +21,7 @@ interface InAppNotificationToastProps {
   onClose: () => void;
   onNavigateToThread?: (threadId: string) => void;
   onNavigateToNotifications?: () => void;
+  notificationSettings?: NotificationPreferences;
 }
 
 export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
@@ -27,11 +29,34 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
   onClose,
   onNavigateToThread,
   onNavigateToNotifications,
+  notificationSettings,
 }) => {
   const [progress, setProgress] = useState(100);
 
+  // Check effective notification preferences
+  let effectivePrefs = notificationSettings;
+  if (!effectivePrefs) {
+    try {
+      const saved = localStorage.getItem("copo_notification_settings");
+      if (saved) effectivePrefs = JSON.parse(saved);
+    } catch (e) {}
+  }
+
+  // If user turned off notifications, immediately suppress toast
+  const isSuppressed = (() => {
+    if (!toast) return true;
+    if (effectivePrefs?.enabled === false) return true;
+    const aType = toast.actionType || (toast.type === "message" ? "message" : undefined);
+    if (aType === "message" && effectivePrefs?.messages === false) return true;
+    if (aType === "like" && effectivePrefs?.likes === false) return true;
+    if (aType === "comment" && effectivePrefs?.comments === false) return true;
+    if (aType === "follow" && effectivePrefs?.follows === false) return true;
+    if ((aType === "bookmark" || aType === "repost") && effectivePrefs?.bookmarks === false) return true;
+    return false;
+  })();
+
   useEffect(() => {
-    if (!toast) {
+    if (!toast || isSuppressed) {
       setProgress(100);
       return;
     }
@@ -53,7 +78,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     return () => clearInterval(timer);
   }, [toast?.id, onClose]);
 
-  if (!toast) return null;
+  if (!toast || isSuppressed) return null;
 
   const handleClick = () => {
     if (toast.onAction) {

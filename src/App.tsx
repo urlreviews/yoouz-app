@@ -392,10 +392,25 @@ export function App() {
     });
 
     // Instant local UI state update:
-    // If master switch turned off, instantly empty the notifications list!
+    // If master switch turned off, instantly empty active notifications and dismiss any active pop-up toast!
     if (newSettings.enabled === false) {
       setNotifications([]);
+      setInAppToast(null);
     } else {
+      // If active toast belongs to a disabled action, dismiss it
+      if (inAppToast) {
+        const aType = inAppToast.actionType || (inAppToast.type === "message" ? "message" : undefined);
+        if (
+          (aType === "message" && newSettings.messages === false) ||
+          (aType === "like" && newSettings.likes === false) ||
+          (aType === "comment" && newSettings.comments === false) ||
+          (aType === "follow" && newSettings.follows === false) ||
+          ((aType === "bookmark" || aType === "repost") && newSettings.bookmarks === false)
+        ) {
+          setInAppToast(null);
+        }
+      }
+
       // Filter out any newly disabled categories
       setNotifications((prev) => prev.filter((n) => {
         if (n.type === "like" && newSettings.likes === false) return false;
@@ -2290,7 +2305,13 @@ export function App() {
                 markChatThreadAsRead(t.id, effectiveMessagingUser);
               }
             } else if (isFromOther && isLiveRecent && !isAlreadyRead) {
-              const prefs = currentUser?.notificationSettings;
+              let prefs = currentUser?.notificationSettings;
+              if (!prefs) {
+                try {
+                  const saved = localStorage.getItem("copo_notification_settings");
+                  if (saved) prefs = JSON.parse(saved);
+                } catch (e) {}
+              }
               if (prefs?.enabled === false || prefs?.messages === false) return;
 
               const toastSenderName = (t.senderName && !t.senderName.startsWith("Member") ? t.senderName : lastMsg.senderName) || "Member";
@@ -2323,7 +2344,7 @@ export function App() {
     });
 
     return () => unsubscribe();
-  }, [effectiveMessagingUser, currentUser, activeThreadId, activeSection]);
+  }, [effectiveMessagingUser, currentUser, currentUser?.notificationSettings, activeThreadId, activeSection]);
 
   // Real-time synchronization of all registered users across the platform
   useEffect(() => {
@@ -6360,6 +6381,7 @@ export function App() {
       {/* Real-time In-App Pop-up Notifications & Messages Toast */}
       <InAppNotificationToast
         toast={inAppToast}
+        notificationSettings={currentUser?.notificationSettings}
         onClose={() => setInAppToast(null)}
         onNavigateToThread={(threadId) => {
           setActiveSection("messages");
