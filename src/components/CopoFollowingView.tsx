@@ -18,7 +18,8 @@ import {
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor } from "../utils/placeUtils";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
 interface CopoFollowingViewProps {
@@ -116,12 +117,15 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
     // 1. Gather authors from video reviews
     videos.forEach((v) => {
       if (v.author && v.author.name) {
-        const key = v.author.name.toLowerCase().trim();
+        const safeAuth = resolveSafeAuthor(v, currentUser, allUsers);
+        const key = (safeAuth.name || v.author.name).toLowerCase().trim();
+        if (!key) return;
         const isFollowed = followedAuthorsSet.has(key);
         const existing = map.get(key);
 
         map.set(key, {
-          ...v.author,
+          ...safeAuth,
+          avatar: getSafeAvatarUrl(safeAuth.avatar || v.author.avatar, safeAuth.name || v.author.name, safeAuth.handle || v.author.handle),
           isFollowed,
           videoReviewCount: (existing?.videoReviewCount || 0) + 1
         });
@@ -157,13 +161,19 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
       const isFollowed = followedAuthorsSet.has(key);
       const followersList = Array.isArray(u.followers) ? u.followers : [];
       const followersCount = typeof u.followersCount === "number" ? u.followersCount : followersList.length;
+      const safeAvatar = getSafeAvatarUrl(u.avatar || existing?.avatar, name, u.handle || u.email || name);
 
       map.set(key, {
         name,
-        avatar: u.avatar || existing?.avatar || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff`,
+        handle: u.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        avatar: safeAvatar,
         bio: u.bio || existing?.bio || "Community reviewer on Yoouz",
         location: u.location || existing?.location,
+        city: u.city || existing?.city,
+        country: u.country || existing?.country,
         isVerified: u.isVerified || existing?.isVerified || false,
+        isLocalGuide: u.isLocalGuide ?? existing?.isLocalGuide ?? false,
+        localGuideLevel: u.localGuideLevel ?? existing?.localGuideLevel ?? 1,
         isFollowed,
         followersCount: Math.max(followersCount, existing?.followersCount || 0),
         videoReviewCount: existing?.videoReviewCount || 0
@@ -197,12 +207,16 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
       const existing = allAuthorsMap.get(clean.toLowerCase()) || allAuthorsMap.get(key);
       if (existing) {
-        list.push({ ...existing, isFollowed: true });
+        list.push({
+          ...existing,
+          avatar: getSafeAvatarUrl(existing.avatar, existing.name, existing.handle),
+          isFollowed: true
+        });
       } else {
         // Synthesize fallback so database follows are never lost
         list.push({
           name: clean,
-          avatar: `/api/avatar?name=${encodeURIComponent(clean)}&background=27272a&color=fff`,
+          avatar: getSafeAvatarUrl(null, clean, `@${clean.toLowerCase().replace(/[^a-z0-9]/g, "")}`),
           bio: "Community reviewer",
           isFollowed: true,
           followersCount: 0,
@@ -353,7 +367,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
         list.push({
           name: userName,
-          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(userName)}&background=27272a&color=fff`,
+          avatar: getSafeAvatarUrl(u.avatar, userName, u.handle || userName),
           bio: u.bio || "Community reviewer",
           location: u.location,
           isFollowed: followedAuthorsSet.has(userName.toLowerCase()),
@@ -372,7 +386,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
       list.push({
         name: clean,
-        avatar: `/api/avatar?name=${encodeURIComponent(clean)}&background=27272a&color=fff`,
+        avatar: getSafeAvatarUrl(null, clean, `@${clean.toLowerCase().replace(/[^a-z0-9]/g, "")}`),
         bio: "Community reviewer",
         isFollowed: followedAuthorsSet.has(clean.toLowerCase()),
         followersCount: 0
@@ -763,14 +777,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Circular Reviewer Avatar */}
                           <img
-                            src={author.avatar || `/api/avatar?name=${encodeURIComponent(author.name || "User")}&background=27272a&color=fff`}
+                            src={getSafeAvatarUrl(author.avatar, author.name, author.handle)}
                             alt={author.name}
                             className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
-                              if (!target.src.includes("/api/avatar")) {
-                                target.src = "/api/avatar?name=User&background=27272a&color=fff";
-                              }
+                              target.src = getSafeAvatarUrl(null, author.name, author.handle);
                             }}
                           />
                           {/* Reviewer Info: Streamlined 2-Line Layout */}
@@ -879,14 +891,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     >
                       <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
-                          src={follower.avatar}
+                          src={getSafeAvatarUrl(follower.avatar, follower.name)}
                           alt={follower.name}
                           className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform mt-0.5 sm:mt-0"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            if (!target.src.includes("/api/avatar")) {
-                              target.src = "/api/avatar?name=User&background=27272a&color=fff";
-                            }
+                            target.src = getSafeAvatarUrl(null, follower.name);
                           }}
                         />
                         <div className="min-w-0 flex-1 text-left">

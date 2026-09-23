@@ -84,12 +84,12 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true },
     { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
     { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
-    { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },
-    { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Bookmarks"), icon: Bookmark },
-    { id: "business" as NavSection, label: t("nav.business", "For Businesses"), icon: Shield },
+    { id: "notifications" as NavSection, label: t("nav.notifications", "Alerts"), icon: Bell, badge: unreadNotifsCount },
+    { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Saved"), icon: Bookmark },
+    { id: "business" as NavSection, label: t("nav.business", "Business"), icon: Shield },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
-    { id: "record_review" as NavSection, label: t("nav.record_review", "Video Review"), icon: Video, isDarkBlue: true }
+    { id: "record_review" as NavSection, label: t("nav.record_review", "Record"), icon: Video, isDarkBlue: true }
   ];
 
   return (

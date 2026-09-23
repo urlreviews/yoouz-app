@@ -4703,7 +4703,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
               uid: vr.userId || authorHandle,
               name: authorName,
               handle: authorHandle?.startsWith("@") ? authorHandle : `@${authorHandle}`,
-              avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`,
+              avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&size=128`,
               email: vr.userEmail || (vr.userId?.includes('@') ? vr.userId : ""),
               location: author?.location || vr.location,
               role: "Creator",
@@ -17406,6 +17406,85 @@ Return JSON:
     }
     return null;
   };
+
+  // Authoritative Deterministic Single-Letter Google-Style Avatar API Endpoint
+  const SERVER_AVATAR_PALETTE = [
+    { bg: '#E53935', text: '#FFFFFF' }, // Material Red 600
+    { bg: '#D81B60', text: '#FFFFFF' }, // Material Pink 600
+    { bg: '#8E24AA', text: '#FFFFFF' }, // Material Purple 600
+    { bg: '#5E35B1', text: '#FFFFFF' }, // Deep Purple 600
+    { bg: '#3949AB', text: '#FFFFFF' }, // Indigo 600
+    { bg: '#1E88E5', text: '#FFFFFF' }, // Blue 600
+    { bg: '#039BE5', text: '#FFFFFF' }, // Light Blue 600
+    { bg: '#00ACC1', text: '#FFFFFF' }, // Cyan 600
+    { bg: '#00897B', text: '#FFFFFF' }, // Teal 600
+    { bg: '#43A047', text: '#FFFFFF' }, // Green 600
+    { bg: '#7CB342', text: '#FFFFFF' }, // Light Green 600
+    { bg: '#FB8C00', text: '#FFFFFF' }, // Orange 600
+    { bg: '#F4511E', text: '#FFFFFF' }, // Deep Orange 600
+    { bg: '#6D4C41', text: '#FFFFFF' }, // Brown 600
+    { bg: '#546E7A', text: '#FFFFFF' }  // Blue Grey 600
+  ];
+
+  function serverHashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  }
+
+  function serverNormalizeSeed(input?: string): string {
+    if (!input || typeof input !== 'string') return 'user';
+    let str = input.trim().toLowerCase();
+    if (str.startsWith('@')) str = str.substring(1);
+    if (str.includes('@')) str = str.split('@')[0].trim();
+    const clean = str.replace(/[^a-z0-9]/g, '');
+    if (!clean) return 'user';
+    if (clean === 'stevenakan' || clean === 'steven' || clean === 'avr6566gd' || clean === 'steven_akan' || clean.includes('stevenakan') || clean === 'avtertuop') return 'stevenakan';
+    if (clean === 'benblue' || clean === 'ben' || clean.includes('aouisesmee') || clean.includes('aouisemee') || clean.includes('aouisesme')) return 'benblue';
+    if (clean === 'bizriv' || clean.includes('louis42111')) return 'bizriv';
+    return clean;
+  }
+
+  app.get(['/api/avatar', '/api/avatar.svg'], (req: any, res: any) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=2592000');
+    
+    const nameParam = String(req.query.name || req.query.seed || req.query.user || 'User').trim();
+    const seedParam = String(req.query.seed || req.query.colorSeed || req.query.handle || nameParam).trim();
+    const size = Math.min(Math.max(parseInt(String(req.query.size || '128'), 10) || 128, 32), 512);
+
+    const norm = (nameParam || seedParam).toLowerCase().replace(/^@/, '');
+    if (norm === 'yoouz' || norm === 'yoouz.com' || norm.includes('yoouz')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      return res.send(DEFAULT_YOOUZ_ICON_SVG);
+    }
+
+    const cleanForLetter = nameParam.includes('@') ? nameParam.split('@')[0] : nameParam;
+    const firstWord = cleanForLetter.replace(/^@/, '').split(/\s+/)[0] || 'U';
+    const letter = (firstWord.charAt(0) || 'U').toUpperCase();
+
+    const normalizedSeed = serverNormalizeSeed(seedParam || nameParam);
+    let color = SERVER_AVATAR_PALETTE[serverHashString(normalizedSeed) % SERVER_AVATAR_PALETTE.length];
+    if (normalizedSeed === 'benblue') color = { bg: '#1E88E5', text: '#FFFFFF' };
+    else if (normalizedSeed === 'stevenakan') color = { bg: '#7CB342', text: '#FFFFFF' };
+    else if (normalizedSeed === 'bizriv') color = { bg: '#8E24AA', text: '#FFFFFF' };
+
+    // Support explicit background/color query params if supplied
+    const bg = req.query.background && /^[0-9a-fA-F]{6}$/.test(String(req.query.background)) ? `#${req.query.background}` : color.bg;
+    const textColor = req.query.color && /^[0-9a-fA-F]{6}$/.test(String(req.query.color)) ? `#${req.query.color}` : color.text;
+    const fontSize = Math.round(size * 0.52);
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+      <rect width="${size}" height="${size}" fill="${bg}"/>
+      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="${fontSize}px">${letter}</text>
+    </svg>`;
+
+    res.setHeader('Content-Type', 'image/svg+xml');
+    return res.status(200).send(svg);
+  });
 
   // Dedicated high-resolution PNG icon endpoints for iOS Lock Screen, Safari, and PWA
   app.all(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png', '/apple-touch-icon', '/api/og-image/icon.png', '/api/og-image/icon-png'], (_req: any, res: any) => {

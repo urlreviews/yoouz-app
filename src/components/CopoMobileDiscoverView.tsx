@@ -207,13 +207,15 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          {user?.avatar ? (
-                            <img src={getSafeAvatarUrl(user.avatar, user.name, user.handle)} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
-                              {(s || "?")[0].toUpperCase()}
-                            </div>
-                          )}
+                          <img
+                            src={getSafeAvatarUrl(user?.avatar, user?.name || s, user?.handle || s)}
+                            alt={s}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = getSafeAvatarUrl(null, user?.name || s, user?.handle || s);
+                            }}
+                          />
                         </div>
                         <span className="text-zinc-200 font-medium truncate">{s}</span>
                         <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
@@ -238,13 +240,15 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center">
-                          {user?.avatar ? (
-                            <img src={getSafeAvatarUrl(user.avatar, user.name, user.handle)} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold">
-                              {(s || "?")[0].toUpperCase()}
-                            </div>
-                          )}
+                          <img
+                            src={getSafeAvatarUrl(user?.avatar, user?.name || s, user?.handle || s)}
+                            alt={s}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = getSafeAvatarUrl(null, user?.name || s, user?.handle || s);
+                            }}
+                          />
                         </div>
                         <span className="text-zinc-200 font-medium truncate">{s}</span>
                         <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />

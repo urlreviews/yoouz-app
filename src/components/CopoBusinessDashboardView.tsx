@@ -1299,7 +1299,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           id: u.id || u.uid || key,
           name: rawName || 'Yoouz User',
           handle: handle || 'user',
-          avatar: u.avatar || `/api/avatar?name=${encodeURIComponent(rawName || "User")}&background=27272a&color=fff`,
+          avatar: u.avatar || getSafeAvatarUrl(u.avatar, rawName || 'User', handle),
           isReviewer: totalUserReviews > 0,
           reviewCount: totalUserReviews,
           rating: userReviews[0]?.rating,
@@ -1331,7 +1331,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             id: myKey,
             name: myRawName || 'You',
             handle: myHandle,
-            avatar: currentUser.avatar || `/api/avatar?name=${encodeURIComponent(myRawName || "You")}&background=27272a&color=fff`,
+            avatar: currentUser.avatar || getSafeAvatarUrl(currentUser.avatar, myRawName || 'You', myHandle),
             isReviewer: false,
             reviewCount: 0,
             followedAt: 'Recent',
@@ -2092,12 +2092,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   };
 
-  // Nav Items array with clean Google Material icons
+  // Nav Items array with clean Google Material icons (short, super premium labels matching CopoSidebar)
   const suiteNavItems = [
     { id: 'overview' as BusinessTab, label: t('business.overview', 'Overview'), icon: BarChart3 },
     { 
       id: 'reviews' as BusinessTab, 
-      label: t('business.videoReviews', 'Video Reviews'), 
+      label: t('business.reviews', 'Reviews'), 
       icon: Video, 
       badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined 
     },
@@ -2115,7 +2115,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     },
     { 
       id: 'notifications' as BusinessTab, 
-      label: t('nav.notifications', 'Notifications'), 
+      label: t('nav.notifications', 'Alerts'), 
       icon: Bell,
       badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
     },
