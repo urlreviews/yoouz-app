@@ -1885,6 +1885,14 @@ export function App() {
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
 
+  useEffect(() => {
+    if (activeSection === "messages") {
+      setInAppToast((cur) => (cur?.type === "message" || cur?.actionType === "message" ? null : cur));
+    } else if (activeSection === "notifications") {
+      setInAppToast((cur) => (cur?.type === "notification" ? null : cur));
+    }
+  }, [activeSection]);
+
   const effectiveMessagingUser = useMemo(() => {
     let effective = currentUser;
     if (activeSection === 'business') {
@@ -1935,6 +1943,7 @@ export function App() {
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
 
       if (newIncoming && activeSectionRef.current !== "notifications") {
+        if (newIncoming.type === "message" && activeSectionRef.current === "messages") return;
         const prefs = currentUser.notificationSettings;
         if (prefs?.enabled === false) return;
         if (newIncoming.type === "like" && prefs?.likes === false) return;
