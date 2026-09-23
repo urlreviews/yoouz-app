@@ -1405,10 +1405,12 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             id: m.id || `msg_${Date.now()}_${Math.random()}`,
             senderName: m.senderName || "Member",
             senderAvatar: m.senderAvatar || generateGoogleLetterAvatarSvg(m.senderName || "User", 128, msgSenderId || msgSenderEmail || m.senderName || "User"),
+            senderEmail: m.senderEmail || msgSenderEmail,
+            senderId: m.senderId || msgSenderId,
             text: m.text || "",
             timestamp: m.timestamp || "Just now",
             createdAtMs: m.createdAt,
-            isMe: Boolean(isSender),
+            isMe: Boolean(isSender || m.isMe),
             videoThumbnail: m.videoThumbnail,
             videoId: m.videoId
           };
