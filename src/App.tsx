@@ -2095,6 +2095,17 @@ export function App() {
   const calculateUnreadMessagesCount = (msgList: CopoMessage[], user: UserProfile | null) => {
     if (!user) return 0;
     if (activeSection === "messages") return 0;
+
+    // Check user notification preferences for messages and master toggle
+    let prefs = user.notificationSettings;
+    if (!prefs) {
+      try {
+        const saved = localStorage.getItem("copo_notification_settings");
+        if (saved) prefs = JSON.parse(saved);
+      } catch (e) {}
+    }
+    if (prefs?.enabled === false || prefs?.messages === false) return 0;
+
     const userEmail = (user.email || "").toLowerCase().trim();
     const userId = (user.userId || (user as any).id || "").toLowerCase().trim();
     const userName = (user.name || "").toLowerCase().trim();
@@ -6659,7 +6670,7 @@ export function App() {
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}
-              unreadCount={effectiveUnreadNotifsCount + (currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0)}
+              unreadCount={effectiveUnreadNotifsCount + calculateUnreadMessagesCount(messages, currentUser)}
             />
         )}
 
