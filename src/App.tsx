@@ -57,6 +57,7 @@ import {
   sendChatMessageToBunnyDB,
   markChatThreadAsRead,
   saveReadThreadTimestamp,
+  getReadThreadTimestamp,
   deleteChatThreadFromBunnyDB,
   deduplicateChatHistory,
   getThreadPartnerKey,
@@ -1919,7 +1920,8 @@ export function App() {
       if (effectiveMessagingUser) {
         messages.forEach((m) => {
           if (m && m.id) {
-            saveReadThreadTimestamp(m.id, effectiveMessagingUser);
+            const pKey = getThreadPartnerKey(m, effectiveMessagingUser);
+            saveReadThreadTimestamp(m.id, effectiveMessagingUser, pKey);
             markChatThreadAsRead(m.id, effectiveMessagingUser);
           }
         });
@@ -2024,6 +2026,23 @@ export function App() {
         );
         if (isLastMsgFromMe) return acc;
       }
+
+      // Check persistent read timestamp
+      const pKey = getThreadPartnerKey(m, user);
+      const readTimestamp = Math.max(
+        getReadThreadTimestamp(m.id, user),
+        pKey ? getReadThreadTimestamp(pKey, user) : 0
+      );
+      if (readTimestamp > 0) {
+        const latestTime = Math.max(
+          Number(m.createdAtMs || (m as any).updatedAt || 0),
+          ...(hist.map((msg: any) => Number(msg?.createdAt || msg?.createdAtMs || 0)))
+        );
+        if (latestTime <= readTimestamp + 5000) {
+          return acc;
+        }
+      }
+
       return acc + (Number(m.unreadCount) > 0 ? Number(m.unreadCount) : 0);
     }, 0);
   };
@@ -2055,7 +2074,22 @@ export function App() {
 
         const mergedThreads = threads.map((thread) => {
           const prevThread = prevMap.get(thread.id);
-          if (!prevThread) return thread;
+          const pKey = getThreadPartnerKey(thread, effectiveMessagingUser);
+          const readTimestamp = Math.max(
+            getReadThreadTimestamp(thread.id, effectiveMessagingUser),
+            pKey ? getReadThreadTimestamp(pKey, effectiveMessagingUser) : 0
+          );
+
+          if (!prevThread) {
+            const latestTime = Math.max(
+              Number(thread.createdAtMs || (thread as any).updatedAt || 0),
+              ...(Array.isArray(thread.history) ? thread.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
+            );
+            if (readTimestamp > 0 && latestTime <= readTimestamp + 5000) {
+              return { ...thread, unreadCount: 0 };
+            }
+            return thread;
+          }
 
           const mergedHistory = deduplicateChatHistory([
             ...(prevThread.history || []),
@@ -2066,9 +2100,16 @@ export function App() {
           const histLastMsg = (mergedHistory[mergedHistory.length - 1]?.text) || "";
           const prevCleanMsg = (prevThread.lastMessage && prevThread.lastMessage !== "Conversation started" && prevThread.lastMessage !== "Direct conversation") ? prevThread.lastMessage : "";
 
+          const latestTime = Math.max(
+            Number(thread.createdAtMs || (thread as any).updatedAt || 0),
+            ...(mergedHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+          );
+          const isThreadRead = (readTimestamp > 0 && latestTime <= readTimestamp + 5000);
+
           return {
             ...prevThread,
             ...thread,
+            unreadCount: isThreadRead ? 0 : (thread.unreadCount ?? prevThread.unreadCount ?? 0),
             history: mergedHistory,
             lastMessage: histLastMsg || cleanLastMsg || prevCleanMsg || ""
           };
@@ -2129,11 +2170,12 @@ export function App() {
       const isBenBlue = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
 
       for (const t of threads) {
-        const prevCount = prevChatHistoryLengthRef.current.get(t.id) ?? 0;
+        const prevCount = prevChatHistoryLengthRef.current.get(t.id);
         const currentCount = t.history?.length || 0;
         prevChatHistoryLengthRef.current.set(t.id, currentCount);
 
-        if (currentCount > prevCount) {
+        // Only evaluate incoming messages if we already had a recorded baseline for this thread
+        if (prevCount !== undefined && currentCount > prevCount) {
           const lastMsg = t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null;
           if (lastMsg) {
             const senderEmail = (lastMsg.senderEmail || "").toLowerCase().trim();
@@ -2150,16 +2192,24 @@ export function App() {
 
             const isFromOther = !isMeMsg;
             const msgTime = Number(lastMsg.createdAtMs || (lastMsg as any).createdAt || 0);
-            const isLiveRecent = msgTime > 0 && (Date.now() - msgTime) < 15000 && msgTime >= (pageLoadTimeRef.current - 1000);
+            const isLiveRecent = msgTime > 0 && (Date.now() - msgTime) < 15000 && msgTime >= pageLoadTimeRef.current;
 
-            const isUserInMessages = activeSection === "messages";
+            const isUserInMessages = (activeSection as string) === "messages";
+
+            // Check if thread was already marked as read
+            const pKey = getThreadPartnerKey(t, effectiveMessagingUser);
+            const readTimestamp = Math.max(
+              getReadThreadTimestamp(t.id, effectiveMessagingUser),
+              pKey ? getReadThreadTimestamp(pKey, effectiveMessagingUser) : 0
+            );
+            const isAlreadyRead = (Number(t.unreadCount) === 0) || (readTimestamp > 0 && msgTime <= readTimestamp + 5000);
 
             if (isUserInMessages) {
               setInAppToast((cur) => (cur?.type === "message" ? null : cur));
               if (effectiveMessagingUser && activeThreadId === t.id && (t.unreadCount || 0) > 0) {
                 markChatThreadAsRead(t.id, effectiveMessagingUser);
               }
-            } else if (isFromOther && isLiveRecent) {
+            } else if (isFromOther && isLiveRecent && !isAlreadyRead) {
               const prefs = currentUser?.notificationSettings;
               if (prefs?.enabled === false || prefs?.messages === false) return;
 

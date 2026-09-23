@@ -1083,14 +1083,20 @@ export function saveDeletedThreadsMap(map: Map<string, number>, currentUser?: Us
   } catch (e) {}
 }
 
-export function saveReadThreadTimestamp(threadId: string, currentUser?: UserProfile | null): void {
+export function saveReadThreadTimestamp(threadId: string, currentUser?: UserProfile | null, partnerKey?: string): void {
   if (typeof window === "undefined" || !currentUser || !threadId) return;
   try {
     const userKey = (currentUser.email || currentUser.userId || (currentUser as any).id || "anon").toLowerCase().trim();
     const readKey = `copo_read_threads_${userKey}`;
     const existingRaw = localStorage.getItem(readKey);
     const map = existingRaw ? JSON.parse(existingRaw) : {};
-    map[threadId] = Date.now();
+    const now = Date.now();
+    map[threadId] = now;
+    map[threadId.toLowerCase()] = now;
+    if (partnerKey) {
+      map[partnerKey] = now;
+      map[partnerKey.toLowerCase()] = now;
+    }
     localStorage.setItem(readKey, JSON.stringify(map));
   } catch (e) {}
 }
@@ -1103,7 +1109,10 @@ export function getReadThreadTimestamp(threadId: string, currentUser?: UserProfi
     const existingRaw = localStorage.getItem(readKey);
     if (!existingRaw) return 0;
     const map = JSON.parse(existingRaw);
-    return Number(map[threadId] || map[threadId.toLowerCase()] || 0);
+    return Math.max(
+      Number(map[threadId] || 0),
+      Number(map[threadId.toLowerCase()] || 0)
+    );
   } catch (e) {
     return 0;
   }
@@ -1495,7 +1504,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
-        unreadCount = data.unreadCount || 1;
+        unreadCount = typeof data.unreadCount === "number" ? data.unreadCount : 1;
       }
 
       // If the last message was sent by ME, force unreadCount to 0
@@ -1806,6 +1815,15 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
         }
       }
 
+      // Check persistent read timestamp
+      const readTimestamp = Math.max(
+        getReadThreadTimestamp(raw.id || existing.id, currentUserOverride),
+        partnerKey ? getReadThreadTimestamp(partnerKey, currentUserOverride) : 0
+      );
+      if (readTimestamp > 0 && newestTime <= readTimestamp + 5000) {
+        finalUnread = 0;
+      }
+
       result[existingIdx] = {
         ...existing,
         senderName: existing.senderName && !existing.senderName.startsWith("Member") ? existing.senderName : raw.senderName,
@@ -1831,6 +1849,18 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
         if (lastCleanMsg.isMe || (uEmail && (mEmail === uEmail || mId === uEmail)) || (uName && mName === uName) || (uId && mId === uId)) {
           newUnread = 0;
         }
+      }
+
+      const readTimestamp = Math.max(
+        getReadThreadTimestamp(raw.id, currentUserOverride),
+        partnerKey ? getReadThreadTimestamp(partnerKey, currentUserOverride) : 0
+      );
+      const rawMsgTime = Math.max(
+        Number(raw.createdAtMs || (raw as any).updatedAt || 0),
+        ...(cleanHist.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+      );
+      if (readTimestamp > 0 && rawMsgTime <= readTimestamp + 5000) {
+        newUnread = 0;
       }
 
       const newThread: CopoMessage = {
