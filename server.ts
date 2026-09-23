@@ -4333,7 +4333,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
         try {
           rs = await bunnyDb.execute({
             sql: colName === 'notifications' 
-              ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications ORDER BY updatedAt DESC`
+              ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications ORDER BY createdAt DESC`
               : (colName === 'comments'
                   ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments ORDER BY updatedAt DESC`
                   : `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`),
@@ -4342,7 +4342,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
         } catch (e) {
           rs = await bunnyDb.execute({
             sql: colName === 'notifications'
-              ? `SELECT id, recipientEmail, type, text, isRead, data, updatedAt FROM notifications`
+              ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications`
               : (colName === 'comments'
                   ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments`
                   : `SELECT id, data FROM ${colName}`),
@@ -4371,8 +4371,74 @@ app.get('/api/nosql/:collection', async (req, res) => {
                 if (!parsedData.text && row.text) {
                   parsedData.text = row.text;
                 }
-                if (!parsedData.createdAtMs && row.updatedAt) {
-                  parsedData.createdAtMs = new Date(row.updatedAt).getTime() || Date.now();
+
+                // Resolve authentic creation timestamp
+                let effectiveCreatedAtMs: number | null = null;
+                if (typeof parsedData.createdAt === 'number' && parsedData.createdAt > 1700000000000) {
+                  effectiveCreatedAtMs = parsedData.createdAt;
+                } else if (typeof parsedData.createdAt === 'string') {
+                  const p = Date.parse(parsedData.createdAt);
+                  if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
+                }
+
+                // Extract embedded 13-digit millisecond timestamp from row id (e.g., notif_msg_1790005830982_...)
+                if (!effectiveCreatedAtMs && typeof row.id === 'string') {
+                  const idMatch = row.id.match(/(17\d{11})/);
+                  if (idMatch) {
+                    const idTs = Number(idMatch[1]);
+                    if (!isNaN(idTs) && idTs > 1700000000000) effectiveCreatedAtMs = idTs;
+                  }
+                }
+
+                // Database createdAt column
+                if (!effectiveCreatedAtMs && row.createdAt) {
+                  const p = new Date(String(row.createdAt).includes('Z') ? row.createdAt : (row.createdAt + 'Z')).getTime();
+                  if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
+                }
+
+                // Saved createdAtMs in data if valid
+                if (!effectiveCreatedAtMs && typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1700000000000) {
+                  effectiveCreatedAtMs = parsedData.createdAtMs;
+                }
+
+                // Fallback to row.updatedAt only as last resort
+                if (!effectiveCreatedAtMs && row.updatedAt) {
+                  const p = new Date(String(row.updatedAt).includes('Z') ? row.updatedAt : (row.updatedAt + 'Z')).getTime();
+                  if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
+                }
+
+                if (!effectiveCreatedAtMs) {
+                  effectiveCreatedAtMs = Date.now();
+                }
+
+                parsedData.createdAt = effectiveCreatedAtMs;
+                parsedData.createdAtMs = effectiveCreatedAtMs;
+
+                // Format dynamic relative time string so timestamp is never stuck on "Just now"
+                const diffMs = Date.now() - effectiveCreatedAtMs;
+                const diffSec = Math.floor(diffMs / 1000);
+                if (diffSec < 60) {
+                  parsedData.timestamp = "Just now";
+                } else {
+                  const diffMin = Math.floor(diffSec / 60);
+                  if (diffMin < 60) {
+                    parsedData.timestamp = `${diffMin}m ago`;
+                  } else {
+                    const diffHr = Math.floor(diffMin / 60);
+                    if (diffHr < 24) {
+                      parsedData.timestamp = `${diffHr}h ago`;
+                    } else {
+                      const diffDays = Math.floor(diffHr / 24);
+                      if (diffDays === 1) {
+                        parsedData.timestamp = "Yesterday";
+                      } else if (diffDays < 7) {
+                        parsedData.timestamp = `${diffDays} days ago`;
+                      } else {
+                        const diffWeeks = Math.floor(diffDays / 7);
+                        parsedData.timestamp = diffWeeks === 1 ? "1 week ago" : `${diffWeeks} weeks ago`;
+                      }
+                    }
+                  }
                 }
               }
               if (colName === 'users') {
@@ -5155,11 +5221,13 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
           const type = finalDataObj.type || "info";
           const text = finalDataObj.text || "";
           const isRead = finalDataObj.isRead ? 1 : 0;
+          const createdTs = Number(finalDataObj.createdAt || finalDataObj.createdAtMs || Date.now());
+          const createdDateStr = new Date(createdTs).toISOString().replace("T", " ").substring(0, 19);
           await bunnyDb.execute({
-            sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [id, recipientEmail, type, text, isRead, jsonStr, recipientEmail, type, text, isRead, jsonStr]
+            args: [id, recipientEmail, type, text, isRead, jsonStr, createdDateStr, recipientEmail, type, text, isRead, jsonStr]
           });
 
           // Broadcast notification via SSE immediately with alias expansion
@@ -12080,11 +12148,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           }
         } catch (dErr) {}
 
+        const createdTs = Number(notifObj.createdAt || notifObj.createdAtMs || Date.now());
+        const createdDateStr = new Date(createdTs).toISOString().replace("T", " ").substring(0, 19);
         await bunnyDb.execute({
-          sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET recipientEmail = ?, type = ?, text = ?, isRead = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-          args: [notifObj.id, recipientEmail, type, text, isRead, jsonStr, recipientEmail, type, text, isRead, jsonStr]
+          args: [notifObj.id, recipientEmail, type, text, isRead, jsonStr, createdDateStr, recipientEmail, type, text, isRead, jsonStr]
         });
       }
 

@@ -1,6 +1,7 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
 import { getCanonicalUserKey, isGenericUsername } from "./userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "./avatar";
+import { formatRecordedDate } from "../utils/dateUtils";
 
 export interface CreateNotificationParams {
   recipientEmail?: string;
@@ -284,6 +285,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     text: params.text,
     timestamp: "Just now",
     createdAt: Date.now(),
+    createdAtMs: Date.now(),
     videoId: params.videoId || "",
     videoThumbnail: sanitizedThumbnail,
     placeName: params.placeName || "",
@@ -535,6 +537,14 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       if (notifType === "bookmark" && prefs.bookmarks === false) continue;
     }
 
+    // Resolve authentic creation timestamp
+    const parsedCreatedAt = Number(data.createdAt || parsedInner.createdAt || 0);
+    const parsedCreatedAtMs = Number(data.createdAtMs || parsedInner.createdAtMs || 0);
+    const idMatch = String(data.id || "").match(/(17\d{11})/);
+    const idTs = idMatch ? Number(idMatch[1]) : 0;
+    const validTimestamps = [parsedCreatedAt, parsedCreatedAtMs, idTs].filter(t => t > 1700000000000);
+    const trueCreatedAtMs = validTimestamps.length > 0 ? Math.min(...validTimestamps) : Date.now();
+
     list.push({
       ...data,
       id: String(data.id),
@@ -548,8 +558,9 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
         email: data.user?.email || parsedInner.user?.email || senderEmail
       },
       text: data.text || parsedInner.text || "",
-      timestamp: data.timestamp || parsedInner.timestamp || "Recently",
-      createdAtMs: data.createdAtMs || data.createdAt || parsedInner.createdAtMs || parsedInner.createdAt || Date.now(),
+      timestamp: formatRecordedDate(undefined, trueCreatedAtMs),
+      createdAtMs: trueCreatedAtMs,
+      createdAt: trueCreatedAtMs,
       videoId: data.videoId || parsedInner.videoId,
       videoThumbnail: data.videoThumbnail || parsedInner.videoThumbnail,
       placeName: data.placeName || parsedInner.placeName,
@@ -677,6 +688,19 @@ export function subscribeToNotifications(
               return false;
             }
             return true;
+          }).map((n: any) => {
+            const parsedCreatedAt = Number(n.createdAt || 0);
+            const parsedCreatedAtMs = Number(n.createdAtMs || 0);
+            const idMatch = String(n.id || "").match(/(17\d{11})/);
+            const idTs = idMatch ? Number(idMatch[1]) : 0;
+            const validTimestamps = [parsedCreatedAt, parsedCreatedAtMs, idTs].filter(t => t > 1700000000000);
+            const trueCreatedAtMs = validTimestamps.length > 0 ? Math.min(...validTimestamps) : (n.createdAtMs || Date.now());
+            return {
+              ...n,
+              createdAtMs: trueCreatedAtMs,
+              createdAt: trueCreatedAtMs,
+              timestamp: formatRecordedDate(undefined, trueCreatedAtMs)
+            };
           });
           if (cleaned.length > 0) {
             updateList(cleaned);
