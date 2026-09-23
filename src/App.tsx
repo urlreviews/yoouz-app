@@ -2057,6 +2057,10 @@ export function App() {
 
       // Detect new incoming message from partner
       const userEmail = (effectiveMessagingUser.email || "").toLowerCase().trim();
+      const userName = (effectiveMessagingUser.name || "").toLowerCase().trim();
+      const userHandle = ((effectiveMessagingUser as any).handle || "").toLowerCase().trim();
+      const userId = (effectiveMessagingUser.userId || (effectiveMessagingUser as any).id || "").toLowerCase().trim();
+
       for (const t of threads) {
         const prevCount = prevChatHistoryLengthRef.current.get(t.id) ?? 0;
         const currentCount = t.history?.length || 0;
@@ -2066,9 +2070,19 @@ export function App() {
           const lastMsg = t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null;
           if (lastMsg) {
             const senderEmail = (lastMsg.senderEmail || "").toLowerCase().trim();
-            const isFromOther = !lastMsg.isMe && (!senderEmail || senderEmail !== userEmail);
+            const senderName = (lastMsg.senderName || "").toLowerCase().trim();
+            const senderId = (lastMsg.senderId || "").toLowerCase().trim().replace(/^@/, "");
+
+            const isMeMsg =
+              lastMsg.isMe === true ||
+              (userEmail && (senderEmail === userEmail || senderId === userEmail)) ||
+              (userName && senderName === userName) ||
+              (userHandle && (senderId === userHandle || senderName === userHandle)) ||
+              (userId && (senderId === userId || senderEmail === userId));
+
+            const isFromOther = !isMeMsg;
             if (isFromOther && (activeSection !== "messages" || activeThreadId !== t.id)) {
-              const prefs = currentUser.notificationSettings;
+              const prefs = currentUser?.notificationSettings;
               if (prefs?.enabled === false || prefs?.messages === false) return;
 
               setInAppToast({
@@ -2081,8 +2095,10 @@ export function App() {
                 userName: t.senderName,
                 threadId: t.id,
                 onAction: () => {
-                  setActiveSection("messages");
-                  setActiveThreadId(t.id);
+                  if (activeSection !== "business") {
+                    setActiveSection("messages");
+                    setActiveThreadId(t.id);
+                  }
                 }
               });
             }
@@ -2092,7 +2108,7 @@ export function App() {
     });
 
     return () => unsubscribe();
-  }, [currentUser, activeThreadId, activeSection]);
+  }, [effectiveMessagingUser, currentUser, activeThreadId, activeSection]);
 
   // Real-time synchronization of all registered users across the platform
   useEffect(() => {

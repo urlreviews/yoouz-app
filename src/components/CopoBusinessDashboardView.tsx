@@ -1379,9 +1379,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Business Messages strictly scoped to this business entity (placeId, business email, or business handle)
   const businessMessages = useMemo(() => {
     if (!messages || messages.length === 0) return [];
-    const bizId = (effectiveUser.id || effectiveUser.userId || currentPlace?.id || '').toLowerCase().trim();
-    const bizEmail = (effectiveUser.email || '').toLowerCase().trim();
-    const bizHandle = (effectiveUser.handle || '').toLowerCase().trim();
+    const bizPlaceId = (currentPlace?.id || effectiveUser?.placeId || (effectiveUser as any)?.id || '').toLowerCase().trim();
+    const bizDomain = (bizPlaceId.includes('.') ? bizPlaceId : (currentPlace?.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')).trim();
+    const bizEmail = (effectiveUser?.email || '').toLowerCase().trim();
+    const bizName = (currentPlace?.name || effectiveUser?.name || '').toLowerCase().trim();
+    const bizSlug = bizName.replace(/[^a-z0-9]/g, '');
+    const bizHandle = (effectiveUser?.handle || '').toLowerCase().trim();
+    const isYoouzBiz = bizPlaceId === 'yoouz.com' || bizPlaceId === 'yoouz' || bizName === 'yoouz' || bizDomain === 'yoouz.com';
 
     return messages.filter(m => {
       if (!m) return false;
@@ -1392,12 +1396,65 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const recipientEmail = (m.recipientEmail || '').toLowerCase().trim();
       const senderId = (m.senderId || '').toLowerCase().trim().replace(/^@/, '');
       const recipientId = (m.recipientId || '').toLowerCase().trim().replace(/^@/, '');
+      const senderName = (m.senderName || '').toLowerCase().trim();
+      const recipientName = (m.recipientName || '').toLowerCase().trim();
+      const threadIdStr = String(m.id || '').toLowerCase();
+      const mPlaceId = String((m as any).placeId || '').toLowerCase();
 
-      const matchesId = Boolean(bizId && (participants.some(p => p.includes(bizId)) || senderId === bizId || recipientId === bizId));
-      const matchesEmail = Boolean(bizEmail && (participants.some(p => p.includes(bizEmail)) || senderEmail === bizEmail || recipientEmail === bizEmail));
-      const matchesHandle = Boolean(bizHandle && bizHandle.length > 2 && (participants.some(p => p.includes(bizHandle)) || senderId === bizHandle || recipientId === bizHandle));
+      const matchesPlaceId = Boolean(
+        bizPlaceId && (
+          participants.some(p => p.includes(bizPlaceId) || bizPlaceId.includes(p)) ||
+          senderId === bizPlaceId || recipientId === bizPlaceId ||
+          mPlaceId === bizPlaceId || threadIdStr.includes(bizPlaceId)
+        )
+      );
 
-      return matchesId || matchesEmail || matchesHandle;
+      const matchesDomain = Boolean(
+        bizDomain && (
+          participants.some(p => p.includes(bizDomain) || bizDomain.includes(p)) ||
+          senderEmail.includes(bizDomain) || recipientEmail.includes(bizDomain) ||
+          senderId.includes(bizDomain) || recipientId.includes(bizDomain) ||
+          threadIdStr.includes(bizDomain)
+        )
+      );
+
+      const matchesEmail = Boolean(
+        bizEmail && (
+          participants.some(p => p.includes(bizEmail)) ||
+          senderEmail === bizEmail || recipientEmail === bizEmail
+        )
+      );
+
+      const matchesName = Boolean(
+        bizName && bizName !== 'business manager' && (
+          senderName === bizName || recipientName === bizName ||
+          participants.includes(bizName) ||
+          (bizSlug && bizSlug.length > 2 && (
+            senderName.replace(/[^a-z0-9]/g, '') === bizSlug ||
+            recipientName.replace(/[^a-z0-9]/g, '') === bizSlug ||
+            threadIdStr.includes(bizSlug)
+          ))
+        )
+      );
+
+      const matchesHandle = Boolean(
+        bizHandle && bizHandle.length > 2 && (
+          participants.some(p => p.includes(bizHandle)) ||
+          senderId === bizHandle || recipientId === bizHandle
+        )
+      );
+
+      const matchesYoouz = Boolean(
+        isYoouzBiz && (
+          participants.some(p => p.includes('yoouz') || p.includes('info@yoouz.com')) ||
+          senderName.includes('yoouz') || recipientName.includes('yoouz') ||
+          senderId.includes('yoouz') || recipientId.includes('yoouz') ||
+          senderEmail.includes('yoouz') || recipientEmail.includes('yoouz') ||
+          threadIdStr.includes('yoouz')
+        )
+      );
+
+      return matchesPlaceId || matchesDomain || matchesEmail || matchesName || matchesHandle || matchesYoouz;
     });
   }, [messages, effectiveUser, currentPlace]);
 
@@ -3456,7 +3513,25 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   currentUser={effectiveUser}
                   allVideos={placeVideos}
                   onSelectNotificationVideo={(videoId) => onSelectVideo?.(videoId)}
-                  onNavigateToMessages={() => setActiveTab('inbox')}
+                  onNavigateToMessages={(targetKey) => {
+                    setActiveTab('inbox');
+                    if (targetKey) {
+                      const tKeyLower = targetKey.toLowerCase().trim();
+                      const found = businessMessages.find(m =>
+                        (m.senderEmail && m.senderEmail.toLowerCase().includes(tKeyLower)) ||
+                        (m.senderId && m.senderId.toLowerCase().includes(tKeyLower)) ||
+                        (m.senderName && m.senderName.toLowerCase().includes(tKeyLower)) ||
+                        (m.recipientEmail && m.recipientEmail.toLowerCase().includes(tKeyLower)) ||
+                        (m.recipientId && m.recipientId.toLowerCase().includes(tKeyLower)) ||
+                        (m.recipientName && m.recipientName.toLowerCase().includes(tKeyLower)) ||
+                        (Array.isArray(m.participants) && m.participants.some(p => p && p.toLowerCase().includes(tKeyLower))) ||
+                        m.id.toLowerCase().includes(tKeyLower)
+                      );
+                      if (found) {
+                        setTargetThreadId(found.id);
+                      }
+                    }
+                  }}
                   onNavigateHome={() => setActiveTab('overview')}
                   onMarkRead={(id) => onMarkNotificationRead?.(id)}
                   onMarkAllRead={() => {

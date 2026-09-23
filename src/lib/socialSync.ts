@@ -1193,12 +1193,62 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     let isParticipant = false;
 
+    const bizPlaceId = (((currentUser as any).placeId || userId || "") as string).toLowerCase().trim();
+    const bizDomain = (bizPlaceId.includes(".") ? bizPlaceId : "").toLowerCase().trim();
+    const bizNameLower = (userName || "").toLowerCase().trim();
+    const bizSlug = bizNameLower.replace(/[^a-z0-9]/g, "");
+    const isYoouzBiz = bizPlaceId === "yoouz.com" || bizPlaceId === "yoouz" || bizNameLower === "yoouz" || bizDomain === "yoouz.com";
+
     if (isBusinessUser) {
-      // For Business Profiles: ONLY include threads where this specific business entity is an explicit participant or recipient
+      // For Business Profiles: Include threads where this specific business entity is an explicit participant, recipient, or place
+      const threadIdStr = String(data.id || "").toLowerCase();
+      const pIdStr = String((data as any).placeId || "").toLowerCase();
+      const recName = (data.recipientName || "").toLowerCase().trim();
+      const senName = (data.senderName || "").toLowerCase().trim();
+      const recId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+      const senId = (data.senderId || "").toLowerCase().trim().replace(/^@/, "");
+      const recEmail = (data.recipientEmail || "").toLowerCase().trim();
+      const senEmail = (data.senderEmail || "").toLowerCase().trim();
+
       const bizMatch =
-        (userId && (participants.some(p => p.includes(userId)) || senderId === userId || recipientId === userId)) ||
-        (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail)) ||
-        (userHandle && userHandle.length > 2 && (participants.some(p => p.includes(userHandle)) || senderId === userHandle || recipientId === userHandle));
+        (bizPlaceId && (
+          participants.some(p => p.includes(bizPlaceId) || bizPlaceId.includes(p)) ||
+          senderId === bizPlaceId || recipientId === bizPlaceId ||
+          senId === bizPlaceId || recId === bizPlaceId ||
+          pIdStr === bizPlaceId ||
+          threadIdStr.includes(bizPlaceId)
+        )) ||
+        (bizDomain && (
+          participants.some(p => p.includes(bizDomain) || bizDomain.includes(p)) ||
+          senEmail.includes(bizDomain) || recEmail.includes(bizDomain) ||
+          threadIdStr.includes(bizDomain)
+        )) ||
+        (userEmail && (
+          participants.some(p => p.includes(userEmail)) ||
+          senderEmail === userEmail || recipientEmail === userEmail ||
+          senEmail === userEmail || recEmail === userEmail
+        )) ||
+        (userHandle && userHandle.length > 2 && (
+          participants.some(p => p.includes(userHandle)) ||
+          senderId === userHandle || recipientId === userHandle ||
+          senId === userHandle || recId === userHandle
+        )) ||
+        (bizNameLower && bizNameLower !== "business manager" && (
+          recName === bizNameLower || senName === bizNameLower ||
+          participants.includes(bizNameLower)
+        )) ||
+        (bizSlug && bizSlug.length > 2 && (
+          recName.replace(/[^a-z0-9]/g, "") === bizSlug ||
+          senName.replace(/[^a-z0-9]/g, "") === bizSlug ||
+          threadIdStr.includes(bizSlug)
+        )) ||
+        (isYoouzBiz && (
+          participants.some(p => p.includes("yoouz") || p.includes("info@yoouz.com")) ||
+          recName.includes("yoouz") || senName.includes("yoouz") ||
+          recId.includes("yoouz") || senId.includes("yoouz") ||
+          recEmail.includes("yoouz") || senEmail.includes("yoouz") ||
+          threadIdStr.includes("yoouz")
+        ));
 
       if (!bizMatch) {
         continue;
@@ -1285,6 +1335,11 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             normK === userHandle ||
             normK === userName ||
             normK === userId ||
+            (isBusinessUser && (
+              normK === bizPlaceId ||
+              normK === bizDomain ||
+              (isYoouzBiz && (normK === "info@yoouz.com" || normK === "yoouz.com" || normK === "yoouz"))
+            )) ||
             (isBenBlue && (normK.includes("aouisesmee") || normK.includes("ben"))) ||
             (isStevenAkan && (normK.includes("avr6566gd") || normK.includes("steven") || normK.includes("avt"))) ||
             (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
@@ -1323,6 +1378,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userHandle] ??
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
+          (isBusinessUser ? (data.unreadCounts[bizPlaceId] ?? (bizDomain ? data.unreadCounts[bizDomain] : undefined) ?? (isYoouzBiz ? (data.unreadCounts["info@yoouz.com"] ?? data.unreadCounts["yoouz.com"] ?? data.unreadCounts["yoouz"]) : undefined)) : undefined) ??
           (isStevenAkan ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["steven akan"] ?? data.unreadCounts["stevenakan"] ?? data.unreadCounts["steven"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
           (isBenBlue ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["ben blue"] ?? data.unreadCounts["benblue"] ?? data.unreadCounts["ben"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"]) : undefined) ??
           (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
@@ -1344,6 +1400,10 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
             (userName && msgSenderName === userName) ||
             (userId && msgSenderId === userId) ||
+            (isBusinessUser && (
+              (bizPlaceId && (msgSenderId === bizPlaceId || msgSenderEmail === bizPlaceId)) ||
+              (isYoouzBiz && (msgSenderEmail.includes("yoouz") || msgSenderName === "yoouz" || msgSenderId === "yoouz" || msgSenderId === "yoouz.com"))
+            )) ||
             (isBenBlue && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderName.includes("ben") || msgSenderId.includes("ben"))) ||
             (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
             (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
@@ -1365,6 +1425,12 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           if (t === "Conversation started" || t === "Direct conversation") return false;
           return Boolean(t || m.videoThumbnail || m.videoId);
         });
+
+      // If the current user was the sender of the most recent message, this thread is read for them
+      const lastHistMsg = processedHistory.length > 0 ? processedHistory[processedHistory.length - 1] : null;
+      if (lastHistMsg && lastHistMsg.isMe) {
+        unreadCount = 0;
+      }
 
       const cleanRawLastMsg = (data.lastMessage && data.lastMessage !== "Conversation started" && data.lastMessage !== "Direct conversation") ? data.lastMessage.trim() : "";
       const lastMsg = (processedHistory[processedHistory.length - 1]?.text) || cleanRawLastMsg || "";
@@ -1471,6 +1537,12 @@ export function deduplicateChatThreads(threads: CopoMessage[]): CopoMessage[] {
         ...(mergedHist.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
       );
 
+      const lastMergedMsg = mergedHist.length > 0 ? mergedHist[mergedHist.length - 1] : null;
+      let finalUnread = Math.max(existing.unreadCount || 0, raw.unreadCount || 0);
+      if (lastMergedMsg && lastMergedMsg.isMe) {
+        finalUnread = 0;
+      }
+
       result[existingIdx] = {
         ...existing,
         senderName: existing.senderName && !existing.senderName.startsWith("Member") ? existing.senderName : raw.senderName,
@@ -1478,17 +1550,23 @@ export function deduplicateChatThreads(threads: CopoMessage[]): CopoMessage[] {
         history: mergedHist,
         lastMessage: finalLastMsg,
         createdAtMs: newestTime || Date.now(),
-        unreadCount: Math.max(existing.unreadCount || 0, raw.unreadCount || 0),
+        unreadCount: finalUnread,
         videoPreviewUrl: raw.videoPreviewUrl || existing.videoPreviewUrl,
         isBusiness: Boolean(existing.isBusiness || raw.isBusiness),
         placeId: existing.placeId || raw.placeId
       };
     } else {
+      const lastCleanMsg = cleanHist.length > 0 ? cleanHist[cleanHist.length - 1] : null;
+      let newUnread = Number(raw.unreadCount) || 0;
+      if (lastCleanMsg && lastCleanMsg.isMe) {
+        newUnread = 0;
+      }
+
       const newThread: CopoMessage = {
         ...raw,
         history: cleanHist,
         lastMessage: effectiveLastMsg,
-        unreadCount: Number(raw.unreadCount) || 0
+        unreadCount: newUnread
       };
       if (partnerKey) {
         partnerIndexMap.set(partnerKey, result.length);
@@ -1990,7 +2068,14 @@ export async function sendChatMessage(
       text: m.text || "",
       timestamp: m.timestamp || "Just now",
       createdAtMs: m.createdAt,
-      isMe: (m.senderEmail && m.senderEmail.toLowerCase() === userEmail) || (m.senderId && m.senderId === userEmail) || true,
+      isMe: Boolean(
+        (userEmail && (m.senderEmail?.toLowerCase() === userEmail || m.senderId === userEmail)) ||
+        (emailPrefix && (m.senderEmail?.toLowerCase().startsWith(emailPrefix) || m.senderId === emailPrefix)) ||
+        (userHandle && (m.senderId === userHandle || m.senderName?.toLowerCase() === userHandle)) ||
+        (userName && m.senderName?.toLowerCase() === userName.toLowerCase()) ||
+        m.id === newMessage.id ||
+        m.isMe === true
+      ),
       videoThumbnail: m.videoThumbnail,
       videoId: m.videoId
     }))

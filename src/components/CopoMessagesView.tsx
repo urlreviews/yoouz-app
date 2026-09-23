@@ -257,16 +257,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedThreadId, messages]);
 
-  const activeThread = useMemo(() => {
-    if (draftThread && draftThread.id === selectedThreadId) {
-      return messages.find((m) => m.id === selectedThreadId) || draftThread;
-    }
-    const found = messages.find((m) => m.id === selectedThreadId);
-    if (found) return found;
-    if (draftThread) return draftThread;
-    return messages[0];
-  }, [messages, selectedThreadId, draftThread]);
-
   // Discover available community members for user-to-user messaging (strictly deduplicated and canonical)
   const availableRecipients = useMemo(() => {
     const map = new Map<string, {
@@ -734,6 +724,44 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     }).catch(() => {});
   };
 
+  // Filter threads based on search with deduplication and instant local deleted filter
+  const filteredThreads = useMemo(() => {
+    const deduped = deduplicateChatThreads(messages);
+    const visible = deduped.filter((m) => {
+      if (!m) return false;
+      const mId = String(m.id || "").trim();
+      const mPartnerKey = getThreadPartnerKey(m);
+      const mName = (m.senderName || "").toLowerCase().trim();
+      const mIdKey = (m.senderId || "").toLowerCase().trim();
+      if (deletedThreadKeys.has(mId)) return false;
+      if (mPartnerKey && deletedThreadKeys.has(mPartnerKey)) return false;
+      if (mName && deletedThreadKeys.has(mName)) return false;
+      if (mIdKey && deletedThreadKeys.has(mIdKey)) return false;
+      return true;
+    });
+
+    if (!searchTerm.trim()) return visible;
+    const q = searchTerm.toLowerCase();
+    return visible.filter((m) =>
+      m.senderName.toLowerCase().includes(q) ||
+      (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
+    );
+  }, [messages, searchTerm, deletedThreadKeys]);
+
+  const activeThread = useMemo(() => {
+    if (draftThread && draftThread.id === selectedThreadId) {
+      return filteredThreads.find((m) => m.id === selectedThreadId) || messages.find((m) => m.id === selectedThreadId) || draftThread;
+    }
+    if (selectedThreadId) {
+      const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m) === selectedThreadId || m.senderId === selectedThreadId);
+      if (foundInFiltered) return foundInFiltered;
+      const found = messages.find((m) => m.id === selectedThreadId);
+      if (found) return found;
+    }
+    if (draftThread) return draftThread;
+    return filteredThreads[0] || messages[0];
+  }, [messages, filteredThreads, selectedThreadId, draftThread]);
+
   const isSenderBlocked = useMemo(() => {
     if (!activeThread) return false;
     const sId = (activeThread.senderId || "").toLowerCase().trim().replace(/^@/, "");
@@ -758,32 +786,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
   // Total unread count for the header info
   const unreadCount = useMemo(() => {
-    return messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0);
-  }, [messages]);
-
-  // Filter threads based on search with deduplication and instant local deleted filter
-  const filteredThreads = useMemo(() => {
-    const deduped = deduplicateChatThreads(messages);
-    const visible = deduped.filter((m) => {
-      if (!m) return false;
-      const mId = String(m.id || "").trim();
-      const mPartnerKey = getThreadPartnerKey(m);
-      const mName = (m.senderName || "").toLowerCase().trim();
-      const mIdKey = (m.senderId || "").toLowerCase().trim();
-      if (deletedThreadKeys.has(mId)) return false;
-      if (mPartnerKey && deletedThreadKeys.has(mPartnerKey)) return false;
-      if (mName && deletedThreadKeys.has(mName)) return false;
-      if (mIdKey && deletedThreadKeys.has(mIdKey)) return false;
-      return true;
-    });
-
-    if (!searchTerm.trim()) return visible;
-    const q = searchTerm.toLowerCase();
-    return visible.filter((m) =>
-      m.senderName.toLowerCase().includes(q) ||
-      (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
-    );
-  }, [messages, searchTerm, deletedThreadKeys]);
+    return filteredThreads.reduce((acc, m) => {
+      if (m.id === selectedThreadId) return acc;
+      return acc + (m.unreadCount || 0);
+    }, 0);
+  }, [filteredThreads, selectedThreadId]);
 
   // Clean, filtered messages for the active conversation
   const activeThreadMessages = useMemo(() => {
