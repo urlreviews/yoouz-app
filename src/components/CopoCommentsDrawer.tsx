@@ -896,7 +896,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           if (comment.isOwner) {
                             target.src = "/favicon.svg";
                           } else {
-                            target.src = `/api/avatar?name=${encodeURIComponent(comment.authorName || "User")}&background=27272a&color=fff&bold=true`;
+                            target.src = generateGoogleLetterAvatarSvg(
+                              comment.authorName || "User",
+                              128,
+                              comment.authorHandle || comment.authorName
+                            );
                           }
                         }}
                         onClick={() => !comment.isOwner && onSelectAuthor && comment.authorHandle && onSelectAuthor(comment.authorHandle, comment.authorName, comment.authorAvatar)}
@@ -1045,7 +1049,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                       if (reply.isOwner) {
                                         target.src = "/favicon.svg";
                                       } else {
-                                        target.src = `/api/avatar?name=${encodeURIComponent(reply.authorName || "User")}&background=27272a&color=fff&bold=true`;
+                                        target.src = generateGoogleLetterAvatarSvg(
+                                          reply.authorName || "User",
+                                          128,
+                                          reply.authorHandle || reply.authorName
+                                        );
                                       }
                                     }}
                                     onClick={() => !reply.isOwner && onSelectAuthor && reply.authorHandle && onSelectAuthor(reply.authorHandle, reply.authorName, reply.authorAvatar)}

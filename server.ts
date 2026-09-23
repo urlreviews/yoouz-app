@@ -16281,7 +16281,7 @@ Return JSON:
     try {
       const name = String(req.query.name || "User");
       const cleanName = name.replace(/^(een|a|the)\s+/i, "").trim() || "U";
-      const char = cleanName.charAt(0).toUpperCase() || "U";
+      let char = (cleanName.startsWith('@') ? cleanName.substring(1) : cleanName).split(/\s+/)[0].charAt(0).toUpperCase() || "U";
 
       if (cleanName.toLowerCase().includes("yoouz") || cleanName.toLowerCase().includes("admin")) {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
@@ -16306,6 +16306,7 @@ Return JSON:
       if (seed.includes('@')) seed = seed.split('@')[0].trim();
       const clean = seed.replace(/[^a-z0-9]/g, '');
 
+      let bg = '';
       if (
         clean === 'stevenakan' ||
         clean === 'steven' ||
@@ -16315,6 +16316,8 @@ Return JSON:
         clean === 'avtertuop'
       ) {
         seed = 'stevenakan';
+        bg = '#7CB342'; // Exact Light Green 600
+        char = 'S';
       } else if (
         clean === 'benblue' ||
         clean === 'ben' ||
@@ -16323,25 +16326,36 @@ Return JSON:
         clean.includes('aouisesme')
       ) {
         seed = 'benblue';
+        bg = '#1E88E5'; // Exact Blue 600
+        char = 'B';
       } else if (
         clean === 'bizriv' ||
         clean.includes('louis42111')
       ) {
         seed = 'bizriv';
+        bg = '#8E24AA'; // Exact Purple 600
+        char = 'B';
       } else if (clean) {
         seed = clean;
       }
 
-      let hash = 0;
-      for (let i = 0; i < seed.length; i++) {
-        hash = (hash << 5) - hash + seed.charCodeAt(i);
-        hash |= 0;
+      if (!bg && req.query.background && typeof req.query.background === 'string' && req.query.background !== '27272a') {
+        const bgQuery = req.query.background.trim();
+        bg = bgQuery.startsWith('#') ? bgQuery : `#${bgQuery}`;
       }
-      const bg = PALETTE[Math.abs(hash) % PALETTE.length];
+
+      if (!bg) {
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+          hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+          hash = hash & hash;
+        }
+        bg = PALETTE[Math.abs(hash) % PALETTE.length];
+      }
       
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
         <rect width="128" height="128" fill="${bg}"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="64px">${char}</text>
+        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="64px">${char}</text>
       </svg>`;
       
       res.setHeader("Content-Type", "image/svg+xml");

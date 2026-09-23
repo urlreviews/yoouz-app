@@ -1379,7 +1379,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Business Messages strictly scoped to this business entity (placeId, business email, or business handle)
   const businessMessages = useMemo(() => {
     if (!messages || messages.length === 0) return [];
-    const bizPlaceId = (currentPlace?.id || effectiveUser?.placeId || (effectiveUser as any)?.id || '').toLowerCase().trim();
+    const bizPlaceId = (currentPlace?.id || (effectiveUser as any)?.placeId || (effectiveUser as any)?.id || '').toLowerCase().trim();
     const bizDomain = (bizPlaceId.includes('.') ? bizPlaceId : (currentPlace?.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')).trim();
     const bizEmail = (effectiveUser?.email || '').toLowerCase().trim();
     const bizName = (currentPlace?.name || effectiveUser?.name || '').toLowerCase().trim();

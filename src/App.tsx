@@ -2071,7 +2071,7 @@ export function App() {
           if (lastMsg) {
             const senderEmail = (lastMsg.senderEmail || "").toLowerCase().trim();
             const senderName = (lastMsg.senderName || "").toLowerCase().trim();
-            const senderId = (lastMsg.senderId || "").toLowerCase().trim().replace(/^@/, "");
+            const senderId = (((lastMsg as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, "");
 
             const isMeMsg =
               lastMsg.isMe === true ||
