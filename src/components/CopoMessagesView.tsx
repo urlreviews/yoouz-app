@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   Mail,
   Send,
@@ -39,6 +39,7 @@ import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
+import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -805,6 +806,57 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   }, [filteredThreads, selectedThreadId]);
 
   // Clean, filtered messages for the active conversation
+  const checkIsMessageFromMe = useCallback((msg: any): boolean => {
+    if (!msg) return false;
+    const userEmail = (currentUser?.email || "").toLowerCase().trim();
+    const userName = (currentUser?.name || "").toLowerCase().trim();
+    const userId = (currentUser?.userId || (currentUser as any)?.id || "").toLowerCase().trim();
+    const userHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
+
+    const msgSenderEmail = (msg.senderEmail || "").toLowerCase().trim();
+    const msgSenderId = (msg.senderId || "").toLowerCase().trim().replace(/^@/, "");
+    const msgSenderName = (msg.senderName || "").toLowerCase().trim();
+
+    // Persona checks
+    const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
+    const isBenViewing = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
+
+    // If message is explicitly from Ben Blue, and Steven is viewing, it is NOT me!
+    if (isStevenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben"))) {
+      return false;
+    }
+    // If message is explicitly from Steven Akan, and Ben is viewing, it is NOT me!
+    if (isBenViewing && (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) {
+      return false;
+    }
+
+    // Check if message matches the active chat partner (the other person in this conversation)
+    const partnerName = (activeThread?.senderName || "").toLowerCase().trim();
+    const partnerEmail = (activeThread?.senderEmail || "").toLowerCase().trim();
+    const partnerId = (activeThread?.senderId || "").toLowerCase().trim().replace(/^@/, "");
+
+    const matchesPartner =
+      (partnerName && partnerName !== "you" && msgSenderName === partnerName) ||
+      (partnerEmail && (msgSenderEmail === partnerEmail || msgSenderId === partnerEmail)) ||
+      (partnerId && (msgSenderId === partnerId || msgSenderEmail === partnerId));
+
+    if (matchesPartner) {
+      return false;
+    }
+
+    // Check if message matches current user
+    const matchesUser = Boolean(
+      (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
+      (userName && msgSenderName === userName) ||
+      (userId && (msgSenderId === userId || msgSenderEmail === userId)) ||
+      (userHandle && (msgSenderId === userHandle || msgSenderName === userHandle)) ||
+      (isStevenViewing && (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
+      (isBenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben")))
+    );
+
+    return matchesUser;
+  }, [currentUser, activeThread]);
+
   const activeThreadMessages = useMemo(() => {
     return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
       const t = (m.text || "").trim();
@@ -860,10 +912,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
     const nowMs = Date.now();
     const deterministicMsgId = `msg_${nowMs}_${Math.random().toString(36).substring(2, 6)}`;
+    const curEmail = (currentUser?.email || "").toLowerCase().trim();
+    const curId = (currentUser?.userId || (currentUser as any)?.id || "").toLowerCase().trim();
+    const curName = (currentUser?.name || "").trim();
+
     const newMessage = {
       id: deterministicMsgId,
-      senderName: currentUser?.name || "You",
-      senderAvatar: currentUser?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+      senderName: curName || "Reviewer",
+      senderAvatar: currentUser?.avatar || generateGoogleLetterAvatarSvg(curName || "User", 128, curEmail || curName || "User"),
+      senderEmail: curEmail,
+      senderId: curEmail || curId || curName,
       text: text.trim(),
       timestamp: "Just now",
       createdAt: nowMs,
@@ -1820,82 +1878,90 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       </div>
                     </div>
                   ) : (
-                    activeThreadMessages.map((msg) => (
-                      <div
-                        key={`msg-log-${msg.id}`}
-                        className={`flex items-start gap-2.5 sm:gap-3 ${msg.isMe ? "flex-row-reverse" : ""} animate-in fade-in duration-200`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (msg.isMe && currentUser) {
-                              handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
-                            } else {
-                              handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
-                            }
-                          }}
-                          className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                    activeThreadMessages.map((msg) => {
+                      const isMe = checkIsMessageFromMe(msg);
+                      const isBiz = checkIsBusinessThread(activeThread);
+                      const displaySenderName = isMe
+                        ? "You"
+                        : (msg.senderName && msg.senderName !== "You" ? msg.senderName : activeThread.senderName);
+                      const displayAvatar = isMe
+                        ? (currentUser?.avatar || msg.senderAvatar)
+                        : (msg.senderAvatar || activeThread.senderAvatar);
+
+                      return (
+                        <div
+                          key={`msg-log-${msg.id}`}
+                          className={`flex items-start gap-2.5 sm:gap-3 ${isMe ? "flex-row-reverse" : ""} animate-in fade-in duration-200`}
                         >
-                          {(() => {
-                            const isBiz = checkIsBusinessThread(activeThread);
-
-                            if (msg.isMe) {
-                              return (
-                                <img
-                                  src={getSafeAvatarUrl(currentUser?.avatar || msg.senderAvatar, currentUser?.name || msg.senderName, currentUser?.email || (currentUser as any)?.handle)}
-                                  alt={currentUser?.name || msg.senderName}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
-                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, currentUser?.name || msg.senderName, currentUser?.email); }}
-                                />
-                              );
-                            }
-
-                            if (isBiz) {
-                              return (
-                                <CopoBrandLogo
-                                  domain={activeThread.senderId}
-                                  name={activeThread.senderName}
-                                  logoUrl={msg.senderAvatar || activeThread.senderAvatar}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white p-0.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
-                                  imageClassName="w-full h-full object-contain rounded-sm"
-                                  fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
-                                />
-                              );
-                            }
-
-                            return (
-                              <img
-                                src={getSafeAvatarUrl(msg.senderAvatar || activeThread.senderAvatar, msg.senderName || activeThread.senderName, msg.senderId || activeThread.senderId)}
-                                alt={msg.senderName}
-                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
-                                onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, msg.senderName, msg.senderId); }}
-                              />
-                            );
-                          })()}
-                        </button>
-                        <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${msg.isMe ? "items-end text-right" : "items-start text-left"}`}>
                           <button
                             type="button"
                             onClick={() => {
-                              if (msg.isMe && currentUser) {
+                              if (isMe && currentUser) {
                                 handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
                               } else {
                                 handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
                               }
                             }}
-                            className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
+                            className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
                           >
-                            {msg.isMe ? "You" : msg.senderName} · {formatRecordedDate(msg.timestamp, msg.createdAtMs)}
+                            {(() => {
+                              if (isMe) {
+                                return (
+                                  <img
+                                    src={getSafeAvatarUrl(displayAvatar, currentUser?.name || "You", currentUser?.email || (currentUser as any)?.handle)}
+                                    alt={currentUser?.name || "You"}
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
+                                    onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, currentUser?.name || "You", currentUser?.email); }}
+                                  />
+                                );
+                              }
+
+                              if (isBiz) {
+                                return (
+                                  <CopoBrandLogo
+                                    domain={activeThread.senderId}
+                                    name={activeThread.senderName}
+                                    logoUrl={displayAvatar}
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white p-0.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                                    imageClassName="w-full h-full object-contain rounded-sm"
+                                    fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
+                                  />
+                                );
+                              }
+
+                              return (
+                                <img
+                                  src={getSafeAvatarUrl(displayAvatar, displaySenderName, msg.senderId || activeThread.senderId)}
+                                  alt={displaySenderName}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
+                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, displaySenderName, msg.senderId); }}
+                                />
+                              );
+                            })()}
                           </button>
-                          <div
-                            className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl ${
-                              msg.videoThumbnail ? "w-[260px] sm:w-[280px]" : "w-fit max-w-full"
-                            } ${
-                              msg.isMe
-                                ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
-                                : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
-                            }`}
-                          >
+                          <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${isMe ? "items-end text-right" : "items-start text-left"}`}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isMe && currentUser) {
+                                  handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
+                                } else {
+                                  handleOpenAuthorProfile(activeThread.senderName, activeThread.senderId, activeThread.senderAvatar, undefined, activeThread.isBusiness);
+                                }
+                              }}
+                              className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors"
+                            >
+                              {displaySenderName} · {formatRecordedDate(msg.timestamp, msg.createdAtMs)}
+                            </button>
+                            <div
+                              className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl ${
+                                msg.videoThumbnail ? "w-[260px] sm:w-[280px]" : "w-fit max-w-full"
+                              } ${
+                                isMe
+                                  ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
+                                  : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
+                              }`}
+                            >
                             <p className="px-1">{msg.text}</p>
 
                             {/* Render shared recommendation / video review card inside message bubble */}
@@ -1931,8 +1997,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
+                    );
+                  })
+                )}
 
                   {/* Render shared video preview if it is configured at the thread level */}
                   {activeThread.videoPreviewUrl && (!activeThread.history || activeThread.history.length === 0) ? (

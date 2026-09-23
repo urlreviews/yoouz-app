@@ -1401,16 +1401,37 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
             (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
 
+          let finalSenderName = m.senderName || "Member";
+          let finalSenderAvatar = m.senderAvatar;
+          let finalSenderEmail = m.senderEmail || msgSenderEmail;
+          let finalSenderId = m.senderId || msgSenderId;
+
+          if (!isSender) {
+            if (finalSenderName === "You" || !finalSenderName) {
+              finalSenderName = otherName || "Member";
+            }
+            if (!finalSenderAvatar) {
+              finalSenderAvatar = otherAvatar || generateGoogleLetterAvatarSvg(finalSenderName, 128, finalSenderId || finalSenderEmail || finalSenderName);
+            }
+          } else {
+            if (finalSenderName === "You" && currentUser.name) {
+              finalSenderName = currentUser.name;
+            }
+            if (!finalSenderAvatar && currentUser.avatar) {
+              finalSenderAvatar = currentUser.avatar;
+            }
+          }
+
           return {
             id: m.id || `msg_${Date.now()}_${Math.random()}`,
-            senderName: m.senderName || "Member",
-            senderAvatar: m.senderAvatar || generateGoogleLetterAvatarSvg(m.senderName || "User", 128, msgSenderId || msgSenderEmail || m.senderName || "User"),
-            senderEmail: m.senderEmail || msgSenderEmail,
-            senderId: m.senderId || msgSenderId,
+            senderName: finalSenderName,
+            senderAvatar: finalSenderAvatar || generateGoogleLetterAvatarSvg(finalSenderName, 128, finalSenderId || finalSenderEmail || finalSenderName),
+            senderEmail: finalSenderEmail,
+            senderId: finalSenderId,
             text: m.text || "",
             timestamp: m.timestamp || "Just now",
             createdAtMs: m.createdAt,
-            isMe: Boolean(isSender || m.isMe),
+            isMe: Boolean(isSender),
             videoThumbnail: m.videoThumbnail,
             videoId: m.videoId
           };
@@ -1943,7 +1964,7 @@ export async function sendChatMessage(
     timestamp: "Just now",
     createdAt: msgTime,
     createdAtMs: msgTime,
-    isMe: true,
+    isMe: false,
     videoThumbnail: sanitizedThumbnail,
     videoId: customVideoId
   };
@@ -2164,8 +2185,7 @@ export async function sendChatMessage(
         (emailPrefix && (m.senderEmail?.toLowerCase().startsWith(emailPrefix) || m.senderId === emailPrefix)) ||
         (userHandle && (m.senderId === userHandle || m.senderName?.toLowerCase() === userHandle)) ||
         (userName && m.senderName?.toLowerCase() === userName.toLowerCase()) ||
-        m.id === newMessage.id ||
-        m.isMe === true
+        m.id === newMessage.id
       ),
       videoThumbnail: m.videoThumbnail,
       videoId: m.videoId
@@ -2184,8 +2204,8 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   const userName = (currentUser.name || "").toLowerCase().trim();
   const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
 
-  const isAvt = userEmail.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avr6566gd");
-  const isAou = userEmail.includes("aouisesmee") || userName.includes("aouisesmee") || userId.includes("aouisesmee");
+  const isAvt = userEmail.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avr6566gd") || userName.includes("steven") || userHandle.includes("steven");
+  const isAou = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("aouisesmee") || userId.includes("aouisesmee") || userName.includes("ben") || userHandle.includes("ben");
   const isBiz = userEmail.includes("louis42111") || userName.includes("biz") || userHandle.includes("biz") || userId.includes("louis42111");
 
   const unreadCountsUpdates: Record<string, number> = {};
@@ -2197,13 +2217,21 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   if (isAvt) {
     unreadCountsUpdates["avr6566gd@gmail.com"] = 0;
     unreadCountsUpdates["avr6566gd"] = 0;
+    unreadCountsUpdates["steven akan"] = 0;
+    unreadCountsUpdates["stevenakan"] = 0;
+    unreadCountsUpdates["steven"] = 0;
     unreadCountsUpdates["avt ertuop"] = 0;
     unreadCountsUpdates["avtertuop"] = 0;
     unreadCountsUpdates["avt"] = 0;
   }
   if (isAou) {
     unreadCountsUpdates["aouisesmee@gmail.com"] = 0;
+    unreadCountsUpdates["aouisemee@gmail.com"] = 0;
     unreadCountsUpdates["aouisesmee"] = 0;
+    unreadCountsUpdates["aouisemee"] = 0;
+    unreadCountsUpdates["ben blue"] = 0;
+    unreadCountsUpdates["benblue"] = 0;
+    unreadCountsUpdates["ben"] = 0;
   }
   if (isBiz) {
     unreadCountsUpdates["louis42111@gmail.com"] = 0;
