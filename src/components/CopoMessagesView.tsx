@@ -288,6 +288,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (onMarkThreadRead && id) {
       onMarkThreadRead(id);
     }
+    if (id && onUpdateMessages) {
+      const updated = messages.map((m) =>
+        m.id === id ? { ...m, unreadCount: 0 } : m
+      );
+      onUpdateMessages(updated);
+    }
     setIsMobileThreadViewOpen(true);
   };
 

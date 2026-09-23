@@ -1885,14 +1885,6 @@ export function App() {
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
 
-  useEffect(() => {
-    if (activeSection === "messages") {
-      setInAppToast((cur) => (cur?.type === "message" || cur?.actionType === "message" ? null : cur));
-    } else if (activeSection === "notifications") {
-      setInAppToast((cur) => (cur?.type === "notification" ? null : cur));
-    }
-  }, [activeSection]);
-
   const effectiveMessagingUser = useMemo(() => {
     let effective = currentUser;
     if (activeSection === 'business') {
@@ -1920,6 +1912,17 @@ export function App() {
     return effective;
   }, [currentUser, activeSection]);
 
+  useEffect(() => {
+    if ((activeSection as string) === "messages") {
+      setInAppToast((cur) => (cur?.type === "message" || cur?.actionType === "message" ? null : cur));
+      if (effectiveMessagingUser) {
+        setMessages((prev) => prev.map((m) => ({ ...m, unreadCount: 0 })));
+      }
+    } else if ((activeSection as string) === "notifications") {
+      setInAppToast((cur) => (cur?.type === "notification" ? null : cur));
+    }
+  }, [activeSection, effectiveMessagingUser]);
+
   // Real-time BunnyDB sync for Notifications
   useEffect(() => {
     if (!effectiveMessagingUser) {
@@ -1943,28 +1946,26 @@ export function App() {
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
 
       if (newIncoming && activeSectionRef.current !== "notifications") {
-        if (newIncoming.type === "message" && activeSectionRef.current === "messages") return;
+        if ((newIncoming.type as string) === "message") return; // Chat popups are uniquely handled by subscribeToUserChats
         const prefs = currentUser.notificationSettings;
         if (prefs?.enabled === false) return;
         if (newIncoming.type === "like" && prefs?.likes === false) return;
         if (newIncoming.type === "comment" && prefs?.comments === false) return;
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
         if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
-        if (newIncoming.type === "message" && prefs?.messages === false) return;
 
         let title = "1 new notification";
         if (newIncoming.type === "like") title = "1 new like";
         else if (newIncoming.type === "comment") title = "1 new comment";
         else if (newIncoming.type === "follow") title = "1 new follower";
         else if (newIncoming.type === "bookmark") title = "1 new save";
-        else if (newIncoming.type === "message") title = "1 new message";
         else if (newIncoming.type === "repost") title = "1 new share";
 
         const targetThreadId = (newIncoming as any).threadId || (newIncoming as any).chatId;
 
         setInAppToast({
           id: newIncoming.id,
-          type: newIncoming.type === "message" ? "message" : "notification",
+          type: "notification",
           actionType: newIncoming.type,
           title: title,
           subtitle: newIncoming.text ? `${newIncoming.user.name}: ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
@@ -1973,13 +1974,7 @@ export function App() {
           threadId: targetThreadId,
           onAction: () => {
             markNotificationAsRead(newIncoming.id, effectiveMessagingUser);
-            if (newIncoming.type === "message") {
-              setActiveSection("messages");
-              if (targetThreadId) {
-                setActiveThreadId(targetThreadId);
-                markChatThreadAsRead(targetThreadId, effectiveMessagingUser);
-              }
-            } else if (newIncoming.videoId) {
+            if (newIncoming.videoId) {
               handleSelectVideoById(newIncoming.videoId);
             } else {
               setActiveSection("notifications");
@@ -1995,6 +1990,7 @@ export function App() {
 
   const calculateUnreadMessagesCount = (msgList: CopoMessage[], user: UserProfile | null) => {
     if (!user) return 0;
+    if (activeSection === "messages") return 0;
     const userEmail = (user.email || "").toLowerCase().trim();
     const userId = (user.userId || (user as any).id || "").toLowerCase().trim();
     const userName = (user.name || "").toLowerCase().trim();
@@ -2002,7 +1998,7 @@ export function App() {
     return msgList.reduce((acc, m) => {
       if (!m) return acc;
       // If user is currently in messages viewing this thread, don't count it as unread
-      if (activeSection === "messages" && activeThreadId && (m.id === activeThreadId || getThreadPartnerKey(m, user) === activeThreadId)) {
+      if ((activeSection as string) === "messages" && activeThreadId && (m.id === activeThreadId || getThreadPartnerKey(m, user) === activeThreadId)) {
         return acc;
       }
       const hist = m.history || [];
