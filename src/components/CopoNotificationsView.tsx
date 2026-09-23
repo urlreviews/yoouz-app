@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { formatRecordedDate } from "../utils/dateUtils";
+import { formatRecordedDate, parseTimestampToMs } from "../utils/dateUtils";
 import { extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import {
@@ -21,7 +21,7 @@ import {
   Settings,
   Trash2
 } from "lucide-react";
-import { CopoNotification, UserProfile, VideoReview } from "../types";
+import { CopoNotification, UserProfile, VideoReview, DEFAULT_NOTIFICATION_PREFERENCES } from "../types";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -142,9 +142,33 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
     }
   };
 
+  // User notification preferences
+  const userPrefs = useMemo(() => {
+    let p = currentUser?.notificationSettings;
+    if (!p) {
+      try {
+        const saved = localStorage.getItem("copo_notification_settings");
+        if (saved) p = JSON.parse(saved);
+      } catch (e) {}
+    }
+    return p || DEFAULT_NOTIFICATION_PREFERENCES;
+  }, [currentUser?.notificationSettings]);
+
   // Filtered Notifications list
   const filteredNotifications = useMemo(() => {
+    if (userPrefs?.enabled === false) {
+      return [];
+    }
     return notifications.filter((n) => {
+      // User preference toggles
+      if (userPrefs) {
+        if (n.type === "like" && userPrefs.likes === false) return false;
+        if (n.type === "comment" && userPrefs.comments === false) return false;
+        if ((n.type === "message" || (n.type as any) === "chat") && userPrefs.messages === false) return false;
+        if (n.type === "follow" && userPrefs.follows === false) return false;
+        if ((n.type === "bookmark" || n.type === "repost") && userPrefs.bookmarks === false) return false;
+      }
+
       if (activeFilter === "unread") return !n.isRead;
       if (activeFilter === "messages") return n.type === "message";
       if (activeFilter === "likes") return n.type === "like";
@@ -153,12 +177,13 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       if (activeFilter === "bookmarks") return n.type === "bookmark" || n.type === "repost";
       return true;
     });
-  }, [notifications, activeFilter]);
+  }, [notifications, activeFilter, userPrefs]);
 
   // Compute unread count
   const unreadCount = useMemo(() => {
-    return notifications.filter((n) => !n.isRead).length;
-  }, [notifications]);
+    if (userPrefs?.enabled === false) return 0;
+    return filteredNotifications.filter((n) => !n.isRead).length;
+  }, [filteredNotifications, userPrefs]);
 
   // Render Category Filter Pills
   const filterPills: { label: string; value: FilterType; count?: number }[] = [
@@ -669,7 +694,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                         )}
                         <span className="text-[10px] sm:text-[11px] text-zinc-400 font-medium block">
-                          {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
+                          {formatRecordedDate(notif.timestamp, notif.createdAtMs || (notif as any).createdAt || parseTimestampToMs(notif.id) || undefined)}
                         </span>
                       </div>
                     </div>
@@ -734,19 +759,34 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             <div className="w-14 h-14 rounded-2xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center mb-3">
               <BellOff className="w-7 h-7 stroke-[2]" />
             </div>
-            <h3 className="font-black text-white text-base mb-1">No notifications</h3>
+            <h3 className="font-black text-white text-base mb-1">
+              {userPrefs?.enabled === false ? "Notifications are paused" : "No notifications"}
+            </h3>
             <p className="text-xs text-zinc-200 max-w-xs leading-relaxed font-medium">
-              {activeFilter === "all"
+              {userPrefs?.enabled === false
+                ? "You have paused in-app notifications in your preferences. Turn them on to see new alerts."
+                : activeFilter === "all"
                 ? "You're all caught up! Community updates and video review activity will appear here."
                 : `No notifications found under "${activeFilter}".`}
             </p>
-            {activeFilter !== "all" && (
-              <button
-                onClick={() => setActiveFilter("all")}
-                className="mt-4 px-4 py-2 rounded-full text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors cursor-pointer"
-              >
-                View all notifications
-              </button>
+            {userPrefs?.enabled === false ? (
+              onOpenSettings && (
+                <button
+                  onClick={onOpenSettings}
+                  className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-zinc-950 bg-white hover:bg-zinc-200 shadow-sm transition-all cursor-pointer active:scale-95"
+                >
+                  Notification Settings
+                </button>
+              )
+            ) : (
+              activeFilter !== "all" && (
+                <button
+                  onClick={() => setActiveFilter("all")}
+                  className="mt-4 px-4 py-2 rounded-full text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors cursor-pointer"
+                >
+                  View all notifications
+                </button>
+              )
             )}
           </div>
         )}

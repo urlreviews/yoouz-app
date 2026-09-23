@@ -391,22 +391,48 @@ export function App() {
       return nextUser;
     });
 
-    // 2. Real-time Live Database Update (BunnyDB users collection)
-    const BunnyDBPromises: Promise<any>[] = [];
+    // Instant local UI state update:
+    // If master switch turned off, instantly empty the notifications list!
+    if (newSettings.enabled === false) {
+      setNotifications([]);
+    } else {
+      // Filter out any newly disabled categories
+      setNotifications((prev) => prev.filter((n) => {
+        if (n.type === "like" && newSettings.likes === false) return false;
+        if (n.type === "comment" && newSettings.comments === false) return false;
+        if ((n.type === "message" || (n.type as any) === "chat") && newSettings.messages === false) return false;
+        if (n.type === "follow" && newSettings.follows === false) return false;
+        if ((n.type === "bookmark" || n.type === "repost") && newSettings.bookmarks === false) return false;
+        return true;
+      }));
+    }
 
+    // 2. Real-time Live Database Update (Bunny Cloud Database via dedicated API)
+    const syncPromises: Promise<any>[] = [
+      fetch('/api/users/notification-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUid,
+          email: currentEmail,
+          handle: currentUser?.handle,
+          preferences: newSettings
+        })
+      }).catch((err) => console.warn("BunnyDB notification preferences save notice:", err))
+    ];
 
     // 3. Real-time Live Database Update (Server NoSQL API)
     const targetUid = currentUid || (currentEmail ? `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}` : 'guest');
-    const nosqlPromises: Promise<any>[] = [
+    syncPromises.push(
       fetch(`/api/nosql/users/${targetUid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: { notificationSettings: newSettings }, merge: true })
       }).catch((err) => console.warn("NoSQL notification sync warning:", err))
-    ];
+    );
 
     if (currentEmail && targetUid !== `usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`) {
-      nosqlPromises.push(
+      syncPromises.push(
         fetch(`/api/nosql/users/usr_${currentEmail.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -415,7 +441,7 @@ export function App() {
       );
     }
 
-    await Promise.allSettled([...BunnyDBPromises, ...nosqlPromises]);
+    await Promise.allSettled(syncPromises);
   };
 
   const [preselectedPlaceForRecording, setPreselectedPlaceForRecording] = useState<Place | null>(null);
@@ -1956,12 +1982,18 @@ export function App() {
 
       if (newIncoming && activeSectionRef.current !== "notifications") {
         if ((newIncoming.type as string) === "message") return; // Chat popups are uniquely handled by subscribeToUserChats
-        const prefs = currentUser.notificationSettings;
+        let prefs = currentUser?.notificationSettings;
+        if (!prefs) {
+          try {
+            const saved = localStorage.getItem("copo_notification_settings");
+            if (saved) prefs = JSON.parse(saved);
+          } catch (e) {}
+        }
         if (prefs?.enabled === false) return;
         if (newIncoming.type === "like" && prefs?.likes === false) return;
         if (newIncoming.type === "comment" && prefs?.comments === false) return;
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
-        if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
+        if ((newIncoming.type === "bookmark" || newIncoming.type === "repost") && prefs?.bookmarks === false) return;
 
         let title = "1 new notification";
         if (newIncoming.type === "like") title = "1 new like";
@@ -1995,7 +2027,55 @@ export function App() {
     });
 
     return () => unsubscribe();
-  }, [effectiveMessagingUser, currentUser]);
+  }, [effectiveMessagingUser, currentUser, currentUser?.notificationSettings]);
+
+  // Keep notification settings in lockstep with Bunny Cloud Database
+  useEffect(() => {
+    const userIdentifier = currentUser?.email || currentUser?.id || auth.currentUser?.email || "";
+    if (!userIdentifier) return;
+    fetch(`/api/users/notification-preferences?user=${encodeURIComponent(userIdentifier)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res) => {
+        if (res && res.settings && typeof res.settings === "object") {
+          try {
+            localStorage.setItem("copo_notification_settings", JSON.stringify(res.settings));
+          } catch (e) {}
+          setCurrentUser((prev) => {
+            if (!prev) return null;
+            if (JSON.stringify(prev.notificationSettings) === JSON.stringify(res.settings)) return prev;
+            return {
+              ...prev,
+              notificationSettings: res.settings
+            };
+          });
+        }
+      })
+      .catch(() => {});
+  }, [currentUser?.email, currentUser?.id]);
+
+  // Real-time effective unread notifications count adhering to user preferences
+  const effectiveUnreadNotifsCount = useMemo(() => {
+    if (!currentUser) return 0;
+    let prefs = currentUser.notificationSettings;
+    if (!prefs) {
+      try {
+        const saved = localStorage.getItem("copo_notification_settings");
+        if (saved) prefs = JSON.parse(saved);
+      } catch (e) {}
+    }
+    if (prefs?.enabled === false) return 0;
+    return notifications.filter((n) => {
+      if (n.isRead) return false;
+      if (prefs) {
+        if (n.type === "like" && prefs.likes === false) return false;
+        if (n.type === "comment" && prefs.comments === false) return false;
+        if ((n.type === "message" || (n.type as any) === "chat") && prefs.messages === false) return false;
+        if (n.type === "follow" && prefs.follows === false) return false;
+        if ((n.type === "bookmark" || n.type === "repost") && prefs.bookmarks === false) return false;
+      }
+      return true;
+    }).length;
+  }, [currentUser, currentUser?.notificationSettings, notifications]);
 
   const calculateUnreadMessagesCount = (msgList: CopoMessage[], user: UserProfile | null) => {
     if (!user) return 0;
@@ -6004,7 +6084,7 @@ export function App() {
               setActiveSection(section);
             }
           }}
-          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+          unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onCloseEmbed={() => {
             setEmbedTargetId(null);
@@ -6210,7 +6290,7 @@ export function App() {
             }
           }}
           currentUser={currentUser}
-          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+          unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenCreateModal={() => {
             setIsMobileNavDrawerOpen(false);
@@ -6438,7 +6518,7 @@ export function App() {
             setSelectedAuthorForDrawer(null);
             setActiveSection(section);
           }}
-          unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+          unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onOpenCreateModal={() => {
@@ -6557,7 +6637,7 @@ export function App() {
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}
-              unreadCount={(currentUser ? notifications.filter((n) => !n.isRead).length : 0) + (currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0)}
+              unreadCount={effectiveUnreadNotifsCount + (currentUser ? messages.reduce((acc, m) => acc + (m.unreadCount || 0), 0) : 0)}
             />
         )}
 
@@ -6866,7 +6946,7 @@ export function App() {
                 onSelectPlace={handleOpenPlaceDrawer}
                 onNavigateToNotifications={() => setActiveSection("notifications")}
                 onNavigateHome={handleGoHome}
-                unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+                unreadNotifsCount={effectiveUnreadNotifsCount}
                 blockedUserIds={blockedUserIds}
                 onBlockUser={handleBlockUser}
                 onUnblockUser={handleUnblockUser}
@@ -7276,7 +7356,7 @@ export function App() {
           setActiveSection(section);
         }}
         currentUser={currentUser}
-        unreadNotifsCount={currentUser ? notifications.filter((n) => !n.isRead).length : 0}
+        unreadNotifsCount={effectiveUnreadNotifsCount}
         unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
         onOpenCreateModal={() => {
           if (!currentUser) {

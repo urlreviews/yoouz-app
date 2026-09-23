@@ -4320,6 +4320,66 @@ async function ensureWelcomeNotificationsForAllUsers(): Promise<void> {
   }
 }
 
+// Server-side policy checker: verify if a recipient allows notifications of a given type
+async function isNotificationAllowedForRecipient(recipientIdentifier: string, notifType: string): Promise<boolean> {
+  if (!recipientIdentifier) return true;
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return true;
+
+  try {
+    const raw = String(recipientIdentifier).trim().toLowerCase();
+    const cleanHandle = raw.replace(/^@/, '');
+    
+    // Expand aliases to canonical user email
+    let primaryEmail = raw;
+    if (raw.includes("avr6566gd") || raw.includes("avtertuop") || raw === "avt ertuop" || raw === "avt") {
+      primaryEmail = "avr6566gd@gmail.com";
+    } else if (raw.includes("aouisesmee") || raw.includes("aouisemee") || raw.includes("aouisesme") || raw.includes("aouiseme") || raw === "ben blue") {
+      primaryEmail = "aouisesmee@gmail.com";
+    } else if (raw.includes("louis42111") || raw.includes("bizriv") || raw === "biz riv") {
+      primaryEmail = "louis42111@gmail.com";
+    }
+
+    const res = await bunnyDb.execute({
+      sql: `SELECT data FROM users 
+            WHERE id = ? 
+               OR email = ? 
+               OR id = ? 
+               OR (email != '' AND email = ?)
+               OR json_extract(data, '$.email') = ?
+               OR json_extract(data, '$.handle') = ?
+               OR json_extract(data, '$.handle') = ?
+            LIMIT 1`,
+      args: [primaryEmail, primaryEmail, raw, raw, primaryEmail, `@${cleanHandle}`, cleanHandle]
+    });
+
+    if (res && res.rows && res.rows.length > 0) {
+      let uData: any = {};
+      try {
+        uData = typeof res.rows[0].data === 'string' ? JSON.parse(res.rows[0].data as string) : (res.rows[0].data || {});
+      } catch (e) {}
+
+      const prefs = uData.notificationSettings;
+      if (prefs && typeof prefs === 'object') {
+        // Master switch: If completely disabled, reject all notifications!
+        if (prefs.enabled === false) {
+          return false;
+        }
+
+        const normType = (notifType || '').toLowerCase().trim();
+        if (normType === 'like' && prefs.likes === false) return false;
+        if (normType === 'comment' && prefs.comments === false) return false;
+        if ((normType === 'message' || normType === 'chat') && prefs.messages === false) return false;
+        if (normType === 'follow' && prefs.follows === false) return false;
+        if ((normType === 'bookmark' || normType === 'save' || normType === 'repost' || normType === 'share') && prefs.bookmarks === false) return false;
+      }
+    }
+  } catch (err) {
+    console.warn("isNotificationAllowedForRecipient check notice:", err);
+  }
+  return true;
+}
+
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
     const colName = req.params.collection;
@@ -4392,19 +4452,23 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
                 // Database createdAt column
                 if (!effectiveCreatedAtMs && row.createdAt) {
-                  const p = new Date(String(row.createdAt).includes('Z') ? row.createdAt : (row.createdAt + 'Z')).getTime();
-                  if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
+                  const s = String(row.createdAt).trim();
+                  const iso = s.includes("T") ? (s.endsWith("Z") ? s : s + "Z") : s.replace(" ", "T") + "Z";
+                  const p = Date.parse(iso);
+                  if (!isNaN(p) && p > 1500000000000) effectiveCreatedAtMs = p;
                 }
 
                 // Saved createdAtMs in data if valid
-                if (!effectiveCreatedAtMs && typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1700000000000) {
+                if (!effectiveCreatedAtMs && typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1500000000000) {
                   effectiveCreatedAtMs = parsedData.createdAtMs;
                 }
 
                 // Fallback to row.updatedAt only as last resort
                 if (!effectiveCreatedAtMs && row.updatedAt) {
-                  const p = new Date(String(row.updatedAt).includes('Z') ? row.updatedAt : (row.updatedAt + 'Z')).getTime();
-                  if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
+                  const s = String(row.updatedAt).trim();
+                  const iso = s.includes("T") ? (s.endsWith("Z") ? s : s + "Z") : s.replace(" ", "T") + "Z";
+                  const p = Date.parse(iso);
+                  if (!isNaN(p) && p > 1500000000000) effectiveCreatedAtMs = p;
                 }
 
                 if (!effectiveCreatedAtMs) {
@@ -4416,13 +4480,12 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
                 // Format dynamic relative time string so timestamp is never stuck on "Just now"
                 const diffMs = Date.now() - effectiveCreatedAtMs;
-                const diffSec = Math.floor(diffMs / 1000);
-                if (diffSec < 60) {
+                if (diffMs < 45000) {
                   parsedData.timestamp = "Just now";
                 } else {
-                  const diffMin = Math.floor(diffSec / 60);
+                  const diffMin = Math.floor(diffMs / 60000);
                   if (diffMin < 60) {
-                    parsedData.timestamp = `${diffMin}m ago`;
+                    parsedData.timestamp = `${Math.max(1, diffMin)}m ago`;
                   } else {
                     const diffHr = Math.floor(diffMin / 60);
                     if (diffHr < 24) {
@@ -4925,6 +4988,52 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
     if (colName === 'notifications') {
       ensureWelcomeNotificationsForAllUsers().catch(() => {});
+      const reqUser = String(req.query.user || req.query.email || req.query.userId || '').trim().toLowerCase();
+      if (reqUser) {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          try {
+            let primaryEmail = reqUser;
+            if (reqUser.includes("avr6566gd") || reqUser.includes("avtertuop") || reqUser === "avt ertuop" || reqUser === "avt") {
+              primaryEmail = "avr6566gd@gmail.com";
+            } else if (reqUser.includes("aouisesmee") || reqUser.includes("aouisemee") || reqUser.includes("aouisesme") || reqUser.includes("aouiseme") || reqUser === "ben blue") {
+              primaryEmail = "aouisesmee@gmail.com";
+            } else if (reqUser.includes("louis42111") || reqUser.includes("bizriv") || reqUser === "biz riv") {
+              primaryEmail = "louis42111@gmail.com";
+            }
+            const cleanHandle = reqUser.replace(/^@/, '');
+            const uRes = await bunnyDb.execute({
+              sql: `SELECT data FROM users 
+                    WHERE id = ? 
+                       OR email = ? 
+                       OR id = ? 
+                       OR json_extract(data, '$.email') = ?
+                       OR json_extract(data, '$.handle') = ?
+                    LIMIT 1`,
+              args: [primaryEmail, primaryEmail, reqUser, primaryEmail, `@${cleanHandle}`]
+            });
+            if (uRes && uRes.rows && uRes.rows.length > 0) {
+              let uData: any = {};
+              try { uData = JSON.parse(String(uRes.rows[0].data || '{}')); } catch (e) {}
+              const prefs = uData.notificationSettings;
+              if (prefs && typeof prefs === 'object') {
+                if (prefs.enabled === false) {
+                  return res.json([]);
+                }
+                items = items.filter((n: any) => {
+                  const t = (n.type || '').toLowerCase().trim();
+                  if (t === 'like' && prefs.likes === false) return false;
+                  if (t === 'comment' && prefs.comments === false) return false;
+                  if ((t === 'message' || t === 'chat') && prefs.messages === false) return false;
+                  if (t === 'follow' && prefs.follows === false) return false;
+                  if ((t === 'bookmark' || t === 'save' || t === 'repost' || t === 'share') && prefs.bookmarks === false) return false;
+                  return true;
+                });
+              }
+            }
+          } catch (e) {}
+        }
+      }
     }
 
     res.json(items);
@@ -5219,6 +5328,12 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
         if (colName === 'notifications') {
           const recipientEmail = finalDataObj.recipientEmail || finalDataObj.recipientId || "";
           const type = finalDataObj.type || "info";
+          const recipientTarget = recipientEmail || finalDataObj.recipientHandle || "";
+          const isAllowed = await isNotificationAllowedForRecipient(recipientTarget, type);
+          if (!isAllowed) {
+            console.log(`[BunnyDB Notifications] Suppressed notification for ${recipientTarget} (${type}) due to user preferences`);
+            return res.json({ success: true, suppressed: true, reason: "Notification disabled by recipient preferences" });
+          }
           const text = finalDataObj.text || "";
           const isRead = finalDataObj.isRead ? 1 : 0;
           const createdTs = Number(finalDataObj.createdAt || finalDataObj.createdAtMs || Date.now());
@@ -5593,6 +5708,131 @@ app.post('/api/user/deactivate-account', express.json(), async (req, res) => {
     res.json({ success: true, message: "Account deactivated. Profile and reviews are now hidden." });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// =========================================================================
+// Notification Preferences Live Endpoints (BunnyDB + Realtime Broadcast)
+// =========================================================================
+app.post('/api/users/notification-preferences', express.json(), async (req, res) => {
+  try {
+    const { userId, email, handle, preferences } = req.body || {};
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: "Missing or invalid preferences object" });
+    }
+
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      let cleanEmail = (email || '').toLowerCase().trim();
+      let cleanId = (userId || '').trim();
+      let cleanHandle = (handle || '').replace(/^@/, '').toLowerCase().trim();
+
+      // Normalize aliases
+      if (cleanEmail.includes("avr6566gd") || cleanId.includes("avr6566gd") || cleanHandle.includes("avtertuop") || cleanId === "avt ertuop") {
+        cleanEmail = "avr6566gd@gmail.com";
+      } else if (cleanEmail.includes("aouisesmee") || cleanId.includes("aouisesmee") || cleanHandle.includes("benblue")) {
+        cleanEmail = "aouisesmee@gmail.com";
+      } else if (cleanEmail.includes("louis42111") || cleanId.includes("bizriv") || cleanHandle.includes("bizriv")) {
+        cleanEmail = "louis42111@gmail.com";
+      }
+
+      // Query existing user row
+      const queryRes = await bunnyDb.execute({
+        sql: `SELECT id, email, name, data FROM users 
+              WHERE id = ? 
+                 OR (email != '' AND email = ?) 
+                 OR id = ? 
+                 OR json_extract(data, '$.email') = ?
+                 OR json_extract(data, '$.handle') = ?
+              LIMIT 1`,
+        args: [cleanId || cleanEmail, cleanEmail, cleanEmail, cleanEmail, `@${cleanHandle}`]
+      });
+
+      let targetId = cleanEmail || cleanId || `usr_${Date.now()}`;
+      let userData: any = {};
+
+      if (queryRes && queryRes.rows && queryRes.rows.length > 0) {
+        const row = queryRes.rows[0];
+        targetId = String(row.id);
+        try {
+          userData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+        } catch (e) {}
+      }
+
+      userData.notificationSettings = preferences;
+      if (cleanEmail && !userData.email) userData.email = cleanEmail;
+      if (cleanHandle && !userData.handle) userData.handle = `@${cleanHandle}`;
+      const jsonStr = JSON.stringify(userData);
+
+      await bunnyDb.execute({
+        sql: `INSERT INTO users (id, email, data, updatedAt)
+              VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: [targetId, cleanEmail || userData.email || '', jsonStr, jsonStr]
+      });
+
+      // Broadcast preference change via SSE to all active client tabs
+      const targets = [targetId, cleanEmail, cleanId, cleanHandle].filter(Boolean);
+      broadcastSseEvent({
+        type: "notification_settings_updated",
+        userId: targetId,
+        email: cleanEmail,
+        settings: preferences
+      }, targets);
+
+      console.log(`[BunnyDB] Saved notification preferences for ${targetId}:`, preferences);
+    }
+
+    return res.json({ success: true, settings: preferences });
+  } catch (err: any) {
+    console.error("Failed to save notification preferences:", err);
+    return res.status(500).json({ error: err.message || "Failed to save settings" });
+  }
+});
+
+app.get('/api/users/notification-preferences', async (req, res) => {
+  try {
+    const userQuery = String(req.query.user || req.query.email || req.query.id || req.query.userId || '').trim();
+    if (!userQuery) {
+      return res.json({ success: true, settings: null });
+    }
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      let cleanUser = userQuery.toLowerCase().trim();
+      let cleanHandle = cleanUser.replace(/^@/, '');
+
+      if (cleanUser.includes("avr6566gd") || cleanUser.includes("avtertuop") || cleanUser === "avt ertuop") {
+        cleanUser = "avr6566gd@gmail.com";
+      } else if (cleanUser.includes("aouisesmee") || cleanUser.includes("aouisemee") || cleanUser === "ben blue") {
+        cleanUser = "aouisesmee@gmail.com";
+      } else if (cleanUser.includes("louis42111") || cleanUser.includes("bizriv")) {
+        cleanUser = "louis42111@gmail.com";
+      }
+
+      const queryRes = await bunnyDb.execute({
+        sql: `SELECT data FROM users 
+              WHERE id = ? 
+                 OR (email != '' AND email = ?) 
+                 OR id = ? 
+                 OR json_extract(data, '$.email') = ?
+                 OR json_extract(data, '$.handle') = ?
+              LIMIT 1`,
+        args: [cleanUser, cleanUser, cleanHandle, cleanUser, `@${cleanHandle}`]
+      });
+
+      if (queryRes && queryRes.rows && queryRes.rows.length > 0) {
+        let uData: any = {};
+        try {
+          uData = typeof queryRes.rows[0].data === 'string' ? JSON.parse(queryRes.rows[0].data) : (queryRes.rows[0].data || {});
+        } catch (e) {}
+        if (uData.notificationSettings) {
+          return res.json({ success: true, settings: uData.notificationSettings });
+        }
+      }
+    }
+    return res.json({ success: true, settings: null });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -10462,6 +10702,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         return;
       }
 
+      // Check recipient's notification preferences in BunnyDB
+      const recipientTarget = params.recipientEmail || params.recipientId || params.recipientHandle || "";
+      const isAllowed = await isNotificationAllowedForRecipient(recipientTarget, params.type);
+      if (!isAllowed) {
+        console.log(`[Notification Service] Suppressed notification for ${recipientTarget} (${params.type}) due to user preferences`);
+        return;
+      }
+
       // Multi-channel deduplication guard:
       // If an identical notification was recently generated for this recipient, type, and text, skip to prevent double notification
       try {
@@ -12120,6 +12368,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         } else if (idLower.includes("aouisesmee") || idLower.includes("aouisemee") || idLower.includes("aouisesme") || idLower.includes("aouiseme") || handleLower.includes("aouisesmee") || handleLower.includes("aouisemee") || handleLower.includes("aouisesme") || handleLower.includes("aouiseme")) {
           notifObj.recipientEmail = "aouisesmee@gmail.com";
         }
+      }
+
+      // Check recipient's notification preferences in BunnyDB
+      const recipientTarget = notifObj.recipientEmail || notifObj.recipientId || notifObj.recipientHandle || "";
+      const isAllowed = await isNotificationAllowedForRecipient(recipientTarget, notifObj.type || "info");
+      if (!isAllowed) {
+        console.log(`[API interactions/notification] Suppressed notification for ${recipientTarget} (${notifObj.type}) due to user preferences`);
+        return res.json({ success: true, suppressed: true, reason: "Notification disabled by recipient preferences" });
       }
 
       const bunnyDb = getBunnyDb();

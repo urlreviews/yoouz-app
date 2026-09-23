@@ -1,7 +1,7 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
 import { getCanonicalUserKey, isGenericUsername } from "./userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "./avatar";
-import { formatRecordedDate } from "../utils/dateUtils";
+import { formatRecordedDate, parseTimestampToMs } from "../utils/dateUtils";
 
 export interface CreateNotificationParams {
   recipientEmail?: string;
@@ -400,6 +400,19 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     Boolean((currentUser as any).isBusiness) ||
     Boolean(userPlaceId);
 
+  // Read preferences from currentUser or localStorage
+  let prefs = currentUser?.notificationSettings;
+  if (!prefs) {
+    try {
+      const stored = typeof localStorage !== 'undefined' ? localStorage.getItem("copo_notification_settings") : null;
+      if (stored) prefs = JSON.parse(stored);
+    } catch (e) {}
+  }
+  // Master notification switch: If disabled, user receives ZERO notifications!
+  if (prefs && prefs.enabled === false) {
+    return [];
+  }
+
   const list: CopoNotification[] = [];
 
   for (const data of rawItems) {
@@ -525,25 +538,27 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const notifType = data.type || parsedInner.type || "like";
 
     // Respect user's in-app notification preferences
-    const prefs = currentUser.notificationSettings;
     if (prefs) {
-      if (prefs.enabled === false && !isSystemOrGlobal) {
+      if (prefs.enabled === false) {
         continue;
       }
-      if (notifType === "like" && prefs.likes === false) continue;
-      if (notifType === "comment" && prefs.comments === false) continue;
-      if (notifType === "message" && prefs.messages === false) continue;
-      if (notifType === "follow" && prefs.follows === false) continue;
-      if (notifType === "bookmark" && prefs.bookmarks === false) continue;
+      const normNotifType = String(notifType).toLowerCase().trim();
+      if (normNotifType === "like" && prefs.likes === false) continue;
+      if (normNotifType === "comment" && prefs.comments === false) continue;
+      if ((normNotifType === "message" || normNotifType === "chat") && prefs.messages === false) continue;
+      if (normNotifType === "follow" && prefs.follows === false) continue;
+      if ((normNotifType === "bookmark" || normNotifType === "save" || normNotifType === "repost" || normNotifType === "share") && prefs.bookmarks === false) continue;
     }
 
     // Resolve authentic creation timestamp
-    const parsedCreatedAt = Number(data.createdAt || parsedInner.createdAt || 0);
-    const parsedCreatedAtMs = Number(data.createdAtMs || parsedInner.createdAtMs || 0);
-    const idMatch = String(data.id || "").match(/(17\d{11})/);
-    const idTs = idMatch ? Number(idMatch[1]) : 0;
-    const validTimestamps = [parsedCreatedAt, parsedCreatedAtMs, idTs].filter(t => t > 1700000000000);
-    const trueCreatedAtMs = validTimestamps.length > 0 ? Math.min(...validTimestamps) : Date.now();
+    const trueCreatedAtMs =
+      parseTimestampToMs(data.createdAtMs) ??
+      parseTimestampToMs(parsedInner.createdAtMs) ??
+      parseTimestampToMs(data.createdAt) ??
+      parseTimestampToMs(parsedInner.createdAt) ??
+      parseTimestampToMs(data.id) ??
+      parseTimestampToMs(parsedInner.id) ??
+      Date.now();
 
     list.push({
       ...data,
@@ -640,12 +655,33 @@ export function subscribeToNotifications(
   const userKey = (userEmail || userId || "anon").toLowerCase().trim();
   const cacheKey = `copo_cached_notifs_${userKey}`;
 
+  const getCurrentPrefs = () => {
+    let p = currentUser?.notificationSettings;
+    if (!p) {
+      try {
+        const s = localStorage.getItem("copo_notification_settings");
+        if (s) p = JSON.parse(s);
+      } catch (e) {}
+    }
+    return p;
+  };
+
   const updateList = (newItems: CopoNotification[]) => {
     if (isDisposed) return;
+    const currentPrefs = getCurrentPrefs();
+    if (currentPrefs && currentPrefs.enabled === false) {
+      cachedNotifs = [];
+      onUpdate([]);
+      return;
+    }
+
+    // Filter against user's specific notification toggles (likes, comments, etc.)
+    const filteredByPrefs = filterNotificationsForUser(newItems, currentUser);
+
     // Strict deduplication guard across memory, cache, and state
     const deduped: CopoNotification[] = [];
     const seen = new Set<string>();
-    for (const item of newItems) {
+    for (const item of filteredByPrefs) {
       if (!item || !item.id) continue;
       const rec = ((item as any).recipientEmail || (item as any).recipientId || "").toLowerCase().trim();
       const type = (item.type || "").toLowerCase().trim();
@@ -689,12 +725,11 @@ export function subscribeToNotifications(
             }
             return true;
           }).map((n: any) => {
-            const parsedCreatedAt = Number(n.createdAt || 0);
-            const parsedCreatedAtMs = Number(n.createdAtMs || 0);
-            const idMatch = String(n.id || "").match(/(17\d{11})/);
-            const idTs = idMatch ? Number(idMatch[1]) : 0;
-            const validTimestamps = [parsedCreatedAt, parsedCreatedAtMs, idTs].filter(t => t > 1700000000000);
-            const trueCreatedAtMs = validTimestamps.length > 0 ? Math.min(...validTimestamps) : (n.createdAtMs || Date.now());
+            const trueCreatedAtMs =
+              parseTimestampToMs(n.createdAtMs) ??
+              parseTimestampToMs(n.createdAt) ??
+              parseTimestampToMs(n.id) ??
+              Date.now();
             return {
               ...n,
               createdAtMs: trueCreatedAtMs,
@@ -718,7 +753,8 @@ export function subscribeToNotifications(
     if (isFetchingNotifs) return;
     isFetchingNotifs = true;
     try {
-      const res = await fetch(`/api/nosql/notifications?_t=${Date.now()}`);
+      const userParam = userEmail || userId || "";
+      const res = await fetch(`/api/nosql/notifications?user=${encodeURIComponent(userParam)}&_t=${Date.now()}`);
       if (res.ok) {
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
@@ -728,8 +764,9 @@ export function subscribeToNotifications(
           // Merge server items with cached items to ensure real-time notifications are never dropped
           const map = new Map<string, CopoNotification>();
           
-          // Seed with current cached items
-          cachedNotifs.forEach((item) => {
+          // Seed with current filtered cached items
+          const filteredCached = filterNotificationsForUser(cachedNotifs, currentUser);
+          filteredCached.forEach((item) => {
             if (item && item.id) map.set(item.id, item);
           });
           
@@ -772,6 +809,11 @@ export function subscribeToNotifications(
         const filtered = filterNotificationsForUser([notifData], currentUser);
         if (filtered.length > 0) {
           const freshItem = filtered[0];
+          const freshMs = parseTimestampToMs(freshItem.createdAtMs) ?? parseTimestampToMs(freshItem.createdAt) ?? Date.now();
+          freshItem.createdAtMs = freshMs;
+          freshItem.createdAt = freshMs;
+          freshItem.timestamp = formatRecordedDate(undefined, freshMs);
+
           const freshSender = (freshItem.user?.name || freshItem.user?.email || "").toLowerCase().trim();
           const freshType = (freshItem.type || "").toLowerCase().trim();
           const freshText = (freshItem.text || "").toLowerCase().trim();
@@ -811,6 +853,17 @@ export function subscribeToNotifications(
       updateList(nextList);
     } else if (evt.type === "notifications_cleared") {
       updateList([]);
+    } else if (evt.type === "notification_settings_updated") {
+      const newSettings = evt.settings;
+      if (newSettings && typeof newSettings === "object") {
+        if (currentUser) {
+          currentUser.notificationSettings = newSettings;
+        }
+        try {
+          localStorage.setItem("copo_notification_settings", JSON.stringify(newSettings));
+        } catch (e) {}
+        updateList(cachedNotifs);
+      }
     }
   });
 

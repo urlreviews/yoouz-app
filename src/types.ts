@@ -289,6 +289,7 @@ export interface CopoNotification {
   text: string;
   timestamp: string;
   createdAtMs?: number;
+  createdAt?: number | string;
   videoThumbnail?: string;
   videoId?: string;
   placeId?: string;
