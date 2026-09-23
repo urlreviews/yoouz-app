@@ -91,10 +91,32 @@ interface CopoMessagesViewProps {
 
 export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | null) {
   if (!thread) return { name: "User", avatar: "", email: "", id: "", handle: "", isBusiness: false };
+
   const uEmail = (currentUser?.email || "").toLowerCase().trim();
   const uId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || "").toLowerCase().trim().replace(/^@/, "");
   const uName = (currentUser?.name || "").toLowerCase().trim();
   const uHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
+
+  // Try finding partner profile from participantProfiles map
+  if (thread.participantProfiles && typeof thread.participantProfiles === "object") {
+    const profiles = Object.entries(thread.participantProfiles);
+    for (const [key, p] of profiles) {
+      if (!p || typeof p !== "object") continue;
+      const pEmail = ((p as any).email || key || "").toLowerCase().trim();
+      const pName = ((p as any).name || "").toLowerCase().trim();
+      const isMe = (uEmail && pEmail === uEmail) || (uName && pName === uName && uName !== "user" && uName !== "reviewer");
+      if (!isMe) {
+        return {
+          name: (p as any).name || "User",
+          avatar: (p as any).avatar || "",
+          email: pEmail,
+          id: (p as any).id || key,
+          handle: ((p as any).handle || "").toLowerCase().trim().replace(/^@/, ""),
+          isBusiness: Boolean(thread.isBusiness)
+        };
+      }
+    }
+  }
 
   const tSenderEmail = (thread.senderEmail || "").toLowerCase().trim();
   const tSenderId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
@@ -108,9 +130,11 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
   );
 
   if (isSenderMe) {
+    const rName = (thread.recipientName || "").trim();
+    const cleanRName = rName && rName.toLowerCase() !== uName ? rName : "User";
     return {
-      name: thread.recipientName || thread.senderName || "User",
-      avatar: thread.recipientAvatar || thread.senderAvatar || "",
+      name: cleanRName,
+      avatar: thread.recipientAvatar || "",
       email: (thread.recipientEmail || "").toLowerCase().trim(),
       id: (thread.recipientId || "").toLowerCase().trim().replace(/^@/, ""),
       handle: ((thread as any).recipientHandle || "").toLowerCase().trim().replace(/^@/, ""),
@@ -880,6 +904,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const checkIsMessageFromMe = useCallback((msg: any): boolean => {
     if (!msg) return false;
 
+    // 1. Local explicit flag
+    if (msg.isMe === true || msg.isMe === "true" || msg.senderName === "you" || msg.senderName === "You") {
+      return true;
+    }
+
     const msgSenderEmail = (msg.senderEmail || "").toLowerCase().trim();
     const msgSenderId = (msg.senderId || "").toLowerCase().trim().replace(/^@/, "");
     const msgSenderName = (msg.senderName || "").toLowerCase().trim();
@@ -890,47 +919,49 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const userId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || "").toLowerCase().trim().replace(/^@/, "");
     const userHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
 
-    // 1. If message belongs to current user, it IS from me (render on right)
-    const isUserMsg = Boolean(
-      (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) ||
-      (userId && (msgSenderId === userId || msgSenderEmail === userId)) ||
-      (userHandle && (msgSenderHandle === userHandle || msgSenderId === userHandle)) ||
-      msg.isMe === true || msg.isMe === "true" || msgSenderName === "you"
-    );
-    if (isUserMsg) return true;
+    // 2. Direct email match
+    if (userEmail && (msgSenderEmail === userEmail || msgSenderId === userEmail)) {
+      return true;
+    }
 
-    // 2. If message belongs to active partner, it is NOT from me (render on left)
-    const pEmail = partnerDetails.email;
-    const pId = partnerDetails.id;
-    const pHandle = partnerDetails.handle;
-    const pName = partnerDetails.name.toLowerCase();
-
-    const isPartnerMsg = Boolean(
-      (pEmail && (msgSenderEmail === pEmail || msgSenderId === pEmail)) ||
-      (pId && (msgSenderId === pId || msgSenderEmail === pId)) ||
-      (pHandle && (msgSenderHandle === pHandle || msgSenderId === pHandle)) ||
-      (pName && msgSenderName === pName)
-    );
-    if (isPartnerMsg) return false;
+    // 3. Direct user ID / handle match
+    if (userId && (msgSenderId === userId || msgSenderEmail === userId)) {
+      return true;
+    }
+    if (userHandle && (msgSenderHandle === userHandle || msgSenderId === userHandle)) {
+      return true;
+    }
 
     // Persona checks
     const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
     const isBenViewing = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
 
-    if (isStevenViewing && (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderId.includes("ben"))) {
-      return false;
-    }
-    if (isBenViewing && (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) {
-      return false;
+    if (isStevenViewing) {
+      if (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderId.includes("ben")) {
+        return false;
+      }
+      if (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt")) {
+        return true;
+      }
     }
 
-    // 3. Name match fallback ONLY if partner name is NOT identical to current user name
-    if (userName && msgSenderName && userName === msgSenderName && msgSenderName !== pName) {
+    if (isBenViewing) {
+      if (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt")) {
+        return false;
+      }
+      if (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderId.includes("ben")) {
+        return true;
+      }
+    }
+
+    // 4. Name match (only if not a generic string)
+    const isGenericName = !userName || userName === "user" || userName === "member" || userName === "reviewer";
+    if (!isGenericName && userName === msgSenderName) {
       return true;
     }
 
     return false;
-  }, [currentUser, partnerDetails]);
+  }, [currentUser]);
 
   const activeThreadMessages = useMemo(() => {
     return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {

@@ -2080,9 +2080,10 @@ export async function sendChatMessage(
   const msgTime = customCreatedAt || Date.now();
   const msgId = customMessageId || `msg_${msgTime}_${Math.random().toString(36).substring(2, 6)}`;
 
+  const curUserId = currentUser.userId || (currentUser as any).id || (currentUser as any).uid || "";
   const newMessage = {
     id: msgId,
-    senderId: userEmail || currentUser.name,
+    senderId: userEmail || curUserId || currentUser.name,
     senderEmail: userEmail,
     senderName: currentUser.name || "Reviewer",
     senderAvatar: currentUser.avatar || generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, userEmail || currentUser.name || "User"),
