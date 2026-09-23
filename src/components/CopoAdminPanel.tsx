@@ -2028,26 +2028,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* Top Application Bar */}
-      <header className="h-16 border-b border-zinc-800 bg-zinc-900/90 backdrop-blur px-6 flex items-center justify-between shrink-0 z-20">
+      <header className="h-16 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-4">
           <button
             onClick={onExit}
-            className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-all border border-zinc-700 cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all border border-zinc-800 hover:border-zinc-700 cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
             title="Return to Yoouz Live Feed"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Exit to Yoouz</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Exit</span>
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shadow-md">
-              <Shield className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-md">
+              <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-tight text-white">Yoouz</span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700 uppercase tracking-wide">
-                  Master Admin
+                <span className="text-sm font-black tracking-tight text-white">Yoouz</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-wide">
+                  Admin
                 </span>
               </div>
             </div>
@@ -2056,34 +2056,34 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
         {/* Global Search Bar */}
         <div className="flex-1 max-w-md mx-6 relative hidden md:block">
-          <Search className="w-4 h-4 text-zinc-200 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search videos, businesses, creators, comments..."
+            placeholder="Search videos, places, creators, comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
         {/* Header Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={fetchLiveStats}
             disabled={isLoadingLiveStats}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-200 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
             title="Click to refresh live stats directly from BunnyDB & CDN Storage"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="hidden xl:inline">BunnyDB & CDN:</span>
+            <span className="hidden xl:inline text-zinc-400">Edge:</span>
             <span className="text-emerald-400 font-mono font-bold">
               {liveStats ? `${liveStats.latencyMs}ms` : "Live"}
             </span>
@@ -2092,16 +2092,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           <button
             onClick={handleExportDataJSON}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
             title="Download JSON Database Backup"
           >
             <Download className="w-3.5 h-3.5" />
-            Export JSON
+            Export
           </button>
 
           <button
             onClick={handleLogout}
-            className="px-3 py-2 text-zinc-200 hover:text-white hover:bg-zinc-800 rounded-xl text-xs font-bold transition-all border border-transparent hover:border-zinc-700 cursor-pointer"
+            className="px-3 py-1.5 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl text-xs font-bold transition-all border border-zinc-800/80 hover:border-zinc-700 cursor-pointer"
           >
             Lock
           </button>
@@ -2111,220 +2111,247 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       {/* Main Admin Workspace Layout */}
       <div className="flex-1 flex overflow-hidden bg-zinc-950">
         {/* Sidebar Nav Tabs */}
-        <aside className="w-64 border-r border-zinc-800 bg-zinc-950/80 p-4 flex flex-col justify-between shrink-0 hidden md:flex">
+        <aside className="w-60 border-r border-zinc-800/90 bg-zinc-950 p-3.5 flex flex-col justify-between shrink-0 hidden md:flex">
           <div className="space-y-1">
-            <div className="px-3 py-2 text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Navigation</div>
+            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Navigation</div>
 
+            {/* 1. Overview */}
             <button
               onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <BarChart3 className="w-4 h-4" />
-                Overview & KPIs
+              <div className="flex items-center gap-2.5">
+                <BarChart3 className="w-4 h-4 text-zinc-400" />
+                <span>Overview</span>
               </div>
             </button>
 
+            {/* 2. Health */}
             <button
               onClick={() => setActiveTab("health")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "health"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <CheckCircle2 className={`w-4 h-4 ${healthData?.overallStatus === 'healthy' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
-                System Health & Bugs
+                <span>Health</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
-                healthData?.unresolvedCount > 0
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                activeTab === "health"
+                  ? "bg-zinc-950 text-emerald-400"
+                  : healthData?.unresolvedCount > 0
                   ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
                   : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
               }`}>
-                {healthData?.unresolvedCount > 0 ? `${healthData.unresolvedCount} issues` : "100% Green"}
+                {healthData?.unresolvedCount > 0 ? `${healthData.unresolvedCount}` : "100%"}
               </span>
             </button>
 
+            {/* 3. Creators */}
             <button
               onClick={() => setActiveTab("creators")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "creators"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <Award className="w-4 h-4 text-amber-400" />
-                Creators & Reviewers
+                <span>Creators</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "creators" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-amber-400 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "creators" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-amber-400 border border-zinc-800"
+              }`}>
                 {metrics.totalCreators}
               </span>
             </button>
 
+            {/* 4. Users */}
             <button
               onClick={() => setActiveTab("users")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "users"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Users className="w-4 h-4" />
-                Community Members
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 text-zinc-400" />
+                <span>Users</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "users" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "users" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {metrics.totalUsers}
               </span>
             </button>
 
+            {/* 5. Businesses */}
             <button
               onClick={() => setActiveTab("businesses")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "businesses"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Briefcase className="w-4 h-4 text-zinc-300" />
-                Businesses
+              <div className="flex items-center gap-2.5">
+                <Briefcase className="w-4 h-4 text-blue-400" />
+                <span>Businesses</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "businesses" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "businesses" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {metrics.totalBusinesses}
               </span>
             </button>
 
+            {/* 6. Places */}
             <button
               onClick={() => setActiveTab("places")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "places"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <Building2 className="w-4 h-4 text-zinc-400" />
-                Places Directory
+                <span>Places</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${activeTab === "places" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "places" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {metrics.totalPhysicalPlaces}
               </span>
             </button>
 
+            {/* 7. Videos */}
             <button
               onClick={() => setActiveTab("videos")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "videos"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Video className="w-4 h-4" />
-                Video Reviews
+              <div className="flex items-center gap-2.5">
+                <Video className="w-4 h-4 text-purple-400" />
+                <span>Videos</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "videos" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "videos" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {videos.length}
               </span>
             </button>
 
+            {/* 8. Comments */}
             <button
               onClick={() => setActiveTab("comments")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "comments"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4" />
-                Comments Moderation
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="w-4 h-4 text-emerald-400" />
+                <span>Comments</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "comments" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "comments" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {allComments.length}
               </span>
             </button>
 
+            {/* 9. Messages */}
             <button
               onClick={() => setActiveTab("messages")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "messages"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4" />
-                Messages & Chats
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-cyan-400" />
+                <span>Messages</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === "messages" ? "bg-zinc-200 text-zinc-900" : "bg-zinc-900 text-zinc-200 border border-zinc-800"}`}>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                activeTab === "messages" ? "bg-zinc-950 text-white" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+              }`}>
                 {adminChats.length}
               </span>
             </button>
 
+            {/* 10. Broadcast */}
             <button
               onClick={() => setActiveTab("broadcast")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "broadcast"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4" />
-                Broadcast Alerts
+              <div className="flex items-center gap-2.5">
+                <Bell className="w-4 h-4 text-amber-400" />
+                <span>Broadcast</span>
               </div>
             </button>
 
+            {/* 11. Database */}
             <button
               onClick={() => setActiveTab("database")}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "database"
-                  ? "bg-white text-zinc-950 shadow-lg"
-                  : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                  ? "bg-white text-zinc-950 shadow-md shadow-white/5"
+                  : "text-zinc-300 hover:text-white hover:bg-zinc-900/80 border border-transparent hover:border-zinc-800/80"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Database className="w-4 h-4" />
-                Database & Cloud
+              <div className="flex items-center gap-2.5">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <span>Database</span>
               </div>
             </button>
           </div>
 
           {/* Quick System Badge & Actions */}
-          <div className="p-4 rounded-3xl bg-zinc-900/90 border border-zinc-800 space-y-2.5 shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Quick Actions</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="p-3.5 rounded-3xl bg-zinc-900/90 border border-zinc-800 space-y-2 shadow-md">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Quick Actions</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <button
               onClick={() => setIsAddPlaceOpen(true)}
-              className="w-full py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
+              className="w-full py-2 bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-98"
             >
-              <Plus className="w-4 h-4" /> Add New Business
+              <Plus className="w-3.5 h-3.5" /> New Business
             </button>
-            <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => setActiveTab("broadcast")}
-                className="py-2 px-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 hover:text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 border border-zinc-700/60 cursor-pointer"
+                className="py-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 border border-zinc-800 hover:border-zinc-700 cursor-pointer"
                 title="Compose Broadcast Notification"
               >
-                <Bell className="w-3.5 h-3.5 text-amber-400" /> Broadcast
+                <Bell className="w-3 h-3 text-amber-400" /> Broadcast
               </button>
               <button
                 onClick={fetchLiveStats}
                 disabled={isLoadingLiveStats}
-                className="py-2 px-2 bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-50 text-zinc-200 hover:text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 border border-zinc-700/60 cursor-pointer"
+                className="py-1.5 px-2 bg-zinc-950 hover:bg-zinc-800 disabled:opacity-50 text-zinc-300 hover:text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 border border-zinc-800 hover:border-zinc-700 cursor-pointer"
                 title="Sync Database & CDN"
               >
-                <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isLoadingLiveStats ? "animate-spin" : ""}`} /> Sync DB
+                <RefreshCw className={`w-3 h-3 text-emerald-400 ${isLoadingLiveStats ? "animate-spin" : ""}`} /> Sync DB
               </button>
             </div>
           </div>
@@ -2339,11 +2366,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["overview", "Overview"],
                 ["health", "Health 🟢"],
                 ["creators", `Creators (${metrics.totalCreators})`],
-                ["users", `Users (${metrics.totalCommunityUsers})`],
+                ["users", `Users (${metrics.totalUsers})`],
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["videos", `Videos (${videos.length})`],
-                ["comments", "Moderation"],
+                ["comments", `Comments (${allComments.length})`],
                 ["messages", `Messages (${adminChats.length})`],
                 ["broadcast", "Broadcast"],
                 ["database", "Database"]
@@ -2352,8 +2379,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <button
                 key={tabKey}
                 onClick={() => setActiveTab(tabKey as AdminTab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                  activeTab === tabKey ? "bg-white text-zinc-950" : "bg-zinc-900 text-zinc-200 border border-zinc-800"
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  activeTab === tabKey ? "bg-white text-zinc-950 shadow-md" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
                 }`}
               >
                 {label}
