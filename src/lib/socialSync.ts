@@ -2362,7 +2362,7 @@ export async function sendChatMessage(
         avatar: currentUser.avatar,
         email: userEmail
       },
-      text: `sent you a message: "${cleanNotifText}"`,
+      text: "sent you a message",
       videoThumbnail: videoUrl,
       videoId: customVideoId
     });

@@ -211,17 +211,15 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
     }
 
     // Case C: Standard direct message
-    const msgMatch = raw.match(/^sent you a message:\s*"?(.*?)"?$/i);
-    if (msgMatch) {
-      let msgBody = msgMatch[1].trim();
-      msgBody = msgBody.replace(/\.{2,}$/, "").trim();
-      if (msgBody.length > 50) {
-        msgBody = msgBody.slice(0, 48).trim() + "...";
-      }
+    const isDirectMsg =
+      (notif.type as string) === "message" ||
+      (notif.type as string) === "chat" ||
+      /^sent (?:you )?a message/i.test(raw);
+    if (isDirectMsg) {
       return {
         type: "direct_message" as const,
-        action: "messaged:",
-        messageBody: msgBody ? `"${msgBody}"` : "sent a message"
+        action: "sent you a message",
+        messageBody: ""
       };
     }
 
@@ -652,13 +650,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                               </span>
                             )}
                           </>
-                        ) : details.type === "direct_message" ? (
-                          <>
-                            <span className="text-zinc-300 font-medium">sent a message:</span>{" "}
-                            <span className="text-zinc-300 font-medium italic">
-                              {details.messageBody}
-                            </span>
-                          </>
+                        ) : details.type === "direct_message" || (notif.type as string) === "message" || (notif.type as string) === "chat" ? (
+                          <span className="text-zinc-300 font-medium">sent you a message</span>
                         ) : details.type === "review_activity" ? (
                           <>
                             <span className="text-zinc-300 font-medium">{details.action}</span>{" "}

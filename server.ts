@@ -12255,7 +12255,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             recipientId: recipientEmail,
             recipientHandle: message?.senderName || "Member",
             type: "message",
-            text: message?.text ? `sent you a message: "${message.text.slice(0, 50)}${message.text.length > 50 ? '...' : ''}"` : `sent you a review attachment`,
+            text: "sent you a message",
             customId: `notif_msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
           });
         }
