@@ -44,16 +44,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Check if target is Yoouz
   const isYoouz = useMemo(() => {
+    const cleanD = (resolvedDomain || "").toLowerCase().trim();
+    const cleanN = (typeof name === "string" ? name : "").toLowerCase().trim();
     return (
-      resolvedDomain === "yoouz.com" ||
-      resolvedDomain === "www.yoouz.com" ||
-      resolvedDomain === "yoouz" ||
-      (typeof name === "string" && name.toLowerCase().trim().includes("yoouz")) ||
-      (typeof domain === "string" && domain.toLowerCase().trim().includes("yoouz")) ||
-      (typeof website === "string" && website.toLowerCase().trim().includes("yoouz")) ||
-      (typeof logoUrl === "string" && (logoUrl.toLowerCase().includes("yoouz") || logoUrl.includes("favicon.svg")))
+      cleanD === "yoouz.com" ||
+      cleanD === "www.yoouz.com" ||
+      cleanD === "yoouz" ||
+      cleanN === "yoouz" ||
+      cleanN === "yoouz.com"
     );
-  }, [resolvedDomain, name, domain, website, logoUrl]);
+  }, [resolvedDomain, name]);
 
   // Deterministic Brand Theme (Letters & Color)
   const brandTheme = useMemo(() => {

@@ -456,16 +456,82 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`),
-  "brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
-  "www.brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
-  "brusselsdental": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png"
+  "brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#0c4a6e"/>
+      <path d="M42 32 C34 32 28 38 28 48 C28 62 36 78 44 88 C46 90 50 90 52 86 C55 80 58 72 60 66 C62 72 65 80 68 86 C70 90 74 90 76 88 C84 78 92 62 92 48 C92 38 86 32 78 32 C72 32 66 36 60 42 C54 36 48 32 42 32 Z" fill="#38bdf8"/>
+      <path d="M44 42 C38 42 34 46 34 52 C34 62 40 74 46 82 C47 83 49 83 50 80 C52 74 54 66 56 60 C52 52 48 44 44 42 Z" fill="#e0f2fe" opacity="0.9"/>
+      <text x="60" y="106" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DTC DENTAL</text>
+    </svg>`),
+  "www.brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#0c4a6e"/>
+      <path d="M42 32 C34 32 28 38 28 48 C28 62 36 78 44 88 C46 90 50 90 52 86 C55 80 58 72 60 66 C62 72 65 80 68 86 C70 90 74 90 76 88 C84 78 92 62 92 48 C92 38 86 32 78 32 C72 32 66 36 60 42 C54 36 48 32 42 32 Z" fill="#38bdf8"/>
+      <path d="M44 42 C38 42 34 46 34 52 C34 62 40 74 46 82 C47 83 49 83 50 80 C52 74 54 66 56 60 C52 52 48 44 44 42 Z" fill="#e0f2fe" opacity="0.9"/>
+      <text x="60" y="106" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DTC DENTAL</text>
+    </svg>`),
+  "brusselsdental": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#0c4a6e"/>
+      <path d="M42 32 C34 32 28 38 28 48 C28 62 36 78 44 88 C46 90 50 90 52 86 C55 80 58 72 60 66 C62 72 65 80 68 86 C70 90 74 90 76 88 C84 78 92 62 92 48 C92 38 86 32 78 32 C72 32 66 36 60 42 C54 36 48 32 42 32 Z" fill="#38bdf8"/>
+      <path d="M44 42 C38 42 34 46 34 52 C34 62 40 74 46 82 C47 83 49 83 50 80 C52 74 54 66 56 60 C52 52 48 44 44 42 Z" fill="#e0f2fe" opacity="0.9"/>
+      <text x="60" y="106" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DTC DENTAL</text>
+    </svg>`)
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "brusselsdental.com": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
-  "www.brusselsdental.com": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
-  "brusselsdental": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
+  "brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
+      <defs>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#082f49"/>
+          <stop offset="50%" stop-color="#0369a1"/>
+          <stop offset="100%" stop-color="#0284c7"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="500" fill="url(#g)"/>
+      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
+      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
+      <g transform="translate(100, 160)">
+        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
+        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
+      </g>
+    </svg>`),
+  "www.brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
+      <defs>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#082f49"/>
+          <stop offset="50%" stop-color="#0369a1"/>
+          <stop offset="100%" stop-color="#0284c7"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="500" fill="url(#g)"/>
+      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
+      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
+      <g transform="translate(100, 160)">
+        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
+        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
+      </g>
+    </svg>`),
+  "brusselsdental": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
+      <defs>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#082f49"/>
+          <stop offset="50%" stop-color="#0369a1"/>
+          <stop offset="100%" stop-color="#0284c7"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="500" fill="url(#g)"/>
+      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
+      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
+      <g transform="translate(100, 160)">
+        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
+        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
+      </g>
+    </svg>`),
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",

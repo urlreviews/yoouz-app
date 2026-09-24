@@ -5064,8 +5064,13 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Special handler for places collection: use multi-layer resolver first for consistent attributes
+    // Special handler for places collection: check places index and multi-layer resolver
     if (colName === 'places') {
+      const placesList = readPlacesIndex();
+      const existingInList = placesList.find((p: any) => p && (p.id === id || p.brandDomain === id || cleanDomainName(p.website || p.id) === cleanDomainName(id) || String(p.id).toLowerCase() === String(id).toLowerCase()));
+      if (existingInList && !isDeletedPlaceServer(existingInList)) {
+        return res.json(existingInList);
+      }
       const resolved = await resolvePlaceFromAnySource(id);
       if (resolved && !isDeletedPlaceServer(resolved)) {
         return res.json(resolved);
@@ -5481,6 +5486,17 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
               } catch (idxErr) {}
             }
           } catch (e) {}
+
+          try {
+            const currentPlaces = readPlacesIndex();
+            const idx = currentPlaces.findIndex(p => p.id === id);
+            if (idx >= 0) {
+              currentPlaces[idx] = { ...currentPlaces[idx], ...finalDataObj, id };
+            } else {
+              currentPlaces.unshift({ id, ...finalDataObj });
+            }
+            writePlacesIndex(currentPlaces);
+          } catch (pIdxErr) {}
 
           broadcastSseEvent({
             type: "place_updated",
@@ -17888,12 +17904,12 @@ Return JSON:
       // Extract rich location, phone, email, and category
       const locInfo = extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
       const isYoouz = cleanDomain === "yoouz.com";
-      const effectiveAddress = locInfo.address || "";
-      const effectiveCity = locInfo.city || (effectiveAddress ? "" : (isYoouz ? "Worldwide" : "Online"));
-      const effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
-      const effectivePhone = locInfo.phone || "";
-      const effectiveEmail = locInfo.email || "";
-      const effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
+      let effectiveAddress = locInfo.address || "";
+      let effectiveCity = locInfo.city || (effectiveAddress ? "" : (isYoouz ? "Worldwide" : "Online"));
+      let effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
+      let effectivePhone = locInfo.phone || "";
+      let effectiveEmail = locInfo.email || "";
+      let effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
 
       // Automatically persist to BunnyDB database immediately upon search so it is stored in system
       try {
@@ -17993,6 +18009,16 @@ Return JSON:
                     WHERE id = ?`,
               args: [mergedLogo, mergedAddress, mergedCity, mergedCountry, JSON.stringify(mergedDoc), autoPlaceId]
             });
+            image = mergedBanner || image;
+            logo = mergedLogo || logo;
+            effectiveAddress = mergedAddress || effectiveAddress;
+            effectiveCity = mergedCity || effectiveCity;
+            effectiveCountry = mergedCountry || effectiveCountry;
+            effectivePhone = mergedPhone || effectivePhone;
+            effectiveEmail = mergedEmail || effectiveEmail;
+            if (existingDoc.name) {
+              title = existingDoc.name;
+            }
           } else {
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;
@@ -21265,7 +21291,15 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
       if (first.placeLogo || first.placeLogoUrl || first.logoUrl) {
         place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
       }
-      if (first.bannerUrl) place.bannerUrl = first.bannerUrl;
+      if (first.placeBannerUrl || first.bannerUrl) {
+        place.bannerUrl = first.placeBannerUrl || first.bannerUrl;
+      }
+      if (first.placeAddress) place.address = first.placeAddress;
+      if (first.placeCity) place.city = first.placeCity;
+      if (first.placeCountry) place.country = first.placeCountry;
+      if (first.placePhone) place.phone = first.placePhone;
+      if (first.placeEmail) place.email = first.placeEmail;
+      if (first.placeCategory) place.category = first.placeCategory;
       const sum = matchedVideos.reduce((acc: number, v: any) => acc + Number(v.rating || 5), 0);
       place.rating = sum / matchedVideos.length;
     }
