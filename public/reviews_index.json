@@ -261,7 +261,7 @@
     "createdAtMs": 1789421422427,
     "placeId": "nevadalegalservices.org",
     "placeName": "Nevada Legal Services",
-    "placeCategory": "Website",
+    "placeCategory": "Legal Services",
     "placeAddress": "701 E Bridger Ave #400",
     "placeCity": "Las Vegas, NV",
     "placeRating": 5,
@@ -354,7 +354,9 @@
     "logoUrl": "https://nevadalegalservices.org/wp-content/uploads/2021/01/Untitled-design-4.png",
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1
+    "totalReviews": 1,
+    "placeCountry": "United States",
+    "placePhone": "+1 (702) 386-0404"
   },
   {
     "id": "rev-1789421309884-ca7le",
@@ -363,7 +365,7 @@
     "createdAtMs": 1789421321114,
     "placeId": "lernerandrowe.com",
     "placeName": "Lerner and Rowe Injury Attorneys",
-    "placeCategory": "Website",
+    "placeCategory": "Legal Services • Personal Injury",
     "placeAddress": "2701 E Camelback Rd #140",
     "placeCity": "Phoenix, AZ",
     "placeRating": 5,
@@ -423,7 +425,9 @@
     "logoUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1
+    "totalReviews": 1,
+    "placeCountry": "United States",
+    "placePhone": "+1 (602) 977-1900"
   },
   {
     "id": "rev-1789421167017-8i4l3",
@@ -501,7 +505,7 @@
     "createdAtMs": 1789420103465,
     "placeId": "vanlawfirm.com",
     "placeName": "Van Law Firm Injury Attorneys",
-    "placeCategory": "Website",
+    "placeCategory": "Legal Services • Personal Injury",
     "placeAddress": "1290 S Jones Blvd",
     "placeCity": "Las Vegas, NV",
     "placeRating": 5,
@@ -560,6 +564,8 @@
     "shares": 0,
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1
+    "totalReviews": 1,
+    "placeCountry": "United States",
+    "placePhone": "+1 (702) 529-1011"
   }
 ]

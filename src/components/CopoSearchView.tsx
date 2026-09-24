@@ -181,6 +181,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  ogImage: (foundPlace.ogImage && !foundPlace.ogImage.includes("unsplash.com")) ? foundPlace.ogImage : (fetchedBanner || ""),
                  photos: (foundPlace.photos && foundPlace.photos.length > 0 && !foundPlace.photos[0].includes("unsplash.com")) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
                  description: foundPlace.description || data.description || "",
+                  category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
+                  address: foundPlace.address || data.address || "",
+                  city: (foundPlace.city && foundPlace.city !== "Online") ? foundPlace.city : (data.city || foundPlace.city || ""),
+                  country: foundPlace.country || data.country || "",
+                  phone: foundPlace.phone || data.phone || "",
+                  email: foundPlace.email || data.email || "",
                };
                setSearchedPlace(foundPlace);
                if (onAddPlace) {
@@ -190,10 +196,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                const newPlace: Place = {
                  id: (data.domain || domain || "website").toLowerCase(),
                  name: formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
-                 category: "Website",
+                 category: data.category || "Website",
                  categoryType: "all",
-                 address: "",
-                 city: "Online",
+                 address: data.address || "",
+                 city: data.city || "Online",
+                  country: data.country || "",
                  lat: 0,
                  lng: 0,
                  rating: 5,
@@ -206,7 +213,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  photos: ((fetchedBanner && !fetchedBanner.includes("unsplash.com")) || (instantBanner && !instantBanner.includes("unsplash.com"))) ? [(fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : instantBanner] : [],
                  openingHours: "Available 24/7",
                  isOpen: true,
-                 phone: "",
+                 phone: data.phone || "",
+                  email: data.email || "",
                  website: data.url || `https://${domain}`,
                  priceRange: "N/A",
                  plusCode: "",

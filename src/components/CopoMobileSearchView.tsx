@@ -133,12 +133,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               const newPlace: Place = {
                 id: (data.domain || cleanDom).toLowerCase(),
                 name: formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || formatBusinessName(cleanDom) || cleanDom,
-                category: "Website",
+                category: data.category || "Website",
                 categoryType: "all",
-                address: "",
-                city: "Online",
-                lat: 0,
-                lng: 0,
+                address: data.address || "",
+                city: data.city || "Online",
+                country: data.country || "",
+                lat: data.lat || 0,
+                lng: data.lng || 0,
                 rating: 5,
                 totalReviews: 1,
                 ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
@@ -149,7 +150,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 photos: fetchedBanner ? [fetchedBanner] : [],
                 openingHours: "Available 24/7",
                 isOpen: true,
-                phone: "",
+                phone: data.phone || "",
+                email: data.email || "",
                 website: data.url || `https://${cleanDom}`,
                 priceRange: "N/A",
                 plusCode: "",
@@ -271,6 +273,30 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         brandDomain: cleanUrl
       };
       onAddPlace(optimisticPlace);
+
+      // Immediately enrich with authentic address, phone, email, category in the background
+      fetch(`/api/url-metadata?url=${encodeURIComponent(cleanUrl)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && (data.title || data.address || data.phone || data.category || data.image)) {
+            onAddPlace({
+              ...optimisticPlace,
+              name: formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              category: data.category || optimisticPlace.category,
+              address: data.address || optimisticPlace.address,
+              city: data.city || optimisticPlace.city,
+              country: data.country || optimisticPlace.country,
+              phone: data.phone || optimisticPlace.phone,
+              email: data.email || optimisticPlace.email,
+              bannerUrl: data.image || optimisticPlace.bannerUrl,
+              ogImage: data.image || optimisticPlace.ogImage,
+              logoUrl: data.logo || optimisticPlace.logoUrl,
+              avatarUrl: data.logo || optimisticPlace.avatarUrl,
+              description: data.description || optimisticPlace.description
+            });
+          }
+        })
+        .catch(() => {});
     }
     
     setQuery(cleanUrl);

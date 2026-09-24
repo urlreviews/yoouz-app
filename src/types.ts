@@ -120,6 +120,8 @@ export interface VideoReview {
   placeCategory?: string;
   placeAddress?: string;
   placeCity?: string;
+  placeCountry?: string;
+  placePhone?: string;
   placeRating?: number;
   placeWebsite?: string;
   placeLogoUrl?: string;

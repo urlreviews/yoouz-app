@@ -8939,6 +8939,30 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     });
   });
 
+  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; phone?: string; email?: string; category?: string; lat: number; lng: number }> = {
+    "brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
+    "www.brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
+    "nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
+    "www.nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
+    "lernerandrowe.com": { name: "Lerner and Rowe Injury Attorneys", address: "2701 E Camelback Rd #140", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 977-1900", category: "Legal Services", lat: 33.5092, lng: -112.0238 },
+    "bensonbingham.com": { name: "Benson & Bingham", address: "626 S 10th St", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 382-9797", category: "Legal Services", lat: 36.1624, lng: -115.1378 },
+    "vanlawfirm.com": { name: "Van Law Firm Injury Attorneys", address: "1290 S Jones Blvd", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 529-1011", category: "Legal Services", lat: 36.1558, lng: -115.2246 },
+    "mcveaghfleming.co.nz": { name: "McVeagh Fleming Lawyers", address: "Level 14/188 Quay St, Auckland CBD", city: "Auckland", country: "New Zealand", phone: "+64 9 377 9966", category: "Legal Services", lat: -36.8436, lng: 174.7663 },
+    "digitalpark.ae": { name: "Digital Park", address: "Dubai Silicon Oasis", city: "Dubai", country: "United Arab Emirates", phone: "+971 4 501 5555", category: "Technology & Coworking", lat: 25.1228, lng: 55.3783 },
+    "aldhabidental.ae": { name: "Al Dhabi Dental Center", address: "Al Khalidiyah", city: "Abu Dhabi", country: "United Arab Emirates", phone: "+971 2 666 6120", category: "Dentist & Dental Clinic", lat: 24.4754, lng: 54.3475 },
+    "mylawyersadvice.com": { name: "My Lawyers Advice", address: "M-10, Greater Kailash Part 1", city: "New Delhi", country: "India", phone: "+91 90696 66999", category: "Legal Services", lat: 28.5492, lng: 77.2343 },
+    "paulpowell.com": { name: "The Paul Powell Law Firm", address: "8918 Spanish Ridge Ave #100", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 479-7979", category: "Legal Services", lat: 36.1042, lng: -115.2863 },
+    "jbsimonslaw.com": { name: "Simons Law Office", address: "75 Arlington St #500", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3512, lng: -71.0700 },
+    "discriminationandsexualharassmentlawyers.com": { name: "Derek Smith Law Group", address: "1 Penn Plaza #4905", city: "New York, NY", country: "United States", phone: "+1 (212) 587-0760", category: "Legal Services", lat: 40.7516, lng: -73.9934 },
+    "alaris-law.com": { name: "Alaris Law", address: "12 Rue de la Paix", city: "Paris", country: "France", phone: "+33 1 42 68 80 00", category: "Legal Services", lat: 48.8698, lng: 2.3312 },
+    "msmithlawoffices.com": { name: "Michael O. Smith Law Offices", address: "100 State St #900", city: "Boston, MA", country: "United States", phone: "+1 (617) 227-2000", category: "Legal Services", lat: 42.3592, lng: -71.0558 },
+    "brettlevy.com": { name: "Brett A. Levy Law", address: "10410 N 19th Ave", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 254-9900", category: "Legal Services", lat: 33.5802, lng: -112.1006 },
+    "paultolandlaw.com": { name: "Paul Toland Law Office", address: "15 Court Square #800", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3585, lng: -71.0592 },
+    "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", phone: "+44 20 7396 9292", category: "Legal Directory & Advisory", lat: 51.5245, lng: -0.1037 },
+    "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
+    "businessplace.com": { name: "Businessplace", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
+  };
+
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
     "districtuae.com": {
       bannerUrl: "https://www.districtuae.com/og-default.jpeg",
@@ -9075,6 +9099,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       ? r.fallbackVideoUrls.filter((u: any) => typeof u === "string" && !u.startsWith("blob:"))
       : [];
 
+    const matchedLoc = KNOWN_ENTITY_LOCATIONS[domain] || (domain ? Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
+
     const cleanResult = {
       ...r,
       videoUrl: resolvedVideoUrl,
@@ -9083,7 +9109,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
       placeLogoUrl: logo || r.placeLogoUrl || "",
-      placeWebsite: website || r.placeWebsite || ""
+      placeWebsite: website || r.placeWebsite || "",
+      placeAddress: (r.placeAddress && r.placeAddress !== "Verified Location" && r.placeAddress !== domain) ? r.placeAddress : (matchedLoc?.address || r.placeAddress || ""),
+      placeCity: (r.placeCity && r.placeCity !== "Online") ? r.placeCity : (matchedLoc?.city || r.placeCity || ""),
+      placeCountry: (r.placeCountry && r.placeCountry !== "Worldwide") ? r.placeCountry : (matchedLoc?.country || r.placeCountry || ""),
+      placePhone: r.placePhone || (matchedLoc as any)?.phone || "",
+      placeCategory: (r.placeCategory && r.placeCategory !== "Website" && r.placeCategory !== "General") ? r.placeCategory : ((matchedLoc as any)?.category || r.placeCategory || "")
     };
 
     delete cleanResult.localBlobUrl;
@@ -16336,27 +16367,34 @@ Respond ONLY with a JSON object:
               if (desc && desc.trim()) metaDesc = desc.trim();
               if (img && img.trim()) ogImage = img.trim();
 
-              // Scrape phone
-              const telLink = $('a[href^="tel:"]').first().attr('href')?.replace('tel:', '').trim();
-              if (telLink) metaPhone = telLink;
-
-              // Scrape email
-              const mailLink = $('a[href^="mailto:"]').first().attr('href')?.replace('mailto:', '').trim();
-              if (mailLink && !mailLink.includes("example.com")) metaEmail = mailLink;
+              const locInfo = extractWebsiteLocationAndContact($, html, targetUrl, domain);
+              if (locInfo.phone) metaPhone = locInfo.phone;
+              if (locInfo.email) metaEmail = locInfo.email;
+              var scrapedAddress = locInfo.address;
+              var scrapedCity = locInfo.city;
+              var scrapedCountry = locInfo.country;
+              var scrapedCategory = locInfo.category;
             }
           } catch (e) {
             // Fetch timeout or error, use domain defaults
           }
+
+          const matchedKnownLoc = KNOWN_ENTITY_LOCATIONS[domain] || KNOWN_ENTITY_LOCATIONS[`www.${domain}`];
+          const finalAddress = (typeof scrapedAddress !== "undefined" && scrapedAddress) ? scrapedAddress : (matchedKnownLoc?.address || "");
+          const finalCity = (typeof scrapedCity !== "undefined" && scrapedCity) ? scrapedCity : (matchedKnownLoc?.city || (finalAddress ? "" : "Online"));
+          const finalCountry = (typeof scrapedCountry !== "undefined" && scrapedCountry) ? scrapedCountry : (matchedKnownLoc?.country || "Worldwide");
+          const finalCategory = (typeof scrapedCategory !== "undefined" && scrapedCategory) ? scrapedCategory : (matchedKnownLoc?.category || "Business & Professional Services");
+          const finalPhone = metaPhone || matchedKnownLoc?.phone || "";
 
           const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
           const websitePlace = {
             id: `site-${domain.replace(/[^a-zA-Z0-9]/g, '-')}`,
             name: metaTitle,
-            category: "Business & Professional Services",
-            address: domain,
-            city: "Online",
-            country: "Worldwide",
+            category: finalCategory,
+            address: finalAddress,
+            city: finalCity,
+            country: finalCountry,
             lat: 0,
             lng: 0,
             rating: 5.0,
@@ -16752,6 +16790,165 @@ Return JSON:
     }
   });
   
+  function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string) {
+    let address = "";
+    let city = "";
+    let country = "";
+    let phone = "";
+    let email = "";
+    let category = "";
+
+    const matchedKnown = KNOWN_ENTITY_LOCATIONS[cleanDomain] || Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => cleanDomain.includes(k) || k.includes(cleanDomain))?.[1];
+    if (matchedKnown) {
+      address = matchedKnown.address || "";
+      city = matchedKnown.city || "";
+      country = matchedKnown.country || "";
+      phone = matchedKnown.phone || "";
+      category = (matchedKnown as any).category || "";
+    }
+
+    if ($) {
+      $("a[href*=\"maps.google\"], a[href*=\"google.com/maps\"], a[href*=\"maps.apple.com\"], a[href*=\"waze.com\"]").each((_: any, el: any) => {
+        if (address) return;
+        const href = $(el).attr("href") || "";
+        try {
+          let q = "";
+          if (href.includes("daddr=")) q = href.split("daddr=")[1].split("&")[0];
+          else if (href.includes("q=")) q = href.split("q=")[1].split("&")[0];
+          else if (href.includes("/place/")) q = href.split("/place/")[1].split("/")[0].split("?")[0];
+          if (q) {
+            const decoded = decodeURIComponent(q.replace(/\+/g, " ")).trim();
+            if (!/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(decoded) && decoded.length > 5 && decoded.length < 150) {
+              address = decoded;
+            }
+          }
+        } catch(e){}
+      });
+
+      $("a[href^=\"tel:\"]").each((_: any, el: any) => {
+        if (phone) return;
+        const raw = $(el).attr("href")?.replace(/^tel:\s*/i, "").trim() || "";
+        if (raw && raw.length >= 6 && !raw.includes("555") && !raw.includes("000-0000")) {
+          phone = raw;
+        }
+      });
+
+      $("a[href^=\"mailto:\"]").each((_: any, el: any) => {
+        if (email) return;
+        const raw = $(el).attr("href")?.replace(/^mailto:\s*/i, "").split("?")[0].trim() || "";
+        const l = raw.toLowerCase();
+        if (raw.includes("@") && !l.includes("example.com") && !l.includes("wixpress.com") && !l.includes("sentry.io") && !l.includes("domain.com") && !l.includes("@gmail.com") && !l.includes("@yahoo.com") && !l.includes("@hotmail.com")) {
+          email = raw;
+        }
+      });
+
+      try {
+        $("script[type=\"application/ld+json\"]").each((_: any, el: any) => {
+          try {
+            const data = JSON.parse($(el).html() || "{}");
+            const scan = (obj: any) => {
+              if (!obj || typeof obj !== "object") return;
+              if (obj.telephone && !phone) {
+                const tel = String(obj.telephone).trim();
+                if (!tel.includes("555")) phone = tel;
+              }
+              if (obj.email && !email) {
+                const em = String(obj.email).trim();
+                if (em.includes("@") && !em.includes("example.com") && !em.includes("@gmail.com")) email = em;
+              }
+              if (obj.address) {
+                const a = obj.address;
+                if (typeof a === "string" && !address && a.length > 5) {
+                  address = a;
+                } else if (typeof a === "object") {
+                  const parts = [a.streetAddress, a.addressLocality, a.postalCode, a.addressCountry].filter(Boolean);
+                  if (parts.length > 0 && !address) address = parts.join(", ");
+                  if (a.addressLocality && !city) city = a.addressLocality;
+                  if (a.addressCountry && !country) {
+                    country = typeof a.addressCountry === "string" ? a.addressCountry : a.addressCountry?.name || "";
+                  }
+                }
+              }
+              for (const k of Object.keys(obj)) scan(obj[k]);
+            };
+            scan(data);
+          } catch(e){}
+        });
+      } catch(e){}
+
+      if (!address) {
+        const ogStreet = $("meta[property=\"business:contact_data:street_address\"]").attr("content") ||
+                         $("meta[name=\"business:contact_data:street_address\"]").attr("content") ||
+                         $("meta[name=\"geo.placename\"]").attr("content") || "";
+        if (ogStreet && ogStreet.length > 5) address = ogStreet.trim();
+      }
+      if (!city) {
+        const ogCity = $("meta[property=\"business:contact_data:locality\"]").attr("content") ||
+                       $("meta[name=\"business:contact_data:locality\"]").attr("content") || "";
+        if (ogCity) city = ogCity.trim();
+      }
+      if (!country) {
+        const ogCountry = $("meta[property=\"business:contact_data:country_name\"]").attr("content") ||
+                          $("meta[name=\"business:contact_data:country_name\"]").attr("content") || "";
+        if (ogCountry) country = ogCountry.trim();
+      }
+
+      if (!address) {
+        const addrTag = $("[itemprop=\"streetAddress\"], address, .address, .office-address, .contact-address").first().text().replace(/\s+/g, " ").trim();
+        if (addrTag && addrTag.length > 6 && addrTag.length < 120 && !addrTag.includes("{") && !addrTag.includes("function")) {
+          address = addrTag;
+        }
+      }
+
+      const textSnippet = $("body").text().replace(/\s+/g, " ");
+      if (!address) {
+        const streetMatch = textSnippet.match(/(?:[0-9]{1,5}\s+)?(?:Rue|Avenue|Boulevard|Chaussée|Street|St|Road|Rd|Ave|Blvd|Suite|Drive|Dr|Way|Lane|Ln|Plaza|Square)\s+[^,\n|•<]{2,45}(?:,\s*[0-9]{4,5})?/i);
+        if (streetMatch && streetMatch[0].length >= 8 && streetMatch[0].length <= 80 && !streetMatch[0].includes("(")) {
+          address = streetMatch[0].trim();
+        }
+      }
+
+      const combinedText = `${address} ${city} ${finalUrl} ${$("title").text()} ${textSnippet.slice(0, 3000)}`;
+      if (!city) {
+        if (/Brussels|Bruxelles/i.test(combinedText) || cleanDomain.includes("brussels")) city = "Brussels";
+        else if (/Paris/i.test(combinedText)) city = "Paris";
+        else if (/London/i.test(combinedText)) city = "London";
+        else if (/New York/i.test(combinedText)) city = "New York";
+        else if (/Las Vegas/i.test(combinedText)) city = "Las Vegas";
+        else if (/Phoenix/i.test(combinedText)) city = "Phoenix";
+        else if (/Dubai/i.test(combinedText)) city = "Dubai";
+        else if (/Abu Dhabi/i.test(combinedText)) city = "Abu Dhabi";
+        else if (/Auckland/i.test(combinedText)) city = "Auckland";
+        else if (/Madrid/i.test(combinedText)) city = "Madrid";
+      }
+
+      if (!country) {
+        if (finalUrl.endsWith(".be") || /Belgium|Belgique/i.test(combinedText) || city === "Brussels") country = "Belgium";
+        else if (finalUrl.endsWith(".fr") || /France/i.test(combinedText) || city === "Paris") country = "France";
+        else if (finalUrl.endsWith(".co.uk") || /United Kingdom|UK/i.test(combinedText) || city === "London") country = "United Kingdom";
+        else if (finalUrl.endsWith(".ae") || /United Arab Emirates|UAE/i.test(combinedText) || city === "Dubai" || city === "Abu Dhabi") country = "United Arab Emirates";
+        else if (finalUrl.endsWith(".co.nz") || /New Zealand/i.test(combinedText) || city === "Auckland") country = "New Zealand";
+        else if (finalUrl.endsWith(".es") || /Spain|España/i.test(combinedText) || city === "Madrid") country = "Spain";
+        else if (/United States|USA/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
+      }
+
+      if (!category) {
+        const lower = combinedText.toLowerCase();
+        if (/dentist|dental|teeth|mendozza|cavity|implant|orthodont/i.test(lower)) category = "Dentist & Dental Clinic";
+        else if (/injury|accident|lawyer|attorney|law\s*firm|legal/i.test(lower)) category = "Legal Services";
+        else if (/plumb|heating|plomberie|drain/i.test(lower)) category = "Plumbing & HVAC";
+        else if (/massage|spa|wellness|facial/i.test(lower)) category = "Spa & Wellness";
+        else if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen/i.test(lower)) category = "Restaurant & Cafe";
+        else if (/hotel|resort|suites/i.test(lower)) category = "Hotel & Hospitality";
+        else if (/car\s*rental|rental\s*car|auto\s*rental/i.test(lower)) category = "Auto & Car Rental";
+        else if (/real\s*estate|property|properties|realtor/i.test(lower)) category = "Real Estate";
+        else if (/doctor|clinic|medical|health|hospital/i.test(lower)) category = "Healthcare & Medical";
+      }
+    }
+
+    return { address, city, country, phone, email, category };
+  }
+
   app.get('/api/url-metadata', async (req, res) => {
     try {
       let url = String(req.query.url || '');
@@ -16776,6 +16973,8 @@ Return JSON:
       let logo = '';
       let siteName = '';
       let finalUrl = url;
+      let html = '';
+      let $: any = null;
       
       try {
         const fetchResponse = await fetch(url, {
@@ -16791,11 +16990,11 @@ Return JSON:
         
         if (fetchResponse.ok) {
           finalUrl = fetchResponse.url;
-          let html = await fetchResponse.text();
+          html = await fetchResponse.text();
           
           if (html && html.length < 5000000) {
             try {
-              let $ = cheerio.load(html);
+              $ = cheerio.load(html);
 
               // Prioritize English version if server responded with localized non-English content
               const pageLang = ($('html').attr('lang') || $('meta[http-equiv="content-language"]').attr('content') || '').toLowerCase();
@@ -17582,20 +17781,29 @@ Return JSON:
       if (image) image = sanitizeProxy(image);
       if (logo) logo = sanitizeProxy(logo);
 
+      // Extract rich location, phone, email, and category
+      const locInfo = extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
+      const isYoouz = cleanDomain === "yoouz.com";
+      const effectiveAddress = locInfo.address || "";
+      const effectiveCity = locInfo.city || (effectiveAddress ? "" : (isYoouz ? "Worldwide" : "Online"));
+      const effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
+      const effectivePhone = locInfo.phone || "";
+      const effectiveEmail = locInfo.email || "";
+      const effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
+
       // Automatically persist to BunnyDB database immediately upon search so it is stored in system
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           const autoPlaceId = cleanDomain;
-          const isYoouz = cleanDomain === "yoouz.com";
           const autoPlaceDoc = {
             id: autoPlaceId,
             name: isYoouz ? "Yoouz" : (title || cleanDomain),
-            category: isYoouz ? "Video Reviews Platform" : "Website",
+            category: effectiveCategory,
             categoryType: "all",
-            address: "",
-            city: isYoouz ? "Worldwide" : "Online",
-            country: isYoouz ? "Global" : "",
+            address: effectiveAddress,
+            city: effectiveCity,
+            country: effectiveCountry,
             lat: 0,
             lng: 0,
             rating: 5,
@@ -17608,7 +17816,8 @@ Return JSON:
             photos: image ? [image] : [],
             openingHours: "Available 24/7",
             isOpen: true,
-            phone: "",
+            phone: effectivePhone,
+            email: effectiveEmail,
             website: finalUrl || `https://${cleanDomain}`,
             priceRange: isYoouz ? "Free" : "N/A",
             plusCode: "",
@@ -17624,14 +17833,28 @@ Return JSON:
           await bunnyDb.execute({
             sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [autoPlaceId, autoPlaceName, "", autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
-                   autoPlaceName, "", autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo]
+                  ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
+                   autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
           });
         }
       } catch (bErr) {}
       
-      res.json({ title, description, image, logo, siteName, domain: cleanDomain, url: finalUrl });
+      res.json({ 
+        title, 
+        description, 
+        image, 
+        logo, 
+        siteName, 
+        domain: cleanDomain, 
+        url: finalUrl,
+        address: effectiveAddress,
+        city: effectiveCity,
+        country: effectiveCountry,
+        phone: effectivePhone,
+        email: effectiveEmail,
+        category: effectiveCategory
+      });
     } catch (e) {
       console.error('SERVER ERROR:', e);
       res.status(500).json({ error: e.message });

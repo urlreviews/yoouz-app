@@ -204,6 +204,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       if (place.city && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim())) {
         return [place.city, (place as any).state, place.country].filter(Boolean).join(", ");
       }
+      if (place.country && !["global", "worldwide", "n/a"].includes(place.country.toLowerCase().trim())) {
+        return place.country;
+      }
       return null;
     }
     let addr = place.address.trim();
@@ -403,8 +406,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !place.logoUrl.includes("fallback")
     );
     const needsLogo = !hasValidLogo;
+    const needsLocation = !place.address || place.address.trim() === "" || place.address === "Verified Location" || isAddressUrl;
+    const needsPhone = !hasGenuinePhone;
 
-    if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo)) {
+    if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone)) {
       fetchedTargetUrlsRef.current.add(targetUrl);
       let isMounted = true;
       fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
@@ -414,11 +419,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (data.image) {
               setFetchedBannerUrl(data.image);
             }
-            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description)) {
+            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category)) {
               onUpdatePlace({
                 ...place,
                 name: (data.title && isGenericName) ? data.title : place.name,
                 description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
+                address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
+                city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
+                country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
+                phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
+                email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
+                category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
                 bannerUrl: place.bannerUrl || data.image || "",
                 ogImage: place.ogImage || data.image || "",
                 logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
@@ -1281,22 +1292,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <ChevronUp className="w-4 h-4 text-zinc-200" />
                   </div>
                   
-                  {/* Address Line */}
-                  {displayAddress && (
-                    <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
-                      <div className="flex items-start gap-3">
-                        <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
-                        <div className="text-xs space-y-0.5">
-                          <p className="text-zinc-200 font-medium leading-relaxed">
-                            {displayAddress}
-                          </p>
-                          {place.locatedIn && !isAddressUrl && (
-                            <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
-                          )}
-                        </div>
+                  {/* Address Line (Always present with clean fallback) */}
+                  <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
+                      <div className="text-xs space-y-0.5">
+                        {displayAddress ? (
+                          <>
+                            <p className="text-zinc-200 font-medium leading-relaxed">
+                              {displayAddress}
+                            </p>
+                            {place.locatedIn && !isAddressUrl && (
+                              <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-zinc-200">{t("place.locationNotProvided", "Location not provided")}</span>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Hours Line */}
                   <div className="px-5 py-3.5 hover:bg-zinc-900 transition-colors">
