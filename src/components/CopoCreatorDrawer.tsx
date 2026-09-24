@@ -412,7 +412,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   });
 
   const isVerifiedReviewer = authorVideos.length > 0 || (author?.isVerified === true && (author?.videoReviewCount ?? 0) > 0);
-  const totalLikes = authorVideos.reduce((acc, v) => acc + v.likes + (v.isLiked ? 1 : 0), 0);
+  const totalLikes = authorVideos.reduce((acc, v) => acc + (typeof v.likes === 'number' ? v.likes : (v.likesCount || 0)), 0);
   const avgRating =
     authorVideos.length > 0
       ? (authorVideos.reduce((acc, v) => acc + v.rating, 0) / authorVideos.length).toFixed(1)

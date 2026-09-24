@@ -485,7 +485,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 <ThumbsUp className={`w-5 h-5 ${currentReview.isLiked ? "fill-black" : ""}`} />
               </div>
               <span className="text-[11px] font-bold mt-1 drop-shadow">
-                {currentReview.likes + (currentReview.isLiked ? 1 : 0)}
+                {typeof currentReview.likes === 'number' ? currentReview.likes : (currentReview.likesCount || 0)}
               </span>
             </button>
 

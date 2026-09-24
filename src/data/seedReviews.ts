@@ -45,7 +45,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789577075627-3488d.jpg",
     caption: "Video review for yoouz.com",
     dishOrItem: "Yoouz",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -63,7 +63,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: STEVEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-16 16:44:47",
-    likesCount: 1,
+    likesCount: 0,
     bookmarks: 0,
     shares: 0
   },
@@ -107,7 +107,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789421411968-6xx3t.jpg",
     caption: "Video review for yoouz.com",
     dishOrItem: "Yoouz",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -125,7 +125,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: BEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-15 14:20:10",
-    likesCount: 1,
+    likesCount: 0,
     bookmarks: 0,
     shares: 18
   },
@@ -168,7 +168,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789421411968-6xx3t.jpg",
     caption: "Video review for Nevada Legal Services",
     dishOrItem: "Nevada Legal Services",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -187,7 +187,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: BEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-14 21:30:22",
-    likesCount: 1,
+    likesCount: 0,
     bookmarks: 0,
     shares: 0
   },
@@ -230,7 +230,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789421309884-ca7le.jpg",
     caption: "Video review for Lerner and Rowe Injury Attorneys",
     dishOrItem: "Lerner and Rowe Injury Attorneys",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -249,7 +249,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: BEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-14 21:28:41",
-    likesCount: 1,
+    likesCount: 0,
     bookmarks: 0
   },
   {
@@ -291,7 +291,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789421167017-8i4l3.jpg",
     caption: "Video review for McVeagh Fleming Lawyers",
     dishOrItem: "McVeagh Fleming Lawyers",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -311,7 +311,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: STEVEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-14 21:26:27",
-    likesCount: 1,
+    likesCount: 0,
     shares: 0
   },
   {
@@ -353,7 +353,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     thumbnailUrl: "https://rev1.b-cdn.net/videos/rev-1789420100396-2578b.jpg",
     caption: "Video review for Van Law Firm Injury Attorneys",
     dishOrItem: "Van Law Firm Injury Attorneys",
-    likes: 1,
+    likes: 0,
     isLiked: false,
     commentsCount: 0,
     comments: [],
@@ -372,7 +372,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     authorAvatar: BEN_AVATAR,
     duration: 60,
     createdAt: "2026-09-14 21:08:23",
-    likesCount: 1,
+    likesCount: 0,
     bookmarks: 0,
     shares: 0
   }
