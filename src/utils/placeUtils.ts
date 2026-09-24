@@ -582,43 +582,45 @@ export function isPlaceReviewMatch(
   const vPlaceName = (video.placeName || "").trim();
   const vPlaceWebsite = (video.placeWebsite || "").trim();
 
-  // 1. Direct ID match
+  // Extract cleaned domains
+  const placeDomain = extractCleanDomain(placeWebsite || placeBrandDomain || (placeId.includes(".") ? placeId : "") || (placeName.includes(".") ? placeName : ""));
+  const vDomain = extractCleanDomain(vPlaceWebsite || (vPlaceId.includes(".") ? vPlaceId : "") || (vPlaceName.includes(".") ? vPlaceName : ""));
+
+  // 1. STRICT DOMAIN ANTI-COLLISION CHECK:
+  // If BOTH entities have domains, they ONLY match if the domains are IDENTICAL!
+  // If domains differ (e.g. dentiste-namur.be vs dentisteerpent.be), they are definitively DIFFERENT businesses!
+  if (placeDomain && vDomain) {
+    return placeDomain.toLowerCase() === vDomain.toLowerCase();
+  }
+
+  // 2. Direct ID match
   if (placeId && vPlaceId && placeId.toLowerCase() === vPlaceId.toLowerCase()) {
     return true;
   }
 
-  // 2. Direct exact Place Name match
-  if (placeName && vPlaceName && placeName.toLowerCase() === vPlaceName.toLowerCase()) {
+  // 3. Domain match with ID or slug
+  if (placeDomain && vPlaceId) {
+    const normVId = vPlaceId.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normPDomain = placeDomain.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (normVId && normPDomain && normVId === normPDomain) return true;
+  }
+  if (vDomain && placeId) {
+    const normPId = placeId.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normVDomain = vDomain.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (normPId && normVDomain && normPId === normVDomain) return true;
+  }
+
+  // 4. Direct exact Place Name match (normalized)
+  const cleanPName = placeName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+  const cleanVName = vPlaceName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+  if (cleanPName && cleanVName && cleanPName === cleanVName && cleanPName.length > 2) {
     return true;
   }
 
-  // 3. Domain extraction match
-  const placeDomain = extractCleanDomain(placeWebsite || placeBrandDomain || placeId || placeName);
-  const vDomain = extractCleanDomain(vPlaceWebsite || vPlaceId || vPlaceName);
-
-  if (placeDomain && vDomain && placeDomain === vDomain) {
-    return true;
-  }
-
-  // 4. Normalized slug match (e.g. "fiverr-com" vs "fiverr.com")
+  // 5. Normalized slug match (e.g. "fiverr-com" vs "fiverr.com")
   const normPlaceId = placeId.toLowerCase().replace(/[^a-z0-9]/g, "");
   const normVPlaceId = vPlaceId.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (normPlaceId && normVPlaceId && normPlaceId === normVPlaceId) {
-    return true;
-  }
-
-  // 5. Website domain contained in place name or video place name
-  if (placeDomain && (vPlaceName.toLowerCase().includes(placeDomain) || vPlaceId.toLowerCase().includes(placeDomain))) {
-    return true;
-  }
-  if (vDomain && (placeName.toLowerCase().includes(vDomain) || placeId.toLowerCase().includes(vDomain))) {
-    return true;
-  }
-
-  // 6. Name partial match if business names are similar
-  const cleanPName = placeName.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-  const cleanVName = vPlaceName.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-  if (cleanPName && cleanVName && (cleanPName.includes(cleanVName) || cleanVName.includes(cleanPName))) {
+  if (normPlaceId && normVPlaceId && normPlaceId === normVPlaceId && normPlaceId.length > 2) {
     return true;
   }
 

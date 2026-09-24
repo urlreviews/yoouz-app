@@ -3623,17 +3623,25 @@ export function App() {
     if (searchId.includes("@") || searchId.startsWith("usr_") || searchId.startsWith("user_")) {
       return null;
     }
+    const cleanSearchDomain = extractCleanDomain(searchId);
     let found = places.find(
-      (p) =>
-        p.id === searchId ||
-        isPlaceReviewMatch({ placeId: p.id, placeName: p.name, placeWebsite: p.website } as VideoReview, searchId)
+      (p) => {
+        if (cleanSearchDomain) {
+          const pDomain = extractCleanDomain(p.website || p.brandDomain || p.id || p.name);
+          if (pDomain) return pDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
+        }
+        return p.id === searchId || (p.name && p.name.toLowerCase() === searchId.toLowerCase());
+      }
     );
     if (!found) {
       const matchingVideo = videos.find(
-        (v) =>
-          v.placeId === searchId ||
-          v.id === searchId ||
-          isPlaceReviewMatch(v, searchId)
+        (v) => {
+          if (cleanSearchDomain) {
+            const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
+            if (vDomain) return vDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
+          }
+          return v.placeId === searchId || v.id === searchId || (v.placeName && v.placeName.toLowerCase() === searchId.toLowerCase());
+        }
       );
       if (matchingVideo) {
         found = synthesizePlaceFromReview(matchingVideo, places);

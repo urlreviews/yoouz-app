@@ -842,14 +842,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               onPauseVideo?.();
-              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
               onOpenPlace(targetPlaceId);
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => {
               e.stopPropagation();
               onPauseVideo?.();
-              const targetPlaceId = video.placeId || video.placeName || video.dishOrItem || video.id;
+              const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
               onOpenPlace(targetPlaceId);
             }}
             className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[280px] sm:max-w-[340px] md:max-w-[420px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
