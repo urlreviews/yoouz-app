@@ -36,8 +36,18 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
   const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const ratingScore = rawRating.toFixed(1);
+  const ratingNum = Math.round(Number(ratingScore));
   const avatarUrl = (video.author as any)?.avatarUrl || video.author?.avatar || (video as any).authorAvatar || "";
-  const subtitle = `${authorName} • 60s Review`;
+  const placeLogoUrl = place?.logoUrl || video.placeLogoUrl || (video as any).logoUrl || "";
+
+  const rawTargetDomain =
+    (video as any)?.placeDomain ||
+    place?.website ||
+    ((place as any)?.id && (place as any).id.includes('.') ? (place as any).id : null) ||
+    (video.placeName && video.placeName.includes('.') ? video.placeName.toLowerCase() : null) ||
+    ((placeName || 'yoouz').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
+  let targetDomain = (rawTargetDomain || 'yoouz.com').toLowerCase().trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].split('?')[0];
+  if (!targetDomain.includes('.')) targetDomain += '.com';
 
   const handleDownloadVideo = async () => {
     if (isExporting) return;
@@ -104,16 +114,32 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
               {/* Ambient dark gradient vignette matching Share Card */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
 
-              {/* TOP BAR: Place pill (★ PlaceName 4.0) */}
-              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[72%]">
-                  <span className="text-amber-400 text-xs font-black shrink-0">★</span>
-                  <span className="text-white text-xs font-bold truncate">
-                    {placeName}
-                  </span>
-                  <span className="text-amber-400 text-[11px] font-bold shrink-0">
-                    {ratingScore}
-                  </span>
+              {/* TOP LEFT: Business Squircle Logo & Rating Pill (Matches Screenshot 3) */}
+              <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[70%]">
+                {/* Left Squircle Logo Container */}
+                <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                  {placeLogoUrl ? (
+                    <img src={placeLogoUrl} alt={placeName} className="w-6 h-6 object-contain" />
+                  ) : (
+                    <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  )}
+                </div>
+                {/* Text column */}
+                <div className="flex flex-col min-w-0 justify-center">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-white text-xs font-bold truncate leading-tight">{placeName}</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+                      <svg className="w-2 h-2 text-zinc-950 stroke-[2.8]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 leading-tight mt-0.5">
+                    <span className="text-amber-400 text-[10px]">★</span>
+                    <span className="text-amber-400 text-[11px] font-bold">{ratingScore}</span>
+                  </div>
                 </div>
               </div>
 
@@ -126,39 +152,56 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 </div>
               </div>
 
-              {/* BOTTOM BAR: Author Info (Left) & yoouz.com Watermark (Right) */}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
-                    {avatarUrl ? (
-                      <img
-                        src={getProxiedImageUrl(avatarUrl)}
-                        alt={authorName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
-                        {authorName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
-                      {authorName}
-                    </p>
-                    <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
-                      {subtitle}
-                    </p>
-                  </div>
+              {/* BOTTOM LEFT: Reviewer Profile Pill (Matches Screenshot 4) */}
+              <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[75%] pointer-events-none">
+                {/* Circular Avatar */}
+                <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 bg-lime-600 shrink-0 shadow-xs flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img
+                      src={getProxiedImageUrl(avatarUrl)}
+                      alt={authorName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(authorName)}&background=65a30d&color=fff&bold=true&size=128`;
+                      }}
+                    />
+                  ) : (
+                    <span className="text-white text-sm font-bold">{authorName.charAt(0).toUpperCase()}</span>
+                  )}
                 </div>
+                {/* 3 Lines of Text */}
+                <div className="flex flex-col min-w-0 justify-center">
+                  {/* Line 1: By AuthorName + Verified badge */}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-white text-xs font-bold truncate leading-tight">By {authorName}</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+                      <svg className="w-2 h-2 text-zinc-950 stroke-[2.8]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </div>
+                  {/* Line 2: 5 Stars */}
+                  <div className="flex items-center gap-0.5 leading-none my-0.5">
+                    {[1, 2, 3, 4, 5].map((starIdx) => (
+                      <span
+                        key={starIdx}
+                        className={`text-[10px] ${starIdx <= ratingNum ? 'text-amber-400' : 'text-zinc-600'}`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  {/* Line 3: Video review for domain */}
+                  <span className="text-zinc-400 text-[10px] leading-tight truncate">
+                    Video review for {targetDomain}
+                  </span>
+                </div>
+              </div>
 
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  <span>yoouz.com</span>
-                </div>
+              {/* BOTTOM RIGHT: yoouz.com watermark badge with red live dot */}
+              <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-md pointer-events-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                <span>yoouz.com</span>
               </div>
 
             </div>

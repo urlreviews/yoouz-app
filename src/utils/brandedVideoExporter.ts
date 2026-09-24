@@ -199,10 +199,10 @@ function drawVerifiedBadge(ctx: CanvasRenderingContext2D, x: number, y: number, 
 
 /**
  * Renders the studio-grade, Ultra-HD branded overlays onto the canvas frame
- * exactly matching the Share Card design:
- * 1. Top-Left: Star Rating & Venue Pill (★ Yoouz 4.0)
+ * exactly matching the Share Card and OpenGraph design (Screenshots 3 & 4):
+ * 1. Top-Left: Business Squircle Logo Container & Rating Pill (Logo/White Star + PlaceName + Verified Badge + ★ 4.0)
  * 2. Top-Right: NOTHING (Powered by yoouz.com completely removed)
- * 3. Bottom-Left: Reviewer Avatar + Name + "Author • 60s Review"
+ * 3. Bottom-Left: Reviewer Profile Pill (Avatar + By AuthorName + Verified Badge + 5 Stars + Video review for domain)
  * 4. Bottom-Right: Red Dot Live Badge + "yoouz.com"
  */
 export function renderBrandedVideoOverlays(
@@ -226,8 +226,18 @@ export function renderBrandedVideoOverlays(
 
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const ratingScore = rawRating.toFixed(1);
+  const ratingNum = Math.round(rawRating);
   const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
-  const subtitle = `${authorName} • 60s Review`;
+
+  const rawTargetDomain =
+    (video as any)?.placeDomain ||
+    place?.website ||
+    ((place as any)?.id && (place as any).id.includes('.') ? (place as any).id : null) ||
+    (video.placeName && video.placeName.includes('.') ? video.placeName.toLowerCase() : null) ||
+    ((placeName || 'yoouz').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com');
+  let targetDomain = (rawTargetDomain || 'yoouz.com').toLowerCase().trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].split('?')[0];
+  if (!targetDomain.includes('.')) targetDomain += '.com';
+  const videoReviewLine = `Video review for ${targetDomain}`;
 
   ctx.save();
   ctx.imageSmoothingEnabled = true;
@@ -244,132 +254,225 @@ export function renderBrandedVideoOverlays(
   ctx.fillRect(0, 0, width, height);
 
   // -------------------------------------------------------------
-  // 1. TOP-LEFT VENUE & RATING PILL (Matches Share Modal: ★ PlaceName 4.0)
+  // 1. TOP-LEFT: Business Squircle Logo & Rating Pill (Screenshot 3)
   // -------------------------------------------------------------
-  const pillMarginX = 24 * safeScale;
-  const pillMarginY = 28 * safeScale;
-  const pillHeight = 32 * safeScale;
+  const topPillX = 32 * safeScale;
+  const topPillY = 30 * safeScale;
+  const topPillHeight = 56 * safeScale;
+  const sqSize = 40 * safeScale;
 
-  // Text measurements
-  ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const nameWidth = ctx.measureText(placeName).width;
 
-  ctx.font = `800 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const ratingWidth = ctx.measureText(ratingScore).width;
 
-  const starIconSize = 14 * safeScale;
-  const pillWidth = pillMarginX + starIconSize + (8 * safeScale) + nameWidth + (10 * safeScale) + ratingWidth + (12 * safeScale);
+  const topTextWidth = Math.max(nameWidth + (20 * safeScale), (16 * safeScale) + ratingWidth);
+  const topPillWidth = (8 * safeScale) + sqSize + (10 * safeScale) + topTextWidth + (14 * safeScale);
 
-  // Translucent dark glass background
+  // Outer black translucent glass pill
   drawRoundedRect(
     ctx,
-    pillMarginX,
-    pillMarginY,
-    pillWidth,
-    pillHeight,
-    pillHeight / 2,
-    'rgba(0, 0, 0, 0.70)',
-    'rgba(255, 255, 255, 0.20)',
+    topPillX,
+    topPillY,
+    topPillWidth,
+    topPillHeight,
+    18 * safeScale,
+    'rgba(0, 0, 0, 0.85)',
+    'rgba(255, 255, 255, 0.22)',
+    1.4 * safeScale
+  );
+
+  // Left Squircle Logo Container
+  const sqX = topPillX + (8 * safeScale);
+  const sqY = topPillY + (8 * safeScale);
+  drawRoundedRect(
+    ctx,
+    sqX,
+    sqY,
+    sqSize,
+    sqSize,
+    11 * safeScale,
+    '#18181b',
+    'rgba(255, 255, 255, 0.25)',
     1.2 * safeScale
   );
 
-  // Gold Star icon
+  if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
+    ctx.save();
+    ctx.beginPath();
+    // Clip rounded rect inside squircle
+    const clipPad = 4 * safeScale;
+    ctx.roundRect
+      ? ctx.roundRect(sqX + clipPad, sqY + clipPad, sqSize - clipPad * 2, sqSize - clipPad * 2, 8 * safeScale)
+      : ctx.rect(sqX + clipPad, sqY + clipPad, sqSize - clipPad * 2, sqSize - clipPad * 2);
+    ctx.clip();
+    ctx.drawImage(logoImage, sqX + clipPad, sqY + clipPad, sqSize - clipPad * 2, sqSize - clipPad * 2);
+    ctx.restore();
+  } else {
+    // Crisp pure white star in the center
+    drawStar(
+      ctx,
+      sqX + sqSize / 2,
+      sqY + sqSize / 2,
+      5,
+      8.5 * safeScale,
+      4.2 * safeScale,
+      '#FFFFFF'
+    );
+  }
+
+  // Text Column (Line 1: PlaceName + Verified Badge, Line 2: Gold Star + Rating)
+  const topColX = sqX + sqSize + (10 * safeScale);
+
+  // Line 1: Place Name (White text)
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `800 ${15 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(placeName, topColX, topPillY + (20 * safeScale));
+
+  // Verified checkmark badge right after place name
+  drawVerifiedBadge(
+    ctx,
+    topColX + nameWidth + (8 * safeScale),
+    topPillY + (20 * safeScale),
+    5.5 * safeScale
+  );
+
+  // Line 2: Gold Star + Rating
   drawStar(
     ctx,
-    pillMarginX + (14 * safeScale),
-    pillMarginY + (pillHeight / 2),
+    topColX + (5 * safeScale),
+    topPillY + (38 * safeScale),
     5,
-    5.5 * safeScale,
-    2.8 * safeScale,
+    4.5 * safeScale,
+    2.2 * safeScale,
     '#FBBF24'
   );
 
-  // Place Name (White text)
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  ctx.shadowBlur = 4 * safeScale;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 1;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  const nameStartX = pillMarginX + (24 * safeScale);
-  ctx.fillText(placeName, nameStartX, pillMarginY + (20 * safeScale));
-
-  // Rating Score (Gold text)
   ctx.fillStyle = '#FBBF24';
-  ctx.font = `800 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText(ratingScore, nameStartX + nameWidth + (8 * safeScale), pillMarginY + (20 * safeScale));
-
-  // Note: Top-Right "Powered by yoouz.com" is completely removed per user instruction!
+  ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText(ratingScore, topColX + (14 * safeScale), topPillY + (38 * safeScale));
 
   // -------------------------------------------------------------
-  // 2. BOTTOM BAR: Reviewer Info (Left) & yoouz.com Watermark (Right)
+  // 2. BOTTOM-LEFT: Reviewer Profile Pill (Screenshot 4)
   // -------------------------------------------------------------
-  const bottomMarginY = height - (32 * safeScale);
+  const botPillHeight = 74 * safeScale;
+  const botPillY = height - (32 * safeScale) - botPillHeight;
+  const botPillX = 32 * safeScale;
 
-  // --- BOTTOM-LEFT: Reviewer Avatar + Name + Subtitle ---
-  const avatarRadius = 15 * safeScale;
-  const avatarX = 24 * safeScale;
-  const avatarY = bottomMarginY - (avatarRadius * 2);
+  const authorPrefix = `By ${authorName}`;
+  ctx.font = `800 ${14.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  const authorPrefixWidth = ctx.measureText(authorPrefix).width;
+
+  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const videoReviewWidth = ctx.measureText(videoReviewLine).width;
+
+  const starsBlockWidth = 5 * (12 * safeScale);
+  const botTextWidth = Math.max(authorPrefixWidth + (20 * safeScale), starsBlockWidth, videoReviewWidth);
+  const avatarDiameter = 44 * safeScale;
+  const botPillWidth = (12 * safeScale) + avatarDiameter + (12 * safeScale) + botTextWidth + (16 * safeScale);
+
+  // Outer black translucent glass pill
+  drawRoundedRect(
+    ctx,
+    botPillX,
+    botPillY,
+    botPillWidth,
+    botPillHeight,
+    22 * safeScale,
+    'rgba(0, 0, 0, 0.85)',
+    'rgba(255, 255, 255, 0.22)',
+    1.4 * safeScale
+  );
+
+  // Circular Reviewer Avatar on the left
+  const avX = botPillX + (12 * safeScale);
+  const avY = botPillY + (botPillHeight - avatarDiameter) / 2;
+  const avRadius = avatarDiameter / 2;
 
   if (authorAvatarImage && authorAvatarImage.complete && authorAvatarImage.naturalWidth > 0) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(avatarX + avatarRadius, avatarY + avatarRadius, avatarRadius, 0, Math.PI * 2);
+    ctx.arc(avX + avRadius, avY + avRadius, avRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(authorAvatarImage, avatarX, avatarY, avatarRadius * 2, avatarRadius * 2);
+    ctx.drawImage(authorAvatarImage, avX, avY, avatarDiameter, avatarDiameter);
     ctx.restore();
   } else {
+    // Green circle (matching Screenshot 4)
     ctx.save();
     ctx.beginPath();
-    ctx.arc(avatarX + avatarRadius, avatarY + avatarRadius, avatarRadius, 0, Math.PI * 2);
-    ctx.fillStyle = '#27272a';
+    ctx.arc(avX + avRadius, avY + avRadius, avRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#65a30d';
     ctx.fill();
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, sans-serif`;
+    ctx.font = `800 ${14 * safeScale}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(authorName.charAt(0).toUpperCase(), avatarX + avatarRadius, avatarY + avatarRadius);
+    ctx.fillText(authorName.charAt(0).toUpperCase(), avX + avRadius, avY + avRadius);
     ctx.restore();
   }
 
   // Thin ring around avatar
   ctx.save();
   ctx.beginPath();
-  ctx.arc(avatarX + avatarRadius, avatarY + avatarRadius, avatarRadius, 0, Math.PI * 2);
+  ctx.arc(avX + avRadius, avY + avRadius, avRadius, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.30)';
   ctx.lineWidth = 1.2 * safeScale;
   ctx.stroke();
   ctx.restore();
 
-  // Author Name & 60s Review subtitle
-  const textStartX = avatarX + (avatarRadius * 2) + (8 * safeScale);
+  // Text Column (Line 1: By AuthorName + Verified, Line 2: 5 Stars, Line 3: Video review for domain)
+  const botColX = avX + avatarDiameter + (12 * safeScale);
 
-  // Line 1: Author Name
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-  ctx.shadowBlur = 4 * safeScale;
-  ctx.shadowOffsetY = 1;
+  // Line 1: By AuthorName
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `700 ${12.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${14.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(authorName, textStartX, avatarY + (11 * safeScale));
+  ctx.textBaseline = 'middle';
+  ctx.fillText(authorPrefix, botColX, botPillY + (20 * safeScale));
 
-  // Line 2: Author Name • 60s Review
-  ctx.fillStyle = 'rgba(212, 212, 216, 0.95)';
+  // Verified checkmark badge right after author name
+  drawVerifiedBadge(
+    ctx,
+    botColX + authorPrefixWidth + (8 * safeScale),
+    botPillY + (20 * safeScale),
+    5.5 * safeScale
+  );
+
+  // Line 2: 5 Star Icons row
+  const starY = botPillY + (38 * safeScale);
+  for (let i = 0; i < 5; i++) {
+    const starFill = i < ratingNum ? '#FBBF24' : '#52525B';
+    drawStar(
+      ctx,
+      botColX + (i * 12 * safeScale) + (5 * safeScale),
+      starY,
+      5,
+      4.5 * safeScale,
+      2.2 * safeScale,
+      starFill
+    );
+  }
+
+  // Line 3: Video review for domain
+  ctx.fillStyle = '#94A3B8';
   ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText(subtitle, textStartX, avatarY + (24 * safeScale));
+  ctx.fillText(videoReviewLine, botColX, botPillY + (56 * safeScale));
 
-  // --- BOTTOM-RIGHT: yoouz.com watermark badge with red live dot ---
-  ctx.font = `800 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  // -------------------------------------------------------------
+  // 3. BOTTOM-RIGHT: yoouz.com watermark badge with red live dot
+  // -------------------------------------------------------------
+  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const wmText = 'yoouz.com';
   const wmTextWidth = ctx.measureText(wmText).width;
-  const redDotRadius = 3 * safeScale;
-  const wmPillHeight = 24 * safeScale;
-  const wmPillWidth = (10 * safeScale) + (redDotRadius * 2) + (6 * safeScale) + wmTextWidth + (10 * safeScale);
-  const wmX = width - wmPillWidth - (24 * safeScale);
-  const wmY = bottomMarginY - wmPillHeight;
+  const redDotRadius = 3.2 * safeScale;
+  const wmPillHeight = 28 * safeScale;
+  const wmPillWidth = (12 * safeScale) + (redDotRadius * 2) + (6 * safeScale) + wmTextWidth + (12 * safeScale);
+  const wmX = width - wmPillWidth - (32 * safeScale);
+  const wmY = height - (32 * safeScale) - wmPillHeight;
 
   drawRoundedRect(
     ctx,
@@ -378,13 +481,13 @@ export function renderBrandedVideoOverlays(
     wmPillWidth,
     wmPillHeight,
     wmPillHeight / 2,
-    'rgba(0, 0, 0, 0.65)',
-    'rgba(255, 255, 255, 0.20)',
-    1.0 * safeScale
+    'rgba(0, 0, 0, 0.80)',
+    'rgba(255, 255, 255, 0.22)',
+    1.2 * safeScale
   );
 
   // Pulsing red dot
-  const dotCenterX = wmX + (10 * safeScale) + redDotRadius;
+  const dotCenterX = wmX + (12 * safeScale) + redDotRadius;
   const dotCenterY = wmY + (wmPillHeight / 2);
   ctx.beginPath();
   ctx.arc(dotCenterX, dotCenterY, redDotRadius, 0, Math.PI * 2);
@@ -393,8 +496,10 @@ export function renderBrandedVideoOverlays(
 
   // yoouz.com text
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `800 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText(wmText, dotCenterX + redDotRadius + (5 * safeScale), wmY + (16 * safeScale));
+  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(wmText, dotCenterX + redDotRadius + (6 * safeScale), dotCenterY);
 
   ctx.restore();
 }
