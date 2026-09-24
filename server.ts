@@ -5064,6 +5064,15 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Special handler for places collection: use multi-layer resolver first for consistent attributes
+    if (colName === 'places') {
+      const resolved = await resolvePlaceFromAnySource(id);
+      if (resolved && !isDeletedPlaceServer(resolved)) {
+        return res.json(resolved);
+      }
+      return res.status(404).json({ error: "Place not found" });
+    }
+
     // 1. Try Bunny Database (Cloud libSQL)
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
@@ -20884,7 +20893,30 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
       });
       if (res.rows && res.rows.length > 0) {
         const row: any = res.rows[0];
-        if (row.name) place.name = row.name;
+        let pData: any = {};
+        if (row.data) {
+          try {
+            pData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {});
+          } catch (e) {}
+        }
+        
+        place = {
+          ...place,
+          ...pData,
+          id: row.id || place.id,
+          name: row.name || pData.name || place.name,
+          address: row.address || pData.address || place.address,
+          city: row.city || pData.city || place.city,
+          country: row.country || pData.country || place.country,
+          category: row.category || pData.category || place.category,
+          latitude: typeof row.latitude === 'number' ? row.latitude : (pData.lat || place.latitude || 0),
+          longitude: typeof row.longitude === 'number' ? row.longitude : (pData.lng || place.longitude || 0),
+          phone: pData.phone || row.phone || place.phone || "",
+          email: pData.email || row.email || place.email || "",
+          openingHours: pData.openingHours || row.openingHours || place.openingHours || "",
+          website: pData.website || row.website || place.website || "",
+          description: pData.description || row.description || place.description || ""
+        };
         if (row.logoUrl && !row.logoUrl.startsWith("data:;")) place.logoUrl = row.logoUrl;
         if (row.avatarUrl && !row.avatarUrl.startsWith("data:;")) place.avatarUrl = row.avatarUrl;
         if (row.bannerUrl) place.bannerUrl = row.bannerUrl;
@@ -20900,10 +20932,19 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
       const dbPlaces: any = await activeDb.select().from(places).where(eq(places.id, raw)).limit(1).catch(() => []);
       if (dbPlaces && dbPlaces.length > 0) {
         const p = dbPlaces[0];
+        place.id = p.id || place.id;
         if (p.name) place.name = p.name;
         if (p.logoUrl) place.logoUrl = p.logoUrl;
         if (p.avatarUrl) place.avatarUrl = p.avatarUrl;
         if (p.bannerUrl) place.bannerUrl = p.bannerUrl;
+        if (p.address) place.address = p.address;
+        if (p.city) place.city = p.city;
+        if (p.country) place.country = p.country;
+        if (p.category) place.category = p.category;
+        if (p.phone) place.phone = p.phone;
+        if (p.email) place.email = p.email;
+        if (p.openingHours) place.openingHours = p.openingHours;
+        if (p.website) place.website = p.website;
       }
     }
   } catch (e) {}

@@ -329,19 +329,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [rawPlaceVideos, place?.name, place?.id, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
-    if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com")) {
+    if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com") && (!place.website.includes("g.com") || place.id === "g.com")) {
       const w = place.website.trim();
       return w.startsWith("http://") || w.startsWith("https://") ? w : `https://${w}`;
     }
-    if (drawerDomain) {
+    if (drawerDomain && (drawerDomain !== "g.com" || place.id === "g.com")) {
       return `https://${drawerDomain}`;
     }
-    if (place.brandDomain) {
+    if (place.brandDomain && (place.brandDomain !== "g.com" || place.id === "g.com")) {
       const d = extractCleanDomain(place.brandDomain);
       if (d) return `https://${d}`;
     }
     const cleanFromId = extractCleanDomain(place.id);
-    if (cleanFromId && cleanFromId.includes(".")) {
+    if (cleanFromId && cleanFromId.includes(".") && (cleanFromId !== "g.com" || place.id === "g.com")) {
       return `https://${cleanFromId}`;
     }
     return null;

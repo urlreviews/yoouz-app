@@ -126,6 +126,10 @@ export function App() {
                 p.ogImage = "";
               }
               const isYoouz = p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz') || p.brandDomain === 'yoouz.com';
+              let finalWebsite = p.website || '';
+              if (finalWebsite.includes('g.com') && p.id && p.id !== 'g.com') {
+                finalWebsite = p.id.includes('.') ? `https://${p.id}` : '';
+              }
               return {
                 ...p,
                 logoUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.logoUrl,
@@ -139,7 +143,8 @@ export function App() {
                 isVerified: isYoouz ? true : Boolean(p.isVerified),
                 claimedByEmail: isYoouz ? 'info@yoouz.com' : p.claimedByEmail,
                 rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
-                totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0)
+                totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0),
+                website: finalWebsite
               };
             });
           if (!list.some(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'))) {
