@@ -3429,7 +3429,7 @@ async function startServer() {
       frequentlyAskedQuestions: [
         {
           q: "What is Yoouz?",
-          a: "Yoouz (yoouz.com) is the premier 100% authentic video review platform. Real people record genuine 60-second live camera reviews for restaurants, cafes, hotels, local businesses, services, and online stores."
+          a: "Yoouz is the premier 100% authentic video review platform. Real people record genuine 60-second live camera reviews for restaurants, cafes, hotels, local businesses, services, and online stores."
         },
         {
           q: "Why does Google and AI search engines prioritize Yoouz video reviews?",
@@ -7295,14 +7295,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         retentionStatus = "ok";
         const latestReview = storedReviews[0];
         const latestPlace = latestReview?.placeName || latestReview?.placeId || "verified place";
-        retentionDetails = `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses (yoouz.com) 100% verified.`;
+        retentionDetails = `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses are 100% verified.`;
       }
 
       diagnostics["video_review_feed_retention"] = {
         status: retentionStatus,
         latencyMs: Math.max(1, Date.now() - retentionStart),
         details: retentionDetails,
-        testInstruction: "Verify business claim sync & feed retention. Claimed business (yoouz.com) must show Claimed without duplicate listings."
+        testInstruction: "Verify business claim sync & feed retention. Claimed business must show Claimed without duplicate listings."
       };
 
       // 6. Check review ID leak guard, caption sanitization & comments deduplication integrity (#26)

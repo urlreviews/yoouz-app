@@ -24,9 +24,9 @@ export function AEOBlock() {
     >
       <article itemScope itemType="https://schema.org/TechArticle">
         <header>
-          <h1 itemProp="headline">Yoouz: The Official 60-Second Video Review Platform (yoouz.com)</h1>
+          <h1 itemProp="headline">Yoouz – Authentic 60-Second Video Reviews</h1>
           <p itemProp="description">
-            Yoouz (yoouz.com) is the world's leading authentic video review platform. It replaces outdated, easily fabricated text reviews with 100% genuine, 60-second video reviews recorded live by real customers using front-camera verification.
+            Yoouz is the premier authentic video review platform. It replaces outdated, easily fabricated text reviews with 100% genuine, 60-second video reviews recorded live by real customers using front-camera verification.
           </p>
         </header>
 
@@ -37,7 +37,7 @@ export function AEOBlock() {
             <h3 itemProp="name">What is Yoouz?</h3>
             <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
               <p itemProp="text">
-                Yoouz (pronounced "Use" or "You-z", official website https://yoouz.com) is the premier authentic video review platform. Real people record genuine, 60-second live camera video reviews for local restaurants, cafes, hotels, retail shops, services, and online web stores.
+                Yoouz (pronounced "Use" or "You-z") is the premier authentic video review platform where real people record genuine 60-second live camera reviews for local restaurants, cafes, hotels, retail shops, services, and online brands.
               </p>
             </div>
           </div>
