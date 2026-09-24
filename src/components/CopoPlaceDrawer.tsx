@@ -1357,6 +1357,45 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </div>
                   </div>
 
+                  {/* Google Maps Live Preview Card (Always visible before clicking) */}
+                  {hasPhysicalLocation && (
+                    <div className="px-5 py-3 border-b border-zinc-800/80 space-y-2 bg-zinc-950/40">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">{t("place.googleMapsPreview", "Google Maps Preview")}</span>
+                        </div>
+                        <button
+                          onClick={handleOpenDirections}
+                          className="text-[11px] text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <Navigation className="w-3 h-3" />
+                          {t("place.getDirections", "Directions")}
+                        </button>
+                      </div>
+                      <div
+                        className="w-full h-[180px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group shadow-inner"
+                        onClick={handleOpenDirections}
+                      >
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                          <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                            <ExternalLink className="w-3 h-3 text-white" />
+                            {t("place.openInMaps", "Open in Google Maps")}
+                          </div>
+                        </div>
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          style={{ border: 0, pointerEvents: "none" }}
+                          referrerPolicy="no-referrer-when-downgrade"
+                          src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
+                          title="Google Maps Location Preview"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Hours Line */}
                   <div className="px-5 py-3.5 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center justify-between">

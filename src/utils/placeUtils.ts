@@ -249,6 +249,16 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "toptechbelgiumsrl": "Toptech Belgium SRL",
   "bhol": "B'Chadrei Charedim",
   "bhol.co.il": "B'Chadrei Charedim",
+  "tandis": "Tandis",
+  "tandis.be": "Tandis",
+  "dentisteerpent": "Dentiste Erpent",
+  "dentisteerpent.be": "Dentiste Erpent",
+  "dentiste-namur": "Dentiste Namur",
+  "dentiste-namur.be": "Dentiste Namur",
+  "brusselsdental": "Brussels Dental",
+  "brusselsdental.com": "Brussels Dental",
+  "aldhabidental": "Al Dhabi Dental Center",
+  "aldhabidental.ae": "Al Dhabi Dental Center",
   "brettlevy": "Brett Levy",
   "brettlevy.com": "Brett Levy",
   "yoouz": "Yoouz",
@@ -328,7 +338,8 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
   
   // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
-  const commonWords = /(lerner|rowe|and|benson|bingham|injury|accident|lawyers|lawyer|attorneys|attorney|lawfirm|dentists|dentist|dental|clinic|center|centre|park|hotels|hotel|avenue|valley|therapy|services|service|solutions|solution|group|media|news|technology|tech|studios|studio|travel|cafe|coffee|bar|suites|suite|hospitals|hospital|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spa|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumber|plomberie|cancellations|cancellation|motors|motor|auto|rentals|rental|logistics|express|trusted|trust|capital|consulting|associates|associate|partners|partner|properties|realestate|agency|law|firm|orthodontics|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  // Note: Avoid short sub-words like 'and' that cause false splits in words like 'tandis' or 'standard'
+  const commonWords = /(lerner|rowe|benson|bingham|injury|accident|lawyers|lawyer|attorneys|attorney|lawfirm|dentistes|dentiste|dentists|dentist|dental|clinics|clinic|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|services|service|solutions|solution|groups|group|media|news|technology|tech|studios|studio|travel|cafes|cafe|coffee|bars|bar|suites|suite|hospitals|hospital|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|plumber|plomberie|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|consulting|associates|associate|partners|partner|properties|realestate|agency|law|firm|orthodontics|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
@@ -588,9 +599,21 @@ export function isPlaceReviewMatch(
 
   // 1. STRICT DOMAIN ANTI-COLLISION CHECK:
   // If BOTH entities have domains, they ONLY match if the domains are IDENTICAL!
-  // If domains differ (e.g. dentiste-namur.be vs dentisteerpent.be), they are definitively DIFFERENT businesses!
+  // If domains differ (e.g. dentiste-namur.be vs dentisteerpent.be or tandis.be), they are definitively DIFFERENT businesses!
   if (placeDomain && vDomain) {
     return placeDomain.toLowerCase() === vDomain.toLowerCase();
+  }
+
+  // If one has a domain and the other does not, but one ID is a domain (contains dot or tld), they DO NOT match unless domains match!
+  if (placeDomain || vDomain) {
+    if (placeDomain && vPlaceId && vPlaceId.includes(".")) {
+      const vClean = extractCleanDomain(vPlaceId);
+      return vClean.toLowerCase() === placeDomain.toLowerCase();
+    }
+    if (vDomain && placeId && placeId.includes(".")) {
+      const pClean = extractCleanDomain(placeId);
+      return pClean.toLowerCase() === vDomain.toLowerCase();
+    }
   }
 
   // 2. Direct ID match
@@ -610,11 +633,13 @@ export function isPlaceReviewMatch(
     if (normPId && normVDomain && normPId === normVDomain) return true;
   }
 
-  // 4. Direct exact Place Name match (normalized)
-  const cleanPName = placeName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
-  const cleanVName = vPlaceName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
-  if (cleanPName && cleanVName && cleanPName === cleanVName && cleanPName.length > 2) {
-    return true;
+  // 4. Direct exact Place Name match (normalized) - ONLY if neither entity has a conflicting domain
+  if (!placeDomain && !vDomain) {
+    const cleanPName = placeName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+    const cleanVName = vPlaceName.toLowerCase().replace(/[^a-z0-9]/g, " ").replace(/\s+/g, " ").trim();
+    if (cleanPName && cleanVName && cleanPName === cleanVName && cleanPName.length > 2) {
+      return true;
+    }
   }
 
   // 5. Normalized slug match (e.g. "fiverr-com" vs "fiverr.com")
@@ -1927,10 +1952,19 @@ export const KNOWN_CITY_COORDINATES: Record<string, { lat: number; lng: number }
   "auckland": { lat: -36.8485, lng: 174.7633 },
   "mumbai": { lat: 18.9217, lng: 72.8332 },
   "brussels": { lat: 50.8503, lng: 4.3517 },
+  "bruxelles": { lat: 50.8503, lng: 4.3517 },
+  "antwerpen": { lat: 51.2194, lng: 4.4025 },
+  "antwerp": { lat: 51.2194, lng: 4.4025 },
+  "namur": { lat: 50.4674, lng: 4.8719 },
+  "erpent": { lat: 50.4578, lng: 4.9082 },
+  "ghent": { lat: 51.0543, lng: 3.7174 },
+  "gent": { lat: 51.0543, lng: 3.7174 },
+  "liege": { lat: 50.6326, lng: 5.5797 },
   "doha": { lat: 25.2854, lng: 51.5310 },
   "riyadh": { lat: 24.7136, lng: 46.6753 },
   "toronto": { lat: 43.6532, lng: -79.3832 },
-  "sydney": { lat: -33.8688, lng: 151.2093 }
+  "sydney": { lat: -33.8688, lng: 151.2093 },
+  "madrid": { lat: 40.4168, lng: -3.7038 }
 };
 
 /**
@@ -1968,27 +2002,19 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
 
   // 3. Resolve real physical address or city if available
   const rawAddress = (place?.address || "").trim();
+  const isUrlOnly = /^(https?:\/\/|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/.*)?$/i.test(rawAddress);
   const isGenericAddress = 
     !rawAddress ||
     rawAddress === placeKey ||
-    rawAddress.startsWith("http://") ||
-    rawAddress.startsWith("https://") ||
-    rawAddress.includes("www.") ||
-    rawAddress.includes(".com") ||
-    rawAddress.includes(".ae") ||
-    rawAddress.includes(".org") ||
-    rawAddress.includes(".be") ||
-    rawAddress.includes(".nz") ||
-    rawAddress.toLowerCase().includes("verified location") ||
-    rawAddress.toLowerCase().includes("verified listing") ||
-    rawAddress.toLowerCase().includes("verified business") ||
-    rawAddress.toLowerCase().includes("online") ||
-    rawAddress.toLowerCase().includes("worldwide") ||
-    rawAddress.toLowerCase().includes("global") ||
-    rawAddress.toLowerCase().includes("website") ||
-    rawAddress.toLowerCase().startsWith("official domain:") ||
-    rawAddress.toLowerCase().includes("global headquarters") ||
-    rawAddress.toLowerCase().includes("enterprise way");
+    isUrlOnly ||
+    rawAddress.toLowerCase() === "verified location" ||
+    rawAddress.toLowerCase() === "verified listing" ||
+    rawAddress.toLowerCase() === "verified business" ||
+    rawAddress.toLowerCase() === "online" ||
+    rawAddress.toLowerCase() === "worldwide" ||
+    rawAddress.toLowerCase() === "global" ||
+    rawAddress.toLowerCase() === "website" ||
+    rawAddress.toLowerCase().startsWith("official domain:");
 
   const rawCity = (place?.city || "").trim();
   const isGenericCity =
@@ -1999,7 +2025,7 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
     rawCity.toLowerCase() === "global";
 
   const rawCountry = (place?.country || "").trim();
-  const isGenericCountry = !rawCountry || rawCountry.toLowerCase() === "global";
+  const isGenericCountry = !rawCountry || rawCountry.toLowerCase() === "global" || rawCountry.toLowerCase() === "worldwide";
 
   // If we have a real street address
   if (!isGenericAddress) {
@@ -2016,14 +2042,11 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
     return `${name}, ${rawCountry}`;
   }
 
-  // Fallback to pure business name for Google Maps to find the official business entity
   return name;
 }
 
 /**
  * Returns the Google Maps Directions / Place Card URL using the resolved business name and location.
- * Uses the official Google Maps Search / Place API which places the pin directly on the establishment,
- * displays reviews/hours/photos, and provides direct navigation buttons without cross-continent errors.
  */
 export function getGoogleMapsDirectionsUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
   const query = getGoogleMapsQuery(place, customDisplayName);
@@ -2031,48 +2054,12 @@ export function getGoogleMapsDirectionsUrl(place?: Partial<Place> | null, custom
 }
 
 /**
- * Returns the Google Maps Embed URL using the resolved business name, coordinates and location.
- * Guarantees that neither existing nor new business pages will ever render an empty or broken map preview.
+ * Returns the Google Maps Embed URL using the resolved business name and location.
+ * Standard embed automatically renders the pin, map tiles, and street view without blank water or coordinate collisions.
  */
 export function getGoogleMapsEmbedUrl(place?: Partial<Place> | null, customDisplayName?: string): string {
-  const placeKey = (place?.id || place?.brandDomain || place?.name || "").toLowerCase().replace(/^www\./, "").trim();
-  const knownHq = KNOWN_BUSINESS_HEADQUARTERS[placeKey] || KNOWN_BUSINESS_HEADQUARTERS[placeKey.replace(/\.(com|org|net|ae|co\.nz|us|io)$/i, '')];
-  
-  let lat = place?.lat && place.lat !== 0 ? place.lat : knownHq?.lat;
-  let lng = place?.lng && place.lng !== 0 ? place.lng : knownHq?.lng;
-
-  if (!lat || !lng || (lat === 0 && lng === 0)) {
-    const cName = (place?.city || "").toLowerCase().trim();
-    if (cName && KNOWN_CITY_COORDINATES[cName]) {
-      lat = KNOWN_CITY_COORDINATES[cName].lat;
-      lng = KNOWN_CITY_COORDINATES[cName].lng;
-    } else if (cName.includes("miami")) {
-      lat = 25.7907; lng = -80.1408;
-    } else if (cName.includes("boston")) {
-      lat = 42.3601; lng = -71.0589;
-    } else if (cName.includes("vegas")) {
-      lat = 36.1699; lng = -115.1398;
-    } else if (cName.includes("york")) {
-      lat = 40.7128; lng = -74.0060;
-    } else if (cName.includes("london")) {
-      lat = 51.5074; lng = -0.1278;
-    } else if (cName.includes("dubai")) {
-      lat = 25.2048; lng = 55.2708;
-    } else if (cName.includes("phoenix")) {
-      lat = 33.4484; lng = -112.0740;
-    } else if (cName.includes("paris")) {
-      lat = 48.8566; lng = 2.3522;
-    } else if (cName.includes("auckland")) {
-      lat = -36.8485; lng = 174.7633;
-    } else {
-      // Default to high-density center (New York Manhattan) so the map is never empty or pointing to 0,0 Null Island
-      lat = 40.7128; lng = -74.0060;
-    }
-  }
-
   const query = getGoogleMapsQuery(place, customDisplayName);
-
-  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&ll=${lat},${lng}&hl=en&z=15&output=embed`;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 }
 
 /**

@@ -19,7 +19,7 @@ import {
   Tag
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { formatBusinessName, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
+import { formatBusinessName, getEffectivePlaceDescription, formatPhoneNumber, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { GoogleVideoReviewCard } from "./GoogleVideoReviewCard";
 
@@ -436,6 +436,32 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Google Maps Live Interactive Preview (Always visible before clicking) */}
+              {(place.address || place.city) && (
+                <div className="pt-1 pb-1">
+                  <div
+                    className="w-full h-[180px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group shadow-inner"
+                    onClick={onOpenDirections}
+                  >
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                      <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                        <Navigation className="w-3 h-3 text-white" />
+                        <span>Open in Google Maps</span>
+                      </div>
+                    </div>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0, pointerEvents: "none" }}
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={getGoogleMapsEmbedUrl(place, formatBusinessName(place.name))}
+                      title="Google Maps Location Preview"
+                    />
+                  </div>
+                </div>
+              )}
 
               {place.openingHours && (
                 <div className="flex items-center gap-3">
