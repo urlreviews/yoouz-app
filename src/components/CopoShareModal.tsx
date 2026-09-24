@@ -105,6 +105,57 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   }, [isModalOpen, video?.id]);
 
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(() => {
+    if (!video) return false;
+    try {
+      const saved = localStorage.getItem("yoouz_bookmarked_reviews") || "[]";
+      const list = JSON.parse(saved);
+      return Array.isArray(list) && list.includes(video.id);
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (video) {
+      try {
+        const saved = localStorage.getItem("yoouz_bookmarked_reviews") || "[]";
+        const list = JSON.parse(saved);
+        setIsBookmarked(Array.isArray(list) && list.includes(video.id));
+      } catch {
+        setIsBookmarked(false);
+      }
+    }
+  }, [video?.id]);
+
+  const handleBookmarkToggle = () => {
+    if (!video) {
+      triggerHaptic("medium");
+      setIsBookmarked(!isBookmarked);
+      setToastMessage(isBookmarked ? "Removed from Bookmarks" : "Saved to Bookmarks");
+      setTimeout(() => setToastMessage(null), 2500);
+      return;
+    }
+    triggerHaptic("medium");
+    const nextVal = !isBookmarked;
+    setIsBookmarked(nextVal);
+    try {
+      const saved = localStorage.getItem("yoouz_bookmarked_reviews") || "[]";
+      let list = JSON.parse(saved);
+      if (!Array.isArray(list)) list = [];
+      if (nextVal) {
+        if (!list.includes(video.id)) list.push(video.id);
+      } else {
+        list = list.filter((id: string) => id !== video.id);
+      }
+      localStorage.setItem("yoouz_bookmarked_reviews", JSON.stringify(list));
+      setToastMessage(nextVal ? "Saved to Bookmarks" : "Removed from Bookmarks");
+      setTimeout(() => setToastMessage(null), 2500);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // Keyboard shortcut: Escape to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -492,6 +543,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       icon: <Share2 className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
       onClick: handleNativeShare
+    },
+    {
+      id: "bookmark",
+      name: isBookmarked ? "Saved" : "Save Review",
+      icon: isBookmarked ? <Bookmark className="w-5.5 h-5.5 stroke-[2.5] text-amber-400 fill-amber-400" /> : <Bookmark className="w-5.5 h-5.5 text-zinc-100" />,
+      circleClass: isBookmarked
+        ? "bg-amber-950/90 border-amber-500/80 text-amber-300"
+        : "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+      onClick: handleBookmarkToggle
     },
     {
       id: "open",
