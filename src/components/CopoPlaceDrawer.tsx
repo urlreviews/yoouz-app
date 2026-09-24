@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -1215,7 +1215,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-200">{t("place.aboutThisBusiness", "About this business")}</p>
                     <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed">
-                      {place.description || t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
+                      {getEffectivePlaceDescription(place)}
                     </p>
                   </div>
                   <ChevronDown className="w-4 h-4 text-zinc-200 -rotate-90 mt-4 group-hover:text-white transition-colors" />
@@ -1652,8 +1652,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {t("place.businessDescription", "Business Description")}
                 </span>
                 <p className="text-xs text-zinc-200 leading-relaxed font-medium">
-                  {place.description ||
-                    t("place.defaultDescription", "Verified Yoouz business listing with authentic video reviews from real users.")}
+                  {getEffectivePlaceDescription(place)}
                 </p>
               </div>
 

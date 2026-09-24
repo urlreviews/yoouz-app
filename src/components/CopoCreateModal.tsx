@@ -26,7 +26,7 @@ import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -801,7 +801,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       placeWebsite: selectedPlace.website || (placeDomain ? `https://${placeDomain}` : ""),
       placeLogoUrl: resolvedPlaceLogo,
       placeBannerUrl: resolvedPlaceBanner,
-      placeDescription: selectedPlace.description || "",
+      placeDescription: getEffectivePlaceDescription(selectedPlace) || selectedPlace.description || "",
       author: {
         name: resolvedAuthor.name || "Verified Reviewer",
         handle: resolvedAuthor.handle || "@reviewer",
@@ -1101,17 +1101,28 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;") && !foundPlace.logoUrl.includes("tap/0.png")) ? foundPlace.logoUrl : (fetchedLogo || ""),
               avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;") && !foundPlace.avatarUrl.includes("tap/0.png")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
               bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
-              description: foundPlace.description || data.description || "",
+              description: getEffectivePlaceDescription({
+                ...foundPlace,
+                name: foundPlace.name || data.siteName || data.title,
+                description: foundPlace.description || data.description,
+                category: foundPlace.category || data.category,
+                city: foundPlace.city || data.city,
+                domain: data.domain || domain
+              }),
             };
           } else {
+            const newBizName = formatBusinessName(data.siteName || data.title, data.domain || domain) || formatBusinessName(data.domain || domain) || (data.domain || domain);
+            const newBizCat = data.category || "Website";
+            const newBizCity = data.city || "";
+            const newBizCountry = data.country || "";
             foundPlace = {
               id: placeId,
-              name: formatBusinessName(data.siteName || data.title, data.domain || domain) || formatBusinessName(data.domain || domain) || (data.domain || domain),
-              category: data.category || "Website",
+              name: newBizName,
+              category: newBizCat,
               categoryType: "all",
               address: data.address || "",
-              city: data.city || "",
-              country: data.country || "",
+              city: newBizCity,
+              country: newBizCountry,
               lat: data.lat || 0,
               lng: data.lng || 0,
               rating: 5,
@@ -1128,7 +1139,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               website: data.url || domain,
               priceRange: "N/A",
               plusCode: "",
-              description: data.description || "",
+              description: getEffectivePlaceDescription({
+                id: placeId,
+                name: newBizName,
+                category: newBizCat,
+                city: newBizCity,
+                country: newBizCountry,
+                website: data.url || domain,
+                domain: data.domain || domain,
+                description: data.description
+              }),
               popularKeywords: [],
               amenities: [],
               topDishes: [],

@@ -19,7 +19,7 @@ import {
   Tag
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { formatBusinessName } from "../utils/placeUtils";
+import { formatBusinessName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { GoogleVideoReviewCard } from "./GoogleVideoReviewCard";
 
@@ -420,9 +420,9 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
         {/* TAB 2: OVERVIEW */}
         {activeTab === "overview" && (
           <div className="space-y-4 text-[14px] text-zinc-100">
-            {place.description && (
+            {getEffectivePlaceDescription(place) && (
               <p className="text-zinc-200 leading-relaxed text-[13px] bg-zinc-900 p-3 rounded-xl border border-zinc-800">
-                {place.description}
+                {getEffectivePlaceDescription(place)}
               </p>
             )}
 
@@ -504,7 +504,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                 <span>About {formatBusinessName(place.name)}</span>
               </h4>
               <p className="text-[13px] text-zinc-200 leading-relaxed font-normal">
-                {place.description || "Verified Yoouz business listing with authentic video reviews from real users."}
+                {getEffectivePlaceDescription(place)}
               </p>
             </div>
 

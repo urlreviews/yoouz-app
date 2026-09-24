@@ -821,18 +821,33 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     };
   }
 
-  const initialDescription = video.placeDescription || "";
   const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
   const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
+  const formattedName = formatBusinessName(video.placeName || domain) || "Verified Business";
+  const initialCategory = video.placeCategory || "Establishment";
+  const initialCity = isYoouz ? "" : (video.placeCity || "");
+  const initialCountry = isYoouz ? "" : (video.placeCountry || "");
+  
+  const rawDescription = video.placeDescription || "";
+  const computedDescription = getEffectivePlaceDescription({
+    id: cleanId,
+    name: formattedName,
+    category: initialCategory,
+    city: initialCity,
+    country: initialCountry,
+    website: video.placeWebsite || (domain ? `https://${domain}` : ""),
+    brandDomain: domain || undefined,
+    description: rawDescription
+  });
 
   return {
     id: cleanId,
-    name: formatBusinessName(video.placeName || domain) || "Verified Business",
-    category: video.placeCategory || "Establishment",
+    name: formattedName,
+    category: initialCategory,
     categoryType: "all",
     address: isYoouz ? "" : cleanReviewAddr,
-    city: isYoouz ? "" : (video.placeCity || ""),
-    country: isYoouz ? "" : (video.placeCountry || ""),
+    city: initialCity,
+    country: initialCountry,
     lat: 0,
     lng: 0,
     rating: video.rating || 5.0,
@@ -852,11 +867,144 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     priceRange: "N/A",
     isSavedToProfile: true,
     plusCode: "",
-    description: initialDescription || `Verified video review destination for ${formatBusinessName(video.placeName || domain)}.`,
+    description: computedDescription,
     popularKeywords: [{ tag: "Verified", count: 1 }],
     amenities: [],
     topDishes: []
   };
+}
+
+/**
+ * Generates an authentic, context-aware business description tailored to the specific business
+ */
+export function generateSmartPlaceDescription(params: {
+  name?: string;
+  category?: string;
+  city?: string;
+  country?: string;
+  website?: string;
+  domain?: string;
+  address?: string;
+}): string {
+  const name = (params.name || params.domain || "This business").trim();
+  const domain = (params.domain || "").toLowerCase();
+  const cat = (params.category || "").toLowerCase();
+  const nameLower = name.toLowerCase();
+
+  const isYoouz = domain === "yoouz.com" || domain === "yoouz" || nameLower === "yoouz";
+  if (isYoouz) {
+    return "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.";
+  }
+
+  // Location string construction
+  let locStr = "";
+  if (params.city && params.city !== "Online" && params.city !== "Worldwide") {
+    locStr = ` in ${params.city}${params.country ? ', ' + params.country : ''}`;
+  } else if (params.country && params.country !== "Worldwide" && params.country !== "Global") {
+    locStr = ` in ${params.country}`;
+  } else if (params.address && !params.address.startsWith("http") && params.address !== "Verified Location") {
+    locStr = ` located at ${params.address}`;
+  } else if (params.domain) {
+    locStr = ` online at ${params.domain}`;
+  }
+
+  // Domain/name specific known descriptions
+  if (domain.includes("dentiste-namur") || (nameLower.includes("dentist e") && locStr.includes("Namur"))) {
+    return "Dentist E is a premier dental clinic located in Namur, Belgium, providing comprehensive oral healthcare, routine checkups, cosmetic dentistry, and gentle patient treatments.";
+  }
+  if (domain.includes("brusselsdental") || nameLower.includes("brussels dental")) {
+    return "Full-service high quality dental treatment center with English and French speaking dentists and specialists in Brussels, Belgium.";
+  }
+  if (domain.includes("aldhabidental") || nameLower.includes("al dhabi")) {
+    return "Premier dental clinic in Abu Dhabi, UAE delivering comprehensive oral healthcare, cosmetic dentistry, orthodontic care, and dental implants.";
+  }
+  if (domain.includes("londontrustedtherapy") || nameLower.includes("london trusted therapy")) {
+    return "Private psychology, therapy, and counseling services in Harley Street and central London.";
+  }
+  if (domain.includes("legal500") || nameLower.includes("legal 500")) {
+    return "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.";
+  }
+  if (domain.includes("digitalpark") || nameLower.includes("digital park")) {
+    return "Digital Park is Dubai Silicon Oasis's premier integrated smart community and technology business park.";
+  }
+
+  // Industry / Category specific templates
+  if (cat.includes("dentist") || cat.includes("dental") || nameLower.includes("dentist") || nameLower.includes("dental")) {
+    return `${name} is a trusted dental clinic${locStr}, providing comprehensive oral healthcare, preventive checkups, cosmetic dentistry, and patient-centered dental care.`;
+  }
+  if (cat.includes("law") || cat.includes("legal") || cat.includes("attorney") || cat.includes("lawyer") || nameLower.includes("law") || nameLower.includes("attorney")) {
+    return `${name} is a dedicated law practice${locStr}, offering expert legal counsel, professional representation, and trusted advisory services for clients.`;
+  }
+  if (cat.includes("restaurant") || cat.includes("cafe") || cat.includes("food") || cat.includes("dining") || cat.includes("bakery") || cat.includes("bistro")) {
+    return `${name} is a popular dining destination${locStr}, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.`;
+  }
+  if (cat.includes("hotel") || cat.includes("resort") || cat.includes("hospitality") || cat.includes("accommodation") || cat.includes("lodge")) {
+    return `${name} is a premier hospitality destination${locStr}, offering comfortable accommodations, top-tier amenities, and attentive guest service.`;
+  }
+  if (cat.includes("spa") || cat.includes("massage") || cat.includes("wellness") || cat.includes("therapy") || cat.includes("counseling")) {
+    return `${name} is a dedicated wellness and therapy center${locStr}, providing restorative treatments, professional care, and personalized wellness services.`;
+  }
+  if (cat.includes("auto") || cat.includes("car") || cat.includes("vehicle") || cat.includes("rental")) {
+    return `${name} is a dependable automotive and transportation service provider${locStr}, delivering reliable vehicle solutions and quality customer support.`;
+  }
+  if (cat.includes("tech") || cat.includes("digital") || cat.includes("software") || cat.includes("it ") || cat.includes("media")) {
+    return `${name} provides innovative digital solutions, modern technology services, and trusted professional capabilities.`;
+  }
+  if (cat.includes("health") || cat.includes("medical") || cat.includes("clinic") || cat.includes("hospital") || cat.includes("doctor")) {
+    return `${name} is a premier healthcare practice${locStr}, committed to delivering high-quality medical services and personalized patient care.`;
+  }
+  if (cat.includes("plumb") || cat.includes("electric") || cat.includes("contractor") || cat.includes("service") || cat.includes("repair")) {
+    return `${name} provides professional, reliable emergency and maintenance services${locStr}, dedicated to quality workmanship and prompt client care.`;
+  }
+
+  // Default professional business description
+  return `${name} is a verified business and service provider${locStr}, committed to delivering high quality services, verified expertise, and excellent customer satisfaction.`;
+}
+
+/**
+ * Returns a guaranteed valid, business-specific description for any Place or VideoReview
+ */
+export function getEffectivePlaceDescription(place?: any, fallbackCategory?: string): string {
+  if (!place) return "";
+
+  const rawDesc = place.description || place.placeDescription;
+  const isGeneric = !rawDesc ||
+    typeof rawDesc !== "string" ||
+    rawDesc.trim() === "" ||
+    rawDesc === "undefined" ||
+    rawDesc.toLowerCase() === "home" ||
+    rawDesc.includes("Verified Yoouz business listing") ||
+    rawDesc.includes("Verified Yoouz location review") ||
+    rawDesc.includes("Verified video review destination") ||
+    rawDesc.includes("No description available");
+
+  const name = place.name || place.placeName || "";
+  const domain = (place.brandDomain || place.domain || (place.id?.includes(".") ? place.id : "") || extractCleanDomain(place.website || place.id || name) || "").toLowerCase();
+  const isActuallyYoouz = domain === "yoouz.com" || domain === "yoouz" || name.toLowerCase() === "yoouz";
+
+  if (!isGeneric) {
+    const trimmed = rawDesc.trim();
+    // If the place is NOT Yoouz, but description mentions "Yoouz is the premier authentic video review platform"
+    if (!isActuallyYoouz && (trimmed.toLowerCase().includes("yoouz is the premier") || trimmed.toLowerCase().includes("100% genuine 60-second video reviews"))) {
+      // Discard and generate accurate business description below
+    } else {
+      return trimmed;
+    }
+  }
+
+  if (isActuallyYoouz) {
+    return "Official verified business profile for Yoouz. 100% authentic 60-second video reviews by real customers. Zero fake text reviews.";
+  }
+
+  return generateSmartPlaceDescription({
+    name: name || domain,
+    category: place.category || place.placeCategory || fallbackCategory,
+    city: place.city || place.placeCity,
+    country: place.country || place.placeCountry,
+    website: place.website || place.placeWebsite,
+    domain: domain,
+    address: place.address || place.placeAddress
+  });
 }
 
 export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {

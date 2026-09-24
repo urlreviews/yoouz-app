@@ -42,7 +42,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -3530,7 +3530,13 @@ export function App() {
 
           const effectiveBanner = existingBanner || existingOg || reviewBanner || knownBanner || (isYoouz ? YOOUZ_CDN_BANNER : "") || "";
           const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (knownLogo || reviewLogo || (isYoouz ? "/favicon.svg" : "")));
-          const effectiveDescription = v.placeDescription || (existing.description && !existing.description.includes("Verified video review destination") && !existing.description.includes("Verified Yoouz business listing") ? existing.description : "");
+          const effectiveDescription = getEffectivePlaceDescription({
+            ...existing,
+            description: v.placeDescription || existing.description,
+            name: existing.name || v.placeName,
+            domain: reviewDomain,
+            website: effectiveWeb
+          });
 
           if (
             (!existing.bannerUrl && effectiveBanner) ||
@@ -3539,7 +3545,7 @@ export function App() {
             (!existing.website && effectiveWeb) ||
             (!existing.brandDomain && reviewDomain) ||
             (existing.bannerUrl === "" && effectiveBanner !== "") ||
-            (effectiveDescription && (!existing.description || existing.description.includes("Verified video review destination") || existing.description.includes("Verified Yoouz business listing")))
+            (effectiveDescription && effectiveDescription !== existing.description)
           ) {
             next[idx] = {
               ...existing,
@@ -3652,7 +3658,7 @@ export function App() {
           website: domain ? `https://${domain}` : "",
           priceRange: "$",
           plusCode: "",
-          description: "Verified Yoouz location review destination.",
+          description: getEffectivePlaceDescription({ name: domain || searchId, domain: domain, website: domain ? `https://${domain}` : "" }),
           popularKeywords: [{ tag: "Verified", count: 1 }],
           amenities: ["Wheelchair accessible entrance"],
           topDishes: [],
@@ -5867,7 +5873,11 @@ export function App() {
               bannerUrl: p.bannerUrl || newReview.placeBannerUrl || p.ogImage || "",
               ogImage: p.ogImage || newReview.placeBannerUrl || p.bannerUrl || "",
               website: p.website || newReview.placeWebsite || "",
-              description: newReview.placeDescription || (p.description && !p.description.includes("Verified video review destination") && !p.description.includes("Verified Yoouz business listing") ? p.description : "") || p.description || ""
+              description: getEffectivePlaceDescription({
+                ...p,
+                description: newReview.placeDescription || p.description,
+                name: p.name || newReview.placeName
+              })
             };
             return targetPlace;
           }

@@ -17825,7 +17825,7 @@ Return JSON:
         image = domainBanners[cleanDomain] || "";
       }
 
-      // High-accuracy fallback descriptions for major websites
+      // High-accuracy fallback descriptions for major websites and businesses
       const domainDescriptions: Record<string, string> = {
         "lernerandrowe.com": "Lerner and Rowe Injury Attorneys is a premier personal injury and accident law firm dedicated to fighting for victims across the nation.",
         "lernerandrowelaw.com": "Lerner and Rowe Injury Attorneys is a premier personal injury and accident law firm dedicated to fighting for victims across the nation.",
@@ -17837,13 +17837,29 @@ Return JSON:
         "spotify.com": "Spotify is a digital music, podcast, and video service that gives you access to millions of songs.",
         "usa.com": "USA.com provides local and national information, resources, and public data across the United States.",
         "legal500.com": "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
-        "digitalpark.ae": "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
-        "aldhabidental.ae": "Premier dental clinic in the UAE delivering comprehensive oral healthcare, cosmetic dentistry, and dental implants.",
+        "digitalpark.ae": "Digital Park is Dubai Silicon Oasis's premier integrated smart community and technology business park.",
+        "aldhabidental.ae": "Premier dental clinic in Abu Dhabi, UAE delivering comprehensive oral healthcare, cosmetic dentistry, orthodontic care, and dental implants.",
+        "brusselsdental.com": "Full-service high quality dental treatment center with English and French speaking dentists and specialists in Brussels, Belgium.",
+        "dentiste-namur.be": "Dentist E is a premier dental clinic located in Namur, Belgium, providing comprehensive oral healthcare, routine checkups, cosmetic dentistry, and gentle patient treatments.",
+        "londontrustedtherapy.com": "Private psychology, therapy, and counseling services in Harley Street and central London.",
+        "paultolandlaw.com": "Paul Toland Law Office provides expert legal defense and client advocacy across Boston, MA, specializing in criminal defense, litigation, and personal legal counsel.",
+        "brettlevy.com": "Brett A. Levy Law provides aggressive legal representation and dedicated criminal defense and litigation counsel in Phoenix, AZ.",
+        "paulpowell.com": "The Paul Powell Law Firm is a premier personal injury and accident law practice in Las Vegas, NV, dedicated to recovering maximum compensation for injured clients.",
+        "ramosdelcueto.com": "Ramos del Cueto is a distinguished legal advisory and law practice in Madrid, Spain, providing comprehensive corporate, civil, and commercial legal counsel.",
+        "lmdivorcelawyers.com": "LM Divorce Lawyers is an experienced family and divorce law firm in New York, NY, providing compassionate guidance, asset division, and marital legal representation.",
+        "booking.com": "Booking.com is a global leader in online travel reservations, connecting millions of travelers with hotels, vacation rentals, flights, and car rentals worldwide.",
+        "trip.com": "Trip.com is an international online travel agency offering one-stop booking services for flights, hotels, trains, car rentals, and travel tours across 5,000+ destinations worldwide.",
+        "avis.com": "Avis is a leading global car rental agency offering premium car rentals, commercial vehicle solutions, and reliable airport transit worldwide.",
+        "avis.vo": "Avis is a leading global car rental agency offering premium car rentals, commercial vehicle solutions, and reliable airport transit worldwide.",
+        "businessplace.com": "Businessplace is a premier business directory and service platform connecting consumers with verified local professionals and corporate services.",
         "plomberiebruxelles24.be": "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs.",
         "hertz.com": "Hertz is a premier global car rental company offering passenger and commercial vehicle rentals in over 160 countries worldwide."
       };
-      if (!description && domainDescriptions[cleanDomain]) {
-        description = domainDescriptions[cleanDomain];
+
+      if (!description || description.toLowerCase() === "home" || description.toLowerCase() === "welcome" || description.includes("Verified Yoouz business listing")) {
+        if (domainDescriptions[cleanDomain]) {
+          description = domainDescriptions[cleanDomain];
+        }
       }
 
       // Ensure logo is authentic and not a white/inverted or broken variant
@@ -17910,6 +17926,38 @@ Return JSON:
       let effectivePhone = locInfo.phone || "";
       let effectiveEmail = locInfo.email || "";
       let effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
+
+      if (!description || description.toLowerCase() === "home" || description.toLowerCase() === "welcome" || description.includes("Verified Yoouz business listing") || description === "No description available.") {
+        const placeName = isYoouz ? "Yoouz" : (title || cleanDomain);
+        if (isYoouz) {
+          description = "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.";
+        } else {
+          let locStr = "";
+          if (effectiveCity && effectiveCity !== "Online" && effectiveCity !== "Worldwide") {
+            locStr = ` in ${effectiveCity}${effectiveCountry ? ', ' + effectiveCountry : ''}`;
+          } else if (effectiveAddress && !effectiveAddress.startsWith("http")) {
+            locStr = ` located at ${effectiveAddress}`;
+          } else {
+            locStr = ` online at ${cleanDomain}`;
+          }
+          const catLower = effectiveCategory.toLowerCase();
+          if (catLower.includes("dentist") || catLower.includes("dental")) {
+            description = `${placeName} is a trusted dental clinic${locStr}, providing comprehensive oral healthcare, preventive checkups, cosmetic dentistry, and patient-centered dental care.`;
+          } else if (catLower.includes("law") || catLower.includes("legal") || catLower.includes("attorney")) {
+            description = `${placeName} is a dedicated law practice${locStr}, offering expert legal counsel, professional representation, and trusted advisory services for clients.`;
+          } else if (catLower.includes("restaurant") || catLower.includes("cafe") || catLower.includes("food") || catLower.includes("bistro")) {
+            description = `${placeName} is a popular dining destination${locStr}, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.`;
+          } else if (catLower.includes("hotel") || catLower.includes("resort") || catLower.includes("hospitality")) {
+            description = `${placeName} is a premier hospitality destination${locStr}, offering comfortable accommodations, top-tier amenities, and attentive guest service.`;
+          } else if (catLower.includes("spa") || catLower.includes("massage") || catLower.includes("wellness") || catLower.includes("therapy")) {
+            description = `${placeName} is a dedicated wellness and therapy center${locStr}, providing restorative treatments, professional care, and personalized wellness services.`;
+          } else if (catLower.includes("auto") || catLower.includes("car") || catLower.includes("vehicle") || catLower.includes("rental")) {
+            description = `${placeName} is a dependable automotive service provider${locStr}, delivering reliable vehicle solutions and quality customer support.`;
+          } else {
+            description = `${placeName} is a verified business and service provider${locStr}, committed to delivering high quality services, verified expertise, and excellent customer satisfaction.`;
+          }
+        }
+      }
 
       // Automatically persist to BunnyDB database immediately upon search so it is stored in system
       try {
