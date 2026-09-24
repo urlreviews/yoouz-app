@@ -406,7 +406,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     },
     {
       id: "wabusiness",
-      name: "WA Business",
+      name: "WA Biz",
       category: "favorites",
       bgClass: "bg-[#128C7E] text-white",
       icon: (
@@ -530,7 +530,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const actionButtons = [
     {
       id: "copy",
-      name: copied ? "Copied" : t("shareModal.copyLink", "Copy Link"),
+      name: copied ? "Copied" : t("shareModal.copyLinkShort", "Copy"),
       icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-emerald-400" /> : <Copy className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: copied
         ? "bg-emerald-950/90 border-emerald-500/80 text-emerald-300"
@@ -539,14 +539,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     },
     {
       id: "native-share",
-      name: t("shareModal.systemShare", "System Share"),
+      name: t("shareModal.systemShareShort", "Share"),
       icon: <Share2 className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
       onClick: handleNativeShare
     },
     {
       id: "bookmark",
-      name: isBookmarked ? "Saved" : "Save Review",
+      name: isBookmarked ? "Saved" : "Save",
       icon: isBookmarked ? <Bookmark className="w-5.5 h-5.5 stroke-[2.5] text-amber-400 fill-amber-400" /> : <Bookmark className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: isBookmarked
         ? "bg-amber-950/90 border-amber-500/80 text-amber-300"
@@ -555,7 +555,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     },
     {
       id: "open",
-      name: t("shareModal.openTab", "Open in Tab"),
+      name: t("shareModal.openTabShort", "Open"),
       icon: <ExternalLink className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
       onClick: () => {
@@ -565,7 +565,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     },
     ...(onOpenReport ? [{
       id: "report",
-      name: t("shareModal.report", "Report"),
+      name: t("shareModal.reportShort", "Report"),
       icon: <Flag className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
       onClick: () => {
@@ -711,12 +711,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     key={app.id}
                     type="button"
                     onClick={app.onClick}
-                    className="flex flex-col items-center group cursor-pointer shrink-0 w-15 focus:outline-hidden"
+                    className="flex flex-col items-center group cursor-pointer shrink-0 w-16 focus:outline-hidden"
                   >
                     <div className={`w-14 h-14 rounded-[18px] flex items-center justify-center shadow-md transition-all group-hover:scale-105 active:scale-95 ${app.bgClass}`}>
                       {app.icon}
                     </div>
-                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-normal truncate w-full text-center mt-1.5 transition-colors">
+                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
                       {app.name}
                     </span>
                   </button>
@@ -735,12 +735,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     key={action.id}
                     type="button"
                     onClick={action.onClick}
-                    className="flex flex-col items-center group cursor-pointer shrink-0 w-15 focus:outline-hidden"
+                    className="flex flex-col items-center group cursor-pointer shrink-0 w-16 focus:outline-hidden"
                   >
                     <div className={`w-13 h-13 rounded-full border flex items-center justify-center transition-all shadow-xs group-hover:scale-105 active:scale-95 ${action.circleClass}`}>
                       {action.icon}
                     </div>
-                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-normal truncate w-full text-center mt-1.5 transition-colors">
+                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
                       {action.name}
                     </span>
                   </button>
