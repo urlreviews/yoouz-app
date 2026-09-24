@@ -199,7 +199,33 @@ return () => window.removeEventListener("keydown", handleKeyDown);
      place.address.toLowerCase().includes("online") ||
      place.address.toLowerCase().includes("global headquarters"))
   );
-  const displayAddress = (isAddressUrl || !place.address || place.address.trim() === "") ? null : place.address;
+  const displayAddress = React.useMemo(() => {
+    if (isAddressUrl || !place.address || place.address.trim() === "" || place.address.trim() === "Verified Location") {
+      if (place.city && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim())) {
+        return [place.city, (place as any).state, place.country].filter(Boolean).join(", ");
+      }
+      return null;
+    }
+    let addr = place.address.trim();
+    const c = place.city ? place.city.trim() : "";
+    const st = (place as any).state ? (place as any).state.trim() : "";
+    const zip = (place as any).zipCode ? (place as any).zipCode.trim() : "";
+    const country = place.country ? place.country.trim() : "";
+
+    if (c && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(c.toLowerCase()) && !addr.toLowerCase().includes(c.toLowerCase())) {
+      addr += `, ${c}`;
+    }
+    if (st && !addr.toLowerCase().includes(st.toLowerCase())) {
+      addr += `, ${st}`;
+    }
+    if (zip && !addr.includes(zip)) {
+      addr += ` ${zip}`;
+    }
+    if (country && !addr.toLowerCase().includes(country.toLowerCase())) {
+      addr += `, ${country}`;
+    }
+    return addr;
+  }, [place, isAddressUrl]);
 
   const isYoouz = place.id === 'yoouz.com' || (place.name && place.name.toLowerCase() === 'yoouz') || place.brandDomain === 'yoouz.com' || (place.website && place.website.includes('yoouz.com'));
 

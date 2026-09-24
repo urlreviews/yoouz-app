@@ -16304,6 +16304,8 @@ Respond ONLY with a JSON object:
           let metaTitle = siteTitle;
           let metaDesc = `Official website of ${domain}`;
           let ogImage = "";
+          let metaPhone = "";
+          let metaEmail = "";
 
           try {
             const controller = new AbortController();
@@ -16324,6 +16326,14 @@ Respond ONLY with a JSON object:
               if (title && title.trim()) metaTitle = title.trim();
               if (desc && desc.trim()) metaDesc = desc.trim();
               if (img && img.trim()) ogImage = img.trim();
+
+              // Scrape phone
+              const telLink = $('a[href^="tel:"]').first().attr('href')?.replace('tel:', '').trim();
+              if (telLink) metaPhone = telLink;
+
+              // Scrape email
+              const mailLink = $('a[href^="mailto:"]').first().attr('href')?.replace('mailto:', '').trim();
+              if (mailLink && !mailLink.includes("example.com")) metaEmail = mailLink;
             }
           } catch (e) {
             // Fetch timeout or error, use domain defaults
@@ -16334,7 +16344,7 @@ Respond ONLY with a JSON object:
           const websitePlace = {
             id: `site-${domain.replace(/[^a-zA-Z0-9]/g, '-')}`,
             name: metaTitle,
-            category: "Website / Online Business",
+            category: "Business & Professional Services",
             address: domain,
             city: "Online",
             country: "Worldwide",
@@ -16345,9 +16355,10 @@ Respond ONLY with a JSON object:
             avatarUrl: faviconUrl,
             bannerUrl: ogImage || "",
             photos: ogImage ? [ogImage] : [],
-            openingHours: "24/7 Website",
+            openingHours: "Mon-Fri: 9:00 AM - 5:00 PM",
             isOpen: true,
-            phone: "",
+            phone: metaPhone,
+            email: metaEmail,
             website: targetUrl,
             description: metaDesc,
             amenities: ["Official Website", "Online Service"],
