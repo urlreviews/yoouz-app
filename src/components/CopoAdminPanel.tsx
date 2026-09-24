@@ -3035,6 +3035,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href="/testembed"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-amber-600/20"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 fill-current" />
+                    <span>Live Tester</span>
+                  </a>
                   <button
                     onClick={() => setIsAddPlaceOpen(true)}
                     className="px-3.5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
@@ -4098,12 +4107,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                       {/* Card Actions */}
                       <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
-                        <button
-                          onClick={() => setEditPlaceModal(biz)}
-                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
-                        >
-                          <Edit className="w-3.5 h-3.5" /> Edit Business
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditPlaceModal(biz)}
+                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
+                          >
+                            <Edit className="w-3.5 h-3.5" /> Edit
+                          </button>
+
+                          {domain && (
+                            <a
+                              href={`/testembed?slug=${encodeURIComponent(domain)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" /> Test Embed
+                            </a>
+                          )}
+                        </div>
 
                         {confirmDeleteBusinessId === biz.id ? (
                           <div className="flex items-center gap-1">

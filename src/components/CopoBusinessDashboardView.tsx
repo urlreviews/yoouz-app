@@ -2513,6 +2513,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   places={places}
                   videos={videos}
                   onExit={() => setShowEmbedTester(false)}
+                  restrictToPlace={currentPlace || undefined}
                 />
               </div>
             ) : (

@@ -1,20 +1,41 @@
 import React, { useState } from "react";
 import { Copy, Check, ExternalLink, ArrowLeft, Monitor, Smartphone, Maximize2, Sparkles, Code } from "lucide-react";
 import { Place, VideoReview } from "../types";
+import { getPlaceSlug } from "../utils/placeUtils";
 
 interface CopoTestEmbedViewProps {
   places: Place[];
   videos: VideoReview[];
   onExit: () => void;
+  restrictToPlace?: Place;
 }
 
 export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   places: _places,
   videos: _videos,
-  onExit
+  onExit,
+  restrictToPlace
 }) => {
-  const [testSlug, setTestSlug] = useState<string>("yoouz.com");
-  const [inputUrl, setInputUrl] = useState<string>("https://www.yoouz.com/embed/yoouz.com");
+  const [testSlug, setTestSlug] = useState<string>(() => {
+    if (restrictToPlace) {
+      return getPlaceSlug(restrictToPlace);
+    }
+    const params = new URLSearchParams(window.location.search);
+    const querySlug = params.get("slug");
+    return querySlug || "yoouz.com";
+  });
+  const [inputUrl, setInputUrl] = useState<string>(() => {
+    if (restrictToPlace) {
+      const slug = getPlaceSlug(restrictToPlace);
+      return `https://www.yoouz.com/embed/${slug}`;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const querySlug = params.get("slug");
+    if (querySlug) {
+      return `https://www.yoouz.com/embed/${querySlug}`;
+    }
+    return "https://www.yoouz.com/embed/yoouz.com";
+  });
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile" | "full">("desktop");
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [iframeKey, setIframeKey] = useState<number>(0);
@@ -76,7 +97,9 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
 
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h1 className="text-sm font-bold text-white">Yoouz Live Embed Tester</h1>
+            <h1 className="text-sm font-bold text-white">
+              {restrictToPlace ? `Live Embed Preview — ${restrictToPlace.name}` : "Yoouz Live Embed Tester"}
+            </h1>
           </div>
         </div>
 
@@ -114,44 +137,46 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
-        {/* Test Control Box */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
-          <form onSubmit={handleTestUrl} className="flex flex-col sm:flex-row gap-2.5">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
-                placeholder="https://www.yoouz.com/embed/yoouz.com"
-                className="w-full bg-zinc-950 border border-zinc-750 text-white font-mono text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-1.5 shrink-0"
-            >
-              <span>TEST</span>
-            </button>
-          </form>
-
-          {/* Quick Test Chips */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-semibold text-zinc-400">QUICK TESTS:</span>
-            {quickTests.map((t) => (
+        {/* Test Control Box - Hidden if restricted to a specific business */}
+        {!restrictToPlace && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+            <form onSubmit={handleTestUrl} className="flex flex-col sm:flex-row gap-2.5">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={inputUrl}
+                  onChange={(e) => setInputUrl(e.target.value)}
+                  placeholder="https://www.yoouz.com/embed/yoouz.com"
+                  className="w-full bg-zinc-950 border border-zinc-750 text-white font-mono text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
+                />
+              </div>
               <button
-                key={t.slug}
-                onClick={() => handleQuickSelect(t.slug)}
-                className={`text-xs px-2.5 py-1 rounded-lg border font-mono transition ${
-                  testSlug === t.slug
-                    ? "bg-amber-400/10 border-amber-400 text-amber-300 font-bold"
-                    : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white"
-                }`}
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-1.5 shrink-0"
               >
-                {t.label}
+                <span>TEST</span>
               </button>
-            ))}
+            </form>
+
+            {/* Quick Test Chips */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs font-semibold text-zinc-400">QUICK TESTS:</span>
+              {quickTests.map((t) => (
+                <button
+                  key={t.slug}
+                  onClick={() => handleQuickSelect(t.slug)}
+                  className={`text-xs px-2.5 py-1 rounded-lg border font-mono transition ${
+                    testSlug === t.slug
+                      ? "bg-amber-400/10 border-amber-400 text-amber-300 font-bold"
+                      : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Live Iframe Sandbox Preview Container */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl flex flex-col">
@@ -159,7 +184,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
             <div className="flex items-center gap-2 text-zinc-300 font-medium">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>
-                Live Iframe Test: <span className="font-mono text-white">/embed/{testSlug}</span>
+                {restrictToPlace ? "Live Widget Embed Preview" : `Live Iframe Test: /embed/${testSlug}`}
               </span>
             </div>
             <a
@@ -193,36 +218,6 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
               />
             </div>
           </div>
-        </div>
-
-        {/* Copyable Embed Code Snippet */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
-              <Code className="w-4 h-4 text-amber-400" />
-              <span>HTML Embed Code for Your Website</span>
-            </div>
-            <button
-              onClick={handleCopyCode}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white transition shadow-sm"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Snippet</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <pre className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] sm:text-xs font-mono text-amber-300/90 overflow-x-auto whitespace-pre-wrap leading-relaxed">
-            {fullEmbedSnippet}
-          </pre>
         </div>
       </main>
     </div>
