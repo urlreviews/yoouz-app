@@ -3069,7 +3069,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 type="button"
                                 onClick={() => handleDownloadVideoForAds(video)}
                                 className="flex-1 sm:flex-initial px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
-                                title="Export Ultra-HD branded 9:16 video review for TikTok, Meta & Google Ad campaigns"
+                                title="Export Ultra-HD branded 16:9 widescreen video review for Facebook, social media & web"
                               >
                                 <Download className="w-3.5 h-3.5 text-white" />
                                 <span>Export</span>

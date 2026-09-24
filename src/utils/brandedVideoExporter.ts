@@ -215,8 +215,8 @@ export function renderBrandedVideoOverlays(
   yoouzLogoImage?: HTMLImageElement | null,
   authorAvatarImage?: HTMLImageElement | null
 ) {
-  // Scale metrics relative to 440px baseline for exact layout parity
-  const safeScale = width / 440;
+  // Scale metrics relative to 800px baseline for 16:9 widescreen Full HD layout
+  const safeScale = width / 800;
 
   const rawPlaceName = place?.name || video.placeName || 'Yoouz';
   let placeName = rawPlaceName.trim();
@@ -232,6 +232,16 @@ export function renderBrandedVideoOverlays(
   ctx.save();
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+
+  // Ambient dark gradient vignette matching the Share Card
+  const vignetteGradient = ctx.createLinearGradient(0, height, 0, 0);
+  vignetteGradient.addColorStop(0.0, 'rgba(0, 0, 0, 0.85)');
+  vignetteGradient.addColorStop(0.25, 'rgba(0, 0, 0, 0.25)');
+  vignetteGradient.addColorStop(0.50, 'rgba(0, 0, 0, 0.0)');
+  vignetteGradient.addColorStop(0.80, 'rgba(0, 0, 0, 0.25)');
+  vignetteGradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.60)');
+  ctx.fillStyle = vignetteGradient;
+  ctx.fillRect(0, 0, width, height);
 
   // -------------------------------------------------------------
   // 1. TOP-LEFT VENUE & RATING PILL (Matches Share Modal: ★ PlaceName 4.0)
@@ -576,9 +586,9 @@ export async function exportBrandedAdVideo(
       const naturalHeight = videoEl.videoHeight || 1920;
       const duration = videoEl.duration || 5;
 
-      // 4. Set canvas dimensions to 1080x1920 (standard 9:16 vertical video across mobile & desktop) for real-time 60fps hardware encoding
-      const targetWidth = 1080;
-      const targetHeight = 1920;
+      // 4. Set canvas dimensions to 1920x1080 (standard 16:9 widescreen Full HD matching Share layout) for full-screen playback on Facebook, YouTube & Web
+      const targetWidth = 1920;
+      const targetHeight = 1080;
 
       const canvas = document.createElement('canvas');
       canvas.width = targetWidth;

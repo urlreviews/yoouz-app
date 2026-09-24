@@ -1728,11 +1728,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         <Download className="w-4 h-4 text-white shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white flex items-center gap-2">
-                            <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
-                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">9:16</span>
+                            <span>{t("video.downloadForAds", "Download Video (MP4)")}</span>
+                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">16:9</span>
                           </div>
                           <div className="text-[11px] text-zinc-400 font-normal truncate">
-                            {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}
+                            {t("video.downloadForAdsDesc", "Full-width HD video for Facebook, social media & web")}
                           </div>
                         </div>
                       </button>
@@ -1838,11 +1838,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         <Download className="w-4 h-4 text-white shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-white flex items-center gap-2">
-                            <span>{t("video.downloadForAds", "Download for Ads (MP4)")}</span>
-                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">9:16</span>
+                            <span>{t("video.downloadForAds", "Download Video (MP4)")}</span>
+                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">16:9</span>
                           </div>
                           <div className="text-[11px] text-zinc-400 font-normal truncate">
-                            {t("video.downloadForAdsDesc", "Clean video for TikTok, Instagram & Facebook ads")}
+                            {t("video.downloadForAdsDesc", "Full-width HD video for Facebook, social media & web")}
                           </div>
                         </div>
                       </button>
