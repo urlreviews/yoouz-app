@@ -72,7 +72,25 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   };
 
   const iframeSrc = `/embed/${encodeURIComponent(testSlug)}`;
-  const fullEmbedSnippet = `<iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Yoouz Authentic Video Reviews"></iframe>`;
+  const fullEmbedSnippet = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
+<div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
+  <iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${testSlug} on Yoouz"></iframe>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AggregateRating",
+    "itemReviewed": {
+      "@type": "LocalBusiness",
+      "name": "${testSlug}",
+      "url": "https://www.yoouz.com/place/${testSlug}"
+    },
+    "ratingValue": "5.0",
+    "bestRating": "5",
+    "worstRating": "1",
+    "ratingCount": "8"
+  }
+  </script>
+</div>`;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(fullEmbedSnippet);

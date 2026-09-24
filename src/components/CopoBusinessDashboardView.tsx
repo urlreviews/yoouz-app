@@ -4803,9 +4803,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       icon: Code,
                       action: () => {
                         setActiveTab('embed');
-                        navigator.clipboard.writeText(`<iframe src="${window.location.origin}/embed/${selectedPlaceId}" width="100%" height="450" frameborder="0"></iframe>`);
-                        setIsCodeCopied(true);
-                        setTimeout(() => setIsCodeCopied(false), 2500);
+                        copyEmbedCode();
                       }
                     },
                     {

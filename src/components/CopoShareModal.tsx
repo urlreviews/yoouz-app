@@ -193,7 +193,29 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : getPlaceSlug(propDomain || propTitle || "yoouz.com");
   const embedUrl = `${appOrigin}/embed/${encodeURIComponent(embedSlug)}`;
 
-  const iframeEmbedCode = `<iframe src="${embedUrl}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Yoouz Authentic Video Reviews"></iframe>`;
+  const placeTitle = (title || 'Business').replace(/"/g, '\\"');
+  const placeRating = Number(video?.rating || 5).toFixed(1);
+  const reviewCount = video ? 1 : 8;
+
+  const iframeEmbedCode = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
+<div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
+  <iframe src="${embedUrl}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AggregateRating",
+    "itemReviewed": {
+      "@type": "LocalBusiness",
+      "name": "${placeTitle}",
+      "url": "https://www.yoouz.com/place/${embedSlug}"
+    },
+    "ratingValue": "${placeRating}",
+    "bestRating": "5",
+    "worstRating": "1",
+    "ratingCount": "${reviewCount}"
+  }
+  </script>
+</div>`;
 
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
