@@ -494,16 +494,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       onClick: handleNativeShare
     },
     {
-      id: "embed",
-      name: t("shareModal.embed", "Embed Code"),
-      icon: <Code className="w-5.5 h-5.5 text-zinc-100" />,
-      circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
-      onClick: () => {
-        triggerHaptic("light");
-        setActiveView("options");
-      }
-    },
-    {
       id: "open",
       name: t("shareModal.openTab", "Open in Tab"),
       icon: <ExternalLink className="w-5.5 h-5.5 text-zinc-100" />,
@@ -599,18 +589,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic("light");
-                      setActiveView("options");
-                    }}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-black/65 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/25 text-white text-xs font-semibold shadow-md transition-all cursor-pointer shrink-0"
-                    title="Options & Embed Code"
-                  >
-                    <span>{t("shareModal.options", "Options")}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-300" />
-                  </button>
+
                 </div>
 
                 {/* CENTER: Play Button for Videos */}
