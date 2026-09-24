@@ -11,6 +11,7 @@ import {
 import { VideoReview, Place } from '../types';
 import { exportBrandedAdVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
 import { getProxiedImageUrl } from '../utils/logoUtils';
+import { formatRecordedDate } from '../utils/dateUtils';
 
 interface CopoBrandedAdExportModalProps {
   isOpen: boolean;
@@ -38,6 +39,16 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
   const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const avatarUrl = (video.author as any)?.avatarUrl || video.author?.avatar || (video as any).authorAvatar || "";
+
+  // Exact reviews count logic from exporter to match branding
+  let reviewsCount = 1;
+  if (typeof (place as any)?.reviewsCount === 'number' && (place as any).reviewsCount > 0) {
+    reviewsCount = (place as any).reviewsCount;
+  } else if (typeof (place as any)?.reviewCount === 'number' && (place as any).reviewCount > 0) {
+    reviewsCount = (place as any).reviewCount;
+  } else if (typeof (video as any).reviewsCount === 'number' && (video as any).reviewsCount > 0) {
+    reviewsCount = (video as any).reviewsCount;
+  }
 
   const handleDownloadVideo = async () => {
     if (isExporting) return;
@@ -88,9 +99,9 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
         {/* Modal Body */}
         <div className="p-5 space-y-5 text-zinc-300">
           
-          {/* HIGH-FIDELITY SOCIAL PREVIEW CARD (Matches share view 100% exactly!) */}
-          <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
-            <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
+          {/* HIGH-FIDELITY SOCIAL PREVIEW CARD (Matches exported 9:16 vertical video & actual burned-in overlays!) */}
+          <div className="w-[180px] aspect-[9/16] mx-auto rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl relative select-none group">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
               {/* Clean video thumbnail */}
               <img
                 src={getProxiedImageUrl(video.thumbnailUrl || '')}
@@ -101,65 +112,73 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 }}
               />
 
-              {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
+              {/* Ambient dark gradient vignette to match canvas overlay drawing perfectly */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/55 pointer-events-none" />
 
-              {/* TOP BAR: Place details pill */}
-              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[72%]">
-                  <span className="text-amber-400 text-xs font-black shrink-0">★</span>
-                  <span className="text-white text-xs font-bold truncate">
-                    {placeName}
-                  </span>
-                  <span className="text-amber-400 text-[11px] font-bold shrink-0">
-                    {rawRating.toFixed(1)}
-                  </span>
+              {/* TOP LEFT PILL: Place details matching Canvas */}
+              <div className="absolute top-4 left-3 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/20 shadow-md max-w-[85%]">
+                <div className="w-5 h-5 rounded bg-zinc-950 border border-white/20 flex items-center justify-center shrink-0">
+                  <Star className="w-2.5 h-2.5 fill-white text-white" />
                 </div>
+                <div className="min-w-0 flex flex-col leading-none">
+                  <span className="text-white text-[9px] font-black truncate flex items-center gap-0.5">
+                    {placeName}
+                    <span className="inline-flex items-center justify-center w-2.5 h-2.5 rounded-full bg-white text-black text-[5.5px] font-bold">✓</span>
+                  </span>
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    <span className="text-amber-400 text-[8px] font-bold">★ {rawRating.toFixed(1)}</span>
+                    <span className="text-zinc-400 text-[7px] font-medium">({reviewsCount})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TOP RIGHT PILL: Powered by Yoouz matching Canvas */}
+              <div className="absolute top-4 right-3 flex items-center gap-1 px-1.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/20 shadow-md">
+                <div className="w-3.5 h-3.5 rounded bg-zinc-950 border border-white/20 flex items-center justify-center shrink-0">
+                  <Star className="w-1.5 h-1.5 fill-white text-white" />
+                </div>
+                <span className="text-[7px] text-zinc-300 font-medium whitespace-nowrap leading-none">
+                  Powered by <strong className="text-white font-black">yoouz</strong>
+                </span>
               </div>
 
               {/* CENTER: Play Button overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
+                <div className="w-10 h-10 rounded-full bg-black/55 backdrop-blur-md border border-white/35 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
+                  <svg className="w-4 h-4 fill-white ml-0.5" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
               </div>
 
-              {/* BOTTOM BAR: Reviewer avatar, name & brand stamp */}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
-                    {avatarUrl ? (
-                      <img
-                        src={getProxiedImageUrl(avatarUrl)}
-                        alt={authorName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
-                        {authorName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
-                      {authorName}
-                    </p>
-                    <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
-                      {authorName} • 60s Review
-                    </p>
-                  </div>
+              {/* BOTTOM LEFT OVERLAYS: Matches Canvas bottom overlays exactly! */}
+              <div className="absolute bottom-4 left-3 right-3 text-left leading-normal pointer-events-none z-10">
+                {/* Row 1: By Author */}
+                <div className="flex items-center gap-1">
+                  <span className="text-white text-[11px] font-black drop-shadow-md leading-none">
+                    By {authorName}
+                  </span>
+                  <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-white text-black text-[7px] font-black shadow-xs leading-none">✓</span>
                 </div>
 
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  <span>yoouz.com</span>
+                {/* Row 2: Star rating and Date */}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center gap-0.5 leading-none">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className={`text-[8.5px] leading-none ${i < Math.round(rawRating) ? 'text-amber-400' : 'text-zinc-600/80'}`}>★</span>
+                    ))}
+                  </div>
+                  <span className="text-white/90 text-[8.5px] font-bold drop-shadow-sm flex items-center gap-0.5 leading-none">
+                    🕒 {formatRecordedDate(video.recordedAt, video.createdAtMs) || '3 days ago'}
+                  </span>
                 </div>
+
+                {/* Row 3: Caption/Video review for */}
+                <p className="text-white/95 text-[9px] font-semibold leading-tight drop-shadow-md mt-1 line-clamp-1">
+                  {video.caption?.trim() || `Video review for ${placeName}`}
+                </p>
               </div>
+
             </div>
           </div>
 
