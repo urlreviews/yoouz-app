@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -1406,7 +1406,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           href={`tel:${effectivePhone}`}
                           className="text-xs text-white hover:text-zinc-200 font-bold"
                         >
-                          {effectivePhone}
+                          {formatPhoneNumber(effectivePhone)}
                         </a>
                       ) : (
                         <span className="text-xs text-zinc-200">{t("place.phoneNotProvided", "Phone not provided")}</span>

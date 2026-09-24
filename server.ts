@@ -16906,6 +16906,123 @@ Return JSON:
     }
   });
   
+  function formatServerPhoneNumber(raw?: string | null): string {
+    if (!raw || typeof raw !== "string") return "";
+    let clean = raw.trim();
+    if (!clean || clean.length < 5) return clean;
+
+    if (clean.startsWith("00")) {
+      clean = "+" + clean.slice(2);
+    }
+
+    const hasPlus = clean.startsWith("+");
+    const digitsOnly = clean.replace(/[^0-9]/g, "");
+    if (!digitsOnly) return clean;
+
+    // Belgium (+32)
+    if (clean.startsWith("+32") || (digitsOnly.startsWith("32") && digitsOnly.length >= 9)) {
+      const rest = digitsOnly.startsWith("32") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (/^[2349]/.test(local) && local.length === 8) {
+        return `+32 ${local[0]} ${local.slice(1, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
+      }
+      if (/^(10|11|12|13|14|15|16|19|50|51|52|53|54|55|56|57|58|59|60|61|63|64|65|67|68|69|71|80|81|82|83|84|85|86|87|89)/.test(local) && local.length === 8) {
+        return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
+      }
+      if (/^4[5-9]/.test(local) && local.length === 9) {
+        return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+      }
+      if (local.length === 8) {
+        return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
+      }
+      if (local.length === 9) {
+        return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+      }
+      return `+32 ${local}`;
+    }
+
+    // Belgium local format starting with 0
+    if (digitsOnly.startsWith("0") && digitsOnly.length === 9) {
+      const local = digitsOnly.slice(1);
+      if (/^[2349]/.test(local)) {
+        return `+32 ${local[0]} ${local.slice(1, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
+      }
+      return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
+    }
+    if (digitsOnly.startsWith("04") && digitsOnly.length === 10) {
+      const local = digitsOnly.slice(1);
+      return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+    }
+
+    // US/Canada (+1)
+    if (clean.startsWith("+1") || (digitsOnly.startsWith("1") && digitsOnly.length === 11)) {
+      const rest = digitsOnly.startsWith("1") ? digitsOnly.slice(1) : digitsOnly;
+      if (rest.length === 10) {
+        return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
+      }
+    }
+
+    // UAE (+971)
+    if (clean.startsWith("+971") || (digitsOnly.startsWith("971") && digitsOnly.length >= 11)) {
+      const rest = digitsOnly.startsWith("971") ? digitsOnly.slice(3) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.length === 8) {
+        return `+971 ${local[0]} ${local.slice(1, 4)} ${local.slice(4)}`;
+      }
+      if (local.length === 9) {
+        return `+971 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+      }
+    }
+
+    // France (+33)
+    if (clean.startsWith("+33") || (digitsOnly.startsWith("33") && digitsOnly.length === 11)) {
+      const rest = digitsOnly.startsWith("33") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.length === 9) {
+        return `+33 ${local[0]} ${local.slice(1, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+      }
+    }
+
+    // UK (+44)
+    if (clean.startsWith("+44") || (digitsOnly.startsWith("44") && digitsOnly.length >= 12)) {
+      const rest = digitsOnly.startsWith("44") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.startsWith("20") && local.length === 10) {
+        return `+44 20 ${local.slice(2, 6)} ${local.slice(6)}`;
+      }
+      if (local.length === 10) {
+        return `+44 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+      }
+    }
+
+    // Spain (+34)
+    if (clean.startsWith("+34") || (digitsOnly.startsWith("34") && digitsOnly.length === 11)) {
+      const rest = digitsOnly.startsWith("34") ? digitsOnly.slice(2) : digitsOnly;
+      if (rest.length === 9) {
+        return `+34 ${rest.slice(0, 2)} ${rest.slice(2, 5)} ${rest.slice(5, 7)} ${rest.slice(7)}`;
+      }
+    }
+
+    if (/^(\+[0-9]{1,4})\s+([0-9\s-()]+)$/.test(clean)) {
+      return clean;
+    }
+
+    if (hasPlus && digitsOnly.length >= 8) {
+      const cc = digitsOnly.slice(0, 2);
+      const rest = digitsOnly.slice(2);
+      const chunks: string[] = [];
+      let i = 0;
+      while (i < rest.length) {
+        const size = (rest.length - i) % 2 === 1 ? 3 : 2;
+        chunks.push(rest.slice(i, i + size));
+        i += size;
+      }
+      return `+${cc} ${chunks.join(" ")}`;
+    }
+
+    return clean;
+  }
+
   function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string) {
     let address = "";
     let city = "";
@@ -16919,7 +17036,7 @@ Return JSON:
       address = matchedKnown.address || "";
       city = matchedKnown.city || "";
       country = matchedKnown.country || "";
-      phone = matchedKnown.phone || "";
+      phone = formatServerPhoneNumber(matchedKnown.phone || "");
       category = (matchedKnown as any).category || "";
     }
 
@@ -17062,7 +17179,7 @@ Return JSON:
       }
     }
 
-    return { address, city, country, phone, email, category };
+    return { address, city, country, phone: formatServerPhoneNumber(phone), email, category };
   }
 
   app.get('/api/url-metadata', async (req, res) => {

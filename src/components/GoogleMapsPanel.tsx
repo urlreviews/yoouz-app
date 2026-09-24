@@ -19,7 +19,7 @@ import {
   Tag
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { formatBusinessName, getEffectivePlaceDescription } from "../utils/placeUtils";
+import { formatBusinessName, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { GoogleVideoReviewCard } from "./GoogleVideoReviewCard";
 
@@ -452,7 +452,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
                   <a href={`tel:${place.phone}`} className="text-zinc-200 hover:underline">
-                    {place.phone}
+                    {formatPhoneNumber(place.phone)}
                   </a>
                 </div>
               )}
