@@ -872,11 +872,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         if (p) {
           const logo = getPlaceLogoUrl(p) || p.logoUrl || p.avatarUrl;
-          if (logo && logo.trim() !== "" && !logo.startsWith("data:;")) return logo;
+          if (logo && logo.trim() !== "" && !logo.startsWith("data:;") && !logo.includes("tap/0.png") && !logo.includes("icons/tap")) return logo;
         }
       }
 
-      if (vid.placeLogoUrl && vid.placeLogoUrl.trim() !== "" && !vid.placeLogoUrl.startsWith("data:;")) {
+      if (vid.placeLogoUrl && vid.placeLogoUrl.trim() !== "" && !vid.placeLogoUrl.startsWith("data:;") && !vid.placeLogoUrl.includes("tap/0.png") && !vid.placeLogoUrl.includes("icons/tap")) {
         return getCleanLogoUrl(vid.placeLogoUrl, vid.placeWebsite);
       }
 

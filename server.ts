@@ -5422,11 +5422,17 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
                    placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr]
           });
 
-          // Also propagate place banner, logo, and name changes into existing video reviews
+          // Also propagate place banner, logo, name, address, phone, email changes into existing video reviews
           try {
             const newBanner = finalDataObj.bannerUrl || finalDataObj.ogImage || '';
             const newLogo = finalDataObj.logoUrl || finalDataObj.avatarUrl || '';
-            if (newBanner || newLogo || placeName) {
+            const newAddress = finalDataObj.address || '';
+            const newCity = finalDataObj.city || '';
+            const newCountry = finalDataObj.country || '';
+            const newPhone = finalDataObj.phone || '';
+            const newEmail = finalDataObj.email || '';
+
+            if (newBanner || newLogo || placeName || newAddress || newPhone || newEmail) {
               const vRows = await bunnyDb.execute({
                 sql: `SELECT id, data FROM videoReviews WHERE placeId = ? OR placeName = ?`,
                 args: [id, placeName]
@@ -5435,9 +5441,14 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
                 for (const vr of vRows.rows) {
                   try {
                     const vd = typeof (vr as any).data === 'string' ? JSON.parse((vr as any).data) : ((vr as any).data || {});
-                    if (newBanner) vd.placeBannerUrl = newBanner;
-                    if (newLogo) vd.placeLogoUrl = newLogo;
+                    if (newBanner) { vd.placeBannerUrl = newBanner; vd.bannerUrl = newBanner; }
+                    if (newLogo) { vd.placeLogoUrl = newLogo; vd.logoUrl = newLogo; }
                     if (placeName) vd.placeName = placeName;
+                    if (newAddress) vd.placeAddress = newAddress;
+                    if (newCity) vd.placeCity = newCity;
+                    if (newCountry) vd.placeCountry = newCountry;
+                    if (newPhone) vd.placePhone = newPhone;
+                    if (newEmail) vd.placeEmail = newEmail;
                     await bunnyDb.execute({
                       sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
                       args: [JSON.stringify(vd), (vr as any).id]
@@ -5445,6 +5456,29 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
                   } catch (e) {}
                 }
               }
+
+              // Also update uploads/reviews_index.json and feedCache
+              try {
+                const list = readReviewsIndex();
+                let indexModified = false;
+                list.forEach((item: any) => {
+                  if (item.placeId === id || item.placeName === placeName) {
+                    if (newBanner) { item.placeBannerUrl = newBanner; item.bannerUrl = newBanner; }
+                    if (newLogo) { item.placeLogoUrl = newLogo; item.logoUrl = newLogo; }
+                    if (placeName) item.placeName = placeName;
+                    if (newAddress) item.placeAddress = newAddress;
+                    if (newCity) item.placeCity = newCity;
+                    if (newCountry) item.placeCountry = newCountry;
+                    if (newPhone) item.placePhone = newPhone;
+                    if (newEmail) item.placeEmail = newEmail;
+                    indexModified = true;
+                  }
+                });
+                if (indexModified) {
+                  writeReviewsIndex(list);
+                  feedCache.lastFetched = 0; // invalidate feed cache
+                }
+              } catch (idxErr) {}
             }
           } catch (e) {}
 
@@ -8959,11 +8993,25 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "brettlevy.com": { name: "Brett A. Levy Law", address: "10410 N 19th Ave", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 254-9900", category: "Legal Services", lat: 33.5802, lng: -112.1006 },
     "paultolandlaw.com": { name: "Paul Toland Law Office", address: "15 Court Square #800", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3585, lng: -71.0592 },
     "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", phone: "+44 20 7396 9292", category: "Legal Directory & Advisory", lat: 51.5245, lng: -0.1037 },
+    "brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
+    "www.brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
     "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
     "businessplace.com": { name: "Businessplace", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "brusselsdental.com": {
+      bannerUrl: "https://styles.prosites.com/litesite/8106/images/hero.jpg",
+      logoUrl: "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+      name: "Dental Treatment Center - Dentist Brussels",
+      website: "https://www.brusselsdental.com/"
+    },
+    "www.brusselsdental.com": {
+      bannerUrl: "https://styles.prosites.com/litesite/8106/images/hero.jpg",
+      logoUrl: "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+      name: "Dental Treatment Center - Dentist Brussels",
+      website: "https://www.brusselsdental.com/"
+    },
     "districtuae.com": {
       bannerUrl: "https://www.districtuae.com/og-default.jpeg",
       logoUrl: "https://www.districtuae.com/dre-logo-dark.png",
@@ -9045,7 +9093,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     
     let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
     let logo = r.placeLogoUrl || r.logoUrl || "";
-    if (logo === "data:;" || logo.startsWith("data:;") || logo.includes("brandfetch.io") || logo.includes("gstatic.com/faviconV2")) {
+    if (logo === "data:;" || logo.startsWith("data:;") || logo.includes("brandfetch.io") || logo.includes("gstatic.com/faviconV2") || logo.includes("tap/0.png") || logo.includes("icons/tap")) {
       logo = "";
     }
 
@@ -10517,9 +10565,23 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             r.placeBannerUrl = livePlace.bannerUrl;
             r.bannerUrl = livePlace.bannerUrl;
           }
-          if (livePlace.logoUrl && !livePlace.logoUrl.startsWith("data:") && !livePlace.logoUrl.startsWith("blob:")) {
+          if (livePlace.logoUrl && 
+              !livePlace.logoUrl.startsWith("data:") && 
+              !livePlace.logoUrl.startsWith("blob:") &&
+              !livePlace.logoUrl.includes("tap/0.png") &&
+              !livePlace.logoUrl.includes("icons/tap")
+          ) {
             r.placeLogoUrl = livePlace.logoUrl;
             r.logoUrl = livePlace.logoUrl;
+          }
+          if (livePlace.address && !livePlace.address.startsWith("http") && (!r.placeAddress || r.placeAddress.startsWith("http") || r.placeAddress === "Verified Location")) {
+            r.placeAddress = livePlace.address;
+          }
+          if (livePlace.phone && !r.placePhone) {
+            r.placePhone = livePlace.phone;
+          }
+          if (livePlace.email && !r.placeEmail) {
+            r.placeEmail = livePlace.email;
           }
         }
         
@@ -13371,41 +13433,79 @@ app.post("/api/videos/save-review", async (req, res) => {
           if (reviewPlaceId || reviewPlaceName) {
             try {
               const placeDocId = reviewPlaceId || reviewPlaceName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+              
+              // Check if place already exists to safely merge
+              const existingPlaceRs = await bunnyDb.execute({
+                sql: `SELECT id, name, address, logoUrl, data FROM places WHERE id = ?`,
+                args: [placeDocId]
+              }).catch(() => null);
+
+              let existingDoc: any = {};
+              if (existingPlaceRs && existingPlaceRs.rows && existingPlaceRs.rows.length > 0) {
+                try {
+                  const rawD = (existingPlaceRs.rows[0] as any).data;
+                  existingDoc = typeof rawD === 'string' ? JSON.parse(rawD) : (rawD || {});
+                } catch(e) {}
+              }
+
+              const cleanReviewLogo = (review.placeLogoUrl && !review.placeLogoUrl.includes("tap/0.png") && !review.placeLogoUrl.includes("icons/tap") && !review.placeLogoUrl.startsWith("data:;")) ? review.placeLogoUrl : '';
+              const cleanReviewBanner = (review.placeBannerUrl && !review.placeBannerUrl.includes("unsplash.com") && !review.placeBannerUrl.includes("placeholder")) ? review.placeBannerUrl : '';
+              const cleanReviewAddr = (review.placeAddress && !review.placeAddress.startsWith("http") && review.placeAddress !== "Verified Location") ? review.placeAddress : '';
+
               const placeData = {
                 id: placeDocId,
-                name: reviewPlaceName,
-                website: review.placeWebsite || (review.place && review.place.website) || '',
-                brandDomain: review.placeWebsite || (review.place && review.place.brandDomain) || '',
-                rating: reviewRating,
-                totalReviews: 1,
-                city: review.place?.city || 'Online',
-                country: review.place?.country || 'USA',
-                category: review.place?.category || 'Services'
+                name: reviewPlaceName || existingDoc.name || placeDocId,
+                website: review.placeWebsite || (review.place && review.place.website) || existingDoc.website || '',
+                brandDomain: review.placeWebsite || (review.place && review.place.brandDomain) || existingDoc.brandDomain || '',
+                rating: reviewRating || existingDoc.rating || 5,
+                totalReviews: Math.max(existingDoc.totalReviews || 1, (existingDoc.totalReviews || 0) + 1),
+                city: review.placeCity || review.place?.city || existingDoc.city || 'Online',
+                country: review.placeCountry || review.place?.country || existingDoc.country || '',
+                address: cleanReviewAddr || existingDoc.address || '',
+                phone: review.placePhone || review.place?.phone || existingDoc.phone || '',
+                email: review.placeEmail || review.place?.email || existingDoc.email || '',
+                bannerUrl: cleanReviewBanner || existingDoc.bannerUrl || existingDoc.ogImage || '',
+                ogImage: cleanReviewBanner || existingDoc.ogImage || existingDoc.bannerUrl || '',
+                photos: cleanReviewBanner ? [cleanReviewBanner] : (existingDoc.photos || []),
+                logoUrl: cleanReviewLogo || existingDoc.logoUrl || existingDoc.avatarUrl || '',
+                avatarUrl: cleanReviewLogo || existingDoc.avatarUrl || existingDoc.logoUrl || '',
+                category: review.placeCategory || review.place?.category || existingDoc.category || 'Services'
               };
+
+              const jsonStr = JSON.stringify(placeData);
+
               await bunnyDb.execute({
                 sql: `INSERT INTO places (id, name, address, category, city, country, logoUrl, data, createdAt, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                       ON CONFLICT(id) DO UPDATE SET
                         name = COALESCE(?, places.name),
+                        address = COALESCE(NULLIF(?, ''), places.address),
                         category = COALESCE(?, places.category),
+                        city = COALESCE(NULLIF(?, ''), places.city),
+                        country = COALESCE(NULLIF(?, ''), places.country),
+                        logoUrl = COALESCE(NULLIF(?, ''), places.logoUrl),
                         data = ?,
                         updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   placeDocId,
-                  reviewPlaceName,
-                  placeData.website,
+                  placeData.name,
+                  placeData.address,
                   placeData.category,
                   placeData.city,
                   placeData.country,
-                  review.placeLogoUrl || '',
-                  JSON.stringify(placeData),
+                  placeData.logoUrl,
+                  jsonStr,
                   // Update args
-                  reviewPlaceName,
+                  placeData.name,
+                  placeData.address,
                   placeData.category,
-                  JSON.stringify(placeData)
+                  placeData.city,
+                  placeData.country,
+                  placeData.logoUrl,
+                  jsonStr
                 ]
               });
-              console.log(`🐰 [Server] BunnyDB place synced for ${reviewPlaceName} (${placeDocId})`);
+              console.log(`🐰 [Server] BunnyDB place synced with address, phone, email, banner, and logo for ${reviewPlaceName} (${placeDocId})`);
             } catch (placeUpsertErr: any) {
               console.warn("Notice syncing place to BunnyDB places table:", placeUpsertErr?.message || placeUpsertErr);
             }
@@ -17464,7 +17564,8 @@ Return JSON:
                   'payment', 'visa', 'mastercard', 'amex', 'paypal', 'stripe',
                   'award', 'badge', 'banner', 'hero', 'slider', 'carousel',
                   'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading',
-                  'logoheader', '1024x170', '1024x', '1200x', '1920x'
+                  'logoheader', '1024x170', '1024x', '1200x', '1920x',
+                  'tap/0.png', 'icons/tap', 'tap/', '/tap', '0.png'
                 ];
                 for (const kw of badKeywords) {
                   if (s.includes(kw) && !domain.toLowerCase().includes(kw)) {
@@ -17478,6 +17579,9 @@ Return JSON:
                 "yoouz.com": "https://yoouz.com/favicon.svg",
                 "www.yoouz.com": "https://yoouz.com/favicon.svg",
                 "yoouz": "https://yoouz.com/favicon.svg",
+                "brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+                "www.brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+                "brusselsdental": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
                 "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
                 "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
                 "nevadalegalservices": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
@@ -17828,15 +17932,76 @@ Return JSON:
             brandDomain: cleanDomain,
             ...(isYoouz ? { isClaimed: true, claimedByEmail: "info@yoouz.com", ownerId: "info@yoouz.com", isVerified: true } : {})
           };
-          const jsonStr = JSON.stringify(autoPlaceDoc);
-          const autoPlaceName = autoPlaceDoc.name;
-          await bunnyDb.execute({
-            sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr,
-                   autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
-          });
+          const existingPlaceRs = await bunnyDb.execute({
+            sql: `SELECT id, name, address, city, country, logoUrl, data FROM places WHERE id = ?`,
+            args: [autoPlaceId]
+          }).catch(() => null);
+
+          if (existingPlaceRs && existingPlaceRs.rows && existingPlaceRs.rows.length > 0) {
+            let existingDoc: any = {};
+            try {
+              const rawD = (existingPlaceRs.rows[0] as any).data;
+              existingDoc = typeof rawD === 'string' ? JSON.parse(rawD) : (rawD || {});
+            } catch(e) {}
+
+            // DO NOT OVERWRITE authentic banners, logos, or addresses!
+            const mergedLogo = (existingDoc.logoUrl && !existingDoc.logoUrl.includes("tap/0.png") && !existingDoc.logoUrl.includes("icons/tap") && !existingDoc.logoUrl.startsWith("data:;"))
+              ? existingDoc.logoUrl
+              : ((existingPlaceRs.rows[0] as any).logoUrl && !(existingPlaceRs.rows[0] as any).logoUrl.includes("tap/0.png") ? (existingPlaceRs.rows[0] as any).logoUrl : logo);
+
+            const mergedBanner = (existingDoc.bannerUrl && !existingDoc.bannerUrl.includes("unsplash.com") && !existingDoc.bannerUrl.includes("placeholder"))
+              ? existingDoc.bannerUrl
+              : (existingDoc.ogImage || image || "");
+
+            const mergedAddress = (existingDoc.address && !existingDoc.address.startsWith("http") && existingDoc.address !== "Verified Location")
+              ? existingDoc.address
+              : ((existingPlaceRs.rows[0] as any).address && !(existingPlaceRs.rows[0] as any).address.startsWith("http") ? (existingPlaceRs.rows[0] as any).address : effectiveAddress);
+
+            const mergedCity = (existingDoc.city && existingDoc.city !== "Online" && existingDoc.city !== "Worldwide")
+              ? existingDoc.city
+              : (effectiveCity || (existingPlaceRs.rows[0] as any).city || "Online");
+
+            const mergedCountry = existingDoc.country || effectiveCountry || (existingPlaceRs.rows[0] as any).country || "";
+            const mergedPhone = existingDoc.phone || effectivePhone || "";
+            const mergedEmail = existingDoc.email || effectiveEmail || "";
+
+            const mergedDoc = {
+              ...autoPlaceDoc,
+              ...existingDoc,
+              name: existingDoc.name || autoPlaceDoc.name,
+              category: (existingDoc.category && existingDoc.category !== "Website") ? existingDoc.category : autoPlaceDoc.category,
+              logoUrl: mergedLogo,
+              avatarUrl: mergedLogo,
+              bannerUrl: mergedBanner,
+              ogImage: mergedBanner,
+              photos: mergedBanner ? Array.from(new Set([mergedBanner, ...(existingDoc.photos || [])])) : (existingDoc.photos || []),
+              address: mergedAddress,
+              city: mergedCity,
+              country: mergedCountry,
+              phone: mergedPhone,
+              email: mergedEmail
+            };
+
+            await bunnyDb.execute({
+              sql: `UPDATE places SET 
+                      logoUrl = ?,
+                      address = COALESCE(NULLIF(?, ''), places.address),
+                      city = COALESCE(NULLIF(?, ''), places.city),
+                      country = COALESCE(NULLIF(?, ''), places.country),
+                      data = ?,
+                      updatedAt = CURRENT_TIMESTAMP
+                    WHERE id = ?`,
+              args: [mergedLogo, mergedAddress, mergedCity, mergedCountry, JSON.stringify(mergedDoc), autoPlaceId]
+            });
+          } else {
+            const jsonStr = JSON.stringify(autoPlaceDoc);
+            const autoPlaceName = autoPlaceDoc.name;
+            await bunnyDb.execute({
+              sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+              args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
+            });
+          }
         }
       } catch (bErr) {}
       

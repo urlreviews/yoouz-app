@@ -100,12 +100,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (isYoouz) return "/favicon.svg";
 
     // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
+    const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+    if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
+    }
     if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      return KNOWN_BRAND_LOGOS[resolvedDomain];
+      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[resolvedDomain]);
     }
     const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     if (cleanName && KNOWN_BRAND_LOGOS[cleanName]) {
-      return KNOWN_BRAND_LOGOS[cleanName];
+      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanName]);
     }
 
     // 1. Explicit clean Logo URL from place record or metadata
@@ -116,16 +120,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       !logoUrl.startsWith("data:;") &&
       !logoUrl.includes("LogoHeader") &&
       !logoUrl.includes("1024x170") &&
+      !logoUrl.includes("tap/0.png") &&
+      !logoUrl.includes("icons/tap") &&
       (logoUrl.startsWith("/") || logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))
     ) {
-      if (logoUrl.startsWith("/api/proxy-image?url=")) {
-        try {
-          return decodeURIComponent(logoUrl.replace("/api/proxy-image?url=", ""));
-        } catch (e) {
-          return logoUrl;
-        }
-      }
-      return logoUrl;
+      return getProxiedImageUrl(logoUrl);
     }
 
     // 2. High-resolution authentic favicon endpoint
@@ -136,13 +135,18 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [isYoouz, resolvedDomain, logoUrl, name, googleFaviconUrl]);
 
+  const [triedFaviconFallback, setTriedFaviconFallback] = useState(false);
+
   const currentSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
     if (hasError) return null;
+    if (triedFaviconFallback && googleFaviconUrl) {
+      return googleFaviconUrl;
+    }
     const base = effectiveSrc || googleFaviconUrl;
     if (!base) return null;
     return getProxiedImageUrl(base);
-  }, [isYoouz, hasError, googleFaviconUrl, effectiveSrc]);
+  }, [isYoouz, hasError, triedFaviconFallback, googleFaviconUrl, effectiveSrc]);
 
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
   const isKnownFailed = currentSrc ? KNOWN_FAILED_LOGOS.has(currentSrc) : false;
@@ -202,8 +206,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
           onError={() => {
             if (currentSrc) KNOWN_FAILED_LOGOS.add(currentSrc);
-            if (!triedProxy && effectiveSrc && (effectiveSrc.startsWith("http://") || effectiveSrc.startsWith("https://")) && !effectiveSrc.startsWith("/api/")) {
-              setTriedProxy(true);
+            if (!triedFaviconFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
+              setTriedFaviconFallback(true);
+              setImgLoaded(false);
             } else {
               setHasError(true);
             }

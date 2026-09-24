@@ -455,11 +455,17 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="50" cy="50" r="26" fill="none" stroke="#ffffff" stroke-width="2"/>
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-    </svg>`)
+    </svg>`),
+  "brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+  "www.brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
+  "brusselsdental": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "brusselsdental.com": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
+  "www.brusselsdental.com": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
+  "brusselsdental": "https://styles.prosites.com/litesite/8106/images/hero.jpg",
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
@@ -754,18 +760,6 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): string | null {
   if (!place) return null;
 
-  // 1. Explicit custom logoUrl provided (e.g. uploaded by owner to Bunny CDN or custom URL) takes highest priority
-  if (
-    place.logoUrl &&
-    place.logoUrl.trim() !== "" &&
-    !isWhiteOrInvertedLogo(place.logoUrl) &&
-    !place.logoUrl.includes("brandfetch.io") &&
-    place.logoUrl !== "data:;" &&
-    !place.logoUrl.startsWith("data:;")
-  ) {
-    return getProxiedImageUrl(place.logoUrl);
-  }
-
   let domain = place.brandDomain;
   if (!domain && place.website) {
     domain = extractDomain(place.website);
@@ -786,12 +780,43 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return YOOUZ_LOGO_DATA_URI;
   }
 
-  // 2. Direct match for known high-quality brand vector logos
+  // 1. Direct match for known high-quality brand vector logos takes precedence over arbitrary scraped tap icons
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // 3. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)
+  // 2. Explicit custom logoUrl provided (e.g. uploaded by owner to Bunny CDN or custom URL)
+  if (
+    place.logoUrl &&
+    place.logoUrl.trim() !== "" &&
+    !isWhiteOrInvertedLogo(place.logoUrl) &&
+    !place.logoUrl.includes("brandfetch.io") &&
+    place.logoUrl !== "data:;" &&
+    !place.logoUrl.startsWith("data:;") &&
+    !place.logoUrl.includes("tap/0.png") &&
+    !place.logoUrl.includes("icons/tap") &&
+    !place.logoUrl.includes("LogoHeader") &&
+    !place.logoUrl.includes("1024x170")
+  ) {
+    return getProxiedImageUrl(place.logoUrl);
+  }
+
+  // 3. Explicit avatarUrl fallback
+  if (
+    place.avatarUrl &&
+    place.avatarUrl.trim() !== "" &&
+    !place.avatarUrl.includes("brandfetch.io") &&
+    place.avatarUrl !== "data:;" &&
+    !place.avatarUrl.startsWith("data:;") &&
+    !place.avatarUrl.includes("tap/0.png") &&
+    !place.avatarUrl.includes("icons/tap") &&
+    !place.avatarUrl.includes("LogoHeader") &&
+    !place.avatarUrl.includes("1024x170")
+  ) {
+    return getProxiedImageUrl(place.avatarUrl);
+  }
+
+  // 4. Authentic High-Resolution Social Favicon (Google 256px resolution directly from website icon/metadata)
   if (cleanDomain && cleanDomain.includes(".")) {
     return `/api/favicon?domain=${cleanDomain}`;
   }

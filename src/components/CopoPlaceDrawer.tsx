@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -116,7 +116,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const criticalImagesLoaded = useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
   const [logoError, setLogoError] = useState(false);
-  const [showDetailedInfo, setShowDetailedInfo] = useState(false);
+  const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
 
@@ -199,21 +199,28 @@ return () => window.removeEventListener("keydown", handleKeyDown);
      place.address.toLowerCase().includes("online") ||
      place.address.toLowerCase().includes("global headquarters"))
   );
+  const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
+
   const displayAddress = React.useMemo(() => {
-    if (isAddressUrl || !place.address || place.address.trim() === "" || place.address.trim() === "Verified Location") {
-      if (place.city && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim())) {
-        return [place.city, (place as any).state, place.country].filter(Boolean).join(", ");
+    const reviewWithAddr = rawPlaceVideos.find(v => v.placeAddress && v.placeAddress.trim() !== "" && v.placeAddress !== "Verified Location" && !v.placeAddress.startsWith("http"));
+    const rawAddr = (!isAddressUrl && place.address && place.address.trim() !== "" && place.address.trim() !== "Verified Location") ? place.address.trim() : (reviewWithAddr?.placeAddress?.trim() || "");
+
+    if (!rawAddr) {
+      const reviewCity = rawPlaceVideos.find(v => v.placeCity && v.placeCity.trim() !== "" && !["online", "global", "worldwide", "n/a"].includes(v.placeCity.toLowerCase().trim()))?.placeCity;
+      const effectiveCity = place.city || reviewCity;
+      if (effectiveCity && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(effectiveCity.toLowerCase().trim())) {
+        return [effectiveCity, (place as any).state, place.country || reviewWithAddr?.placeCountry].filter(Boolean).join(", ");
       }
       if (place.country && !["global", "worldwide", "n/a"].includes(place.country.toLowerCase().trim())) {
         return place.country;
       }
       return null;
     }
-    let addr = place.address.trim();
-    const c = place.city ? place.city.trim() : "";
+    let addr = rawAddr;
+    const c = place.city ? place.city.trim() : (reviewWithAddr?.placeCity ? reviewWithAddr.placeCity.trim() : "");
     const st = (place as any).state ? (place as any).state.trim() : "";
     const zip = (place as any).zipCode ? (place as any).zipCode.trim() : "";
-    const country = place.country ? place.country.trim() : "";
+    const country = place.country ? place.country.trim() : (reviewWithAddr?.placeCountry ? reviewWithAddr.placeCountry.trim() : "");
 
     if (c && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(c.toLowerCase()) && !addr.toLowerCase().includes(c.toLowerCase())) {
       addr += `, ${c}`;
@@ -228,7 +235,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       addr += `, ${country}`;
     }
     return addr;
-  }, [place, isAddressUrl]);
+  }, [place, isAddressUrl, rawPlaceVideos]);
 
   const isYoouz = place.id === 'yoouz.com' || (place.name && place.name.toLowerCase() === 'yoouz') || place.brandDomain === 'yoouz.com' || (place.website && place.website.includes('yoouz.com'));
 
@@ -238,8 +245,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
      place.city.trim() !== "" && 
      !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim()))
   );
-
-  const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
 
   // Compute dynamic stats based on actual video reviews
   const dynamicReviewCount = rawPlaceVideos.length;
@@ -506,16 +511,34 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
+    const cleanD = (drawerDomain || "").replace(/^www\./, "").toLowerCase().trim();
+    if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    // Priority 1: Canonical place record logo (ignoring wide header banners)
+    // Priority 1: Canonical place record logo (ignoring wide header banners and tap icons)
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
-    if (canonicalPlaceLogo && !canonicalPlaceLogo.startsWith("data:;") && canonicalPlaceLogo.trim() !== "" && !canonicalPlaceLogo.includes("LogoHeader") && !canonicalPlaceLogo.includes("1024x170")) {
+    if (
+      canonicalPlaceLogo && 
+      !canonicalPlaceLogo.startsWith("data:;") && 
+      canonicalPlaceLogo.trim() !== "" && 
+      !canonicalPlaceLogo.includes("LogoHeader") && 
+      !canonicalPlaceLogo.includes("1024x170") &&
+      !canonicalPlaceLogo.includes("tap/0.png") &&
+      !canonicalPlaceLogo.includes("icons/tap")
+    ) {
       return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain);
     }
 
     // Priority 2: Video review logo
-    const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && v.placeLogoUrl.trim() !== "" && !v.placeLogoUrl.includes("LogoHeader") && !v.placeLogoUrl.includes("1024x170")));
+    const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
+      v.placeLogoUrl && 
+      !v.placeLogoUrl.startsWith("data:;") && 
+      v.placeLogoUrl.trim() !== "" && 
+      !v.placeLogoUrl.includes("LogoHeader") && 
+      !v.placeLogoUrl.includes("1024x170") &&
+      !v.placeLogoUrl.includes("tap/0.png") &&
+      !v.placeLogoUrl.includes("icons/tap")
+    ));
     if (matchingVidWithLogo?.placeLogoUrl) {
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain);
     }
@@ -525,11 +548,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   // Genuine check filters
+  const effectivePhone = place.phone || rawPlaceVideos.find(v => v.placePhone && v.placePhone.trim() !== "")?.placePhone || "";
+  const effectiveEmail = React.useMemo(() => {
+    const raw = (place.email && place.email.trim() !== "")
+      ? place.email.trim()
+      : (rawPlaceVideos.find(v => v.placeEmail && v.placeEmail.trim() !== "")?.placeEmail || "");
+    if (!raw) return "";
+    const lower = raw.toLowerCase();
+    if (lower.includes("4samet") || lower.includes("@gmail.") || lower.includes("@yahoo.") || lower.includes("@hotmail.") || lower.includes("@outlook.") || lower.includes("@icloud.")) {
+      return "";
+    }
+    return raw;
+  }, [place.email, rawPlaceVideos]);
   const hasGenuinePhone = Boolean(
-    place.phone &&
-    place.phone.trim() !== "" &&
-    !place.phone.includes("555") &&
-    !place.phone.includes("019-2834")
+    effectivePhone &&
+    effectivePhone.trim() !== "" &&
+    !effectivePhone.includes("555-01") &&
+    !effectivePhone.includes("019-2834")
   );
 
   const hasGenuineWebsite = Boolean(
@@ -833,11 +868,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
           </div>
         ) : (
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.15),transparent_70%)]" />
-            <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10">
-              <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">Verified Listing</span>
+          <div
+            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center overflow-hidden transition-all duration-300"
+            style={{
+              background: (() => {
+                const bg = getDomainBrandGradient(drawerDomain || place.name || place.id);
+                return `linear-gradient(135deg, ${bg.from} 0%, ${bg.via} 50%, ${bg.to} 100%)`;
+              })()
+            }}
+          >
+            <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.2),transparent_70%)]" />
+            <div className="px-3.5 py-1.5 rounded-full bg-black/40 border border-white/20 backdrop-blur-md z-10 shadow-lg">
+              <span className="text-white font-black text-xs tracking-wider uppercase select-none">
+                {displayedPlaceName}
+              </span>
             </div>
           </div>
         )}
@@ -1359,10 +1403,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
                       {hasGenuinePhone ? (
                         <a
-                          href={`tel:${place.phone}`}
+                          href={`tel:${effectivePhone}`}
                           className="text-xs text-white hover:text-zinc-200 font-bold"
                         >
-                          {place.phone}
+                          {effectivePhone}
                         </a>
                       ) : (
                         <span className="text-xs text-zinc-200">{t("place.phoneNotProvided", "Phone not provided")}</span>
@@ -1374,12 +1418,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
                     <div className="flex items-center gap-3 truncate">
                       <Mail className="w-5 h-5 text-zinc-200 shrink-0" />
-                      {place.email && place.email.trim() !== "" && !place.email.toLowerCase().includes("@gmail.") && !place.email.toLowerCase().includes("@yahoo.") && !place.email.toLowerCase().includes("@hotmail.") && !place.email.toLowerCase().includes("@outlook.") && !place.email.toLowerCase().includes("@icloud.") ? (
+                      {effectiveEmail ? (
                         <a
-                          href={`mailto:${place.email}`}
+                          href={`mailto:${effectiveEmail}`}
                           className="text-xs text-zinc-200 hover:text-white hover:underline font-medium truncate"
                         >
-                          {place.email}
+                          {effectiveEmail}
                         </a>
                       ) : (
                         <span className="text-xs text-zinc-200">{t("place.emailNotProvided", "Email not provided")}</span>

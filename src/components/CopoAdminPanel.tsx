@@ -1363,9 +1363,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           brandDomain: p.brandDomain || (isYoouz ? 'yoouz.com' : (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : p.id)),
           claimedByEmail: isYoouz ? 'info@yoouz.com' : p.claimedByEmail
         });
-      } else {
-        physicalPlaces.push(p);
       }
+      // Always include in allPhysicalPlaces so all venues in directory remain visible and editable in Places tab
+      physicalPlaces.push(p);
     });
 
     return { allBusinesses: businesses, allPhysicalPlaces: physicalPlaces };
@@ -4357,8 +4357,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         </div>
 
-                        {/* Location / Address */}
-                        {(place.address || place.city || place.phone) && (
+                        {/* Location / Address / Contact */}
+                        {(place.address || place.city || place.phone || place.email) && (
                           <div className="space-y-1 text-xs text-zinc-400 px-1">
                             {(place.address || place.city) && (
                               <div className="flex items-center gap-1.5 truncate">
@@ -4370,6 +4370,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <div className="flex items-center gap-1.5 truncate">
                                 <Phone className="w-3 h-3 text-zinc-500 shrink-0" />
                                 <span className="truncate font-mono">{place.phone}</span>
+                              </div>
+                            )}
+                            {place.email && (
+                              <div className="flex items-center gap-1.5 truncate">
+                                <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <span className="truncate font-mono text-[11px]">{place.email}</span>
                               </div>
                             )}
                           </div>
@@ -6815,14 +6821,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-zinc-200 mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={editPlaceModal.phone || ""}
                     onChange={(e) => setEditPlaceModal({ ...editPlaceModal, phone: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+                    placeholder="+1 415-555-0100"
+                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-200 mb-1">Business Public Email</label>
+                  <input
+                    type="email"
+                    value={editPlaceModal.email || ""}
+                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, email: e.target.value })}
+                    placeholder="contact@business.com"
+                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 font-mono text-xs"
                   />
                 </div>
                 <div>
@@ -6831,7 +6848,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     type="text"
                     value={editPlaceModal.website || ""}
                     onChange={(e) => setEditPlaceModal({ ...editPlaceModal, website: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+                    placeholder="https://example.com"
+                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 text-xs"
                   />
                 </div>
               </div>
@@ -7451,6 +7469,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
   const [city, setCity] = useState("San Francisco");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [claimedByEmail, setClaimedByEmail] = useState("");
@@ -7482,6 +7501,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       openingHours: "Mon-Sun 10:00 AM - 10:00 PM",
       isOpen: true,
       phone: phone.trim(),
+      email: email.trim(),
       website: website.trim(),
       priceRange: "$$",
       plusCode: "",
@@ -7555,7 +7575,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-zinc-200 mb-1">Phone Number</label>
               <input
@@ -7563,7 +7583,17 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +1 415-555-0199"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-mono text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-200 mb-1">Business Public Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. contact@business.com"
+                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-mono text-xs"
               />
             </div>
             <div>
@@ -7572,8 +7602,8 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
                 type="text"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                placeholder="e.g. https://bluebottlecoffee.com"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                placeholder="e.g. https://example.com"
+                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-xs"
               />
             </div>
           </div>

@@ -3186,13 +3186,21 @@ export function App() {
                   if (!existing) {
                     map.set(key, placeObj);
                   } else {
-                    const mergedLogo = (placeObj.logoUrl && !placeObj.logoUrl.includes('favicon.svg') && !placeObj.logoUrl.startsWith('<svg')) ? placeObj.logoUrl : (existing.logoUrl || placeObj.logoUrl);
-                    const mergedBanner = placeObj.bannerUrl || existing.bannerUrl || '';
+                    const isValidLogo = (l?: string) => Boolean(l && !l.includes('tap/0.png') && !l.includes('icons/tap') && !l.includes('favicon.svg') && !l.startsWith('<svg') && !l.startsWith('data:;') && l !== 'data:;');
+                    const mergedLogo = isValidLogo(placeObj.logoUrl) ? placeObj.logoUrl : (isValidLogo(existing.logoUrl) ? existing.logoUrl : (placeObj.logoUrl || existing.logoUrl || ''));
+                    
+                    const isValidBanner = (b?: string) => Boolean(b && !b.includes('unsplash.com') && !b.includes('placeholder') && !b.includes('mock') && !b.startsWith('blob:'));
+                    const mergedBanner = isValidBanner(placeObj.bannerUrl) ? placeObj.bannerUrl : (isValidBanner(existing.bannerUrl) ? existing.bannerUrl : (placeObj.bannerUrl || existing.bannerUrl || ''));
+
+                    const isValidAddress = (a?: string) => Boolean(a && !a.startsWith('http://') && !a.startsWith('https://') && !a.includes('www.') && a !== 'Verified Location');
+                    const mergedAddress = isValidAddress(placeObj.address) ? placeObj.address : (isValidAddress(existing.address) ? existing.address : (placeObj.address || existing.address || ''));
+
                     const mergedCategory = (placeObj.category && placeObj.category !== 'Website' && placeObj.category !== 'all') ? placeObj.category : (existing.category || placeObj.category);
+                    const mergedCity = (placeObj.city && placeObj.city !== 'Online' && placeObj.city !== 'Worldwide') ? placeObj.city : (existing.city || placeObj.city || 'Online');
+                    const mergedCountry = placeObj.country || existing.country || '';
                     const mergedPhone = placeObj.phone || (existing as any).phone || '';
                     const mergedHours = (placeObj as any).hours || placeObj.openingHours || (existing as any).hours || existing.openingHours || '';
                     const mergedDesc = (placeObj as any).description || (existing as any).description || '';
-                    const mergedAddress = placeObj.address || existing.address || '';
                     const mergedWebsite = placeObj.website || existing.website || '';
                     const mergedEmail = (placeObj as any).email || (existing as any).email || '';
 
@@ -3207,6 +3215,8 @@ export function App() {
                       photos: mergedBanner ? [mergedBanner, ...(placeObj.photos || existing.photos || []).filter((ph: any) => ph !== mergedBanner)] : (placeObj.photos || existing.photos || []),
                       category: mergedCategory,
                       address: mergedAddress,
+                      city: mergedCity,
+                      country: mergedCountry,
                       phone: mergedPhone,
                       hours: mergedHours,
                       openingHours: mergedHours,

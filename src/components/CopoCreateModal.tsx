@@ -763,12 +763,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
     const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
-    const resolvedPlaceLogo = (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;") && !selectedPlace.logoUrl.includes("gstatic.com") && !selectedPlace.logoUrl.includes("faviconV2"))
-      ? selectedPlace.logoUrl
-      : (selectedPlace.avatarUrl && !selectedPlace.avatarUrl.startsWith("data:;") && !selectedPlace.avatarUrl.includes("gstatic.com") && !selectedPlace.avatarUrl.includes("faviconV2"))
-      ? selectedPlace.avatarUrl
-      : (placeDomain && KNOWN_BRAND_LOGOS[placeDomain])
+    const resolvedPlaceLogo =
+      (placeDomain && KNOWN_BRAND_LOGOS[placeDomain])
       ? KNOWN_BRAND_LOGOS[placeDomain]
+      : (selectedPlace.logoUrl && !selectedPlace.logoUrl.startsWith("data:;") && !selectedPlace.logoUrl.includes("tap/0.png"))
+      ? selectedPlace.logoUrl
+      : (selectedPlace.avatarUrl && !selectedPlace.avatarUrl.startsWith("data:;") && !selectedPlace.avatarUrl.includes("tap/0.png"))
+      ? selectedPlace.avatarUrl
       : getPlaceLogoUrl(selectedPlace) || "";
     const resolvedPlaceBanner = selectedPlace.bannerUrl || selectedPlace.ogImage || (placeDomain && KNOWN_BRAND_BANNERS[placeDomain]) || "";
     const safeThumbnail = finalThumbnail || videoThumbnail || recordedVideoUrl || resolvedPlaceBanner || resolvedPlaceLogo || `/api/avatar?name=${encodeURIComponent(cleanPlaceName)}&background=18181b&color=fff`;
@@ -795,6 +796,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       placeCity: (selectedPlace.city && selectedPlace.city !== "Online") ? selectedPlace.city : "",
       placeCountry: (selectedPlace as any).country || "",
       placePhone: (selectedPlace as any).phone || "",
+      placeEmail: (selectedPlace as any).email || "",
       placeRating: rating || 5,
       placeWebsite: selectedPlace.website || (placeDomain ? `https://${placeDomain}` : ""),
       placeLogoUrl: resolvedPlaceLogo,
@@ -1096,8 +1098,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               phone: foundPlace.phone || data.phone || "",
               email: foundPlace.email || data.email || "",
               category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
-              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;") && !foundPlace.logoUrl.includes("gstatic.com") && !foundPlace.logoUrl.includes("faviconV2")) ? foundPlace.logoUrl : (fetchedLogo || ""),
-              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;") && !foundPlace.avatarUrl.includes("gstatic.com") && !foundPlace.avatarUrl.includes("faviconV2")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
+              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;") && !foundPlace.logoUrl.includes("tap/0.png")) ? foundPlace.logoUrl : (fetchedLogo || ""),
+              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;") && !foundPlace.avatarUrl.includes("tap/0.png")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
               bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
               description: foundPlace.description || data.description || "",
             };
@@ -1266,7 +1268,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 
                 <div className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-lg ">
                   <CopoBrandLogo
-                    domain={selectedPlace.brandDomain}
+                    domain={selectedPlace.brandDomain || extractCleanDomain(selectedPlace.website || selectedPlace.id || selectedPlace.name)}
                     name={selectedPlace.name}
                     website={selectedPlace.website}
                     logoUrl={selectedPlace.logoUrl || selectedPlace.avatarUrl}
@@ -1417,7 +1419,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       <div className="flex items-center gap-1.5 border-r border-white/15 pr-2 sm:pr-2.5 shrink-0">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse hidden sm:block" />
                         <CopoBrandLogo
-                          domain={selectedPlace?.brandDomain}
+                          domain={selectedPlace?.brandDomain || extractCleanDomain(selectedPlace?.website || selectedPlace?.id || selectedPlace?.name)}
                           name={selectedPlace?.name}
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
@@ -1594,7 +1596,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       <div className="flex items-center gap-1.5 border-r border-white/15 pr-2 sm:pr-2.5 shrink-0">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse hidden sm:block" />
                         <CopoBrandLogo
-                          domain={selectedPlace?.brandDomain}
+                          domain={selectedPlace?.brandDomain || extractCleanDomain(selectedPlace?.website || selectedPlace?.id || selectedPlace?.name)}
                           name={selectedPlace?.name}
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}

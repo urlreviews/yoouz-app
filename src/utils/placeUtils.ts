@@ -762,14 +762,14 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     ""
   );
   const reviewLogo =
-    (video.placeLogoUrl && !video.placeLogoUrl.includes("gstatic.com") && !video.placeLogoUrl.includes("faviconV2")) ? video.placeLogoUrl :
-    ((domain && KNOWN_BRAND_LOGOS[domain]) ||
-     (domain ? getCleanLogoUrl(null, domain) || "" : ""));
+    (domain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] :
+    (video.placeLogoUrl && !video.placeLogoUrl.startsWith("data:;") && !video.placeLogoUrl.includes("tap/0.png")) ? video.placeLogoUrl :
+    (domain ? getCleanLogoUrl(null, domain) || "" : "");
 
   if (existing) {
     const rawBanner = existing.bannerUrl || existing.ogImage || reviewBanner || (domain && KNOWN_BRAND_BANNERS[domain]) || "";
     const banner = sanitizeBanner(rawBanner);
-    const logo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (reviewLogo || (domain && KNOWN_BRAND_LOGOS[domain]) || ""));
+    const logo = (domain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : ((existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("tap/0.png")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("tap/0.png")) ? existing.avatarUrl : (reviewLogo || "")));
     const website = (existing.website && !existing.website.includes("maps.google.com")) 
       ? existing.website 
       : (video.placeWebsite || (domain ? `https://${domain}` : ""));
@@ -790,14 +790,24 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
 
     const isYoouz = existing.id === 'yoouz.com' || existing.brandDomain === 'yoouz.com' || existing.name?.toLowerCase() === 'yoouz' || domain === 'yoouz.com';
 
+    const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
+    const cleanExistingAddr = (existing.address && !existing.address.startsWith("http") && existing.address !== "Verified Location") ? existing.address : "";
+    const effectiveAddress = isYoouz ? "" : (cleanExistingAddr || cleanReviewAddr || "");
+    const effectiveCity = isYoouz ? "" : (existing.city && existing.city !== "Online" && existing.city !== "Worldwide" ? existing.city : (video.placeCity || existing.city || ""));
+    const effectiveCountry = isYoouz ? "" : (existing.country || video.placeCountry || "");
+    const effectivePhone = existing.phone || video.placePhone || "";
+    const effectiveEmail = existing.email || video.placeEmail || "";
+
     return {
       ...existing,
       name: updatedName,
-      address: isYoouz ? "" : existing.address,
-      city: isYoouz ? "" : existing.city,
-      country: isYoouz ? "" : existing.country,
-      lat: isYoouz ? 0 : existing.lat,
-      lng: isYoouz ? 0 : existing.lng,
+      address: effectiveAddress,
+      city: effectiveCity,
+      country: effectiveCountry,
+      phone: effectivePhone,
+      email: effectiveEmail,
+      lat: isYoouz ? 0 : (existing.lat || 0),
+      lng: isYoouz ? 0 : (existing.lng || 0),
       totalReviews: Math.max(existing.totalReviews || 1, (existing.totalReviews || 0) + 1),
       rating: video.rating || existing.rating || 5.0,
       avatarUrl: logo,
@@ -813,15 +823,16 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
 
   const initialDescription = video.placeDescription || "";
   const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
+  const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
 
   return {
     id: cleanId,
     name: formatBusinessName(video.placeName || domain) || "Verified Business",
     category: video.placeCategory || "Establishment",
     categoryType: "all",
-    address: isYoouz ? "" : (video.placeAddress || ""),
+    address: isYoouz ? "" : cleanReviewAddr,
     city: isYoouz ? "" : (video.placeCity || ""),
-    country: isYoouz ? "" : "",
+    country: isYoouz ? "" : (video.placeCountry || ""),
     lat: 0,
     lng: 0,
     rating: video.rating || 5.0,
@@ -835,7 +846,8 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
     photos: reviewBanner ? [reviewBanner] : [],
     openingHours: "Available 24/7",
     isOpen: true,
-    phone: "",
+    phone: isYoouz ? "" : (video.placePhone || ""),
+    email: isYoouz ? "" : (video.placeEmail || ""),
     website: video.placeWebsite || (domain ? `https://${domain}` : ""),
     priceRange: "N/A",
     isSavedToProfile: true,
@@ -1738,6 +1750,8 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
   "paultolandlaw": { address: "15 Court Square #800", city: "Boston", state: "MA", country: "United States", lat: 42.3585, lng: -71.0592 },
   "businessplace.com": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
   "businessplace": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
+  "brusselsdental.com": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
+  "brusselsdental": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "usa.com": { address: "100 Wall Street", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
 };
 

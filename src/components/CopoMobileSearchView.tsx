@@ -278,20 +278,22 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       fetch(`/api/url-metadata?url=${encodeURIComponent(cleanUrl)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-          if (data && (data.title || data.address || data.phone || data.category || data.image)) {
+          if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
+            const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
+            const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             onAddPlace({
               ...optimisticPlace,
               name: formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
               category: data.category || optimisticPlace.category,
-              address: data.address || optimisticPlace.address,
+              address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
               city: data.city || optimisticPlace.city,
               country: data.country || optimisticPlace.country,
               phone: data.phone || optimisticPlace.phone,
               email: data.email || optimisticPlace.email,
-              bannerUrl: data.image || optimisticPlace.bannerUrl,
-              ogImage: data.image || optimisticPlace.ogImage,
-              logoUrl: data.logo || optimisticPlace.logoUrl,
-              avatarUrl: data.logo || optimisticPlace.avatarUrl,
+              bannerUrl: isValidBanner ? data.image : optimisticPlace.bannerUrl,
+              ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
+              logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
+              avatarUrl: isValidLogo ? data.logo : optimisticPlace.avatarUrl,
               description: data.description || optimisticPlace.description
             });
           }
