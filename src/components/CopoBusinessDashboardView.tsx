@@ -3910,7 +3910,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <span>Scan with phone camera to record live review</span>
                     </div>
 
-                    {/* Footnote: Direct URL + Copy Link & Test Flow */}
+                    {/* Footnote: Direct URL + Copy Link */}
                     <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-1">
                       <span className="text-[11px] font-mono text-zinc-400 truncate max-w-[200px] sm:max-w-[240px]">
                         {qrDirectReviewUrl.replace(/^https?:\/\//, '')}
@@ -3937,21 +3937,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <span className="text-[10px]">Copy</span>
                             </>
                           )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (onRecordReview) {
-                              onRecordReview(currentPlace);
-                            } else {
-                              window.location.href = qrDirectReviewUrl;
-                            }
-                          }}
-                          className="p-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-750 active:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer text-xs font-semibold flex items-center gap-1 border border-zinc-700/60"
-                          title="Test Review Flow"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span className="text-[10px]">Test</span>
                         </button>
                       </div>
                     </div>
