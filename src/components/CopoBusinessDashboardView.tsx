@@ -2,6 +2,7 @@ import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
+import { CopoTestEmbedView } from "./CopoTestEmbedView";
 import { getDisplayViews, getPlaceSlug, getSafeAvatarUrl, resolveSafeAuthor, extractCleanDomain } from '../utils/placeUtils';
 import { generateGoogleLetterAvatarSvg } from '../lib/avatar';
 import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
@@ -219,11 +220,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onRecordReview
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
+  const [showEmbedTester, setShowEmbedTester] = useState(false);
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
   // Automatically scroll main content area back to top when switching tabs
   useEffect(() => {
+    setShowEmbedTester(false);
     const resetScroll = () => {
       if (mainScrollRef.current) {
         mainScrollRef.current.scrollTop = 0;
@@ -2509,8 +2512,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           <main ref={mainScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-zinc-950 p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth w-full max-w-full">
             <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
 
-            {/* TAB 1: OVERVIEW & INSIGHTS */}
-            {activeTab === 'overview' && (
+            {showEmbedTester ? (
+              <div className="animate-in fade-in duration-300">
+                <CopoTestEmbedView
+                  places={places}
+                  videos={videos}
+                  onExit={() => setShowEmbedTester(false)}
+                />
+              </div>
+            ) : (
+              <>
+                {/* TAB 1: OVERVIEW & INSIGHTS */}
+                {activeTab === 'overview' && (
               <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
                 
                 {/* Banner with Welcome & Date Filter */}
@@ -3729,12 +3742,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           <span>Test player</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
-                        <a
-                          href="/testembed"
-                          className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors"
+                        <button
+                          type="button"
+                          onClick={() => setShowEmbedTester(true)}
+                          className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors cursor-pointer bg-transparent border-none p-0"
                         >
                           <span>Open Live Embed Tester</span>
-                        </a>
+                        </button>
                       </div>
 
                       <button
@@ -4442,6 +4456,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               </div>
             )}
+            </>
+          )}
 
             {/* Mobile & Bottom Page Footer Links */}
             <div className="md:hidden pt-8 pb-12 flex flex-col items-center justify-center gap-2 text-center text-zinc-400">
