@@ -88,8 +88,8 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
         {/* Modal Body */}
         <div className="p-5 space-y-5 text-zinc-300">
           
-          {/* HIGH-FIDELITY SOCIAL PREVIEW CARD (Matches share view perfectly!) */}
-          <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-800/80 bg-zinc-900 shadow-xl select-none group">
+          {/* HIGH-FIDELITY SOCIAL PREVIEW CARD (Matches share view 100% exactly!) */}
+          <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
             <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
               {/* Clean video thumbnail */}
               <img
@@ -101,12 +101,12 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 }}
               />
 
-              {/* Gradient vignette filter for ultra readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/55 pointer-events-none" />
+              {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
 
               {/* TOP BAR: Place details pill */}
               <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[85%]">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[72%]">
                   <span className="text-amber-400 text-xs font-black shrink-0">★</span>
                   <span className="text-white text-xs font-bold truncate">
                     {placeName}
@@ -119,8 +119,8 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
 
               {/* CENTER: Play Button overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md border border-white/35 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
-                  <svg className="w-4.5 h-4.5 fill-white ml-0.5" viewBox="0 0 24 24">
+                <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
@@ -140,22 +140,22 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10px] font-bold">
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
                         {authorName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-white text-[11px] font-semibold leading-tight truncate drop-shadow-xs">
+                    <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
                       {authorName}
                     </p>
-                    <p className="text-zinc-300 text-[10px] leading-tight truncate drop-shadow-xs opacity-90">
-                      Verified Video Review
+                    <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                      {authorName} • 60s Review
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[9.5px] font-bold text-white shrink-0 shadow-xs">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                   <span>yoouz.com</span>
                 </div>
