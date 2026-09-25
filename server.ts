@@ -748,6 +748,23 @@ function readReviewsIndex(): any[] {
               }
             }
 
+            // Ensure Garage As business name is cleanly formatted with proper two-word casing
+            if (
+              (r.placeId && (r.placeId.toLowerCase().includes("garageas") || r.placeId.toLowerCase().includes("garage-as"))) ||
+              (r.placeName && (r.placeName.toLowerCase().replace(/\s+/g, "") === "garageas" || r.placeName.toLowerCase() === "garageas")) ||
+              (r.businessName && (r.businessName.toLowerCase().replace(/\s+/g, "") === "garageas" || r.businessName.toLowerCase() === "garageas")) ||
+              (r.caption && r.caption.toLowerCase().includes("garageas"))
+            ) {
+              if (r.placeName !== "Garage As" || r.businessName !== "Garage As") {
+                r.placeName = "Garage As";
+                r.businessName = "Garage As";
+                if (r.dishOrItem && (r.dishOrItem.toLowerCase().includes("garageas") || r.dishOrItem.toLowerCase() === "garageas")) {
+                  r.dishOrItem = "Garage As";
+                }
+                dirty = true;
+              }
+            }
+
             if (r.author) {
               // Ensure Steven Akan always has canonical location
               if ((r.authorName === "Steven Akan" || r.author.name === "Steven Akan" || r.userId === "avr6566gd@gmail.com") && (!r.author.location || !r.author.country)) {
