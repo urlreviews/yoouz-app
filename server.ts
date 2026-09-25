@@ -19571,35 +19571,14 @@ Return JSON:
     }
   });
 
-  const renderFallbackSvg = (res: any, domainStr: string) => {
-    const clean = (domainStr || "B").replace(/^(https?:\/\/)?(www\.)?/, "").split(".")[0] || "B";
-    let letters = "B";
-    if (clean.length <= 3) {
-      letters = clean.toUpperCase();
-    } else {
-      const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0 && !["inc", "llc", "ltd", "corp", "co"].includes(w.toLowerCase()));
-      if (words.length >= 2) {
-        letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
-      } else if (clean.length > 0) {
-        letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
-      }
-    }
-
-    const PALETTES = [
-      "#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626",
-      "#0891b2", "#4f46e5", "#c026d3", "#0284c7", "#db2777"
-    ];
-    let hash = 0;
-    for (let i = 0; i < clean.length; i++) {
-      hash = (hash << 5) - hash + clean.charCodeAt(i);
-      hash |= 0;
-    }
-    const bgColor = PALETTES[Math.abs(hash) % PALETTES.length];
-    const fontSize = letters.length > 3 ? 65 : letters.length > 2 ? 80 : 105;
-
+  const renderFallbackSvg = (res: any, _domainStr?: string) => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-      <rect width="256" height="256" rx="56" fill="${bgColor}"/>
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-1px">${letters}</text>
+      <rect width="256" height="256" rx="56" fill="#ffffff"/>
+      <rect x="4" y="4" width="248" height="248" rx="52" fill="none" stroke="#e4e4e7" stroke-width="6"/>
+      <path d="m40 88 48-48h80l48 48" fill="none" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M56 128v80a8 8 0 0 0 8 8h128a8 8 0 0 0 8-8v-80" fill="none" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M104 216v-48a8 8 0 0 1 8-8h32a8 8 0 0 1 8 8v48" fill="none" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40 88h176" fill="none" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round"/>
     </svg>`;
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
@@ -19614,7 +19593,7 @@ Return JSON:
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
     if (!cleanDomain) {
-      return renderFallbackSvg(res, "Y");
+      return renderFallbackSvg(res);
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -19634,7 +19613,13 @@ Return JSON:
       "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
       "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
       "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-      "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png"
+      "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+      "toopoptiek.com": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+      "www.toopoptiek.com": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+      "toopoptiek": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+      "vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
+      "www.vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
+      "vandenbalck": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png"
     };
 
     if (KNOWN_FAVICON_LOGOS[cleanDomain]) {

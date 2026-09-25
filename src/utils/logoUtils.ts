@@ -50,6 +50,12 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
   "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
   "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+  "toopoptiek.com": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+  "www.toopoptiek.com": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+  "toopoptiek": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
+  "vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
+  "www.vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
+  "vandenbalck": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
   "zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#2D8CFF"/>
@@ -760,17 +766,15 @@ export function getDeterministicBrandTheme(nameOrDomain?: string | null, domainS
 }
 
 export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 128): string {
-  const theme = getDeterministicBrandTheme(nameOrDomain, nameOrDomain);
-  
-  if (theme.letters === "Y" && (nameOrDomain || "").toLowerCase().includes("yoouz")) {
+  if ((nameOrDomain || "").toLowerCase().includes("yoouz")) {
     return YOOUZ_LOGO_DATA_URI;
   }
 
-  const fontSize = theme.letters.length > 3 ? Math.round(size * 0.28) : theme.letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
-
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
     <rect width="${size}" height="${size}" fill="#ffffff"/>
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${theme.textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${theme.letters}</text>
+    <path d="m${Math.round(size*0.16)} ${Math.round(size*0.35)} ${Math.round(size*0.18)} -${Math.round(size*0.18)}h${Math.round(size*0.32)}l${Math.round(size*0.18)} ${Math.round(size*0.18)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M${Math.round(size*0.22)} ${Math.round(size*0.5)}v${Math.round(size*0.32)}a${Math.round(size*0.03)} ${Math.round(size*0.03)} 0 0 0 ${Math.round(size*0.03)} ${Math.round(size*0.03)}h${Math.round(size*0.5)}a${Math.round(size*0.03)} ${Math.round(size*0.03)} 0 0 0 ${Math.round(size*0.03)} -${Math.round(size*0.03)}v-${Math.round(size*0.32)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M${Math.round(size*0.16)} ${Math.round(size*0.35)}h${Math.round(size*0.68)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round"/>
   </svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

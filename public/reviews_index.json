@@ -6,7 +6,7 @@
     "createdAtMs": 1790344780190,
     "isLocalUpload": true,
     "placeId": "proximus.be",
-    "placeName": "Pro Ximus",
+    "placeName": "Proximus",
     "placeCategory": "Website",
     "placeAddress": "",
     "placeCity": "Online",
@@ -79,7 +79,7 @@
     "placeRating": 5,
     "placeWebsite": "https://multipharma.be",
     "placeLogoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "placeBannerUrl": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "placeDescription": "Bezoek Multipharma.be voor het meest uitgebreide aanbod in verzorging en gezondheid. ✓Snelle levering ✓Altijd veilige betaling ✓Tot wel 60% korting.",
     "author": {
       "name": "Steven Akan",
@@ -121,7 +121,7 @@
     "recordedAt": "Just now",
     "bunnyVideoId": "rev-1790339546979-n56mr",
     "businessName": "Multipharma",
-    "bannerUrl": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "logoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png"
   },

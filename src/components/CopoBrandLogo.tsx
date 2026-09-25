@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getDeterministicBrandTheme, getProxiedImageUrl } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -55,12 +55,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }, [resolvedDomain, name]);
 
-  // Deterministic Brand Theme (Letters & Color)
-  const brandTheme = useMemo(() => {
-    return getDeterministicBrandTheme(name || resolvedDomain, resolvedDomain);
-  }, [name, resolvedDomain]);
-
-  // If Yoouz, render the official emblem directly as native vector SVG.
+  // Yoouz emblem handling
   if (isYoouz) {
     return (
       <div className={className} id="copo-brand-logo-yoouz">
@@ -170,25 +165,36 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const containerClasses = [
     !hasPosition ? "relative" : "",
     !hasOverflow ? "overflow-hidden" : "",
+    "bg-white",
     className
   ].filter(Boolean).join(" ");
 
   return (
     <div className={containerClasses}>
-      {/* 1. Rock-Solid Deterministic Monogram Base Layer (Immediate zero-delay rendering, never fails) */}
-      <div
-        className={`absolute inset-0 w-full h-full flex items-center justify-center select-none ${imageClassName}`}
-        style={{ backgroundColor: brandTheme.bgColor }}
-      >
-        <span
-          className={`font-black tracking-tight leading-none ${fallbackTextClassName}`}
-          style={{ color: brandTheme.textColor }}
+      {/* 1. Neutral Business Placeholder (Clean neutral storefront, ZERO fake letters, ZERO random initials) */}
+      {(!shouldAttemptImage || !imgLoaded || hasError) && (
+        <div
+          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-white text-zinc-300 ${imageClassName}`}
         >
-          {brandTheme.letters}
-        </span>
-      </div>
+          <svg
+            viewBox="0 0 24 24"
+            className="w-1/2 h-1/2 max-w-[32px] max-h-[32px] opacity-60"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+            <path d="M2 7h20" />
+          </svg>
+        </div>
+      )}
 
-      {/* 2. Primary Brand Logo / Favicon Layer (Fades in on load, perfectly graceful) */}
+      {/* 2. Primary Brand Logo / Favicon Layer (Crisp, authentic, completely unobstructed on clean canvas) */}
       {shouldAttemptImage && (
         <img
           src={currentSrc}
@@ -196,7 +202,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${imageClassName} relative z-10 transition-opacity duration-200 ${
+          className={`${imageClassName} relative z-10 transition-opacity duration-150 ${
             imgLoaded ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
