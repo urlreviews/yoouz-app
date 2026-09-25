@@ -383,8 +383,30 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "pro ximus": "Proximus",
   "multipharma": "Multipharma",
   "multipharma.be": "Multipharma",
-  "www.multipharma.be": "Multipharma"
+  "www.multipharma.be": "Multipharma",
+  "autowerkplaatsbrugge": "Auto Werkplaats Brugge",
+  "autowerkplaatsbrugge.be": "Auto Werkplaats Brugge",
+  "autowerkplaatsbruggebe": "Auto Werkplaats Brugge",
+  "autowerkplaats-brugge": "Auto Werkplaats Brugge",
+  "autowerkplaats-brugge.be": "Auto Werkplaats Brugge",
+  "www-autowerkplaatsbrugge-be": "Auto Werkplaats Brugge",
+  "autowerkplaats brugge": "Auto Werkplaats Brugge",
+  "auto werkplaats brugge": "Auto Werkplaats Brugge"
 };
+
+/**
+ * Detects corrupt/fragmented strings scraped from website footers or contact blocks (e.g. "Kruis Tel", "St-Kruis Tel", "Tel: 050", etc.)
+ */
+export function isCorruptedBusinessName(name?: string | null): boolean {
+  if (!name) return false;
+  const lower = name.trim().toLowerCase();
+  if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
+  if (/^(st-)?kruis\s*tel[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone|call|contact|address|location|postcode|zipcode|vat|be\s*0\d{3})[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone)\b/i.test(lower) && /\d{3}/.test(lower)) return true;
+  if (/^maalsesteenweg/i.test(lower) || /^postcode/i.test(lower)) return true;
+  return false;
+}
 
 /**
  * Splits concatenated compound words, slugs, and camelCase domain strings into separate human-readable words.
@@ -405,7 +427,7 @@ export function splitCompoundWords(str: string): string {
   
   // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
   // Note: Avoid short sub-words like 'and' that cause false splits in words like 'tandis' or 'standard'
-  const commonWords = /(optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|garages|garage|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(autowerkplaats|werkplaats|carrosserie|garagejv|garageas|autobedrijf|autohandel|autowas|autocentrum|herstelplaats|werkplek|brugge|gent|antwerpen|brussel|leuven|hasselt|kortrijk|oostende|mechelen|sint|optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|garages|garage|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
@@ -430,6 +452,7 @@ export function splitCompoundWords(str: string): string {
  */
 export function isGenericPlaceName(name?: string | null): boolean {
   if (!name) return true;
+  if (isCorruptedBusinessName(name)) return true;
   const lower = name.trim().toLowerCase();
   const genericWords = new Set([
     "home",
@@ -466,6 +489,12 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
   }
   if (domRoot && KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()]) {
     return KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()];
+  }
+
+  // Reject corrupted or contact fragment titles (e.g. "Kruis Tel")
+  if (name && isCorruptedBusinessName(name)) {
+    if (cleanDom) return formatBusinessName(cleanDom);
+    return "";
   }
 
   if (!name && cleanDom) {

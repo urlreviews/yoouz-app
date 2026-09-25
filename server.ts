@@ -18189,6 +18189,7 @@ Return JSON:
 
               const isGenericOrPlaceholderTitle = (t: string) => {
                 if (!t) return true;
+                if (isCorruptedBusinessNameServer(t)) return true;
                 const lower = t.trim().toLowerCase();
                 const genericList = [
                   'hostinger horizons', 'react app', 'vite + react', 'vite app', 'create react app',
@@ -22989,8 +22990,27 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "pro ximus": "Proximus",
   "multipharma": "Multipharma",
   "multipharma.be": "Multipharma",
-  "www.multipharma.be": "Multipharma"
+  "www.multipharma.be": "Multipharma",
+  "autowerkplaatsbrugge": "Auto Werkplaats Brugge",
+  "autowerkplaatsbrugge.be": "Auto Werkplaats Brugge",
+  "autowerkplaatsbruggebe": "Auto Werkplaats Brugge",
+  "autowerkplaats-brugge": "Auto Werkplaats Brugge",
+  "autowerkplaats-brugge.be": "Auto Werkplaats Brugge",
+  "www-autowerkplaatsbrugge-be": "Auto Werkplaats Brugge",
+  "autowerkplaats brugge": "Auto Werkplaats Brugge",
+  "auto werkplaats brugge": "Auto Werkplaats Brugge"
 };
+
+function isCorruptedBusinessNameServer(name?: string | null): boolean {
+  if (!name) return false;
+  const lower = name.trim().toLowerCase();
+  if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
+  if (/^(st-)?kruis\s*tel[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone|call|contact|address|location|postcode|zipcode|vat|be\s*0\d{3})[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone)\b/i.test(lower) && /\d{3}/.test(lower)) return true;
+  if (/^maalsesteenweg/i.test(lower) || /^postcode/i.test(lower)) return true;
+  return false;
+}
 
 function splitCompoundWords(str: string): string {
   let s = str.trim();
@@ -23004,7 +23024,7 @@ function splitCompoundWords(str: string): string {
   s = s.replace(/^(the|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{4,})/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
   
-  const commonWords = /(optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(autowerkplaats|werkplaats|carrosserie|garagejv|garageas|autobedrijf|autohandel|autowas|autocentrum|herstelplaats|werkplek|brugge|gent|antwerpen|brussel|leuven|hasselt|kortrijk|oostende|mechelen|sint|optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   const parts = s.split(" ").map(p => {
     if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
@@ -23018,6 +23038,7 @@ function splitCompoundWords(str: string): string {
 
 function isGenericPlaceNameServer(name?: string | null): boolean {
   if (!name) return true;
+  if (isCorruptedBusinessNameServer(name)) return true;
   const lower = name.trim().toLowerCase();
   const genericWords = new Set([
     "home",
@@ -23053,6 +23074,12 @@ function formatBusinessName(name?: string | null, domain?: string | null): strin
   }
   if (domRoot && KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()]) {
     return KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()];
+  }
+
+  // Reject corrupted or contact fragment titles (e.g. "Kruis Tel")
+  if (name && isCorruptedBusinessNameServer(name)) {
+    if (cleanDom) return formatBusinessName(cleanDom);
+    return "";
   }
 
   if (!name && cleanDom) {
@@ -23936,7 +23963,9 @@ function injectOpenGraphTags(html: string, meta: any) {
     "garage-jv.be": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
     "garage-jv": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
     "healis.be": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
-    "healis": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 }
+    "healis": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
+    "autowerkplaatsbrugge.be": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" },
+    "autowerkplaatsbrugge": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" }
   });
 
   Object.assign(KNOWN_PLACE_METADATA, {
