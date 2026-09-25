@@ -19355,13 +19355,29 @@ Return JSON:
               for (const phrase of list[1].slice(0, 5)) {
                 if (typeof phrase === 'string' && phrase.length >= 2) {
                   const cleanedPhrase = phrase.trim();
-                  const guessDomain = cleanedPhrase.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
-                  if (!seenDomains.has(guessDomain)) {
+                  let targetDomain = (cleanedPhrase.includes(".") && !cleanedPhrase.includes(" ")) ? cleanDomainName(cleanedPhrase) : "";
+
+                  if (!targetDomain) {
+                    const knownMatchKey = Object.keys(KNOWN_OFFICIAL_NAMES).find(
+                      k => k.includes('.') && KNOWN_OFFICIAL_NAMES[k].toLowerCase() === cleanedPhrase.toLowerCase()
+                    );
+                    if (knownMatchKey) {
+                      targetDomain = knownMatchKey;
+                    }
+                  }
+
+                  const displayTitle = (targetDomain && KNOWN_OFFICIAL_NAMES[targetDomain])
+                    ? KNOWN_OFFICIAL_NAMES[targetDomain]
+                    : formatBusinessName(cleanedPhrase) || cleanedPhrase;
+
+                  const dedupKey = targetDomain || displayTitle.toLowerCase();
+                  if (!seenDomains.has(dedupKey) && displayTitle && displayTitle !== ".com") {
+                    seenDomains.add(dedupKey);
                     suggestions.push({
-                      title: formatBusinessName(cleanedPhrase),
-                      domain: guessDomain,
-                      logoUrl: `/api/favicon?domain=${guessDomain}`,
-                      category: "Suggested Search",
+                      title: displayTitle,
+                      domain: targetDomain || "",
+                      logoUrl: targetDomain ? `/api/favicon?domain=${targetDomain}` : `/api/avatar?name=${encodeURIComponent(displayTitle)}`,
+                      category: "Verified Business",
                       source: "autocomplete"
                     });
                   }
@@ -22929,7 +22945,7 @@ function cleanDomainName(urlStr: any) {
      lower = lower.replace(/^www[\.\-\/]/, '');
 
      if (!lower.includes(".") && lower.length > 0) {
-        lower = lower.replace(/[^a-z0-9]/g, "") + ".com";
+        return "";
      }
      return lower;
   } catch(e) {

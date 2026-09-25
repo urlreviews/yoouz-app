@@ -83,10 +83,16 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
     setQuery(item.title);
     setIsLoadingPlace(true);
 
-    const cleanDom = extractCleanDomain(item.domain || item.title) || item.domain.toLowerCase();
+    const hasDomain = Boolean(item.domain && item.domain.includes('.') && item.domain !== '.com');
+    const cleanDom = hasDomain ? extractCleanDomain(item.domain) || item.domain.toLowerCase() : "";
+    const placeId = cleanDom || item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
 
     // Check existing place in memory
-    const existing = places.find(p => p.id.toLowerCase() === cleanDom || p.brandDomain === cleanDom);
+    const existing = places.find(p => 
+      p.id.toLowerCase() === placeId || 
+      (cleanDom && p.brandDomain === cleanDom) ||
+      (p.name && p.name.toLowerCase() === item.title.toLowerCase())
+    );
     if (existing) {
       setSelectedPlace(existing);
       setIsLoadingPlace(false);
@@ -94,9 +100,13 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
     }
 
     // Set optimistic place
-    const officialName = KNOWN_OFFICIAL_NAMES[cleanDom] || item.title || formatBusinessName(cleanDom);
+    const officialName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || item.title || formatBusinessName(cleanDom) || item.title;
+    const avatar = item.logoUrl && !item.logoUrl.includes('domain=.com') && !item.logoUrl.includes('domain=')
+      ? item.logoUrl
+      : (cleanDom ? `/api/favicon?domain=${cleanDom}` : `/api/avatar?name=${encodeURIComponent(officialName)}`);
+
     const optimisticPlace: Place = {
-      id: cleanDom,
+      id: placeId,
       name: officialName,
       category: item.category || "Verified Business",
       categoryType: "all",
@@ -108,8 +118,8 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       rating: 5,
       totalReviews: 1,
       ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: item.logoUrl || `/api/favicon?domain=${cleanDom}`,
-      logoUrl: item.logoUrl || `/api/favicon?domain=${cleanDom}`,
+      avatarUrl: avatar,
+      logoUrl: avatar,
       bannerUrl: "",
       ogImage: "",
       photos: [],
@@ -118,38 +128,42 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       phone: "",
       priceRange: "$$",
       plusCode: "",
-      description: "",
+      description: `${officialName} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
       popularKeywords: [],
       amenities: [],
       topDishes: [],
-      website: `https://${cleanDom}`,
+      website: cleanDom ? `https://${cleanDom}` : "",
       brandDomain: cleanDom
     };
 
     setSelectedPlace(optimisticPlace);
 
-    // Fetch full metadata in background
-    try {
-      const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        const resolvedName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || optimisticPlace.name;
-        setSelectedPlace(prev => prev ? {
-          ...prev,
-          name: resolvedName,
-          category: data.category || prev.category,
-          address: data.address || prev.address,
-          city: data.city || prev.city,
-          country: data.country || prev.country,
-          logoUrl: data.logo || prev.logoUrl,
-          avatarUrl: data.logo || prev.avatarUrl,
-          bannerUrl: data.image || prev.bannerUrl,
-          description: data.description || prev.description
-        } : null);
+    // Fetch full metadata in background if real website domain exists
+    if (cleanDom) {
+      try {
+        const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const resolvedName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || optimisticPlace.name;
+          setSelectedPlace(prev => prev ? {
+            ...prev,
+            name: resolvedName,
+            category: (data.category && data.category !== "Website") ? data.category : prev.category,
+            address: data.address || prev.address,
+            city: data.city || prev.city,
+            country: data.country || prev.country,
+            logoUrl: (data.logo && !data.logo.includes('domain=.com')) ? data.logo : prev.logoUrl,
+            avatarUrl: (data.logo && !data.logo.includes('domain=.com')) ? data.logo : prev.avatarUrl,
+            bannerUrl: data.image || prev.bannerUrl,
+            description: data.description || prev.description
+          } : null);
+        }
+      } catch (err) {
+        console.error("Url metadata fetch error:", err);
+      } finally {
+        setIsLoadingPlace(false);
       }
-    } catch (err) {
-      console.error("Url metadata fetch error:", err);
-    } finally {
+    } else {
       setIsLoadingPlace(false);
     }
   };
@@ -220,10 +234,10 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                       <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                     </div>
                     <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                      <span className="text-zinc-500 truncate">{item.domain}</span>
+                      {item.domain && <span className="text-zinc-500 truncate">{item.domain}</span>}
                       {item.category && (
                         <>
-                          <span className="text-zinc-700">•</span>
+                          {item.domain && <span className="text-zinc-700">•</span>}
                           <span className="text-zinc-400 truncate">{item.category}</span>
                         </>
                       )}
@@ -285,10 +299,12 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   </div>
 
                   {/* Website Link Line */}
-                  <a href={selectedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 text-xs font-medium mt-2">
-                    <Globe className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{selectedPlace.brandDomain || selectedPlace.website?.replace(/^https?:\/\//, '')}</span>
-                  </a>
+                  {selectedPlace.website && selectedPlace.website !== "https://" && selectedPlace.brandDomain && (
+                    <a href={selectedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 text-xs font-medium mt-2">
+                      <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>{selectedPlace.brandDomain}</span>
+                    </a>
+                  )}
                 </div>
 
                 {/* Record Video Review Action */}
