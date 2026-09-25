@@ -252,9 +252,61 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return addr;
   }, [place, isAddressUrl, rawPlaceVideos]);
 
+  const [selectedLocationIndex, setSelectedLocationIndex] = useState<number>(0);
+
+  // Reset selected branch index when drawer opens a new place
+  useEffect(() => {
+    setSelectedLocationIndex(0);
+  }, [place?.id]);
+
+  const availableLocations = React.useMemo(() => {
+    const placeKey = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
+    const known = KNOWN_LOCATIONS[placeKey] || KNOWN_LOCATIONS[placeKey.replace(/\.(com|be|nl|fr|de|es|it|org|net|com\.au|au)$/i, '')];
+    
+    if (place.locations && place.locations.length > 0) {
+      return place.locations;
+    }
+    if (known?.locations && known.locations.length > 0) {
+      return known.locations;
+    }
+    return [];
+  }, [place]);
+
+  const activeBranch = availableLocations.length > 0 ? (availableLocations[selectedLocationIndex] || availableLocations[0]) : null;
+
+  const currentDisplayAddress = React.useMemo(() => {
+    if (activeBranch && activeBranch.address) {
+      let bAddr = activeBranch.address.trim();
+      const bZip = activeBranch.postalCode;
+      const bCity = activeBranch.city;
+      const bCountry = activeBranch.country || place.country;
+      
+      const hasCity = bCity && bAddr.toLowerCase().includes(bCity.toLowerCase());
+      const hasZip = bZip && bAddr.includes(bZip);
+      const hasCountry = bCountry && bAddr.toLowerCase().includes(bCountry.toLowerCase());
+
+      if (!hasCity && bCity) {
+        if (bZip && !hasZip) {
+          bAddr += `, ${bZip} ${bCity}`;
+        } else {
+          bAddr += `, ${bCity}`;
+        }
+      } else if (bZip && !hasZip) {
+        bAddr += ` ${bZip}`;
+      }
+
+      if (bCountry && !hasCountry && !["worldwide", "global"].includes(bCountry.toLowerCase())) {
+        bAddr += `, ${bCountry}`;
+      }
+      return bAddr;
+    }
+    return displayAddress;
+  }, [activeBranch, displayAddress, place.country]);
+
   const isYoouz = place.id === 'yoouz.com' || (place.name && place.name.toLowerCase() === 'yoouz') || place.brandDomain === 'yoouz.com' || (place.website && place.website.includes('yoouz.com'));
 
   const hasPhysicalLocation = !isYoouz && Boolean(
+    (currentDisplayAddress && currentDisplayAddress.trim() !== "") ||
     (displayAddress && displayAddress.trim() !== "") ||
     (place.city && 
      place.city.trim() !== "" && 
@@ -563,10 +615,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   // Genuine check filters
-  const effectivePhone = place.phone || rawPlaceVideos.find(v => v.placePhone && v.placePhone.trim() !== "")?.placePhone || "";
+  const effectivePhone = activeBranch?.phone || place.phone || rawPlaceVideos.find(v => v.placePhone && v.placePhone.trim() !== "")?.placePhone || "";
+  const effectiveHours = activeBranch?.openingHours || place.openingHours || "";
   const effectiveEmail = React.useMemo(() => {
-    const raw = (place.email && place.email.trim() !== "")
-      ? place.email.trim()
+    const raw = (activeBranch?.email || place.email || "") && (activeBranch?.email || place.email || "").trim() !== ""
+      ? (activeBranch?.email || place.email || "").trim()
       : (rawPlaceVideos.find(v => v.placeEmail && v.placeEmail.trim() !== "")?.placeEmail || "");
     if (!raw) return "";
     const lower = raw.toLowerCase();
@@ -574,12 +627,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return "";
     }
     return raw;
-  }, [place.email, rawPlaceVideos]);
+  }, [activeBranch, place.email, rawPlaceVideos]);
+
+  const effectivePlaceForMaps = React.useMemo(() => {
+    if (activeBranch && activeBranch.address) {
+      return {
+        ...place,
+        address: activeBranch.address,
+        postalCode: activeBranch.postalCode,
+        city: activeBranch.city || place.city,
+        country: activeBranch.country || place.country,
+        lat: activeBranch.lat || place.lat,
+        lng: activeBranch.lng || place.lng
+      };
+    }
+    return place;
+  }, [place, activeBranch]);
+
   const hasGenuinePhone = Boolean(
     effectivePhone &&
     effectivePhone.trim() !== "" &&
     !effectivePhone.includes("555-01") &&
-    !effectivePhone.includes("019-2834")
+    !effectivePhone.includes("019-2834") &&
+    !effectivePhone.includes("19.5999")
   );
 
   const hasGenuineWebsite = Boolean(
@@ -598,10 +668,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   );
 
   const hasGenuineHours = Boolean(
-    place.openingHours &&
-    place.openingHours.trim() !== "" &&
-    place.openingHours !== "Open 24 hours" &&
-    (isOnlineOnlyPlatform || place.openingHours !== "Available 24/7")
+    effectiveHours &&
+    effectiveHours.trim() !== "" &&
+    effectiveHours !== "Open 24 hours" &&
+    (isOnlineOnlyPlatform || effectiveHours !== "Available 24/7") &&
+    !effectiveHours.toLowerCase().includes("not provided")
   );
 
   const hasGenuinePlusCode = Boolean(
@@ -774,7 +845,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   };
 
   const handleOpenDirections = () => {
-    const url = getGoogleMapsDirectionsUrl(place, displayedPlaceName);
+    const url = getGoogleMapsDirectionsUrl(effectivePlaceForMaps, displayedPlaceName);
     window.open(url, "_blank");
   };
 
@@ -1361,15 +1432,63 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <ChevronUp className="w-4 h-4 text-zinc-200" />
                   </div>
                   
+                  {/* Interactive Branch Selector (when multi-branch business) */}
+                  {availableLocations.length > 1 && (
+                    <div className="px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/40">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+                            {t("place.selectBranchLocation", "Branch Locations")} ({availableLocations.length})
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-zinc-400 font-medium">
+                          {selectedLocationIndex + 1} of {availableLocations.length} selected
+                        </span>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
+                        {availableLocations.map((loc: any, idx: number) => {
+                          const isSelected = selectedLocationIndex === idx;
+                          const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
+                          const branchAddress = loc.address ? `${loc.address}${loc.postalCode ? `, ${loc.postalCode}` : ''} ${loc.city || ''}` : loc.city || '';
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setSelectedLocationIndex(idx);
+                                triggerHaptic();
+                              }}
+                              className={`shrink-0 text-left px-3 py-2 rounded-xl transition-all border cursor-pointer min-w-[180px] max-w-[240px] ${
+                                isSelected
+                                  ? "bg-blue-600/20 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/50"
+                                  : "bg-zinc-850/80 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                                <span className="text-[11px] font-bold truncate">{branchLabel}</span>
+                                {isSelected && <Check className="w-3 h-3 text-blue-400 shrink-0" />}
+                              </div>
+                              <p className="text-[10px] text-zinc-400 truncate">{branchAddress}</p>
+                              {loc.phone && (
+                                <p className="text-[9.5px] text-zinc-400 mt-0.5 font-medium">{formatPhoneNumber(loc.phone)}</p>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Address Line (Always present with clean fallback) */}
                   <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
                       <div className="text-xs space-y-0.5">
-                        {displayAddress ? (
+                        {currentDisplayAddress || displayAddress ? (
                           <>
                             <p className="text-zinc-200 font-medium leading-relaxed">
-                              {displayAddress}
+                              {currentDisplayAddress || displayAddress}
                             </p>
                             {place.locatedIn && !isAddressUrl && (
                               <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
@@ -1414,7 +1533,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           frameBorder="0"
                           style={{ border: 0, pointerEvents: "none" }}
                           referrerPolicy="no-referrer-when-downgrade"
-                          src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
+                          src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
                           title="Google Maps Location Preview"
                         />
                       </div>
@@ -1427,10 +1546,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <div className="flex items-center gap-3">
                         <Clock className="w-5 h-5 text-zinc-200 shrink-0" />
                         <div className="text-xs">
-                          {hasGenuineHours ? (
+                          {hasGenuineHours || effectiveHours ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-white font-bold">{t("place.open", "Open")}</span>
-                              <span className="text-zinc-200 ml-1">⋅ {place.openingHours}</span>
+                              <span className="text-zinc-200 ml-1">⋅ {effectiveHours || place.openingHours}</span>
                             </div>
                           ) : (
                             <span className="text-zinc-200">{t("place.hoursNotProvided", "Hours not provided")}</span>
@@ -1791,17 +1910,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* Maps Integration for physical places, or Online Presence for websites */}
               {hasPhysicalLocation ? (
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="pt-2 space-y-3">
+                  <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
-                    <button onClick={handleOpenDirections} className="text-[10px] text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1">
+                    <button onClick={handleOpenDirections} className="text-[10px] text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer">
                       <Navigation className="w-3 h-3" />
                       {t("place.getDirections", "Get Directions")}
                     </button>
                   </div>
                   <div className="w-full h-[200px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group" onClick={handleOpenDirections}>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                       <div className="bg-zinc-900 px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">{t("place.openInMaps", "Open in Maps")}</div>
+                       <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                         <ExternalLink className="w-3 h-3 text-white" />
+                         {t("place.openInMaps", "Open in Maps")}
+                       </div>
                     </div>
                     <iframe 
                       width="100%" 
@@ -1809,15 +1931,82 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       frameBorder="0" 
                       style={{ border: 0, pointerEvents: 'none' }} 
                       referrerPolicy="no-referrer-when-downgrade" 
-                      src={getGoogleMapsEmbedUrl(place, displayedPlaceName)}
+                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
                       title="Google Maps Location"
                     />
                   </div>
-                  {displayAddress && (
-                     <div className="flex items-start gap-2 mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
-                       <MapPin className="w-4 h-4 text-zinc-200 shrink-0 mt-0.5" />
-                       <p className="text-xs text-zinc-200 font-medium">{displayAddress}</p>
+                  {(currentDisplayAddress || displayAddress) && (
+                     <div className="flex items-start gap-2.5 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
+                       <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                       <p className="text-xs text-zinc-200 font-medium leading-relaxed">{currentDisplayAddress || displayAddress}</p>
                      </div>
+                  )}
+
+                  {/* Multi-Branch Directory in About Tab */}
+                  {availableLocations.length > 1 && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+                          {t("place.allBranchLocations", "All Branch Locations")} ({availableLocations.length})
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {availableLocations.map((loc: any, idx: number) => {
+                          const isSelected = selectedLocationIndex === idx;
+                          const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
+                          const branchAddress = loc.address ? `${loc.address}${loc.postalCode ? `, ${loc.postalCode}` : ''} ${loc.city || ''}${loc.country ? `, ${loc.country}` : ''}` : loc.city || '';
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                setSelectedLocationIndex(idx);
+                                triggerHaptic();
+                              }}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-blue-950/20 border-blue-500/80 ring-1 ring-blue-500/40"
+                                  : "bg-zinc-900/60 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <Building2 className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-blue-400" : "text-zinc-400"}`} />
+                                  <span className="text-xs font-bold text-white truncate">{branchLabel}</span>
+                                </div>
+                                {isSelected ? (
+                                  <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded-full border border-blue-500/30 shrink-0">
+                                    {t("place.active", "Active")}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-zinc-400 font-medium hover:text-zinc-200 shrink-0">
+                                    {t("place.select", "Select")}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-zinc-300 mb-1">{branchAddress}</p>
+                              <div className="flex items-center gap-3 text-[10.5px] text-zinc-400 pt-1 border-t border-zinc-800/60">
+                                {loc.phone && (
+                                  <a
+                                    href={`tel:${loc.phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="hover:text-blue-400 font-medium flex items-center gap-1"
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                    <span>{formatPhoneNumber(loc.phone)}</span>
+                                  </a>
+                                )}
+                                {loc.openingHours && (
+                                  <div className="flex items-center gap-1 truncate">
+                                    <Clock className="w-3 h-3 shrink-0" />
+                                    <span className="truncate">{loc.openingHours}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : place.website ? (

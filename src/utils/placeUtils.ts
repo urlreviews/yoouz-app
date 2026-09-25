@@ -2023,6 +2023,183 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; pos
   "tandis": { address: "Lange Gasthuisstraat 3", postalCode: "2000", city: "Antwerpen", country: "Belgium", lat: 51.2163, lng: 4.4042 },
   "dental365.nl": { address: "Kanaalstraat 40", postalCode: "4388 BN", city: "Oost-Souburg", country: "Netherlands", lat: 51.4682, lng: 3.6041 },
   "dental365": { address: "Kanaalstraat 40", postalCode: "4388 BN", city: "Oost-Souburg", country: "Netherlands", lat: 51.4682, lng: 3.6041 },
+  "multipharma.be": {
+    address: "Rue du Marché aux Poulets 37",
+    postalCode: "1000",
+    city: "Brussels",
+    country: "Belgium",
+    lat: 50.8491,
+    lng: 4.3512,
+    locations: [
+      { name: "Multipharma Marché aux Poulets", address: "Rue du Marché aux Poulets 37", postalCode: "1000", city: "Brussels", phone: "+32 2 511 35 90", openingHours: "Mon - Sat: 09:00 - 18:00 · Closed Sun", lat: 50.8491, lng: 4.3512 },
+      { name: "Multipharma Alexiens", address: "Rue des Alexiens 13", postalCode: "1000", city: "Brussels", phone: "+32 2 513 64 32", openingHours: "Mon - Fri: 09:00 - 17:30 · Closed Sat & Sun", lat: 50.8437, lng: 4.3518 },
+      { name: "Multipharma Porte de Hal", address: "Rue Haute 343", postalCode: "1000", city: "Brussels", phone: "+32 2 511 33 64", openingHours: "Mon - Sat: 09:00 - 18:30 · Closed Sun", lat: 50.8351, lng: 4.3468 },
+      { name: "Multipharma Parvis de Saint-Gilles", address: "Parvis de Saint-Gilles 45", postalCode: "1060", city: "Brussels", phone: "+32 2 537 01 89", openingHours: "Mon - Sat: 09:00 - 18:00 · Closed Sun", lat: 50.8298, lng: 4.3462 },
+      { name: "Multipharma Charleroi", address: "Chaussée de Charleroi 38", postalCode: "1060", city: "Saint-Gilles", phone: "+32 2 537 60 11", openingHours: "Mon - Sat: 09:00 - 19:00 · Closed Sun", lat: 50.8306, lng: 4.3578 }
+    ]
+  },
+  "multipharma": {
+    address: "Rue du Marché aux Poulets 37",
+    postalCode: "1000",
+    city: "Brussels",
+    country: "Belgium",
+    lat: 50.8491,
+    lng: 4.3512,
+    locations: [
+      { name: "Multipharma Marché aux Poulets", address: "Rue du Marché aux Poulets 37", postalCode: "1000", city: "Brussels", phone: "+32 2 511 35 90", openingHours: "Mon - Sat: 09:00 - 18:00 · Closed Sun", lat: 50.8491, lng: 4.3512 },
+      { name: "Multipharma Alexiens", address: "Rue des Alexiens 13", postalCode: "1000", city: "Brussels", phone: "+32 2 513 64 32", openingHours: "Mon - Fri: 09:00 - 17:30 · Closed Sat & Sun", lat: 50.8437, lng: 4.3518 },
+      { name: "Multipharma Porte de Hal", address: "Rue Haute 343", postalCode: "1000", city: "Brussels", phone: "+32 2 511 33 64", openingHours: "Mon - Sat: 09:00 - 18:30 · Closed Sun", lat: 50.8351, lng: 4.3468 },
+      { name: "Multipharma Parvis de Saint-Gilles", address: "Parvis de Saint-Gilles 45", postalCode: "1060", city: "Brussels", phone: "+32 2 537 01 89", openingHours: "Mon - Sat: 09:00 - 18:00 · Closed Sun", lat: 50.8298, lng: 4.3462 },
+      { name: "Multipharma Charleroi", address: "Chaussée de Charleroi 38", postalCode: "1060", city: "Saint-Gilles", phone: "+32 2 537 60 11", openingHours: "Mon - Sat: 09:00 - 19:00 · Closed Sun", lat: 50.8306, lng: 4.3578 }
+    ]
+  },
+  "chemistwarehouse.com.au": {
+    address: "416-418 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8703,
+    lng: 151.2070,
+    locations: [
+      { name: "Chemist Warehouse Sydney CBD", address: "416-418 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9232 4470", openingHours: "Mon - Fri: 07:30 - 20:00, Sat - Sun: 09:00 - 18:00", lat: -33.8703, lng: 151.2070 },
+      { name: "Chemist Warehouse Melbourne Bourke St", address: "327-333 Bourke St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9654 6699", openingHours: "Mon - Fri: 08:00 - 21:00, Sat - Sun: 09:00 - 19:00", lat: -37.8135, lng: 144.9652 },
+      { name: "Chemist Warehouse Brisbane Queen St", address: "138 Queen St", postalCode: "4000", city: "Brisbane", state: "QLD", country: "Australia", phone: "+61 7 3221 3466", openingHours: "Mon - Fri: 08:00 - 19:00, Sat - Sun: 09:00 - 18:00", lat: -27.4699, lng: 153.0255 },
+      { name: "Chemist Warehouse Perth Hay St", address: "647 Hay St", postalCode: "6000", city: "Perth", state: "WA", country: "Australia", phone: "+61 8 9325 3300", openingHours: "Mon - Fri: 08:00 - 18:30, Sat: 09:00 - 17:30, Sun: 11:00 - 17:00", lat: -31.9536, lng: 115.8605 }
+    ]
+  },
+  "chemistwarehouse": {
+    address: "416-418 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8703,
+    lng: 151.2070,
+    locations: [
+      { name: "Chemist Warehouse Sydney CBD", address: "416-418 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9232 4470", openingHours: "Mon - Fri: 07:30 - 20:00, Sat - Sun: 09:00 - 18:00", lat: -33.8703, lng: 151.2070 },
+      { name: "Chemist Warehouse Melbourne Bourke St", address: "327-333 Bourke St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9654 6699", openingHours: "Mon - Fri: 08:00 - 21:00, Sat - Sun: 09:00 - 19:00", lat: -37.8135, lng: 144.9652 },
+      { name: "Chemist Warehouse Brisbane Queen St", address: "138 Queen St", postalCode: "4000", city: "Brisbane", state: "QLD", country: "Australia", phone: "+61 7 3221 3466", openingHours: "Mon - Fri: 08:00 - 19:00, Sat - Sun: 09:00 - 18:00", lat: -27.4699, lng: 153.0255 }
+    ]
+  },
+  "priceline.com.au": {
+    address: "Shop 25, 429 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8711,
+    lng: 151.2067,
+    locations: [
+      { name: "Priceline Sydney Queen Victoria Building", address: "Shop 25, 429 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9233 2833", openingHours: "Mon - Fri: 08:00 - 19:00, Sat: 09:00 - 18:00, Sun: 10:00 - 17:00", lat: -33.8711, lng: 151.2067 },
+      { name: "Priceline Melbourne Elizabeth St", address: "250 Elizabeth St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9663 3311", openingHours: "Mon - Fri: 08:00 - 19:00, Sat - Sun: 09:30 - 18:00", lat: -37.8118, lng: 144.9634 },
+      { name: "Priceline Brisbane Wintergarden", address: "171 Queen St", postalCode: "4000", city: "Brisbane", state: "QLD", country: "Australia", phone: "+61 7 3221 2166", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 17:30, Sun: 10:00 - 16:00", lat: -27.4692, lng: 153.0267 }
+    ]
+  },
+  "priceline": {
+    address: "Shop 25, 429 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8711,
+    lng: 151.2067,
+    locations: [
+      { name: "Priceline Sydney Queen Victoria Building", address: "Shop 25, 429 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9233 2833", openingHours: "Mon - Fri: 08:00 - 19:00, Sat: 09:00 - 18:00, Sun: 10:00 - 17:00", lat: -33.8711, lng: 151.2067 },
+      { name: "Priceline Melbourne Elizabeth St", address: "250 Elizabeth St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9663 3311", openingHours: "Mon - Fri: 08:00 - 19:00, Sat - Sun: 09:30 - 18:00", lat: -37.8118, lng: 144.9634 }
+    ]
+  },
+  "terrywhitechemmart.com.au": {
+    address: "197 Pitt St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8696,
+    lng: 151.2085,
+    locations: [
+      { name: "TerryWhite Chemmart Sydney Mid City", address: "197 Pitt St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9235 1566", openingHours: "Mon - Fri: 08:00 - 18:00, Sat: 09:00 - 16:00", lat: -33.8696, lng: 151.2085 },
+      { name: "TerryWhite Chemmart Brisbane Queen St", address: "91 Queen St", postalCode: "4000", city: "Brisbane", state: "QLD", country: "Australia", phone: "+61 7 3229 3977", openingHours: "Mon - Fri: 08:00 - 18:00, Sat: 09:00 - 17:00", lat: -27.4705, lng: 153.0248 }
+    ]
+  },
+  "commbank.com.au": {
+    address: "48 Martin Pl",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8679,
+    lng: 151.2100,
+    locations: [
+      { name: "CommBank Martin Place Flagship", address: "48 Martin Pl", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 13 2221", openingHours: "Mon - Fri: 09:30 - 16:00", lat: -33.8679, lng: 151.2100 },
+      { name: "CommBank Melbourne Bourke St", address: "385 Bourke St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 13 2221", openingHours: "Mon - Fri: 09:30 - 16:00", lat: -37.8146, lng: 144.9622 }
+    ]
+  },
+  "anz.com.au": {
+    address: "833 Collins St",
+    postalCode: "3008",
+    city: "Melbourne",
+    state: "VIC",
+    country: "Australia",
+    lat: -37.8208,
+    lng: 144.9469,
+    locations: [
+      { name: "ANZ World Headquarters Docklands", address: "833 Collins St", postalCode: "3008", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 13 1314", openingHours: "Mon - Fri: 09:30 - 16:00", lat: -37.8208, lng: 144.9469 },
+      { name: "ANZ Sydney Flagship", address: "242 Pitt St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 13 1314", openingHours: "Mon - Fri: 09:30 - 16:00", lat: -33.8722, lng: 151.2081 }
+    ]
+  },
+  "opsm.com.au": {
+    address: "413 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8702,
+    lng: 151.2066,
+    locations: [
+      { name: "OPSM Sydney George St", address: "413 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9221 4455", openingHours: "Mon - Wed: 09:00 - 18:00, Thu: 09:00 - 20:00, Fri: 09:00 - 18:30, Sat - Sun: 10:00 - 17:00", lat: -33.8702, lng: 151.2066 },
+      { name: "OPSM Melbourne Collins St", address: "280 Collins St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9654 8877", openingHours: "Mon - Thu: 09:00 - 17:30, Fri: 09:00 - 19:00, Sat: 09:30 - 17:00, Sun: 11:00 - 16:00", lat: -37.8159, lng: 144.9649 }
+    ]
+  },
+  "nationaldentalcare.com.au": {
+    address: "Level 1, 107 Pitt St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8672,
+    lng: 151.2088,
+    locations: [
+      { name: "National Dental Care Sydney CBD", address: "Level 1, 107 Pitt St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9232 3337", openingHours: "Mon - Fri: 08:00 - 17:30", lat: -33.8672, lng: 151.2088 },
+      { name: "National Dental Care Brisbane CBD", address: "Level 4, 141 Queen St", postalCode: "4000", city: "Brisbane", state: "QLD", country: "Australia", phone: "+61 7 3221 0443", openingHours: "Mon - Fri: 08:00 - 17:00", lat: -27.4697, lng: 153.0259 }
+    ]
+  },
+  "pacificsmilesdental.com.au": {
+    address: "483 George St",
+    postalCode: "2000",
+    city: "Sydney",
+    state: "NSW",
+    country: "Australia",
+    lat: -33.8735,
+    lng: 151.2064,
+    locations: [
+      { name: "Pacific Smiles Dental Sydney Town Hall", address: "483 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9264 5644", openingHours: "Mon - Fri: 08:00 - 18:00, Sat: 08:30 - 16:00, Sun: 09:30 - 15:30", lat: -33.8735, lng: 151.2064 },
+      { name: "Pacific Smiles Dental Melbourne CBD", address: "285 Little Collins St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9663 0566", openingHours: "Mon - Fri: 08:00 - 18:00, Sat: 08:30 - 15:30", lat: -37.8152, lng: 144.9654 }
+    ]
+  },
+  "jbhifi.com.au": {
+    address: "206 Bourke St",
+    postalCode: "3000",
+    city: "Melbourne",
+    state: "VIC",
+    country: "Australia",
+    lat: -37.8126,
+    lng: 144.9678,
+    locations: [
+      { name: "JB Hi-Fi Melbourne Bourke St", address: "206 Bourke St", postalCode: "3000", city: "Melbourne", state: "VIC", country: "Australia", phone: "+61 3 9663 3555", openingHours: "Mon - Wed: 09:00 - 18:00, Thu - Fri: 09:00 - 21:00, Sat: 09:00 - 18:00, Sun: 10:00 - 18:00", lat: -37.8126, lng: 144.9678 },
+      { name: "JB Hi-Fi Sydney City Galeries", address: "500 George St", postalCode: "2000", city: "Sydney", state: "NSW", country: "Australia", phone: "+61 2 9267 8500", openingHours: "Mon - Wed: 09:00 - 18:00, Thu: 09:00 - 21:00, Fri - Sat: 09:00 - 19:00, Sun: 10:00 - 18:00", lat: -33.8732, lng: 151.2072 }
+    ]
+  },
   "lassustandartsen.nl": { address: "Keizersgracht 378", postalCode: "1016 GB", city: "Amsterdam", country: "Netherlands", lat: 52.3688, lng: 4.8837 },
   "lassustandartsen": { address: "Keizersgracht 378", postalCode: "1016 GB", city: "Amsterdam", country: "Netherlands", lat: 52.3688, lng: 4.8837 },
   "usa.com": { address: "100 Wall Street", postalCode: "10005", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
@@ -2066,6 +2243,14 @@ export const KNOWN_CITY_COORDINATES: Record<string, { lat: number; lng: number }
   "riyadh": { lat: 24.7136, lng: 46.6753 },
   "toronto": { lat: 43.6532, lng: -79.3832 },
   "sydney": { lat: -33.8688, lng: 151.2093 },
+  "melbourne": { lat: -37.8136, lng: 144.9631 },
+  "brisbane": { lat: -27.4705, lng: 153.0260 },
+  "perth": { lat: -31.9505, lng: 115.8605 },
+  "adelaide": { lat: -34.9285, lng: 138.6007 },
+  "gold coast": { lat: -28.0167, lng: 153.4000 },
+  "canberra": { lat: -35.2809, lng: 149.1300 },
+  "hobart": { lat: -42.8821, lng: 147.3272 },
+  "darwin": { lat: -12.4634, lng: 130.8456 },
   "madrid": { lat: 40.4168, lng: -3.7038 }
 };
 
@@ -2090,24 +2275,12 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
   // Filter out raw domain leftovers
   name = name.replace(/\.(com|net|org|ae|be|co\.uk|io|ai|app|co\.nz)$/i, "").trim();
 
-  // 2. Check known verified headquarters
-  const placeKey = (place?.id || place?.brandDomain || place?.name || "").toLowerCase().replace(/^www\./, "").trim();
-  const knownHq = KNOWN_BUSINESS_HEADQUARTERS[placeKey] || KNOWN_BUSINESS_HEADQUARTERS[placeKey.replace(/\.(com|org|net|ae|co\.nz|us|io)$/i, '')];
-  if (knownHq) {
-    if (knownHq.address && knownHq.city) {
-      return `${name}, ${knownHq.address}, ${knownHq.city}${knownHq.state ? ', ' + knownHq.state : ''}`;
-    }
-    if (knownHq.city) {
-      return `${name}, ${knownHq.city}${knownHq.country ? ', ' + knownHq.country : ''}`;
-    }
-  }
-
-  // 3. Resolve real physical address or city if available
+  // 2. If a specific non-generic street address is passed on place, use it directly (supports branch selection)
   const rawAddress = (place?.address || "").trim();
   const isUrlOnly = /^(https?:\/\/|www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/.*)?$/i.test(rawAddress);
   const isGenericAddress = 
     !rawAddress ||
-    rawAddress === placeKey ||
+    rawAddress.toLowerCase() === placeKey ||
     isUrlOnly ||
     rawAddress.toLowerCase() === "verified location" ||
     rawAddress.toLowerCase() === "verified listing" ||
@@ -2117,6 +2290,28 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
     rawAddress.toLowerCase() === "global" ||
     rawAddress.toLowerCase() === "website" ||
     rawAddress.toLowerCase().startsWith("official domain:");
+
+  if (!isGenericAddress) {
+    let q = `${name}, ${rawAddress}`;
+    if (place?.city && !rawAddress.toLowerCase().includes(place.city.toLowerCase())) {
+      q += `, ${place.city}`;
+    }
+    if (place?.country && !rawAddress.toLowerCase().includes(place.country.toLowerCase()) && !["worldwide", "global"].includes(place.country.toLowerCase())) {
+      q += `, ${place.country}`;
+    }
+    return q;
+  }
+
+  // 3. Check known verified headquarters fallback
+  const knownHq = KNOWN_BUSINESS_HEADQUARTERS[placeKey] || KNOWN_BUSINESS_HEADQUARTERS[placeKey.replace(/\.(com|org|net|ae|co\.nz|us|io|com\.au|au)$/i, '')];
+  if (knownHq) {
+    if (knownHq.address && knownHq.city) {
+      return `${name}, ${knownHq.address}, ${knownHq.city}${knownHq.state ? ', ' + knownHq.state : ''}`;
+    }
+    if (knownHq.city) {
+      return `${name}, ${knownHq.city}${knownHq.country ? ', ' + knownHq.country : ''}`;
+    }
+  }
 
   const rawCity = (place?.city || "").trim();
   const isGenericCity =
