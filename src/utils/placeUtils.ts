@@ -264,8 +264,6 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "dentiste-namur.be": "Dentiste Namur",
   "brusselsdental": "Brussels Dental",
   "brusselsdental.com": "Brussels Dental",
-  "aldhabidental": "Al Dhabi Dental Center",
-  "aldhabidental.ae": "Al Dhabi Dental Center",
   "brettlevy": "Brett Levy",
   "brettlevy.com": "Brett Levy",
   "yoouz": "Yoouz",

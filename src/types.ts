@@ -122,6 +122,7 @@ export interface VideoReview {
   placeCity?: string;
   placeCountry?: string;
   placePhone?: string;
+  placeEmail?: string;
   placeRating?: number;
   placeWebsite?: string;
   placeLogoUrl?: string;

@@ -41,7 +41,6 @@ import {
   Volume2,
   VolumeX,
   RotateCcw,
-  Pin,
   CheckCircle2,
   Globe,
   Sliders,
@@ -879,11 +878,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [embedTheme, setEmbedTheme] = useState<'dark_glass' | 'midnight_oled' | 'clean_light' | 'minimal'>('dark_glass');
   const [embedLayout, setEmbedLayout] = useState<'grid' | 'carousel' | 'badge'>('grid');
   const [embedAccentColor, setEmbedAccentColor] = useState<string>('#10B981');
-  const [pinnedVideoIds, setPinnedVideoIds] = useState<string[]>([]);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>([]);
   const [downloadingVideoId, setDownloadingVideoId] = useState<string | null>(null);
   const [adExportVideo, setAdExportVideo] = useState<VideoReview | null>(null);
-  const [pinNotice, setPinNotice] = useState<string | null>(null);
+  const [widgetNotice, setWidgetNotice] = useState<string | null>(null);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
   const [isDirectLinkCopied, setIsDirectLinkCopied] = useState(false);
   const [embedDeviceMode, setEmbedDeviceMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -1982,33 +1980,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   };
 
-  const togglePinVideo = (id: string) => {
-    if (pinnedVideoIds.includes(id)) {
-      setPinnedVideoIds(prev => prev.filter(item => item !== id));
-      setPinNotice('Removed video from pinned top section.');
-    } else {
-      if (pinnedVideoIds.length >= 3) {
-        setPinNotice('Maximum 3 videos can be pinned to the top of your website widget.');
-        setTimeout(() => setPinNotice(null), 3500);
-        return;
-      }
-      setPinnedVideoIds(prev => [...prev, id]);
-      setHiddenVideoIds(prev => prev.filter(item => item !== id));
-      setPinNotice('📌 Video pinned to the top of your website widget!');
-    }
-    setTimeout(() => setPinNotice(null), 3500);
-  };
-
   const toggleHideVideo = (id: string) => {
     if (hiddenVideoIds.includes(id)) {
       setHiddenVideoIds(prev => prev.filter(item => item !== id));
-      setPinNotice('Video restored to widget carousel.');
+      setWidgetNotice('Video restored to website widget.');
     } else {
       setHiddenVideoIds(prev => [...prev, id]);
-      setPinnedVideoIds(prev => prev.filter(item => item !== id));
-      setPinNotice('👁️ Video hidden from website widget.');
+      setWidgetNotice('👁️ Video hidden from website widget.');
     }
-    setTimeout(() => setPinNotice(null), 3500);
+    setTimeout(() => setWidgetNotice(null), 3500);
   };
 
   const handleDownloadVideoForAds = (video: VideoReview) => {
@@ -2051,19 +2031,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Compute displayable videos for Widget Preview and Website Embed
   const displayableWidgetVideos = useMemo(() => {
-    return placeVideos
-      .filter(v => {
-        if (hiddenVideoIds.includes(v.id)) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const aPinned = pinnedVideoIds.includes(a.id);
-        const bPinned = pinnedVideoIds.includes(b.id);
-        if (aPinned && !bPinned) return -1;
-        if (!aPinned && bPinned) return 1;
-        return 0;
-      });
-  }, [placeVideos, hiddenVideoIds, pinnedVideoIds]);
+    return placeVideos.filter(v => !hiddenVideoIds.includes(v.id));
+  }, [placeVideos, hiddenVideoIds]);
 
   // Synchronize ownerReplies from placeVideos when videos or selectedPlaceId updates
   useEffect(() => {
@@ -2787,12 +2756,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {/* TAB 2: VIDEO REVIEWS & MODERATION */}
             {activeTab === 'reviews' && (
               <div className="space-y-6 animate-in fade-in duration-200">
-                {/* Pin/Hide Alert Toast */}
-                {pinNotice && (
+                {/* Widget Notice Alert Toast */}
+                {widgetNotice && (
                   <div className="bg-zinc-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-lg border border-zinc-700 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
                     <span className="flex items-center gap-2">
-                      <Pin className="w-4 h-4 text-white" />
-                      {pinNotice}
+                      <Eye className="w-4 h-4 text-white" />
+                      {widgetNotice}
                     </span>
                     <button
                       onClick={() => setActiveTab('embed')}
@@ -2807,11 +2776,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   <div className="min-w-0">
                     <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Customer Video Reviews</h2>
                     <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-300">
-                      <span>Curate customer videos and pin your favorites to your website widget.</span>
-                      <span className="hidden sm:inline text-zinc-600">•</span>
-                      <span className="font-semibold text-amber-400 bg-amber-900/30 px-2.5 py-0.5 rounded-full border border-amber-800/40 text-[11px] flex items-center gap-1 shrink-0">
-                        <Pin className="w-2.5 h-2.5 fill-current text-amber-400" /> {pinnedVideoIds.length}/3 Pinned
-                      </span>
+                      <span>Manage and curate authentic customer video reviews displayed on your profile and website widget.</span>
                     </div>
                   </div>
 
@@ -2887,7 +2852,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     .map((video) => {
                       const hasReply = Boolean(ownerReplies[video.id]);
                       const isReplying = activeReplyId === video.id;
-                      const isPinned = pinnedVideoIds.includes(video.id);
                       const isHidden = hiddenVideoIds.includes(video.id);
 
                       const authorInfoJSX = (
@@ -2916,11 +2880,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               <span className="font-bold text-xs sm:text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                                 {video.author?.name || 'Customer Review'}
                               </span>
-                              {isPinned && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] sm:text-[10px] font-bold tracking-wide flex items-center gap-0.5 border border-zinc-700 shrink-0">
-                                  <Pin className="w-2.5 h-2.5 fill-current text-white" /> Pinned
-                                </span>
-                              )}
                               {isHidden && (
                                 <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 border border-zinc-700 shrink-0">
                                   <EyeOff className="w-2.5 h-2.5" /> Hidden
@@ -2959,9 +2918,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <div 
                           key={video.id}
                           className={`rounded-3xl border p-4 sm:p-6 shadow-xs transition-all w-full max-w-full overflow-hidden ${
-                            isPinned 
-                              ? 'border-zinc-700 bg-zinc-900 text-white' 
-                              : isHidden 
+                            isHidden 
                               ? 'border-zinc-800 opacity-60 bg-zinc-900/60 text-zinc-200' 
                               : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-white'
                           }`}
@@ -3027,20 +2984,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                             {/* Action Buttons: Flexible Grid/Wrap that perfectly fits mobile without horizontal overflow */}
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-stretch sm:justify-end w-full pt-2 border-t border-zinc-800/80">
-                              <button
-                                type="button"
-                                onClick={() => togglePinVideo(video.id)}
-                                className={`flex-1 sm:flex-initial px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
-                                  isPinned
-                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-2xs font-bold'
-                                    : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
-                                }`}
-                                title={isPinned ? 'Unpin from website widget' : 'Pin to top of website widget (Max 3)'}
-                              >
-                                <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current text-amber-400' : 'text-zinc-300'}`} />
-                                <span>{isPinned ? 'Pinned' : 'Pin'}</span>
-                              </button>
-
                               <button
                                 type="button"
                                 onClick={() => toggleHideVideo(video.id)}
@@ -3628,11 +3571,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         Embed authentic video reviews directly on your website or reservation page.
                       </p>
                     </div>
-                    {pinnedVideoIds.length > 0 && (
-                      <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] sm:text-xs font-medium flex items-center gap-1.5">
-                        <Pin className="w-3.5 h-3.5 text-white fill-current" /> {pinnedVideoIds.length}/3 Pinned
-                      </span>
-                    )}
                   </div>
 
                   {/* HTML iFrame & SEO Code Section */}

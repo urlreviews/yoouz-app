@@ -8196,7 +8196,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       // Sub-system #48: Multi-Language Compound Word & Business Name Separation Integrity Guard
       const check48Start = Date.now();
-      let check48Status = "ok";
+      let check48Status: "ok" | "degraded" | "error" = "ok";
       let check48Details = "Multi-language compound word separation engine active. 100% of registered business places and video reviews formatted with official separate-word brand titles (e.g. Lassus Tandartsen, Dentiste Erpent, Tandis, Dental 365). Zero single-word concatenation defects.";
       try {
         const bunnyDb = getBunnyDb();
@@ -9041,8 +9041,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "brettlevy.com": { name: "Brett A. Levy Law", address: "10410 N 19th Ave", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 254-9900", category: "Legal Services", lat: 33.5802, lng: -112.1006 },
     "paultolandlaw.com": { name: "Paul Toland Law Office", address: "15 Court Square #800", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3585, lng: -71.0592 },
     "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", phone: "+44 20 7396 9292", category: "Legal Directory & Advisory", lat: 51.5245, lng: -0.1037 },
-    "brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
-    "www.brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
     "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
     "businessplace.com": { name: "Businessplace", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
@@ -21886,8 +21884,6 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "dentiste-namur.be": "Dentiste Namur",
   "brusselsdental": "Brussels Dental",
   "brusselsdental.com": "Brussels Dental",
-  "aldhabidental": "Al Dhabi Dental Center",
-  "aldhabidental.ae": "Al Dhabi Dental Center",
   "brettlevy": "Brett Levy",
   "brettlevy.com": "Brett Levy",
   "yoouz": "Yoouz",

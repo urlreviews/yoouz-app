@@ -1,4 +1,4 @@
-import { getBunnyDb } from '../src/lib/bunny-db';
+import { getBunnyDb } from '../../../src/lib/bunny-db';
 
 const ENRICHED_PLACES: Record<string, {
   name: string;
