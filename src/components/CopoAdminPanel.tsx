@@ -67,7 +67,7 @@ import {
   CheckSquare,
   Square
 } from "lucide-react";
-import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted, getSafeAvatarUrl } from "../utils/placeUtils";
+import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted, getSafeAvatarUrl, extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI, getProxiedImageUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
@@ -1866,12 +1866,45 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleSaveVideoEdits = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editVideoModal) return;
+    const vDomain = extractCleanDomain(editVideoModal.placeWebsite || editVideoModal.placeId || editVideoModal.placeName);
+    const cleanName = (vDomain && KNOWN_OFFICIAL_NAMES[vDomain])
+      || formatBusinessName(editVideoModal.placeName, vDomain)
+      || editVideoModal.placeName;
+    const updatedReview = {
+      ...editVideoModal,
+      placeName: cleanName,
+      dishOrItem: cleanName,
+      businessName: cleanName
+    };
     if (onUpdateVideo) {
-      onUpdateVideo(editVideoModal);
+      onUpdateVideo(updatedReview);
     }
-    showToast(`Updated review details for "${editVideoModal.placeName}".`);
+    showToast(`Updated review details for "${cleanName}".`);
     setEditVideoModal(null);
     setTimeout(fetchLiveStats, 400);
+  };
+
+  const handleSyncReviewBusinessNames = async () => {
+    let fixedCount = 0;
+    for (const v of videos) {
+      const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
+      const parentPlace = places.find(p => p.id === v.placeId || (p.website && extractCleanDomain(p.website) === vDomain));
+      const canonicalName = (vDomain && KNOWN_OFFICIAL_NAMES[vDomain]) 
+        || (parentPlace?.name && parentPlace.name.toLowerCase() !== "vaibe" ? formatBusinessName(parentPlace.name, vDomain) : null)
+        || formatBusinessName(v.businessName || v.placeName, vDomain);
+
+      if (canonicalName && (v.placeName !== canonicalName || v.businessName !== canonicalName || v.placeName?.toLowerCase() === "vaibe")) {
+        fixedCount++;
+        const updatedVid = {
+          ...v,
+          placeName: canonicalName,
+          businessName: canonicalName,
+          dishOrItem: canonicalName
+        };
+        if (onUpdateVideo) onUpdateVideo(updatedVid);
+      }
+    }
+    showToast(fixedCount > 0 ? `Synced and verified ${fixedCount} review business names!` : "All review business names are authentic and in sync.");
   };
 
   const handleSendBroadcast = async (e?: React.FormEvent) => {
@@ -3818,6 +3851,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <Trash2 className="w-3.5 h-3.5" /> Purge All Reviews
                     </button>
                   )}
+
+                  {/* Sync & Fix Business Names */}
+                  <button
+                    onClick={handleSyncReviewBusinessNames}
+                    className="px-3 py-1.5 bg-zinc-950 hover:bg-emerald-950/50 text-zinc-300 hover:text-emerald-300 border border-zinc-800 hover:border-emerald-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    title="Scan and synchronize all video review business names with verified official brand names"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Sync Business Names
+                  </button>
                 </div>
               </div>
 

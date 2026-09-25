@@ -854,31 +854,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }}
             className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[280px] sm:max-w-[340px] md:max-w-[420px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
           >
-            <CopoBrandLogo
-              domain={extractCleanDomain(video.placeWebsite || video.placeId || video.placeName)}
-              name={businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}
-              website={video.placeWebsite}
-              logoUrl={businessLogoUrl || video?.placeLogoUrl}
-              bannerUrl={businessBannerUrl || video.placeBannerUrl}
-              loading={isActive || isNear ? "eager" : "lazy"}
-              fetchPriority={isActive ? "high" : "auto"}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
-              imageClassName="w-full h-full object-contain rounded-lg"
-              fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
-            />
-            <div className="min-w-0 flex-1 py-0.5">
-              <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                <span className="truncate">{businessName || formatBusinessName(video?.placeName || video?.dishOrItem || video?.placeId) || t("common.businessPlace", "Business Place")}</span>
-                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
-              </span>
-              {!isEmbed && (
-                <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
-                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                  <span>{effectiveRating}</span>
-                  <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
-                </div>
-              )}
-            </div>
+            {(() => {
+              const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
+              const cardName = businessName || formatBusinessName(video?.businessName || video?.placeName || video?.dishOrItem || video?.placeId, cardDom) || t("common.businessPlace", "Business Place");
+              return (
+                <>
+                  <CopoBrandLogo
+                    domain={cardDom}
+                    name={cardName}
+                    website={video.placeWebsite}
+                    logoUrl={businessLogoUrl || video?.placeLogoUrl}
+                    bannerUrl={businessBannerUrl || video.placeBannerUrl}
+                    loading={isActive || isNear ? "eager" : "lazy"}
+                    fetchPriority={isActive ? "high" : "auto"}
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
+                    imageClassName="w-full h-full object-contain rounded-lg"
+                    fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
+                  />
+                  <div className="min-w-0 flex-1 py-0.5">
+                    <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                      <span className="truncate">{cardName}</span>
+                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+                    </span>
+                    {!isEmbed && (
+                      <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
+                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                        <span>{effectiveRating}</span>
+                        <span className="text-zinc-300 font-normal">({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </button>
         </div>
 

@@ -191,6 +191,7 @@ export interface VideoReview {
   authorAvatar?: string;
   duration?: number;
   ogImage?: string;
+  businessName?: string;
 }
 
 export type VideoAuthor = VideoReview["author"];

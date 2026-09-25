@@ -1,5 +1,56 @@
 [
   {
+    "id": "healis.be",
+    "name": "Healis",
+    "category": "Pharmacy & Healthcare",
+    "categoryType": "all",
+    "address": "Winkelom 83B/1",
+    "city": "Geel",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "",
+    "logoUrl": "",
+    "bannerUrl": "",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fbanner_l%2Fpublic%2Fmedia%2Fimage%2F2026-05%2Fimage00013.jpeg%3Fh%3D71976bb4%26itok%3D_UV7PHGl",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fbanner_l%2Fpublic%2Fmedia%2Fimage%2F2026-05%2Fimage00013.jpeg%3Fh%3D71976bb4%26itok%3D_UV7PHGl"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "info@healis.be",
+    "website": "https://healis.be",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Samen sterk in zorg, persoonlijk en dichtbij",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "healis.be",
+    "isSavedToProfile": true,
+    "videoReviewCount": 1,
+    "domain": "healis.be",
+    "reviewCount": 0,
+    "reviews": [],
+    "siteName": "Healis"
+  },
+  {
     "id": "vandenbalck.be",
     "name": "Optiek Vandenbalck",
     "category": "Optician & Eyewear",

@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain } from "../utils/placeUtils";
+import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 
 interface CopoVideoPlayerProps {
   videos: VideoReview[];
@@ -901,8 +901,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     (vid: VideoReview | undefined): string => {
       if (!vid) return "Business Place";
 
+      const vidDomain = extractCleanDomain(vid.placeWebsite || vid.placeId || (vid.placeName?.includes(".") ? vid.placeName : ""));
+
+      // 1. Check Known Verified Brand Names first
+      if (vidDomain && KNOWN_OFFICIAL_NAMES[vidDomain]) {
+        return KNOWN_OFFICIAL_NAMES[vidDomain];
+      }
+      const vidCleanId = extractCleanDomain(vid.placeId || "");
+      if (vidCleanId && KNOWN_OFFICIAL_NAMES[vidCleanId]) {
+        return KNOWN_OFFICIAL_NAMES[vidCleanId];
+      }
+
+      // 2. Check if place record exists in places array
       if (places && places.length > 0) {
-        const vidCleanId = extractCleanDomain(vid.placeId || "");
         const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
         const vidCleanName = extractCleanDomain(vid.placeName || "");
 
@@ -915,24 +926,37 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return false;
         });
 
-        if (p && p.name && !isGenericPlaceName(p.name)) {
-          const formatted = formatBusinessName(p.name);
-          if (formatted && formatted.trim() !== "") return formatted;
+        if (p) {
+          const pDomain = extractCleanDomain(p.brandDomain || p.website || p.id || "");
+          if (pDomain && KNOWN_OFFICIAL_NAMES[pDomain]) {
+            return KNOWN_OFFICIAL_NAMES[pDomain];
+          }
+          if (p.name && !isGenericPlaceName(p.name)) {
+            const formatted = formatBusinessName(p.name, pDomain || vidDomain);
+            if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
+          }
         }
       }
 
+      // 3. Check explicit authentic businessName on video review
+      if (vid.businessName && !isGenericPlaceName(vid.businessName)) {
+        const formatted = formatBusinessName(vid.businessName, vidDomain);
+        if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
+      }
+
+      // 4. Check placeName on video review
       if (vid.placeName && !isGenericPlaceName(vid.placeName)) {
-        const formatted = formatBusinessName(vid.placeName);
+        const formatted = formatBusinessName(vid.placeName, vidDomain);
+        if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
+      }
+
+      // 5. Fallback to clean domain
+      if (vidDomain && vidDomain.includes(".") && vidDomain !== "home.com") {
+        const formatted = formatBusinessName(vidDomain, vidDomain);
         if (formatted && formatted.trim() !== "") return formatted;
       }
 
-      const fallbackDomain = extractCleanDomain(vid.placeWebsite || vid.placeId || (vid.placeName?.includes(".") ? vid.placeName : ""));
-      if (fallbackDomain && fallbackDomain.includes(".") && fallbackDomain !== "home.com") {
-        const formatted = formatBusinessName(fallbackDomain);
-        if (formatted && formatted.trim() !== "") return formatted;
-      }
-
-      return formatBusinessName(vid.dishOrItem || vid.placeName) || "Business Place";
+      return formatBusinessName(vid.businessName || vid.dishOrItem || vid.placeName, vidDomain) || "Business Place";
     },
     [places]
   );

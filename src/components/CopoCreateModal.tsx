@@ -762,7 +762,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     const defaultStreamUrl = `/api/videos/stream/${cleanFileName}`;
 
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
-    const cleanPlaceName = formatBusinessName(selectedPlace.name || placeDomain) || selectedPlace.name;
+    const cleanPlaceName = (placeDomain && KNOWN_OFFICIAL_NAMES[placeDomain])
+      || formatBusinessName(selectedPlace.name || placeDomain, placeDomain)
+      || selectedPlace.name;
     const resolvedPlaceLogo =
       (placeDomain && KNOWN_BRAND_LOGOS[placeDomain])
       ? KNOWN_BRAND_LOGOS[placeDomain]
@@ -819,6 +821,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       thumbnailUrl: safeThumbnail,
       caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
       dishOrItem: cleanPlaceName,
+      businessName: cleanPlaceName,
       likes: 0,
       isLiked: false,
       commentsCount: 0,
@@ -1099,7 +1102,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           const fetchedBanner = data.image || "";
 
           const resolvedName = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain])
-            || (data.title && !data.title.includes("://") && data.title !== "Website" && data.title !== "undefined" ? data.title : "")
+            || (data.title && !data.title.includes("://") && data.title !== "Website" && data.title !== "undefined" && data.title.toLowerCase() !== "vaibe" ? data.title : "")
             || formatBusinessName(data.siteName || data.title, data.domain || domain)
             || formatBusinessName(data.domain || domain)
             || (data.domain || domain);

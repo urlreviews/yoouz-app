@@ -248,6 +248,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "plomberiebruxelles24": "Plomberie Bruxelles 24",
   "plomberiebruxelles24.be": "Plomberie Bruxelles 24",
   "toptechbelgium": "Toptech Belgium SRL",
+  "healis": "Healis",
+  "healis.be": "Healis",
+  "healis.com": "Healis",
+  "healisbe": "Healis",
+  "bvhealis": "Healis",
+  "bvhealisholding": "Healis",
   "toptechbelgiumsrl": "Toptech Belgium SRL",
   "bhol": "B'Chadrei Charedim",
   "bhol.co.il": "B'Chadrei Charedim",
@@ -453,6 +459,28 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
   }
   if (!name) return "";
   let trimmed = name.trim();
+
+  // Guard against known agency/CMS/boilerplate titles leaking into business names
+  const lowerTrimmedCheck = trimmed.toLowerCase();
+  if (cleanDom && (
+    lowerTrimmedCheck === "vaibe" ||
+    lowerTrimmedCheck === "webflow" ||
+    lowerTrimmedCheck === "wix" ||
+    lowerTrimmedCheck === "squarespace" ||
+    lowerTrimmedCheck === "wordpress" ||
+    lowerTrimmedCheck === "elementor" ||
+    lowerTrimmedCheck === "shopify" ||
+    lowerTrimmedCheck === "vite" ||
+    lowerTrimmedCheck === "react" ||
+    lowerTrimmedCheck === "vue" ||
+    lowerTrimmedCheck === "nextjs" ||
+    lowerTrimmedCheck === "website" ||
+    lowerTrimmedCheck === "untitled" ||
+    lowerTrimmedCheck === "hostinger" ||
+    lowerTrimmedCheck === "drupal"
+  )) {
+    return formatBusinessName(cleanDom);
+  }
 
   // Guard against review IDs or raw ID strings leaking into business names (e.g., rev17895770756273488d)
   if (trimmed.startsWith("rev") && (/^rev\d+/i.test(trimmed) || /^rev[0-9a-f]{8,}/i.test(trimmed) || trimmed.includes("rev17895"))) {

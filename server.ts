@@ -18345,6 +18345,12 @@ Return JSON:
                 return cleaned;
               };
 
+              const cleanDomKey = cleanDomainName(domain);
+              const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+
+              // 1. First priority: Known Verified Official Names
+              const knownBrand = KNOWN_OFFICIAL_NAMES[cleanDomKey] || KNOWN_OFFICIAL_NAMES[domRoot];
+
               const rawSiteName = getMetaContent('site_name');
               const appName = $('meta[name="application-name"]').attr('content') ||
                               $('meta[name="apple-mobile-web-app-title"]').attr('content') ||
@@ -18353,24 +18359,40 @@ Return JSON:
               const htmlTagTitle = $('title').first().text() || '';
               const logoAltTitle = $('header img[alt], nav img[alt], .logo img[alt]').first().attr('alt') || '';
 
-              const bestSiteNameCandidate = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && rawSiteName.length <= 50) ? rawSiteName
-                                          : (appName && !isGenericOrPlaceholderTitle(appName) && appName.length <= 50) ? appName
-                                          : '';
+              // Filter out agency/CMS/framework boilerplate from appName and metadata
+              const isAgencyOrBoilerplate = (str: string) => {
+                if (!str) return false;
+                const l = str.toLowerCase().trim();
+                return l === "vaibe" || l === "webflow" || l === "wix" || l === "squarespace" || 
+                       l === "wordpress" || l === "elementor" || l === "shopify" || l === "vite" || 
+                       l === "react" || l === "vue" || l === "nextjs" || l === "website" || 
+                       l === "my blog" || l === "untitled" || l === "hostinger" || l === "drupal";
+              };
 
-              if (bestSiteNameCandidate) {
-                title = cleanTitleString(bestSiteNameCandidate);
-                siteName = title;
-              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
+              const validAppName = (appName && !isGenericOrPlaceholderTitle(appName) && !isAgencyOrBoilerplate(appName) && appName.length <= 50) ? appName : '';
+              const validSiteName = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && !isAgencyOrBoilerplate(rawSiteName) && rawSiteName.length <= 50) ? rawSiteName : '';
+              const bestSiteNameCandidate = knownBrand || validSiteName || validAppName;
+
+              if (knownBrand) {
+                title = knownBrand;
+                siteName = knownBrand;
+              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
                 title = cleanTitleString(jsonLdOrgName);
                 siteName = title;
-              } else if (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 50) {
+              } else if (validSiteName) {
+                title = cleanTitleString(validSiteName);
+                siteName = title;
+              } else if (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && !isAgencyOrBoilerplate(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 50) {
                 title = cleanTitleString(jsonLdWebSiteName);
                 siteName = title;
               } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
                 title = cleanTitleString(htmlTagTitle);
               } else if (rawTitle && !isGenericOrPlaceholderTitle(cleanTitleString(rawTitle))) {
                 title = cleanTitleString(rawTitle);
-              } else if (jsonLdGenericName && !isGenericOrPlaceholderTitle(jsonLdGenericName) && jsonLdGenericName.length <= 50) {
+              } else if (validAppName) {
+                title = cleanTitleString(validAppName);
+                siteName = title;
+              } else if (jsonLdGenericName && !isGenericOrPlaceholderTitle(jsonLdGenericName) && !isAgencyOrBoilerplate(jsonLdGenericName) && jsonLdGenericName.length <= 50) {
                 title = cleanTitleString(jsonLdGenericName);
               } else if (logoAltTitle && !isGenericOrPlaceholderTitle(logoAltTitle) && logoAltTitle.length >= 3 && logoAltTitle.length <= 50) {
                 title = cleanTitleString(logoAltTitle.replace(/^logo\s*(?:of|van|de)?\s*/i, ''));
@@ -22786,6 +22808,12 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "plomberiebruxelles24.be": "Plomberie Bruxelles 24",
   "toptechbelgium": "Toptech Belgium SRL",
   "toptechbelgiumsrl": "Toptech Belgium SRL",
+  "healis": "Healis",
+  "healis.be": "Healis",
+  "healis.com": "Healis",
+  "healisbe": "Healis",
+  "bvhealis": "Healis",
+  "bvhealisholding": "Healis",
   "bhol": "B'Chadrei Charedim",
   "bhol.co.il": "B'Chadrei Charedim",
   "tandis": "Tandis",
@@ -22957,6 +22985,28 @@ function formatBusinessName(name?: string | null, domain?: string | null): strin
   }
   if (!name) return "";
   let trimmed = name.trim();
+
+  // Guard against known agency/CMS/boilerplate titles leaking into business names
+  const lowerTrimmedCheck = trimmed.toLowerCase();
+  if (cleanDom && (
+    lowerTrimmedCheck === "vaibe" ||
+    lowerTrimmedCheck === "webflow" ||
+    lowerTrimmedCheck === "wix" ||
+    lowerTrimmedCheck === "squarespace" ||
+    lowerTrimmedCheck === "wordpress" ||
+    lowerTrimmedCheck === "elementor" ||
+    lowerTrimmedCheck === "shopify" ||
+    lowerTrimmedCheck === "vite" ||
+    lowerTrimmedCheck === "react" ||
+    lowerTrimmedCheck === "vue" ||
+    lowerTrimmedCheck === "nextjs" ||
+    lowerTrimmedCheck === "website" ||
+    lowerTrimmedCheck === "untitled" ||
+    lowerTrimmedCheck === "hostinger" ||
+    lowerTrimmedCheck === "drupal"
+  )) {
+    return formatBusinessName(cleanDom);
+  }
 
   // Guard against review IDs or raw ID strings leaking into business names (e.g. rev17895770756273488d)
   if (trimmed.startsWith("rev") && (/^rev\d+/i.test(trimmed) || /^rev[0-9a-f]{8,}/i.test(trimmed) || trimmed.includes("rev17895"))) {
