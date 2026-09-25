@@ -36,6 +36,7 @@ import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { CopoNotificationSettingsModal } from "./components/CopoNotificationSettingsModal";
 import { CopoEmbedView } from "./components/CopoEmbedView";
 import { CopoTestEmbedView } from "./components/CopoTestEmbedView";
+import { CopoSearchTestView } from "./components/CopoSearchTestView";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
@@ -6707,8 +6708,24 @@ export function App() {
             />
         )}
 
-        {/* Other Sections (Search, Map, Notifications, Messages, Bookmarks, Profile) when NOT in Place or Creator view */}
-        {!isPlaceView && !isCreatorView && (
+        {/* Search Test Sandbox Route (/searchtest) */}
+        {window.location.pathname.startsWith("/searchtest") ? (
+          <CopoSearchTestView
+            places={places}
+            videos={videos}
+            onOpenPlace={handleOpenPlaceDrawer}
+            onRecordForPlace={(place) => {
+              if (!currentUser) {
+                setAuthIntent('record');
+                setPreselectedPlaceForRecording(place);
+                setIsAuthModalOpen(true);
+              } else {
+                setPreselectedPlaceForRecording(place);
+                setIsCreateModalOpen(true);
+              }
+            }}
+          />
+        ) : !isPlaceView && !isCreatorView && (
           <>
             {/* Search View (Desktop Live Search Places, Businesses, Addresses & Videos) */}
             {activeSection === "search" && (

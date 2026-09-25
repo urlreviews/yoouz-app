@@ -19285,6 +19285,99 @@ Return JSON:
       res.status(500).json({ error: e.message });
     }
   });
+
+  // Fast $0 Multi-Language Business Auto-Suggest Endpoint
+  app.get('/api/search-suggest', async (req, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (q.length < 2) {
+        return res.json({ suggestions: [], query: q });
+      }
+
+      const suggestions: Array<{ title: string; domain: string; logoUrl: string; category?: string; address?: string; source: string }> = [];
+      const seenDomains = new Set<string>();
+
+      // 1. Search local DB places
+      const activeDb = (global as any).bunnyDb || db;
+      if (activeDb) {
+        try {
+          const dbRes = await activeDb.execute({
+            sql: `SELECT id, name, category, address, city, country, logoUrl, data FROM places 
+                  WHERE name LIKE ? OR id LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 6`,
+            args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
+          });
+          if (dbRes && dbRes.rows) {
+            for (const row of dbRes.rows as any[]) {
+              const dom = (row.id || '').toLowerCase();
+              if (dom && !seenDomains.has(dom)) {
+                seenDomains.add(dom);
+                const title = (dom && KNOWN_OFFICIAL_NAMES[dom]) || row.name || dom;
+                suggestions.push({
+                  title: title,
+                  domain: dom.includes('.') ? dom : `${dom}.com`,
+                  logoUrl: row.logoUrl || `/api/favicon?domain=${dom}`,
+                  category: row.category || "Verified Business",
+                  address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ''),
+                  source: "database"
+                });
+              }
+            }
+          }
+        } catch (dbErr) {}
+      }
+
+      // 2. Search Known Official Dictionary
+      const qLower = q.toLowerCase();
+      for (const [dom, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+        if ((officialName.toLowerCase().includes(qLower) || dom.includes(qLower)) && !seenDomains.has(dom)) {
+          seenDomains.add(dom);
+          suggestions.push({
+            title: officialName,
+            domain: dom,
+            logoUrl: `/api/favicon?domain=${dom}`,
+            category: "Verified Brand",
+            source: "brand_index"
+          });
+          if (suggestions.length >= 8) break;
+        }
+      }
+
+      // 3. Live DuckDuckGo Auto-Complete (Multi-language live phrase suggestions)
+      if (suggestions.length < 6) {
+        try {
+          const ddgRes = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined
+          });
+          if (ddgRes.ok) {
+            const list = await ddgRes.json().catch(() => []);
+            if (Array.isArray(list) && list.length > 1 && Array.isArray(list[1])) {
+              for (const phrase of list[1].slice(0, 5)) {
+                if (typeof phrase === 'string' && phrase.length >= 2) {
+                  const cleanedPhrase = phrase.trim();
+                  const guessDomain = cleanedPhrase.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+                  if (!seenDomains.has(guessDomain)) {
+                    suggestions.push({
+                      title: formatBusinessName(cleanedPhrase),
+                      domain: guessDomain,
+                      logoUrl: `/api/favicon?domain=${guessDomain}`,
+                      category: "Suggested Search",
+                      source: "autocomplete"
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch (ddgErr) {}
+      }
+
+      return res.json({ suggestions: suggestions.slice(0, 8), query: q });
+    } catch (e: any) {
+      console.error('Search suggest error:', e);
+      return res.status(500).json({ suggestions: [], error: e.message });
+    }
+  });
   app.post('/api/user/sync', requireAuth, async (req: any, res: any) => {
     try {
       const { uid, email, name, avatar } = req.body;
