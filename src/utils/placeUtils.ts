@@ -1920,7 +1920,7 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
 /**
  * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
  */
-export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; city?: string; state?: string; country?: string; lat?: number; lng?: number }> = {
+export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; postalCode?: string; city?: string; state?: string; country?: string; lat?: number; lng?: number; locations?: any[] }> = {
   "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
@@ -1959,18 +1959,76 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
   "paultolandlaw": { address: "15 Court Square #800", city: "Boston", state: "MA", country: "United States", lat: 42.3585, lng: -71.0592 },
   "businessplace.com": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
   "businessplace": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
-  "brusselsdental.com": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
-  "brusselsdental": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
-  "apotheekgodelaine.be": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
-  "apotheekgodelaine": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
-  "optieknieuwenhuysen.be": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
-  "optieknieuwenhuysen": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
-  "vandenbalck.be": { address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", lat: 50.8804, lng: 4.7042 },
-  "vandenbalck": { address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", lat: 50.8804, lng: 4.7042 },
-  "toopoptiek.com": { address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", lat: 50.8806643, lng: 4.6996604 },
-  "toopoptiek": { address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", lat: 50.8806643, lng: 4.6996604 },
-  "usa.com": { address: "100 Wall Street", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
+  "brusselsdental.com": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
+  "brusselsdental": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
+  "apotheekgodelaine.be": { address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
+  "apotheekgodelaine": { address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
+  "optieknieuwenhuysen.be": { address: "Fruithoflaan 19", postalCode: "2600", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
+  "optieknieuwenhuysen": { address: "Fruithoflaan 19", postalCode: "2600", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
+  "vandenbalck.be": { 
+    address: "Bondgenotenlaan 50a", 
+    postalCode: "3000", 
+    city: "Leuven", 
+    country: "Belgium", 
+    lat: 50.8804, 
+    lng: 4.7042,
+    locations: [
+      { name: "Optiek Vandenbalck Eyecare", address: "Bondgenotenlaan 50a", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be" },
+      { name: "Optiek Vandenbalck Eyewear", address: "Bondgenotenlaan 76", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyewear@vandenbalck.be" }
+    ]
+  },
+  "vandenbalck": { 
+    address: "Bondgenotenlaan 50a", 
+    postalCode: "3000", 
+    city: "Leuven", 
+    country: "Belgium", 
+    lat: 50.8804, 
+    lng: 4.7042,
+    locations: [
+      { name: "Optiek Vandenbalck Eyecare", address: "Bondgenotenlaan 50a", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be" },
+      { name: "Optiek Vandenbalck Eyewear", address: "Bondgenotenlaan 76", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyewear@vandenbalck.be" }
+    ]
+  },
+  "toopoptiek.com": { 
+    address: "Mechelsestraat 27", 
+    postalCode: "3000", 
+    city: "Leuven", 
+    country: "Belgium", 
+    lat: 50.8806643, 
+    lng: 4.6996604,
+    locations: [
+      { city: "Leuven", postalCode: "3000", address: "Mechelsestraat 27", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+      { city: "Edegem", postalCode: "2650", address: "Mechelsesteenweg 476", phone: "+32 33 69 65 60", email: "antwerpen@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+      { city: "Sint-Martens-Latem", postalCode: "9830", address: "Kortrijksesteenweg 66", phone: "+32 9 469 44 44", email: "gent@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" }
+    ]
+  },
+  "toopoptiek": { 
+    address: "Mechelsestraat 27", 
+    postalCode: "3000", 
+    city: "Leuven", 
+    country: "Belgium", 
+    lat: 50.8806643, 
+    lng: 4.6996604,
+    locations: [
+      { city: "Leuven", postalCode: "3000", address: "Mechelsestraat 27", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+      { city: "Edegem", postalCode: "2650", address: "Mechelsesteenweg 476", phone: "+32 33 69 65 60", email: "antwerpen@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+      { city: "Sint-Martens-Latem", postalCode: "9830", address: "Kortrijksesteenweg 66", phone: "+32 9 469 44 44", email: "gent@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" }
+    ]
+  },
+  "dentisteerpent.be": { address: "Rue des Jacinthes 8", postalCode: "5101", city: "Erpent", country: "Belgium", lat: 50.4578, lng: 4.9082 },
+  "dentisteerpent": { address: "Rue des Jacinthes 8", postalCode: "5101", city: "Erpent", country: "Belgium", lat: 50.4578, lng: 4.9082 },
+  "dentiste-namur.be": { address: "Rue de Fer 22", postalCode: "5000", city: "Namur", country: "Belgium", lat: 50.4674, lng: 4.8719 },
+  "dentiste-namur": { address: "Rue de Fer 22", postalCode: "5000", city: "Namur", country: "Belgium", lat: 50.4674, lng: 4.8719 },
+  "tandis.be": { address: "Lange Gasthuisstraat 3", postalCode: "2000", city: "Antwerpen", country: "Belgium", lat: 51.2163, lng: 4.4042 },
+  "tandis": { address: "Lange Gasthuisstraat 3", postalCode: "2000", city: "Antwerpen", country: "Belgium", lat: 51.2163, lng: 4.4042 },
+  "dental365.nl": { address: "Kanaalstraat 40", postalCode: "4388 BN", city: "Oost-Souburg", country: "Netherlands", lat: 51.4682, lng: 3.6041 },
+  "dental365": { address: "Kanaalstraat 40", postalCode: "4388 BN", city: "Oost-Souburg", country: "Netherlands", lat: 51.4682, lng: 3.6041 },
+  "lassustandartsen.nl": { address: "Keizersgracht 378", postalCode: "1016 GB", city: "Amsterdam", country: "Netherlands", lat: 52.3688, lng: 4.8837 },
+  "lassustandartsen": { address: "Keizersgracht 378", postalCode: "1016 GB", city: "Amsterdam", country: "Netherlands", lat: 52.3688, lng: 4.8837 },
+  "usa.com": { address: "100 Wall Street", postalCode: "10005", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
 };
+
+export const KNOWN_LOCATIONS = KNOWN_BUSINESS_HEADQUARTERS;
 
 /**
  * Verified city coordinates for reliable map previews across any new or existing business location

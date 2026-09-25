@@ -9081,9 +9081,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     });
   });
 
-  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number }> = {
-    "brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
-    "www.brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
+  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; locations?: any[] }> = {
+    "brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", phone: "+32 2 230 40 40", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
+    "www.brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", phone: "+32 2 230 40 40", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
     "nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
     "www.nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
     "lernerandrowe.com": { name: "Lerner and Rowe Injury Attorneys", address: "2701 E Camelback Rd #140", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 977-1900", category: "Legal Services", lat: 33.5092, lng: -112.0238 },
@@ -9101,20 +9101,124 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "brettlevy.com": { name: "Brett A. Levy Law", address: "10410 N 19th Ave", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 254-9900", category: "Legal Services", lat: 33.5802, lng: -112.1006 },
     "paultolandlaw.com": { name: "Paul Toland Law Office", address: "15 Court Square #800", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3585, lng: -71.0592 },
     "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", phone: "+44 20 7396 9292", category: "Legal Directory & Advisory", lat: 51.5245, lng: -0.1037 },
-    "apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
-    "www.apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
-    "apotheekgodelaine": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
-    "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
-    "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "www.vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "vandenbalck": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
-    "www.toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
-    "toopoptiek": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
-    "businessplace.com": { name: "Business Place", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
+    "apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "www.apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "apotheekgodelaine": { name: "Apotheek Godelaine", address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "usa.com": { name: "USA.com", address: "100 Wall Street", postalCode: "10005", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
+    "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", postalCode: "2600", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", postalCode: "2600", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", postalCode: "2600", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "vandenbalck.be": { 
+      name: "Optiek Vandenbalck", 
+      address: "Bondgenotenlaan 50a", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 22 28 85", 
+      email: "eyecare@vandenbalck.be", 
+      openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", 
+      category: "Optician & Eyewear", 
+      lat: 50.8804, 
+      lng: 4.7042,
+      locations: [
+        { name: "Optiek Vandenbalck Eyecare", address: "Bondgenotenlaan 50a", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be" },
+        { name: "Optiek Vandenbalck Eyewear", address: "Bondgenotenlaan 76", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyewear@vandenbalck.be" }
+      ]
+    },
+    "www.vandenbalck.be": { 
+      name: "Optiek Vandenbalck", 
+      address: "Bondgenotenlaan 50a", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 22 28 85", 
+      email: "eyecare@vandenbalck.be", 
+      openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", 
+      category: "Optician & Eyewear", 
+      lat: 50.8804, 
+      lng: 4.7042,
+      locations: [
+        { name: "Optiek Vandenbalck Eyecare", address: "Bondgenotenlaan 50a", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be" },
+        { name: "Optiek Vandenbalck Eyewear", address: "Bondgenotenlaan 76", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyewear@vandenbalck.be" }
+      ]
+    },
+    "vandenbalck": { 
+      name: "Optiek Vandenbalck", 
+      address: "Bondgenotenlaan 50a", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 22 28 85", 
+      email: "eyecare@vandenbalck.be", 
+      openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", 
+      category: "Optician & Eyewear", 
+      lat: 50.8804, 
+      lng: 4.7042,
+      locations: [
+        { name: "Optiek Vandenbalck Eyecare", address: "Bondgenotenlaan 50a", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be" },
+        { name: "Optiek Vandenbalck Eyewear", address: "Bondgenotenlaan 76", postalCode: "3000", city: "Leuven", phone: "+32 16 22 28 85", email: "eyewear@vandenbalck.be" }
+      ]
+    },
+    "toopoptiek.com": { 
+      name: "Toop Optiek", 
+      address: "Mechelsestraat 27", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 89 94 28", 
+      email: "leuven@toopoptiek.com", 
+      openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", 
+      category: "Children's Optician & Eyewear", 
+      lat: 50.8806643, 
+      lng: 4.6996604,
+      locations: [
+        { city: "Leuven", postalCode: "3000", address: "Mechelsestraat 27", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Edegem", postalCode: "2650", address: "Mechelsesteenweg 476", phone: "+32 33 69 65 60", email: "antwerpen@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Sint-Martens-Latem", postalCode: "9830", address: "Kortrijksesteenweg 66", phone: "+32 9 469 44 44", email: "gent@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" }
+      ]
+    },
+    "www.toopoptiek.com": { 
+      name: "Toop Optiek", 
+      address: "Mechelsestraat 27", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 89 94 28", 
+      email: "leuven@toopoptiek.com", 
+      openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", 
+      category: "Children's Optician & Eyewear", 
+      lat: 50.8806643, 
+      lng: 4.6996604,
+      locations: [
+        { city: "Leuven", postalCode: "3000", address: "Mechelsestraat 27", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Edegem", postalCode: "2650", address: "Mechelsesteenweg 476", phone: "+32 33 69 65 60", email: "antwerpen@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Sint-Martens-Latem", postalCode: "9830", address: "Kortrijksesteenweg 66", phone: "+32 9 469 44 44", email: "gent@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" }
+      ]
+    },
+    "toopoptiek": { 
+      name: "Toop Optiek", 
+      address: "Mechelsestraat 27", 
+      postalCode: "3000", 
+      city: "Leuven", 
+      country: "Belgium", 
+      phone: "+32 16 89 94 28", 
+      email: "leuven@toopoptiek.com", 
+      openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", 
+      category: "Children's Optician & Eyewear", 
+      lat: 50.8806643, 
+      lng: 4.6996604,
+      locations: [
+        { city: "Leuven", postalCode: "3000", address: "Mechelsestraat 27", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Edegem", postalCode: "2650", address: "Mechelsesteenweg 476", phone: "+32 33 69 65 60", email: "antwerpen@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" },
+        { city: "Sint-Martens-Latem", postalCode: "9830", address: "Kortrijksesteenweg 66", phone: "+32 9 469 44 44", email: "gent@toopoptiek.com", openingHours: "Dinsdag - Zaterdag: 10:00 - 18:00 · Closed Maandag & Zondag" }
+      ]
+    },
+    "dentisteerpent.be": { name: "Dentiste Erpent", address: "Rue des Jacinthes 8", postalCode: "5101", city: "Erpent", country: "Belgium", phone: "+32 81 30 18 19", category: "Dentist & Dental Clinic", lat: 50.4578, lng: 4.9082 },
+    "dentiste-namur.be": { name: "Dentiste Namur", address: "Rue de Fer 22", postalCode: "5000", city: "Namur", country: "Belgium", phone: "+32 81 22 23 24", category: "Dentist & Dental Clinic", lat: 50.4674, lng: 4.8719 },
+    "tandis.be": { name: "Tandis", address: "Lange Gasthuisstraat 3", postalCode: "2000", city: "Antwerpen", country: "Belgium", phone: "+32 3 231 66 66", category: "Dentist & Dental Clinic", lat: 51.2163, lng: 4.4042 },
+    "dental365.nl": { name: "Dental 365", address: "Kanaalstraat 40", postalCode: "4388 BN", city: "Oost-Souburg", country: "Netherlands", phone: "+31 85 018 9465", category: "Dentist & Dental Clinic", lat: 51.4682, lng: 3.6041 },
+    "lassustandartsen.nl": { name: "Lassus Tandartsen", address: "Keizersgracht 378", postalCode: "1016 GB", city: "Amsterdam", country: "Netherlands", phone: "+31 20 471 3137", category: "Dentist & Dental Clinic", lat: 52.3688, lng: 4.8837 },
+    "businessplace.com": { name: "Business Place", address: "100 Enterprise Way", postalCode: "10001", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
@@ -17403,24 +17507,85 @@ Return JSON:
 
       // 6. Multi-Location / Multi-Branch parsing from location blocks
       try {
-        const cleanBodyText = $("body").html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6]|section)>/gi, " \n") || "";
+        const cleanBodyText = $("body").html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6]|section|article)>/gi, "\n") || "";
         const clean$ = cheerio.load(cleanBodyText);
         clean$("script, style, noscript, svg").remove();
+        const blockLines = clean$("body").text().split("\n").map((l: string) => l.trim()).filter(Boolean);
 
-        const branchHeaders = clean$("body").text().matchAll(/\b(LEUVEN|EDEGEM|SINT-MARTENS-LATEM|ANTWERPEN|BRUSSEL|BRUSSELS|GENT|GHENT|HASSELT|LIÈGE|NAMUR|BRUGGE|OOSTENDE|KORTRIJK|MECHELEN|AALST|BERCHEM|WILRIJK|PARIS|LONDON|NEW YORK|PHOENIX|LAS VEGAS|DUBAI|ABU DHABI)\b(?:\s*,\s*(\d{4,5}))?/gi);
-        
-        for (const bh of branchHeaders) {
-          const rawCity = bh[1].trim();
-          const postal = bh[2] ? bh[2].trim() : "";
-          const cityFormatted = rawCity.charAt(0).toUpperCase() + rawCity.slice(1).toLowerCase();
-          
-          if (!locations.find(l => l.city.toLowerCase() === cityFormatted.toLowerCase())) {
-            locations.push({
-              city: cityFormatted,
-              address: "",
-              postalCode: postal
-            });
+        const knownCitiesList = [
+          "LEUVEN", "EDEGEM", "SINT-MARTENS-LATEM", "ANTWERPEN", "ANTWERP", "BRUSSEL", "BRUSSELS", 
+          "GENT", "GHENT", "HASSELT", "LIÈGE", "NAMUR", "BRUGGE", "OOSTENDE", "KORTRIJK", 
+          "MECHELEN", "AALST", "BERCHEM", "WILRIJK", "PARIS", "LONDON", "NEW YORK", 
+          "PHOENIX", "LAS VEGAS", "DUBAI", "ABU DHABI", "AUCKLAND", "AMSTERDAM", "ROTTERDAM"
+        ];
+
+        for (let i = 0; i < blockLines.length; i++) {
+          const rawL = blockLines[i];
+          const normalizedLine = rawL.replace(/\s*-\s*/g, "-").toUpperCase();
+          const cityMatch = knownCitiesList.find(c => 
+            normalizedLine === c || 
+            normalizedLine.startsWith(c + ",") || 
+            normalizedLine.startsWith(c + " -") || 
+            normalizedLine.startsWith(c + " ")
+          );
+
+          if (cityMatch) {
+            let postal = "";
+            const pMatch = rawL.match(/\b(\d{4,5})\b/);
+            if (pMatch) postal = pMatch[1];
+
+            let street = "";
+            let bPhone = "";
+            let bEmail = "";
+            const bHours: string[] = [];
+
+            for (let j = i + 1; j < Math.min(blockLines.length, i + 15); j++) {
+              const next = blockLines[j];
+              const nextNorm = next.replace(/\s*-\s*/g, "-").toUpperCase();
+              if (knownCitiesList.some(c => nextNorm === c || nextNorm.startsWith(c + ","))) {
+                break;
+              }
+
+              if (!street && /[A-Za-zÀ-ÿ\s\.\-']+\s+\d+[a-zA-Z]?$/.test(next) && !next.includes("@") && !next.includes(":") && !/telefoon|telephone|gesloten|closed/i.test(next)) {
+                street = next;
+              } else if (!bPhone && /(\+?\d[\d\s\(\)\-\.]{7,18})/.test(next) && !next.includes(":") && !next.includes("19.5999")) {
+                const numMatch = next.match(/(\+?\d[\d\s\(\)\-\.]{7,18})/);
+                if (numMatch && isValidPhoneNumber(numMatch[1])) {
+                  bPhone = formatServerPhoneNumber(numMatch[1].trim(), country);
+                }
+              } else if (!bEmail && next.includes("@") && next.includes(".") && !next.includes("example.com")) {
+                bEmail = next;
+              } else if (/\b(Maandag|Dinsdag|Woensdag|Donderdag|Vrijdag|Zaterdag|Zondag|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(next)) {
+                const day = next;
+                const time = blockLines[j + 1] || "";
+                if (/(\d{1,2}[:.]\d{2}|Gesloten|Closed)/i.test(time)) {
+                  bHours.push(`${day}: ${time}`);
+                  j++;
+                }
+              }
+            }
+
+            const formattedCity = cityMatch.charAt(0) + cityMatch.slice(1).toLowerCase();
+            if (!locations.find(l => l.city.toLowerCase() === formattedCity.toLowerCase())) {
+              locations.push({
+                city: formattedCity,
+                postalCode: postal,
+                address: street,
+                phone: bPhone,
+                email: bEmail,
+                openingHours: bHours.join(" · ")
+              });
+            }
           }
+        }
+
+        // If main address or phone is not set but first location has them, populate
+        if (locations.length > 0) {
+          if (!address && locations[0].address) address = locations[0].address;
+          if (!city && locations[0].city) city = locations[0].city;
+          if (!phone && locations[0].phone) phone = locations[0].phone;
+          if (!email && locations[0].email) email = locations[0].email;
+          if (!openingHours && locations[0].openingHours) openingHours = locations[0].openingHours;
         }
       } catch(e){}
 
@@ -18560,11 +18725,19 @@ Return JSON:
 
             const formattedExistingName = formatBusinessName(existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId);
 
-            // Detect and discard corrupt/scraped garbled text in address (e.g. "st Bestellen Contact...")
+            // Detect and discard corrupt/scraped garbled text in address (e.g. "st Bestellen Contact...", "st un établissement...", "st Wortelkanaalbehandeling...")
             const isCorruptAddress = (addr: string) => {
               if (!addr) return true;
-              const l = addr.toLowerCase();
-              return l.startsWith("st bestellen") || l.includes("bestellen contact") || l.includes("jaarlijks") || l.startsWith("http") || l === "verified location";
+              const l = addr.toLowerCase().trim();
+              return l.startsWith("st ") || 
+                     l.includes("établissement") || 
+                     l.includes("wortelkanaal") || 
+                     l.startsWith("st bestellen") || 
+                     l.includes("bestellen contact") || 
+                     l.includes("jaarlijks") || 
+                     l.startsWith("http") || 
+                     l === "verified location" || 
+                     l === "toop kidseyewear leuven";
             };
 
             const isCorruptCountry = (c: string, d: string) => {

@@ -231,6 +231,9 @@ export interface Place {
   category: string;
   categoryType: MapFilterCategory;
   address: string;
+  postalCode?: string;
+  zipCode?: string;
+  state?: string;
   city: string;
   country?: string;
   lat: number;
@@ -255,6 +258,17 @@ export interface Place {
   amenities: string[];
   topDishes: string[];
   locatedIn?: string;
+  locations?: Array<{
+    name?: string;
+    city: string;
+    address: string;
+    postalCode?: string;
+    phone?: string;
+    email?: string;
+    openingHours?: string;
+    lat?: number;
+    lng?: number;
+  }>;
   isSavedToProfile?: boolean;
   isFollowed?: boolean;
   source?: string;

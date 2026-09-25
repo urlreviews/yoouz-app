@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -202,36 +202,51 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
 
   const displayAddress = React.useMemo(() => {
+    const placeKey = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
+    const known = KNOWN_LOCATIONS[placeKey] || KNOWN_LOCATIONS[placeKey.replace(/\.(com|be|nl|fr|de|es|it|org|net)$/i, '')];
+
     const reviewWithAddr = rawPlaceVideos.find(v => v.placeAddress && v.placeAddress.trim() !== "" && v.placeAddress !== "Verified Location" && !v.placeAddress.startsWith("http"));
-    const rawAddr = (!isAddressUrl && place.address && place.address.trim() !== "" && place.address.trim() !== "Verified Location") ? place.address.trim() : (reviewWithAddr?.placeAddress?.trim() || "");
+    let rawAddr = (!isAddressUrl && place.address && place.address.trim() !== "" && place.address.trim() !== "Verified Location") 
+      ? place.address.trim() 
+      : (reviewWithAddr?.placeAddress?.trim() || known?.address || "");
 
     if (!rawAddr) {
       const reviewCity = rawPlaceVideos.find(v => v.placeCity && v.placeCity.trim() !== "" && !["online", "global", "worldwide", "n/a"].includes(v.placeCity.toLowerCase().trim()))?.placeCity;
-      const effectiveCity = place.city || reviewCity;
+      const effectiveCity = place.city || reviewCity || known?.city;
       if (effectiveCity && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(effectiveCity.toLowerCase().trim())) {
-        return [effectiveCity, (place as any).state, place.country || reviewWithAddr?.placeCountry].filter(Boolean).join(", ");
+        return [effectiveCity, (place as any).state || known?.state, place.country || reviewWithAddr?.placeCountry || known?.country].filter(Boolean).join(", ");
       }
       if (place.country && !["global", "worldwide", "n/a"].includes(place.country.toLowerCase().trim())) {
         return place.country;
       }
       return null;
     }
-    let addr = rawAddr;
-    const c = place.city ? place.city.trim() : (reviewWithAddr?.placeCity ? reviewWithAddr.placeCity.trim() : "");
-    const st = (place as any).state ? (place as any).state.trim() : "";
-    const zip = (place as any).zipCode ? (place as any).zipCode.trim() : "";
-    const country = place.country ? place.country.trim() : (reviewWithAddr?.placeCountry ? reviewWithAddr.placeCountry.trim() : "");
 
-    if (c && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(c.toLowerCase()) && !addr.toLowerCase().includes(c.toLowerCase())) {
-      addr += `, ${c}`;
+    let addr = rawAddr;
+    const c = place.city ? place.city.trim() : (reviewWithAddr?.placeCity ? reviewWithAddr.placeCity.trim() : (known?.city || ""));
+    const st = (place as any).state ? (place as any).state.trim() : (known?.state || "");
+    const zip = (place as any).postalCode || (place as any).zipCode || (place as any).zip || (known as any)?.postalCode || "";
+    const country = place.country ? place.country.trim() : (reviewWithAddr?.placeCountry ? reviewWithAddr.placeCountry.trim() : (known?.country || ""));
+
+    // Check if zip and city are already included
+    const hasCity = c && addr.toLowerCase().includes(c.toLowerCase());
+    const hasZip = zip && addr.includes(zip);
+    const hasCountry = country && addr.toLowerCase().includes(country.toLowerCase());
+
+    if (!hasCity && c && !["online", "global", "worldwide", "global headquarters", "n/a"].includes(c.toLowerCase())) {
+      if (zip && !hasZip) {
+        addr += `, ${zip} ${c}`;
+      } else {
+        addr += `, ${c}`;
+      }
+    } else if (!hasZip && zip) {
+      addr += ` ${zip}`;
     }
+
     if (st && !addr.toLowerCase().includes(st.toLowerCase())) {
       addr += `, ${st}`;
     }
-    if (zip && !addr.includes(zip)) {
-      addr += ` ${zip}`;
-    }
-    if (country && !addr.toLowerCase().includes(country.toLowerCase())) {
+    if (country && !hasCountry && !["worldwide", "global"].includes(country.toLowerCase())) {
       addr += `, ${country}`;
     }
     return addr;
