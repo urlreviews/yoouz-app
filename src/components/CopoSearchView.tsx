@@ -470,21 +470,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <span>{searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
                   </a>
 
-                  {/* Structured Category & Location Row */}
-                  {(searchedPlace.category || searchedPlace.city) && (
+                  {/* Structured Category Row */}
+                  {searchedPlace.category && (
                     <div className="flex items-center gap-2.5 flex-wrap my-2.5">
-                      {searchedPlace.category && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 border border-zinc-750 text-xs font-semibold text-zinc-200">
-                          <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                          <span>{searchedPlace.category}</span>
-                        </span>
-                      )}
-                      {searchedPlace.city && (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
-                          <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                          <span>{searchedPlace.city}{searchedPlace.country ? `, ${searchedPlace.country}` : ""}</span>
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 border border-zinc-750 text-xs font-semibold text-zinc-200">
+                        <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        <span>{searchedPlace.category}</span>
+                      </span>
                     </div>
                   )}
                   

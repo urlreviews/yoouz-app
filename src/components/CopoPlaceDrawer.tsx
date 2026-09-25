@@ -1083,9 +1083,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
         </div>
 
-        {/* Structured Location & Website Lines (Monochrome Dark Theme) */}
-        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-800/70 text-xs sm:text-sm">
-          {effectiveWebsite && (
+        {/* Structured Website Link Line (Clean, Single Line) */}
+        {effectiveWebsite && (
+          <div className="pt-3 border-t border-zinc-800/70 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-zinc-300 font-medium min-w-0">
               <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
               <a 
@@ -1097,22 +1097,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {displayWebsiteClean}
               </a>
             </div>
-          )}
-
-          {(() => {
-            if (isYoouz) return null;
-            const invalidLocations = ["online", "global", "worldwide", "global headquarters", "n/a"];
-            const validCity = place.city && !invalidLocations.includes(place.city.toLowerCase().trim()) ? place.city.trim() : "";
-            const validCountry = place.country && !invalidLocations.includes(place.country.toLowerCase().trim()) ? place.country.trim() : "";
-            if (!validCity && !validCountry) return null;
-            return (
-              <div className="flex items-center gap-2 text-zinc-300 font-medium">
-                <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
-                <span>{validCity}{validCity && validCountry ? ", " : ""}{validCountry}</span>
-              </div>
-            );
-          })()}
-        </div>
+          </div>
+        )}
       </div>
 
         {/* Google Maps Tabs: Overview | Reviews | About */}
