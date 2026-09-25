@@ -1977,7 +1977,7 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
 /**
  * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
  */
-export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; postalCode?: string; city?: string; state?: string; country?: string; lat?: number; lng?: number; locations?: any[] }> = {
+export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; postalCode?: string; city?: string; state?: string; country?: string; phone?: string; email?: string; openingHours?: string; category?: string; lat?: number; lng?: number; locations?: any[] }> = {
   "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
@@ -2016,6 +2016,54 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; pos
   "paultolandlaw": { address: "15 Court Square #800", city: "Boston", state: "MA", country: "United States", lat: 42.3585, lng: -71.0592 },
   "businessplace.com": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
   "businessplace": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
+  "garageas.be": {
+    address: "Battelsesteenweg 282",
+    postalCode: "2800",
+    city: "Mechelen",
+    country: "Belgium",
+    phone: "+32 15 33 95 04",
+    email: "garage-as@outlook.be",
+    openingHours: "Mon-Fri: 08:00 - 12:00, 13:00 - 18:00 · Sat: 08:30 - 12:30 · Closed Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0371,
+    lng: 4.4682
+  },
+  "garageas": {
+    address: "Battelsesteenweg 282",
+    postalCode: "2800",
+    city: "Mechelen",
+    country: "Belgium",
+    phone: "+32 15 33 95 04",
+    email: "garage-as@outlook.be",
+    openingHours: "Mon-Fri: 08:00 - 12:00, 13:00 - 18:00 · Sat: 08:30 - 12:30 · Closed Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0371,
+    lng: 4.4682
+  },
+  "garage-as.be": {
+    address: "Battelsesteenweg 282",
+    postalCode: "2800",
+    city: "Mechelen",
+    country: "Belgium",
+    phone: "+32 15 33 95 04",
+    email: "garage-as@outlook.be",
+    openingHours: "Mon-Fri: 08:00 - 12:00, 13:00 - 18:00 · Sat: 08:30 - 12:30 · Closed Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0371,
+    lng: 4.4682
+  },
+  "garage-as": {
+    address: "Battelsesteenweg 282",
+    postalCode: "2800",
+    city: "Mechelen",
+    country: "Belgium",
+    phone: "+32 15 33 95 04",
+    email: "garage-as@outlook.be",
+    openingHours: "Mon-Fri: 08:00 - 12:00, 13:00 - 18:00 · Sat: 08:30 - 12:30 · Closed Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0371,
+    lng: 4.4682
+  },
   "brusselsdental.com": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "brusselsdental": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "apotheekgodelaine.be": { address: "Berkenlaan 85", postalCode: "2610", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },

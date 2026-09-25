@@ -748,16 +748,33 @@ function readReviewsIndex(): any[] {
               }
             }
 
-            // Ensure Garage As business name is cleanly formatted with proper two-word casing
+            // Ensure Garage As business name is cleanly formatted with proper two-word casing and authoritative metadata
             if (
               (r.placeId && (r.placeId.toLowerCase().includes("garageas") || r.placeId.toLowerCase().includes("garage-as"))) ||
               (r.placeName && (r.placeName.toLowerCase().replace(/\s+/g, "") === "garageas" || r.placeName.toLowerCase() === "garageas")) ||
               (r.businessName && (r.businessName.toLowerCase().replace(/\s+/g, "") === "garageas" || r.businessName.toLowerCase() === "garageas")) ||
               (r.caption && r.caption.toLowerCase().includes("garageas"))
             ) {
-              if (r.placeName !== "Garage As" || r.businessName !== "Garage As") {
+              const needsUpdate =
+                r.placeName !== "Garage As" ||
+                r.businessName !== "Garage As" ||
+                !r.placePhone ||
+                !r.placeEmail ||
+                !r.placeAddress ||
+                r.placeAddress.includes("Spa") ||
+                r.placeCategory === "Spa & Wellness";
+
+              if (needsUpdate) {
                 r.placeName = "Garage As";
                 r.businessName = "Garage As";
+                r.placeAddress = "Battelsesteenweg 282";
+                r.placePostalCode = "2800";
+                r.placeCity = "Mechelen";
+                r.placeCountry = "Belgium";
+                r.placePhone = "+32 15 33 95 04";
+                r.placeEmail = "garage-as@outlook.be";
+                r.placeCategory = "Auto Repair & Garage";
+                r.placeWebsite = "https://garageas.be";
                 if (r.dishOrItem && (r.dishOrItem.toLowerCase().includes("garageas") || r.dishOrItem.toLowerCase() === "garageas")) {
                   r.dishOrItem = "Garage As";
                 }
@@ -3089,13 +3106,22 @@ function enrichRealBusinessData(item: any, rawQuery: string = ""): any {
   const safeLat = Number.isFinite(rawLat) && !Number.isNaN(rawLat) && rawLat >= -90 && rawLat <= 90 ? rawLat : 31.7921646;
   const safeLng = Number.isFinite(rawLng) && !Number.isNaN(rawLng) && rawLng >= -180 && rawLng <= 180 ? rawLng : 34.635408;
 
+  const postalCode = item.postalCode || item.zipCode || item.zip || "";
+  const resolvedCountry = item.country || "";
+  const email = item.email || "";
+
   return {
     id: item.id || `place-${Math.random().toString(36).substr(2, 9)}`,
     name,
     category,
     categoryType: item.categoryType || "all",
     address: addr,
+    postalCode,
+    zipCode: postalCode,
+    zip: postalCode,
     city: city || "Global",
+    country: resolvedCountry,
+    email,
     lat: safeLat,
     lng: safeLng,
     rating,
@@ -23868,6 +23894,20 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   });
 
+  Object.assign(KNOWN_ENTITY_LOCATIONS, {
+    "garageas.be": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
+    "garageas": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
+    "garage-as.be": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
+    "garage-as": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
+    "healis.be": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
+    "healis": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 }
+  });
+
+  Object.assign(KNOWN_PLACE_METADATA, {
+    "garageas.be": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
+    "garageas": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" }
+  });
+
   // Dedicated endpoint to audit and automatically repair any single-word or compound domain business names, corrupt addresses, and countries in BunnyDB
   app.all("/api/admin/repair-business-names", async (req, res) => {
     try {
@@ -23916,11 +23956,26 @@ function injectOpenGraphTags(html: string, meta: any) {
           targetAddress = matchedKnown.address || targetAddress;
           targetCity = matchedKnown.city || targetCity;
           targetCountry = matchedKnown.country || targetCountry;
+          if (matchedKnown.postalCode) {
+            placeDoc.postalCode = matchedKnown.postalCode;
+            placeDoc.zipCode = matchedKnown.postalCode;
+            placeDoc.zip = matchedKnown.postalCode;
+          }
           if (matchedKnown.phone) targetPhone = formatServerPhoneNumber(matchedKnown.phone, targetCountry);
           if (matchedKnown.email) targetEmail = matchedKnown.email;
           if (matchedKnown.category) targetCategory = matchedKnown.category;
           if (matchedKnown.lat) targetLat = matchedKnown.lat;
           if (matchedKnown.lng) targetLng = matchedKnown.lng;
+        }
+
+        // If postal code is missing, extract from address if present
+        if (!placeDoc.postalCode && targetAddress) {
+          const zipMatch = targetAddress.match(/\b\d{4,5}\b/) || targetAddress.match(/\b[A-Z0-9]{3,4}\s?[A-Z0-9]{3,4}\b/i);
+          if (zipMatch) {
+            placeDoc.postalCode = zipMatch[0];
+            placeDoc.zipCode = zipMatch[0];
+            placeDoc.zip = zipMatch[0];
+          }
         }
 
         if (matchedMeta) {
