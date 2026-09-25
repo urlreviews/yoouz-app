@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
+import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
@@ -465,10 +465,28 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       );
                     })()}
                   </h2>
-                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-200 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm mt-1 mb-2">
-                    <Globe className="w-4 h-4 text-zinc-200" />
-                    {searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}
+                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1.5 font-medium text-sm mt-1 mb-2">
+                    <Globe className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>{searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
                   </a>
+
+                  {/* Structured Category & Location Row */}
+                  {(searchedPlace.category || searchedPlace.city) && (
+                    <div className="flex items-center gap-2.5 flex-wrap my-2.5">
+                      {searchedPlace.category && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700/60 text-xs font-semibold text-zinc-200">
+                          <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <span>{searchedPlace.category}</span>
+                        </span>
+                      )}
+                      {searchedPlace.city && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>{searchedPlace.city}{searchedPlace.country ? `, ${searchedPlace.country}` : ""}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Star Rating Row */}
                   {totalReviewsCount > 0 && (
