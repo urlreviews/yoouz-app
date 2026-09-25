@@ -8212,7 +8212,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Sub-system #48: Multi-Language Compound Word & Business Name Separation Integrity Guard
       const check48Start = Date.now();
       let check48Status: "ok" | "degraded" | "error" = "ok";
-      let check48Details = "Multi-language compound word separation engine active. 100% of registered business places and video reviews formatted with official separate-word brand titles (e.g. Lassus Tandartsen, Dentiste Erpent, Tandis, Dental 365). Zero single-word concatenation defects.";
+      let check48Details = "Multi-language compound word separation engine active. 100% of registered business places and video reviews formatted with official separate-word brand titles (e.g. Lassus Tandartsen, Dentiste Erpent, Tandis, Dental 365, Optiek Nieuwenhuysen). Zero single-word concatenation defects.";
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
@@ -8220,7 +8220,16 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           const unspacedNames = (placesRs.rows as any[]).filter(r => {
             const n = (r.name || "").trim();
             const id = (r.id || "").trim();
-            return n.length > 8 && !n.includes(" ") && !n.includes("-") && (id.includes(".") || id.length > 8) && !KNOWN_OFFICIAL_NAMES[id.toLowerCase()];
+            const cleanDom = cleanDomainName(id);
+            if (KNOWN_OFFICIAL_NAMES[id.toLowerCase()] || KNOWN_OFFICIAL_NAMES[cleanDom]) return false;
+            
+            // Check if compound word split detects hidden words
+            const splitFromName = splitCompoundWords(n);
+            const splitFromId = splitCompoundWords(cleanDom.replace(/\.[a-z]{2,}$/i, ""));
+            const hasMultipleWordsInSplit = splitFromName.split(/\s+/).filter(Boolean).length > 1 || splitFromId.split(/\s+/).filter(Boolean).length > 1;
+            const currentHasSingleWord = !n.includes(" ") && !n.includes("-");
+            
+            return currentHasSingleWord && hasMultipleWordsInSplit && n.length > 8;
           });
           if (unspacedNames.length > 0) {
             check48Status = "degraded";
@@ -9099,10 +9108,40 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
     "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
     "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "www.vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "vandenbalck": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
+    "www.toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
+    "toopoptiek": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
     "businessplace.com": { name: "Business Place", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "toopoptiek.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png%2Fv1%2Ffit%2Fw_2500%2Ch_1330%2Cal_c%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png",
+      logoUrl: "/api/favicon?domain=toopoptiek.com",
+      name: "Toop Optiek",
+      website: "https://toopoptiek.com"
+    },
+    "www.toopoptiek.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png%2Fv1%2Ffit%2Fw_2500%2Ch_1330%2Cal_c%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png",
+      logoUrl: "/api/favicon?domain=toopoptiek.com",
+      name: "Toop Optiek",
+      website: "https://toopoptiek.com"
+    },
+    "vandenbalck.be": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fvandenbalck.be%2Fwp-content%2Fuploads%2Felementor%2Fthumbs%2FVDB-eyewear-1-qlxnbgsl5sv8s6hszra0qbv7simw8mhk2ftxbtk8ao.png",
+      logoUrl: "/api/favicon?domain=vandenbalck.be",
+      name: "Optiek Vandenbalck",
+      website: "https://vandenbalck.be"
+    },
+    "www.vandenbalck.be": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fvandenbalck.be%2Fwp-content%2Fuploads%2Felementor%2Fthumbs%2FVDB-eyewear-1-qlxnbgsl5sv8s6hszra0qbv7simw8mhk2ftxbtk8ao.png",
+      logoUrl: "/api/favicon?domain=vandenbalck.be",
+      name: "Optiek Vandenbalck",
+      website: "https://vandenbalck.be"
+    },
     "optieknieuwenhuysen.be": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Foptieknieuwenhuysen.be%2Fwp-content%2Fuploads%2Fsites%2F32%2F2026%2F03%2Foptieknieuwenhuysen-teamfoto-weekvanhetzien-2024.jpg",
       logoUrl: "/api/favicon?domain=optieknieuwenhuysen.be",
@@ -22098,6 +22137,12 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "optieknieuwenhuysen.be": "Optiek Nieuwenhuysen",
   "www-optieknieuwenhuysen-be": "Optiek Nieuwenhuysen",
   "nieuwenhuysen": "Optiek Nieuwenhuysen",
+  "vandenbalck": "Optiek Vandenbalck",
+  "vandenbalck.be": "Optiek Vandenbalck",
+  "www-vandenbalck-be": "Optiek Vandenbalck",
+  "toopoptiek": "Toop Optiek",
+  "toopoptiek.com": "Toop Optiek",
+  "www-toopoptiek-com": "Toop Optiek",
   "dental365": "Dental 365",
   "dental365.nl": "Dental 365",
   "www-dental365-nl": "Dental 365",

@@ -260,6 +260,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "optieknieuwenhuysen.be": "Optiek Nieuwenhuysen",
   "www-optieknieuwenhuysen-be": "Optiek Nieuwenhuysen",
   "nieuwenhuysen": "Optiek Nieuwenhuysen",
+  "vandenbalck": "Optiek Vandenbalck",
+  "vandenbalck.be": "Optiek Vandenbalck",
+  "www-vandenbalck-be": "Optiek Vandenbalck",
+  "toopoptiek": "Toop Optiek",
+  "toopoptiek.com": "Toop Optiek",
+  "www-toopoptiek-com": "Toop Optiek",
   "dental365": "Dental 365",
   "dental365.nl": "Dental 365",
   "www-dental365-nl": "Dental 365",
@@ -1959,6 +1965,10 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
   "apotheekgodelaine": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
   "optieknieuwenhuysen.be": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
   "optieknieuwenhuysen": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
+  "vandenbalck.be": { address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", lat: 50.8804, lng: 4.7042 },
+  "vandenbalck": { address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", lat: 50.8804, lng: 4.7042 },
+  "toopoptiek.com": { address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", lat: 50.8806643, lng: 4.6996604 },
+  "toopoptiek": { address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", lat: 50.8806643, lng: 4.6996604 },
   "usa.com": { address: "100 Wall Street", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
 };
 
