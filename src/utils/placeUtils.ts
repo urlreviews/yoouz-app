@@ -355,7 +355,15 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "mc veagh fleming": "McVeagh Fleming Lawyers",
   "mc veagh fleming lawyer s": "McVeagh Fleming Lawyers",
   "mcveagh fleming lawyer s": "McVeagh Fleming Lawyers",
-  "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers"
+  "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers",
+  "proximus": "Proximus",
+  "proximus.be": "Proximus",
+  "www.proximus.be": "Proximus",
+  "pro-ximus": "Proximus",
+  "pro ximus": "Proximus",
+  "multipharma": "Multipharma",
+  "multipharma.be": "Multipharma",
+  "www.multipharma.be": "Multipharma"
 };
 
 /**
@@ -363,12 +371,16 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
  */
 export function splitCompoundWords(str: string): string {
   let s = str.trim();
+  // If already a clean capitalized word (e.g. "Proximus", "Multipharma"), do not split
+  if (/^[A-Z][a-z0-9]+$/.test(s)) {
+    return s;
+  }
   // 1. Split camelCase/PascalCase
   s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
   // 2. Split letter-number and number-letter
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
-  // 3. Known brand/locational prefixes
-  s = s.replace(/^(the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  // 3. Known brand/locational prefixes (Note: do NOT split "pro", "all", "my", "top" to prevent breaking Proximus, Profile, Alliance, etc.)
+  s = s.replace(/^(the|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{4,})/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
   
   // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
@@ -554,6 +566,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
+  // 3c. If the string is already a clean capitalized business name from metadata, preserve directly
+  if (!isDomainLike && trimmed && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(trimmed) && trimmed.length <= 50) {
+    return trimmed;
+  }
+
   let rawName = trimmed;
   if (isDomainLike) {
     const cleanDomain = extractCleanDomain(trimmed);
@@ -565,6 +582,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     .replace(/^https?:\/\//i, '')
     .replace(/^www[\.\-\/]/i, '')
     .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
+
+  // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma"), preserve directly
+  if (/^[A-Z][a-z0-9]+$/.test(rawName)) {
+    return rawName;
+  }
 
   // 6. Split compound words
   let spaced = splitCompoundWords(rawName);

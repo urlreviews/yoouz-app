@@ -18235,9 +18235,11 @@ Return JSON:
                 } catch (e) {}
               }
 
-              // 3. Support JSON-LD schemas
+              // 3. Support JSON-LD schemas with strict Organization / LocalBusiness / WebSite prioritization
               let jsonLdLogo = '';
-              let jsonLdName = '';
+              let jsonLdOrgName = '';
+              let jsonLdWebSiteName = '';
+              let jsonLdGenericName = '';
               let jsonLdDesc = '';
               try {
                 $('script[type="application/ld+json"]').each((i, el) => {
@@ -18246,9 +18248,21 @@ Return JSON:
                     const traverseSchema = (item: any) => {
                       if (!item) return;
                       if (typeof item === 'object') {
-                        if (item.name && typeof item.name === 'string' && !jsonLdName) {
-                          jsonLdName = item.name;
+                        const typeStr = String(item['@type'] || item.type || '').toLowerCase();
+                        const itemName = (typeof item.name === 'string' && item.name.trim()) || 
+                                         (typeof item.legalName === 'string' && item.legalName.trim()) || 
+                                         (typeof item.alternateName === 'string' && item.alternateName.trim()) || '';
+
+                        if (itemName && !isGenericOrPlaceholderTitle(itemName) && itemName.length <= 60) {
+                          if (typeStr.includes('organization') || typeStr.includes('corporation') || typeStr.includes('localbusiness') || typeStr.includes('store') || typeStr.includes('restaurant') || typeStr.includes('medical') || typeStr.includes('service') || typeStr.includes('brand')) {
+                            if (!jsonLdOrgName) jsonLdOrgName = itemName;
+                          } else if (typeStr.includes('website') || typeStr.includes('webpage')) {
+                            if (!jsonLdWebSiteName) jsonLdWebSiteName = itemName;
+                          } else if (!jsonLdGenericName) {
+                            jsonLdGenericName = itemName;
+                          }
                         }
+
                         if (item.description && typeof item.description === 'string' && !jsonLdDesc) {
                           jsonLdDesc = item.description;
                         }
@@ -18277,15 +18291,20 @@ Return JSON:
                 });
               } catch (e) {}
 
-              // 4. Resolve Title (Priority: og:site_name > JSON-LD Organization name > Cleaned HTML <title> > og:title > Logo alt > Bundle phrase > splitCompoundWords)
+              // 4. Resolve Title (Priority: og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Cleaned HTML <title> > og:title > Logo alt > Bundle phrase > domain fallback)
               const cleanTitleString = (str: string) => {
                 let cleaned = str.replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '').trim();
-                // Clean SEO title suffixes like "Lassus Tandartsen | 365 Dagen..." -> "Lassus Tandartsen"
+                // Strip common marketing / generic prefixes
+                cleaned = cleaned.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
+                // Clean SEO title suffixes like "Welcome to Proximus - Internet, mobile, phone and TV | Proximus" -> "Proximus"
                 const parts = cleaned.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                  // Check if any part matches domRoot exactly (e.g. "Proximus")
+                  const exactPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot && !isGenericOrPlaceholderTitle(p));
+                  if (exactPart) return exactPart;
                   const matchPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '').includes(domRoot) && p.length <= 40 && !isGenericOrPlaceholderTitle(p));
-                  if (matchPart) return matchPart;
+                  if (matchPart) return matchPart.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
                   const nonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && p.length >= 2 && p.length <= 45);
                   if (nonGeneric.length > 0) return nonGeneric[0];
                 }
@@ -18293,17 +18312,32 @@ Return JSON:
               };
 
               const rawSiteName = getMetaContent('site_name');
+              const appName = $('meta[name="application-name"]').attr('content') ||
+                              $('meta[name="apple-mobile-web-app-title"]').attr('content') ||
+                              $('meta[property="al:android:app_name"]').attr('content') ||
+                              $('meta[property="al:ios:app_name"]').attr('content') || '';
               const htmlTagTitle = $('title').first().text() || '';
               const logoAltTitle = $('header img[alt], nav img[alt], .logo img[alt]').first().attr('alt') || '';
 
-              if (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && rawSiteName.length <= 50) {
-                title = cleanTitleString(rawSiteName);
-              } else if (jsonLdName && !isGenericOrPlaceholderTitle(jsonLdName) && jsonLdName.length <= 50) {
-                title = cleanTitleString(jsonLdName);
+              const bestSiteNameCandidate = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && rawSiteName.length <= 50) ? rawSiteName
+                                          : (appName && !isGenericOrPlaceholderTitle(appName) && appName.length <= 50) ? appName
+                                          : '';
+
+              if (bestSiteNameCandidate) {
+                title = cleanTitleString(bestSiteNameCandidate);
+                siteName = title;
+              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
+                title = cleanTitleString(jsonLdOrgName);
+                siteName = title;
+              } else if (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 50) {
+                title = cleanTitleString(jsonLdWebSiteName);
+                siteName = title;
               } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
                 title = cleanTitleString(htmlTagTitle);
               } else if (rawTitle && !isGenericOrPlaceholderTitle(cleanTitleString(rawTitle))) {
                 title = cleanTitleString(rawTitle);
+              } else if (jsonLdGenericName && !isGenericOrPlaceholderTitle(jsonLdGenericName) && jsonLdGenericName.length <= 50) {
+                title = cleanTitleString(jsonLdGenericName);
               } else if (logoAltTitle && !isGenericOrPlaceholderTitle(logoAltTitle) && logoAltTitle.length >= 3 && logoAltTitle.length <= 50) {
                 title = cleanTitleString(logoAltTitle.replace(/^logo\s*(?:of|van|de)?\s*/i, ''));
               } else {
@@ -18333,6 +18367,10 @@ Return JSON:
                   const namePart = domain.split('.')[0];
                   title = splitCompoundWords(namePart);
                 }
+              }
+
+              if (!siteName) {
+                siteName = bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName || title;
               }
 
               if (!description && jsonLdDesc) {
@@ -18494,7 +18532,9 @@ Return JSON:
                 image = getHighQualityImageUrl(image);
               }
 
-              siteName = getMetaContent('site_name') || domain;
+              if (!siteName || siteName === domain) {
+                siteName = getMetaContent('site_name') || bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName || title || domain;
+              }
     
               logo = '';
 
@@ -18510,6 +18550,9 @@ Return JSON:
                 if (isCandidateWhiteOrInverted(src)) return false;
 
                 const s = src.toLowerCase();
+                // Reject .ico files as primary logos (they are 16x16 / 32x32 low-res browser favicons)
+                if (s.endsWith('.ico') || s.includes('.ico?') || s.includes('.ico#')) return false;
+
                 // Reject obvious badges, partner icons, app store buttons, UI icons
                 const badKeywords = [
                   'app-store', 'appstore', 'google-play', 'googleplay', 'play-store',
@@ -18531,6 +18574,12 @@ Return JSON:
                 "yoouz.com": "https://yoouz.com/favicon.svg",
                 "www.yoouz.com": "https://yoouz.com/favicon.svg",
                 "yoouz": "https://yoouz.com/favicon.svg",
+                "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+                "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+                "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+                "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+                "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+                "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
                 "brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
                 "www.brusselsdental.com": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
                 "brusselsdental": "https://C1-preview.prosites.com/31378/wy/images/DTC%20logo.png",
@@ -18562,52 +18611,12 @@ Return JSON:
               }
 
               // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
-              // Priority 1: High-Resolution Apple Touch Icons (authentic brand icon)
-              if (!logo) {
-                const appleTouch = $('link[rel="apple-touch-icon"]').attr('href') || 
-                                   $('link[rel="apple-touch-icon-precomposed"]').attr('href');
-                if (appleTouch && isValidCandidateLogo(appleTouch)) {
-                  logo = appleTouch;
-                }
-              }
-
-              // Priority 2: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512, SVG)
-              if (!logo) {
-                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes], link[rel="icon"][type="image/svg+xml"]');
-                let bestSize = 0;
-                largeIcons.each((i, el) => {
-                  const sizesAttr = $(el).attr('sizes');
-                  const href = $(el).attr('href');
-                  if (href && isValidCandidateLogo(href)) {
-                    if (sizesAttr) {
-                      const width = parseInt(sizesAttr.split('x')[0], 10);
-                      if (width > bestSize) {
-                        bestSize = width;
-                        logo = href;
-                      }
-                    } else if ($(el).attr('type') === 'image/svg+xml' && !logo) {
-                      logo = href;
-                    }
-                  }
-                });
-              }
-
-              // Priority 3: Standard Favicons declared in head (more authentic than arbitrary regex in scripts)
-              if (!logo) {
-                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
-                                       $('link[rel="shortcut icon"]').first().attr('href') ||
-                                       $('link[rel="fluid-icon"]').first().attr('href');
-                if (standardFavicon && isValidCandidateLogo(standardFavicon)) {
-                  logo = standardFavicon;
-                }
-              }
-
-              // Priority 4: JSON-LD direct logo schemas
+              // Priority 1: JSON-LD direct logo schemas (official vector/raster logo declared by business)
               if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo)) {
                 logo = jsonLdLogo;
               }
 
-              // Priority 5: Brand-specific DOM Logo Selectors
+              // Priority 2: Brand-specific DOM Header & Navbar Logo Selectors
               if (!logo) {
                 const domLogoSelectors = [
                   'header img.custom-logo',
@@ -18617,9 +18626,15 @@ Return JSON:
                   'header .navbar-brand img',
                   'nav .navbar-brand img',
                   '.navbar-brand img',
+                  'a.logo-home img',
+                  'img.logo-home-img',
+                  'header a[class*="branding-logo"] img',
+                  'a[class*="branding-logo"] img',
                   'header a[href="/"] img',
                   'nav a[href="/"] img',
                   `header a[href*="${domain}"] img`,
+                  'header img[class*="logo" i]',
+                  'nav img[class*="logo" i]',
                   'img[class*="custom-logo" i]',
                   'img[class*="site-logo" i]',
                   'img[class*="navbar-logo" i]',
@@ -18640,7 +18655,37 @@ Return JSON:
                 }
               }
 
-              // Priority 6: Meta logo tags
+              // Priority 3: High-Resolution Apple Touch Icons (authentic brand icon 180x180)
+              if (!logo) {
+                const appleTouch = $('link[rel="apple-touch-icon"]').attr('href') || 
+                                   $('link[rel="apple-touch-icon-precomposed"]').attr('href');
+                if (appleTouch && isValidCandidateLogo(appleTouch)) {
+                  logo = appleTouch;
+                }
+              }
+
+              // Priority 4: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512, SVG)
+              if (!logo) {
+                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes], link[rel="icon"][type="image/svg+xml"]');
+                let bestSize = 0;
+                largeIcons.each((i, el) => {
+                  const sizesAttr = $(el).attr('sizes');
+                  const href = $(el).attr('href');
+                  if (href && isValidCandidateLogo(href)) {
+                    if (sizesAttr) {
+                      const width = parseInt(sizesAttr.split('x')[0], 10);
+                      if (width > bestSize) {
+                        bestSize = width;
+                        logo = href;
+                      }
+                    } else if ($(el).attr('type') === 'image/svg+xml' && !logo) {
+                      logo = href;
+                    }
+                  }
+                });
+              }
+
+              // Priority 5: Meta logo tags
               if (!logo) {
                 const metaLogo = getMetaContent('logo');
                 if (metaLogo && isValidCandidateLogo(metaLogo)) {
@@ -18648,11 +18693,21 @@ Return JSON:
                 }
               }
 
-              // Priority 7: Script / JS bundle discovered logos (fallback only)
+              // Priority 6: Script / JS bundle discovered logos (fallback only)
               if (!logo && scriptLogos.length > 0) {
                 const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && (l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo'))) || scriptLogos.find(l => isValidCandidateLogo(l));
                 if (bestLogo) {
                   logo = bestLogo;
+                }
+              }
+
+              // Priority 7: Standard Favicons declared in head (fallback only if no crisp logo found)
+              if (!logo) {
+                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
+                                       $('link[rel="shortcut icon"]').first().attr('href') ||
+                                       $('link[rel="fluid-icon"]').first().attr('href');
+                if (standardFavicon && !standardFavicon.toLowerCase().endsWith('.ico')) {
+                  logo = standardFavicon;
                 }
               }
 
@@ -18710,6 +18765,10 @@ Return JSON:
         "reddit.com": "Reddit",
         "uber.com": "Uber",
         "spotify.com": "Spotify",
+        "proximus.be": "Proximus",
+        "proximus": "Proximus",
+        "multipharma.be": "Multipharma",
+        "multipharma": "Multipharma",
         "usa.com": "USA.com",
         "legal500.com": "The Legal 500",
         "lernerandrowe.com": "Lerner and Rowe Injury Attorneys",
@@ -18741,6 +18800,10 @@ Return JSON:
 
       // High-accuracy fallback banners for major websites (authentic brand assets only, no mock/fake stock photos)
       const domainBanners: Record<string, string> = {
+        "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+        "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+        "multipharma.be": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+        "multipharma": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
         "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
         "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
         "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
@@ -18753,8 +18816,8 @@ Return JSON:
         "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg"
       };
 
-      if (!image || image.includes("unsplash.com")) {
-        image = domainBanners[cleanDomain] || "";
+      if (!image || image.includes("unsplash.com") || image.includes("${") || image.includes("dummy.png") || image.includes("placeholder")) {
+        image = domainBanners[cleanDomain] || (image.includes("${") ? "" : image);
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -18808,6 +18871,12 @@ Return JSON:
       };
 
       const serverBrandLogos: Record<string, string> = {
+        "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+        "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+        "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+        "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+        "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+        "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
         "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
         "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
         "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
@@ -18818,8 +18887,10 @@ Return JSON:
         "uber.com": "https://d3i4yxtzktqr9n.cloudfront.net/uber-sites/f452c7aefd72a0f60067b0ba861e144d.ico",
       };
 
-      // Always use Google Social Favicon V2 (256px resolution) if logo is missing, broken, or white/inverted
-      if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
+      // Prioritize known brand logos, otherwise resolve crisp logo or Google Social Favicon V2 fallback
+      if (serverBrandLogos[cleanDomain]) {
+        logo = serverBrandLogos[cleanDomain];
+      } else if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
         logo = serverBrandLogos[cleanDomain] || `/api/favicon?domain=${cleanDomain}`;
       }
       
@@ -18942,7 +19013,10 @@ Return JSON:
               existingDoc = typeof rawD === 'string' ? JSON.parse(rawD) : (rawD || {});
             } catch(e) {}
 
-            const formattedExistingName = formatBusinessName(existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId);
+            const cleanDomainExact = cleanDomain.toLowerCase();
+            const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
+              || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
+              || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId);
 
             // Detect and discard corrupt/scraped garbled text in address (e.g. "st Bestellen Contact...", "st un établissement...", "st Wortelkanaalbehandeling...")
             const isCorruptAddress = (addr: string) => {
@@ -18966,13 +19040,27 @@ Return JSON:
               return false;
             };
 
-            const mergedLogo = (existingDoc.logoUrl && !existingDoc.logoUrl.includes("tap/0.png") && !existingDoc.logoUrl.includes("icons/tap") && !existingDoc.logoUrl.startsWith("data:;"))
-              ? existingDoc.logoUrl
-              : ((existingPlaceRs.rows[0] as any).logoUrl && !(existingPlaceRs.rows[0] as any).logoUrl.includes("tap/0.png") ? (existingPlaceRs.rows[0] as any).logoUrl : logo);
+            const isFaviconOrPlaceholder = (u?: string) => !u || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2");
+            const hasBetterLogo = logo && !isFaviconOrPlaceholder(logo);
 
-            const mergedBanner = (existingDoc.bannerUrl && !existingDoc.bannerUrl.includes("unsplash.com") && !existingDoc.bannerUrl.includes("placeholder") && !existingDoc.bannerUrl.includes("glas1.png"))
-              ? existingDoc.bannerUrl
-              : (image || existingDoc.ogImage || "");
+            const mergedLogo = (hasBetterLogo && isFaviconOrPlaceholder(existingDoc.logoUrl))
+              ? logo
+              : (!isFaviconOrPlaceholder(existingDoc.logoUrl))
+                ? existingDoc.logoUrl
+                : (logo || (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : logo));
+
+            const isBadBanner = (b?: string) => {
+              if (!b) return true;
+              try {
+                const decoded = decodeURIComponent(b);
+                return decoded.includes("${") || decoded.includes("unsplash.com") || decoded.includes("placeholder") || decoded.includes("glas1.png") || decoded.includes("dummy.png");
+              } catch (e) {
+                return b.includes("${") || b.includes("%24%7B");
+              }
+            };
+            const mergedBanner = !isBadBanner(image)
+              ? image
+              : (!isBadBanner(existingDoc.bannerUrl) ? existingDoc.bannerUrl : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""));
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
             const mergedAddress = isCorruptAddress(rawExistingAddr) ? effectiveAddress : rawExistingAddr;
@@ -19538,6 +19626,19 @@ Return JSON:
       res.setHeader("Content-Type", "image/svg+xml");
       res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
       return res.status(200).send(yoouzSvg);
+    }
+
+    const KNOWN_FAVICON_LOGOS: Record<string, string> = {
+      "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+      "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+      "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+      "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+      "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+      "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png"
+    };
+
+    if (KNOWN_FAVICON_LOGOS[cleanDomain]) {
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_FAVICON_LOGOS[cleanDomain])}`);
     }
 
     try {
@@ -22758,14 +22859,27 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "usa": "USA",
   "usa.com": "USA",
   "mastercard": "Mastercard",
-  "mastercard.com": "Mastercard"
+  "mastercard.com": "Mastercard",
+  "proximus": "Proximus",
+  "proximus.be": "Proximus",
+  "www.proximus.be": "Proximus",
+  "pro-ximus": "Proximus",
+  "pro ximus": "Proximus",
+  "multipharma": "Multipharma",
+  "multipharma.be": "Multipharma",
+  "www.multipharma.be": "Multipharma"
 };
 
 function splitCompoundWords(str: string): string {
   let s = str.trim();
+  // If already a clean capitalized word (e.g. "Proximus", "Multipharma"), do not split
+  if (/^[A-Z][a-z0-9]+$/.test(s)) {
+    return s;
+  }
   s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
-  s = s.replace(/^(the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  // Known brand/locational prefixes (Note: do NOT split "pro", "all", "my", "top" to prevent breaking Proximus, Profile, Alliance, etc.)
+  s = s.replace(/^(the|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{4,})/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
   
   const commonWords = /(optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
@@ -22886,6 +23000,11 @@ function formatBusinessName(name?: string | null, domain?: string | null): strin
     /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
+  // 3c. If the string is already a clean capitalized business name from metadata, preserve directly
+  if (!isDomainLike && trimmed && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(trimmed) && trimmed.length <= 50) {
+    return trimmed;
+  }
+
   let rawName = trimmed;
   if (isDomainLike) {
     const domainStr = cleanDomainName(trimmed);
@@ -22896,6 +23015,11 @@ function formatBusinessName(name?: string | null, domain?: string | null): strin
     .replace(/^https?:\/\//i, '')
     .replace(/^www[\.\-\/]/i, '')
     .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
+
+  // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma"), preserve directly
+  if (/^[A-Z][a-z0-9]+$/.test(rawName)) {
+    return rawName;
+  }
 
   let spaced = splitCompoundWords(rawName);
 

@@ -44,6 +44,12 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
   "yoouz": YOOUZ_LOGO_DATA_URI,
+  "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+  "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+  "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+  "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+  "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+  "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
   "zoom.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#2D8CFF"/>
@@ -535,6 +541,12 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+  "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+  "www.proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+  "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+  "multipharma.be": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+  "www.multipharma.be": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+  "multipharma": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
   "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "www.zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
   "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
@@ -797,7 +809,15 @@ export function getDomainBrandGradient(domainOrName?: string | null): {
 }
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {
-  // 1. Explicit custom valid URL takes absolute priority
+  const cleanDomain = extractDomain(domain || url);
+  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
+    return YOOUZ_LOGO_DATA_URI;
+  }
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
+  }
+
+  // Explicit custom valid URL takes priority over generic favicon fallbacks
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
@@ -806,14 +826,6 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
       return getProxiedImageUrl(url);
     }
-  }
-
-  const cleanDomain = extractDomain(domain || url);
-  if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
-    return YOOUZ_LOGO_DATA_URI;
-  }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
   if (cleanDomain && cleanDomain.includes(".")) {

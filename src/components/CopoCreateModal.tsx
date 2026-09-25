@@ -26,7 +26,7 @@ import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -1098,21 +1098,32 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           const fetchedLogo = data.logo || (data.domain ? getCleanLogoUrl(null, data.domain) || "" : "");
           const fetchedBanner = data.image || "";
 
+          const resolvedName = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain])
+            || (data.title && !data.title.includes("://") && data.title !== "Website" && data.title !== "undefined" ? data.title : "")
+            || formatBusinessName(data.siteName || data.title, data.domain || domain)
+            || formatBusinessName(data.domain || domain)
+            || (data.domain || domain);
+
+          const isFallbackLogo = (u?: string) => !u || u.includes("/api/favicon") || u.startsWith("data:;") || u.includes("tap/0.png") || u.includes("tap/default");
+          const resolvedLogo = (!isFallbackLogo(fetchedLogo) ? fetchedLogo : (!isFallbackLogo(foundPlace?.logoUrl) ? foundPlace?.logoUrl : (fetchedLogo || foundPlace?.logoUrl || "")));
+
           if (foundPlace) {
+            const hasBadExistingName = !foundPlace.name || foundPlace.name === "Pro Ximus" || foundPlace.name === "undefined" || foundPlace.name.startsWith("www.");
             foundPlace = {
               ...foundPlace,
+              name: hasBadExistingName ? (resolvedName || foundPlace.name) : foundPlace.name,
               address: foundPlace.address || data.address || "",
               city: (foundPlace.city && foundPlace.city !== "Online") ? foundPlace.city : (data.city || foundPlace.city || ""),
               country: foundPlace.country || data.country || "",
               phone: foundPlace.phone || data.phone || "",
               email: foundPlace.email || data.email || "",
               category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
-              logoUrl: (foundPlace.logoUrl && !foundPlace.logoUrl.startsWith("data:;") && !foundPlace.logoUrl.includes("tap/0.png")) ? foundPlace.logoUrl : (fetchedLogo || ""),
-              avatarUrl: (foundPlace.avatarUrl && !foundPlace.avatarUrl.startsWith("data:;") && !foundPlace.avatarUrl.includes("tap/0.png")) ? foundPlace.avatarUrl : (fetchedLogo || ""),
-              bannerUrl: foundPlace.bannerUrl || fetchedBanner || "",
+              logoUrl: resolvedLogo,
+              avatarUrl: resolvedLogo,
+              bannerUrl: (foundPlace.bannerUrl && !foundPlace.bannerUrl.includes("${")) ? foundPlace.bannerUrl : (fetchedBanner || ""),
               description: getEffectivePlaceDescription({
                 ...foundPlace,
-                name: foundPlace.name || data.siteName || data.title,
+                name: foundPlace.name || resolvedName,
                 description: foundPlace.description || data.description,
                 category: foundPlace.category || data.category,
                 city: foundPlace.city || data.city,
@@ -1120,7 +1131,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               }),
             };
           } else {
-            const newBizName = formatBusinessName(data.siteName || data.title, data.domain || domain) || formatBusinessName(data.domain || domain) || (data.domain || domain);
+            const newBizName = resolvedName;
             const newBizCat = data.category || "Website";
             const newBizCity = data.city || "";
             const newBizCountry = data.country || "";
@@ -1137,8 +1148,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               rating: 5,
               totalReviews: 1,
               ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-              avatarUrl: fetchedLogo,
-              logoUrl: fetchedLogo,
+              avatarUrl: resolvedLogo,
+              logoUrl: resolvedLogo,
               bannerUrl: fetchedBanner,
               photos: fetchedBanner ? [fetchedBanner] : [],
               openingHours: "Available 24/7",
