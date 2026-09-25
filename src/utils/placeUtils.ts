@@ -251,6 +251,9 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "bhol.co.il": "B'Chadrei Charedim",
   "tandis": "Tandis",
   "tandis.be": "Tandis",
+  "apotheekgodelaine": "Apotheek Godelaine",
+  "apotheekgodelaine.be": "Apotheek Godelaine",
+  "www-apotheekgodelaine-be": "Apotheek Godelaine",
   "dental365": "Dental 365",
   "dental365.nl": "Dental 365",
   "www-dental365-nl": "Dental 365",
@@ -1946,6 +1949,8 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
   "businessplace": { address: "100 Enterprise Way", city: "New York", state: "NY", country: "United States", lat: 40.7128, lng: -74.0060 },
   "brusselsdental.com": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "brusselsdental": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
+  "apotheekgodelaine.be": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
+  "apotheekgodelaine": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
   "usa.com": { address: "100 Wall Street", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
 };
 

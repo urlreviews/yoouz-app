@@ -2718,7 +2718,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     type="text"
                     value={subsystemSearchQuery}
                     onChange={(e) => setSubsystemSearchQuery(e.target.value)}
-                    placeholder="Search 47 platform subsystems, guards, or APIs..."
+                    placeholder="Search 49 platform subsystems, guards, or APIs..."
                     className="w-full pl-10 pr-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
                   />
                   {subsystemSearchQuery && (
@@ -2826,7 +2826,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
                       duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
-                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard"
+                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard",
+                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard"
                     };
 
                     const title = titles[key] || key;
@@ -2834,15 +2835,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                     // Category matching
                     if (subsystemCategory === "database") {
-                      if (!["database_persistence", "video_feed_engine", "video_review_persistence_sync", "video_cascade_deletion", "pwa_service_worker_cache", "video_review_feed_retention", "business_name_word_separation_integrity_guard"].includes(key)) return false;
+                      if (!["database_persistence", "video_feed_engine", "video_review_persistence_sync", "video_cascade_deletion", "pwa_service_worker_cache", "video_review_feed_retention", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
                     } else if (subsystemCategory === "media") {
                       if (!["video_streaming_cdn", "video_playback_controls", "camera_recording_modal", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_sharing_deep_links", "video_review_metadata_sharing_social_preview_guard"].includes(key)) return false;
                     } else if (subsystemCategory === "security") {
-                      if (!["business_auth_claims", "ai_content_safety", "business_owner_claims", "business_pricing_stripe", "content_moderation_reporting", "fake_reviewer_ghost_profile_ban_guard", "zero_fake_followers_strict_enforcement_guard", "video_author_user_attribution_integrity_guard"].includes(key)) return false;
+                      if (!["business_auth_claims", "ai_content_safety", "business_owner_claims", "business_pricing_stripe", "content_moderation_reporting", "fake_reviewer_ghost_profile_ban_guard", "zero_fake_followers_strict_enforcement_guard", "video_author_user_attribution_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
                     } else if (subsystemCategory === "realtime") {
                       if (!["realtime_stream_sse_stability_guard", "duplicate_notification_prevention_live_guard", "business_comments_messages_sync_guard", "business_universal_notifications_all_interactions_guard", "comments_realtime_sync_guard", "cross_device_comment_sync_guard", "comments_system", "like_button_throttling", "notifications_and_badges"].includes(key)) return false;
                     } else if (subsystemCategory === "social") {
-                      if (!["user_follow_sync", "bookmarks_and_saved_places", "i18n_language_engine", "user_profiles_avatars", "comments_deduplication_sync", "user_profile_chat_dedup_guard", "universal_avatar_deterministic_sync_guard", "universal_resource_api_telemetry_guard", "mobile_user_profile_location_layout_stability_guard", "user_profile_location_canonicalization_guard", "business_profile_review_match_guard", "business_profile_banner_logo_database_live_sync_guard", "google_maps_business_name_resolution_anti_break_guard", "business_cover_banner_sync_storage_guard", "business_web_listing_logo_banner_contrast_guard", "business_name_word_separation_integrity_guard"].includes(key)) return false;
+                      if (!["user_follow_sync", "bookmarks_and_saved_places", "i18n_language_engine", "user_profiles_avatars", "comments_deduplication_sync", "user_profile_chat_dedup_guard", "universal_avatar_deterministic_sync_guard", "universal_resource_api_telemetry_guard", "mobile_user_profile_location_layout_stability_guard", "user_profile_location_canonicalization_guard", "business_profile_review_match_guard", "business_profile_banner_logo_database_live_sync_guard", "google_maps_business_name_resolution_anti_break_guard", "business_cover_banner_sync_storage_guard", "business_web_listing_logo_banner_contrast_guard", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
                     }
 
                     // Search matching
@@ -2903,7 +2904,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
                       duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
-                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard"
+                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard",
+                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard"
                     };
 
                     const icons: Record<string, string> = {
@@ -2955,7 +2957,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_cross_device_instant_live_sync_guard: "🔄",
                       business_web_listing_logo_banner_contrast_guard: "✨",
                       duplicate_notification_prevention_live_guard: "🔔",
-                      business_name_word_separation_integrity_guard: "🏢"
+                      business_name_word_separation_integrity_guard: "🏢",
+                      zero_mock_business_data_geocoding_guard: "📍"
                     };
 
                     const isExpanded = expandedSubsystems[key] || false;
