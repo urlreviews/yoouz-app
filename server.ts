@@ -782,6 +782,38 @@ function readReviewsIndex(): any[] {
               }
             }
 
+            // Ensure Garage JV business name is cleanly formatted with official brand title and metadata
+            if (
+              (r.placeId && (r.placeId.toLowerCase().includes("garagejv") || r.placeId.toLowerCase().includes("garage-jv"))) ||
+              (r.placeName && (r.placeName.toLowerCase().replace(/\s+/g, "") === "garagejv" || r.placeName.toLowerCase().includes("garage jv"))) ||
+              (r.businessName && (r.businessName.toLowerCase().replace(/\s+/g, "") === "garagejv" || r.businessName.toLowerCase().includes("garage jv"))) ||
+              (r.caption && r.caption.toLowerCase().includes("garagejv"))
+            ) {
+              const needsUpdate =
+                r.placeName !== "Garage & Aanhangwagens Vermeersch J." ||
+                r.businessName !== "Garage & Aanhangwagens Vermeersch J." ||
+                !r.placePhone ||
+                !r.placeEmail ||
+                !r.placeAddress;
+
+              if (needsUpdate) {
+                r.placeName = "Garage & Aanhangwagens Vermeersch J.";
+                r.businessName = "Garage & Aanhangwagens Vermeersch J.";
+                r.placeAddress = "Sint-Bernadettestraat 76";
+                r.placePostalCode = "9000";
+                r.placeCity = "Gent";
+                r.placeCountry = "Belgium";
+                r.placePhone = "+32 9 251 56 68";
+                r.placeEmail = "info@garagejv.be";
+                r.placeCategory = "Auto Repair & Garage";
+                r.placeWebsite = "https://garagejv.be";
+                if (r.dishOrItem && (r.dishOrItem.toLowerCase().includes("garagejv") || r.dishOrItem.toLowerCase() === "garage jv")) {
+                  r.dishOrItem = "Garage & Aanhangwagens Vermeersch J.";
+                }
+                dirty = true;
+              }
+            }
+
             if (r.author) {
               // Ensure Steven Akan always has canonical location
               if ((r.authorName === "Steven Akan" || r.author.name === "Steven Akan" || r.userId === "avr6566gd@gmail.com") && (!r.author.location || !r.author.country)) {
@@ -23899,6 +23931,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     "garageas": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
     "garage-as.be": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
     "garage-as": { address: "Battelsesteenweg 282", postalCode: "2800", city: "Mechelen", country: "Belgium", phone: "+32 15 33 95 04", email: "garage-as@outlook.be", category: "Auto Repair & Garage", lat: 51.0371, lng: 4.4682 },
+    "garagejv.be": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
+    "garagejv": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
+    "garage-jv.be": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
+    "garage-jv": { address: "Sint-Bernadettestraat 76", postalCode: "9000", city: "Gent", country: "Belgium", phone: "+32 9 251 56 68", email: "info@garagejv.be", category: "Auto Repair & Garage", lat: 51.0762, lng: 3.7481 },
     "healis.be": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
     "healis": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 }
   });

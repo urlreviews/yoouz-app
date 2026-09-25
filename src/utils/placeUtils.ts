@@ -266,6 +266,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "garage-as.be": "Garage As",
   "www-garageas-be": "Garage As",
   "garage as": "Garage As",
+  "garagejv": "Garage & Aanhangwagens Vermeersch J.",
+  "garagejv.be": "Garage & Aanhangwagens Vermeersch J.",
+  "garagejvbe": "Garage & Aanhangwagens Vermeersch J.",
+  "garage-jv": "Garage & Aanhangwagens Vermeersch J.",
+  "garage-jv.be": "Garage & Aanhangwagens Vermeersch J.",
+  "www-garagejv-be": "Garage & Aanhangwagens Vermeersch J.",
+  "garage jv": "Garage & Aanhangwagens Vermeersch J.",
   "apotheekgodelaine": "Apotheek Godelaine",
   "apotheekgodelaine.be": "Apotheek Godelaine",
   "www-apotheekgodelaine-be": "Apotheek Godelaine",
@@ -513,30 +520,31 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
-  // 3. Clean up scraped SEO titles (e.g., "Home | Van Law Firm : Nevada's Premiere...")
+  // 3. Clean up scraped SEO titles (e.g., "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
   const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
   if (rawParts.length > 1) {
-    // If domain root is known, check if one of the parts matches the domain brand!
+    let bestCandidate: string | undefined = undefined;
+
+    // First try finding a part that matches domRoot
     if (domRoot) {
-      const matchPart = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 35 && !isGenericPlaceName(p));
-      if (matchPart) {
-        trimmed = matchPart;
+      bestCandidate = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 45 && !isGenericPlaceName(p));
+    }
+
+    // If domRoot is not inside title (e.g. domain is garagejv.be, title part is "Garage Vermeersch J."), select the first non-generic candidate part
+    if (!bestCandidate) {
+      const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
+      if (nonGenericParts.length > 0) {
+        const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 50);
+        if (validCandidates.length > 0) {
+          bestCandidate = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law|auto's van|aanhangwagens in)/i.test(p)) || validCandidates[0];
+        } else {
+          bestCandidate = nonGenericParts[0];
+        }
       }
     }
 
-    if (!domRoot || trimmed === name) {
-      const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
-      if (nonGenericParts.length > 0) {
-        const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 45);
-        if (validCandidates.length > 0) {
-          const best = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law)/i.test(p)) || validCandidates[0];
-          trimmed = best;
-        } else {
-          trimmed = nonGenericParts[0];
-        }
-      } else {
-        trimmed = "";
-      }
+    if (bestCandidate) {
+      trimmed = bestCandidate;
     }
   }
 
@@ -551,42 +559,35 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     return KNOWN_OFFICIAL_NAMES[strippedKey];
   }
 
-  // 3b. Detect if the string is a long marketing sentence/slogan
+  // 3b. Detect if the string is an explicit marketing sentence/ad slogan (e.g., "Rent a car worldwide with best price guarantee")
   const lowerTrimmed = trimmed.toLowerCase();
   const sentenceWords = lowerTrimmed.split(/[\s,–—\-_/:]+/).filter(Boolean);
   
-  // If sentence has foreign or localized marketing terms or is overly long
   const isMarketingSentence = 
-    sentenceWords.length >= 3 && (
-      lowerTrimmed.includes("huren") ||
+    sentenceWords.length >= 4 && (
       lowerTrimmed.includes("autoverhuur") ||
-      lowerTrimmed.includes("wereldwijd") ||
       lowerTrimmed.includes("auto huren") ||
       lowerTrimmed.includes("mietwagen") ||
       lowerTrimmed.includes("autovermietung") ||
-      lowerTrimmed.includes("location de") ||
+      lowerTrimmed.includes("location de voiture") ||
       lowerTrimmed.includes("car rental") ||
       lowerTrimmed.includes("rent a car") ||
       lowerTrimmed.includes("best rates") ||
       lowerTrimmed.includes("save more on") ||
-      lowerTrimmed.includes("official site") ||
-      lowerTrimmed.includes("goedkoopste") ||
+      lowerTrimmed.includes("goedkoopste prijs") ||
       lowerTrimmed.includes("prijs garantie") ||
-      lowerTrimmed.includes("just do it") ||
-      lowerTrimmed.includes("find deals") ||
+      lowerTrimmed.includes("find deals on") ||
       lowerTrimmed.includes("cheap flights")
     );
 
-  if (isMarketingSentence || sentenceWords.length >= 4) {
-    // Check if any individual word matches a known brand
+  if (isMarketingSentence) {
     for (const w of sentenceWords) {
       if (w.length >= 3 && KNOWN_OFFICIAL_NAMES[w]) {
         return KNOWN_OFFICIAL_NAMES[w];
       }
     }
-    // If domain root exists and name is an overly long slogan, fall back to clean domain brand
     if (domRoot && domRoot.length >= 2) {
-      return domRoot.charAt(0).toUpperCase() + domRoot.slice(1);
+      return formatBusinessName(domRoot);
     }
   }
 
@@ -2063,6 +2064,54 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; pos
     category: "Auto Repair & Garage",
     lat: 51.0371,
     lng: 4.4682
+  },
+  "garagejv.be": {
+    address: "Sint-Bernadettestraat 76",
+    postalCode: "9000",
+    city: "Gent",
+    country: "Belgium",
+    phone: "+32 9 251 56 68",
+    email: "info@garagejv.be",
+    openingHours: "Mon-Thu: 08:00 - 12:00, 13:00 - 18:00 · Fri: By appointment · Closed Sat & Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0762,
+    lng: 3.7481
+  },
+  "garagejv": {
+    address: "Sint-Bernadettestraat 76",
+    postalCode: "9000",
+    city: "Gent",
+    country: "Belgium",
+    phone: "+32 9 251 56 68",
+    email: "info@garagejv.be",
+    openingHours: "Mon-Thu: 08:00 - 12:00, 13:00 - 18:00 · Fri: By appointment · Closed Sat & Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0762,
+    lng: 3.7481
+  },
+  "garage-jv.be": {
+    address: "Sint-Bernadettestraat 76",
+    postalCode: "9000",
+    city: "Gent",
+    country: "Belgium",
+    phone: "+32 9 251 56 68",
+    email: "info@garagejv.be",
+    openingHours: "Mon-Thu: 08:00 - 12:00, 13:00 - 18:00 · Fri: By appointment · Closed Sat & Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0762,
+    lng: 3.7481
+  },
+  "garage-jv": {
+    address: "Sint-Bernadettestraat 76",
+    postalCode: "9000",
+    city: "Gent",
+    country: "Belgium",
+    phone: "+32 9 251 56 68",
+    email: "info@garagejv.be",
+    openingHours: "Mon-Thu: 08:00 - 12:00, 13:00 - 18:00 · Fri: By appointment · Closed Sat & Sun",
+    category: "Auto Repair & Garage",
+    lat: 51.0762,
+    lng: 3.7481
   },
   "brusselsdental.com": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "brusselsdental": { address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
