@@ -615,19 +615,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   // Genuine check filters
-  const effectivePhone = activeBranch?.phone || place.phone || rawPlaceVideos.find(v => v.placePhone && v.placePhone.trim() !== "")?.placePhone || "";
-  const effectiveHours = activeBranch?.openingHours || place.openingHours || "";
+  const placeKeyForKnown = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
+  const knownLoc = KNOWN_LOCATIONS[placeKeyForKnown] || KNOWN_LOCATIONS[placeKeyForKnown.replace(/\.(com|be|nl|fr|de|es|it|org|net)$/i, '')];
+
+  const effectivePhone = activeBranch?.phone || place.phone || knownLoc?.phone || rawPlaceVideos.find(v => v.placePhone && v.placePhone.trim() !== "")?.placePhone || "";
+  const effectiveHours = activeBranch?.openingHours || place.openingHours || knownLoc?.openingHours || "";
   const effectiveEmail = React.useMemo(() => {
-    const raw = (activeBranch?.email || place.email || "") && (activeBranch?.email || place.email || "").trim() !== ""
-      ? (activeBranch?.email || place.email || "").trim()
-      : (rawPlaceVideos.find(v => v.placeEmail && v.placeEmail.trim() !== "")?.placeEmail || "");
-    if (!raw) return "";
-    const lower = raw.toLowerCase();
-    if (lower.includes("4samet") || lower.includes("@gmail.") || lower.includes("@yahoo.") || lower.includes("@hotmail.") || lower.includes("@outlook.") || lower.includes("@icloud.")) {
+    const raw = activeBranch?.email || place.email || knownLoc?.email || rawPlaceVideos.find(v => v.placeEmail && v.placeEmail.trim() !== "")?.placeEmail || "";
+    if (!raw || !raw.trim()) return "";
+    const lower = raw.trim().toLowerCase();
+    if (lower.includes("4samet")) {
       return "";
     }
-    return raw;
-  }, [activeBranch, place.email, rawPlaceVideos]);
+    return raw.trim();
+  }, [activeBranch, place.email, knownLoc, rawPlaceVideos]);
 
   const effectivePlaceForMaps = React.useMemo(() => {
     if (activeBranch && activeBranch.address) {
