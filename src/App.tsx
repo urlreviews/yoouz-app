@@ -199,6 +199,7 @@ export function App() {
       const pathname = window.location.pathname;
       if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
       if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return "testembed";
+      if (pathname === "/searchtest" || pathname === "/search-test") return "searchtest";
       if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
       if (pathname === "/discover") return "discover";
       if (pathname === "/following") return "following";
@@ -520,6 +521,11 @@ export function App() {
         if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") {
           setEmbedTargetId(null);
           setActiveSection("testembed");
+          return;
+        }
+        if (pathname === "/searchtest" || pathname === "/search-test") {
+          setEmbedTargetId(null);
+          setActiveSection("searchtest");
           return;
         }
 
@@ -6858,6 +6864,16 @@ export function App() {
                     window.history.pushState(null, "", "/");
                   } catch (e) {}
                 }}
+              />
+            )}
+
+            {/* Live Search Sandbox Test View (/searchtest) */}
+            {activeSection === "searchtest" && (
+              <CopoSearchTestView
+                places={places}
+                videos={videos}
+                onRecordForPlace={(targetPlace) => handleOpenCreateReview(targetPlace)}
+                onOpenPlace={handleOpenPlaceDrawer}
               />
             )}
 

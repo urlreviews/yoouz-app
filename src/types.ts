@@ -31,7 +31,8 @@ export type NavSection =
   | "admin"
   | "pricing"
   | "business"
-  | "testembed";
+  | "testembed"
+  | "searchtest";
 
 export type FeedSubTab = "discover" | "following";
 
