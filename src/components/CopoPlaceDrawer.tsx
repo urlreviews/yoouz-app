@@ -573,10 +573,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     !effectiveWebsite.includes("maps.google.com")
   );
 
+  const isOnlineOnlyPlatform = Boolean(
+    place.category === "Technology & Online" ||
+    place.category === "Online Service" ||
+    place.brandDomain === "yoouz.com" ||
+    place.id === "yoouz.com" ||
+    place.id === "google.com" ||
+    place.id === "apple.com"
+  );
+
   const hasGenuineHours = Boolean(
     place.openingHours &&
     place.openingHours.trim() !== "" &&
-    place.openingHours !== "Open 24 hours"
+    place.openingHours !== "Open 24 hours" &&
+    (isOnlineOnlyPlatform || place.openingHours !== "Available 24/7")
   );
 
   const hasGenuinePlusCode = Boolean(

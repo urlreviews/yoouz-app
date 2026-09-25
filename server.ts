@@ -9081,7 +9081,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     });
   });
 
-  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; phone?: string; email?: string; category?: string; lat: number; lng: number }> = {
+  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number }> = {
     "brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
     "www.brusselsdental.com": { name: "Brussels Dental", address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", phone: "02 231 04 32", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3826 },
     "nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
@@ -9101,19 +9101,19 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "brettlevy.com": { name: "Brett A. Levy Law", address: "10410 N 19th Ave", city: "Phoenix, AZ", country: "United States", phone: "+1 (602) 254-9900", category: "Legal Services", lat: 33.5802, lng: -112.1006 },
     "paultolandlaw.com": { name: "Paul Toland Law Office", address: "15 Court Square #800", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3585, lng: -71.0592 },
     "legal500.com": { name: "The Legal 500", address: "225-227 St John St", city: "London", country: "United Kingdom", phone: "+44 20 7396 9292", category: "Legal Directory & Advisory", lat: 51.5245, lng: -0.1037 },
-    "apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
-    "www.apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
-    "apotheekgodelaine": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "www.apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
+    "apotheekgodelaine": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", openingHours: "Mon - Fri: 08:30 - 18:30, Sat: 09:00 - 12:30 · Sun: Closed", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
     "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
-    "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
-    "vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "www.vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "vandenbalck": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
-    "toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
-    "www.toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
-    "toopoptiek": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
+    "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "www.vandenbalck.be": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "vandenbalck": { name: "Optiek Vandenbalck", address: "Bondgenotenlaan 50a", city: "Leuven", country: "Belgium", phone: "+32 16 22 28 85", email: "eyecare@vandenbalck.be", openingHours: "Tue - Sat: 09:30 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8804, lng: 4.7042 },
+    "toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
+    "www.toopoptiek.com": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
+    "toopoptiek": { name: "Toop Optiek", address: "Mechelsestraat 27", city: "Leuven", country: "Belgium", phone: "+32 16 89 94 28", email: "leuven@toopoptiek.com", openingHours: "Tue - Sat: 10:00 - 18:00 · Sun & Mon: Closed", category: "Optician & Eyewear", lat: 50.8806643, lng: 4.6996604 },
     "businessplace.com": { name: "Business Place", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
 
@@ -17063,10 +17063,30 @@ Return JSON:
     }
   });
   
+  function isValidPhoneNumber(raw?: string | null): boolean {
+    if (!raw || typeof raw !== "string") return false;
+    const s = raw.trim();
+    if (s.length < 6 || s.length > 35) return false;
+    // Reject CSS dimensions, px, em, rem, font declarations, variables, URLs, HTML tags
+    if (/(?:px|em|rem|font|rgba|var\(|;|{|}|--|width|height|http|www\.|\.com|\.be|\.nl|@)/i.test(s)) return false;
+    // Reject floating point numbers with repeated decimals (e.g. 19.599999999999998)
+    if (/\d+\.\d{3,}/.test(s)) return false;
+    
+    const digits = s.replace(/\D/g, "");
+    // ITU E.164 phone numbers have between 7 and 15 digits
+    if (digits.length < 7 || digits.length > 15) return false;
+    
+    // Reject repeated single digit dummy numbers (e.g., 0000000, 999999999999)
+    if (/^(\d)\1+$/.test(digits)) return false;
+    if (digits.includes("55501") || digits.includes("000000")) return false;
+    
+    return true;
+  }
+
   function formatServerPhoneNumber(raw?: string | null, _countryContext?: string): string {
     if (!raw || typeof raw !== "string") return "";
     let clean = raw.trim();
-    if (!clean || clean.length < 5) return clean;
+    if (!isValidPhoneNumber(clean)) return "";
 
     if (clean.startsWith("00")) {
       clean = "+" + clean.slice(2);
@@ -17074,7 +17094,7 @@ Return JSON:
 
     const hasPlus = clean.startsWith("+");
     const digitsOnly = clean.replace(/[^0-9]/g, "");
-    if (!digitsOnly) return clean;
+    if (!digitsOnly) return "";
 
     // Belgium (+32)
     if (clean.startsWith("+32") || (digitsOnly.startsWith("32") && digitsOnly.length >= 9)) {
@@ -17109,6 +17129,15 @@ Return JSON:
     if (digitsOnly.startsWith("04") && digitsOnly.length === 10) {
       const local = digitsOnly.slice(1);
       return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+    }
+
+    // Netherlands (+31)
+    if (clean.startsWith("+31") || (digitsOnly.startsWith("31") && digitsOnly.length >= 10)) {
+      const rest = digitsOnly.startsWith("31") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.length === 9) {
+        return `+31 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+      }
     }
 
     // US/Canada (+1)
@@ -17180,6 +17209,79 @@ Return JSON:
     return clean;
   }
 
+  function parseWebsiteOpeningHours($: any, html: string, isOnlinePlatform?: boolean): string {
+    if (isOnlinePlatform) return "Available 24/7";
+    if (!$) return "";
+    
+    // 1. Check Schema.org / JSON-LD structured opening hours
+    let jsonLdHours = "";
+    try {
+      $("script[type=\"application/ld+json\"]").each((_: any, el: any) => {
+        if (jsonLdHours) return;
+        try {
+          const data = JSON.parse($(el).html() || "{}");
+          const scan = (obj: any) => {
+            if (!obj || typeof obj !== "object") return;
+            if (obj.openingHours) {
+              if (Array.isArray(obj.openingHours)) jsonLdHours = obj.openingHours.join(", ");
+              else if (typeof obj.openingHours === "string") jsonLdHours = obj.openingHours;
+            }
+            if (obj.openingHoursSpecification && Array.isArray(obj.openingHoursSpecification)) {
+              const specs = obj.openingHoursSpecification.map((s: any) => `${s.dayOfWeek || ""}: ${s.opens || ""}-${s.closes || ""}`).filter(Boolean);
+              if (specs.length > 0) jsonLdHours = specs.join(", ");
+            }
+            for (const k of Object.keys(obj)) scan(obj[k]);
+          };
+          scan(data);
+        } catch(e){}
+      });
+    } catch(e){}
+    if (jsonLdHours) return jsonLdHours;
+
+    // 2. Extract with whitespace-separated block elements
+    try {
+      const cleanHtml = (html || "").replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6]|span|td|th)>/gi, " \n");
+      const clean$ = cheerio.load(cleanHtml);
+      // Remove scripts and styles
+      clean$("script, style, noscript, svg").remove();
+      const text = clean$("body").text().replace(/\u00a0/g, " ");
+
+      const daysPattern = /\b(Maandag|Monday|Lundi|Montag|Lunes|Dinsdag|Tuesday|Mardi|Dienstag|Martes|Woensdag|Wednesday|Mercredi|Mittwoch|Mi[ée]rcoles|Donderdag|Thursday|Jeudi|Donnerstag|Jueves|Vrijdag|Friday|Vendredi|Freitag|Viernes|Zaterdag|Saturday|Samedi|Samstag|S[áa]bado|Zondag|Sunday|Dimanche|Sonntag|Domingo|Mon|Tue|Wed|Thu|Fri|Sat|Sun|Ma|Di|Wo|Do|Vr|Za|Zo)\b\s*[:.]?\s*(\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*(?:-|–|tot|to|à)\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?|Gesloten|Closed|Ferm[ée]|Geschlossen|Cerrado)/gi;
+      
+      const matches: Array<{ day: string; time: string }> = [];
+      let m;
+      while ((m = daysPattern.exec(text)) !== null) {
+        const day = m[1].trim();
+        const time = m[2].trim();
+        matches.push({ day, time });
+        if (matches.length >= 7) break;
+      }
+
+      if (matches.length >= 3) {
+        const closed = matches.filter(item => /gesloten|closed|ferm|geschlossen|cerrado/i.test(item.time)).map(item => item.day);
+        const open = matches.filter(item => !/gesloten|closed|ferm|geschlossen|cerrado/i.test(item.time));
+        
+        if (open.length > 0) {
+          const firstTime = open[0].time;
+          const allSameTime = open.every(o => o.time === firstTime);
+          if (allSameTime && open.length >= 3) {
+            const closedStr = closed.length > 0 ? ` · Closed ${closed.join(" & ")}` : "";
+            return `${open[0].day} - ${open[open.length - 1].day}: ${firstTime}${closedStr}`;
+          }
+        }
+        return matches.map(item => `${item.day}: ${item.time}`).join(" · ");
+      }
+
+      // 3. Fallback to summary pattern (e.g. Mon-Fri: 9:00 - 18:00)
+      const summaryMatch = text.match(/(?:Mon(?:day)?\s*[-–]\s*Fri(?:day)?|Ma(?:andag)?\s*[-–]\s*Vr(?:ijdag)?)\s*[:.]?\s*(\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*[-–]\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?)/i);
+      if (summaryMatch) {
+        return summaryMatch[0].trim();
+      }
+    } catch(e){}
+
+    return "";
+  }
+
   function decodeCloudflareEmail(encoded?: string | null): string {
     if (!encoded || typeof encoded !== "string" || encoded.length < 4) return "";
     try {
@@ -17194,15 +17296,17 @@ Return JSON:
     }
   }
 
-  function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string) {
+  function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string, targetCityHint?: string) {
     let address = "";
     let city = "";
     let country = "";
     let phone = "";
     let email = "";
     let category = "";
+    let openingHours = "";
     let lat = 0;
     let lng = 0;
+    const locations: Array<{ name?: string; city: string; address: string; postalCode?: string; phone?: string; email?: string; openingHours?: string; lat?: number; lng?: number }> = [];
 
     // 1. Check verified known entity locations first
     const matchedKnown = KNOWN_ENTITY_LOCATIONS[cleanDomain] || Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => cleanDomain.includes(k) || k.includes(cleanDomain))?.[1];
@@ -17213,6 +17317,7 @@ Return JSON:
       phone = formatServerPhoneNumber(matchedKnown.phone || "");
       email = matchedKnown.email || "";
       category = (matchedKnown as any).category || "";
+      openingHours = (matchedKnown as any).openingHours || "";
       lat = matchedKnown.lat || 0;
       lng = matchedKnown.lng || 0;
     }
@@ -17244,7 +17349,7 @@ Return JSON:
           const enc = $(el).attr("data-cfemail");
           if (enc) {
             const dec = decodeCloudflareEmail(enc);
-            if (dec && dec.includes("@") && !dec.includes("example.com") && !dec.includes("@sentry.io")) {
+            if (dec && dec.includes("@") && !dec.includes("example.com") && !dec.includes("@sentry.io") && !dec.includes("@gmail.com")) {
               email = dec;
             }
           }
@@ -17296,40 +17401,53 @@ Return JSON:
       // 5. Contact section elements for focused extraction
       const contactElements = $("#contact, .contact, footer, #footer, section[id*=\"contact\"], div[id*=\"contact\"], div[class*=\"contact\"], address, .address, [class*=\"footer\"]");
 
-      // 6. Phone extraction - Prefer explicit contact section label, then text label, then tel: links
+      // 6. Multi-Location / Multi-Branch parsing from location blocks
+      try {
+        const cleanBodyText = $("body").html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6]|section)>/gi, " \n") || "";
+        const clean$ = cheerio.load(cleanBodyText);
+        clean$("script, style, noscript, svg").remove();
+
+        const branchHeaders = clean$("body").text().matchAll(/\b(LEUVEN|EDEGEM|SINT-MARTENS-LATEM|ANTWERPEN|BRUSSEL|BRUSSELS|GENT|GHENT|HASSELT|LIÈGE|NAMUR|BRUGGE|OOSTENDE|KORTRIJK|MECHELEN|AALST|BERCHEM|WILRIJK|PARIS|LONDON|NEW YORK|PHOENIX|LAS VEGAS|DUBAI|ABU DHABI)\b(?:\s*,\s*(\d{4,5}))?/gi);
+        
+        for (const bh of branchHeaders) {
+          const rawCity = bh[1].trim();
+          const postal = bh[2] ? bh[2].trim() : "";
+          const cityFormatted = rawCity.charAt(0).toUpperCase() + rawCity.slice(1).toLowerCase();
+          
+          if (!locations.find(l => l.city.toLowerCase() === cityFormatted.toLowerCase())) {
+            locations.push({
+              city: cityFormatted,
+              address: "",
+              postalCode: postal
+            });
+          }
+        }
+      } catch(e){}
+
+      // 7. Phone extraction - PRIORITIZE unambiguous a[href^="tel:"], THEN clean text with strict boundaries
       if (!phone) {
-        const contactText = contactElements.text();
-        const contactPhoneMatch = contactText.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail|T:)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i) ||
-                                  html.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail|T:)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
+        $("a[href^=\"tel:\"]").each((_: any, el: any) => {
+          if (phone) return;
+          const raw = $(el).attr("href")?.replace(/^tel:\s*/i, "").trim() || "";
+          if (isValidPhoneNumber(raw)) {
+            phone = raw;
+          }
+        });
+      }
+
+      if (!phone) {
+        // Search inside rendered text ONLY (never raw html!)
+        const contactText = contactElements.text().replace(/\s+/g, " ");
+        const contactPhoneMatch = contactText.match(/\b(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail)\b\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
         if (contactPhoneMatch) {
           const candidate = contactPhoneMatch[1].trim().replace(/\s+$/, "");
-          if (candidate.replace(/\D/g, "").length >= 7 && !candidate.includes("00000")) {
+          if (isValidPhoneNumber(candidate)) {
             phone = candidate;
           }
         }
       }
 
-      if (!phone) {
-        contactElements.find("a[href^=\"tel:\"]").each((_: any, el: any) => {
-          if (phone) return;
-          const raw = $(el).attr("href")?.replace(/^tel:\s*/i, "").trim() || "";
-          if (raw && raw.length >= 6 && !raw.includes("555") && !raw.includes("000-0000")) {
-            phone = raw;
-          }
-        });
-      }
-
-      if (!phone) {
-        $("a[href^=\"tel:\"]").each((_: any, el: any) => {
-          if (phone) return;
-          const raw = $(el).attr("href")?.replace(/^tel:\s*/i, "").trim() || "";
-          if (raw && raw.length >= 6 && !raw.includes("555") && !raw.includes("000-0000")) {
-            phone = raw;
-          }
-        });
-      }
-
-      // 7. Email extraction
+      // 8. Email extraction
       if (!email) {
         $("a[href^=\"mailto:\"]").each((_: any, el: any) => {
           if (email) return;
@@ -17341,7 +17459,7 @@ Return JSON:
         });
       }
 
-      // 8. Structured JSON-LD extraction
+      // 9. Structured JSON-LD extraction
       try {
         $("script[type=\"application/ld+json\"]").each((_: any, el: any) => {
           try {
@@ -17350,7 +17468,7 @@ Return JSON:
               if (!obj || typeof obj !== "object") return;
               if (obj.telephone && !phone) {
                 const tel = String(obj.telephone).trim();
-                if (!tel.includes("555")) phone = tel;
+                if (isValidPhoneNumber(tel)) phone = tel;
               }
               if (obj.email && !email) {
                 const em = String(obj.email).trim();
@@ -17376,13 +17494,13 @@ Return JSON:
         });
       } catch(e){}
 
-      // 9. Multi-Language Address and City parsing from block-formatted DOM lines
+      // 10. Multi-Language Address and City parsing from block-formatted DOM lines
       if (!address || !city) {
-        // Parse with newline separation around block elements so lines are cleanly separated
         const domLines: string[] = [];
         contactElements.each((_: any, el: any) => {
           const textWithBreaks = $(el).html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6])>/gi, "\n") || "";
           const cleanEl = cheerio.load(textWithBreaks);
+          cleanEl("script, style, noscript, svg").remove();
           cleanEl("body").text().split(/\n+/).forEach((l: string) => {
             const t = l.trim();
             if (t.length > 2 && t.length < 100) domLines.push(t);
@@ -17408,13 +17526,18 @@ Return JSON:
         }
       }
 
-      // 10. Specific City matching based on text
+      // 11. Specific City matching based on text & requested city hint
       const textSnippet = $("body").text().replace(/\s+/g, " ");
       const combinedText = `${address} ${city} ${finalUrl} ${$("title").text()} ${textSnippet.slice(0, 3000)}`;
+
+      if (targetCityHint) {
+        city = targetCityHint;
+      }
 
       if (!city) {
         if (/Brussels|Bruxelles/i.test(combinedText) || cleanDomain.includes("brussels")) city = "Brussels";
         else if (/Berchem/i.test(combinedText)) city = "Berchem";
+        else if (/Leuven/i.test(combinedText)) city = "Leuven";
         else if (/Antwerp|Antwerpen/i.test(combinedText) || cleanDomain.includes("antwerp")) city = "Antwerp";
         else if (/Wilrijk/i.test(combinedText)) city = "Wilrijk";
         else if (/Paris/i.test(combinedText)) city = "Paris";
@@ -17430,7 +17553,7 @@ Return JSON:
       }
 
       if (!country) {
-        if (/\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk" || city === "Berchem") country = "Belgium";
+        if (/\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk" || city === "Berchem" || city === "Leuven") country = "Belgium";
         else if (/\bNetherlands\b|\bNederland\b/i.test(combinedText) || city === "Amsterdam") country = "Netherlands";
         else if (/\bFrance\b/i.test(combinedText) || city === "Paris") country = "France";
         else if (/\bUnited Kingdom\b|\bGreat Britain\b|\bEngland\b/i.test(combinedText) || city === "London") country = "United Kingdom";
@@ -17440,7 +17563,7 @@ Return JSON:
         else if (/\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
       }
 
-      // 11. Industry Category classification
+      // 12. Industry Category classification
       if (!category) {
         const lower = combinedText.toLowerCase();
         if (/optiek|optician|opticien|glasses|brillen|eyewear|lenzen|contactlenzen|oogmeting|oogarts|optometrist/i.test(lower)) category = "Optician & Eyewear";
@@ -17455,9 +17578,26 @@ Return JSON:
         else if (/real\s*estate|property|properties|realtor/i.test(lower)) category = "Real Estate";
         else if (/doctor|clinic|medical|health|hospital/i.test(lower)) category = "Healthcare & Medical";
       }
+
+      // 13. Opening Hours extraction
+      if (!openingHours) {
+        const isOnlinePlatform = cleanDomain === "yoouz.com" || cleanDomain === "google.com" || cleanDomain === "apple.com" || cleanDomain === "uber.com";
+        openingHours = parseWebsiteOpeningHours($, html, isOnlinePlatform);
+      }
     }
 
-    return { address, city, country, phone: formatServerPhoneNumber(phone, country), email, category, lat, lng };
+    return { 
+      address, 
+      city, 
+      country, 
+      phone: formatServerPhoneNumber(phone, country), 
+      email, 
+      category, 
+      openingHours, 
+      locations, 
+      lat, 
+      lng 
+    };
   }
 
   app.get('/api/url-metadata', async (req, res) => {
@@ -18391,13 +18531,14 @@ Return JSON:
             bannerUrl: image,
             ogImage: image,
             photos: image ? [image] : [],
-            openingHours: "Available 24/7",
+            openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
             email: effectiveEmail,
             website: finalUrl || `https://${cleanDomain}`,
             priceRange: isYoouz ? "Free" : "N/A",
             plusCode: "",
+            locations: locInfo.locations || [],
             description: description || "",
             popularKeywords: isYoouz ? [{ tag: "Authentic", count: 1 }, { tag: "Video Reviews", count: 1 }] : [],
             amenities: isYoouz ? ["Verified Merchant", "Live Camera Only", "Instant Sync"] : [],
@@ -18469,6 +18610,8 @@ Return JSON:
               country: mergedCountry,
               phone: mergedPhone,
               email: mergedEmail,
+              openingHours: locInfo.openingHours || existingDoc.openingHours || "",
+              locations: locInfo.locations && locInfo.locations.length > 0 ? locInfo.locations : (existingDoc.locations || []),
               lat: locInfo.lat || existingDoc.lat || 0,
               lng: locInfo.lng || existingDoc.lng || 0
             };
@@ -18521,7 +18664,9 @@ Return JSON:
         country: effectiveCountry,
         phone: effectivePhone,
         email: effectiveEmail,
-        category: effectiveCategory
+        category: effectiveCategory,
+        openingHours: locInfo.openingHours || "",
+        locations: locInfo.locations || []
       });
     } catch (e) {
       console.error('SERVER ERROR:', e);
@@ -22231,7 +22376,7 @@ function splitCompoundWords(str: string): string {
   s = s.replace(/^(the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
   
-  const commonWords = /(tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   const parts = s.split(" ").map(p => {
     if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
