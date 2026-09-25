@@ -1013,7 +1013,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="min-w-0 flex-1">
             <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
               <span>{displayedPlaceName || ""}</span>
-              <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-emerald-500 text-zinc-950 shrink-0 relative -top-[2px]" />
+              <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-zinc-950 shrink-0 relative -top-[2px]" />
             </h2>
           </div>
 
@@ -1056,7 +1056,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Rating & Category Badges Row */}
         <div className="flex items-center gap-2.5 flex-wrap text-sm mb-3.5">
-          <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-lg">
+          <div className="inline-flex items-center gap-1.5 bg-zinc-850/90 border border-zinc-750 px-2.5 py-1 rounded-lg">
             <span className="font-extrabold text-amber-400 text-sm leading-none">{dynamicAvgRating.toFixed(1)}</span>
             <div className="flex items-center text-amber-400 gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -1065,7 +1065,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   className={`w-3.5 h-3.5 ${
                     i < Math.round(dynamicAvgRating)
                       ? "fill-amber-400 text-amber-400"
-                      : "fill-zinc-800 text-zinc-800"
+                      : "fill-zinc-700 text-zinc-700"
                   }`}
                 />
               ))}
@@ -1076,23 +1076,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
 
           {place.category && (
-            <span className="inline-flex items-center gap-1.5 text-zinc-200 font-semibold px-2.5 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700/60 text-xs shadow-xs">
+            <span className="inline-flex items-center gap-1.5 text-zinc-200 font-semibold px-2.5 py-1 rounded-lg bg-zinc-850/90 border border-zinc-750 text-xs shadow-xs">
               <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
               <span>{place.category}</span>
             </span>
           )}
         </div>
 
-        {/* Structured Location & Website Lines (Icon Anchored, Zero Floating Dots) */}
+        {/* Structured Location & Website Lines (Monochrome Dark Theme) */}
         <div className="flex flex-col gap-2 pt-3 border-t border-zinc-800/70 text-xs sm:text-sm">
           {effectiveWebsite && (
             <div className="flex items-center gap-2 text-zinc-300 font-medium min-w-0">
-              <Globe className="w-4 h-4 text-sky-400 shrink-0" />
+              <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
               <a 
                 href={effectiveWebsite} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="text-sky-400 hover:text-sky-300 hover:underline font-medium truncate"
+                className="text-zinc-200 hover:text-white hover:underline font-medium truncate"
               >
                 {displayWebsiteClean}
               </a>
@@ -1107,7 +1107,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (!validCity && !validCountry) return null;
             return (
               <div className="flex items-center gap-2 text-zinc-300 font-medium">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
                 <span>{validCity}{validCity && validCountry ? ", " : ""}{validCountry}</span>
               </div>
             );
