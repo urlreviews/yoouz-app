@@ -1007,22 +1007,82 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
       {/* Business Title & Star Rating Header */}
-      <div className="px-6 pt-14 pb-3 bg-zinc-950 md:bg-zinc-900">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="min-w-0 flex-1 pr-2">
-            <h2 className="text-2xl font-bold text-white md:text-white tracking-tight leading-tight line-clamp-2 [overflow-wrap:anywhere]">
-              {displayedPlaceName || ""}
-              <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[2px]" />
-            </h2>
+      <div className="px-6 pt-14 pb-3.5 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/60">
+        {/* Full 100% Width Title Block - Zero Side-by-Side Squeezing */}
+        <div className="w-full mb-2.5">
+          <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere] w-full">
+            <span>{displayedPlaceName || ""}</span>
+            <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[2px]" />
+          </h2>
+        </div>
+
+        {/* Sub-header Metadata Row with Ratings & Follow Button */}
+        <div className="flex items-center justify-between gap-3 flex-wrap text-sm">
+          <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-white">{dynamicAvgRating.toFixed(1)}</span>
+              <div className="flex items-center text-zinc-200 gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3.5 h-3.5 ${
+                      i < Math.round(dynamicAvgRating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "fill-zinc-800 text-zinc-800"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            <span className="text-zinc-200 font-medium">
+              ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
+            </span>
+            {place.category && (
+              <>
+                <span className="text-zinc-700">·</span>
+                <span className="text-zinc-300 font-medium px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs">
+                  {place.category}
+                </span>
+              </>
+            )}
+            {effectiveWebsite && (
+              <>
+                <span className="text-zinc-700">·</span>
+                <a 
+                  href={effectiveWebsite} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-zinc-200 hover:text-white hover:underline font-medium truncate max-w-[180px]"
+                >
+                  {displayWebsiteClean}
+                </a>
+              </>
+            )}
+            
+            {(() => {
+              if (isYoouz) return null;
+              const invalidLocations = ["online", "global", "worldwide", "global headquarters", "n/a"];
+              const validCity = place.city && !invalidLocations.includes(place.city.toLowerCase().trim()) ? place.city.trim() : "";
+              const validCountry = place.country && !invalidLocations.includes(place.country.toLowerCase().trim()) ? place.country.trim() : "";
+              if (!validCity && !validCountry) return null;
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-zinc-700">·</span>
+                  <span className="text-zinc-200 text-xs font-medium">
+                    {validCity}{validCity && validCountry ? ", " : ""}{validCountry}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Business Follow Button - High-end standard placement */}
+          {/* Business Follow Button - High-end standard placement in subheader */}
           {onToggleFollowPlace && (
             <button
               onClick={() => onToggleFollowPlace(place.id)}
               onMouseEnter={() => setIsHoveredUnfollow(true)}
               onMouseLeave={() => setIsHoveredUnfollow(false)}
-              className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 ${
+              className={`px-4 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 ${
                 place.isFollowed
                   ? isHoveredUnfollow
                     ? "bg-red-500/15 text-red-400 border-red-500/30"
@@ -1051,64 +1111,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               )}
             </button>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap text-sm">
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-white md:text-white">{dynamicAvgRating.toFixed(1)}</span>
-            <div className="flex items-center text-zinc-200 gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 ${
-                    i < Math.round(dynamicAvgRating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "fill-zinc-800 text-zinc-800"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-          <span className="text-zinc-200 font-medium">
-            ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
-          </span>
-          {place.category && (
-            <>
-              <span className="text-zinc-700">·</span>
-              <span className="text-zinc-300 font-medium px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-xs">
-                {place.category}
-              </span>
-            </>
-          )}
-          {effectiveWebsite && (
-            <>
-              <span className="text-zinc-700">·</span>
-              <a 
-                href={effectiveWebsite} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-zinc-200 hover:text-white hover:underline font-medium truncate max-w-[180px]"
-              >
-                {displayWebsiteClean}
-              </a>
-            </>
-          )}
-          
-          {(() => {
-            if (isYoouz) return null;
-            const invalidLocations = ["online", "global", "worldwide", "global headquarters", "n/a"];
-            const validCity = place.city && !invalidLocations.includes(place.city.toLowerCase().trim()) ? place.city.trim() : "";
-            const validCountry = place.country && !invalidLocations.includes(place.country.toLowerCase().trim()) ? place.country.trim() : "";
-            if (!validCity && !validCountry) return null;
-            return (
-              <div className="flex items-center gap-1.5">
-                <span className="text-zinc-700">·</span>
-                <span className="text-zinc-200 text-xs font-medium">
-                  {validCity}{validCity && validCountry ? ", " : ""}{validCountry}
-                </span>
-              </div>
-            );
-          })()}
         </div>
       </div>
 

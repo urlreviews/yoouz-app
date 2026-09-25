@@ -208,8 +208,8 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       <div className="absolute inset-0 bg-black/15 pointer-events-none" />
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-white text-sm truncate leading-snug">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">
                           {getDisplayUrlAsDomain(video)}
                         </h4>
                         <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
@@ -305,8 +305,8 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                       />
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-white text-sm truncate leading-snug">{formattedTitle}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">{formattedTitle}</h4>
                           <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
                             {place.category}
                           </span>
