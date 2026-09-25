@@ -256,6 +256,10 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "apotheekgodelaine": "Apotheek Godelaine",
   "apotheekgodelaine.be": "Apotheek Godelaine",
   "www-apotheekgodelaine-be": "Apotheek Godelaine",
+  "optieknieuwenhuysen": "Optiek Nieuwenhuysen",
+  "optieknieuwenhuysen.be": "Optiek Nieuwenhuysen",
+  "www-optieknieuwenhuysen-be": "Optiek Nieuwenhuysen",
+  "nieuwenhuysen": "Optiek Nieuwenhuysen",
   "dental365": "Dental 365",
   "dental365.nl": "Dental 365",
   "www-dental365-nl": "Dental 365",
@@ -1953,6 +1957,8 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
   "brusselsdental": { address: "235 Rue de la Loi, 1040", city: "Brussels", country: "Belgium", lat: 50.8436, lng: 4.3824 },
   "apotheekgodelaine.be": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
   "apotheekgodelaine": { address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", lat: 51.18288, lng: 4.39160 },
+  "optieknieuwenhuysen.be": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
+  "optieknieuwenhuysen": { address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", lat: 51.1809661, lng: 4.4355056 },
   "usa.com": { address: "100 Wall Street", city: "New York", state: "NY", country: "United States", lat: 40.7058, lng: -74.0071 }
 };
 
@@ -1960,6 +1966,8 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; cit
  * Verified city coordinates for reliable map previews across any new or existing business location
  */
 export const KNOWN_CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  "berchem": { lat: 51.1809661, lng: 4.4355056 },
+  "wilrijk": { lat: 51.18288, lng: 4.39160 },
   "phoenix": { lat: 33.4484, lng: -112.0740 },
   "las vegas": { lat: 36.1699, lng: -115.1398 },
   "boston": { lat: 42.3601, lng: -71.0589 },

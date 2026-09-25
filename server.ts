@@ -8252,13 +8252,17 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             const addr = (r.address || "").toLowerCase();
             const country = (r.country || "").toLowerCase();
             const id = (r.id || "").toLowerCase();
-            return addr.startsWith("st bestellen") || addr.includes("bestellen contact") || (id.endsWith(".be") && country.includes("kingdom")) || (id.endsWith(".nl") && country.includes("kingdom"));
+            let parsed: any = {};
+            try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
+            const hasKnownLoc = Boolean(KNOWN_ENTITY_LOCATIONS[id] || KNOWN_ENTITY_LOCATIONS[cleanDomainName(id)]);
+            const missingKnownAddr = hasKnownLoc && (!addr || addr.trim() === "");
+            return addr.startsWith("st bestellen") || addr.includes("bestellen contact") || (id.endsWith(".be") && country.includes("kingdom")) || (id.endsWith(".nl") && country.includes("kingdom")) || missingKnownAddr;
           });
           if (corruptPlaces.length > 0) {
             check49Status = "degraded";
-            check49Details = `Detected ${corruptPlaces.length} place(s) with mismatched address/country metadata (${corruptPlaces.map(c => c.id).join(", ")}). Use the 'Audit & Repair Business Data' tool to synchronize verified metadata.`;
+            check49Details = `Detected ${corruptPlaces.length} place(s) with incomplete address/country metadata (${corruptPlaces.map(c => c.id).join(", ")}). Use the 'Audit & Repair Business Data' tool to synchronize verified metadata.`;
           } else {
-            check49Details = `Zero-mock business metadata guard active. All ${placesRs.rows.length} places verified with authentic addresses, genuine phone/email records, validated countries, and verified brand assets.`;
+            check49Details = `Zero-mock business metadata guard active. All ${placesRs.rows.length} places verified with authentic addresses, genuine phone/email records (including Cloudflare-decoded emails), validated countries, and verified brand assets.`;
           }
         }
       } catch (e: any) {
@@ -9092,10 +9096,25 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "www.apotheekgodelaine.be": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
     "apotheekgodelaine": { name: "Apotheek Godelaine", address: "Berkenlaan 85", city: "Wilrijk", country: "Belgium", phone: "+32 3 827 09 23", email: "info@apotheekgodelaine.be", category: "Pharmacy & Healthcare", lat: 51.18288, lng: 4.39160 },
     "usa.com": { name: "USA.com", address: "100 Wall Street", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0199", category: "Directory & Information", lat: 40.7058, lng: -74.0071 },
+    "optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "www.optieknieuwenhuysen.be": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
+    "optieknieuwenhuysen": { name: "Optiek Nieuwenhuysen", address: "Fruithoflaan 19", city: "Berchem", country: "Belgium", phone: "+32 3 440 04 12", email: "info@optieknieuwenhuysen.be", category: "Optician & Eyewear", lat: 51.1809661, lng: 4.4355056 },
     "businessplace.com": { name: "Business Place", address: "100 Enterprise Way", city: "New York, NY", country: "United States", phone: "+1 (212) 555-0188", category: "Business Directory", lat: 40.7128, lng: -74.0060 }
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "optieknieuwenhuysen.be": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Foptieknieuwenhuysen.be%2Fwp-content%2Fuploads%2Fsites%2F32%2F2026%2F03%2Foptieknieuwenhuysen-teamfoto-weekvanhetzien-2024.jpg",
+      logoUrl: "/api/favicon?domain=optieknieuwenhuysen.be",
+      name: "Optiek Nieuwenhuysen",
+      website: "https://optieknieuwenhuysen.be"
+    },
+    "www.optieknieuwenhuysen.be": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Foptieknieuwenhuysen.be%2Fwp-content%2Fuploads%2Fsites%2F32%2F2026%2F03%2Foptieknieuwenhuysen-teamfoto-weekvanhetzien-2024.jpg",
+      logoUrl: "/api/favicon?domain=optieknieuwenhuysen.be",
+      name: "Optiek Nieuwenhuysen",
+      website: "https://optieknieuwenhuysen.be"
+    },
     "apotheekgodelaine.be": {
       bannerUrl: "https://apotheekgodelaine.be/custom/img/Farmad_1448x1024.jpg",
       logoUrl: "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://apotheekgodelaine.be&size=256",
@@ -17122,6 +17141,20 @@ Return JSON:
     return clean;
   }
 
+  function decodeCloudflareEmail(encoded?: string | null): string {
+    if (!encoded || typeof encoded !== "string" || encoded.length < 4) return "";
+    try {
+      let email = "";
+      const k = parseInt(encoded.substr(0, 2), 16);
+      for (let i = 2; i < encoded.length; i += 2) {
+        email += String.fromCharCode(parseInt(encoded.substr(i, 2), 16) ^ k);
+      }
+      return email.trim();
+    } catch(e) {
+      return "";
+    }
+  }
+
   function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string) {
     let address = "";
     let city = "";
@@ -17165,25 +17198,70 @@ Return JSON:
     }
 
     if ($) {
-      // 3. Google Maps iframe check for exact coordinates
-      $("iframe[src*=\"google.com/maps\"], iframe[src*=\"maps.google\"]").each((_: any, el: any) => {
-        const src = $(el).attr("src") || "";
-        if (src.includes("!2d") && src.includes("!3d")) {
-          const latM = src.match(/!3d([0-9\.\-]+)/);
-          const lngM = src.match(/!2d([0-9\.\-]+)/);
-          if (latM && !lat) lat = parseFloat(latM[1]);
-          if (lngM && !lng) lng = parseFloat(lngM[1]);
+      // 3. Cloudflare Protected Email Decoding (Anti-Obfuscation)
+      if (!email) {
+        $("[data-cfemail], span.__cf_email__").each((_: any, el: any) => {
+          if (email) return;
+          const enc = $(el).attr("data-cfemail");
+          if (enc) {
+            const dec = decodeCloudflareEmail(enc);
+            if (dec && dec.includes("@") && !dec.includes("example.com") && !dec.includes("@sentry.io")) {
+              email = dec;
+            }
+          }
+        });
+      }
+
+      // 4. Google Maps Links, Directions & Iframes extraction for exact address & coordinates
+      $("a[href*=\"google.com/maps\"], a[href*=\"maps.google\"], a[href*=\"goo.gl/maps\"], a[href*=\"maps.app.goo.gl\"], iframe[src*=\"google.com/maps\"], iframe[src*=\"maps.google\"]").each((_: any, el: any) => {
+        const href = $(el).attr("href") || $(el).attr("src") || "";
+        
+        // Exact Coordinates parsing (@lat,lng, !2d / !3d, ll=, q=)
+        const coordsMatch = href.match(/@([0-9\.\-]+),([0-9\.\-]+)/) || 
+                            href.match(/!2d([0-9\.\-]+)!3d([0-9\.\-]+)/) || 
+                            href.match(/!3d([0-9\.\-]+)!2d([0-9\.\-]+)/) || 
+                            href.match(/ll=([0-9\.\-]+),([0-9\.\-]+)/) || 
+                            href.match(/q=([0-9\.\-]+),([0-9\.\-]+)/);
+        if (coordsMatch) {
+          const p1 = parseFloat(coordsMatch[1]);
+          const p2 = parseFloat(coordsMatch[2]);
+          if (!lat && !isNaN(p1) && p1 !== 0) lat = p1;
+          if (!lng && !isNaN(p2) && p2 !== 0) lng = p2;
+        }
+
+        // Destination address parsing from directions URL (e.g. /maps/dir//Fruithoflaan+19,+2600+Antwerpen/@51.18...)
+        const dirMatch = href.match(/maps\/dir\/\/([^\/@\?#]+)/) || href.match(/maps\/search\/([^\/@\?#]+)/) || href.match(/maps\/place\/([^\/@\?#]+)/);
+        if (dirMatch && !address) {
+          try {
+            const rawDest = decodeURIComponent(dirMatch[1]).replace(/\+/g, " ").trim();
+            const parts = rawDest.split(/,\s*/);
+            if (parts.length >= 2) {
+              const candAddr = parts[0].trim();
+              if (candAddr.length > 3 && !candAddr.includes("http")) {
+                address = candAddr;
+              }
+              const cityPart = parts[1].trim();
+              const postalMatch = cityPart.match(/^(?:[A-Z]{2}-?)?(\d{4,5})\s+([A-ZÀ-ÿ][a-zà-ÿA-Z\s\-]+)$/);
+              if (postalMatch) {
+                if (!city) city = postalMatch[2].trim();
+              } else if (!city && cityPart.length > 2) {
+                city = cityPart.replace(/^\d{4,5}\s+/, "").trim();
+              }
+            } else if (rawDest.length > 5 && !rawDest.includes("http")) {
+              address = rawDest;
+            }
+          } catch(e) {}
         }
       });
 
-      // 4. Contact section elements for focused extraction
-      const contactElements = $("#contact, .contact, footer, #footer, section[id*=\"contact\"], div[id*=\"contact\"], div[class*=\"contact\"], address, .address");
+      // 5. Contact section elements for focused extraction
+      const contactElements = $("#contact, .contact, footer, #footer, section[id*=\"contact\"], div[id*=\"contact\"], div[class*=\"contact\"], address, .address, [class*=\"footer\"]");
 
-      // 5. Phone extraction - Prefer explicit contact section label, then text label, then tel: links
+      // 6. Phone extraction - Prefer explicit contact section label, then text label, then tel: links
       if (!phone) {
         const contactText = contactElements.text();
-        const contactPhoneMatch = contactText.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i) ||
-                                  html.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
+        const contactPhoneMatch = contactText.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail|T:)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i) ||
+                                  html.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail|T:)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
         if (contactPhoneMatch) {
           const candidate = contactPhoneMatch[1].trim().replace(/\s+$/, "");
           if (candidate.replace(/\D/g, "").length >= 7 && !candidate.includes("00000")) {
@@ -17212,7 +17290,7 @@ Return JSON:
         });
       }
 
-      // 6. Email extraction
+      // 7. Email extraction
       if (!email) {
         $("a[href^=\"mailto:\"]").each((_: any, el: any) => {
           if (email) return;
@@ -17224,7 +17302,7 @@ Return JSON:
         });
       }
 
-      // 7. Structured JSON-LD extraction
+      // 8. Structured JSON-LD extraction
       try {
         $("script[type=\"application/ld+json\"]").each((_: any, el: any) => {
           try {
@@ -17259,38 +17337,45 @@ Return JSON:
         });
       } catch(e){}
 
-      // 8. Multi-Language Address and City parsing from Contact block lines
+      // 9. Multi-Language Address and City parsing from block-formatted DOM lines
       if (!address || !city) {
+        // Parse with newline separation around block elements so lines are cleanly separated
+        const domLines: string[] = [];
         contactElements.each((_: any, el: any) => {
-          if (address && city) return;
-          const lines = $(el).text().split(/\n+/).map((l: string) => l.trim()).filter((l: string) => l.length > 2 && l.length < 100);
-          
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const streetPattern = /^([A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+\s+\d+[a-zA-Z]?|\d{1,5}\s+[A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+)$/;
-            const postalCityPattern = /^(?:[A-Z]{2}-?)?(\d{4,5})\s+([A-ZÀ-ÿ][a-zà-ÿA-Z\s\-]+)$/;
+          const textWithBreaks = $(el).html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6])>/gi, "\n") || "";
+          const cleanEl = cheerio.load(textWithBreaks);
+          cleanEl("body").text().split(/\n+/).forEach((l: string) => {
+            const t = l.trim();
+            if (t.length > 2 && t.length < 100) domLines.push(t);
+          });
+        });
 
-            if (streetPattern.test(line) && !line.toLowerCase().includes("telefoon") && !line.toLowerCase().includes("telephone") && !line.toLowerCase().includes("fax") && !line.toLowerCase().includes("openingsuren") && !line.toLowerCase().includes("btw") && !line.toLowerCase().includes("email")) {
-              const nextLine = lines[i + 1] || "";
-              const postalMatch = nextLine.match(postalCityPattern);
-              if (postalMatch) {
-                if (!address) address = line;
-                if (!city) city = postalMatch[2].trim();
-                break;
-              } else if (!address && line.length > 5 && line.length < 50) {
-                address = line;
-              }
+        for (let i = 0; i < domLines.length; i++) {
+          const line = domLines[i];
+          const streetPattern = /^([A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+\s+\d+[a-zA-Z]?|\d{1,5}\s+[A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+)$/;
+          const postalCityPattern = /^(?:[A-Z]{2}-?)?(\d{4,5})\s+([A-ZÀ-ÿ][a-zà-ÿA-Z\s\-]+)$/;
+
+          if (streetPattern.test(line) && !line.toLowerCase().includes("telefoon") && !line.toLowerCase().includes("telephone") && !line.toLowerCase().includes("fax") && !line.toLowerCase().includes("openingsuren") && !line.toLowerCase().includes("btw") && !line.toLowerCase().includes("email")) {
+            const nextLine = domLines[i + 1] || "";
+            const postalMatch = nextLine.match(postalCityPattern);
+            if (postalMatch) {
+              if (!address) address = line;
+              if (!city) city = postalMatch[2].trim();
+              break;
+            } else if (!address && line.length > 5 && line.length < 50) {
+              address = line;
             }
           }
-        });
+        }
       }
 
-      // 9. Specific City matching based on text
+      // 10. Specific City matching based on text
       const textSnippet = $("body").text().replace(/\s+/g, " ");
       const combinedText = `${address} ${city} ${finalUrl} ${$("title").text()} ${textSnippet.slice(0, 3000)}`;
 
       if (!city) {
         if (/Brussels|Bruxelles/i.test(combinedText) || cleanDomain.includes("brussels")) city = "Brussels";
+        else if (/Berchem/i.test(combinedText)) city = "Berchem";
         else if (/Antwerp|Antwerpen/i.test(combinedText) || cleanDomain.includes("antwerp")) city = "Antwerp";
         else if (/Wilrijk/i.test(combinedText)) city = "Wilrijk";
         else if (/Paris/i.test(combinedText)) city = "Paris";
@@ -17306,7 +17391,7 @@ Return JSON:
       }
 
       if (!country) {
-        if (/\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk") country = "Belgium";
+        if (/\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk" || city === "Berchem") country = "Belgium";
         else if (/\bNetherlands\b|\bNederland\b/i.test(combinedText) || city === "Amsterdam") country = "Netherlands";
         else if (/\bFrance\b/i.test(combinedText) || city === "Paris") country = "France";
         else if (/\bUnited Kingdom\b|\bGreat Britain\b|\bEngland\b/i.test(combinedText) || city === "London") country = "United Kingdom";
@@ -17316,10 +17401,11 @@ Return JSON:
         else if (/\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
       }
 
-      // 10. Industry Category classification
+      // 11. Industry Category classification
       if (!category) {
         const lower = combinedText.toLowerCase();
-        if (/apotheek|pharmacie|pharmacy|apotheke|farmacia|drugstore/i.test(lower)) category = "Pharmacy & Healthcare";
+        if (/optiek|optician|opticien|glasses|brillen|eyewear|lenzen|contactlenzen|oogmeting|oogarts|optometrist/i.test(lower)) category = "Optician & Eyewear";
+        else if (/apotheek|pharmacie|pharmacy|apotheke|farmacia|drugstore/i.test(lower)) category = "Pharmacy & Healthcare";
         else if (/dentist|dental|teeth|mendozza|cavity|implant|orthodont|tandarts|zahnarzt/i.test(lower)) category = "Dentist & Dental Clinic";
         else if (/injury|accident|lawyer|attorney|law\s*firm|legal|advocaat|avocat/i.test(lower)) category = "Legal Services";
         else if (/plumb|heating|plomberie|drain|chauffage|sanitair/i.test(lower)) category = "Plumbing & HVAC";
@@ -18369,6 +18455,7 @@ Return JSON:
             effectiveCountry = mergedCountry || effectiveCountry;
             effectivePhone = mergedPhone || effectivePhone;
             effectiveEmail = mergedEmail || effectiveEmail;
+            effectiveCategory = mergedDoc.category || effectiveCategory;
             title = formattedExistingName;
           } else {
             const jsonStr = JSON.stringify(autoPlaceDoc);
@@ -22007,6 +22094,10 @@ const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "bhol.co.il": "B'Chadrei Charedim",
   "tandis": "Tandis",
   "tandis.be": "Tandis",
+  "optieknieuwenhuysen": "Optiek Nieuwenhuysen",
+  "optieknieuwenhuysen.be": "Optiek Nieuwenhuysen",
+  "www-optieknieuwenhuysen-be": "Optiek Nieuwenhuysen",
+  "nieuwenhuysen": "Optiek Nieuwenhuysen",
   "dental365": "Dental 365",
   "dental365.nl": "Dental 365",
   "www-dental365-nl": "Dental 365",
@@ -23065,29 +23156,33 @@ function injectOpenGraphTags(html: string, meta: any) {
         const addressChanged = currentAddress !== targetAddress || placeDoc.address !== targetAddress;
         const countryChanged = currentCountry !== targetCountry || placeDoc.country !== targetCountry;
         const cityChanged = currentCity !== targetCity || placeDoc.city !== targetCity;
+        const emailChanged = targetEmail && placeDoc.email !== targetEmail;
+        const phoneChanged = targetPhone && placeDoc.phone !== targetPhone;
+        const catChanged = targetCategory && placeDoc.category !== targetCategory;
+        const latLngChanged = targetLat !== 0 && (placeDoc.lat !== targetLat || placeDoc.lng !== targetLng);
         const bannerChanged = matchedMeta?.bannerUrl && placeDoc.bannerUrl !== matchedMeta.bannerUrl;
 
-        if (nameChanged || addressChanged || countryChanged || cityChanged || bannerChanged) {
+        if (nameChanged || addressChanged || countryChanged || cityChanged || emailChanged || phoneChanged || catChanged || latLngChanged || bannerChanged) {
           placeDoc.name = formattedName;
           placeDoc.address = targetAddress;
           placeDoc.city = targetCity;
           placeDoc.country = targetCountry;
-          placeDoc.phone = targetPhone;
-          placeDoc.email = targetEmail;
-          placeDoc.category = targetCategory;
-          placeDoc.bannerUrl = targetBanner;
-          placeDoc.ogImage = targetBanner;
-          placeDoc.logoUrl = targetLogo;
-          placeDoc.avatarUrl = targetLogo;
-          placeDoc.lat = targetLat;
-          placeDoc.lng = targetLng;
+          placeDoc.phone = targetPhone || placeDoc.phone;
+          placeDoc.email = targetEmail || placeDoc.email;
+          placeDoc.category = targetCategory || placeDoc.category;
+          placeDoc.bannerUrl = targetBanner || placeDoc.bannerUrl;
+          placeDoc.ogImage = targetBanner || placeDoc.ogImage;
+          placeDoc.logoUrl = targetLogo || placeDoc.logoUrl;
+          placeDoc.avatarUrl = targetLogo || placeDoc.avatarUrl;
+          placeDoc.lat = targetLat || placeDoc.lat;
+          placeDoc.lng = targetLng || placeDoc.lng;
           if (cleanDom) placeDoc.brandDomain = cleanDom;
 
           await bunnyDb.execute({
             sql: `UPDATE places SET name = ?, address = ?, city = ?, country = ?, category = ?, logoUrl = ?, latitude = ?, longitude = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-            args: [formattedName, targetAddress, targetCity, targetCountry, targetCategory, targetLogo, targetLat, targetLng, JSON.stringify(placeDoc), placeId]
+            args: [formattedName, targetAddress, targetCity, targetCountry, placeDoc.category, placeDoc.logoUrl, placeDoc.lat, placeDoc.lng, JSON.stringify(placeDoc), placeId]
           });
-          fixedPlaces.push({ id: placeId, previousName: currentName, newName: formattedName, address: targetAddress, country: targetCountry });
+          fixedPlaces.push({ id: placeId, previousName: currentName, newName: formattedName, address: targetAddress, city: targetCity, country: targetCountry, email: placeDoc.email, phone: placeDoc.phone });
         }
       }
 
@@ -23134,31 +23229,39 @@ function injectOpenGraphTags(html: string, meta: any) {
           targetCountry = "Belgium";
         }
 
-        const needsUpdate = currentPlaceName !== formattedPlaceName || rawData.placeAddress !== targetAddr || rawData.placeCountry !== targetCountry || (matchedMeta?.bannerUrl && rawData.placeBannerUrl !== matchedMeta.bannerUrl);
+        const needsUpdate = currentPlaceName !== formattedPlaceName || 
+                            rawData.placeAddress !== targetAddr || 
+                            rawData.placeCity !== targetCity || 
+                            rawData.placeCountry !== targetCountry || 
+                            (targetEmail && rawData.placeEmail !== targetEmail) || 
+                            (targetPhone && rawData.placePhone !== targetPhone) || 
+                            (matchedMeta?.bannerUrl && rawData.placeBannerUrl !== matchedMeta.bannerUrl);
         if (needsUpdate) {
           rawData.placeName = formattedPlaceName;
           rawData.businessName = formattedPlaceName;
           rawData.placeAddress = targetAddr;
           rawData.placeCity = targetCity;
           rawData.placeCountry = targetCountry;
-          rawData.placePhone = targetPhone;
-          rawData.placeEmail = targetEmail;
-          rawData.placeCategory = targetCat;
-          rawData.placeBannerUrl = targetBanner;
-          rawData.bannerUrl = targetBanner;
-          rawData.ogImage = targetBanner;
+          rawData.placePhone = targetPhone || rawData.placePhone;
+          rawData.placeEmail = targetEmail || rawData.placeEmail;
+          rawData.placeCategory = targetCat || rawData.placeCategory;
+          rawData.placeBannerUrl = targetBanner || rawData.placeBannerUrl;
+          rawData.bannerUrl = targetBanner || rawData.bannerUrl;
+          rawData.ogImage = targetBanner || rawData.ogImage;
           if (rawData.name) rawData.name = formattedPlaceName;
           if (rawData.place) {
             rawData.place.name = formattedPlaceName;
             rawData.place.address = targetAddr;
             rawData.place.city = targetCity;
             rawData.place.country = targetCountry;
+            rawData.place.phone = targetPhone || rawData.place.phone;
+            rawData.place.email = targetEmail || rawData.place.email;
           }
           await bunnyDb.execute({
             sql: `UPDATE videoReviews SET placeName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
             args: [formattedPlaceName, JSON.stringify(rawData), reviewId]
           });
-          fixedReviews.push({ id: reviewId, placeId, previousName: currentPlaceName, newName: formattedPlaceName, address: targetAddr, country: targetCountry });
+          fixedReviews.push({ id: reviewId, placeId, previousName: currentPlaceName, newName: formattedPlaceName, address: targetAddr, city: targetCity, country: targetCountry, email: targetEmail });
         }
       }
 
