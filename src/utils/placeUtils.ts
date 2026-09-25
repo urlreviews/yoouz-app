@@ -237,6 +237,8 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "legal500": "The Legal 500",
   "legal500.com": "The Legal 500",
   "thelegal500": "The Legal 500",
+  "businessplace": "Business Place",
+  "businessplace.com": "Business Place",
   "freecancellations": "Free Cancellations",
   "freecancellations.com": "Free Cancellations",
   "www-freecancellations-com": "Free Cancellations",
