@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -106,7 +106,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
       const instantLogo = foundPlace?.logoUrl || getCleanLogoUrl(null, domain) || "";
       const instantBanner = foundPlace?.bannerUrl || KNOWN_BRAND_BANNERS[domain] || "";
-      const instantName = foundPlace?.name || formatBusinessName(domain) || domain;
+      const instantName = (domain && KNOWN_OFFICIAL_NAMES[domain]) 
+        || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl])
+        || formatBusinessName(foundPlace?.name || domain, domain)
+        || domain;
 
       const instantPlace: Place = foundPlace || {
         id: domain,
@@ -172,9 +175,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  return l.includes("hostinger") || l.includes("untitled") || l.includes("react app") || l.includes("vite app") || l === "website" || l === foundPlace?.brandDomain;
                };
 
+               const targetName = (domain && KNOWN_OFFICIAL_NAMES[domain])
+                 || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+                 || formatBusinessName(data.siteName || data.title, data.domain || domain)
+                 || instantName;
+
                foundPlace = {
                  ...foundPlace,
-                 name: (isGenericName(foundPlace.name) || foundPlace.name === foundPlace.brandDomain) ? (formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || foundPlace.name) : foundPlace.name,
+                 name: targetName || foundPlace.name,
                  logoUrl: (foundPlace.logoUrl && isValidLogo(foundPlace.logoUrl)) ? foundPlace.logoUrl : (fetchedLogo || instantLogo),
                  avatarUrl: (foundPlace.avatarUrl && isValidLogo(foundPlace.avatarUrl)) ? foundPlace.avatarUrl : (fetchedLogo || instantLogo),
                  bannerUrl: (foundPlace.bannerUrl && !foundPlace.bannerUrl.includes("unsplash.com")) ? foundPlace.bannerUrl : (fetchedBanner || ""),
@@ -195,7 +203,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              } else {
                const newPlace: Place = {
                  id: (data.domain || domain || "website").toLowerCase(),
-                 name: formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
+                 name: (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
                  category: data.category || "Website",
                  categoryType: "all",
                  address: data.address || "",
@@ -437,8 +445,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <div>
                   <h2 className="text-3xl font-extrabold text-white mb-2">
                     {(() => {
-                      const matchingVideoName = placeVideos.find(v => v.placeName && !v.placeName.includes(".com"))?.placeName;
-                      const name = formatBusinessName(matchingVideoName || searchedPlace.name) || "";
+                      const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
+                      const name = (dom && KNOWN_OFFICIAL_NAMES[dom])
+                        || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
+                        || formatBusinessName(searchedPlace.name, dom)
+                        || "";
                       const words = name.split(" ");
                       const lastWord = words.pop();
                       return (

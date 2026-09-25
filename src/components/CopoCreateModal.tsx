@@ -1102,7 +1102,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           const fetchedBanner = data.image || "";
 
           const resolvedName = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain])
-            || (data.title && !data.title.includes("://") && data.title !== "Website" && data.title !== "undefined" && data.title.toLowerCase() !== "vaibe" ? data.title : "")
+            || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
             || formatBusinessName(data.siteName || data.title, data.domain || domain)
             || formatBusinessName(data.domain || domain)
             || (data.domain || domain);

@@ -4,7 +4,7 @@ import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName } from "../utils/placeUtils";
+import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 
 interface CopoMobileSearchViewProps {
@@ -29,7 +29,10 @@ const SearchBusinessBadge: React.FC<{
 
   if (isBusinessOrDomain) {
     const domain = cleanDomain || term;
-    const displayName = place?.name || formatBusinessName(domain) || domain;
+    const displayName = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain])
+      || (place?.brandDomain && KNOWN_OFFICIAL_NAMES[place.brandDomain])
+      || (place?.name && !isGenericPlaceName(place.name) && place.name !== domain && place.name !== "Garage Jv" ? place.name : formatBusinessName(domain))
+      || domain;
     return (
       <div className="w-8 h-8 rounded-lg bg-white shadow-sm ring-1 ring-white/20 border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
         <CopoBrandLogo
@@ -242,7 +245,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
       const instantLogo = getCleanLogoUrl(null, cleanUrl) || "";
-      const instantName = formatBusinessName(cleanUrl) || cleanUrl;
+      const instantName = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || cleanUrl;
       const optimisticPlace: Place = {
         id: cleanUrl.toLowerCase(),
         name: instantName,
@@ -283,7 +286,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             onAddPlace({
               ...optimisticPlace,
-              name: formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              name: (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
               category: data.category || optimisticPlace.category,
               address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
               city: data.city || optimisticPlace.city,
