@@ -254,10 +254,19 @@ export const CopoBusinessClaimModal: React.FC<CopoBusinessClaimModalProps> = ({
     }
   };
 
-  const filteredPlaces = places.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    p.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPlaces = React.useMemo(() => {
+    if (!isOpen || !places || !Array.isArray(places)) return [];
+    const query = (searchQuery || "").toLowerCase().trim();
+    if (!query) return places;
+    return places.filter(p => {
+      if (!p) return false;
+      const name = (p.name || "").toLowerCase();
+      const address = (p.address || "").toLowerCase();
+      const city = (p.city || "").toLowerCase();
+      const domain = (p.brandDomain || "").toLowerCase();
+      return name.includes(query) || address.includes(query) || city.includes(query) || domain.includes(query);
+    });
+  }, [isOpen, places, searchQuery]);
 
   const { swipeProps, dragOffsetY } = useSwipeDownToDismiss({
     onDismiss: onClose,

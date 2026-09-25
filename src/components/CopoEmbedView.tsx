@@ -120,7 +120,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       return (
         pSlug === cleanSlug ||
         p.id === cleanSlug ||
-        p.name.toLowerCase().trim() === cleanSlug ||
+        (p.name ? p.name.toLowerCase().trim() === cleanSlug : false) ||
         (p.website && getPlaceSlug(p.website) === cleanSlug) ||
         (p.brandDomain && extractCleanDomain(p.brandDomain) === cleanSlug)
       );

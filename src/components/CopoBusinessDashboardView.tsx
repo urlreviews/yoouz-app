@@ -1114,7 +1114,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (!clean || seen.has(clean)) return;
       seen.add(clean);
 
-      const foundPlace = places.find(p => p.id.toLowerCase() === clean || p.name.toLowerCase() === clean);
+      const foundPlace = places.find(p => (p.id ? p.id.toLowerCase() === clean : false) || (p.name ? p.name.toLowerCase() === clean : false));
       if (foundPlace) {
         list.push({ ...foundPlace, isFollowed: true });
       } else {
@@ -1360,8 +1360,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     // 1. Matching existing followers
     businessFollowers.forEach((f) => {
-      if (f.name.toLowerCase().includes(q) || f.handle.toLowerCase().includes(q) || (f.lastReviewSnippet && f.lastReviewSnippet.toLowerCase().includes(q))) {
-        map.set(f.name.toLowerCase(), f);
+      const fName = (f?.name || "").toLowerCase();
+      const fHandle = (f?.handle || "").toLowerCase();
+      const fSnippet = (f?.lastReviewSnippet || "").toLowerCase();
+      if (fName.includes(q) || fHandle.includes(q) || fSnippet.includes(q)) {
+        map.set(fName || fHandle, f);
       }
     });
 
