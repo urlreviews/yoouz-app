@@ -1144,7 +1144,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           {/* Action Buttons Row */}
           <div className="px-4 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 sm:gap-2">
-            {hasPhysicalLocation ? (
+            {hasPhysicalLocation && (
               <button
                 onClick={handleOpenDirections}
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
@@ -1154,9 +1154,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
                 <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
               </button>
-            ) : place.website ? (
+            )}
+
+            {effectiveWebsite && (
               <a
-                href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
+                href={effectiveWebsite}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
@@ -1166,7 +1168,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
                 <span className="font-bold text-[11px] text-white">{t("place.website", "Website")}</span>
               </a>
-            ) : null}
+            )}
 
             <button
               onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
@@ -1908,8 +1910,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </p>
               </div>
 
-              {/* Maps Integration for physical places, or Online Presence for websites */}
-              {hasPhysicalLocation ? (
+              {/* Maps Integration for physical places */}
+              {hasPhysicalLocation && (
                 <div className="pt-2 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
@@ -2009,13 +2011,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </div>
                   )}
                 </div>
-              ) : place.website ? (
+              )}
+
+              {effectiveWebsite && (
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-xs font-bold text-zinc-200">{t("place.onlinePresence", "Online Presence")}</h4>
                   </div>
                   <a
-                    href={place.website.startsWith("http") ? place.website : `https://${place.website}`}
+                    href={effectiveWebsite}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-between p-4 bg-zinc-900/80 hover:bg-zinc-900 rounded-2xl border border-zinc-800 transition-colors group cursor-pointer"
@@ -2025,7 +2029,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <CopoBrandLogo
                           domain={drawerDomain || place.brandDomain}
                           name={displayedPlaceName}
-                          website={place.website}
+                          website={effectiveWebsite}
                           logoUrl={primaryLogoUrl || place.logoUrl}
                           bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
                           className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden bg-transparent"
@@ -2035,13 +2039,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{t("place.visitOfficialWebsite", "Visit Official Website")}</p>
-                        <p className="text-xs text-zinc-400 truncate max-w-[200px] sm:max-w-xs">{displayWebsiteClean || place.website}</p>
+                        <p className="text-xs text-zinc-400 truncate max-w-[200px] sm:max-w-xs">{displayWebsiteClean || effectiveWebsite}</p>
                       </div>
                     </div>
                     <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
                   </a>
                 </div>
-              ) : null}
+              )}
 
               <div className="pt-2 space-y-2">
                 <h4 className="text-xs font-bold text-zinc-200">{t("place.accessibilityServices", "Accessibility & Services")}</h4>

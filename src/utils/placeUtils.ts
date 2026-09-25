@@ -2263,6 +2263,12 @@ export const KNOWN_CITY_COORDINATES: Record<string, { lat: number; lng: number }
 export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayName?: string): string {
   if (!place && !customDisplayName) return "Yoouz";
 
+  const placeKey = (place?.brandDomain || place?.id || place?.website || "")
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .trim();
+
   // 1. Resolve authentic clean business name
   let name = customDisplayName && !customDisplayName.includes("://") && !customDisplayName.endsWith(".com")
     ? customDisplayName
