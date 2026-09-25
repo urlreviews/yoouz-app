@@ -8257,14 +8257,48 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           const placesRs = await bunnyDb.execute("SELECT id, name, address, city, country, logoUrl, data FROM places;");
+          
+          // Auto-heal known places if any have missing address or corrupt country
+          for (const r of (placesRs.rows as any[])) {
+            const id = (r.id || "").toLowerCase();
+            const cleanDom = cleanDomainName(id);
+            const matchedKnown = KNOWN_ENTITY_LOCATIONS[id] || KNOWN_ENTITY_LOCATIONS[cleanDom];
+            const addr = (r.address || "").toLowerCase();
+            const country = (r.country || "").toLowerCase();
+            const isCorrupt = addr.startsWith("st bestellen") || addr.includes("bestellen contact") || (id.endsWith(".be") && country.includes("kingdom")) || (id.endsWith(".nl") && country.includes("kingdom"));
+            const isMissing = matchedKnown && (!r.address || r.address.trim() === "");
+            
+            if ((isCorrupt || isMissing) && matchedKnown) {
+              let parsed: any = {};
+              try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
+              parsed.name = matchedKnown.name || parsed.name || r.name || id;
+              parsed.address = matchedKnown.address || parsed.address || "";
+              parsed.city = matchedKnown.city || parsed.city || "";
+              parsed.country = matchedKnown.country || parsed.country || "";
+              parsed.category = matchedKnown.category || parsed.category || "Business & Professional Services";
+              if (matchedKnown.phone) parsed.phone = formatServerPhoneNumber(matchedKnown.phone, parsed.country);
+              if (matchedKnown.email) parsed.email = matchedKnown.email;
+              if (matchedKnown.lat) parsed.lat = matchedKnown.lat;
+              if (matchedKnown.lng) parsed.lng = matchedKnown.lng;
+
+              await bunnyDb.execute({
+                sql: `UPDATE places SET name = ?, address = ?, city = ?, country = ?, category = ?, latitude = ?, longitude = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [parsed.name, parsed.address, parsed.city, parsed.country, parsed.category, parsed.lat || 0, parsed.lng || 0, JSON.stringify(parsed), r.id]
+              }).catch(() => {});
+
+              r.name = parsed.name;
+              r.address = parsed.address;
+              r.city = parsed.city;
+              r.country = parsed.country;
+            }
+          }
+
           const corruptPlaces = (placesRs.rows as any[]).filter(r => {
             const addr = (r.address || "").toLowerCase();
             const country = (r.country || "").toLowerCase();
             const id = (r.id || "").toLowerCase();
-            let parsed: any = {};
-            try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
             const hasKnownLoc = Boolean(KNOWN_ENTITY_LOCATIONS[id] || KNOWN_ENTITY_LOCATIONS[cleanDomainName(id)]);
-            const missingKnownAddr = hasKnownLoc && (!addr || addr.trim() === "");
+            const missingKnownAddr = hasKnownLoc && (!r.address || r.address.trim() === "");
             return addr.startsWith("st bestellen") || addr.includes("bestellen contact") || (id.endsWith(".be") && country.includes("kingdom")) || (id.endsWith(".nl") && country.includes("kingdom")) || missingKnownAddr;
           });
           if (corruptPlaces.length > 0) {
@@ -23854,26 +23888,35 @@ function injectOpenGraphTags(html: string, meta: any) {
         const bannerChanged = matchedMeta?.bannerUrl && placeDoc.bannerUrl !== matchedMeta.bannerUrl;
 
         if (nameChanged || addressChanged || countryChanged || cityChanged || emailChanged || phoneChanged || catChanged || latLngChanged || bannerChanged) {
-          placeDoc.name = formattedName;
-          placeDoc.address = targetAddress;
-          placeDoc.city = targetCity;
-          placeDoc.country = targetCountry;
-          placeDoc.phone = targetPhone || placeDoc.phone;
-          placeDoc.email = targetEmail || placeDoc.email;
-          placeDoc.category = targetCategory || placeDoc.category;
-          placeDoc.bannerUrl = targetBanner || placeDoc.bannerUrl;
-          placeDoc.ogImage = targetBanner || placeDoc.ogImage;
-          placeDoc.logoUrl = targetLogo || placeDoc.logoUrl;
-          placeDoc.avatarUrl = targetLogo || placeDoc.avatarUrl;
-          placeDoc.lat = targetLat || placeDoc.lat;
-          placeDoc.lng = targetLng || placeDoc.lng;
+          const finalName = formattedName || placeDoc.name || placeId || "";
+          const finalAddress = targetAddress || placeDoc.address || "";
+          const finalCity = targetCity || placeDoc.city || "";
+          const finalCountry = targetCountry || placeDoc.country || "";
+          const finalCategory = targetCategory || placeDoc.category || "Business & Professional Services";
+          const finalLogo = targetLogo || placeDoc.logoUrl || "";
+          const finalLat = (typeof targetLat === "number" && !isNaN(targetLat)) ? targetLat : (typeof placeDoc.lat === "number" && !isNaN(placeDoc.lat) ? placeDoc.lat : 0);
+          const finalLng = (typeof targetLng === "number" && !isNaN(targetLng)) ? targetLng : (typeof placeDoc.lng === "number" && !isNaN(placeDoc.lng) ? placeDoc.lng : 0);
+
+          placeDoc.name = finalName;
+          placeDoc.address = finalAddress;
+          placeDoc.city = finalCity;
+          placeDoc.country = finalCountry;
+          placeDoc.phone = targetPhone || placeDoc.phone || "";
+          placeDoc.email = targetEmail || placeDoc.email || "";
+          placeDoc.category = finalCategory;
+          placeDoc.bannerUrl = targetBanner || placeDoc.bannerUrl || "";
+          placeDoc.ogImage = targetBanner || placeDoc.ogImage || "";
+          placeDoc.logoUrl = finalLogo;
+          placeDoc.avatarUrl = finalLogo;
+          placeDoc.lat = finalLat;
+          placeDoc.lng = finalLng;
           if (cleanDom) placeDoc.brandDomain = cleanDom;
 
           await bunnyDb.execute({
             sql: `UPDATE places SET name = ?, address = ?, city = ?, country = ?, category = ?, logoUrl = ?, latitude = ?, longitude = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-            args: [formattedName, targetAddress, targetCity, targetCountry, placeDoc.category, placeDoc.logoUrl, placeDoc.lat, placeDoc.lng, JSON.stringify(placeDoc), placeId]
+            args: [finalName, finalAddress, finalCity, finalCountry, finalCategory, finalLogo, finalLat, finalLng, JSON.stringify(placeDoc), placeId]
           });
-          fixedPlaces.push({ id: placeId, previousName: currentName, newName: formattedName, address: targetAddress, city: targetCity, country: targetCountry, email: placeDoc.email, phone: placeDoc.phone });
+          fixedPlaces.push({ id: placeId, previousName: currentName, newName: finalName, address: finalAddress, city: finalCity, country: finalCountry, email: placeDoc.email, phone: placeDoc.phone });
         }
       }
 
