@@ -210,6 +210,12 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "isrotel.co.il": "ישרוטל אילת",
+  "danhotels.co.il": "דן אילת",
+  "clubhotels-israel.com": "קלאב הוטל אילת",
+  "clubhotels.co.il": "קלאב הוטל אילת",
+  "yust.com": "Yust Liege Hotel",
+  "davidchantraine.be": "David Chantraine Eupen",
   "digitalpark": "Digital Park",
   "digitalpark.ae": "Digital Park",
   "digitalparkae": "Digital Park",

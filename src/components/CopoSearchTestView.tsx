@@ -138,32 +138,39 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
     setSelectedPlace(optimisticPlace);
 
-    // Fetch full metadata in background if real website domain exists
-    if (cleanDom) {
-      try {
-        const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          const resolvedName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || optimisticPlace.name;
-          setSelectedPlace(prev => prev ? {
-            ...prev,
-            name: resolvedName,
-            category: (data.category && data.category !== "Website") ? data.category : prev.category,
-            address: data.address || prev.address,
-            city: data.city || prev.city,
-            country: data.country || prev.country,
-            logoUrl: (data.logo && !data.logo.includes('domain=.com')) ? data.logo : prev.logoUrl,
-            avatarUrl: (data.logo && !data.logo.includes('domain=.com')) ? data.logo : prev.avatarUrl,
-            bannerUrl: data.image || prev.bannerUrl,
-            description: data.description || prev.description
-          } : null);
-        }
-      } catch (err) {
-        console.error("Url metadata fetch error:", err);
-      } finally {
-        setIsLoadingPlace(false);
+    // Fetch full metadata in background if real website domain exists or resolve it via name query
+    try {
+      const fetchUrl = cleanDom 
+        ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
+        : `/api/url-metadata?q=${encodeURIComponent(officialName)}`;
+        
+      const resp = await fetch(fetchUrl);
+      if (resp.ok) {
+        const data = await resp.json();
+        const resolvedDomain = data.domain || cleanDom;
+        const resolvedName = (resolvedDomain && KNOWN_OFFICIAL_NAMES[resolvedDomain]) || formatBusinessName(data.siteName || data.title, resolvedDomain) || optimisticPlace.name;
+        const resolvedAvatar = (data.logo && !data.logo.includes('domain=.com')) 
+          ? data.logo 
+          : (resolvedDomain ? `/api/favicon?domain=${resolvedDomain}` : optimisticPlace.avatarUrl);
+
+        setSelectedPlace(prev => prev ? {
+          ...prev,
+          name: resolvedName,
+          category: (data.category && data.category !== "Website") ? data.category : prev.category,
+          address: data.address || prev.address,
+          city: data.city || prev.city,
+          country: data.country || prev.country,
+          logoUrl: resolvedAvatar,
+          avatarUrl: resolvedAvatar,
+          bannerUrl: data.image || prev.bannerUrl,
+          description: data.description || prev.description,
+          website: resolvedDomain ? `https://${resolvedDomain}` : prev.website,
+          brandDomain: resolvedDomain || prev.brandDomain
+        } : null);
       }
-    } else {
+    } catch (err) {
+      console.error("Url metadata fetch error:", err);
+    } finally {
       setIsLoadingPlace(false);
     }
   };

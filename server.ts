@@ -19433,7 +19433,7 @@ Return JSON:
                     );
                     if (knownMatchKey) {
                       targetDomain = knownMatchKey;
-                    } else if (suggestions.length < 3) {
+                    } else if (suggestions.length < 5) {
                       targetDomain = await resolveDomainForBusinessQuery(cleanedPhrase);
                     }
                   }
@@ -23026,6 +23026,12 @@ function cleanDomainName(urlStr: any) {
 }
 
 const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "isrotel.co.il": "ישרוטל אילת",
+  "danhotels.co.il": "דן אילת",
+  "clubhotels-israel.com": "קלאב הוטל אילת",
+  "clubhotels.co.il": "קלאב הוטל אילת",
+  "yust.com": "Yust Liege Hotel",
+  "davidchantraine.be": "David Chantraine Eupen",
   "digitalpark": "Digital Park",
   "digitalpark.ae": "Digital Park",
   "digitalparkae": "Digital Park",
