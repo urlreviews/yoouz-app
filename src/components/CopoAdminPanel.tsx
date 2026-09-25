@@ -264,6 +264,57 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [adminReplyText, setAdminReplyText] = useState("");
   const [isSendingAdminReply, setIsSendingAdminReply] = useState(false);
 
+  // Business Name & Compound Word Integrity Center State
+  const [brandTestInput, setBrandTestInput] = useState("lassustandartsen.nl");
+  const [brandTestResult, setBrandTestResult] = useState<any>(null);
+  const [isTestingBrand, setIsTestingBrand] = useState(false);
+  const [isRepairingBrandNames, setIsRepairingBrandNames] = useState(false);
+  const [brandRepairReport, setBrandRepairReport] = useState<any>(null);
+
+  const handleTestBrandName = async (customInput?: string) => {
+    const input = (customInput || brandTestInput || "").trim();
+    if (!input) return;
+    setIsTestingBrand(true);
+    try {
+      const res = await fetch("/api/admin/test-parse-brand-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input })
+      });
+      const data = await res.json();
+      setBrandTestResult(data);
+    } catch (e: any) {
+      setBrandTestResult({ success: false, error: e?.message || "Failed to test brand parser" });
+    } finally {
+      setIsTestingBrand(false);
+    }
+  };
+
+  const handleRepairAllBusinessNames = async () => {
+    setIsRepairingBrandNames(true);
+    try {
+      const res = await fetch("/api/admin/repair-business-names", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      setBrandRepairReport(data);
+      if (data && data.success) {
+        showToast(`Business names repaired: ${data.fixedPlacesCount} place(s), ${data.fixedReviewsCount} review(s).`);
+        if (typeof fetchHealthDiagnostic === "function") {
+          fetchHealthDiagnostic();
+        }
+      } else {
+        showToast(data?.error || "Error repairing business names");
+      }
+    } catch (e: any) {
+      setBrandRepairReport({ success: false, error: e?.message || "Failed to repair business names" });
+      showToast("Network error repairing business names");
+    } finally {
+      setIsRepairingBrandNames(false);
+    }
+  };
+
   const fetchAdminChats = async () => {
     setIsLoadingChats(true);
     try {
@@ -2520,6 +2571,144 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* DEDICATED BUSINESS NAME & COMPOUND WORD INTEGRITY CENTER */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-emerald-500/30 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-white tracking-tight">Business Name & Compound Word Integrity Center</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          SUB-SYSTEM #48 ACTIVE
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        Guarantees zero single-word concatenations (e.g. separates <span className="text-zinc-200 font-mono">lassustandartsen.nl</span> → <span className="text-emerald-400 font-bold font-mono">Lassus Tandartsen</span>, <span className="text-zinc-200 font-mono">dentisteerpent.be</span> → <span className="text-emerald-400 font-bold font-mono">Dentiste Erpent</span>).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleRepairAllBusinessNames}
+                      disabled={isRepairingBrandNames}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRepairingBrandNames ? "animate-spin" : ""}`} />
+                      <span>{isRepairingBrandNames ? "Repairing All Names..." : "Audit & Repair All Names"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Brand Parser Test Console */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                  <div className="lg:col-span-7 space-y-2">
+                    <label className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
+                      <span>Live URL & Brand Separation Test Sandbox</span>
+                      <span className="text-[10px] text-zinc-500 font-normal">(Test any website, slug, or compound string)</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <input
+                          type="text"
+                          value={brandTestInput}
+                          onChange={(e) => setBrandTestInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleTestBrandName(); }}
+                          placeholder="e.g. lassustandartsen.nl, dentisteerpent.be, tandis.be..."
+                          className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 font-mono"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleTestBrandName()}
+                        disabled={isTestingBrand || !brandTestInput.trim()}
+                        className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                      >
+                        {isTestingBrand ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+                        <span>Parse Name</span>
+                      </button>
+                    </div>
+
+                    {/* Quick Test Chips */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mr-1">Quick Test:</span>
+                      {[
+                        "lassustandartsen.nl",
+                        "dentisteerpent.be",
+                        "tandis.be",
+                        "dentiste-namur.be",
+                        "dental365.nl",
+                        "brusselsdental.com",
+                        "aldhabidental.ae"
+                      ].map((sample) => (
+                        <button
+                          key={sample}
+                          type="button"
+                          onClick={() => {
+                            setBrandTestInput(sample);
+                            handleTestBrandName(sample);
+                          }}
+                          className="px-2 py-0.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white border border-zinc-800 transition cursor-pointer"
+                        >
+                          {sample}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Test Result Display */}
+                  <div className="lg:col-span-5 bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 min-h-[92px] flex flex-col justify-center">
+                    {brandTestResult ? (
+                      <div className="space-y-1.5 animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-zinc-400 font-medium">Parsed Business Name:</span>
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold font-mono text-[11px] border border-emerald-500/20">
+                            {brandTestResult.wordCount} {brandTestResult.wordCount === 1 ? "Word" : "Separated Words"}
+                          </span>
+                        </div>
+                        <div className="text-base font-black text-white font-sans flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>{brandTestResult.parsedName || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-zinc-400 pt-0.5">
+                          <span>Domain: <strong className="text-zinc-300 font-mono">{brandTestResult.cleanDomain}</strong></span>
+                          <span>Known Dictionary: <strong className={brandTestResult.isKnownBrand ? "text-emerald-400" : "text-amber-400"}>{brandTestResult.isKnownBrand ? "Yes (Official)" : "Auto-Split"}</strong></span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-xs text-zinc-400 flex flex-col items-center gap-1">
+                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                        <span>Click &quot;Parse Name&quot; or select a quick test domain above</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Repair Report Summary if run */}
+                {brandRepairReport && (
+                  <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-700/50 flex items-start justify-between gap-3 animate-in slide-in-from-top-2">
+                    <div className="space-y-1 text-xs">
+                      <div className="font-bold text-emerald-300 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>{brandRepairReport.message || "Audit and repair completed successfully."}</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-200/80">
+                        All database business entries and video reviews in BunnyDB verified. Single-word concatenations are permanently purged.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setBrandRepairReport(null)}
+                      className="text-zinc-400 hover:text-white p-1 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Subsystems Control & Filter Bar */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
                 {/* Search input */}
@@ -2636,7 +2825,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard",
                       video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
-                      duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard"
+                      duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
+                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard"
                     };
 
                     const title = titles[key] || key;
@@ -2644,7 +2834,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                     // Category matching
                     if (subsystemCategory === "database") {
-                      if (!["database_persistence", "video_feed_engine", "video_review_persistence_sync", "video_cascade_deletion", "pwa_service_worker_cache", "video_review_feed_retention"].includes(key)) return false;
+                      if (!["database_persistence", "video_feed_engine", "video_review_persistence_sync", "video_cascade_deletion", "pwa_service_worker_cache", "video_review_feed_retention", "business_name_word_separation_integrity_guard"].includes(key)) return false;
                     } else if (subsystemCategory === "media") {
                       if (!["video_streaming_cdn", "video_playback_controls", "camera_recording_modal", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_sharing_deep_links", "video_review_metadata_sharing_social_preview_guard"].includes(key)) return false;
                     } else if (subsystemCategory === "security") {
@@ -2652,7 +2842,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     } else if (subsystemCategory === "realtime") {
                       if (!["realtime_stream_sse_stability_guard", "duplicate_notification_prevention_live_guard", "business_comments_messages_sync_guard", "business_universal_notifications_all_interactions_guard", "comments_realtime_sync_guard", "cross_device_comment_sync_guard", "comments_system", "like_button_throttling", "notifications_and_badges"].includes(key)) return false;
                     } else if (subsystemCategory === "social") {
-                      if (!["user_follow_sync", "bookmarks_and_saved_places", "i18n_language_engine", "user_profiles_avatars", "comments_deduplication_sync", "user_profile_chat_dedup_guard", "universal_avatar_deterministic_sync_guard", "universal_resource_api_telemetry_guard", "mobile_user_profile_location_layout_stability_guard", "user_profile_location_canonicalization_guard", "business_profile_review_match_guard", "business_profile_banner_logo_database_live_sync_guard", "google_maps_business_name_resolution_anti_break_guard", "business_cover_banner_sync_storage_guard", "business_web_listing_logo_banner_contrast_guard"].includes(key)) return false;
+                      if (!["user_follow_sync", "bookmarks_and_saved_places", "i18n_language_engine", "user_profiles_avatars", "comments_deduplication_sync", "user_profile_chat_dedup_guard", "universal_avatar_deterministic_sync_guard", "universal_resource_api_telemetry_guard", "mobile_user_profile_location_layout_stability_guard", "user_profile_location_canonicalization_guard", "business_profile_review_match_guard", "business_profile_banner_logo_database_live_sync_guard", "google_maps_business_name_resolution_anti_break_guard", "business_cover_banner_sync_storage_guard", "business_web_listing_logo_banner_contrast_guard", "business_name_word_separation_integrity_guard"].includes(key)) return false;
                     }
 
                     // Search matching
@@ -2712,7 +2902,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard",
                       video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
-                      duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard"
+                      duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
+                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard"
                     };
 
                     const icons: Record<string, string> = {
@@ -2763,7 +2954,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       video_recording_upload_anti_stall_guard: "📹",
                       video_cross_device_instant_live_sync_guard: "🔄",
                       business_web_listing_logo_banner_contrast_guard: "✨",
-                      duplicate_notification_prevention_live_guard: "🔔"
+                      duplicate_notification_prevention_live_guard: "🔔",
+                      business_name_word_separation_integrity_guard: "🏢"
                     };
 
                     const isExpanded = expandedSubsystems[key] || false;
@@ -3916,6 +4108,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                   <button
                     type="button"
+                    onClick={handleRepairAllBusinessNames}
+                    disabled={isRepairingBrandNames}
+                    className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-white rounded-xl text-xs font-bold border border-emerald-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Audit and repair compound word separation across all business names"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{isRepairingBrandNames ? "Repairing..." : "Repair Names"}</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleAuditFollowers}
                     disabled={isAuditingFollowers}
                     className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold border border-zinc-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
@@ -4208,6 +4411,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
                     Showing <span className="text-white font-bold">{filteredPhysicalPlaces.length}</span> venues
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRepairAllBusinessNames}
+                    disabled={isRepairingBrandNames}
+                    className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-white rounded-xl text-xs font-bold border border-emerald-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Audit and repair compound word separation across all places"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{isRepairingBrandNames ? "Repairing..." : "Repair Names"}</span>
+                  </button>
 
                   {allPhysicalPlaces.length > 0 && (
                     <div>

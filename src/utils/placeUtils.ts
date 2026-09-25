@@ -251,6 +251,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "bhol.co.il": "B'Chadrei Charedim",
   "tandis": "Tandis",
   "tandis.be": "Tandis",
+  "dental365": "Dental 365",
+  "dental365.nl": "Dental 365",
+  "www-dental365-nl": "Dental 365",
+  "lassustandartsen": "Lassus Tandartsen",
+  "lassustandartsen.nl": "Lassus Tandartsen",
+  "www-lassustandartsen-nl": "Lassus Tandartsen",
+  "lassustandartsen-nl": "Lassus Tandartsen",
   "dentisteerpent": "Dentiste Erpent",
   "dentisteerpent.be": "Dentiste Erpent",
   "dentiste-namur": "Dentiste Namur",
@@ -311,9 +318,22 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "vanlawfirm": "Van Law Firm Injury Attorneys",
   "vanlawfirm.com": "Van Law Firm Injury Attorneys",
   "www-vanlawfirm-com": "Van Law Firm Injury Attorneys",
+  "alarislaw": "Alaris Law",
+  "alaris-law": "Alaris Law",
+  "alaris-law.com": "Alaris Law",
+  "www-alaris-law-com": "Alaris Law",
   "nevadalegalservices": "Nevada Legal Services",
   "nevadalegalservices.org": "Nevada Legal Services",
   "www-nevadalegalservices-org": "Nevada Legal Services",
+  "paulpowell": "The Paul Powell Law Firm",
+  "paulpowell.com": "The Paul Powell Law Firm",
+  "www-paulpowell-com": "The Paul Powell Law Firm",
+  "thepaulpowelllawfirm": "The Paul Powell Law Firm",
+  "paultoland": "Paul Toland Law Office",
+  "paultolandlaw": "Paul Toland Law Office",
+  "paultolandlaw.com": "Paul Toland Law Office",
+  "theottleylawfirm": "The Ottley Law Firm",
+  "theottleylawfirm.com": "The Ottley Law Firm",
   "mcveaghfleming": "McVeagh Fleming Lawyers",
   "mcveaghfleming.co.nz": "McVeagh Fleming Lawyers",
   "mcveaghfleminglawyers": "McVeagh Fleming Lawyers",
@@ -335,11 +355,12 @@ export function splitCompoundWords(str: string): string {
   // 2. Split letter-number and number-letter
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
   // 3. Known brand/locational prefixes
-  s = s.replace(/^(al|el|the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  s = s.replace(/^(the|my|all|pro|top|best|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{3,})/i, "$1 ");
+  s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
   
   // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
   // Note: Avoid short sub-words like 'and' that cause false splits in words like 'tandis' or 'standard'
-  const commonWords = /(lerner|rowe|benson|bingham|injury|accident|lawyers|lawyer|attorneys|attorney|lawfirm|dentistes|dentiste|dentists|dentist|dental|clinics|clinic|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|services|service|solutions|solution|groups|group|media|news|technology|tech|studios|studio|travel|cafes|cafe|coffee|bars|bar|suites|suite|hospitals|hospital|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|plumber|plomberie|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|consulting|associates|associate|partners|partner|properties|realestate|agency|law|firm|orthodontics|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
+  const commonWords = /(tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
   
   // Apply word splitting if no spaces yet
   const parts = s.split(" ").map(p => {
@@ -542,16 +563,16 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     spaced = "Brett Levy";
   }
 
-  const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae"]);
-  const lowerCaseWords = new Set(["of", "the", "and", "in", "at", "de", "et", "du", "des"]);
+  const acronyms = new Set(["usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae", "lm", "jb", "sf"]);
+  const lowerCaseWords = new Set(["of", "and", "in", "at", "de", "et", "du", "des"]);
 
   const words = spaced
     .split(/[-_ ]+/)
-    .map(word => {
+    .map((word, idx) => {
       if (!word) return "";
       const lower = word.toLowerCase();
       if (acronyms.has(lower)) return lower.toUpperCase();
-      if (lowerCaseWords.has(lower)) return lower;
+      if (lowerCaseWords.has(lower) && idx > 0) return lower;
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .filter(Boolean);
