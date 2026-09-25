@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -379,15 +379,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Clean, official human-readable business name for the Place Page and Drawer
   const displayedPlaceName = React.useMemo(() => {
-    // 1. If any video review for this place has a clean, formatted multi-word placeName, prioritize it!
-    const matchingVid = (rawPlaceVideos || []).find(
-      (v) => v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com") && v.placeName.trim().length > 2
-    );
-    if (matchingVid?.placeName) {
-      const formatted = formatBusinessName(matchingVid.placeName);
-      if (formatted && formatted.length > 2 && !formatted.includes(".com")) return formatted;
-    }
-    // 2. Check KNOWN_OFFICIAL_NAMES for drawerDomain or place.id
+    // 1. Highest Priority: Verified KNOWN_OFFICIAL_NAMES dictionary
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
       return KNOWN_OFFICIAL_NAMES[drawerDomain];
     }
@@ -395,13 +387,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) {
       return KNOWN_OFFICIAL_NAMES[cleanId];
     }
-    // 3. Format place.name
-    const formatted = formatBusinessName(place?.name);
-    if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
-      return formatted;
+    if (place?.brandDomain && KNOWN_OFFICIAL_NAMES[place.brandDomain]) {
+      return KNOWN_OFFICIAL_NAMES[place.brandDomain];
     }
+
+    // 2. Official scraped place name on the Place record
+    if (place?.name && !isGenericPlaceName(place.name)) {
+      const formatted = formatBusinessName(place.name);
+      if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
+        return formatted;
+      }
+    }
+
+    // 3. Multi-word video review placeName (if clean and not a generic domain split)
+    const matchingVid = (rawPlaceVideos || []).find(
+      (v) => v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com") && v.placeName.trim().length > 2
+    );
+    if (matchingVid?.placeName && !isGenericPlaceName(matchingVid.placeName)) {
+      const formatted = formatBusinessName(matchingVid.placeName);
+      if (formatted && formatted.length > 2 && !formatted.includes(".com")) return formatted;
+    }
+
     return formatBusinessName(place?.id) || place?.name || "";
-  }, [rawPlaceVideos, place?.name, place?.id, drawerDomain]);
+  }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
     if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com") && (!place.website.includes("g.com") || place.id === "g.com")) {

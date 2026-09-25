@@ -852,7 +852,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
               onOpenPlace(targetPlaceId);
             }}
-            className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[280px] sm:max-w-[340px] md:max-w-[420px] text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
+            className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
           >
             {(() => {
               const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
@@ -867,14 +867,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     bannerUrl={businessBannerUrl || video.placeBannerUrl}
                     loading={isActive || isNear ? "eager" : "lazy"}
                     fetchPriority={isActive ? "high" : "auto"}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md self-center"
                     imageClassName="w-full h-full object-contain rounded-lg"
                     fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                   />
                   <div className="min-w-0 flex-1 py-0.5">
-                    <span className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
-                      <span className="truncate">{cardName}</span>
-                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+                    <span className="flex items-center gap-1 leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2 [overflow-wrap:anywhere]">
+                      <span className="line-clamp-2 [overflow-wrap:anywhere]">{cardName}</span>
+                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0 inline-block align-text-top ml-0.5" />
                     </span>
                     {!isEmbed && (
                       <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
