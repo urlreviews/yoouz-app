@@ -18093,22 +18093,92 @@ Return JSON:
     };
   }
 
+  async function resolveDomainForBusinessQuery(query: string): Promise<string> {
+    const cleanQ = query.trim();
+    if (!cleanQ || cleanQ.length < 2) return "";
+
+    // 1. Explicit domain check
+    if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
+      return cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+    }
+
+    // 2. Known Official Dictionary lookup
+    const qLower = cleanQ.toLowerCase();
+    for (const [dom, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+      const nameLower = officialName.toLowerCase();
+      if (nameLower === qLower || nameLower.includes(qLower) || qLower.includes(nameLower)) {
+        return dom;
+      }
+    }
+
+    // 3. Live Web Search Domain Resolution
+    try {
+      const res = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(cleanQ + " website"), {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9,he;q=0.8,nl;q=0.8,fr;q=0.8",
+          "Referer": "https://html.duckduckgo.com/"
+        },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const re = /uddg=([^&"']+)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          try {
+            const urlStr = decodeURIComponent(m[1]);
+            const u = new URL(urlStr);
+            const host = u.hostname.toLowerCase().replace(/^www\./, "");
+            if (
+              !host.includes("duckduckgo") &&
+              !host.includes("facebook") &&
+              !host.includes("instagram") &&
+              !host.includes("wikipedia") &&
+              !host.includes("tripadvisor") &&
+              !host.includes("booking.com") &&
+              !host.includes("youtube") &&
+              !host.includes("linkedin") &&
+              !host.includes("twitter") &&
+              !host.includes("x.com") &&
+              !host.includes("yellowpages") &&
+              !host.includes("pagesdor")
+            ) {
+              return host;
+            }
+          } catch(e) {}
+        }
+      }
+    } catch(e) {}
+
+    return "";
+  }
+
   app.get('/api/url-metadata', async (req, res) => {
     try {
-      let url = String(req.query.url || '');
-      if (!url) return res.status(400).json({ error: 'Missing url parameter' });
+      let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
+      if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
       
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
+      let targetUrl = rawQuery;
+      // If user passed a business phrase/name without a domain dot
+      if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
+        const resolvedDom = await resolveDomainForBusinessQuery(rawQuery);
+        if (resolvedDom) {
+          targetUrl = 'https://' + resolvedDom;
+        } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+          targetUrl = 'https://' + targetUrl;
+        }
+      } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        targetUrl = 'https://' + targetUrl;
       }
-      
+
       let parsedUrl;
       try {
-        parsedUrl = new URL(url);
+        parsedUrl = new URL(targetUrl);
       } catch (err) {
-        return res.status(400).json({ error: 'Invalid URL' });
+        return res.status(400).json({ error: 'Invalid URL or Domain' });
       }
-      url = parsedUrl.origin;
+      let url = parsedUrl.origin;
       const domain = parsedUrl.hostname;
       
       let title = '';
@@ -19363,6 +19433,8 @@ Return JSON:
                     );
                     if (knownMatchKey) {
                       targetDomain = knownMatchKey;
+                    } else if (suggestions.length < 3) {
+                      targetDomain = await resolveDomainForBusinessQuery(cleanedPhrase);
                     }
                   }
 
