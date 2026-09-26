@@ -18112,6 +18112,8 @@ Return JSON:
     }
 
     // 3. Live Web Search Domain Resolution
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
     try {
       const res = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(cleanQ + " website"), {
         headers: {
@@ -18119,8 +18121,9 @@ Return JSON:
           "Accept-Language": "en-US,en;q=0.9,he;q=0.8,nl;q=0.8,fr;q=0.8",
           "Referer": "https://html.duckduckgo.com/"
         },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const html = await res.text();
         const re = /uddg=([^&"']+)/g;
@@ -18149,7 +18152,9 @@ Return JSON:
           } catch(e) {}
         }
       }
-    } catch(e) {}
+    } catch(e) {
+      clearTimeout(timeoutId);
+    }
 
     return "";
   }
@@ -19435,7 +19440,7 @@ Return JSON:
                     );
                     if (knownMatchKey) {
                       targetDomain = knownMatchKey;
-                    } else if (suggestions.length < 5) {
+                    } else if (suggestions.length === 0) {
                       targetDomain = await resolveDomainForBusinessQuery(cleanedPhrase);
                     }
                   }
@@ -19464,6 +19469,8 @@ Return JSON:
 
       // 4. Advanced Live Web Search organic scraper for local businesses (e.g. "barber buzzy")
       if (suggestions.length < 8) {
+        const ddgHtmlController = new AbortController();
+        const htmlTimeoutId = setTimeout(() => ddgHtmlController.abort(), 1500);
         try {
           const htmlRes = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
             headers: {
@@ -19471,8 +19478,9 @@ Return JSON:
               "Accept-Language": "en-US,en;q=0.9,he;q=0.8",
               "Referer": "https://html.duckduckgo.com/"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+            signal: ddgHtmlController.signal
           });
+          clearTimeout(htmlTimeoutId);
           if (htmlRes.ok) {
             const searchHtml = await htmlRes.text();
             const $ = cheerio.load(searchHtml);
@@ -19548,6 +19556,7 @@ Return JSON:
             });
           }
         } catch (htmlErr) {
+          clearTimeout(htmlTimeoutId);
           console.error("DDG HTML search parse error:", htmlErr);
         }
       }
