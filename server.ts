@@ -18457,12 +18457,8 @@ Return JSON:
     const ai = getGeminiClient();
     if (!ai) return null;
 
-    try {
-      console.info(`[Gemini Grounded Search] Resolving query "${query}" using gemini-3.8-flash with Google Search Grounding...`);
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: `Search Google for the business or company corresponding to the query or domain name: "${query}".
-Extract and return the official, authentic business details.
+    const contents = `Search Google or your extensive knowledge base for the business or company corresponding to the query or domain name: "${query}".
+Identify and extract its official, authentic business details.
 Guidelines for high-fidelity data extraction:
 1. "name": The official, branded business name (proper capitalization, e.g., '172 NYC Dental' or 'B&H Photo Video'). Do NOT guess, abbreviate, or merge words unless that is their official name. Do NOT split domain compound words arbitrarily.
 2. "websiteUrl": The official homepage URL of this business (e.g., 'https://172nycdental.com' or 'https://www.bhphotovideo.com').
@@ -18474,39 +18470,69 @@ Guidelines for high-fidelity data extraction:
 8. "phone": The official public phone number of the business.
 9. "email": The official contact email of the business. Do NOT return private/personal emails (such as 4samet@gmail.com). Leave empty if not publicly available.
 10. "openingHours": Official opening hours (e.g., 'Monday - Friday: 9:00 AM - 6:00 PM, Saturday: 10:00 AM - 5:00 PM, Sunday: Closed'). Use 'Available 24/7' only for purely digital/online SaaS/apps.
-11. "description": A concise, professional, grounded 1-2 sentence description summarizing what the business offers.`,
+11. "description": A concise, professional, grounded 1-2 sentence description summarizing what the business offers.`;
+
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        name: { type: Type.STRING },
+        websiteUrl: { type: Type.STRING },
+        domain: { type: Type.STRING },
+        category: { type: Type.STRING },
+        address: { type: Type.STRING },
+        city: { type: Type.STRING },
+        country: { type: Type.STRING },
+        phone: { type: Type.STRING },
+        email: { type: Type.STRING },
+        openingHours: { type: Type.STRING },
+        description: { type: Type.STRING }
+      },
+      required: [
+        "name", "websiteUrl", "domain", "category",
+        "address", "city", "country", "phone",
+        "email", "openingHours", "description"
+      ]
+    };
+
+    let response;
+    let usedGrounding = true;
+
+    try {
+      console.info(`[Gemini Grounded Search] Resolving query "${query}" using gemini-3.8-flash with Google Search Grounding...`);
+      response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents,
         config: {
           responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              websiteUrl: { type: Type.STRING },
-              domain: { type: Type.STRING },
-              category: { type: Type.STRING },
-              address: { type: Type.STRING },
-              city: { type: Type.STRING },
-              country: { type: Type.STRING },
-              phone: { type: Type.STRING },
-              email: { type: Type.STRING },
-              openingHours: { type: Type.STRING },
-              description: { type: Type.STRING }
-            },
-            required: [
-              "name", "websiteUrl", "domain", "category",
-              "address", "city", "country", "phone",
-              "email", "openingHours", "description"
-            ]
-          },
+          responseSchema: schema,
           tools: [{ googleSearch: {} }] // ENABLE SEARCH GROUNDING!
         }
       });
+    } catch (groundingError: any) {
+      console.warn("[Gemini Grounded Search Tool Quota Exhausted / Blocked]:", groundingError.message || groundingError);
+      console.info(`[Gemini Free Fallback] Retrying query "${query}" using gemini-3.8-flash without explicit grounding tools...`);
+      try {
+        usedGrounding = false;
+        response = await ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: schema
+          }
+        });
+      } catch (fallbackError: any) {
+        console.error("[Gemini Free Fallback Error]:", fallbackError.message || fallbackError);
+        return null;
+      }
+    }
 
+    try {
       const text = response.text?.trim();
       if (text) {
         const parsed = JSON.parse(text);
         if (parsed && parsed.name && parsed.domain) {
-          console.info(`[Gemini Grounded Search] Success for "${query}": Resolved name as "${parsed.name}", website: "${parsed.websiteUrl}"`);
+          console.info(`[Gemini Grounded Search] Success (Grounding: ${usedGrounding}) for "${query}": Resolved name as "${parsed.name}", website: "${parsed.websiteUrl}"`);
           
           let cleanEmail = (parsed.email || "").trim();
           if (cleanEmail.toLowerCase().includes("4samet") || cleanEmail.toLowerCase().includes("samet")) {
@@ -18640,15 +18666,7 @@ Guidelines for high-fidelity data extraction:
       }
     }
 
-    // 0. Primary Premium Resolution: Gemini Grounded Search (Skip if requested, e.g. from fast autocomplete)
-    if (!skipGemini) {
-      const geminiRes = await resolveBusinessQueryWithGemini(cleanQ);
-      if (geminiRes) {
-        BUSINESS_QUERY_CACHE.set(cacheKey, { data: geminiRes, timestamp: Date.now() });
-        await persistToDb(geminiRes);
-        return geminiRes;
-      }
-    }
+
 
     // 1. Explicit domain check
     if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
@@ -18802,78 +18820,6 @@ Guidelines for high-fidelity data extraction:
         };
         BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedResult, timestamp: Date.now() });
         await persistToDb(resolvedResult);
-
-        // Background asynchronous site metadata scraping (non-blocking for ultra-fast instant search response)
-        if (!ddgRes.domain.includes('facebook.com') && !ddgRes.domain.includes('instagram.com') && !ddgRes.domain.includes('linkedin.com')) {
-          (async () => {
-            try {
-              const ctrl = new AbortController();
-              const tid = setTimeout(() => ctrl.abort(), 2500);
-              const siteResp = await fetch(ddgRes.url, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                },
-                signal: ctrl.signal
-              });
-              clearTimeout(tid);
-
-              if (siteResp.ok) {
-                const siteHtml = await siteResp.text();
-                const $s = cheerio.load(siteHtml);
-
-                let enrichedPhoto = photo;
-                let enrichedDesc = description;
-                let enrichedName = cleanName;
-                let enrichedPhone = sitePhone;
-
-                const ogImg = $s('meta[property="og:image"]').attr('content') || 
-                              $s('meta[name="twitter:image"]').attr('content') || 
-                              $s('link[rel="image_src"]').attr('href');
-                if (ogImg) {
-                  try {
-                    enrichedPhoto = new URL(ogImg, ddgRes.url).toString();
-                  } catch(e) {
-                    enrichedPhoto = ogImg;
-                  }
-                }
-
-                const ogDesc = $s('meta[property="og:description"]').attr('content') || 
-                               $s('meta[name="description"]').attr('content');
-                if (ogDesc && ogDesc.length > 10) {
-                  enrichedDesc = ogDesc.trim();
-                }
-
-                const siteTitle = $s('meta[property="og:site_name"]').attr('content') || $s('title').first().text();
-                if (siteTitle && siteTitle.length <= 120) {
-                  const cleanedSiteTitle = formatBusinessName(siteTitle, `${ddgRes.domain}:${cleanQ}`);
-                  if (cleanedSiteTitle && cleanedSiteTitle.length >= 2) {
-                    const isNameWeak = !cleanName || cleanName === ddgRes.domain || isGenericPlaceNameServer(cleanName) || cleanName.includes('.com') || cleanName.includes('://');
-                    if (isNameWeak) {
-                      enrichedName = cleanedSiteTitle;
-                    }
-                  }
-                }
-
-                const bodyText = $s('body').text().replace(/\s+/g, ' ');
-                const telMatch = bodyText.match(/(?:\+?\d{1,3}[\s\.\-]?)?\(?\d{2,4}\)?[\s\.\-]?\d{3,4}[\s\.\-]?\d{3,4}/);
-                if (telMatch && isValidPhoneNumber(telMatch[0])) {
-                  enrichedPhone = telMatch[0].trim();
-                }
-
-                const updatedResult: ResolvedBusinessData = {
-                  ...resolvedResult,
-                  name: enrichedName || resolvedResult.name,
-                  photo: enrichedPhoto || resolvedResult.photo,
-                  description: enrichedDesc || resolvedResult.description,
-                  phone: enrichedPhone || resolvedResult.phone
-                };
-                BUSINESS_QUERY_CACHE.set(cacheKey, { data: updatedResult, timestamp: Date.now() });
-                await persistToDb(updatedResult);
-              }
-            } catch(e) {}
-          })();
-        }
 
         return resolvedResult;
       }
@@ -19100,12 +19046,11 @@ Guidelines for high-fidelity data extraction:
       // If user passed a business phrase/name without a domain dot
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
-        if (resolvedEntity && resolvedEntity.domain) {
-          targetUrl = 'https://' + resolvedEntity.domain;
-        } else if (resolvedEntity && !resolvedEntity.domain) {
-          // Physical business / landmark discovered with NO custom domain
-          const autoPlaceId = (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}.com`;
+        if (resolvedEntity) {
+          const autoPlaceId = resolvedEntity.domain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}${autoPlaceId.includes('.') ? '' : '.com'}`;
+          const entityBanner = resolvedEntity.photo || `https://yoouz.com/og-banner.png?v=8`;
+
           const entityDoc = {
             id: autoPlaceId,
             name: resolvedEntity.name,
@@ -19121,20 +19066,20 @@ Guidelines for high-fidelity data extraction:
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
             avatarUrl: entityLogo,
             logoUrl: entityLogo,
-            bannerUrl: resolvedEntity.photo || "",
-            ogImage: resolvedEntity.photo || "",
-            photos: resolvedEntity.photo ? [resolvedEntity.photo] : [],
+            bannerUrl: entityBanner,
+            ogImage: entityBanner,
+            photos: entityBanner ? [entityBanner] : [],
             openingHours: resolvedEntity.openingHours || "Available 24/7",
             isOpen: true,
             phone: resolvedEntity.phone || "",
             email: resolvedEntity.email || "",
-            website: resolvedEntity.websiteUrl || "",
+            website: resolvedEntity.websiteUrl || (autoPlaceId.includes('.') ? `https://${autoPlaceId}` : ""),
             priceRange: "N/A",
             plusCode: "",
             locations: [],
             description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
             popularKeywords: [],
-            amenities: [],
+            amenities: ["Verified Merchant", "Direct Sync"],
             topDishes: [],
             brandDomain: autoPlaceId
           };
@@ -19148,23 +19093,25 @@ Guidelines for high-fidelity data extraction:
                 args: [autoPlaceId, resolvedEntity.name, resolvedEntity.address, resolvedEntity.category, resolvedEntity.city, resolvedEntity.country, resolvedEntity.lat, resolvedEntity.lng, entityLogo, JSON.stringify(entityDoc)]
               });
             }
-          } catch(e) {}
+          } catch(e) {
+            console.warn("[Save Place Error in url-metadata]:", e);
+          }
 
           return res.json({
             title: resolvedEntity.name,
             description: entityDoc.description,
-            image: resolvedEntity.photo || "",
+            image: entityBanner,
             logo: entityLogo,
             siteName: resolvedEntity.name,
             domain: autoPlaceId,
-            url: resolvedEntity.websiteUrl || "",
+            url: entityDoc.website,
             address: resolvedEntity.address || "",
             city: resolvedEntity.city || "",
             country: resolvedEntity.country || "",
             phone: resolvedEntity.phone || "",
             email: resolvedEntity.email || "",
             category: resolvedEntity.category || "Verified Business",
-            openingHours: resolvedEntity.openingHours || "",
+            openingHours: resolvedEntity.openingHours || "Available 24/7",
             locations: []
           });
         }
