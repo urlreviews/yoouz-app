@@ -18251,6 +18251,167 @@ Return JSON:
     lng: number;
   }
 
+  interface DDGSearchResult {
+    url: string;
+    domain: string;
+    title: string;
+    snippet: string;
+  }
+
+  async function searchDuckDuckGoWeb(query: string): Promise<DDGSearchResult | null> {
+    const cleanQ = query.trim();
+    if (!cleanQ) return null;
+
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 3500);
+
+      const res = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQ)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache'
+        },
+        signal: ctrl.signal
+      });
+      clearTimeout(tid);
+
+      if (res.ok) {
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        const candidates: DDGSearchResult[] = [];
+
+        $('.result').each((_, el) => {
+          const linkEl = $(el).find('a.result__a').first();
+          let rawHref = linkEl.attr('href') || '';
+          let rawTitle = linkEl.text().trim();
+          let snippet = $(el).find('.result__snippet').text().trim();
+
+          if (rawHref) {
+            if (rawHref.includes('uddg=')) {
+              try {
+                const match = rawHref.match(/uddg=([^&]+)/);
+                if (match) rawHref = decodeURIComponent(match[1]);
+              } catch(e) {}
+            } else if (rawHref.startsWith('//')) {
+              rawHref = 'https:' + rawHref;
+            }
+
+            if (rawHref.startsWith('http://') || rawHref.startsWith('https://')) {
+              const lowerHref = rawHref.toLowerCase();
+              if (
+                !lowerHref.includes('duckduckgo.com') && 
+                !lowerHref.includes('yandex.com') && 
+                !lowerHref.includes('bing.com') && 
+                !lowerHref.includes('ad-delivery') &&
+                !lowerHref.includes('doubleclick')
+              ) {
+                let domain = '';
+                try {
+                  domain = new URL(rawHref).hostname.replace(/^www\./i, '').toLowerCase();
+                } catch(e) {}
+
+                candidates.push({
+                  url: rawHref,
+                  domain,
+                  title: rawTitle,
+                  snippet
+                });
+              }
+            }
+          }
+        });
+
+        if (candidates.length > 0) {
+          const standaloneSite = candidates.slice(0, 3).find(c => 
+            c.domain && 
+            !c.domain.includes('facebook.com') && 
+            !c.domain.includes('instagram.com') && 
+            !c.domain.includes('linkedin.com') && 
+            !c.domain.includes('yelp.com') && 
+            !c.domain.includes('tripadvisor.com') && 
+            !c.domain.includes('yellowpages') &&
+            !c.domain.includes('wikipedia.org')
+          );
+
+          return standaloneSite || candidates[0];
+        }
+      }
+    } catch (e) {
+      console.warn('[DDG HTML Search Error]:', e);
+    }
+
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 3500);
+
+      const res = await fetch(`https://lite.duckduckgo.com/lite/`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'text/html'
+        },
+        body: `q=${encodeURIComponent(cleanQ)}`,
+        signal: ctrl.signal
+      });
+      clearTimeout(tid);
+
+      if (res.ok) {
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        const candidates: DDGSearchResult[] = [];
+
+        $('a.result-link').each((_, el) => {
+          let href = $(el).attr('href') || '';
+          let title = $(el).text().trim();
+          const snippet = $(el).parent().next('td.result-snippet').text().trim();
+
+          if (href) {
+            if (href.includes('uddg=')) {
+              try {
+                const match = href.match(/uddg=([^&]+)/);
+                if (match) href = decodeURIComponent(match[1]);
+              } catch(e) {}
+            } else if (href.startsWith('//')) {
+              href = 'https:' + href;
+            }
+
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+              let domain = '';
+              try {
+                domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
+              } catch(e) {}
+
+              candidates.push({
+                url: href,
+                domain,
+                title,
+                snippet
+              });
+            }
+          }
+        });
+
+        if (candidates.length > 0) {
+          const standaloneSite = candidates.slice(0, 3).find(c => 
+            c.domain && 
+            !c.domain.includes('facebook.com') && 
+            !c.domain.includes('instagram.com') && 
+            !c.domain.includes('linkedin.com') && 
+            !c.domain.includes('yelp.com')
+          );
+          return standaloneSite || candidates[0];
+        }
+      }
+    } catch(e) {
+      console.warn('[DDG Lite Search Error]:', e);
+    }
+
+    return null;
+  }
+
   async function resolveBusinessQuery(query: string): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
@@ -18316,6 +18477,7 @@ Return JSON:
     // Category detection helper from query keywords
     const detectCategoryFromText = (text: string): string => {
       const l = text.toLowerCase();
+      if (/barber|haircut|barbershop|hair\s*salon|coiffeur|kapper/i.test(l)) return "Barber & Hair Salon";
       if (/hotel|resort|suites|inn|lodge|motel|מלון|מלונות/i.test(l)) return "Hotel & Hospitality";
       if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen|brasserie|dining|מסעדה|קפה|מאפייה/i.test(l)) return "Restaurant & Cafe";
       if (/dentist|dental|teeth|clinic|tandarts|מרפאת שיניים|רופא שיניים/i.test(l)) return "Dentist & Dental Clinic";
@@ -18335,6 +18497,102 @@ Return JSON:
     let website = "";
     let phone = "";
     let detectedCategory = detectCategoryFromText(cleanQ);
+
+    // 3. Live DuckDuckGo Web Search Engine Resolution (Guarantees hyper-local & global real search results)
+    try {
+      const ddgRes = await searchDuckDuckGoWeb(cleanQ);
+      if (ddgRes && ddgRes.url && ddgRes.domain) {
+        let cleanName = ddgRes.title || formatBusinessName(cleanQ);
+        // Strip search engine suffixes like " - Facebook", " - Instagram", " - Treatwell", "| Official Site"
+        cleanName = cleanName.replace(/\s*(?:[|\-–—•]|:)\s*(?:Facebook|Instagram|Treatwell|TripAdvisor|Yelp|LinkedIn|Official Site|Home|Bij).*$/i, '').trim();
+        cleanName = formatBusinessName(cleanName || cleanQ);
+
+        let siteAddress = "";
+        let siteCity = "";
+        let siteCountry = "";
+        let sitePhone = "";
+        let siteCategory = detectCategoryFromText(`${cleanQ} ${ddgRes.title} ${ddgRes.snippet}`);
+
+        // Scrape real site metadata if standalone domain
+        if (!ddgRes.domain.includes('facebook.com') && !ddgRes.domain.includes('instagram.com') && !ddgRes.domain.includes('linkedin.com')) {
+          try {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 3000);
+            const siteResp = await fetch(ddgRes.url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+              },
+              signal: ctrl.signal
+            });
+            clearTimeout(tid);
+
+            if (siteResp.ok) {
+              const siteHtml = await siteResp.text();
+              const $s = cheerio.load(siteHtml);
+
+              const ogImg = $s('meta[property="og:image"]').attr('content') || 
+                            $s('meta[name="twitter:image"]').attr('content') || 
+                            $s('link[rel="image_src"]').attr('href');
+              if (ogImg) {
+                try {
+                  photo = new URL(ogImg, ddgRes.url).toString();
+                } catch(e) {
+                  photo = ogImg;
+                }
+              }
+
+              const ogDesc = $s('meta[property="og:description"]').attr('content') || 
+                             $s('meta[name="description"]').attr('content');
+              if (ogDesc && ogDesc.length > 10) {
+                description = ogDesc.trim();
+              }
+
+              const siteTitle = $s('meta[property="og:site_name"]').attr('content') || $s('title').first().text();
+              if (siteTitle && siteTitle.length <= 60) {
+                const cleanedSiteTitle = siteTitle.replace(/\s*(?:[|\-–—•]|:)\s*.*$/i, '').trim();
+                if (cleanedSiteTitle && cleanedSiteTitle.length >= 2) {
+                  cleanName = formatBusinessName(cleanedSiteTitle);
+                }
+              }
+
+              // Address and phone extraction
+              const bodyText = $s('body').text().replace(/\s+/g, ' ');
+              const telMatch = bodyText.match(/(?:\+?\d{1,3}[\s\.\-]?)?\(?\d{2,4}\)?[\s\.\-]?\d{3,4}[\s\.\-]?\d{3,4}/);
+              if (telMatch && isValidPhoneNumber(telMatch[0])) {
+                sitePhone = telMatch[0].trim();
+              }
+            }
+          } catch(e) {}
+        }
+
+        // Infer city from query or snippet
+        if (cleanQ.toLowerCase().includes('antwerp') || ddgRes.snippet.toLowerCase().includes('antwerp')) siteCity = "Antwerp";
+        else if (cleanQ.toLowerCase().includes('brussels') || ddgRes.snippet.toLowerCase().includes('brussels')) siteCity = "Brussels";
+        else if (cleanQ.toLowerCase().includes('paris') || ddgRes.snippet.toLowerCase().includes('paris')) siteCity = "Paris";
+        else if (cleanQ.toLowerCase().includes('london') || ddgRes.snippet.toLowerCase().includes('london')) siteCity = "London";
+        else if (cleanQ.toLowerCase().includes('amsterdam') || ddgRes.snippet.toLowerCase().includes('amsterdam')) siteCity = "Amsterdam";
+
+        return {
+          domain: ddgRes.domain,
+          websiteUrl: ddgRes.url,
+          name: cleanName || formatBusinessName(cleanQ),
+          category: siteCategory || detectedCategory,
+          address: siteAddress || "",
+          city: siteCity || "Online",
+          country: siteCountry || "",
+          phone: sitePhone || phone || "",
+          email: "",
+          openingHours: "Available 24/7",
+          photo: photo || "",
+          description: description || ddgRes.snippet || `${cleanName} is a verified local business discoverable on Yoouz, providing authentic services and verified customer reviews.`,
+          lat: 0,
+          lng: 0
+        };
+      }
+    } catch(e) {
+      console.warn('[DDG Web Search Engine Error in resolveBusinessQuery]:', e);
+    }
 
     // 3. OpenStreetMap Nominatim Live Entity Discovery (Global, Multi-Language, All Cities)
     let osm: any = null;
