@@ -18485,11 +18485,12 @@ Return JSON:
     // Category detection helper from query keywords
     const detectCategoryFromText = (text: string): string => {
       const l = text.toLowerCase();
+      if (/law|legal|attorney|attorneys|lawyer|lawyers|advocaat|advocaten|law\s*group|law\s*firm|procurateur|עורך דין|משפטים/i.test(l)) return "Legal Services";
       if (/barber|haircut|barbershop|hair\s*salon|coiffeur|kapper/i.test(l)) return "Barber & Hair Salon";
       if (/hotel|resort|suites|inn|lodge|motel|מלון|מלונות/i.test(l)) return "Hotel & Hospitality";
       if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen|brasserie|dining|מסעדה|קפה|מאפייה/i.test(l)) return "Restaurant & Cafe";
-      if (/dentist|dental|teeth|clinic|tandarts|מרפאת שיניים|רופא שיניים/i.test(l)) return "Dentist & Dental Clinic";
-      if (/law|legal|attorney|lawyer|advocaat|עורך דין|משפטים/i.test(l)) return "Legal Services";
+      if (/dentist|dental|teeth|tooth|tandarts|dental\s*clinic|מרפאת שיניים|רופא שיניים/i.test(l)) return "Dentist & Dental Clinic";
+      if (/medical\s*clinic|doctor|physician|healthcare|hospital|ziekenhuis|מרפאה/i.test(l)) return "Pharmacy & Healthcare";
       if (/mall|shopping|center|plaza|קניון|מרכז מסחרי/i.test(l)) return "Shopping Mall";
       if (/supermarket|grocery|market|סופרמרקט|מרכול/i.test(l)) return "Supermarket & Grocery";
       if (/pharmacy|drugstore|apotheek|בית מרקחת/i.test(l)) return "Pharmacy & Healthcare";
@@ -20214,12 +20215,14 @@ Return JSON:
       };
 
       if (topEntity && topEntity.domain) {
+        let cityAddr = topEntity.city && topEntity.city !== "Online" ? `${topEntity.city}${topEntity.country ? ', ' + topEntity.country : ''}` : (topEntity.address || "");
         addSuggestion({
           id: topEntity.domain,
           title: topEntity.name || formatBusinessName(q),
           domain: topEntity.domain,
           logoUrl: `/api/favicon?domain=${topEntity.domain}`,
           category: topEntity.category || "Verified Business",
+          address: cityAddr,
           source: "duckduckgo_instant"
         });
       }
