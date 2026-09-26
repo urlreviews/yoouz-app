@@ -19364,7 +19364,7 @@ Return JSON:
         return res.json({ suggestions: [], query: q });
       }
 
-      const suggestions: Array<{ title: string; domain: string; logoUrl: string; category?: string; address?: string; source: string }> = [];
+      const suggestions: Array<{ id?: string; title: string; domain: string; logoUrl: string; category?: string; address?: string; source: string }> = [];
       const seenDomains = new Set<string>();
 
       // 1. Search local DB places
@@ -19382,10 +19382,12 @@ Return JSON:
               if (dom && !seenDomains.has(dom)) {
                 seenDomains.add(dom);
                 const title = (dom && KNOWN_OFFICIAL_NAMES[dom]) || row.name || dom;
+                const hasDot = dom.includes('.');
                 suggestions.push({
+                  id: row.id,
                   title: title,
-                  domain: dom.includes('.') ? dom : `${dom}.com`,
-                  logoUrl: row.logoUrl || `/api/favicon?domain=${dom}`,
+                  domain: hasDot ? dom : "",
+                  logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : `/api/avatar?name=${encodeURIComponent(title)}`),
                   category: row.category || "Verified Business",
                   address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ''),
                   source: "database"

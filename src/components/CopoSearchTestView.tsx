@@ -2,16 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Video, Star, CheckCircle, Building2, MapPin, Loader2, Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
+import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES, isPlaceReviewMatch } from "../utils/placeUtils";
 
 interface CopoSearchTestViewProps {
   places: Place[];
   videos: VideoReview[];
   onRecordForPlace?: (place: Place) => void;
   onOpenPlace?: (placeId: string) => void;
+  onSelectVideo?: (videoId: string) => void;
+  onAddPlace?: (place: Place) => void;
 }
 
 interface SuggestionItem {
+  id?: string;
   title: string;
   domain: string;
   logoUrl: string;
@@ -24,7 +28,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
   places,
   videos,
   onRecordForPlace,
-  onOpenPlace
+  onOpenPlace,
+  onSelectVideo,
+  onAddPlace
 }) => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
@@ -85,11 +91,11 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
     const hasDomain = Boolean(item.domain && item.domain.includes('.') && item.domain !== '.com');
     const cleanDom = hasDomain ? extractCleanDomain(item.domain) || item.domain.toLowerCase() : "";
-    const placeId = cleanDom || item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+    const placeId = item.id || cleanDom || item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
 
     // Check existing place in memory
     const existing = places.find(p => 
-      p.id.toLowerCase() === placeId || 
+      p.id.toLowerCase() === placeId.toLowerCase() || 
       (cleanDom && p.brandDomain === cleanDom) ||
       (p.name && p.name.toLowerCase() === item.title.toLowerCase())
     );
@@ -116,8 +122,8 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       lat: 0,
       lng: 0,
       rating: 5,
-      totalReviews: 1,
-      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      totalReviews: 0,
+      ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
       avatarUrl: avatar,
       logoUrl: avatar,
       bannerUrl: "",
@@ -137,6 +143,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
     };
 
     setSelectedPlace(optimisticPlace);
+    if (onAddPlace) {
+      onAddPlace(optimisticPlace);
+    }
 
     // Fetch full metadata in background if real website domain exists or resolve it via name query
     try {
@@ -153,20 +162,26 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
           ? data.logo 
           : (resolvedDomain ? `/api/favicon?domain=${resolvedDomain}` : optimisticPlace.avatarUrl);
 
-        setSelectedPlace(prev => prev ? {
-          ...prev,
+        const finalPlace: Place = {
+          ...optimisticPlace,
+          id: resolvedDomain || optimisticPlace.id,
           name: resolvedName,
-          category: (data.category && data.category !== "Website") ? data.category : prev.category,
-          address: data.address || prev.address,
-          city: data.city || prev.city,
-          country: data.country || prev.country,
+          category: (data.category && data.category !== "Website") ? data.category : optimisticPlace.category,
+          address: data.address || optimisticPlace.address,
+          city: data.city || optimisticPlace.city,
+          country: data.country || optimisticPlace.country,
           logoUrl: resolvedAvatar,
           avatarUrl: resolvedAvatar,
-          bannerUrl: data.image || prev.bannerUrl,
-          description: data.description || prev.description,
-          website: resolvedDomain ? `https://${resolvedDomain}` : prev.website,
-          brandDomain: resolvedDomain || prev.brandDomain
-        } : null);
+          bannerUrl: data.image || optimisticPlace.bannerUrl,
+          description: data.description || optimisticPlace.description,
+          website: resolvedDomain ? `https://${resolvedDomain}` : optimisticPlace.website,
+          brandDomain: resolvedDomain || optimisticPlace.brandDomain
+        };
+
+        setSelectedPlace(finalPlace);
+        if (onAddPlace) {
+          onAddPlace(finalPlace);
+        }
       }
     } catch (err) {
       console.error("Url metadata fetch error:", err);
@@ -174,6 +189,16 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       setIsLoadingPlace(false);
     }
   };
+
+  const placeVideos = selectedPlace
+    ? videos.filter(v => isPlaceReviewMatch(v, selectedPlace))
+    : [];
+
+  const averageRating = placeVideos.length > 0
+    ? placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / placeVideos.length
+    : (selectedPlace?.rating || 5.0);
+
+  const totalReviewsCount = placeVideos.length;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center p-4 sm:p-8 selection:bg-white selection:text-black">
@@ -259,11 +284,11 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
         {/* Selected Business Profile Preview Box */}
         {selectedPlace && (
-          <div className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl relative transition-all">
+          <div className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl relative transition-all animate-fade-in">
             {/* Banner Canvas */}
             <div className="h-32 sm:h-40 bg-gradient-to-r from-zinc-800 via-zinc-900 to-black relative overflow-hidden">
               {selectedPlace.bannerUrl ? (
-                <img src={selectedPlace.bannerUrl} alt={selectedPlace.name} className="w-full h-full object-cover opacity-80" />
+                <img src={selectedPlace.bannerUrl} alt={selectedPlace.name} className="w-full h-full object-cover opacity-80 animate-fade-in" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-700">
                   <Building2 className="w-12 h-12 opacity-30" />
@@ -293,8 +318,8 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   <div className="flex items-center gap-2.5 flex-wrap my-2 text-xs text-zinc-300">
                     <div className="inline-flex items-center gap-1.5 bg-zinc-850 border border-zinc-750 px-2.5 py-1 rounded-lg">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-extrabold text-amber-400">5.0</span>
-                      <span className="text-zinc-400">(1 review)</span>
+                      <span className="font-extrabold text-amber-400">{averageRating.toFixed(1)}</span>
+                      <span className="text-zinc-400">({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})</span>
                     </div>
 
                     {selectedPlace.category && (
@@ -328,6 +353,52 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                 <p className="text-xs text-zinc-400 leading-relaxed mt-4 pt-4 border-t border-zinc-800">
                   {selectedPlace.description}
                 </p>
+              )}
+
+              {/* Dynamic Video Reviews Grid */}
+              {placeVideos.length > 0 ? (
+                <div className="mt-6 pt-6 border-t border-zinc-800">
+                  <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Video className="w-4 h-4 text-amber-400" />
+                    <span>Customer Video Reviews ({placeVideos.length})</span>
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {placeVideos.map((vid) => (
+                      <button
+                        key={vid.id}
+                        onClick={() => onSelectVideo && onSelectVideo(vid.id)}
+                        className="relative aspect-[9/16] rounded-2xl overflow-hidden group bg-zinc-950 border border-zinc-800 hover:border-zinc-500 transition-all text-left shadow-lg cursor-pointer"
+                      >
+                        <CopoVideoThumbnail
+                          video={vid}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex flex-col justify-between p-3">
+                          <div className="flex justify-end">
+                            <span className="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-black text-amber-400 flex items-center gap-0.5 border border-white/5">
+                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                              {vid.rating || 5}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-white line-clamp-2 leading-snug">
+                              {vid.caption || "Customer Review"}
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-medium truncate mt-1">
+                              By @{vid.author?.handle?.replace(/^@/, "") || vid.author?.name || "Reviewer"}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 pt-6 border-t border-zinc-800 text-center py-6">
+                  <Video className="w-8 h-8 text-zinc-600 mx-auto mb-2 opacity-55" />
+                  <p className="text-sm font-bold text-zinc-300">No video reviews yet</p>
+                  <p className="text-xs text-zinc-500 mt-1">Be the first to record an authentic video review for this business!</p>
+                </div>
               )}
             </div>
           </div>

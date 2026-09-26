@@ -6874,6 +6874,10 @@ export function App() {
                 videos={videos}
                 onRecordForPlace={(targetPlace) => handleOpenCreateReview(targetPlace)}
                 onOpenPlace={handleOpenPlaceDrawer}
+                onSelectVideo={handleSelectVideoById}
+                onAddPlace={(newPlace) => {
+                  setPlaces((prev) => [newPlace, ...prev.filter((p) => p.id !== newPlace.id)]);
+                }}
               />
             )}
 
