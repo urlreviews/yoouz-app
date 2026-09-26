@@ -724,7 +724,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {/* Street Address & Location */}
                   {(searchedPlace.address || (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide")) && (
                     <div className="flex items-center gap-2 text-xs text-zinc-300 mt-2 flex-wrap">
-                      <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <MapPin className="w-4 h-4 text-zinc-300 shrink-0" />
                       <span className="font-medium">
                         {[searchedPlace.address, (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide") ? searchedPlace.city : "", searchedPlace.country].filter(Boolean).join(", ")}
                       </span>
@@ -733,7 +733,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([searchedPlace.name, searchedPlace.address, searchedPlace.city].filter(Boolean).join(", "))}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs text-sky-400 hover:text-sky-300 hover:underline inline-flex items-center gap-0.5 ml-1 font-semibold"
+                          className="text-xs text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-0.5 ml-1 font-semibold"
                         >
                           <span>Directions</span>
                           <ExternalLink className="w-3 h-3" />
@@ -746,19 +746,19 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs text-zinc-300 mt-2.5">
                     {searchedPlace.phone && (
                       <a href={`tel:${searchedPlace.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
-                        <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <Phone className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                         <span>{searchedPlace.phone}</span>
                       </a>
                     )}
                     {searchedPlace.email && !searchedPlace.email.toLowerCase().includes('4samet') && (
                       <a href={`mailto:${searchedPlace.email}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
-                        <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <Mail className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                         <span>{searchedPlace.email}</span>
                       </a>
                     )}
-                    {(searchedPlace.openingHours || (searchedPlace as any).hours) && (
+                    {(searchedPlace.openingHours || (searchedPlace as any).hours) && !(searchedPlace.openingHours || (searchedPlace as any).hours).toLowerCase().includes("24/7") && (
                       <div className="inline-flex items-center gap-1.5 bg-zinc-800/90 text-zinc-300 px-3 py-1.5 rounded-xl border border-zinc-700/60 font-semibold">
-                        <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                         <span>{searchedPlace.openingHours || (searchedPlace as any).hours}</span>
                       </div>
                     )}
@@ -873,7 +873,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner">
                   <Video className="w-6 h-6 text-white" />
                 </div>
-                <h4 className="text-base font-extrabold text-white tracking-tight">{t("search.noReviewsYet", "No video reviews yet")}</h4>
+                <h4 className="text-base font-extrabold text-white tracking-tight">{t("search.beFirstToReviewTitle", "Be the first to video review")}</h4>
                 <p className="text-zinc-400 text-xs mt-1 mb-5 max-w-md leading-relaxed">
                   {t("search.beTheFirst", "Be the first creator to share your video review experience for")} <span className="text-white font-semibold">{searchedPlace.name}</span>!
                 </p>

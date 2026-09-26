@@ -1280,7 +1280,7 @@ export function generateSmartPlaceDescription(params: {
   }
 
   // Default professional business description
-  return `${name} is a verified business and service provider${locStr}, committed to delivering high quality services, verified expertise, and excellent customer satisfaction.`;
+  return `${name} is a premier provider${locStr}, committed to delivering high-quality products, professional capabilities, and exceptional client satisfaction.`;
 }
 
 /**

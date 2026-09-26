@@ -1116,7 +1116,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     : t("place.noReviewsYetShort", "0 Video Reviews")}
                 </span>
               </div>
-              {place.category && (
+              {place.category && place.category !== "Verified Business" && (
                 <span className="text-zinc-400 text-[11px] font-medium truncate block">
                   {place.category}
                 </span>
@@ -1352,8 +1352,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Phone Number */}
                   <div className="py-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                        <Phone className="w-4 h-4 text-emerald-400" />
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                        <Phone className="w-4 h-4 text-zinc-300" />
                       </div>
                       <div className="min-w-0">
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.phone", "Phone Number")}</span>
@@ -1369,7 +1369,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     {hasGenuinePhone && (
                       <a
                         href={`tel:${effectivePhone}`}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-xs transition-colors shrink-0"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0"
                       >
                         {t("place.call", "Call")}
                       </a>
@@ -1379,8 +1379,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Official Website */}
                   <div className="py-2.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                        <Globe className="w-4 h-4 text-blue-400" />
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                        <Globe className="w-4 h-4 text-zinc-300" />
                       </div>
                       <div className="min-w-0">
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.website", "Official Website")}</span>
@@ -1398,7 +1398,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         href={effectiveWebsite}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1.5 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-400 font-bold text-xs transition-colors shrink-0 flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 flex items-center gap-1"
                       >
                         <span>{t("place.visit", "Visit")}</span>
                         <ExternalLink className="w-3 h-3" />
@@ -1410,8 +1410,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {effectiveEmail && (
                     <div className="py-2.5 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
-                          <Mail className="w-4 h-4 text-amber-400" />
+                        <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                          <Mail className="w-4 h-4 text-zinc-300" />
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.email", "Email Address")}</span>
@@ -1420,7 +1420,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                       <a
                         href={`mailto:${effectiveEmail}`}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-bold text-xs transition-colors shrink-0"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0"
                       >
                         {t("place.email", "Email")}
                       </a>
@@ -1438,15 +1438,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {t("place.hoursOfOperation", "Hours of Operation")}
                     </h3>
                   </div>
-                  {(hasGenuineHours || effectiveHours) && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {((hasGenuineHours && effectiveHours && !effectiveHours.toLowerCase().includes("24/7")) || (place.openingHours && !place.openingHours.toLowerCase().includes("24/7"))) && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold text-[10px] flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
                       {t("place.openNow", "Open")}
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-zinc-200 font-medium pt-1">
-                  {hasGenuineHours || effectiveHours ? (
+                  {(hasGenuineHours && effectiveHours && !effectiveHours.toLowerCase().includes("24/7")) || (place.openingHours && !place.openingHours.toLowerCase().includes("24/7")) ? (
                     <p className="text-white font-semibold leading-relaxed">{effectiveHours || place.openingHours}</p>
                   ) : (
                     <p className="text-zinc-500">{t("place.hoursNotProvided", "Hours not provided")}</p>
@@ -1458,7 +1458,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-rose-400" />
+                    <MapPin className="w-4 h-4 text-zinc-300" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-white">
                       {t("place.locationAndMap", "Location & Directions")}
                     </h3>
@@ -1466,7 +1466,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {hasPhysicalLocation && (
                     <button
                       onClick={handleOpenDirections}
-                      className="text-xs text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <Navigation className="w-3.5 h-3.5" />
                       <span>{t("place.getDirections", "Directions")}</span>
@@ -1566,7 +1566,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <Video className="w-4 h-4" />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-white">{t("place.noReviewsYet", "No video reviews yet")}</p>
+                      <p className="text-xs font-bold text-white">{t("place.beFirstToReviewTitle", "Be the first to video review")}</p>
                       <p className="text-[11px] text-zinc-400">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {displayedPlaceName}!</p>
                     </div>
                     <button
@@ -1658,8 +1658,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <Check className="w-5 h-5 text-emerald-400" />
+                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
+                        <Check className="w-5 h-5 text-zinc-300" />
                       </div>
                       <div>
                         <span className="text-xs text-white font-extrabold flex items-center gap-1.5">

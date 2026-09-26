@@ -174,7 +174,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 bannerUrl: fetchedBanner,
                 ogImage: fetchedBanner,
                 photos: fetchedBanner ? [fetchedBanner] : [],
-                openingHours: "Available 24/7",
+                openingHours: data.openingHours || "",
                 isOpen: true,
                 phone: data.phone || "",
                 email: data.email || "",

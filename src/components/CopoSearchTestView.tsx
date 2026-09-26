@@ -155,7 +155,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       const instantPlace: Place = {
         id: cleanDom,
         name: item.title,
-        category: item.category || "Verified Business",
+        category: item.category || "Business",
         categoryType: "all",
         address: item.address || "",
         city: "",
@@ -175,7 +175,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         phone: "",
         priceRange: "$$",
         plusCode: "",
-        description: `${item.title} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+        description: `${item.title} is a premier location providing high-quality products and customer satisfaction.`,
         popularKeywords: [],
         amenities: [],
         topDishes: [],
@@ -207,7 +207,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         const finalPlace: Place = {
           id: resolvedDomain || placeId,
           name: resolvedName,
-          category: (data.category && data.category !== "Website") ? data.category : (item.category || "Verified Business"),
+          category: (data.category && data.category !== "Website") ? data.category : (item.category || "Business"),
           categoryType: "all",
           address: data.address || item.address || "",
           city: data.city || "",
@@ -227,7 +227,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
           phone: data.phone || "",
           priceRange: "$$",
           plusCode: "",
-          description: data.description || `${resolvedName} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+          description: data.description || `${resolvedName} is a premier provider offering quality products and client care.`,
           popularKeywords: [],
           amenities: [],
           topDishes: [],
@@ -528,10 +528,24 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 pt-6 border-t border-zinc-800 text-center py-6">
-                  <Video className="w-8 h-8 text-zinc-600 mx-auto mb-2 opacity-55" />
-                  <p className="text-sm font-bold text-zinc-300">No video reviews yet</p>
-                  <p className="text-xs text-zinc-500 mt-1">Be the first to record an authentic video review for this business!</p>
+                <div className="mt-6 pt-6 border-t border-zinc-800">
+                  <div className="w-full py-8 px-6 bg-gradient-to-b from-zinc-900/90 to-zinc-900/50 border border-zinc-800/80 rounded-2xl flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner">
+                      <Video className="w-6 h-6 text-white" />
+                    </div>
+                    <h4 className="text-sm font-extrabold text-white tracking-tight">Be the first to record a video review</h4>
+                    <p className="text-zinc-400 text-xs mt-1 mb-4 max-w-md leading-relaxed">
+                      Share your authentic experience for <span className="text-white font-semibold">{selectedPlace.name}</span> in a short 60-second video!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onRecordForPlace && onRecordForPlace(selectedPlace)}
+                      className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-full font-extrabold text-xs shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Video className="w-4 h-4 text-zinc-950" />
+                      <span>Record Video Review</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
