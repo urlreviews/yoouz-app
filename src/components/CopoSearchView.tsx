@@ -132,7 +132,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     setShowDropdown(false);
     if (item.domain && item.domain.includes('.')) {
       setQuery(item.domain);
-      handleSearch(undefined, item.domain);
+      handleSearch(undefined, item.domain, item.title);
     } else if (item.id && places.some(p => p.id === item.id)) {
       const match = places.find(p => p.id === item.id);
       if (match) {
@@ -142,7 +142,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     } else {
       setQuery(item.title);
-      handleSearch(undefined, item.title);
+      handleSearch(undefined, item.title, item.title);
     }
   };
 
@@ -162,7 +162,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   };
 
-  const handleSearch = async (e?: React.FormEvent, overrideQuery?: string) => {
+  const handleSearch = async (e?: React.FormEvent, overrideQuery?: string, preferredName?: string) => {
     if (e) e.preventDefault();
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
@@ -243,7 +243,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
         || KNOWN_BRAND_BANNERS[domain] 
         || "";
-      const instantName = (domain && KNOWN_OFFICIAL_NAMES[domain]) 
+      const instantName = preferredName
+        || (domain && KNOWN_OFFICIAL_NAMES[domain]) 
         || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || preloadedMeta?.title
         || preloadedMeta?.siteName
@@ -316,7 +317,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  return l.includes("hostinger") || l.includes("untitled") || l.includes("react app") || l.includes("vite app") || l === "website" || l === foundPlace?.brandDomain;
                };
 
-               const targetName = (domain && KNOWN_OFFICIAL_NAMES[domain])
+               const targetName = preferredName
+                 || (domain && KNOWN_OFFICIAL_NAMES[domain])
                  || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
                  || formatBusinessName(data.siteName || data.title, data.domain || domain)
                  || instantName;
@@ -347,7 +349,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              } else {
                const newPlace: Place = {
                  id: (data.domain || domain || "website").toLowerCase(),
-                 name: (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
+                 name: preferredName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
                  category: data.category || "Website",
                  categoryType: "all",
                  address: data.address || "",

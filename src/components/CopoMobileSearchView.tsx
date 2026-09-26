@@ -239,7 +239,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
   };
 
-  const handleSearch = (e: React.FormEvent | string) => {
+  const handleSearch = (e: React.FormEvent | string, preferredName?: string) => {
     if (typeof e !== 'string') e.preventDefault();
     const raw = typeof e === 'string' ? e : query;
     if (!raw || !raw.trim()) return;
@@ -276,7 +276,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
       const instantLogo = getCleanLogoUrl(null, cleanUrl) || "";
-      const instantName = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || cleanUrl;
+      const instantName = preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || cleanUrl;
       const optimisticPlace: Place = {
         id: cleanUrl.toLowerCase(),
         name: instantName,
@@ -317,7 +317,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             onAddPlace({
               ...optimisticPlace,
-              name: (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              name: preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
               category: data.category || optimisticPlace.category,
               address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
               city: data.city || optimisticPlace.city,
@@ -456,7 +456,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   return (
                     <button 
                       key={idx}
-                      onClick={() => handleSearch(searchArg)}
+                      onClick={() => handleSearch(searchArg, title)}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
                       {targetDomain || itemLogo ? (
