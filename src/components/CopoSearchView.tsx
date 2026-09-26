@@ -764,62 +764,65 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       </div>
                     )}
                   </div>
-                  
-                  {/* Star Rating Showcase Card - Prominent & Super Premium */}
-                  <div className="mt-4 inline-flex items-center gap-3 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 border border-zinc-800/90 px-4 py-2.5 rounded-2xl shadow-xl backdrop-blur-xl">
-                    {totalReviewsCount > 0 ? (
-                      <>
-                        <span className="font-black text-amber-400 text-2xl leading-none tracking-tight">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center text-amber-400 gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-5 h-5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]" : "fill-zinc-800 text-zinc-800"}`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-white font-extrabold text-xs sm:text-sm ml-1 border-l border-zinc-800 pl-3">
-                          {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-black text-zinc-400 text-2xl leading-none tracking-tight">0.0</span>
-                        <div className="flex items-center text-zinc-600 gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className="w-5 h-5 fill-none text-zinc-600 stroke-[1.5]"
-                            />
-                          ))}
-                        </div>
-                        <span className="text-zinc-400 font-semibold text-xs sm:text-sm ml-1 border-l border-zinc-800 pl-3">
-                          0 video reviews
-                        </span>
-                      </>
-                    )}
+
+                  {/* Action Dock Row: Star Rating Pill + Action Buttons on the SAME Horizontal Line */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
+                    {/* Star Rating Pill Badge */}
+                    <div className="inline-flex items-center gap-2.5 bg-zinc-800/90 border border-zinc-700/80 px-3.5 py-2 rounded-full shadow-md">
+                      {totalReviewsCount > 0 ? (
+                        <>
+                          <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
+                          <div className="flex items-center text-amber-400 gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-700 text-zinc-700"}`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-zinc-300 font-extrabold text-xs ml-1 border-l border-zinc-700/80 pl-2.5">
+                            {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold text-zinc-400 text-sm leading-none">0.0</span>
+                          <div className="flex items-center text-zinc-600 gap-0.5">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                              />
+                            ))}
+                          </div>
+                          <span className="text-zinc-400 font-semibold text-xs ml-1 border-l border-zinc-700/80 pl-2.5">
+                            0 video reviews
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Profile Action Pill Buttons */}
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                        className="bg-zinc-800 hover:bg-zinc-750 text-white px-4 py-2 rounded-full font-bold border border-zinc-700 hover:border-zinc-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98"
+                      >
+                        <Building2 className="w-3.5 h-3.5 text-zinc-300" />
+                        <span>View Business Profile</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
+                        className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2 rounded-full font-extrabold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98"
+                      >
+                        <Video className="w-4 h-4 text-zinc-950" />
+                        {t("record.record_video_review", "Record Video Review")}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                {/* Profile Actions */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 mt-4 md:mt-0 w-full md:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                    className="bg-zinc-800 hover:bg-zinc-750 text-white px-5 py-3 rounded-full font-bold border border-zinc-700 hover:border-zinc-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
-                  >
-                    <Building2 className="w-4 h-4 text-zinc-300" />
-                    <span>View Business Profile</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                    className="bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
-                  >
-                    <Video className="w-5 h-5 text-zinc-950" />
-                    {t("record.record_video_review", "Record Video Review")}
-                  </button>
                 </div>
               </div>
             </div>

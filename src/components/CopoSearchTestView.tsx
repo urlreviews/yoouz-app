@@ -440,58 +440,62 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     })()}
                   </h2>
 
-                  {/* Prominent Star Rating Showcase */}
-                  <div className="my-3 inline-flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl shadow-lg">
-                    {totalReviewsCount > 0 ? (
-                      <>
-                        <span className="font-black text-amber-400 text-xl leading-none">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center text-amber-400 gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-800 text-zinc-800"}`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-white font-extrabold text-xs border-l border-zinc-800 pl-2.5">
-                          {totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-black text-zinc-400 text-xl leading-none">0.0</span>
-                        <div className="flex items-center text-zinc-600 gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className="w-4 h-4 fill-none text-zinc-600 stroke-[1.5]"
-                            />
-                          ))}
-                        </div>
-                        <span className="text-zinc-400 font-semibold text-xs border-l border-zinc-800 pl-2.5">
-                          0 video reviews
-                        </span>
-                      </>
-                    )}
-                  </div>
-
                   {/* Website Link Line */}
                   {selectedPlace.website && selectedPlace.website !== "https://" && selectedPlace.brandDomain && (
-                    <a href={selectedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline flex items-center gap-1.5 text-xs font-medium mt-2">
+                    <a href={selectedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 text-xs font-medium mt-1">
                       <Globe className="w-3.5 h-3.5 text-zinc-400" />
                       <span>{selectedPlace.brandDomain}</span>
                     </a>
                   )}
                 </div>
 
-                {/* Record Video Review Action */}
-                <button
-                  onClick={() => onRecordForPlace && onRecordForPlace(selectedPlace)}
-                  className="w-full sm:w-auto bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
-                >
-                  <Video className="w-5 h-5 text-zinc-950" />
-                  <span>Record Video Review</span>
-                </button>
+                {/* Bottom Horizontal Action Row: Star Rating Pill + Record Button */}
+                <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
+                  {/* Star Rating Pill Badge */}
+                  <div className="inline-flex items-center gap-2.5 bg-zinc-800/90 border border-zinc-700/80 px-3.5 py-2 rounded-full shadow-md">
+                    {totalReviewsCount > 0 ? (
+                      <>
+                        <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
+                        <div className="flex items-center text-amber-400 gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-700 text-zinc-700"}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-300 font-extrabold text-xs border-l border-zinc-700/80 pl-2.5">
+                          {totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold text-zinc-400 text-sm leading-none">0.0</span>
+                        <div className="flex items-center text-zinc-600 gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-400 font-semibold text-xs border-l border-zinc-700/80 pl-2.5">
+                          0 video reviews
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Record Video Review Action */}
+                  <button
+                    type="button"
+                    onClick={() => onRecordForPlace && onRecordForPlace(selectedPlace)}
+                    className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2 rounded-full font-extrabold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-95"
+                  >
+                    <Video className="w-4 h-4 text-zinc-950" />
+                    <span>Record Video Review</span>
+                  </button>
+                </div>
               </div>
 
               {/* Dynamic Video Reviews Grid */}
