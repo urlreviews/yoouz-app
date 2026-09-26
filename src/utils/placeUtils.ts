@@ -1298,6 +1298,7 @@ export function getEffectivePlaceDescription(place?: any, fallbackCategory?: str
     rawDesc.includes("Verified Yoouz business listing") ||
     rawDesc.includes("Verified Yoouz location review") ||
     rawDesc.includes("Verified video review destination") ||
+    rawDesc.toLowerCase().includes("verified business") ||
     rawDesc.includes("No description available");
 
   const name = place.name || place.placeName || "";

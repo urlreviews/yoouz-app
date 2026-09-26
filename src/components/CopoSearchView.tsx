@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -633,14 +633,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     {domainInitial}
                   </div>
 
-                  {/* Dynamic Listing Pill */}
-                  <div className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-lg">
-                    <Globe className="w-3.5 h-3.5 text-white/80" />
-                    <span className="text-white/90 text-xs font-semibold tracking-wide">
-                      {t("search.verifiedListing", "Verified Web Listing")}
-                    </span>
-                  </div>
-
                   {(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
                     <>
                       <img 
@@ -712,7 +704,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   </a>
 
                   {/* Structured Category Row */}
-                  {searchedPlace.category && (
+                  {searchedPlace.category && 
+                   !searchedPlace.category.toLowerCase().includes("verified") && 
+                   searchedPlace.category.toLowerCase() !== "website" && 
+                   searchedPlace.category.toLowerCase() !== "business" && (
                     <div className="flex items-center gap-2.5 flex-wrap my-1.5">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
                         <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
@@ -804,9 +799,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       </div>
                     )}
                   </div>
-                  {searchedPlace.description && (
+                  {getEffectivePlaceDescription(searchedPlace) && (
                     <p className="text-zinc-300 mt-3 max-w-2xl text-sm leading-relaxed">
-                      {searchedPlace.description}
+                      {getEffectivePlaceDescription(searchedPlace)}
                     </p>
                   )}
                 </div>
@@ -835,13 +830,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </div>
           </div>
 
-          <div className="w-full">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Play className="w-5 h-5 text-white fill-current" />
-              <span>{t("search.videoReviews", "Video Reviews")} ({placeVideos.length})</span>
-            </h3>
-            
-            {placeVideos.length > 0 ? (
+          {placeVideos.length > 0 && (
+            <div className="w-full">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Play className="w-5 h-5 text-white fill-current" />
+                <span>{t("search.videoReviews", "Video Reviews")} ({placeVideos.length})</span>
+              </h3>
+              
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {placeVideos.map(video => (
                   <div 
@@ -868,26 +863,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="w-full py-10 px-6 bg-gradient-to-b from-zinc-900/90 to-zinc-900/50 border border-zinc-800/80 rounded-3xl flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner">
-                  <Video className="w-6 h-6 text-white" />
-                </div>
-                <h4 className="text-base font-extrabold text-white tracking-tight">{t("search.beFirstToReviewTitle", "Be the first to video review")}</h4>
-                <p className="text-zinc-400 text-xs mt-1 mb-5 max-w-md leading-relaxed">
-                  {t("search.beTheFirst", "Be the first creator to share your video review experience for")} <span className="text-white font-semibold">{searchedPlace.name}</span>!
-                </p>
-                <button
-                  type="button"
-                  onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                  className="bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-extrabold text-xs shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-                >
-                  <Video className="w-4 h-4 text-zinc-950" />
-                  <span>{t("search.recordFirst", "Record Video Review")}</span>
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
