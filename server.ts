@@ -24,7 +24,7 @@ const _filename = typeof __filename !== 'undefined' ? __filename : (typeof impor
 const _dirname = typeof __dirname !== 'undefined' ? __dirname : (_filename ? path.dirname(_filename) : process.cwd());
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import { Resend } from "resend";
 import sharp from "sharp";
@@ -64,7 +64,14 @@ const searchCache = new Map<string, { places: any[]; source: string; timestamp: 
 let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient() {
   if (!geminiClient && process.env.GEMINI_API_KEY) {
-    geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    geminiClient = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
   return geminiClient;
 }
@@ -18446,7 +18453,91 @@ Return JSON:
 
   const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-  async function resolveBusinessQuery(query: string): Promise<ResolvedBusinessData | null> {
+  async function resolveBusinessQueryWithGemini(query: string): Promise<ResolvedBusinessData | null> {
+    const ai = getGeminiClient();
+    if (!ai) return null;
+
+    try {
+      console.info(`[Gemini Grounded Search] Resolving query "${query}" using gemini-3.8-flash with Google Search Grounding...`);
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: `Search Google for the business or company corresponding to the query or domain name: "${query}".
+Extract and return the official, authentic business details.
+Guidelines for high-fidelity data extraction:
+1. "name": The official, branded business name (proper capitalization, e.g., '172 NYC Dental' or 'B&H Photo Video'). Do NOT guess, abbreviate, or merge words unless that is their official name. Do NOT split domain compound words arbitrarily.
+2. "websiteUrl": The official homepage URL of this business (e.g., 'https://172nycdental.com' or 'https://www.bhphotovideo.com').
+3. "domain": The clean, lowercased root domain (e.g., '172nycdental.com' or 'bhphotovideo.com').
+4. "category": A concise, standard industry category (e.g., 'Dentist & Dental Clinic', 'Camera & Electronics Store', 'Legal Services', 'Restaurant & Cafe', 'Plumbing & HVAC').
+5. "address": The official physical address (street, number, suite, zip code). If it is a purely online-only brand with no physical branch, specify its headquarters address or leave empty if none.
+6. "city": The official city of the business's branch or headquarters (e.g., 'New York').
+7. "country": The official country (e.g., 'United States', 'Belgium', 'Netherlands').
+8. "phone": The official public phone number of the business.
+9. "email": The official contact email of the business. Do NOT return private/personal emails (such as 4samet@gmail.com). Leave empty if not publicly available.
+10. "openingHours": Official opening hours (e.g., 'Monday - Friday: 9:00 AM - 6:00 PM, Saturday: 10:00 AM - 5:00 PM, Sunday: Closed'). Use 'Available 24/7' only for purely digital/online SaaS/apps.
+11. "description": A concise, professional, grounded 1-2 sentence description summarizing what the business offers.`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              websiteUrl: { type: Type.STRING },
+              domain: { type: Type.STRING },
+              category: { type: Type.STRING },
+              address: { type: Type.STRING },
+              city: { type: Type.STRING },
+              country: { type: Type.STRING },
+              phone: { type: Type.STRING },
+              email: { type: Type.STRING },
+              openingHours: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: [
+              "name", "websiteUrl", "domain", "category",
+              "address", "city", "country", "phone",
+              "email", "openingHours", "description"
+            ]
+          },
+          tools: [{ googleSearch: {} }] // ENABLE SEARCH GROUNDING!
+        }
+      });
+
+      const text = response.text?.trim();
+      if (text) {
+        const parsed = JSON.parse(text);
+        if (parsed && parsed.name && parsed.domain) {
+          console.info(`[Gemini Grounded Search] Success for "${query}": Resolved name as "${parsed.name}", website: "${parsed.websiteUrl}"`);
+          
+          let cleanEmail = (parsed.email || "").trim();
+          if (cleanEmail.toLowerCase().includes("4samet") || cleanEmail.toLowerCase().includes("samet")) {
+            cleanEmail = "";
+          }
+
+          return {
+            domain: parsed.domain.toLowerCase().replace(/^www\./, ''),
+            websiteUrl: parsed.websiteUrl,
+            name: parsed.name,
+            category: parsed.category || "Verified Business",
+            address: parsed.address || "",
+            city: parsed.city || "Online",
+            country: parsed.country || "",
+            phone: parsed.phone || "",
+            email: cleanEmail,
+            openingHours: parsed.openingHours || "Available 24/7",
+            photo: "", // Will be parsed/scraped
+            description: parsed.description || "",
+            lat: 0,
+            lng: 0
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[Gemini Grounded Search Error]:", e);
+    }
+    return null;
+  }
+
+  async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
 
@@ -18454,6 +18545,109 @@ Return JSON:
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
       return cachedEntry.data;
+    }
+
+    const bunnyDb = getBunnyDb();
+
+    // 0. Persistent Database Cache Lookup BEFORE hitting Gemini
+    if (bunnyDb) {
+      try {
+        const cleanQDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+        const dbResult = await bunnyDb.execute({
+          sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
+                WHERE LOWER(id) = ? OR LOWER(name) = ? OR LOWER(id) = ? LIMIT 1`,
+          args: [cleanQ.toLowerCase(), cleanQ.toLowerCase(), cleanQDom]
+        });
+        
+        if (dbResult.rows && dbResult.rows.length > 0) {
+          const row = dbResult.rows[0];
+          let parsedData: any = {};
+          if (row.data) {
+            try {
+              parsedData = JSON.parse(row.data as string);
+            } catch(e) {}
+          }
+          const data: ResolvedBusinessData = {
+            domain: (row.id as string) || parsedData.brandDomain || parsedData.domain || "",
+            websiteUrl: (parsedData.website || parsedData.websiteUrl || (row.id ? `https://${row.id}` : "")),
+            name: (row.name as string) || parsedData.title || parsedData.name || "",
+            category: (row.category as string) || parsedData.category || "Verified Business",
+            address: (row.address as string) || parsedData.address || "",
+            city: (row.city as string) || parsedData.city || "",
+            country: (row.country as string) || parsedData.country || "",
+            phone: (parsedData.phone || row.phone || "") as string,
+            email: (parsedData.email || row.email || "") as string,
+            openingHours: (parsedData.openingHours || "Available 24/7") as string,
+            photo: (parsedData.bannerUrl || parsedData.ogImage || parsedData.image || row.logoUrl || "") as string,
+            description: (parsedData.description || "") as string,
+            lat: Number(row.latitude) || 0,
+            lng: Number(row.longitude) || 0
+          };
+          BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
+          return data;
+        }
+      } catch (dbErr) {
+        console.warn("[Database Cache Lookup Error in resolveBusinessQuery]:", dbErr);
+      }
+    }
+
+    // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
+    async function persistToDb(data: ResolvedBusinessData) {
+      if (!bunnyDb || !data.domain) return;
+      try {
+        const autoPlaceId = data.domain;
+        const logoUrl = data.photo || `/api/favicon?domain=${data.domain}`;
+        const autoPlaceDoc = {
+          id: autoPlaceId,
+          name: data.name,
+          category: data.category,
+          categoryType: "all",
+          address: data.address,
+          city: data.city,
+          country: data.country,
+          lat: data.lat || 0,
+          lng: data.lng || 0,
+          rating: 5,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: logoUrl,
+          logoUrl: logoUrl,
+          bannerUrl: data.photo || "",
+          ogImage: data.photo || "",
+          photos: data.photo ? [data.photo] : [],
+          openingHours: data.openingHours || "",
+          isOpen: true,
+          phone: data.phone,
+          email: data.email,
+          website: data.websiteUrl || `https://${data.domain}`,
+          priceRange: "N/A",
+          plusCode: "",
+          locations: [],
+          description: data.description || "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          brandDomain: data.domain
+        };
+        
+        await bunnyDb.execute({
+          sql: `INSERT OR REPLACE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
+        });
+      } catch(e) {
+        console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
+      }
+    }
+
+    // 0. Primary Premium Resolution: Gemini Grounded Search (Skip if requested, e.g. from fast autocomplete)
+    if (!skipGemini) {
+      const geminiRes = await resolveBusinessQueryWithGemini(cleanQ);
+      if (geminiRes) {
+        BUSINESS_QUERY_CACHE.set(cacheKey, { data: geminiRes, timestamp: Date.now() });
+        await persistToDb(geminiRes);
+        return geminiRes;
+      }
     }
 
     // 1. Explicit domain check
@@ -18607,6 +18801,7 @@ Return JSON:
           lng: 0
         };
         BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedResult, timestamp: Date.now() });
+        await persistToDb(resolvedResult);
 
         // Background asynchronous site metadata scraping (non-blocking for ultra-fast instant search response)
         if (!ddgRes.domain.includes('facebook.com') && !ddgRes.domain.includes('instagram.com') && !ddgRes.domain.includes('linkedin.com')) {
@@ -18674,6 +18869,7 @@ Return JSON:
                   phone: enrichedPhone || resolvedResult.phone
                 };
                 BUSINESS_QUERY_CACHE.set(cacheKey, { data: updatedResult, timestamp: Date.now() });
+                await persistToDb(updatedResult);
               }
             } catch(e) {}
           })();
@@ -18866,7 +19062,7 @@ Return JSON:
     const fallbackPlaceId = resolvedDomainFromTld || (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : slug);
     const finalCleanTitle = formatBusinessName(cleanQ);
 
-    return {
+    const finalResult = {
       domain: resolvedDomainFromTld || fallbackPlaceId,
       websiteUrl: website || (resolvedDomainFromTld ? `https://${resolvedDomainFromTld}` : (fallbackPlaceId.includes('.') ? `https://${fallbackPlaceId}` : "")),
       name: finalCleanTitle,
@@ -18882,6 +19078,10 @@ Return JSON:
       lat: 0,
       lng: 0
     };
+
+    BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
+    await persistToDb(finalResult);
+    return finalResult;
   }
 
   async function resolveDomainForBusinessQuery(query: string): Promise<string> {
@@ -19012,6 +19212,13 @@ Return JSON:
       let finalUrl = url;
       let html = '';
       let $: any = null;
+      let locInfo: any = {};
+      let effectiveAddress = "";
+      let effectiveCity = "";
+      let effectiveCountry = "";
+      let effectivePhone = "";
+      let effectiveEmail = "";
+      let effectiveCategory = "";
       
       try {
         const fetchResponse = await fetch(url, {
@@ -19789,12 +19996,26 @@ Return JSON:
           }
         } else {
           try {
-            const ddgRes = await searchDuckDuckGoWeb(domain);
-            if (ddgRes && ddgRes.title) {
-              title = ddgRes.title;
-              siteName = ddgRes.title;
-              if (ddgRes.snippet && !description) {
-                description = ddgRes.snippet;
+            const geminiFallback = await resolveBusinessQuery(domain);
+            if (geminiFallback) {
+              title = geminiFallback.name;
+              siteName = geminiFallback.name;
+              description = geminiFallback.description || description;
+              effectiveAddress = geminiFallback.address || effectiveAddress;
+              effectiveCity = geminiFallback.city || effectiveCity;
+              effectiveCountry = geminiFallback.country || effectiveCountry;
+              effectivePhone = geminiFallback.phone || effectivePhone;
+              effectiveEmail = geminiFallback.email || effectiveEmail;
+              effectiveCategory = geminiFallback.category || effectiveCategory;
+              locInfo.openingHours = geminiFallback.openingHours || locInfo.openingHours;
+            } else {
+              const ddgRes = await searchDuckDuckGoWeb(domain);
+              if (ddgRes && ddgRes.title) {
+                title = ddgRes.title;
+                siteName = ddgRes.title;
+                if (ddgRes.snippet && !description) {
+                  description = ddgRes.snippet;
+                }
               }
             }
           } catch (ddgErr) {}
@@ -19804,14 +20025,28 @@ Return JSON:
           }
         }
       } catch (e) {
-        // Direct page fetch failed, try DDG search
+        // Direct page fetch failed, try resolveBusinessQuery which has Gemini Grounded Search
         try {
-          const ddgRes = await searchDuckDuckGoWeb(domain);
-          if (ddgRes && ddgRes.title) {
-            title = ddgRes.title;
-            siteName = ddgRes.title;
-            if (ddgRes.snippet && !description) {
-              description = ddgRes.snippet;
+          const geminiFallback = await resolveBusinessQuery(domain);
+          if (geminiFallback) {
+            title = geminiFallback.name;
+            siteName = geminiFallback.name;
+            description = geminiFallback.description || description;
+            effectiveAddress = geminiFallback.address || effectiveAddress;
+            effectiveCity = geminiFallback.city || effectiveCity;
+            effectiveCountry = geminiFallback.country || effectiveCountry;
+            effectivePhone = geminiFallback.phone || effectivePhone;
+            effectiveEmail = geminiFallback.email || effectiveEmail;
+            effectiveCategory = geminiFallback.category || effectiveCategory;
+            locInfo.openingHours = geminiFallback.openingHours || locInfo.openingHours;
+          } else {
+            const ddgRes = await searchDuckDuckGoWeb(domain);
+            if (ddgRes && ddgRes.title) {
+              title = ddgRes.title;
+              siteName = ddgRes.title;
+              if (ddgRes.snippet && !description) {
+                description = ddgRes.snippet;
+              }
             }
           }
         } catch (ddgErr) {}
@@ -19984,14 +20219,17 @@ Return JSON:
       if (logo) logo = sanitizeProxy(logo);
 
       // Extract rich location, phone, email, and category
-      const locInfo = extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
+      const scrapedLocInfo = extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
+      if (!locInfo || Object.keys(locInfo).length === 0) {
+        locInfo = scrapedLocInfo;
+      }
       const isYoouz = cleanDomain === "yoouz.com";
-      let effectiveAddress = locInfo.address || "";
-      let effectiveCity = locInfo.city || (effectiveAddress ? "" : (isYoouz ? "Worldwide" : "Online"));
-      let effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
-      let effectivePhone = locInfo.phone || "";
-      let effectiveEmail = locInfo.email || "";
-      let effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
+      if (!effectiveAddress) effectiveAddress = locInfo.address || "";
+      if (!effectiveCity) effectiveCity = locInfo.city || (effectiveAddress ? "" : (isYoouz ? "Worldwide" : "Online"));
+      if (!effectiveCountry) effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
+      if (!effectivePhone) effectivePhone = locInfo.phone || "";
+      if (!effectiveEmail) effectiveEmail = locInfo.email || "";
+      if (!effectiveCategory) effectiveCategory = locInfo.category || (isYoouz ? "Video Reviews Platform" : "Website");
 
       if (resolvedEntity) {
         if (!effectiveAddress && resolvedEntity.address) effectiveAddress = resolvedEntity.address;
@@ -20261,7 +20499,7 @@ Return JSON:
       const seenKeys = new Set<string>();
 
       // 0. Instant DDG / Cache Pre-Resolution for Query (Ensures suggestions ALREADY contain real domain like vrijens.net)
-      const topEntity = await resolveBusinessQuery(q).catch(() => null);
+      const topEntity = await resolveBusinessQuery(q, true).catch(() => null);
 
       const addSuggestion = (item: {
         id?: string;

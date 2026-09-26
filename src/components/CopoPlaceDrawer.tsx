@@ -655,10 +655,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const hasGenuinePhone = Boolean(
     effectivePhone &&
-    effectivePhone.trim() !== "" &&
-    !effectivePhone.includes("555-01") &&
-    !effectivePhone.includes("019-2834") &&
-    !effectivePhone.includes("19.5999")
+    effectivePhone.trim() !== ""
   );
 
   const hasGenuineWebsite = Boolean(
@@ -679,8 +676,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasGenuineHours = Boolean(
     effectiveHours &&
     effectiveHours.trim() !== "" &&
-    effectiveHours !== "Open 24 hours" &&
-    (isOnlineOnlyPlatform || effectiveHours !== "Available 24/7") &&
     !effectiveHours.toLowerCase().includes("not provided")
   );
 
@@ -1426,7 +1421,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {t("place.hoursOfOperation", "Hours of Operation")}
                     </h3>
                   </div>
-                  {((hasGenuineHours && effectiveHours && !effectiveHours.toLowerCase().includes("24/7")) || (place.openingHours && !place.openingHours.toLowerCase().includes("24/7"))) && (
+                  {((hasGenuineHours && effectiveHours) || place.openingHours) && (
                     <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold text-[10px] flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
                       {t("place.openNow", "Open")}
@@ -1434,7 +1429,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   )}
                 </div>
                 <div className="text-xs text-zinc-200 font-medium pt-1">
-                  {(hasGenuineHours && effectiveHours && !effectiveHours.toLowerCase().includes("24/7")) || (place.openingHours && !place.openingHours.toLowerCase().includes("24/7")) ? (
+                  {(hasGenuineHours && effectiveHours) || place.openingHours ? (
                     <p className="text-white font-semibold leading-relaxed">{effectiveHours || place.openingHours}</p>
                   ) : (
                     <p className="text-zinc-500">{t("place.hoursNotProvided", "Hours not provided")}</p>
