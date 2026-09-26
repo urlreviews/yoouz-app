@@ -16,7 +16,6 @@ interface CopoBrandLogoProps {
 
 // Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
 const KNOWN_LOADED_LOGOS = new Set<string>();
-const KNOWN_FAILED_LOGOS = new Set<string>();
 
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   domain,
@@ -30,8 +29,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   loading = "lazy",
   fetchPriority = "auto"
 }) => {
-  const [triedProxy, setTriedProxy] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [triedFaviconFallback, setTriedFaviconFallback] = useState(false);
 
   // Extract clean domain from any source
   const resolvedDomain = useMemo(() => {
@@ -54,39 +53,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       cleanN === "yoouz.com"
     );
   }, [resolvedDomain, name]);
-
-  // Yoouz emblem handling
-  if (isYoouz) {
-    return (
-      <div className={className} id="copo-brand-logo-yoouz">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={imageClassName}
-          aria-label="Yoouz"
-        >
-          <rect width="24" height="24" rx="6" fill="#09090b" />
-          <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
-          <path
-            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            fill="#ffffff"
-          />
-        </svg>
-      </div>
-    );
-  }
-
-  // Reset error & fallback whenever domain, logoUrl, or effectiveSrc updates with fresh metadata
-  useEffect(() => {
-    setHasError(false);
-    setTriedFaviconFallback(false);
-    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
-      setImgLoaded(true);
-    } else {
-      setImgLoaded(false);
-    }
-  }, [resolvedDomain, logoUrl, effectiveSrc, currentSrc]);
 
   const googleFaviconUrl = useMemo(() => {
     if (isYoouz) return null;
@@ -135,8 +101,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return null;
   }, [isYoouz, resolvedDomain, logoUrl, name, googleFaviconUrl]);
 
-  const [triedFaviconFallback, setTriedFaviconFallback] = useState(false);
-
   const currentSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
     if (hasError) return null;
@@ -151,13 +115,28 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
   const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
 
+  // Reset error & fallback whenever currentSrc, domain, or logoUrl updates
+  useEffect(() => {
+    setHasError(false);
+    setTriedFaviconFallback(false);
+    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
+      setImgLoaded(true);
+    } else {
+      setImgLoaded(false);
+    }
+  }, [resolvedDomain, logoUrl, currentSrc]);
+
   useEffect(() => {
     if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
       setImgLoaded(true);
     }
   }, [currentSrc]);
 
-  const shouldAttemptImage = !hasError && !!currentSrc;
+  const initialLetter = useMemo(() => {
+    const candidate = name || resolvedDomain || "B";
+    const clean = candidate.replace(/^(https?:\/\/)?(www\.)?/, "").trim();
+    return (clean.charAt(0) || "B").toUpperCase();
+  }, [name, resolvedDomain]);
 
   const hasPosition =
     className.includes("absolute") ||
@@ -173,11 +152,29 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     className
   ].filter(Boolean).join(" ");
 
-  const initialLetter = useMemo(() => {
-    const candidate = name || resolvedDomain || "B";
-    const clean = candidate.replace(/^(https?:\/\/)?(www\.)?/, "").trim();
-    return (clean.charAt(0) || "B").toUpperCase();
-  }, [name, resolvedDomain]);
+  // Dedicated Yoouz emblem (rendered only after all hooks are declared)
+  if (isYoouz) {
+    return (
+      <div className={className} id="copo-brand-logo-yoouz">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={imageClassName}
+          aria-label="Yoouz"
+        >
+          <rect width="24" height="24" rx="6" fill="#09090b" />
+          <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
+          <path
+            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            fill="#ffffff"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  const shouldAttemptImage = !hasError && !!currentSrc;
 
   return (
     <div className={containerClasses}>

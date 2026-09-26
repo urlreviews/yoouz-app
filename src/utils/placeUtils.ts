@@ -2040,7 +2040,7 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
 /**
  * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
  */
-export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { address?: string; postalCode?: string; city?: string; state?: string; country?: string; phone?: string; email?: string; openingHours?: string; category?: string; lat?: number; lng?: number; locations?: any[] }> = {
+export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { name?: string; address?: string; postalCode?: string; city?: string; state?: string; country?: string; phone?: string; email?: string; openingHours?: string; category?: string; lat?: number; lng?: number; locations?: any[] }> = {
   "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
