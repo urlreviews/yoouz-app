@@ -440,27 +440,38 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     })()}
                   </h2>
 
-                  {/* Rating & Category */}
-                  <div className="flex items-center gap-2.5 flex-wrap my-2 text-xs text-zinc-300">
+                  {/* Prominent Star Rating Showcase */}
+                  <div className="my-3 inline-flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-xl shadow-lg">
                     {totalReviewsCount > 0 ? (
-                      <div className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 px-2.5 py-1 rounded-lg">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-extrabold text-amber-400">{averageRating.toFixed(1)}</span>
-                        <span className="text-zinc-300">({totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"})</span>
-                      </div>
+                      <>
+                        <span className="font-black text-amber-400 text-xl leading-none">{averageRating.toFixed(1)}</span>
+                        <div className="flex items-center text-amber-400 gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-800 text-zinc-800"}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-white font-extrabold text-xs border-l border-zinc-800 pl-2.5">
+                          {totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"}
+                        </span>
+                      </>
                     ) : (
-                      <div className="inline-flex items-center gap-1.5 bg-zinc-850 border border-zinc-750 px-2.5 py-1 rounded-lg">
-                        <Star className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]" />
-                        <span className="font-bold text-zinc-400">0.0</span>
-                        <span className="text-zinc-400">(0 video reviews)</span>
-                      </div>
-                    )}
-
-                    {selectedPlace.category && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 border border-zinc-750 font-semibold">
-                        <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                        <span>{selectedPlace.category}</span>
-                      </span>
+                      <>
+                        <span className="font-black text-zinc-400 text-xl leading-none">0.0</span>
+                        <div className="flex items-center text-zinc-600 gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-4 h-4 fill-none text-zinc-600 stroke-[1.5]"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-400 font-semibold text-xs border-l border-zinc-800 pl-2.5">
+                          0 video reviews
+                        </span>
+                      </>
                     )}
                   </div>
 
@@ -482,12 +493,6 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   <span>Record Video Review</span>
                 </button>
               </div>
-
-              {selectedPlace.description && (
-                <p className="text-xs text-zinc-400 leading-relaxed mt-4 pt-4 border-t border-zinc-800">
-                  {selectedPlace.description}
-                </p>
-              )}
 
               {/* Dynamic Video Reviews Grid */}
               {placeVideos.length > 0 ? (

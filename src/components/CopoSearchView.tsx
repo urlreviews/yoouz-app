@@ -765,45 +765,40 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     )}
                   </div>
                   
-                  {/* Star Rating Row - Always Visible */}
-                  <div className="flex items-center gap-2.5 mt-3">
+                  {/* Star Rating Showcase Card - Prominent & Super Premium */}
+                  <div className="mt-4 inline-flex items-center gap-3 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 border border-zinc-800/90 px-4 py-2.5 rounded-2xl shadow-xl backdrop-blur-xl">
                     {totalReviewsCount > 0 ? (
-                      <div className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl shrink-0">
-                        <span className="font-black text-amber-400 text-base leading-none">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center text-amber-400 gap-0.5">
+                      <>
+                        <span className="font-black text-amber-400 text-2xl leading-none tracking-tight">{averageRating.toFixed(1)}</span>
+                        <div className="flex items-center text-amber-400 gap-1">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-700 text-zinc-700"}`}
+                              className={`w-5 h-5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]" : "fill-zinc-800 text-zinc-800"}`}
                             />
                           ))}
                         </div>
-                        <span className="text-white font-extrabold text-xs ml-1">
-                          ({totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")})
+                        <span className="text-white font-extrabold text-xs sm:text-sm ml-1 border-l border-zinc-800 pl-3">
+                          {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")}
                         </span>
-                      </div>
+                      </>
                     ) : (
-                      <div className="flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/60 px-3 py-1.5 rounded-xl shrink-0">
-                        <span className="font-black text-zinc-400 text-sm leading-none">0.0</span>
-                        <div className="flex items-center text-zinc-600 gap-0.5">
+                      <>
+                        <span className="font-black text-zinc-400 text-2xl leading-none tracking-tight">0.0</span>
+                        <div className="flex items-center text-zinc-600 gap-1">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                              className="w-5 h-5 fill-none text-zinc-600 stroke-[1.5]"
                             />
                           ))}
                         </div>
-                        <span className="text-zinc-400 font-medium text-xs ml-1">
-                          (0 video reviews)
+                        <span className="text-zinc-400 font-semibold text-xs sm:text-sm ml-1 border-l border-zinc-800 pl-3">
+                          0 video reviews
                         </span>
-                      </div>
+                      </>
                     )}
                   </div>
-                  {getEffectivePlaceDescription(searchedPlace) && (
-                    <p className="text-zinc-300 mt-3 max-w-2xl text-sm leading-relaxed">
-                      {getEffectivePlaceDescription(searchedPlace)}
-                    </p>
-                  )}
                 </div>
 
                 {/* Profile Actions */}
