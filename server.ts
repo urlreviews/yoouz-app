@@ -20134,6 +20134,7 @@ Return JSON:
 
   // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache
   const searchSuggestCache = new Map<string, { timestamp: number; data: any }>();
+  const SPAM_AUTOCOMPLETE_REGEX = /\b(?:list|lists|school|schools|review|reviews|phone|phones|number|numbers|salary|salaries|jobs|job|career|careers|wiki|wikipedia|pdf|app|login|signup|reddit|forum|quora|contact|email|hours|rating|ratings|fake|scam|glassdoor|indeed|linkedin|facebook|instagram|youtube|twitter|tiktok)\b/i;
 
   app.get('/api/search-suggest', async (req, res) => {
     try {
@@ -20160,6 +20161,9 @@ Return JSON:
       }> = [];
       const seenKeys = new Set<string>();
 
+      // 0. Instant DDG / Cache Pre-Resolution for Query (Ensures suggestions ALREADY contain real domain like vrijens.net)
+      const topEntity = await resolveBusinessQuery(q).catch(() => null);
+
       const addSuggestion = (item: {
         id?: string;
         title: string;
@@ -20170,29 +20174,45 @@ Return JSON:
         source: string;
       }) => {
         if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
-        const dom = (item.domain || "").toLowerCase().replace(/^www\./, "").trim();
+        if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
+
+        let dom = (item.domain || "").toLowerCase().replace(/^www\./, "").trim();
         const normTitle = item.title.toLowerCase().trim();
-        const key = dom || normTitle;
-        if (seenKeys.has(key) || seenKeys.has(normTitle)) return;
-        seenKeys.add(key);
+
+        // If domain is missing, but topEntity exists and item.title shares brand words with topEntity or q
+        if (!dom && topEntity?.domain) {
+          const brandAnchor = (topEntity.name || q).toLowerCase();
+          const brandWords = brandAnchor.split(/\s+/).filter(w => w.length >= 2);
+          if (brandWords.length > 0 && brandWords.some(w => normTitle.includes(w))) {
+            dom = topEntity.domain;
+          }
+        }
+
+        const key = dom ? `${dom}:${normTitle}` : normTitle;
+        if (seenKeys.has(normTitle) && !dom) return;
+        if (seenKeys.has(key)) return;
         seenKeys.add(normTitle);
+        if (key !== normTitle) seenKeys.add(key);
 
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         const logo = item.logoUrl || (hasValidDomain ? `/api/favicon?domain=${dom}` : "");
+
+        let displayCat = item.category || topEntity?.category || "Verified Business";
+        if (displayCat === "Verified Business" && topEntity?.category && topEntity.category !== "Verified Business") {
+          displayCat = topEntity.category;
+        }
 
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
           title: item.title,
           domain: hasValidDomain ? dom : "",
           logoUrl: logo,
-          category: item.category || "Verified Business",
+          category: displayCat,
           address: item.address || "",
           source: item.source
         });
       };
 
-      // 0. Instant DDG / Cache Pre-Resolution for Query (Ensures suggestions ALREADY contain real domain like vrijens.net)
-      const topEntity = await resolveBusinessQuery(q).catch(() => null);
       if (topEntity && topEntity.domain) {
         addSuggestion({
           id: topEntity.domain,

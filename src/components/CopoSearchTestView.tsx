@@ -349,12 +349,20 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                      {item.domain && <span className="text-zinc-500 truncate">{item.domain}</span>}
-                      {item.category && (
+                      {item.domain ? (
                         <>
-                          {item.domain && <span className="text-zinc-700">•</span>}
-                          <span className="text-zinc-400 truncate">{item.category}</span>
+                          <span className="text-zinc-400 font-medium truncate">{item.domain}</span>
+                          {item.category && item.category !== "Verified Business" && (
+                            <>
+                              <span className="text-zinc-600">•</span>
+                              <span className="text-zinc-400 truncate">{item.category}</span>
+                            </>
+                          )}
                         </>
+                      ) : (
+                        item.category && item.category !== "Verified Business" ? (
+                          <span className="text-zinc-400 truncate">{item.category}</span>
+                        ) : null
                       )}
                     </div>
                   </div>
