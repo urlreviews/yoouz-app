@@ -745,21 +745,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {/* Contact & Hours Badges */}
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs text-zinc-300 mt-2.5">
                     {searchedPlace.phone && (
-                      <a href={`tel:${searchedPlace.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-2.5 py-1 rounded-md border border-zinc-700/60 transition-colors">
-                        <Phone className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                        <span className="font-medium">{searchedPlace.phone}</span>
+                      <a href={`tel:${searchedPlace.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
+                        <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>{searchedPlace.phone}</span>
                       </a>
                     )}
-                    {searchedPlace.email && (
-                      <a href={`mailto:${searchedPlace.email}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-2.5 py-1 rounded-md border border-zinc-700/60 transition-colors">
+                    {searchedPlace.email && !searchedPlace.email.toLowerCase().includes('4samet') && (
+                      <a href={`mailto:${searchedPlace.email}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
                         <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="font-medium">{searchedPlace.email}</span>
+                        <span>{searchedPlace.email}</span>
                       </a>
                     )}
                     {(searchedPlace.openingHours || (searchedPlace as any).hours) && (
-                      <div className="inline-flex items-center gap-1.5 bg-zinc-800/90 text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-700/60">
+                      <div className="inline-flex items-center gap-1.5 bg-zinc-800/90 text-zinc-300 px-3 py-1.5 rounded-xl border border-zinc-700/60 font-semibold">
                         <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span className="font-medium">{searchedPlace.openingHours || (searchedPlace as any).hours}</span>
+                        <span>{searchedPlace.openingHours || (searchedPlace as any).hours}</span>
                       </div>
                     )}
                     {isEnriching && (
@@ -770,23 +770,40 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     )}
                   </div>
                   
-                  {/* Star Rating Row */}
-                  {totalReviewsCount > 0 && (
-                    <div className="flex items-center gap-2 mt-2.5">
-                      <div className="flex items-center gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-5 h-5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-800 text-zinc-800"}`}
-                          />
-                        ))}
+                  {/* Star Rating Row - Always Visible */}
+                  <div className="flex items-center gap-2.5 mt-3">
+                    {totalReviewsCount > 0 ? (
+                      <div className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl shrink-0">
+                        <span className="font-black text-amber-400 text-base leading-none">{averageRating.toFixed(1)}</span>
+                        <div className="flex items-center text-amber-400 gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-700 text-zinc-700"}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-white font-extrabold text-xs ml-1">
+                          ({totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")})
+                        </span>
                       </div>
-                      <span className="text-white font-bold text-lg">{averageRating.toFixed(1)}</span>
-                      <span className="text-zinc-200 font-medium text-sm">
-                        ({totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})
-                      </span>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/60 px-3 py-1.5 rounded-xl shrink-0">
+                        <span className="font-black text-zinc-400 text-sm leading-none">0.0</span>
+                        <div className="flex items-center text-zinc-600 gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-400 font-medium text-xs ml-1">
+                          (0 video reviews)
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   {searchedPlace.description && (
                     <p className="text-zinc-300 mt-3 max-w-2xl text-sm leading-relaxed">
                       {searchedPlace.description}
@@ -852,21 +869,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="w-full py-10 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-center">
-                <div className="flex gap-1.5 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-8 h-8 text-zinc-700" strokeWidth={1.5} />
-                  ))}
+              <div className="w-full py-10 px-6 bg-gradient-to-b from-zinc-900/90 to-zinc-900/50 border border-zinc-800/80 rounded-3xl flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner">
+                  <Video className="w-6 h-6 text-white" />
                 </div>
-                <h4 className="text-lg font-bold text-white">{t("search.noReviewsYet", "No reviews yet")}</h4>
-                <p className="text-zinc-200 text-sm mt-1 mb-6">
-                  {t("search.beTheFirst", "Be the first to share your experience with this website!")}
+                <h4 className="text-base font-extrabold text-white tracking-tight">{t("search.noReviewsYet", "No video reviews yet")}</h4>
+                <p className="text-zinc-400 text-xs mt-1 mb-5 max-w-md leading-relaxed">
+                  {t("search.beTheFirst", "Be the first creator to share your video review experience for")} <span className="text-white font-semibold">{searchedPlace.name}</span>!
                 </p>
                 <button
+                  type="button"
                   onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                  className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-full font-bold shadow-sm transition-colors cursor-pointer"
+                  className="bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-extrabold text-xs shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                 >
-                  {t("search.recordFirst", "Record the first video review")}
+                  <Video className="w-4 h-4 text-zinc-950" />
+                  <span>{t("search.recordFirst", "Record Video Review")}</span>
                 </button>
               </div>
             )}

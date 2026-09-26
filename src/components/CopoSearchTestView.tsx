@@ -442,11 +442,19 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
                   {/* Rating & Category */}
                   <div className="flex items-center gap-2.5 flex-wrap my-2 text-xs text-zinc-300">
-                    <div className="inline-flex items-center gap-1.5 bg-zinc-850 border border-zinc-750 px-2.5 py-1 rounded-lg">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-extrabold text-amber-400">{averageRating.toFixed(1)}</span>
-                      <span className="text-zinc-400">({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})</span>
-                    </div>
+                    {totalReviewsCount > 0 ? (
+                      <div className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-400/25 px-2.5 py-1 rounded-lg">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-extrabold text-amber-400">{averageRating.toFixed(1)}</span>
+                        <span className="text-zinc-300">({totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"})</span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 bg-zinc-850 border border-zinc-750 px-2.5 py-1 rounded-lg">
+                        <Star className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]" />
+                        <span className="font-bold text-zinc-400">0.0</span>
+                        <span className="text-zinc-400">(0 video reviews)</span>
+                      </div>
+                    )}
 
                     {selectedPlace.category && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 border border-zinc-750 font-semibold">
