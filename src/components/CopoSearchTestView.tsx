@@ -493,7 +493,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2 rounded-full font-extrabold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-95"
                   >
                     <Video className="w-4 h-4 text-zinc-950" />
-                    <span>Record Video Review</span>
+                    <span>Record Review</span>
                   </button>
                 </div>
               </div>
@@ -503,7 +503,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                 <div className="mt-6 pt-6 border-t border-zinc-800">
                   <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4 flex items-center gap-2">
                     <Video className="w-4 h-4 text-amber-400" />
-                    <span>Customer Video Reviews ({placeVideos.length})</span>
+                    <span>Customer Reviews ({placeVideos.length})</span>
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {placeVideos.map((vid) => (
@@ -542,7 +542,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner">
                       <Video className="w-6 h-6 text-white" />
                     </div>
-                    <h4 className="text-sm font-extrabold text-white tracking-tight">Be the first to record a video review</h4>
+                    <h4 className="text-sm font-extrabold text-white tracking-tight">Be the first to record a review</h4>
                     <p className="text-zinc-400 text-xs mt-1 mb-4 max-w-md leading-relaxed">
                       Share your authentic experience for <span className="text-white font-semibold">{selectedPlace.name}</span> in a short 60-second video!
                     </p>
@@ -552,7 +552,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                       className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-full font-extrabold text-xs shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
                     >
                       <Video className="w-4 h-4 text-zinc-950" />
-                      <span>Record Video Review</span>
+                      <span>Record Review</span>
                     </button>
                   </div>
                 </div>

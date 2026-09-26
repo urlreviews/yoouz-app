@@ -17103,9 +17103,41 @@ Respond ONLY with a JSON object:
               var scrapedCity = locInfo.city;
               var scrapedCountry = locInfo.country;
               var scrapedCategory = locInfo.category;
+            } else {
+              // Direct page fetch failed, try DDG search fallback
+              try {
+                const ddgRes = await searchDuckDuckGoWeb(domain);
+                if (ddgRes && ddgRes.title) {
+                  metaTitle = ddgRes.title;
+                  if (ddgRes.snippet) metaDesc = ddgRes.snippet;
+                }
+              } catch (ddgErr) {}
             }
           } catch (e) {
-            // Fetch timeout or error, use domain defaults
+            // Direct page fetch failed, try DDG search fallback
+            try {
+              const ddgRes = await searchDuckDuckGoWeb(domain);
+              if (ddgRes && ddgRes.title) {
+                metaTitle = ddgRes.title;
+                if (ddgRes.snippet) metaDesc = ddgRes.snippet;
+              }
+            } catch (ddgErr) {}
+          }
+
+          if (metaTitle && metaTitle !== siteTitle) {
+            metaTitle = formatBusinessName(metaTitle, domain);
+          } else {
+            try {
+              const ddgRes = await searchDuckDuckGoWeb(domain);
+              if (ddgRes && ddgRes.title) {
+                metaTitle = formatBusinessName(ddgRes.title, domain);
+                if (ddgRes.snippet) metaDesc = ddgRes.snippet;
+              } else {
+                metaTitle = formatBusinessName(siteTitle, domain);
+              }
+            } catch (ddgErr) {
+              metaTitle = formatBusinessName(siteTitle, domain);
+            }
           }
 
           const matchedKnownLoc = KNOWN_ENTITY_LOCATIONS[domain] || KNOWN_ENTITY_LOCATIONS[`www.${domain}`];
@@ -19729,12 +19761,26 @@ Return JSON:
                 lowerTitle.trim() === '' ||
                 lowerTitle.includes('attention required')
               ) {
-                const parts = domain.split('.');
-                if (parts.length >= 2) {
-                  const mainPart = parts[parts.length - 2];
-                  title = mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
-                } else {
-                  title = domain;
+                let gotDdg = false;
+                try {
+                  const ddgRes = await searchDuckDuckGoWeb(domain);
+                  if (ddgRes && ddgRes.title) {
+                    title = ddgRes.title;
+                    if (ddgRes.snippet && !description) {
+                      description = ddgRes.snippet;
+                    }
+                    gotDdg = true;
+                  }
+                } catch (ddgErr) {}
+
+                if (!gotDdg) {
+                  const parts = domain.split('.');
+                  if (parts.length >= 2) {
+                    const mainPart = parts[parts.length - 2];
+                    title = mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
+                  } else {
+                    title = domain;
+                  }
                 }
               }
             } catch (cheerioErr) {
@@ -19742,13 +19788,37 @@ Return JSON:
             }
           }
         } else {
+          try {
+            const ddgRes = await searchDuckDuckGoWeb(domain);
+            if (ddgRes && ddgRes.title) {
+              title = ddgRes.title;
+              siteName = ddgRes.title;
+              if (ddgRes.snippet && !description) {
+                description = ddgRes.snippet;
+              }
+            }
+          } catch (ddgErr) {}
+          if (!title) {
+            title = domain;
+            siteName = domain;
+          }
+        }
+      } catch (e) {
+        // Direct page fetch failed, try DDG search
+        try {
+          const ddgRes = await searchDuckDuckGoWeb(domain);
+          if (ddgRes && ddgRes.title) {
+            title = ddgRes.title;
+            siteName = ddgRes.title;
+            if (ddgRes.snippet && !description) {
+              description = ddgRes.snippet;
+            }
+          }
+        } catch (ddgErr) {}
+        if (!title) {
           title = domain;
           siteName = domain;
         }
-      } catch (e) {
-        // Silently fallback if metadata fetch fails
-        title = domain;
-        siteName = domain;
       }
       
       const cleanDomain = domain.replace(/^www\./i, "").toLowerCase();
