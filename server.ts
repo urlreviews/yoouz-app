@@ -19462,6 +19462,96 @@ Return JSON:
         } catch (ddgErr) {}
       }
 
+      // 4. Advanced Live Web Search organic scraper for local businesses (e.g. "barber buzzy")
+      if (suggestions.length < 8) {
+        try {
+          const htmlRes = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+              "Accept-Language": "en-US,en;q=0.9,he;q=0.8",
+              "Referer": "https://html.duckduckgo.com/"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+          });
+          if (htmlRes.ok) {
+            const searchHtml = await htmlRes.text();
+            const $ = cheerio.load(searchHtml);
+            
+            $('.result').each((_i, el) => {
+              if (suggestions.length >= 8) return;
+              
+              const rawTitle = $(el).find('.result__title').text().trim();
+              const rawUrl = $(el).find('.result__title a').attr('href') || $(el).find('.result__url').attr('href') || '';
+              const snippet = $(el).find('.result__snippet').text().trim();
+              
+              if (rawTitle && rawUrl) {
+                let destinationUrl = '';
+                if (rawUrl.includes('uddg=')) {
+                  const m = /uddg=([^&"']+)/.exec(rawUrl);
+                  if (m) {
+                    try {
+                      destinationUrl = decodeURIComponent(m[1]);
+                    } catch (e) {}
+                  }
+                }
+                if (!destinationUrl && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
+                  destinationUrl = rawUrl;
+                }
+                
+                if (destinationUrl) {
+                  try {
+                    const u = new URL(destinationUrl);
+                    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+                    
+                    if (
+                      !host.includes("duckduckgo") &&
+                      !host.includes("tripadvisor") &&
+                      !host.includes("booking.com") &&
+                      !host.includes("yellowpages") &&
+                      !host.includes("pagesdor") &&
+                      !host.includes("waze.com")
+                    ) {
+                      let cleanTitle = rawTitle
+                        .replace(/\s*[|\-–—•:|]\s*Home\s*\|\s*Facebook/i, "")
+                        .replace(/\s*[|\-–—•:|]\s*Facebook/i, "")
+                        .replace(/\s*[|\-–—•:|]\s*Instagram.*$/i, "")
+                        .replace(/\s*[|\-–—•:|]\s*LinkedIn.*$/i, "")
+                        .replace(/\s*[|\-–—•:|]\s*Official Website.*$/i, "")
+                        .replace(/\s*[|\-–—•:|]\s*TikTok.*$/i, "")
+                        .trim();
+                        
+                      if (cleanTitle) {
+                        const dedupKey = host || cleanTitle.toLowerCase();
+                        if (!seenDomains.has(dedupKey)) {
+                          seenDomains.add(dedupKey);
+                          
+                          let phone = "";
+                          const phoneMatch = /(\+?[0-9]{2,4}[-.\s]?[0-9]{2,4}[-.\s]?[0-9]{2,8}[-.\s]?[0-9]{2,8})/.exec(snippet);
+                          if (phoneMatch) {
+                            phone = phoneMatch[1].trim();
+                          }
+                          
+                          suggestions.push({
+                            title: cleanTitle,
+                            domain: host,
+                            logoUrl: `/api/favicon?domain=${host}`,
+                            category: "Local Business",
+                            address: phone ? `Phone: ${phone}` : "",
+                            source: "web_search"
+                          });
+                        }
+                      }
+                    }
+                  } catch (e) {}
+                }
+              }
+            });
+          }
+        } catch (htmlErr) {
+          console.error("DDG HTML search parse error:", htmlErr);
+        }
+      }
+
       return res.json({ suggestions: suggestions.slice(0, 8), query: q });
     } catch (e: any) {
       console.error('Search suggest error:', e);
