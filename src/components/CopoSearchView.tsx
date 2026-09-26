@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2 } from "lucide-react";
+import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
@@ -35,6 +35,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const { t } = useLanguage();
   const [query, setQuery] = useState(initialQuery);
   const [isSearching, setIsSearching] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
 
@@ -275,7 +276,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         onAddPlace(instantPlace);
       }
       
-      // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta
+      // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
+      setIsEnriching(true);
       try {
          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(domain)}`);
          if (resp.ok) {
@@ -318,12 +320,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  ogImage: (foundPlace.ogImage && !foundPlace.ogImage.includes("unsplash.com")) ? foundPlace.ogImage : (fetchedBanner || ""),
                  photos: (foundPlace.photos && foundPlace.photos.length > 0 && !foundPlace.photos[0].includes("unsplash.com")) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
                  description: foundPlace.description || data.description || "",
-                  category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
-                  address: foundPlace.address || data.address || "",
-                  city: (foundPlace.city && foundPlace.city !== "Online") ? foundPlace.city : (data.city || foundPlace.city || ""),
-                  country: foundPlace.country || data.country || "",
-                  phone: foundPlace.phone || data.phone || "",
-                  email: foundPlace.email || data.email || "",
+                 category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
+                 address: (data.address && (!foundPlace.address || foundPlace.address === "Verified Location" || foundPlace.address.startsWith("http"))) ? data.address : (foundPlace.address || data.address || ""),
+                 city: (foundPlace.city && foundPlace.city !== "Online" && foundPlace.city !== "Worldwide") ? foundPlace.city : (data.city || foundPlace.city || ""),
+                 country: foundPlace.country || data.country || "",
+                 phone: foundPlace.phone || data.phone || "",
+                 email: foundPlace.email || data.email || "",
+                 openingHours: data.openingHours || foundPlace.openingHours || (data.hours || foundPlace.hours || "Available 24/7"),
+                 hours: data.openingHours || foundPlace.openingHours || (data.hours || foundPlace.hours || "Available 24/7"),
+                 locations: (data.locations && data.locations.length > 0) ? data.locations : (foundPlace.locations || [])
                };
                setSearchedPlace(foundPlace);
                if (onAddPlace) {
@@ -337,9 +342,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  categoryType: "all",
                  address: data.address || "",
                  city: data.city || "Online",
-                  country: data.country || "",
-                 lat: 0,
-                 lng: 0,
+                 country: data.country || "",
+                 lat: data.lat || 0,
+                 lng: data.lng || 0,
                  rating: 5,
                  totalReviews: 1,
                  ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
@@ -348,10 +353,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
                  ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
                  photos: ((fetchedBanner && !fetchedBanner.includes("unsplash.com")) || (instantBanner && !instantBanner.includes("unsplash.com"))) ? [(fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : instantBanner] : [],
-                 openingHours: "Available 24/7",
+                 openingHours: data.openingHours || "Available 24/7",
                  isOpen: true,
                  phone: data.phone || "",
-                  email: data.email || "",
+                 email: data.email || "",
                  website: data.url || `https://${domain}`,
                  priceRange: "N/A",
                  plusCode: "",
@@ -359,6 +364,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  popularKeywords: [],
                  amenities: [],
                  topDishes: [],
+                 locations: data.locations || [],
                  brandDomain: data.domain || domain
                };
                foundPlace = newPlace;
@@ -371,6 +377,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
          }
       } catch (err) {
          console.warn("Metadata fetch error:", err);
+      } finally {
+         setIsEnriching(false);
       }
 
       if (foundPlace) {
@@ -627,8 +635,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-extrabold text-white mb-2">
+                <div className="min-w-0 flex-1">
+                  <h2 
+                    onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                    className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors"
+                  >
                     {(() => {
                       const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
                       const name = (dom && KNOWN_OFFICIAL_NAMES[dom])
@@ -650,24 +661,73 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       );
                     })()}
                   </h2>
-                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-200 hover:text-white hover:underline flex items-center gap-1.5 font-medium text-sm mt-1 mb-2">
+                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-sm mt-0.5 mb-2">
                     <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
                     <span>{searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
                   </a>
 
                   {/* Structured Category Row */}
                   {searchedPlace.category && (
-                    <div className="flex items-center gap-2.5 flex-wrap my-2.5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 border border-zinc-750 text-xs font-semibold text-zinc-200">
+                    <div className="flex items-center gap-2.5 flex-wrap my-1.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
                         <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                         <span>{searchedPlace.category}</span>
                       </span>
                     </div>
                   )}
+
+                  {/* Street Address & Location */}
+                  {(searchedPlace.address || (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide")) && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-300 mt-2 flex-wrap">
+                      <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="font-medium">
+                        {[searchedPlace.address, (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide") ? searchedPlace.city : "", searchedPlace.country].filter(Boolean).join(", ")}
+                      </span>
+                      {searchedPlace.address && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([searchedPlace.name, searchedPlace.address, searchedPlace.city].filter(Boolean).join(", "))}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-sky-400 hover:text-sky-300 hover:underline inline-flex items-center gap-0.5 ml-1 font-semibold"
+                        >
+                          <span>Directions</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Contact & Hours Badges */}
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs text-zinc-300 mt-2.5">
+                    {searchedPlace.phone && (
+                      <a href={`tel:${searchedPlace.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-2.5 py-1 rounded-md border border-zinc-700/60 transition-colors">
+                        <Phone className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                        <span className="font-medium">{searchedPlace.phone}</span>
+                      </a>
+                    )}
+                    {searchedPlace.email && (
+                      <a href={`mailto:${searchedPlace.email}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-2.5 py-1 rounded-md border border-zinc-700/60 transition-colors">
+                        <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className="font-medium">{searchedPlace.email}</span>
+                      </a>
+                    )}
+                    {(searchedPlace.openingHours || (searchedPlace as any).hours) && (
+                      <div className="inline-flex items-center gap-1.5 bg-zinc-800/90 text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-700/60">
+                        <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="font-medium">{searchedPlace.openingHours || (searchedPlace as any).hours}</span>
+                      </div>
+                    )}
+                    {isEnriching && (
+                      <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs px-2.5 py-1 bg-amber-400/10 rounded-md border border-amber-400/20 animate-pulse">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Syncing details...</span>
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Star Rating Row */}
                   {totalReviewsCount > 0 && (
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2.5">
                       <div className="flex items-center gap-0.5">
                         {[...Array(5)].map((_, i) => (
                           <Star
@@ -683,18 +743,32 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     </div>
                   )}
                   {searchedPlace.description && (
-                    <p className="text-zinc-200 mt-4 max-w-2xl text-sm leading-relaxed">
+                    <p className="text-zinc-300 mt-3 max-w-2xl text-sm leading-relaxed">
                       {searchedPlace.description}
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                  className="shrink-0 bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Video className="w-5 h-5 text-zinc-950" />
-                  {t("record.record_video_review", "Record Video Review")}
-                </button>
+
+                {/* Profile Actions */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 mt-4 md:mt-0 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                    className="bg-zinc-800 hover:bg-zinc-750 text-white px-5 py-3 rounded-full font-bold border border-zinc-700 hover:border-zinc-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
+                  >
+                    <Building2 className="w-4 h-4 text-zinc-300" />
+                    <span>View Business Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
+                    className="bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-3 rounded-full font-bold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
+                  >
+                    <Video className="w-5 h-5 text-zinc-950" />
+                    {t("record.record_video_review", "Record Video Review")}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

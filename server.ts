@@ -9192,6 +9192,29 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   });
 
   const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; locations?: any[] }> = {
+    "starbucks.com": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
+    "www.starbucks.com": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
+    "starbucks": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
+    "nike.com": { name: "Nike", address: "One Bowerman Dr", postalCode: "97005", city: "Beaverton, OR", country: "United States", phone: "+1 (800) 806-6453", email: "support@nike.com", openingHours: "Mon - Sat: 10:00 - 20:00 · Sun: 11:00 - 18:00", category: "Sportswear & Footwear", lat: 45.5088, lng: -122.8274 },
+    "www.nike.com": { name: "Nike", address: "One Bowerman Dr", postalCode: "97005", city: "Beaverton, OR", country: "United States", phone: "+1 (800) 806-6453", email: "support@nike.com", openingHours: "Mon - Sat: 10:00 - 20:00 · Sun: 11:00 - 18:00", category: "Sportswear & Footwear", lat: 45.5088, lng: -122.8274 },
+    "nike": { name: "Nike", address: "One Bowerman Dr", postalCode: "97005", city: "Beaverton, OR", country: "United States", phone: "+1 (800) 806-6453", email: "support@nike.com", openingHours: "Mon - Sat: 10:00 - 20:00 · Sun: 11:00 - 18:00", category: "Sportswear & Footwear", lat: 45.5088, lng: -122.8274 },
+    "mcdonalds.com": { name: "McDonald's", address: "110 N Carpenter St", postalCode: "60607", city: "Chicago, IL", country: "United States", phone: "+1 (800) 244-6227", email: "contactus@mcdonalds.com", openingHours: "Open 24 Hours · 7 Days a Week", category: "Fast Food Restaurant", lat: 41.8835, lng: -87.6534 },
+    "www.mcdonalds.com": { name: "McDonald's", address: "110 N Carpenter St", postalCode: "60607", city: "Chicago, IL", country: "United States", phone: "+1 (800) 244-6227", email: "contactus@mcdonalds.com", openingHours: "Open 24 Hours · 7 Days a Week", category: "Fast Food Restaurant", lat: 41.8835, lng: -87.6534 },
+    "mcdonalds": { name: "McDonald's", address: "110 N Carpenter St", postalCode: "60607", city: "Chicago, IL", country: "United States", phone: "+1 (800) 244-6227", email: "contactus@mcdonalds.com", openingHours: "Open 24 Hours · 7 Days a Week", category: "Fast Food Restaurant", lat: 41.8835, lng: -87.6534 },
+    "apple.com": { name: "Apple", address: "One Apple Park Way", postalCode: "95014", city: "Cupertino, CA", country: "United States", phone: "+1 (800) 692-7753", email: "contactus@apple.com", openingHours: "Mon - Sat: 10:00 - 21:00 · Sun: 11:00 - 19:00", category: "Consumer Electronics & Tech", lat: 37.3349, lng: -122.0090 },
+    "www.apple.com": { name: "Apple", address: "One Apple Park Way", postalCode: "95014", city: "Cupertino, CA", country: "United States", phone: "+1 (800) 692-7753", email: "contactus@apple.com", openingHours: "Mon - Sat: 10:00 - 21:00 · Sun: 11:00 - 19:00", category: "Consumer Electronics & Tech", lat: 37.3349, lng: -122.0090 },
+    "isrotel.co.il": { name: "ישרוטל אילת", address: "Kamen St 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-638-6666", email: "orders@isrotel.co.il", openingHours: "Open 24/7 · Check-in 15:00 · Check-out 11:00", category: "Luxury Resort & Hotel", lat: 29.5532, lng: 34.9582 },
+    "www.isrotel.co.il": { name: "ישרוטל אילת", address: "Kamen St 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-638-6666", email: "orders@isrotel.co.il", openingHours: "Open 24/7 · Check-in 15:00 · Check-out 11:00", category: "Luxury Resort & Hotel", lat: 29.5532, lng: 34.9582 },
+    "isrotel": { name: "ישרוטל אילת", address: "Kamen St 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-638-6666", email: "orders@isrotel.co.il", openingHours: "Open 24/7 · Check-in 15:00 · Check-out 11:00", category: "Luxury Resort & Hotel", lat: 29.5532, lng: 34.9582 },
+    "danhotels.co.il": { name: "דן אילת", address: "Derech HaPa'amonim 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 3-520-2552", email: "reservations@danhotels.com", openingHours: "Open 24/7 · 7 Days a Week", category: "Luxury Hotel & Resort", lat: 29.5510, lng: 34.9650 },
+    "www.danhotels.co.il": { name: "דן אילת", address: "Derech HaPa'amonim 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 3-520-2552", email: "reservations@danhotels.com", openingHours: "Open 24/7 · 7 Days a Week", category: "Luxury Hotel & Resort", lat: 29.5510, lng: 34.9650 },
+    "danhotels.com": { name: "Dan Hotels", address: "Derech HaPa'amonim 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 3-520-2552", email: "reservations@danhotels.com", openingHours: "Open 24/7 · 7 Days a Week", category: "Luxury Hotel & Resort", lat: 29.5510, lng: 34.9650 },
+    "danhotels": { name: "Dan Hotels", address: "Derech HaPa'amonim 1", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 3-520-2552", email: "reservations@danhotels.com", openingHours: "Open 24/7 · 7 Days a Week", category: "Luxury Hotel & Resort", lat: 29.5510, lng: 34.9650 },
+    "clubhotels-israel.com": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", category: "Resort Hotel & Suites", lat: 29.5520, lng: 34.9540 },
+    "www.clubhotels-israel.com": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", category: "Resort Hotel & Suites", lat: 29.5520, lng: 34.9540 },
+    "clubhotels.co.il": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", category: "Resort Hotel & Suites", lat: 29.5520, lng: 34.9540 },
+    "clubhotel.co.il": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", category: "Resort Hotel & Suites", lat: 29.5520, lng: 34.9540 },
+    "clubhotel": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", category: "Resort Hotel & Suites", lat: 29.5520, lng: 34.9540 },
     "brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", phone: "+32 2 230 40 40", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
     "www.brusselsdental.com": { name: "Dental Treatment Center - Dentist Brussels", address: "Rue de la Loi 235", postalCode: "1040", city: "Brussels", country: "Belgium", phone: "+32 2 230 40 40", category: "Dentist & Dental Clinic", lat: 50.8436, lng: 4.3824 },
     "nevadalegalservices.org": { name: "Nevada Legal Services", address: "701 E Bridger Ave #400", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 386-0404", category: "Legal Services", lat: 36.1685, lng: -115.1408 },
@@ -17775,6 +17798,123 @@ Return JSON:
     }
 
     if ($) {
+      // 2.5 JSON-LD Schema Extraction for Organization, LocalBusiness, Store, Restaurant, Hotel, MedicalBusiness
+      try {
+        $('script[type="application/ld+json"]').each((_: any, el: any) => {
+          try {
+            const rawJson = $(el).html() || '{}';
+            const parsed = JSON.parse(rawJson);
+            const walk = (node: any) => {
+              if (!node || typeof node !== 'object') return;
+              if (Array.isArray(node)) {
+                node.forEach(walk);
+                return;
+              }
+              // Telephone extraction
+              const tel = node.telephone || node.phone || (node.contactPoint && (node.contactPoint.telephone || node.contactPoint.phone));
+              if (tel && !phone && isValidPhoneNumber(String(tel))) {
+                phone = formatServerPhoneNumber(String(tel).trim(), country);
+              }
+              // Email extraction
+              const em = node.email || (node.contactPoint && node.contactPoint.email);
+              if (em && !email && typeof em === 'string' && em.includes('@') && !em.includes('example.com') && !em.includes('sentry.io')) {
+                email = em.trim();
+              }
+              // Address extraction
+              if (node.address && !address) {
+                if (typeof node.address === 'string' && node.address.length > 5 && !node.address.startsWith('http')) {
+                  address = node.address.trim();
+                } else if (typeof node.address === 'object') {
+                  const street = node.address.streetAddress || node.address.street || '';
+                  const cty = node.address.addressLocality || node.address.city || '';
+                  const postal = node.address.postalCode || node.address.zipCode || '';
+                  const ctry = node.address.addressCountry || node.address.country || '';
+                  if (street && !address) address = street.trim();
+                  if (cty && !city) city = cty.trim();
+                  if (ctry && !country) country = typeof ctry === 'string' ? ctry.trim() : (ctry.name || '');
+                  if (street && cty && !address.includes(cty)) {
+                    address = `${street}, ${postal ? postal + ' ' : ''}${cty}`;
+                  }
+                }
+              }
+              // Opening Hours extraction
+              const oh = node.openingHours || node.openingHoursSpecification;
+              if (oh && !openingHours) {
+                if (typeof oh === 'string') {
+                  openingHours = oh.trim();
+                } else if (Array.isArray(oh)) {
+                  const formatted = oh.map((s: any) => {
+                    if (typeof s === 'string') return s;
+                    const days = Array.isArray(s.dayOfWeek) ? s.dayOfWeek.map((d: any) => String(d).replace('https://schema.org/', '')).join(', ') : String(s.dayOfWeek || '').replace('https://schema.org/', '');
+                    return `${days}: ${s.opens || ''} - ${s.closes || ''}`;
+                  }).filter(Boolean).join(' · ');
+                  if (formatted) openingHours = formatted;
+                }
+              }
+              // Geo Coordinates extraction
+              if (node.geo && (!lat || !lng)) {
+                const gLat = parseFloat(node.geo.latitude);
+                const gLng = parseFloat(node.geo.longitude);
+                if (!isNaN(gLat) && !isNaN(gLng) && gLat !== 0) {
+                  lat = gLat;
+                  lng = gLng;
+                }
+              }
+              // Category extraction
+              if (node['@type'] && (!category || category === 'Website')) {
+                const t = String(node['@type']).toLowerCase();
+                if (t.includes('restaurant') || t.includes('food') || t.includes('cafe') || t.includes('bakery') || t.includes('bar')) category = 'Restaurant & Food';
+                else if (t.includes('hotel') || t.includes('resort') || t.includes('motel') || t.includes('lodging')) category = 'Hotel & Hospitality';
+                else if (t.includes('dentist') || t.includes('dental')) category = 'Dentist & Dental Clinic';
+                else if (t.includes('legal') || t.includes('attorney') || t.includes('law')) category = 'Legal Services';
+                else if (t.includes('store') || t.includes('shop') || t.includes('retail')) category = 'Retail & Shopping';
+                else if (t.includes('medical') || t.includes('pharmacy') || t.includes('clinic')) category = 'Healthcare & Medical';
+                else if (t.includes('automotive') || t.includes('autorepair') || t.includes('carrental')) category = 'Automotive Services';
+              }
+              for (const k in node) {
+                if (typeof node[k] === 'object') walk(node[k]);
+              }
+            };
+            walk(parsed);
+          } catch(e) {}
+        });
+      } catch(e) {}
+
+      // 2.6 Microdata Attributes extraction (itemprop="telephone", itemprop="address", itemprop="openingHours")
+      if (!phone) {
+        const itempropTel = $('[itemprop="telephone"], [itemprop="phone"]').first().text() || $('[itemprop="telephone"]').attr('content') || $('[itemprop="telephone"]').attr('href');
+        if (itempropTel) {
+          const cleanTel = String(itempropTel).replace(/^tel:\s*/i, '').trim();
+          if (isValidPhoneNumber(cleanTel)) {
+            phone = formatServerPhoneNumber(cleanTel, country);
+          }
+        }
+      }
+      if (!email) {
+        const itempropEmail = $('[itemprop="email"]').first().text() || $('[itemprop="email"]').attr('content') || $('[itemprop="email"]').attr('href');
+        if (itempropEmail) {
+          const cleanEm = String(itempropEmail).replace(/^mailto:\s*/i, '').trim();
+          if (cleanEm.includes('@') && !cleanEm.includes('example.com')) {
+            email = cleanEm;
+          }
+        }
+      }
+      if (!address) {
+        const street = $('[itemprop="streetAddress"]').first().text()?.trim();
+        const loc = $('[itemprop="addressLocality"]').first().text()?.trim();
+        const zip = $('[itemprop="postalCode"]').first().text()?.trim();
+        if (street) {
+          address = loc ? `${street}, ${zip ? zip + ' ' : ''}${loc}` : street;
+          if (loc && !city) city = loc;
+        }
+      }
+      if (!openingHours) {
+        const ohText = $('[itemprop="openingHours"]').first().text()?.trim() || $('[itemprop="openingHours"]').attr('content')?.trim();
+        if (ohText) {
+          openingHours = ohText;
+        }
+      }
+
       // 3. Cloudflare Protected Email Decoding (Anti-Obfuscation)
       if (!email) {
         $("[data-cfemail], span.__cf_email__").each((_: any, el: any) => {

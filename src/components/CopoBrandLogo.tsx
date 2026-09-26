@@ -77,11 +77,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }
 
-  // Reset error & fallback ONLY if the domain identity fundamentally changes
+  // Reset error & fallback whenever domain, logoUrl, or effectiveSrc updates with fresh metadata
   useEffect(() => {
     setHasError(false);
-    setTriedProxy(false);
-  }, [resolvedDomain]);
+    setTriedFaviconFallback(false);
+    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
+      setImgLoaded(true);
+    } else {
+      setImgLoaded(false);
+    }
+  }, [resolvedDomain, logoUrl, effectiveSrc, currentSrc]);
 
   const googleFaviconUrl = useMemo(() => {
     if (isYoouz) return null;
@@ -144,7 +149,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [isYoouz, hasError, triedFaviconFallback, googleFaviconUrl, effectiveSrc]);
 
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
-  const isKnownFailed = currentSrc ? KNOWN_FAILED_LOGOS.has(currentSrc) : false;
   const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
 
   useEffect(() => {
@@ -153,7 +157,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
   }, [currentSrc]);
 
-  const shouldAttemptImage = !hasError && !!currentSrc && !isKnownFailed;
+  const shouldAttemptImage = !hasError && !!currentSrc;
 
   const hasPosition =
     className.includes("absolute") ||
@@ -169,28 +173,23 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     className
   ].filter(Boolean).join(" ");
 
+  const initialLetter = useMemo(() => {
+    const candidate = name || resolvedDomain || "B";
+    const clean = candidate.replace(/^(https?:\/\/)?(www\.)?/, "").trim();
+    return (clean.charAt(0) || "B").toUpperCase();
+  }, [name, resolvedDomain]);
+
   return (
     <div className={containerClasses}>
-      {/* 1. Neutral Business Placeholder (Clean neutral storefront, ZERO fake letters, ZERO random initials) */}
+      {/* 1. Neutral Business Monogram / Placeholder (Clean, professional, NEVER an empty square) */}
       {(!shouldAttemptImage || !imgLoaded || hasError) && (
         <div
-          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-white text-zinc-300 ${imageClassName}`}
+          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-white font-black text-xl sm:text-2xl shadow-inner ${imageClassName}`}
+          style={{
+            background: "linear-gradient(135deg, #27272a 0%, #18181b 100%)"
+          }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            className="w-1/2 h-1/2 max-w-[32px] max-h-[32px] opacity-60"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-            <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
-            <path d="M2 7h20" />
-          </svg>
+          <span className="drop-shadow-sm tracking-tight">{initialLetter}</span>
         </div>
       )}
 
@@ -211,7 +210,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             setImgLoaded(true);
           }}
           onError={() => {
-            if (currentSrc) KNOWN_FAILED_LOGOS.add(currentSrc);
             if (!triedFaviconFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
               setTriedFaviconFallback(true);
               setImgLoaded(false);

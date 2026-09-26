@@ -3761,7 +3761,7 @@ export function App() {
     fetch(`/api/nosql/places/${encodeURIComponent(cleanId)}`)
       .then(res => res.ok ? res.json() : null)
       .then(fetchedPlace => {
-        if (fetchedPlace && fetchedPlace.id) {
+        if (fetchedPlace && fetchedPlace.id && fetchedPlace.bannerUrl && fetchedPlace.address && fetchedPlace.phone) {
           const isYoouz = fetchedPlace.id === 'yoouz.com' || (fetchedPlace.name && fetchedPlace.name.toLowerCase() === 'yoouz') || fetchedPlace.brandDomain === 'yoouz.com' || (fetchedPlace.website && fetchedPlace.website.includes('yoouz.com'));
           if (isYoouz) {
             fetchedPlace.address = '';
@@ -3777,6 +3777,61 @@ export function App() {
             }
             return [fetchedPlace, ...prev];
           });
+        } else {
+          // If not in database or missing rich banner/contact data, enrich immediately from /api/url-metadata BEFORE review recording
+          const targetUrl = (fetchedPlace && fetchedPlace.website) || cleanId;
+          fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(metaData => {
+              if (metaData && (metaData.title || metaData.domain)) {
+                const isValidLogo = (l?: string | null): boolean => {
+                  if (!l || typeof l !== "string") return false;
+                  if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
+                  return true;
+                };
+                const fetchedLogo = isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || '');
+                const enriched: Place = {
+                  id: (metaData.domain || cleanId).toLowerCase(),
+                  name: (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]) || formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || (fetchedPlace?.name || cleanId),
+                  category: (metaData.category && metaData.category !== "Website") ? metaData.category : (fetchedPlace?.category || "Website"),
+                  categoryType: "all",
+                  address: metaData.address || fetchedPlace?.address || "",
+                  city: (metaData.city && metaData.city !== "Online") ? metaData.city : (fetchedPlace?.city || "Online"),
+                  country: metaData.country || fetchedPlace?.country || "",
+                  lat: metaData.lat || fetchedPlace?.lat || 0,
+                  lng: metaData.lng || fetchedPlace?.lng || 0,
+                  rating: fetchedPlace?.rating || 5,
+                  totalReviews: fetchedPlace?.totalReviews || 1,
+                  ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+                  avatarUrl: fetchedLogo,
+                  logoUrl: fetchedLogo,
+                  bannerUrl: metaData.image || fetchedPlace?.bannerUrl || "",
+                  ogImage: metaData.image || fetchedPlace?.ogImage || "",
+                  photos: metaData.image ? [metaData.image] : (fetchedPlace?.photos || []),
+                  openingHours: metaData.openingHours || fetchedPlace?.openingHours || (metaData.hours || "Available 24/7"),
+                  isOpen: true,
+                  phone: metaData.phone || fetchedPlace?.phone || "",
+                  email: metaData.email || fetchedPlace?.email || "",
+                  website: metaData.url || fetchedPlace?.website || `https://${cleanId}`,
+                  priceRange: "N/A",
+                  plusCode: "",
+                  description: metaData.description || fetchedPlace?.description || "",
+                  popularKeywords: [],
+                  amenities: [],
+                  topDishes: [],
+                  locations: (metaData.locations && metaData.locations.length > 0) ? metaData.locations : (fetchedPlace?.locations || []),
+                  brandDomain: metaData.domain || cleanId
+                };
+                setPlaces(prev => {
+                  const exists = prev.some(p => p.id === enriched.id);
+                  if (exists) {
+                    return prev.map(p => p.id === enriched.id ? { ...p, ...enriched } : p);
+                  }
+                  return [enriched, ...prev];
+                });
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});

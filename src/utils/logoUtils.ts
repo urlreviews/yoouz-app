@@ -578,7 +578,30 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
   "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
   "mylawyersadvice.com": "https://mylawyersadvice.com/wp-content/uploads/2024/10/justice-lady-e1729752845566.avif",
-  "www.mylawyersadvice.com": "https://mylawyersadvice.com/wp-content/uploads/2024/10/justice-lady-e1729752845566.avif"
+  "www.mylawyersadvice.com": "https://mylawyersadvice.com/wp-content/uploads/2024/10/justice-lady-e1729752845566.avif",
+  "starbucks.com": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
+  "www.starbucks.com": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
+  "starbucks": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
+  "nike.com": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
+  "www.nike.com": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
+  "nike": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
+  "mcdonalds.com": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
+  "www.mcdonalds.com": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
+  "mcdonalds": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
+  "apple.com": "https://www.apple.com/v/home/ch/images/heroes/apple-vision-pro/hero_apple_vision_pro__b6cug2v88f2u_large.jpg",
+  "www.apple.com": "https://www.apple.com/v/home/ch/images/heroes/apple-vision-pro/hero_apple_vision_pro__b6cug2v88f2u_large.jpg",
+  "isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
+  "www.isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
+  "isrotel": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
+  "danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
+  "www.danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
+  "danhotels.com": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
+  "danhotels": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
+  "clubhotels-israel.com": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "www.clubhotels-israel.com": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "clubhotels.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "clubhotel.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "clubhotel": "https://www.clubhotel.co.il/images/header-eilat.jpg"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();
