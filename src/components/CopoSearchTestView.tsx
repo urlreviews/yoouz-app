@@ -465,7 +465,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                           ))}
                         </div>
                         <span className="text-zinc-300 font-extrabold text-xs border-l border-zinc-700/80 pl-2.5">
-                          {totalReviewsCount} {totalReviewsCount === 1 ? "video review" : "video reviews"}
+                          {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
                         </span>
                       </>
                     ) : (
@@ -480,7 +480,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                           ))}
                         </div>
                         <span className="text-zinc-400 font-semibold text-xs border-l border-zinc-700/80 pl-2.5">
-                          0 video reviews
+                          0 reviews
                         </span>
                       </>
                     )}

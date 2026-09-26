@@ -768,26 +768,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {/* Action Dock Row: Star Rating Pill + Action Buttons on the SAME Horizontal Line */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
                     {/* Star Rating Pill Badge */}
-                    <div className="inline-flex items-center gap-2.5 bg-zinc-800/90 border border-zinc-700/80 px-3.5 py-2 rounded-full shadow-md">
+                    <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-full shadow-lg backdrop-blur-md">
                       {totalReviewsCount > 0 ? (
                         <>
                           <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
-                          <div className="flex items-center text-amber-400 gap-0.5">
+                          <div className="flex items-center text-amber-400 gap-1">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-700 text-zinc-700"}`}
+                                className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "fill-zinc-800 text-zinc-800"}`}
                               />
                             ))}
                           </div>
-                          <span className="text-zinc-300 font-extrabold text-xs ml-1 border-l border-zinc-700/80 pl-2.5">
-                            {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "video review") : t("common.reviews", "video reviews")}
+                          <span className="text-zinc-200 font-extrabold text-xs border-l border-zinc-800 pl-3">
+                            {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")}
                           </span>
                         </>
                       ) : (
                         <>
                           <span className="font-bold text-zinc-400 text-sm leading-none">0.0</span>
-                          <div className="flex items-center text-zinc-600 gap-0.5">
+                          <div className="flex items-center text-zinc-600 gap-1">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
@@ -795,8 +795,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                               />
                             ))}
                           </div>
-                          <span className="text-zinc-400 font-semibold text-xs ml-1 border-l border-zinc-700/80 pl-2.5">
-                            0 video reviews
+                          <span className="text-zinc-400 font-semibold text-xs border-l border-zinc-800 pl-3">
+                            0 reviews
                           </span>
                         </>
                       )}
@@ -807,16 +807,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                        className="bg-zinc-800 hover:bg-zinc-750 text-white px-4 py-2 rounded-full font-bold border border-zinc-700 hover:border-zinc-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98"
+                        className="bg-zinc-800 hover:bg-zinc-750 text-white px-5 py-2.5 rounded-full font-bold border border-zinc-700/80 hover:border-zinc-600 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-95"
                       >
-                        <Building2 className="w-3.5 h-3.5 text-zinc-300" />
+                        <Building2 className="w-4 h-4 text-zinc-300" />
                         <span>View Business Profile</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                        className="bg-white hover:bg-zinc-200 text-zinc-950 px-5 py-2 rounded-full font-extrabold shadow-lg shadow-white/10 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-98"
+                        className="bg-white hover:bg-zinc-200 text-zinc-950 px-6 py-2.5 rounded-full font-extrabold shadow-xl shadow-white/10 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 cursor-pointer text-xs active:scale-95"
                       >
                         <Video className="w-4 h-4 text-zinc-950" />
                         {t("record.record_video_review", "Record Video Review")}

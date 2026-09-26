@@ -1112,8 +1112,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               <div className="flex items-center gap-1.5">
                 <span className="text-white font-extrabold text-xs tracking-tight">
                   {dynamicReviewCount > 0
-                    ? `${dynamicReviewCount.toLocaleString()} ${dynamicReviewCount === 1 ? t("place.review", "Video Review") : t("place.reviews", "Video Reviews")}`
-                    : t("place.noReviewsYetShort", "0 Video Reviews")}
+                    ? `${dynamicReviewCount.toLocaleString()} ${dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}`
+                    : t("place.noReviewsYetShort", "0 Reviews")}
                 </span>
               </div>
               {place.category && place.category !== "Verified Business" && (
@@ -1196,10 +1196,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 href={`tel:${effectivePhone}`}
                 className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm group-hover:bg-emerald-600/30 transition-colors">
-                  <Phone className="w-5 h-5 text-emerald-400" />
+                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                  <Phone className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-bold text-[11px] text-emerald-400">{t("place.call", "Call")}</span>
+                <span className="font-bold text-[11px] text-white">{t("place.call", "Call")}</span>
               </a>
             )}
 
