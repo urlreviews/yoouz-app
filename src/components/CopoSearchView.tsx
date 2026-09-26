@@ -195,20 +195,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
+    let preloadedMeta: any = null;
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
       try {
         const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
         if (metaResp.ok) {
-          const metaData = await metaResp.json();
-          if (metaData && metaData.domain) {
-            cleanUrl = metaData.domain;
+          preloadedMeta = await metaResp.json();
+          if (preloadedMeta && preloadedMeta.domain) {
+            cleanUrl = preloadedMeta.domain;
           }
         }
       } catch(e) {}
     }
 
-    if (!isValidDomainUrl(cleanUrl)) {
+    if (!isValidDomainUrl(cleanUrl) && cleanUrl.length < 2) {
       setErrorMsg("Please enter a valid website address or business name (e.g. Starbucks, isrotel.co.il).");
       setIsSearching(false);
       return;
@@ -234,22 +235,31 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       });
 
       // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
-      const instantLogo = foundPlace?.logoUrl || getCleanLogoUrl(null, domain) || "";
-      const instantBanner = foundPlace?.bannerUrl || KNOWN_BRAND_BANNERS[domain] || "";
+      const instantLogo = foundPlace?.logoUrl 
+        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch')) 
+        || getCleanLogoUrl(null, domain) 
+        || `/api/favicon?domain=${domain}`;
+      const instantBanner = foundPlace?.bannerUrl 
+        || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : '') 
+        || KNOWN_BRAND_BANNERS[domain] 
+        || "";
       const instantName = (domain && KNOWN_OFFICIAL_NAMES[domain]) 
         || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl])
+        || preloadedMeta?.title
+        || preloadedMeta?.siteName
         || formatBusinessName(foundPlace?.name || domain, domain)
         || domain;
 
       const instantPlace: Place = foundPlace || {
         id: domain,
         name: instantName,
-        category: "Website",
+        category: preloadedMeta?.category || "Verified Business",
         categoryType: "all",
-        address: "",
-        city: "Online",
-        lat: 0,
-        lng: 0,
+        address: preloadedMeta?.address || "",
+        city: preloadedMeta?.city || "Online",
+        country: preloadedMeta?.country || "",
+        lat: preloadedMeta?.lat || 0,
+        lng: preloadedMeta?.lng || 0,
         rating: 5,
         totalReviews: 1,
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
@@ -258,13 +268,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         bannerUrl: instantBanner,
         ogImage: instantBanner,
         photos: instantBanner ? [instantBanner] : [],
-        openingHours: "Available 24/7",
+        openingHours: preloadedMeta?.openingHours || "Available 24/7",
         isOpen: true,
-        phone: "",
-        website: `https://${domain}`,
+        phone: preloadedMeta?.phone || "",
+        website: preloadedMeta?.url || (domain.includes('.') ? `https://${domain}` : ""),
         priceRange: "N/A",
         plusCode: "",
-        description: "",
+        description: preloadedMeta?.description || "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],

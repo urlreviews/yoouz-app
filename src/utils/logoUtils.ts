@@ -47,6 +47,11 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
   "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
   "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
+  "azrielimalls.co.il": "https://www.azrielimalls.co.il/assets/logos/small_logo.jpg",
+  "www.azrielimalls.co.il": "https://www.azrielimalls.co.il/assets/logos/small_logo.jpg",
+  "azrieli.com": "https://www.azrielimalls.co.il/assets/logos/small_logo.jpg",
+  "www.azrieli.com": "https://www.azrielimalls.co.il/assets/logos/small_logo.jpg",
+  "azrieli": "https://www.azrielimalls.co.il/assets/logos/small_logo.jpg",
   "multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
   "www.multipharma.be": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
   "multipharma": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
@@ -593,6 +598,11 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
   "www.isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
   "isrotel": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
+  "azrielimalls.co.il": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
+  "www.azrielimalls.co.il": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
+  "azrieli.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
+  "www.azrieli.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
+  "azrieli": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
   "danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
   "www.danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
   "danhotels.com": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
@@ -691,8 +701,13 @@ export function extractDomain(str: string | null | undefined): string | null {
     clean = clean.replace(/-([a-z]{2,10})$/i, ".$1");
   }
 
-  if (!clean.includes(".") && clean.length > 2) {
-    clean = clean.replace(/[^a-z0-9]/g, "") + ".com";
+  if (!clean.includes(".")) {
+    const alphanumeric = clean.replace(/[^a-z0-9]/g, "");
+    if (alphanumeric.length >= 3) {
+      clean = alphanumeric + ".com";
+    } else {
+      return null;
+    }
   }
 
   return clean;
