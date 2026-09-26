@@ -235,12 +235,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       });
 
       // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
-      const instantLogo = foundPlace?.logoUrl 
-        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch')) 
+      const instantLogo: string = foundPlace?.logoUrl 
+        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') ? preloadedMeta.logo : "") 
         || getCleanLogoUrl(null, domain) 
         || `/api/favicon?domain=${domain}`;
-      const instantBanner = foundPlace?.bannerUrl 
-        || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : '') 
+      const instantBanner: string = foundPlace?.bannerUrl 
+        || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
         || KNOWN_BRAND_BANNERS[domain] 
         || "";
       const instantName = (domain && KNOWN_OFFICIAL_NAMES[domain]) 
