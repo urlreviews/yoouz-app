@@ -515,6 +515,38 @@ export function splitCompoundWords(str: string): string {
  * e.g., "thecapitalavenue.com" -> "The Capital Avenue"
  * e.g., "https://www.freecancellations.com" -> "Free Cancellations"
  */
+export function formatDisplayHours(rawHours?: string | null): string {
+  if (!rawHours || !rawHours.trim()) return "Open 24 Hours";
+  const h = rawHours.trim();
+  
+  // Detect 24 hours / 0:00 - 23:59 / 00:00 - 23:59
+  if (h.includes("0:00 - 23:59") || h.includes("00:00 - 23:59") || h.includes("24/7") || h.toLowerCase().includes("24 hours") || h.toLowerCase().includes("available 24/7")) {
+    return "Open 24 Hours";
+  }
+
+  // If long spelled-out list of days like "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday: ..."
+  if (h.includes("Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday") || h.includes("Monday, Tuesday, Wednesday")) {
+    const parts = h.split(":");
+    const timePart = parts.length > 1 ? parts.slice(1).join(":").trim() : "";
+    if (timePart.includes("0:00 - 23:59") || timePart.includes("00:00 - 23:59") || !timePart) {
+      return "Mon - Sun: Open 24 Hours";
+    }
+    return `Mon - Sun: ${timePart}`;
+  }
+
+  // Clean up Monday-Friday
+  let clean = h
+    .replace(/\bMonday\b/gi, "Mon")
+    .replace(/\bTuesday\b/gi, "Tue")
+    .replace(/\bWednesday\b/gi, "Wed")
+    .replace(/\bThursday\b/gi, "Thu")
+    .replace(/\bFriday\b/gi, "Fri")
+    .replace(/\bSaturday\b/gi, "Sat")
+    .replace(/\bSunday\b/gi, "Sun");
+
+  return clean;
+}
+
 export function isGenericPlaceName(name?: string | null): boolean {
   if (!name) return true;
   if (isCorruptedBusinessName(name)) return true;
@@ -685,14 +717,21 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
   }
 
-  // 3.1 Anchor preservation: if queryContext is a valid proper brand name (e.g. "Piotrowski Law"), and trimmed is a short acronym/abbreviation (e.g. "CP Law") or generic
+  // 3.1 Anchor preservation: if queryContext is a valid proper brand name (e.g. "Tobener Ravenscroft" or "Piotrowski Law"),
+  // and trimmed is an SEO tagline/slogan that does NOT contain the key query brand words (e.g. "California Tenant Lawyers")
+  // OR trimmed is a short acronym/abbreviation (e.g. "CP Law")
   if (queryContext) {
     const qTrim = queryContext.trim();
-    const qWords = qTrim.split(/\s+/).filter(Boolean);
-    if (qWords.length >= 2 && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(qTrim) && !qTrim.includes('.')) {
+    const qWords = qTrim.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|inc|llc|pc|corp)$/i.test(w));
+    if (qWords.length >= 1 && /^[A-Z0-9][A-Za-z0-9\s&'’\.,\-]+$/i.test(qTrim) && !qTrim.includes('.')) {
       const qLower = qTrim.toLowerCase();
       const trimmedLower = trimmed.toLowerCase();
-      if (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower)) {
+
+      // Check if trimmed fails to contain any of the primary query brand words
+      const matchesQueryWords = qWords.some(w => trimmedLower.includes(w.toLowerCase()));
+
+      // If trimmed is an unrelated marketing slogan (e.g. "California Tenant Lawyers") or an acronym (e.g. "CP Law")
+      if (!matchesQueryWords || (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower))) {
         trimmed = qTrim;
       }
     }

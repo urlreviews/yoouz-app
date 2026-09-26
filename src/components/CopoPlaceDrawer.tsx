@@ -1075,61 +1075,77 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
         </div>
 
-        {/* Rating & Category Badges Row */}
-        <div className="flex items-center gap-2.5 flex-wrap text-sm mb-3.5">
-          <div className="inline-flex items-center gap-1.5 bg-zinc-850/90 border border-zinc-750 px-2.5 py-1 rounded-lg">
-            <span className="font-extrabold text-amber-400 text-sm leading-none">{dynamicAvgRating.toFixed(1)}</span>
-            <div className="flex items-center text-amber-400 gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 ${
-                    i < Math.round(dynamicAvgRating)
-                      ? "fill-amber-400 text-amber-400"
-                      : "fill-zinc-700 text-zinc-700"
-                  }`}
-                />
-              ))}
+        {/* Rating & Category Hero Showcase Card */}
+        <div className="mb-2 p-3.5 rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 border border-white/10 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {dynamicReviewCount > 0 ? (
+              <div className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl shrink-0">
+                <span className="font-black text-amber-400 text-lg leading-none">{dynamicAvgRating.toFixed(1)}</span>
+                <div className="flex items-center text-amber-400 gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${
+                        i < Math.round(dynamicAvgRating)
+                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
+                          : "fill-zinc-700 text-zinc-700"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/60 px-3 py-1.5 rounded-xl shrink-0">
+                <span className="font-black text-zinc-400 text-sm leading-none">0.0</span>
+                <div className="flex items-center text-zinc-600 gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-white font-extrabold text-xs tracking-tight">
+                  {dynamicReviewCount > 0
+                    ? `${dynamicReviewCount.toLocaleString()} ${dynamicReviewCount === 1 ? t("place.review", "Video Review") : t("place.reviews", "Video Reviews")}`
+                    : t("place.noReviewsYetShort", "0 Video Reviews")}
+                </span>
+              </div>
+              {place.category && (
+                <span className="text-zinc-400 text-[11px] font-medium truncate block">
+                  {place.category}
+                </span>
+              )}
             </div>
-            <span className="text-zinc-300 font-medium text-xs ml-0.5">
-              ({dynamicReviewCount.toLocaleString()} {dynamicReviewCount === 1 ? t("place.review", "review") : t("place.reviews", "reviews")})
-            </span>
           </div>
 
-          {place.category && (
-            <span className="inline-flex items-center gap-1.5 text-zinc-200 font-semibold px-2.5 py-1 rounded-lg bg-zinc-850/90 border border-zinc-750 text-xs shadow-xs">
-              <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-              <span>{place.category}</span>
-            </span>
+          {effectiveWebsite && (
+            <a
+              href={effectiveWebsite}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <Globe className="w-3.5 h-3.5 text-zinc-300" />
+              <span className="truncate max-w-[110px]">{displayWebsiteClean}</span>
+            </a>
           )}
         </div>
-
-        {/* Structured Website Link Line (Clean, Single Line) */}
-        {effectiveWebsite && (
-          <div className="pt-3 border-t border-zinc-800/70 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 text-zinc-300 font-medium min-w-0">
-              <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
-              <a 
-                href={effectiveWebsite} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-zinc-200 hover:text-white hover:underline font-medium truncate"
-              >
-                {displayWebsiteClean}
-              </a>
-            </div>
-          </div>
-        )}
       </div>
 
-        {/* Google Maps Tabs: Overview | Reviews | About */}
+      {/* Google Maps Tabs: Overview | Reviews | About */}
       <div className="flex items-center border-b border-zinc-800 bg-zinc-950 px-5 text-sm font-semibold text-zinc-200">
         <button
           onClick={() => handleTabClick("overview")}
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === "overview"
               ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-200"
+              : "border-transparent hover:text-zinc-400 text-zinc-400"
           }`}
         >
           {t("place.overview", "Overview")}
@@ -1139,7 +1155,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
             activeTab === "reviews"
               ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-200"
+              : "border-transparent hover:text-zinc-400 text-zinc-400"
           }`}
         >
           <span>{t("place.reviews", "Video Reviews")}</span>
@@ -1152,7 +1168,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === "about"
               ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-200"
+              : "border-transparent hover:text-zinc-400 text-zinc-400"
           }`}
         >
           {t("place.about", "About")}
@@ -1160,9 +1176,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
         {/* Main Content Area */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div ref={contentRef} className="flex-1 overflow-y-auto bg-zinc-950 space-y-4 p-4" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
           {/* Action Buttons Row */}
-          <div className="px-4 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 sm:gap-2">
+          <div className="p-3 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-around text-center gap-1 sm:gap-2 shadow-lg backdrop-blur-md">
             {hasPhysicalLocation && (
               <button
                 onClick={handleOpenDirections}
@@ -1173,6 +1189,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
                 <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
               </button>
+            )}
+
+            {hasGenuinePhone && (
+              <a
+                href={`tel:${effectivePhone}`}
+                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm group-hover:bg-emerald-600/30 transition-colors">
+                  <Phone className="w-5 h-5 text-emerald-400" />
+                </div>
+                <span className="font-bold text-[11px] text-emerald-400">{t("place.call", "Call")}</span>
+              </a>
             )}
 
             <button
@@ -1210,16 +1238,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <Share2 className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-[11px] text-white">{t("common.share", "Share")}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("reviews")}
-              className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
-                <Video className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-[11px] text-white">{t("place.videoReviews", "Video Reviews")}</span>
             </button>
 
             {onStartChat && (
@@ -1274,7 +1292,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           
           {/* CTA Row - Only rendered when business has upgraded or owner is viewing */}
           {(hasUpgraded || isUserOwner) && (
-            <div className="px-5 py-3.5 border-b border-zinc-800 md:border-zinc-800">
+            <div className="p-3 rounded-2xl bg-zinc-900/80 border border-zinc-800/80">
               {hasUpgraded ? (
                 (() => {
                   const ctaType = typeof window !== 'undefined' ? (localStorage.getItem('demo_cta_type') || 'book_now') : 'book_now';
@@ -1302,34 +1320,232 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
           
           {copiedNotification && (
-            <div className="px-4 py-2 bg-zinc-800 text-white text-xs font-semibold text-center border-y border-zinc-700 animate-in fade-in">
+            <div className="px-4 py-2 bg-zinc-800 text-white text-xs font-semibold text-center rounded-xl border border-zinc-700 animate-in fade-in">
               {copiedNotification}
             </div>
           )}
+
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="divide-y divide-zinc-800">
-              {/* Clickable About Summary (Switch to About Tab) */}
-              <div 
-                onClick={() => handleTabClick("about")}
-                className="px-5 py-4 hover:bg-zinc-900 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-200">{t("place.aboutThisBusiness", "About this business")}</p>
-                    <p className="text-xs text-zinc-200 line-clamp-2 leading-relaxed">
-                      {getEffectivePlaceDescription(place)}
-                    </p>
+            <div className="space-y-4">
+              {/* Business Description Card */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-2">
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4 text-zinc-300" />
+                  <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                    {t("place.aboutThisBusiness", "About This Business")}
+                  </h3>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                  {getEffectivePlaceDescription(place)}
+                </p>
+              </div>
+
+              {/* Contact & Official Information Card */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-zinc-300" />
+                  <span>{t("place.contactInfo", "Contact & Official Info")}</span>
+                </h3>
+
+                <div className="divide-y divide-zinc-800/80">
+                  {/* Phone Number */}
+                  <div className="py-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <Phone className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.phone", "Phone Number")}</span>
+                        {hasGenuinePhone ? (
+                          <span className="text-xs font-bold text-white block truncate">
+                            {formatPhoneNumber(effectivePhone)}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-zinc-500 block">{t("place.phoneNotProvided", "Not provided")}</span>
+                        )}
+                      </div>
+                    </div>
+                    {hasGenuinePhone && (
+                      <a
+                        href={`tel:${effectivePhone}`}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold text-xs transition-colors shrink-0"
+                      >
+                        {t("place.call", "Call")}
+                      </a>
+                    )}
                   </div>
-                  <ChevronDown className="w-4 h-4 text-zinc-200 -rotate-90 mt-4 group-hover:text-white transition-colors" />
+
+                  {/* Official Website */}
+                  <div className="py-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <Globe className="w-4 h-4 text-blue-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.website", "Official Website")}</span>
+                        {effectiveWebsite ? (
+                          <span className="text-xs font-bold text-white block truncate">
+                            {displayWebsiteClean}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-zinc-500 block">{t("place.websiteNotProvided", "Not provided")}</span>
+                        )}
+                      </div>
+                    </div>
+                    {effectiveWebsite && (
+                      <a
+                        href={effectiveWebsite}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-400 font-bold text-xs transition-colors shrink-0 flex items-center gap-1"
+                      >
+                        <span>{t("place.visit", "Visit")}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Email Address */}
+                  {effectiveEmail && (
+                    <div className="py-2.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                          <Mail className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.email", "Email Address")}</span>
+                          <span className="text-xs font-bold text-white block truncate">{effectiveEmail}</span>
+                        </div>
+                      </div>
+                      <a
+                        href={`mailto:${effectiveEmail}`}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-bold text-xs transition-colors shrink-0"
+                      >
+                        {t("place.email", "Email")}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Video Reviews Featured on Overview Tab (Small Video Previews Grid) */}
-              <div className="p-5 space-y-3 bg-zinc-900/40">
+              {/* Operating Hours Card */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-zinc-200" />
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-zinc-300" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                      {t("place.hoursOfOperation", "Hours of Operation")}
+                    </h3>
+                  </div>
+                  {(hasGenuineHours || effectiveHours) && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {t("place.openNow", "Open")}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-zinc-200 font-medium pt-1">
+                  {hasGenuineHours || effectiveHours ? (
+                    <p className="text-white font-semibold leading-relaxed">{effectiveHours || place.openingHours}</p>
+                  ) : (
+                    <p className="text-zinc-500">{t("place.hoursNotProvided", "Hours not provided")}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Location & Google Maps Card */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-rose-400" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                      {t("place.locationAndMap", "Location & Directions")}
+                    </h3>
+                  </div>
+                  {hasPhysicalLocation && (
+                    <button
+                      onClick={handleOpenDirections}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>{t("place.getDirections", "Directions")}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Address Display */}
+                <div className="text-xs text-zinc-300 font-medium leading-relaxed bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80">
+                  {currentDisplayAddress || displayAddress ? (
+                    <p className="text-white font-semibold">{currentDisplayAddress || displayAddress}</p>
+                  ) : (
+                    <p className="text-zinc-500">{t("place.locationNotProvided", "Location not provided")}</p>
+                  )}
+                </div>
+
+                {/* Interactive Multi-Branch Location Selector */}
+                {availableLocations.length > 1 && (
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                      {t("place.selectBranchLocation", "Select Branch Location")} ({availableLocations.length})
+                    </span>
+                    <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
+                      {availableLocations.map((loc: any, idx: number) => {
+                        const isSelected = selectedLocationIndex === idx;
+                        const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setSelectedLocationIndex(idx);
+                              triggerHaptic();
+                            }}
+                            className={`shrink-0 text-left px-3 py-2 rounded-xl transition-all border cursor-pointer min-w-[150px] ${
+                              isSelected
+                                ? "bg-blue-600/20 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/50"
+                                : "bg-zinc-850 border-zinc-750 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                            }`}
+                          >
+                            <span className="text-xs font-bold block truncate">{branchLabel}</span>
+                            <span className="text-[10px] text-zinc-400 block truncate">{loc.city || loc.address}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Google Maps Embedded Map */}
+                {hasPhysicalLocation && (
+                  <div
+                    className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
+                    onClick={handleOpenDirections}
+                  >
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                      <div className="bg-zinc-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                        <ExternalLink className="w-3 h-3 text-white" />
+                        {t("place.openInMaps", "Open in Google Maps")}
+                      </div>
+                    </div>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0, pointerEvents: "none" }}
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
+                      title="Google Maps Location Preview"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Featured Video Reviews Section */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-zinc-300" />
                     <h3 className="text-xs font-black uppercase tracking-wider text-white">
                       {t("place.videoReviews", "Video Reviews")} ({rawPlaceVideos.length})
                     </h3>
@@ -1337,7 +1553,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {rawPlaceVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
-                      className="text-[11px] font-bold text-zinc-200 hover:text-white hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
                     >
                       {t("place.seeAll", "See all")} ({rawPlaceVideos.length})
                     </button>
@@ -1345,13 +1561,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {rawPlaceVideos.length === 0 ? (
-                  <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 space-y-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
-                      <Video className="w-5 h-5" />
+                  <div className="bg-zinc-950/60 rounded-xl p-5 text-center border border-zinc-800/80 space-y-3">
+                    <div className="w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
+                      <Video className="w-4 h-4" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-white">{t("place.noReviewsYet", "No video reviews yet")}</p>
-                      <p className="text-[11px] text-zinc-200">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {displayedPlaceName}!</p>
+                      <p className="text-[11px] text-zinc-400">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {displayedPlaceName}!</p>
                     </div>
                     <button
                       onClick={() => onRecordForPlace(place)}
@@ -1367,13 +1583,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {rawPlaceVideos.slice(0, 6).map((v) => {
                         const displayViews = getDisplayViews(v);
                         const formattedViews = formatViewCount(displayViews);
-                        const posterUrl = resolveVideoPosterUrl(v);
 
                         return (
                           <div
                             key={v.id}
                             onClick={() => onSelectVideo(v.id)}
-                            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
+                            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
                           >
                             <CopoVideoThumbnail
                               video={v}
@@ -1388,7 +1603,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                             </div>
 
-                            {/* Bottom Meta Info (2-Line Domain + Views - Clean & Premium) */}
+                            {/* Bottom Meta Info */}
                             <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
                               <span className="text-[9.5px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
                                 {getDisplayUrlAsDomain(v)}
@@ -1405,7 +1620,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                     <button
                       onClick={() => onRecordForPlace(place)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:bg-zinc-850 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all cursor-pointer"
+                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:bg-zinc-700 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all cursor-pointer"
                     >
                       <Camera className="w-4 h-4 text-zinc-200" />
                       <span>{t("place.recordVideoReview", "Record Video Review")}</span>
@@ -1414,278 +1629,58 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
               </div>
 
-              {/* Collapsed Info Toggle */}
-              {!showDetailedInfo ? (
-                <div 
-                  onClick={() => setShowDetailedInfo(true)}
-                  className="px-5 py-4 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Info className="w-5 h-5 text-zinc-200" />
-                    <span className="text-sm font-bold text-white">{t("place.businessDetails", "Business Details")}</span>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-zinc-200" />
-                </div>
-              ) : (
-                <>
-                  <div 
-                    onClick={() => setShowDetailedInfo(false)}
-                    className="px-5 py-4 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer bg-zinc-900/50"
+              {/* Claim / Edit Business Banner */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md">
+                {!isClaimed ? (
+                  <div
+                    onClick={() => {
+                      if (onClaimBusiness) {
+                        onClaimBusiness(place);
+                      } else {
+                        setIsClaimModalOpen(true);
+                      }
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <Info className="w-5 h-5 text-zinc-200" />
-                      <span className="text-sm font-bold text-white">{t("place.hideDetails", "Hide Details")}</span>
+                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="w-5 h-5 text-zinc-300" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-white font-extrabold block">{t("place.claimThisBusiness", "Claim this business")}</span>
+                        <span className="text-[11px] text-zinc-400 block">{t("place.claimSubtitle", "Verify ownership to edit & manage this profile")}</span>
+                      </div>
                     </div>
-                    <ChevronUp className="w-4 h-4 text-zinc-200" />
+                    <span className="text-xs px-3.5 py-1.5 rounded-xl bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors shadow-sm shrink-0">
+                      {t("place.claim", "Claim")}
+                    </span>
                   </div>
-                  
-                  {/* Interactive Branch Selector (when multi-branch business) */}
-                  {availableLocations.length > 1 && (
-                    <div className="px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/40">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">
-                            {t("place.selectBranchLocation", "Branch Locations")} ({availableLocations.length})
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-zinc-400 font-medium">
-                          {selectedLocationIndex + 1} of {availableLocations.length} selected
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <Check className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-white font-extrabold flex items-center gap-1.5">
+                          {t("place.businessClaimed", "Business Claimed")}
+                        </span>
+                        <span className="text-[11px] text-zinc-400 block">
+                          {t("place.claimedDesc", "Official claimed listing on Yoouz")}
                         </span>
                       </div>
-                      <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-1 px-1">
-                        {availableLocations.map((loc: any, idx: number) => {
-                          const isSelected = selectedLocationIndex === idx;
-                          const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
-                          const branchAddress = loc.address ? `${loc.address}${loc.postalCode ? `, ${loc.postalCode}` : ''} ${loc.city || ''}` : loc.city || '';
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setSelectedLocationIndex(idx);
-                                triggerHaptic();
-                              }}
-                              className={`shrink-0 text-left px-3 py-2 rounded-xl transition-all border cursor-pointer min-w-[180px] max-w-[240px] ${
-                                isSelected
-                                  ? "bg-blue-600/20 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/50"
-                                  : "bg-zinc-850/80 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                                <span className="text-[11px] font-bold truncate">{branchLabel}</span>
-                                {isSelected && <Check className="w-3 h-3 text-blue-400 shrink-0" />}
-                              </div>
-                              <p className="text-[10px] text-zinc-400 truncate">{branchAddress}</p>
-                              {loc.phone && (
-                                <p className="text-[9.5px] text-zinc-400 mt-0.5 font-medium">{formatPhoneNumber(loc.phone)}</p>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
                     </div>
-                  )}
-
-                  {/* Address Line (Always present with clean fallback) */}
-                  <div className="px-5 py-3.5 flex items-start justify-between gap-3 hover:bg-zinc-900 transition-colors animate-in slide-in-from-top-1 duration-200">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-zinc-200 shrink-0 mt-0.5" />
-                      <div className="text-xs space-y-0.5">
-                        {currentDisplayAddress || displayAddress ? (
-                          <>
-                            <p className="text-zinc-200 font-medium leading-relaxed">
-                              {currentDisplayAddress || displayAddress}
-                            </p>
-                            {place.locatedIn && !isAddressUrl && (
-                              <p className="text-zinc-200 text-[11px]">{t("place.locatedIn", "Located in")}: {place.locatedIn}</p>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-zinc-200">{t("place.locationNotProvided", "Location not provided")}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Google Maps Live Preview Card (Always visible before clicking) */}
-                  {hasPhysicalLocation && (
-                    <div className="px-5 py-3 border-b border-zinc-800/80 space-y-2 bg-zinc-950/40">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">{t("place.googleMapsPreview", "Google Maps Preview")}</span>
-                        </div>
-                        <button
-                          onClick={handleOpenDirections}
-                          className="text-[11px] text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <Navigation className="w-3 h-3" />
-                          {t("place.getDirections", "Directions")}
-                        </button>
-                      </div>
-                      <div
-                        className="w-full h-[180px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group shadow-inner"
-                        onClick={handleOpenDirections}
+                    {isUserOwner && (
+                      <button
+                        onClick={openEditModal}
+                        className="text-xs px-3.5 py-1.5 rounded-xl bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors cursor-pointer"
                       >
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                          <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
-                            <ExternalLink className="w-3 h-3 text-white" />
-                            {t("place.openInMaps", "Open in Google Maps")}
-                          </div>
-                        </div>
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          frameBorder="0"
-                          style={{ border: 0, pointerEvents: "none" }}
-                          referrerPolicy="no-referrer-when-downgrade"
-                          src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
-                          title="Google Maps Location Preview"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Hours Line */}
-                  <div className="px-5 py-3.5 hover:bg-zinc-900 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-zinc-200 shrink-0" />
-                        <div className="text-xs">
-                          {hasGenuineHours || effectiveHours ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-white font-bold">{t("place.open", "Open")}</span>
-                              <span className="text-zinc-200 ml-1">⋅ {effectiveHours || place.openingHours}</span>
-                            </div>
-                          ) : (
-                            <span className="text-zinc-200">{t("place.hoursNotProvided", "Hours not provided")}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                        {t("place.editDetails", "Edit Details")}
+                      </button>
+                    )}
                   </div>
-
-
-                  {/* Website Line */}
-                  <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
-                    <div className="flex items-center gap-3 truncate w-full">
-                      <Globe className="w-5 h-5 text-zinc-200 shrink-0" />
-                      {effectiveWebsite ? (
-                        <a
-                          href={effectiveWebsite}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium truncate flex items-center gap-1.5"
-                        >
-                          <span className="truncate">{displayWebsiteClean}</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                        </a>
-                      ) : (
-                        <span className="text-xs text-zinc-200">{t("place.websiteNotProvided", "Website not provided")}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Phone Line */}
-                  <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-zinc-200 shrink-0" />
-                      {hasGenuinePhone ? (
-                        <a
-                          href={`tel:${effectivePhone}`}
-                          className="text-xs text-white hover:text-zinc-200 font-bold"
-                        >
-                          {formatPhoneNumber(effectivePhone)}
-                        </a>
-                      ) : (
-                        <span className="text-xs text-zinc-200">{t("place.phoneNotProvided", "Phone not provided")}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Email Line */}
-                  <div className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-zinc-900 transition-colors">
-                    <div className="flex items-center gap-3 truncate">
-                      <Mail className="w-5 h-5 text-zinc-200 shrink-0" />
-                      {effectiveEmail ? (
-                        <a
-                          href={`mailto:${effectiveEmail}`}
-                          className="text-xs text-zinc-200 hover:text-white hover:underline font-medium truncate"
-                        >
-                          {effectiveEmail}
-                        </a>
-                      ) : (
-                        <span className="text-xs text-zinc-200">{t("place.emailNotProvided", "Email not provided")}</span>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Plus Code Line if valid */}
-              {hasGenuinePlusCode && (
-                <div className="px-5 py-3.5 flex items-center gap-3 hover:bg-zinc-900 transition-colors">
-                  <div className="w-5 h-5 flex items-center justify-center text-zinc-200 font-black text-sm shrink-0">
-                    ⁘
-                  </div>
-                  <span className="text-xs text-zinc-200 font-mono">{place.plusCode}</span>
-                </div>
-              )}
-
-
-
-              {/* Claim / Edit Business CTA Inline Row */}
-              {!isClaimed ? (
-                <div
-                  onClick={() => {
-                    if (onClaimBusiness) {
-                      onClaimBusiness(place);
-                    } else {
-                      setIsClaimModalOpen(true);
-                    }
-                  }}
-                  className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors cursor-pointer border-t border-zinc-800"
-                >
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-400 shrink-0" />
-                    <div>
-                      <span className="text-xs text-zinc-200 font-semibold block">{t("place.claimThisBusiness", "Claim this business")}</span>
-                      <span className="text-[11px] text-zinc-400 block">{t("place.claimSubtitle", "Verify ownership to edit & manage this profile")}</span>
-                    </div>
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors shadow-sm shrink-0">
-                    {t("place.claim", "Claim")}
-                  </span>
-                </div>
-              ) : (
-                <div className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors border-t border-zinc-800">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="w-5 h-5 text-zinc-300 shrink-0" />
-                    <div>
-                      <span className="text-xs text-zinc-100 font-semibold flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5 text-zinc-300" />
-                        {t("place.businessClaimed", "Business Claimed")}
-                      </span>
-                      <span className="text-[11px] text-zinc-400 block">
-                        {t("place.claimedDesc", "Official claimed listing on Yoouz")}
-                      </span>
-                    </div>
-                  </div>
-                  {isUserOwner ? (
-                    <button
-                      onClick={openEditModal}
-                      className="text-[11px] px-3 py-1.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors cursor-pointer"
-                    >
-                      {t("place.editDetails", "Edit Details")}
-                    </button>
-                  ) : (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700 text-zinc-300 font-bold flex items-center gap-1">
-                      <Check className="w-3 h-3 text-zinc-300" /> {t("place.verified", "Claimed")}
-                    </span>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
