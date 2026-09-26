@@ -1036,6 +1036,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 );
               })()}
             </h2>
+            {effectiveWebsite && (
+              <a
+                href={effectiveWebsite}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors mt-1.5"
+              >
+                <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span className="truncate max-w-[240px]">{displayWebsiteClean}</span>
+              </a>
+            )}
           </div>
 
           {/* Business Follow Button */}
@@ -1123,18 +1134,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               )}
             </div>
           </div>
-
-          {effectiveWebsite && (
-            <a
-              href={effectiveWebsite}
-              target="_blank"
-              rel="noreferrer"
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center gap-1.5 shrink-0"
-            >
-              <Globe className="w-3.5 h-3.5 text-zinc-300" />
-              <span className="truncate max-w-[110px]">{displayWebsiteClean}</span>
-            </a>
-          )}
         </div>
       </div>
 
