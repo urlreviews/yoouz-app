@@ -643,8 +643,27 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (rawParts.length > 1) {
     let bestCandidate: string | undefined = undefined;
 
-    // First try finding a part that matches domRoot
-    if (domRoot) {
+    // First try finding a part that matches queryContext if provided
+    if (queryContext) {
+      const cleanQContext = queryContext.trim().toLowerCase();
+      const qWords = cleanQContext.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|law|firm|inc|llc)$/i.test(w));
+      if (qWords.length > 0) {
+        // Try finding part containing all key query words
+        bestCandidate = rawParts.find(p => {
+          const pLower = p.toLowerCase();
+          return qWords.every(w => pLower.includes(w)) && !isGenericPlaceName(p);
+        });
+        if (!bestCandidate) {
+          bestCandidate = rawParts.find(p => {
+            const pLower = p.toLowerCase();
+            return qWords.some(w => pLower.includes(w)) && !isGenericPlaceName(p);
+          });
+        }
+      }
+    }
+
+    // Second try finding a part that matches domRoot
+    if (!bestCandidate && domRoot) {
       bestCandidate = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 45 && !isGenericPlaceName(p));
     }
 
@@ -663,6 +682,19 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
 
     if (bestCandidate) {
       trimmed = bestCandidate;
+    }
+  }
+
+  // 3.1 Anchor preservation: if queryContext is a valid proper brand name (e.g. "Piotrowski Law"), and trimmed is a short acronym/abbreviation (e.g. "CP Law") or generic
+  if (queryContext) {
+    const qTrim = queryContext.trim();
+    const qWords = qTrim.split(/\s+/).filter(Boolean);
+    if (qWords.length >= 2 && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(qTrim) && !qTrim.includes('.')) {
+      const qLower = qTrim.toLowerCase();
+      const trimmedLower = trimmed.toLowerCase();
+      if (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower)) {
+        trimmed = qTrim;
+      }
     }
   }
 

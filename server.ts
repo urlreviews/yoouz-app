@@ -18591,7 +18591,10 @@ Return JSON:
                 if (siteTitle && siteTitle.length <= 120) {
                   const cleanedSiteTitle = formatBusinessName(siteTitle, `${ddgRes.domain}:${cleanQ}`);
                   if (cleanedSiteTitle && cleanedSiteTitle.length >= 2) {
-                    enrichedName = cleanedSiteTitle;
+                    const isNameWeak = !cleanName || cleanName === ddgRes.domain || isGenericPlaceNameServer(cleanName) || cleanName.includes('.com') || cleanName.includes('://');
+                    if (isNameWeak) {
+                      enrichedName = cleanedSiteTitle;
+                    }
                   }
                 }
 
