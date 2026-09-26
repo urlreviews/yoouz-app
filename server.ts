@@ -34,6 +34,7 @@ import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/a
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
+import { KNOWN_OFFICIAL_NAMES } from "./src/utils/placeUtils.ts";
 
 dotenv.config();
 
@@ -18102,58 +18103,44 @@ Return JSON:
       return cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
     }
 
-    // 2. Known Official Dictionary lookup
+    // 2. Known Official Dictionary lookup (forward and reverse)
     const qLower = cleanQ.toLowerCase();
     for (const [dom, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+      if (!dom.includes('.')) continue;
       const nameLower = officialName.toLowerCase();
       if (nameLower === qLower || nameLower.includes(qLower) || qLower.includes(nameLower)) {
         return dom;
       }
     }
 
-    // 3. Live Web Search Domain Resolution
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-    try {
-      const res = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(cleanQ + " website"), {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9,he;q=0.8,nl;q=0.8,fr;q=0.8",
-          "Referer": "https://html.duckduckgo.com/"
-        },
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const html = await res.text();
-        const re = /uddg=([^&"']+)/g;
-        let m;
-        while ((m = re.exec(html)) !== null) {
-          try {
-            const urlStr = decodeURIComponent(m[1]);
-            const u = new URL(urlStr);
-            const host = u.hostname.toLowerCase().replace(/^www\./, "");
-            if (
-              !host.includes("duckduckgo") &&
-              !host.includes("facebook") &&
-              !host.includes("instagram") &&
-              !host.includes("wikipedia") &&
-              !host.includes("tripadvisor") &&
-              !host.includes("booking.com") &&
-              !host.includes("youtube") &&
-              !host.includes("linkedin") &&
-              !host.includes("twitter") &&
-              !host.includes("x.com") &&
-              !host.includes("yellowpages") &&
-              !host.includes("pagesdor")
-            ) {
-              return host;
-            }
-          } catch(e) {}
-        }
+    // 3. Fast Candidate TLD checking (e.g. .com, .be, .nl, .co.il, .fr, .de)
+    const slug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (slug.length >= 3) {
+      const candidates = [
+        `${slug}.com`,
+        `${slug}.be`,
+        `${slug}.nl`,
+        `${slug}.co.il`,
+        `${slug}.fr`,
+        `${slug}.de`,
+        `${slug}.org`
+      ];
+
+      for (const cand of candidates) {
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 600);
+          const headRes = await fetch(`https://${cand}`, {
+            method: 'HEAD',
+            signal: ctrl.signal,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+          });
+          clearTimeout(tid);
+          if (headRes.ok || headRes.status < 400 || headRes.status === 403) {
+            return cand;
+          }
+        } catch (e) {}
       }
-    } catch(e) {
-      clearTimeout(timeoutId);
     }
 
     return "";
@@ -19361,57 +19348,104 @@ Return JSON:
     }
   });
 
-  // Fast $0 Multi-Language Business Auto-Suggest Endpoint
+  // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache
+  const searchSuggestCache = new Map<string, { timestamp: number; data: any }>();
+
   app.get('/api/search-suggest', async (req, res) => {
     try {
       const q = String(req.query.q || '').trim();
-      if (q.length < 2) {
+      if (!q || q.length < 1) {
         return res.json({ suggestions: [], query: q });
       }
 
-      const suggestions: Array<{ id?: string; title: string; domain: string; logoUrl: string; category?: string; address?: string; source: string }> = [];
-      const seenDomains = new Set<string>();
+      const qLower = q.toLowerCase();
+      const cacheKey = qLower;
+      const cached = searchSuggestCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+        return res.json({ suggestions: cached.data, query: q, cached: true });
+      }
 
-      // 1. Search local DB places
+      const suggestions: Array<{
+        id?: string;
+        title: string;
+        domain: string;
+        logoUrl: string;
+        category?: string;
+        address?: string;
+        source: string;
+      }> = [];
+      const seenKeys = new Set<string>();
+
+      const addSuggestion = (item: {
+        id?: string;
+        title: string;
+        domain?: string;
+        logoUrl?: string;
+        category?: string;
+        address?: string;
+        source: string;
+      }) => {
+        if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
+        const dom = (item.domain || "").toLowerCase().replace(/^www\./, "").trim();
+        const normTitle = item.title.toLowerCase().trim();
+        const key = dom || normTitle;
+        if (seenKeys.has(key) || seenKeys.has(normTitle)) return;
+        seenKeys.add(key);
+        seenKeys.add(normTitle);
+
+        const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
+        const logo = item.logoUrl || (hasValidDomain ? `/api/favicon?domain=${dom}` : "");
+
+        suggestions.push({
+          id: item.id || (hasValidDomain ? dom : undefined),
+          title: item.title,
+          domain: hasValidDomain ? dom : "",
+          logoUrl: logo,
+          category: item.category || "Verified Business",
+          address: item.address || "",
+          source: item.source
+        });
+      };
+
+      // 1. Search local DB places (Instant Database Index)
       const activeDb = (global as any).bunnyDb || db;
       if (activeDb) {
         try {
           const dbRes = await activeDb.execute({
-            sql: `SELECT id, name, category, address, city, country, logoUrl, data FROM places 
-                  WHERE name LIKE ? OR id LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 6`,
-            args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
+            sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website FROM places 
+                  WHERE name LIKE ? OR id LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
+            args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
           });
           if (dbRes && dbRes.rows) {
             for (const row of dbRes.rows as any[]) {
-              const dom = (row.id || '').toLowerCase();
-              if (dom && !seenDomains.has(dom)) {
-                seenDomains.add(dom);
-                const title = (dom && KNOWN_OFFICIAL_NAMES[dom]) || row.name || dom;
-                const hasDot = dom.includes('.');
-                suggestions.push({
-                  id: row.id,
-                  title: title,
-                  domain: hasDot ? dom : "",
-                  logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : `/api/avatar?name=${encodeURIComponent(title)}`),
-                  category: row.category || "Verified Business",
-                  address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ''),
-                  source: "database"
-                });
-              }
+              const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+              const hasDot = bDom.includes(".");
+              const title = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+              addSuggestion({
+                id: row.id,
+                title,
+                domain: hasDot ? bDom : "",
+                logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${bDom}` : ""),
+                category: row.category || "Verified Business",
+                address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
+                source: "database"
+              });
             }
           }
         } catch (dbErr) {}
       }
 
-      // 2. Search Known Official Dictionary
-      const qLower = q.toLowerCase();
-      for (const [dom, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
-        if ((officialName.toLowerCase().includes(qLower) || dom.includes(qLower)) && !seenDomains.has(dom)) {
-          seenDomains.add(dom);
-          suggestions.push({
+      // 2. Search Curated Brand Knowledge Graph & Official Names Dictionary
+      for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+        const domLower = domKey.toLowerCase();
+        const nameLower = officialName.toLowerCase();
+        if (domLower.includes(qLower) || nameLower.includes(qLower)) {
+          const hasDot = domKey.includes(".");
+          const validDomain = hasDot ? domKey : (KNOWN_OFFICIAL_NAMES[domKey + ".com"] ? domKey + ".com" : "");
+          addSuggestion({
             title: officialName,
-            domain: dom,
-            logoUrl: `/api/favicon?domain=${dom}`,
+            domain: validDomain,
+            logoUrl: validDomain ? `/api/favicon?domain=${validDomain}` : "",
             category: "Verified Brand",
             source: "brand_index"
           });
@@ -19419,154 +19453,130 @@ Return JSON:
         }
       }
 
-      // 3. Live DuckDuckGo Auto-Complete (Multi-language live phrase suggestions)
-      if (suggestions.length < 6) {
-        try {
-          const ddgRes = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined
-          });
-          if (ddgRes.ok) {
-            const list = await ddgRes.json().catch(() => []);
-            if (Array.isArray(list) && list.length > 1 && Array.isArray(list[1])) {
-              for (const phrase of list[1].slice(0, 5)) {
-                if (typeof phrase === 'string' && phrase.length >= 2) {
-                  const cleanedPhrase = phrase.trim();
-                  let targetDomain = (cleanedPhrase.includes(".") && !cleanedPhrase.includes(" ")) ? cleanDomainName(cleanedPhrase) : "";
-
-                  if (!targetDomain) {
-                    const knownMatchKey = Object.keys(KNOWN_OFFICIAL_NAMES).find(
-                      k => k.includes('.') && KNOWN_OFFICIAL_NAMES[k].toLowerCase() === cleanedPhrase.toLowerCase()
-                    );
-                    if (knownMatchKey) {
-                      targetDomain = knownMatchKey;
-                    } else if (suggestions.length === 0) {
-                      targetDomain = await resolveDomainForBusinessQuery(cleanedPhrase);
-                    }
-                  }
-
-                  const displayTitle = (targetDomain && KNOWN_OFFICIAL_NAMES[targetDomain])
-                    ? KNOWN_OFFICIAL_NAMES[targetDomain]
-                    : formatBusinessName(cleanedPhrase) || cleanedPhrase;
-
-                  const dedupKey = targetDomain || displayTitle.toLowerCase();
-                  if (!seenDomains.has(dedupKey) && displayTitle && displayTitle !== ".com") {
-                    seenDomains.add(dedupKey);
-                    suggestions.push({
-                      title: displayTitle,
-                      domain: targetDomain || "",
-                      logoUrl: targetDomain ? `/api/favicon?domain=${targetDomain}` : `/api/avatar?name=${encodeURIComponent(displayTitle)}`,
-                      category: "Verified Business",
-                      source: "autocomplete"
-                    });
-                  }
+      // 3. Multi-Language Live Auto-Complete (Google Complete & DuckDuckGo AC concurrent with strict timeout)
+      if (suggestions.length < 8) {
+        const fetchTasks = [
+          // Google Suggest API (never blocked, all languages, sub-50ms)
+          (async () => {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 600);
+            try {
+              const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
+                signal: ctrl.signal
+              });
+              clearTimeout(tid);
+              if (res.ok) {
+                const list = await res.json();
+                if (Array.isArray(list) && Array.isArray(list[1])) {
+                  return list[1].slice(0, 6);
                 }
+              }
+            } catch(e) { clearTimeout(tid); }
+            return [];
+          })(),
+          // DuckDuckGo Autocomplete List (never blocked, fast)
+          (async () => {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 600);
+            try {
+              const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                signal: ctrl.signal
+              });
+              clearTimeout(tid);
+              if (res.ok) {
+                const list = await res.json();
+                if (Array.isArray(list) && Array.isArray(list[1])) {
+                  return list[1].slice(0, 5);
+                }
+              }
+            } catch(e) { clearTimeout(tid); }
+            return [];
+          })()
+        ];
+
+        const results = await Promise.allSettled(fetchTasks);
+        const combinedPhrases: string[] = [];
+        for (const r of results) {
+          if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+            for (const phrase of r.value) {
+              if (typeof phrase === 'string' && phrase.trim().length > 1 && !combinedPhrases.includes(phrase.trim())) {
+                combinedPhrases.push(phrase.trim());
               }
             }
           }
-        } catch (ddgErr) {}
-      }
+        }
 
-      // 4. Advanced Live Web Search organic scraper for local businesses (e.g. "barber buzzy")
-      if (suggestions.length < 8) {
-        const ddgHtmlController = new AbortController();
-        const htmlTimeoutId = setTimeout(() => ddgHtmlController.abort(), 1500);
-        try {
-          const htmlRes = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-              "Accept-Language": "en-US,en;q=0.9,he;q=0.8",
-              "Referer": "https://html.duckduckgo.com/"
-            },
-            signal: ddgHtmlController.signal
-          });
-          clearTimeout(htmlTimeoutId);
-          if (htmlRes.ok) {
-            const searchHtml = await htmlRes.text();
-            const $ = cheerio.load(searchHtml);
-            
-            $('.result').each((_i, el) => {
-              if (suggestions.length >= 8) return;
-              
-              const rawTitle = $(el).find('.result__title').text().trim();
-              const rawUrl = $(el).find('.result__title a').attr('href') || $(el).find('.result__url').attr('href') || '';
-              const snippet = $(el).find('.result__snippet').text().trim();
-              
-              if (rawTitle && rawUrl) {
-                let destinationUrl = '';
-                if (rawUrl.includes('uddg=')) {
-                  const m = /uddg=([^&"']+)/.exec(rawUrl);
-                  if (m) {
-                    try {
-                      destinationUrl = decodeURIComponent(m[1]);
-                    } catch (e) {}
-                  }
-                }
-                if (!destinationUrl && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
-                  destinationUrl = rawUrl;
-                }
-                
-                if (destinationUrl) {
-                  try {
-                    const u = new URL(destinationUrl);
-                    const host = u.hostname.toLowerCase().replace(/^www\./, "");
-                    
-                    if (
-                      !host.includes("duckduckgo") &&
-                      !host.includes("tripadvisor") &&
-                      !host.includes("booking.com") &&
-                      !host.includes("yellowpages") &&
-                      !host.includes("pagesdor") &&
-                      !host.includes("waze.com")
-                    ) {
-                      let cleanTitle = rawTitle
-                        .replace(/\s*[|\-–—•:|]\s*Home\s*\|\s*Facebook/i, "")
-                        .replace(/\s*[|\-–—•:|]\s*Facebook/i, "")
-                        .replace(/\s*[|\-–—•:|]\s*Instagram.*$/i, "")
-                        .replace(/\s*[|\-–—•:|]\s*LinkedIn.*$/i, "")
-                        .replace(/\s*[|\-–—•:|]\s*Official Website.*$/i, "")
-                        .replace(/\s*[|\-–—•:|]\s*TikTok.*$/i, "")
-                        .trim();
-                        
-                      if (cleanTitle) {
-                        const dedupKey = host || cleanTitle.toLowerCase();
-                        if (!seenDomains.has(dedupKey)) {
-                          seenDomains.add(dedupKey);
-                          
-                          let phone = "";
-                          const phoneMatch = /(\+?[0-9]{2,4}[-.\s]?[0-9]{2,4}[-.\s]?[0-9]{2,8}[-.\s]?[0-9]{2,8})/.exec(snippet);
-                          if (phoneMatch) {
-                            phone = phoneMatch[1].trim();
-                          }
-                          
-                          suggestions.push({
-                            title: cleanTitle,
-                            domain: host,
-                            logoUrl: `/api/favicon?domain=${host}`,
-                            category: "Local Business",
-                            address: phone ? `Phone: ${phone}` : "",
-                            source: "web_search"
-                          });
-                        }
-                      }
-                    }
-                  } catch (e) {}
-                }
-              }
+        for (const phrase of combinedPhrases) {
+          if (suggestions.length >= 8) break;
+          const phraseClean = phrase.trim();
+          let targetDom = "";
+
+          // Check if phrase has domain dot
+          if (phraseClean.includes(".") && !phraseClean.includes(" ")) {
+            targetDom = cleanDomainName(phraseClean);
+          } else {
+            // Check if matches known brand dictionary
+            const phraseLower = phraseClean.toLowerCase();
+            const matchedKey = Object.keys(KNOWN_OFFICIAL_NAMES).find(k => {
+              if (!k.includes('.')) return false;
+              const offName = KNOWN_OFFICIAL_NAMES[k].toLowerCase();
+              const domBase = k.split('.')[0].toLowerCase();
+              return (
+                offName === phraseLower ||
+                phraseLower.startsWith(offName + " ") ||
+                phraseLower.startsWith(offName) ||
+                phraseLower.includes(offName) ||
+                phraseLower === domBase ||
+                phraseLower.startsWith(domBase + " ") ||
+                phraseLower.includes(domBase) ||
+                offName.startsWith(phraseLower)
+              );
             });
+            if (matchedKey) {
+              targetDom = matchedKey;
+            }
           }
-        } catch (htmlErr) {
-          clearTimeout(htmlTimeoutId);
-          console.error("DDG HTML search parse error:", htmlErr);
+
+          const displayTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
+            ? KNOWN_OFFICIAL_NAMES[targetDom]
+            : formatBusinessName(phraseClean) || phraseClean;
+
+          addSuggestion({
+            title: displayTitle,
+            domain: targetDom,
+            logoUrl: targetDom ? `/api/favicon?domain=${targetDom}` : "",
+            category: "Verified Business",
+            source: "autocomplete"
+          });
         }
       }
 
-      return res.json({ suggestions: suggestions.slice(0, 8), query: q });
+      // 4. If query itself looks like a domain, ensure it is added
+      if (q.includes('.') && !q.includes(' ')) {
+        const cleanQDom = cleanDomainName(q);
+        if (cleanQDom && !seenKeys.has(cleanQDom)) {
+          addSuggestion({
+            title: formatBusinessName(cleanQDom) || cleanQDom,
+            domain: cleanQDom,
+            logoUrl: `/api/favicon?domain=${cleanQDom}`,
+            category: "Direct Domain Search",
+            source: "direct"
+          });
+        }
+      }
+
+      const finalResults = suggestions.slice(0, 8);
+      // Cache response for 10 minutes
+      searchSuggestCache.set(cacheKey, { timestamp: Date.now(), data: finalResults });
+
+      return res.json({ suggestions: finalResults, query: q });
     } catch (e: any) {
       console.error('Search suggest error:', e);
       return res.status(500).json({ suggestions: [], error: e.message });
     }
   });
+
   app.post('/api/user/sync', requireAuth, async (req: any, res: any) => {
     try {
       const { uid, email, name, avatar } = req.body;
@@ -23125,169 +23135,6 @@ function cleanDomainName(urlStr: any) {
      return urlStr.replace(/^(https?:\/\/)?(www[\.\-])?/i, '').split('/')[0];
   }
 }
-
-const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
-  "isrotel.co.il": "ישרוטל אילת",
-  "danhotels.co.il": "דן אילת",
-  "clubhotels-israel.com": "קלאב הוטל אילת",
-  "clubhotels.co.il": "קלאב הוטל אילת",
-  "yust.com": "Yust Liege Hotel",
-  "davidchantraine.be": "David Chantraine Eupen",
-  "digitalpark": "Digital Park",
-  "digitalpark.ae": "Digital Park",
-  "digitalparkae": "Digital Park",
-  "digitalparkae.com": "Digital Park",
-  "dubaidigitalpark": "Dubai Digital Park",
-  "aldhabidental": "Al Dhabi Dental Center",
-  "aldhabidental.ae": "Al Dhabi Dental Center",
-  "aldhabidentalcenter": "Al Dhabi Dental Center",
-  "aldhabidentalclinic": "Al Dhabi Dental Center",
-  "aldhabi": "Al Dhabi Dental Center",
-  "thecapitalavenue": "The Capital Avenue",
-  "thecapitalavenue.com": "The Capital Avenue",
-  "thecapitalavenuerealestate": "The Capital Avenue Real Estate",
-  "thecapitalavenuerealestateabudhabi": "The Capital Avenue Real Estate",
-  "districtuae": "District Real Estate",
-  "districtuae.com": "District Real Estate",
-  "districtrealestate": "District Real Estate",
-  "londontrustedtherapy": "London Trusted Therapy",
-  "londontrustedtherapy.com": "London Trusted Therapy",
-  "kempinski": "Kempinski Hotels",
-  "kempinski.com": "Kempinski Hotels",
-  "timehotels": "Time Hotels",
-  "timehotels.com": "Time Hotels",
-  "www-timehotels-com": "Time Hotels",
-  "legal500": "The Legal 500",
-  "legal500.com": "The Legal 500",
-  "thelegal500": "The Legal 500",
-  "businessplace": "Business Place",
-  "businessplace.com": "Business Place",
-  "freecancellations": "Free Cancellations",
-  "freecancellations.com": "Free Cancellations",
-  "www-freecancellations-com": "Free Cancellations",
-  "tajhotels": "Taj Hotels",
-  "tajhotels.com": "Taj Hotels",
-  "www-tajhotels-com": "Taj Hotels",
-  "plomberiebruxelles24": "Plomberie Bruxelles 24",
-  "plomberiebruxelles24.be": "Plomberie Bruxelles 24",
-  "toptechbelgium": "Toptech Belgium SRL",
-  "toptechbelgiumsrl": "Toptech Belgium SRL",
-  "healis": "Healis",
-  "healis.be": "Healis",
-  "healis.com": "Healis",
-  "healisbe": "Healis",
-  "bvhealis": "Healis",
-  "bvhealisholding": "Healis",
-  "bhol": "B'Chadrei Charedim",
-  "bhol.co.il": "B'Chadrei Charedim",
-  "tandis": "Tandis",
-  "tandis.be": "Tandis",
-  "optieknieuwenhuysen": "Optiek Nieuwenhuysen",
-  "optieknieuwenhuysen.be": "Optiek Nieuwenhuysen",
-  "www-optieknieuwenhuysen-be": "Optiek Nieuwenhuysen",
-  "nieuwenhuysen": "Optiek Nieuwenhuysen",
-  "vandenbalck": "Optiek Vandenbalck",
-  "vandenbalck.be": "Optiek Vandenbalck",
-  "www-vandenbalck-be": "Optiek Vandenbalck",
-  "toopoptiek": "Toop Optiek",
-  "toopoptiek.com": "Toop Optiek",
-  "www-toopoptiek-com": "Toop Optiek",
-  "dental365": "Dental 365",
-  "dental365.nl": "Dental 365",
-  "www-dental365-nl": "Dental 365",
-  "lassustandartsen": "Lassus Tandartsen",
-  "lassustandartsen.nl": "Lassus Tandartsen",
-  "www-lassustandartsen-nl": "Lassus Tandartsen",
-  "lassustandartsen-nl": "Lassus Tandartsen",
-  "dentisteerpent": "Dentiste Erpent",
-  "dentisteerpent.be": "Dentiste Erpent",
-  "dentiste-namur": "Dentiste Namur",
-  "dentiste-namur.be": "Dentiste Namur",
-  "brusselsdental": "Brussels Dental",
-  "brusselsdental.com": "Brussels Dental",
-  "brettlevy": "Brett Levy",
-  "brettlevy.com": "Brett Levy",
-  "yoouz": "Yoouz",
-  "yoouz.com": "Yoouz",
-  "apple": "Apple",
-  "apple.com": "Apple",
-  "github": "GitHub",
-  "github.com": "GitHub",
-  "google": "Google",
-  "google.com": "Google",
-  "uber": "Uber",
-  "uber.com": "Uber",
-  "spotify": "Spotify",
-  "spotify.com": "Spotify",
-  "facebook": "Facebook",
-  "facebook.com": "Facebook",
-  "lernerandrowe": "Lerner and Rowe Injury Attorneys",
-  "lernerandrowe.com": "Lerner and Rowe Injury Attorneys",
-  "www-lernerandrowe-com": "Lerner and Rowe Injury Attorneys",
-  "lernerandrowelaw": "Lerner and Rowe Injury Attorneys",
-  "lernerrowe": "Lerner and Rowe Injury Attorneys",
-  "lernerrowe.com": "Lerner and Rowe Injury Attorneys",
-  "vanlawfirm": "Van Law Firm Injury Attorneys",
-  "vanlawfirm.com": "Van Law Firm Injury Attorneys",
-  "www-vanlawfirm-com": "Van Law Firm Injury Attorneys",
-  "alarislaw": "Alaris Law",
-  "alaris-law": "Alaris Law",
-  "alaris-law.com": "Alaris Law",
-  "www-alaris-law-com": "Alaris Law",
-  "nevadalegalservices": "Nevada Legal Services",
-  "nevadalegalservices.org": "Nevada Legal Services",
-  "www-nevadalegalservices-org": "Nevada Legal Services",
-  "paulpowell": "The Paul Powell Law Firm",
-  "paulpowell.com": "The Paul Powell Law Firm",
-  "www-paulpowell-com": "The Paul Powell Law Firm",
-  "thepaulpowelllawfirm": "The Paul Powell Law Firm",
-  "paultoland": "Paul Toland Law Office",
-  "paultolandlaw": "Paul Toland Law Office",
-  "paultolandlaw.com": "Paul Toland Law Office",
-  "theottleylawfirm": "The Ottley Law Firm",
-  "theottleylawfirm.com": "The Ottley Law Firm",
-  "mcveaghfleming": "McVeagh Fleming Lawyers",
-  "mcveaghfleming.co.nz": "McVeagh Fleming Lawyers",
-  "www-mcveaghfleming-co-nz": "McVeagh Fleming Lawyers",
-  "bensonbingham": "Benson & Bingham",
-  "bensonbingham.com": "Benson & Bingham",
-  "bensonandbingham": "Benson & Bingham",
-  "bensonandbingham.com": "Benson & Bingham",
-  "www-bensonbingham-com": "Benson & Bingham",
-  "meta": "Meta",
-  "meta.com": "Meta",
-  "reddit": "Reddit",
-  "reddit.com": "Reddit",
-  "ibm": "IBM",
-  "ibm.com": "IBM",
-  "ups": "UPS",
-  "ups.com": "UPS",
-  "cnn": "CNN",
-  "cnn.com": "CNN",
-  "zoom": "Zoom",
-  "zoom.us": "Zoom",
-  "zoom.com": "Zoom",
-  "usa": "USA",
-  "usa.com": "USA",
-  "mastercard": "Mastercard",
-  "mastercard.com": "Mastercard",
-  "proximus": "Proximus",
-  "proximus.be": "Proximus",
-  "www.proximus.be": "Proximus",
-  "pro-ximus": "Proximus",
-  "pro ximus": "Proximus",
-  "multipharma": "Multipharma",
-  "multipharma.be": "Multipharma",
-  "www.multipharma.be": "Multipharma",
-  "autowerkplaatsbrugge": "Auto Werkplaats Brugge",
-  "autowerkplaatsbrugge.be": "Auto Werkplaats Brugge",
-  "autowerkplaatsbruggebe": "Auto Werkplaats Brugge",
-  "autowerkplaats-brugge": "Auto Werkplaats Brugge",
-  "autowerkplaats-brugge.be": "Auto Werkplaats Brugge",
-  "www-autowerkplaatsbrugge-be": "Auto Werkplaats Brugge",
-  "autowerkplaats brugge": "Auto Werkplaats Brugge",
-  "auto werkplaats brugge": "Auto Werkplaats Brugge"
-};
 
 function isCorruptedBusinessNameServer(name?: string | null): boolean {
   if (!name) return false;

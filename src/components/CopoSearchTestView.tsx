@@ -42,14 +42,42 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Live Auto-Suggest debounce (triggers after 2 characters)
+  // Live Auto-Suggest debounce with 0ms instant local database preview
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < 2) {
+    if (!trimmed) {
       setSuggestions([]);
       setIsLoadingSuggest(false);
       setShowDropdown(false);
       return;
+    }
+
+    // 0ms instant local DB match
+    const qLow = trimmed.toLowerCase();
+    const localMatches: SuggestionItem[] = places
+      .filter(p => {
+        const pName = (p.name || '').toLowerCase();
+        const pDom = (p.brandDomain || p.website || p.id || '').toLowerCase();
+        return pName.includes(qLow) || pDom.includes(qLow);
+      })
+      .slice(0, 4)
+      .map(p => {
+        const dom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
+        const hasDot = dom.includes('.');
+        return {
+          id: p.id,
+          title: p.name || dom,
+          domain: hasDot ? dom : "",
+          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          category: p.category || "Verified Business",
+          address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
+          source: "database"
+        };
+      });
+
+    if (localMatches.length > 0) {
+      setSuggestions(localMatches);
+      setShowDropdown(true);
     }
 
     setIsLoadingSuggest(true);
@@ -60,17 +88,30 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
         if (resp.ok) {
           const data = await resp.json();
-          setSuggestions(data.suggestions || []);
+          const serverList: SuggestionItem[] = data.suggestions || [];
+          
+          // Merge local matches with server suggestions (avoiding duplicates)
+          const seen = new Set<string>();
+          const merged: SuggestionItem[] = [];
+          
+          for (const item of [...localMatches, ...serverList]) {
+            const key = (item.id || item.domain || item.title).toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              merged.push(item);
+            }
+          }
+          setSuggestions(merged.slice(0, 8));
         }
       } catch (err) {
         console.error("Search suggest error:", err);
       } finally {
         setIsLoadingSuggest(false);
       }
-    }, 200);
+    }, 120);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, places]);
 
   // Click outside listener to close dropdown
   useEffect(() => {
@@ -107,9 +148,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
     // Set optimistic place
     const officialName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || item.title || formatBusinessName(cleanDom) || item.title;
-    const avatar = item.logoUrl && !item.logoUrl.includes('domain=.com') && !item.logoUrl.includes('domain=')
+    const avatar = item.logoUrl && !item.logoUrl.includes('domain=.com') && !item.logoUrl.includes('domain=') && !item.logoUrl.includes('/api/avatar')
       ? item.logoUrl
-      : (cleanDom ? `/api/favicon?domain=${cleanDom}` : `/api/avatar?name=${encodeURIComponent(officialName)}`);
+      : (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
 
     const optimisticPlace: Place = {
       id: placeId,
@@ -251,13 +292,19 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   onClick={() => handleSelectSuggestion(item)}
                   className="w-full px-4 py-3.5 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
                 >
-                  <CopoBrandLogo
-                    domain={item.domain}
-                    name={item.title}
-                    logoUrl={item.logoUrl}
-                    className="w-9 h-9 rounded-xl border border-zinc-700 bg-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 p-1"
-                    imageClassName="w-full h-full object-contain"
-                  />
+                  {item.domain || item.logoUrl ? (
+                    <CopoBrandLogo
+                      domain={item.domain}
+                      name={item.title}
+                      logoUrl={item.logoUrl}
+                      className="w-9 h-9 rounded-xl border border-zinc-700 bg-white shadow-sm flex items-center justify-center overflow-hidden shrink-0 p-1"
+                      imageClassName="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl border border-zinc-700 bg-zinc-800 shadow-sm flex items-center justify-center overflow-hidden shrink-0 text-zinc-300">
+                      <Building2 className="w-4 h-4 text-zinc-400" />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">

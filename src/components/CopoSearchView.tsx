@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
@@ -38,11 +38,112 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [errorMsg, setErrorMsg] = useState("");
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (initialQuery) {
       handleSearch(undefined, initialQuery);
     }
   }, [initialQuery]);
+
+  // Live Auto-Suggest debounce with 0ms instant local database preview
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setSuggestions([]);
+      setIsLoadingSuggest(false);
+      setShowDropdown(false);
+      return;
+    }
+
+    // 0ms instant local DB match
+    const qLow = trimmed.toLowerCase();
+    const localMatches = places
+      .filter(p => {
+        const pName = (p.name || '').toLowerCase();
+        const pDom = (p.brandDomain || p.website || p.id || '').toLowerCase();
+        return pName.includes(qLow) || pDom.includes(qLow);
+      })
+      .slice(0, 4)
+      .map(p => {
+        const dom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
+        const hasDot = dom.includes('.');
+        return {
+          id: p.id,
+          title: p.name || dom,
+          domain: hasDot ? dom : "",
+          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          category: p.category || "Verified Business",
+          address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
+          source: "database"
+        };
+      });
+
+    if (localMatches.length > 0) {
+      setSuggestions(localMatches);
+      setShowDropdown(true);
+    }
+
+    setIsLoadingSuggest(true);
+    setShowDropdown(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const serverList = data.suggestions || [];
+          const seen = new Set<string>();
+          const merged = [];
+          for (const item of [...localMatches, ...serverList]) {
+            const key = (item.id || item.domain || item.title).toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              merged.push(item);
+            }
+          }
+          setSuggestions(merged.slice(0, 8));
+        }
+      } catch (err) {
+      } finally {
+        setIsLoadingSuggest(false);
+      }
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [query, places]);
+
+  // Click outside listener to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (item: any) => {
+    setShowDropdown(false);
+    if (item.domain && item.domain.includes('.')) {
+      setQuery(item.domain);
+      handleSearch(undefined, item.domain);
+    } else if (item.id && places.some(p => p.id === item.id)) {
+      const match = places.find(p => p.id === item.id);
+      if (match) {
+        setSearchedPlace(match);
+        setQuery(match.name || item.title);
+        return;
+      }
+    } else {
+      setQuery(item.title);
+      handleSearch(undefined, item.title);
+    }
+  };
 
   // Validate URL strictly - rejects plain words, single characters like 'k', etc.
   const isValidUrl = (urlString: string) => {
@@ -65,6 +166,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
 
+    setShowDropdown(false);
+
     // Extract clean domain strictly (e.g. "www.uber.com" -> "uber.com", "https://bhol.co.il" -> "bhol.co.il")
     let cleanUrl = extractCleanDomain(rawQuery);
 
@@ -78,8 +181,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       cleanUrl = getCleanDomainUrl(matchingLocal);
     }
 
+    // If not a domain with a dot, check local places by name, known brands, or query API to resolve domain
     if (!isValidDomainUrl(cleanUrl)) {
-      setErrorMsg("Please enter a valid website address (e.g. example.com).");
+      const matchingByName = places.find(p => p.name && p.name.toLowerCase() === rawQuery.toLowerCase());
+      if (matchingByName) {
+        cleanUrl = getCleanDomainUrl(matchingByName);
+      } else {
+        const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => k.includes('.') && (v.toLowerCase() === rawQuery.toLowerCase() || k.toLowerCase().startsWith(rawQuery.toLowerCase())));
+        if (brandMatch) {
+          cleanUrl = brandMatch[0];
+        }
+      }
+    }
+
+    if (!isValidDomainUrl(cleanUrl)) {
+      setIsSearching(true);
+      try {
+        const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
+        if (metaResp.ok) {
+          const metaData = await metaResp.json();
+          if (metaData && metaData.domain) {
+            cleanUrl = metaData.domain;
+          }
+        }
+      } catch(e) {}
+    }
+
+    if (!isValidDomainUrl(cleanUrl)) {
+      setErrorMsg("Please enter a valid website address or business name (e.g. Starbucks, isrotel.co.il).");
       setIsSearching(false);
       return;
     }
@@ -312,49 +441,105 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           {!hideSearchBar && (
-            <form onSubmit={(e) => handleSearch(e)} className="w-full max-w-lg flex flex-col items-center">
-              <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-white/10 transition-all">
-                <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
-                  placeholder={t("search.placeholder", "example.com")}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setErrorMsg("");
-                  }}
-                />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery("");
+            <div className="w-full max-w-lg relative" ref={dropdownRef}>
+              <form onSubmit={(e) => handleSearch(e)} className="w-full flex flex-col items-center">
+                <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-white/10 transition-all">
+                  <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
+                    placeholder={t("search.placeholder", "Search business name or domain (e.g. Starbucks, isrotel.co.il)")}
+                    value={query}
+                    onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
                       setErrorMsg("");
                     }}
-                    className="absolute inset-y-0 right-[5.5rem] flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
-                    title="Clear search query"
-                  >
-                    <span className="text-xl font-medium leading-none">×</span>
-                  </button>
-                )}
-                <div className="absolute inset-y-0 right-1.5 flex items-center">
-                  <button
-                    type="submit"
-                    disabled={isSearching}
-                    className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-200 disabled:cursor-not-allowed text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
-                  >
-                    {isSearching ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      t("common.search", "Search")
-                    )}
-                  </button>
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setErrorMsg("");
+                        setSuggestions([]);
+                        setShowDropdown(false);
+                      }}
+                      className="absolute inset-y-0 right-[5.5rem] flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                      title="Clear search query"
+                    >
+                      <span className="text-xl font-medium leading-none">×</span>
+                    </button>
+                  )}
+                  <div className="absolute inset-y-0 right-1.5 flex items-center">
+                    <button
+                      type="submit"
+                      disabled={isSearching}
+                      className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-200 disabled:cursor-not-allowed text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                    >
+                      {isSearching || isLoadingSuggest ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        t("common.search", "Search")
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+
+              {/* Live Auto-Suggest Dropdown */}
+              {showDropdown && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto">
+                  {suggestions.map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(item)}
+                      className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
+                    >
+                      {item.domain || item.logoUrl ? (
+                        <CopoBrandLogo
+                          domain={item.domain}
+                          name={item.title}
+                          logoUrl={item.logoUrl}
+                          className="w-8 h-8 rounded-lg border border-zinc-700 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
+                          imageClassName="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg border border-zinc-700 bg-zinc-800 shadow-xs flex items-center justify-center overflow-hidden shrink-0 text-zinc-300">
+                          <Building2 className="w-4 h-4 text-zinc-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
+                            {item.title}
+                          </span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                          {item.domain && <span className="text-zinc-500 truncate">{item.domain}</span>}
+                          {item.category && (
+                            <>
+                              {item.domain && <span className="text-zinc-700">•</span>}
+                              <span className="text-zinc-400 truncate">{item.category}</span>
+                            </>
+                          )}
+                          {item.address && (
+                            <>
+                              <span className="text-zinc-700">•</span>
+                              <span className="text-zinc-500 truncate">{item.address}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {errorMsg && (

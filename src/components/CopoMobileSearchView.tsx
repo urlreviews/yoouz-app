@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -77,6 +77,29 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [validationError, setValidationError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
+
+  // Live Auto-Suggest debounce
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setLiveSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          setLiveSuggestions(data.suggestions || []);
+        }
+      } catch (err) {}
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [query]);
   
   // Recent searches (stored as clean domain URLs e.g. "uber.com", "bhol.co.il")
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -224,11 +247,19 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const trimmed = raw.trim();
     // Resolve matching place clean domain if available
     const matchedPlace = findMatchingPlace(trimmed);
-    const cleanUrl = matchedPlace ? getCleanDomainUrl(matchedPlace) : extractCleanDomain(trimmed);
+    let cleanUrl = matchedPlace ? getCleanDomainUrl(matchedPlace) : extractCleanDomain(trimmed);
 
-    // Reject single-letter searches (e.g. "k", "n") and non-domains
+    // If not a domain with a dot, check KNOWN_OFFICIAL_NAMES
     if (!isValidDomainUrl(cleanUrl)) {
-      setValidationError("Please enter a valid website address (e.g. example.com)");
+      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => k.includes('.') && (v.toLowerCase() === trimmed.toLowerCase() || k.toLowerCase().startsWith(trimmed.toLowerCase())));
+      if (brandMatch) {
+        cleanUrl = brandMatch[0];
+      }
+    }
+
+    // Reject non-domains that couldn't be resolved
+    if (!isValidDomainUrl(cleanUrl)) {
+      setValidationError("Please enter a valid business name or website (e.g. Starbucks, isrotel.co.il)");
       setTimeout(() => setValidationError(""), 3500);
       return;
     }
@@ -413,25 +444,46 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <div className="p-4 flex flex-col gap-6">
             
             {/* Autocomplete Suggestions */}
-            {query.length > 0 && suggestions.length > 0 && (
+            {query.length > 0 && (liveSuggestions.length > 0 || suggestions.length > 0) && (
               <div className="flex flex-col">
-                {suggestions.map((p) => {
-                  const cleanUrl = getCleanDomainUrl(p);
+                {(liveSuggestions.length > 0 ? liveSuggestions : suggestions).map((item, idx) => {
+                  const isLive = liveSuggestions.length > 0;
+                  const title = isLive ? item.title : (item.name || getCleanDomainUrl(item));
+                  const targetDomain = isLive ? item.domain : getCleanDomainUrl(item);
+                  const searchArg = targetDomain || title;
+                  const itemLogo = isLive ? item.logoUrl : getItemLogoUrl(targetDomain, item);
+
                   return (
                     <button 
-                      key={p.id}
-                      onClick={() => handleSearch(cleanUrl)}
+                      key={idx}
+                      onClick={() => handleSearch(searchArg)}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
-                      <SearchBusinessBadge 
-                        term={cleanUrl}
-                        place={p}
-                        iconType="search"
-                        getItemLogoUrl={getItemLogoUrl}
-                      />
-                      <span className="text-white text-[15px] font-normal truncate">
-                        {cleanUrl}
-                      </span>
+                      {targetDomain || itemLogo ? (
+                        <div className="w-8 h-8 rounded-lg bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                          <CopoBrandLogo 
+                            domain={targetDomain}
+                            name={title}
+                            logoUrl={itemLogo}
+                            className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
+                            imageClassName="w-full h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400">
+                          <Building2 className="w-4 h-4 text-zinc-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1 truncate">
+                        <div className="text-white text-[15px] font-medium truncate">
+                          {title}
+                        </div>
+                        {targetDomain && (
+                          <div className="text-zinc-500 text-xs truncate">
+                            {targetDomain}
+                          </div>
+                        )}
+                      </div>
                       <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
                     </button>
                   );
