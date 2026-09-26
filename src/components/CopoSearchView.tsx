@@ -449,11 +449,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               </div>
 
               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-                {t("search.title", "Review Any Business or Website")}
+                {t("search.title", "Review Any Business")}
               </h1>
               
               <p className="text-zinc-200 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-                {t("search.subtitle", "Paste a business URL below to see short video reviews or record your own.")}
+                {t("search.subtitle", "Search any business to watch authentic video reviews or record your own.")}
               </p>
             </>
           )}
@@ -468,7 +468,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <input
                     type="text"
                     className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
-                    placeholder={t("search.placeholder", "Search business name or domain (e.g. Starbucks, isrotel.co.il)")}
+                    placeholder={t("search.placeholder", "Search any business...")}
                     value={query}
                     onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
                     onChange={(e) => {

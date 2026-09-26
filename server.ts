@@ -18509,7 +18509,36 @@ Return JSON:
 
     // 3. Live DuckDuckGo Web Search Engine Resolution (Guarantees hyper-local & global real search results)
     try {
-      const ddgRes = await searchDuckDuckGoWeb(cleanQ);
+      let ddgRes = await searchDuckDuckGoWeb(cleanQ).catch(() => null);
+
+      if (!ddgRes || !ddgRes.domain) {
+        // If direct query didn't return a standalone domain (e.g. user typing "Trevor Caudle la" or "Trevor Caudle law pr"),
+        // check root brand query without trailing partial/extra words
+        const words = cleanQ.split(/\s+/).filter(Boolean);
+        if (words.length >= 2) {
+          for (let i = words.length - 1; i >= 1; i--) {
+            const subQuery = words.slice(0, i).join(' ');
+            const subCacheKey = subQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cachedSub = BUSINESS_QUERY_CACHE.get(subCacheKey);
+            if (cachedSub && cachedSub.data?.domain) {
+              ddgRes = {
+                domain: cachedSub.data.domain,
+                url: cachedSub.data.websiteUrl || `https://${cachedSub.data.domain}`,
+                title: cachedSub.data.name,
+                snippet: cachedSub.data.description || ""
+              };
+              break;
+            }
+
+            const subDdgRes = await searchDuckDuckGoWeb(subQuery).catch(() => null);
+            if (subDdgRes && subDdgRes.domain) {
+              ddgRes = subDdgRes;
+              break;
+            }
+          }
+        }
+      }
+
       if (ddgRes && ddgRes.url && ddgRes.domain) {
         let cleanName = formatBusinessName(ddgRes.title || cleanQ, `${ddgRes.domain}:${cleanQ}`);
         if (!cleanName || cleanName.length < 2) {
@@ -18767,13 +18796,12 @@ Return JSON:
       }
     } catch (e) {}
 
-    // 6. Candidate TLD checking (for brand names)
+    // 6. Candidate TLD checking (for single-word brand names only)
     const slug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     let resolvedDomainFromTld = "";
-    if (slug.length >= 3) {
+    if (!cleanQ.includes(' ') && slug.length >= 3) {
       const candidates = [
         `${slug}.com`,
-        `${slug}.co.il`,
         `${slug}.be`,
         `${slug}.nl`,
         `${slug}.fr`,
@@ -18803,12 +18831,12 @@ Return JSON:
     }
 
     // 7. Synthetic Verified Business Object (Guarantees every new business query receives complete metadata)
-    const fallbackPlaceId = resolvedDomainFromTld || (slug.length >= 2 ? `${slug}.com` : cleanQ.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, ''));
+    const fallbackPlaceId = resolvedDomainFromTld || (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : slug);
     const finalCleanTitle = formatBusinessName(cleanQ);
 
     return {
       domain: resolvedDomainFromTld || fallbackPlaceId,
-      websiteUrl: website || (resolvedDomainFromTld ? `https://${resolvedDomainFromTld}` : ""),
+      websiteUrl: website || (resolvedDomainFromTld ? `https://${resolvedDomainFromTld}` : (fallbackPlaceId.includes('.') ? `https://${fallbackPlaceId}` : "")),
       name: finalCleanTitle,
       category: detectedCategory,
       address: "",

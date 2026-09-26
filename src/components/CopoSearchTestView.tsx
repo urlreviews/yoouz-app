@@ -282,7 +282,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         {/* Search Input Box */}
         <div className="relative w-full" ref={dropdownRef}>
           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
-            Search Business by Name or Website Domain (Any Language):
+            Search Any Business:
           </label>
           <div className="relative flex items-center">
             <Search className="absolute left-4 w-5 h-5 text-zinc-400 pointer-events-none" />
@@ -291,7 +291,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
-              placeholder="e.g. Auto Werkplaats Brugge or autowerkplaatsbrugge.be..."
+              placeholder="Search any business..."
               className="w-full bg-zinc-900 border border-zinc-700/80 rounded-2xl pl-12 pr-12 py-4 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all shadow-xl font-medium"
             />
             {isLoadingSuggest && (

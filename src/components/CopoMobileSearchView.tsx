@@ -385,7 +385,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               ref={inputRef}
               type="text"
               className="w-full bg-zinc-900 border border-zinc-800 text-white text-[15px] rounded-lg py-2.5 pl-9 pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-500"
-              placeholder={t("search.placeholder", "example.com")}
+              placeholder={t("search.placeholder", "Search any business...")}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
