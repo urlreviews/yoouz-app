@@ -531,11 +531,31 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
-                            {item.title}
-                          </span>
-                          <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                        <div className="flex items-center min-w-0">
+                          <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors">
+                            {(() => {
+                              const words = (item.title || "").trim().split(/\s+/);
+                              if (words.length <= 1) {
+                                return (
+                                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                    <span>{words[0] || item.title}</span>
+                                    <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                                  </span>
+                                );
+                              }
+                              const lastWord = words.pop();
+                              const mainText = words.join(" ");
+                              return (
+                                <>
+                                  <span>{mainText} </span>
+                                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                    <span>{lastWord}</span>
+                                    <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                                  </span>
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
                           {item.domain && <span className="text-zinc-500 truncate">{item.domain}</span>}
@@ -656,16 +676,23 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
                         || formatBusinessName(searchedPlace.name, dom)
                         || "";
-                      const words = name.split(" ");
+                      const words = name.trim().split(/\s+/);
+                      if (words.length <= 1) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                            <span>{words[0] || name}</span>
+                            <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
+                          </span>
+                        );
+                      }
                       const lastWord = words.pop();
+                      const mainText = words.join(" ");
                       return (
                         <>
-                          {words.length > 0 && <span>{words.join(" ")} </span>}
-                          <span className="whitespace-nowrap inline-flex items-center gap-2 align-bottom">
+                          <span>{mainText} </span>
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                             <span>{lastWord}</span>
-                            <span title="Verified Business" className="inline-flex">
-                              <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
-                            </span>
+                            <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
                           </span>
                         </>
                       );

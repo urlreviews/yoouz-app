@@ -34,7 +34,7 @@ import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/a
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils.ts";
 
 dotenv.config();
 
@@ -18510,69 +18510,16 @@ Return JSON:
     try {
       const ddgRes = await searchDuckDuckGoWeb(cleanQ);
       if (ddgRes && ddgRes.url && ddgRes.domain) {
-        let cleanName = ddgRes.title || formatBusinessName(cleanQ);
-        // Strip search engine suffixes like " - Facebook", " - Instagram", " - Treatwell", "| Official Site"
-        cleanName = cleanName.replace(/\s*(?:[|\-–—•]|:)\s*(?:Facebook|Instagram|Treatwell|TripAdvisor|Yelp|LinkedIn|Official Site|Home|Bij).*$/i, '').trim();
-        cleanName = formatBusinessName(cleanName || cleanQ);
+        let cleanName = formatBusinessName(ddgRes.title || cleanQ, `${ddgRes.domain}:${cleanQ}`);
+        if (!cleanName || cleanName.length < 2) {
+          cleanName = formatBusinessName(cleanQ, `${ddgRes.domain}:${cleanQ}`);
+        }
 
         let siteAddress = "";
         let siteCity = "";
         let siteCountry = "";
         let sitePhone = "";
         let siteCategory = detectCategoryFromText(`${cleanQ} ${ddgRes.title} ${ddgRes.snippet}`);
-
-        // Scrape real site metadata if standalone domain
-        if (!ddgRes.domain.includes('facebook.com') && !ddgRes.domain.includes('instagram.com') && !ddgRes.domain.includes('linkedin.com')) {
-          try {
-            const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 3000);
-            const siteResp = await fetch(ddgRes.url, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-              },
-              signal: ctrl.signal
-            });
-            clearTimeout(tid);
-
-            if (siteResp.ok) {
-              const siteHtml = await siteResp.text();
-              const $s = cheerio.load(siteHtml);
-
-              const ogImg = $s('meta[property="og:image"]').attr('content') || 
-                            $s('meta[name="twitter:image"]').attr('content') || 
-                            $s('link[rel="image_src"]').attr('href');
-              if (ogImg) {
-                try {
-                  photo = new URL(ogImg, ddgRes.url).toString();
-                } catch(e) {
-                  photo = ogImg;
-                }
-              }
-
-              const ogDesc = $s('meta[property="og:description"]').attr('content') || 
-                             $s('meta[name="description"]').attr('content');
-              if (ogDesc && ogDesc.length > 10) {
-                description = ogDesc.trim();
-              }
-
-              const siteTitle = $s('meta[property="og:site_name"]').attr('content') || $s('title').first().text();
-              if (siteTitle && siteTitle.length <= 60) {
-                const cleanedSiteTitle = siteTitle.replace(/\s*(?:[|\-–—•]|:)\s*.*$/i, '').trim();
-                if (cleanedSiteTitle && cleanedSiteTitle.length >= 2) {
-                  cleanName = formatBusinessName(cleanedSiteTitle);
-                }
-              }
-
-              // Address and phone extraction
-              const bodyText = $s('body').text().replace(/\s+/g, ' ');
-              const telMatch = bodyText.match(/(?:\+?\d{1,3}[\s\.\-]?)?\(?\d{2,4}\)?[\s\.\-]?\d{3,4}[\s\.\-]?\d{3,4}/);
-              if (telMatch && isValidPhoneNumber(telMatch[0])) {
-                sitePhone = telMatch[0].trim();
-              }
-            }
-          } catch(e) {}
-        }
 
         // Infer city from query or snippet
         if (cleanQ.toLowerCase().includes('antwerp') || ddgRes.snippet.toLowerCase().includes('antwerp')) siteCity = "Antwerp";
@@ -18598,6 +18545,75 @@ Return JSON:
           lng: 0
         };
         BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedResult, timestamp: Date.now() });
+
+        // Background asynchronous site metadata scraping (non-blocking for ultra-fast instant search response)
+        if (!ddgRes.domain.includes('facebook.com') && !ddgRes.domain.includes('instagram.com') && !ddgRes.domain.includes('linkedin.com')) {
+          (async () => {
+            try {
+              const ctrl = new AbortController();
+              const tid = setTimeout(() => ctrl.abort(), 2500);
+              const siteResp = await fetch(ddgRes.url, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                },
+                signal: ctrl.signal
+              });
+              clearTimeout(tid);
+
+              if (siteResp.ok) {
+                const siteHtml = await siteResp.text();
+                const $s = cheerio.load(siteHtml);
+
+                let enrichedPhoto = photo;
+                let enrichedDesc = description;
+                let enrichedName = cleanName;
+                let enrichedPhone = sitePhone;
+
+                const ogImg = $s('meta[property="og:image"]').attr('content') || 
+                              $s('meta[name="twitter:image"]').attr('content') || 
+                              $s('link[rel="image_src"]').attr('href');
+                if (ogImg) {
+                  try {
+                    enrichedPhoto = new URL(ogImg, ddgRes.url).toString();
+                  } catch(e) {
+                    enrichedPhoto = ogImg;
+                  }
+                }
+
+                const ogDesc = $s('meta[property="og:description"]').attr('content') || 
+                               $s('meta[name="description"]').attr('content');
+                if (ogDesc && ogDesc.length > 10) {
+                  enrichedDesc = ogDesc.trim();
+                }
+
+                const siteTitle = $s('meta[property="og:site_name"]').attr('content') || $s('title').first().text();
+                if (siteTitle && siteTitle.length <= 120) {
+                  const cleanedSiteTitle = formatBusinessName(siteTitle, `${ddgRes.domain}:${cleanQ}`);
+                  if (cleanedSiteTitle && cleanedSiteTitle.length >= 2) {
+                    enrichedName = cleanedSiteTitle;
+                  }
+                }
+
+                const bodyText = $s('body').text().replace(/\s+/g, ' ');
+                const telMatch = bodyText.match(/(?:\+?\d{1,3}[\s\.\-]?)?\(?\d{2,4}\)?[\s\.\-]?\d{3,4}[\s\.\-]?\d{3,4}/);
+                if (telMatch && isValidPhoneNumber(telMatch[0])) {
+                  enrichedPhone = telMatch[0].trim();
+                }
+
+                const updatedResult: ResolvedBusinessData = {
+                  ...resolvedResult,
+                  name: enrichedName || resolvedResult.name,
+                  photo: enrichedPhoto || resolvedResult.photo,
+                  description: enrichedDesc || resolvedResult.description,
+                  phone: enrichedPhone || resolvedResult.phone
+                };
+                BUSINESS_QUERY_CACHE.set(cacheKey, { data: updatedResult, timestamp: Date.now() });
+              }
+            } catch(e) {}
+          })();
+        }
+
         return resolvedResult;
       }
     } catch(e) {

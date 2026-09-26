@@ -1012,8 +1012,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div className="flex items-start justify-between gap-3 w-full mb-3">
           <div className="min-w-0 flex-1">
             <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
-              <span>{displayedPlaceName || ""}</span>
-              <CheckCircle className="inline-block w-[22px] h-[22px] ml-1.5 align-text-bottom fill-white text-zinc-950 shrink-0 relative -top-[2px]" />
+              {(() => {
+                const name = (displayedPlaceName || "").trim();
+                const words = name.split(/\s+/);
+                if (words.length <= 1) {
+                  return (
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <span>{words[0] || name}</span>
+                      <CheckCircle className="w-[22px] h-[22px] fill-white text-zinc-950 shrink-0" />
+                    </span>
+                  );
+                }
+                const lastWord = words.pop();
+                const mainText = words.join(" ");
+                return (
+                  <>
+                    <span>{mainText} </span>
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <span>{lastWord}</span>
+                      <CheckCircle className="w-[22px] h-[22px] fill-white text-zinc-950 shrink-0" />
+                    </span>
+                  </>
+                );
+              })()}
             </h2>
           </div>
 

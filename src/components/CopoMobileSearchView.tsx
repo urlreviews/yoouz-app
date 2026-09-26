@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2 } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2, CheckCircle } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -474,9 +474,30 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <Building2 className="w-4 h-4 text-zinc-400" />
                         </div>
                       )}
-                      <div className="min-w-0 flex-1 truncate">
-                        <div className="text-white text-[15px] font-medium truncate">
-                          {title}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white text-[15px] font-medium">
+                          {(() => {
+                            const words = (title || "").trim().split(/\s+/);
+                            if (words.length <= 1) {
+                              return (
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                  <span>{words[0] || title}</span>
+                                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                                </span>
+                              );
+                            }
+                            const lastWord = words.pop();
+                            const mainText = words.join(" ");
+                            return (
+                              <>
+                                <span>{mainText} </span>
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                                  <span>{lastWord}</span>
+                                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                         {targetDomain && (
                           <div className="text-zinc-500 text-xs truncate">

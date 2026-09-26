@@ -544,8 +544,20 @@ export function isGenericPlaceName(name?: string | null): boolean {
   return false;
 }
 
-export function formatBusinessName(name?: string | null, domain?: string | null): string {
-  const cleanDom = domain ? extractCleanDomain(domain) : "";
+export function formatBusinessName(name?: string | null, domain?: string | null, queryContextParam?: string | null): string {
+  let rawDomain = domain || "";
+  let queryContext = queryContextParam || "";
+  if (rawDomain.includes(":")) {
+    const parts = rawDomain.split(":");
+    rawDomain = parts[0];
+    if (!queryContext) queryContext = parts.slice(1).join(":");
+  } else if (rawDomain.includes("|")) {
+    const parts = rawDomain.split("|");
+    rawDomain = parts[0];
+    if (!queryContext) queryContext = parts.slice(1).join("|");
+  }
+
+  const cleanDom = rawDomain ? extractCleanDomain(rawDomain) : "";
   const domRoot = cleanDom ? cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] : "";
 
   // If domain is provided and matches known official brands directly
@@ -614,6 +626,18 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
+  // 2.5 Truncate at common verb/slogan marketing phrases (e.g. "Law Firm Wanted Law Is A Group of Law Firm S Offering Accessible Law...")
+  const sloganVerbPattern = /\s+(?:is\s+a|is\s+an|is\s+the|is\s+een|is\s+het|offering|provides|providing|specializing\s+in|specialised\s+in|voor\s+al\s+uw|voor\s+al\s+je|pour\s+tous\s+vos|welkom\s+bij|welcome\s+to|dedicated\s+to|your\s+trusted)\b.*/i;
+  if (sloganVerbPattern.test(trimmed)) {
+    const truncated = trimmed.replace(sloganVerbPattern, "").trim();
+    if (truncated && truncated.length >= 2 && !isGenericPlaceName(truncated)) {
+      trimmed = truncated;
+    }
+  }
+
+  // 2.6 Clean leading generic industry descriptors if followed by the actual brand name (e.g., "Law Firm Wanted Law" -> "Wanted Law")
+  trimmed = trimmed.replace(/^(?:Law\s+Firm|Advocatenkantoor|Advocaten|Lawyer|Lawyers|Attorneys|Dental\s+Clinic|Tandartspraktijk|Restaurant|Bistro|Hotel|Auto\s+Garage|Carrosserie)\s+(?=[A-Z0-9])/i, "").trim();
+
   // 3. Clean up scraped SEO titles (e.g., "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
   const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
   if (rawParts.length > 1) {
@@ -639,6 +663,20 @@ export function formatBusinessName(name?: string | null, domain?: string | null)
 
     if (bestCandidate) {
       trimmed = bestCandidate;
+    }
+  }
+
+  // If queryContext has a city location (e.g. "Wanted Law Brugge") and trimmed is short ("Wanted Law"), attach city if query explicitly contained it
+  if (queryContext) {
+    const qTrim = queryContext.trim();
+    const words = qTrim.split(/\s+/);
+    if (words.length >= 2) {
+      const lastQWord = words[words.length - 1];
+      if (/^[A-Z][a-z]+$/.test(lastQWord) && lastQWord.length >= 3) {
+        if (trimmed.toLowerCase().includes(words[0].toLowerCase()) && !trimmed.toLowerCase().includes(lastQWord.toLowerCase())) {
+          trimmed = `${trimmed} ${lastQWord}`;
+        }
+      }
     }
   }
 
