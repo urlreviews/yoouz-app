@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { Building2 } from "lucide-react";
 import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "../utils/logoUtils";
 
 interface CopoBrandLogoProps {
@@ -178,15 +179,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   return (
     <div className={containerClasses}>
-      {/* 1. Neutral Business Monogram / Placeholder (Clean, professional, NEVER an empty square) */}
+      {/* 1. Neutral Dark Glass Business Emblem Placeholder (Clean, professional dark theme, NEVER bright fake letter avatars) */}
       {(!shouldAttemptImage || !imgLoaded || hasError) && (
         <div
-          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-white font-black text-xl sm:text-2xl shadow-inner ${imageClassName}`}
+          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-zinc-400 p-2 shadow-inner ${imageClassName}`}
           style={{
             background: "linear-gradient(135deg, #27272a 0%, #18181b 100%)"
           }}
         >
-          <span className="drop-shadow-sm tracking-tight">{initialLetter}</span>
+          <Building2 className="w-1/2 h-1/2 text-zinc-400/90 animate-pulse" />
         </div>
       )}
 

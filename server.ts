@@ -20747,46 +20747,11 @@ Return JSON:
   });
 
   const renderFallbackSvg = (res: any, domainStr?: string) => {
-    const raw = (domainStr || "Business").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
-    const cleanWord = raw.split('.')[0].replace(/[^a-zA-Z0-9\u0590-\u05FF]/g, ' ').trim() || "B";
-    const parts = cleanWord.split(/\s+/).filter(Boolean);
-    let initials = "";
-    if (parts.length >= 2) {
-      initials = (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-    } else {
-      initials = cleanWord.substring(0, Math.min(2, cleanWord.length)).toUpperCase();
-    }
-    if (!initials) initials = "B";
-
-    const GRADIENTS = [
-      { from: "#4f46e5", to: "#7c3aed" }, // Indigo -> Violet
-      { from: "#2563eb", to: "#06b6d4" }, // Blue -> Cyan
-      { from: "#059669", to: "#10b981" }, // Emerald
-      { from: "#d97706", to: "#f59e0b" }, // Amber
-      { from: "#dc2626", to: "#f43f5e" }, // Red -> Rose
-      { from: "#7c2d12", to: "#c2410c" }, // Copper
-      { from: "#0f172a", to: "#334155" }, // Slate
-      { from: "#831843", to: "#db2777" }, // Pink
-      { from: "#134e4a", to: "#0d9488" }  // Teal
-    ];
-
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-      hash = raw.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const grad = GRADIENTS[Math.abs(hash) % GRADIENTS.length];
-    const fontSize = initials.length > 1 ? "108" : "128";
-
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-      <defs>
-        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${grad.from}"/>
-          <stop offset="100%" stop-color="${grad.to}"/>
-        </linearGradient>
-      </defs>
-      <rect width="256" height="256" rx="60" fill="url(#bgGrad)"/>
-      <rect x="2" y="2" width="252" height="252" rx="58" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3"/>
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="${fontSize}px" letter-spacing="-1px">${initials}</text>
+    // Sleek dark-theme neutral business emblem (never bright colored fake letter avatars)
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+      <rect width="256" height="256" rx="60" fill="#18181b"/>
+      <rect x="2" y="2" width="252" height="252" rx="58" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+      <path d="M72 208V80L128 48L184 80V208M96 112H112M144 112H160M96 144H112M144 144H160M96 176H112M144 176H160" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");

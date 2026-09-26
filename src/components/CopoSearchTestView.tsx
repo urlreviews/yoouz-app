@@ -146,77 +146,50 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       return;
     }
 
-    // Set optimistic place
-    const officialName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || item.title || formatBusinessName(cleanDom) || item.title;
-    const avatar = item.logoUrl && !item.logoUrl.includes('domain=.com') && !item.logoUrl.includes('domain=') && !item.logoUrl.includes('/api/avatar')
-      ? item.logoUrl
-      : (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
-
-    const optimisticPlace: Place = {
-      id: placeId,
-      name: officialName,
-      category: item.category || "Verified Business",
-      categoryType: "all",
-      address: item.address || "",
-      city: "",
-      country: "",
-      lat: 0,
-      lng: 0,
-      rating: 5,
-      totalReviews: 0,
-      ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: avatar,
-      logoUrl: avatar,
-      bannerUrl: "",
-      ogImage: "",
-      photos: [],
-      isOpen: true,
-      openingHours: "",
-      phone: "",
-      priceRange: "$$",
-      plusCode: "",
-      description: `${officialName} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
-      popularKeywords: [],
-      amenities: [],
-      topDishes: [],
-      website: cleanDom ? `https://${cleanDom}` : "",
-      brandDomain: cleanDom
-    };
-
-    setSelectedPlace(optimisticPlace);
-    if (onAddPlace) {
-      onAddPlace(optimisticPlace);
-    }
-
-    // Fetch full metadata in background if real website domain exists or resolve it via name query
+    // Fetch full DuckDuckGo metadata first before displaying place to eliminate any intermediate fake logo flash
     try {
       const fetchUrl = cleanDom 
         ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
-        : `/api/url-metadata?q=${encodeURIComponent(officialName)}`;
+        : `/api/url-metadata?q=${encodeURIComponent(item.title)}`;
         
       const resp = await fetch(fetchUrl);
       if (resp.ok) {
         const data = await resp.json();
         const resolvedDomain = data.domain || cleanDom;
-        const resolvedName = (resolvedDomain && KNOWN_OFFICIAL_NAMES[resolvedDomain]) || formatBusinessName(data.siteName || data.title, resolvedDomain) || optimisticPlace.name;
+        const resolvedName = (resolvedDomain && KNOWN_OFFICIAL_NAMES[resolvedDomain]) || data.title || formatBusinessName(data.siteName || data.title, resolvedDomain) || item.title;
         const resolvedAvatar = (data.logo && !data.logo.includes('domain=.com')) 
           ? data.logo 
-          : (resolvedDomain ? `/api/favicon?domain=${resolvedDomain}` : optimisticPlace.avatarUrl);
+          : (resolvedDomain ? `/api/favicon?domain=${resolvedDomain}` : "");
 
         const finalPlace: Place = {
-          ...optimisticPlace,
-          id: resolvedDomain || optimisticPlace.id,
+          id: resolvedDomain || placeId,
           name: resolvedName,
-          category: (data.category && data.category !== "Website") ? data.category : optimisticPlace.category,
-          address: data.address || optimisticPlace.address,
-          city: data.city || optimisticPlace.city,
-          country: data.country || optimisticPlace.country,
-          logoUrl: resolvedAvatar,
+          category: (data.category && data.category !== "Website") ? data.category : (item.category || "Verified Business"),
+          categoryType: "all",
+          address: data.address || item.address || "",
+          city: data.city || "",
+          country: data.country || "",
+          lat: data.lat || 0,
+          lng: data.lng || 0,
+          rating: 5,
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
           avatarUrl: resolvedAvatar,
-          bannerUrl: data.image || optimisticPlace.bannerUrl,
-          description: data.description || optimisticPlace.description,
-          website: resolvedDomain ? `https://${resolvedDomain}` : optimisticPlace.website,
-          brandDomain: resolvedDomain || optimisticPlace.brandDomain
+          logoUrl: resolvedAvatar,
+          bannerUrl: data.image || "",
+          ogImage: data.image || "",
+          photos: data.image ? [data.image] : [],
+          isOpen: true,
+          openingHours: data.openingHours || "",
+          phone: data.phone || "",
+          priceRange: "$$",
+          plusCode: "",
+          description: data.description || `${resolvedName} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          website: resolvedDomain ? `https://${resolvedDomain}` : (data.url || ""),
+          brandDomain: resolvedDomain || cleanDom
         };
 
         setSelectedPlace(finalPlace);
@@ -330,7 +303,21 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         </div>
 
         {/* Selected Business Profile Preview Box */}
-        {selectedPlace && (
+        {isLoadingPlace ? (
+          <div className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 relative overflow-hidden shadow-2xl animate-pulse">
+            <div className="h-32 sm:h-40 -mx-6 -mt-6 bg-zinc-800/80 mb-12 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-zinc-500 animate-spin" />
+            </div>
+            <div className="w-20 h-20 rounded-2xl border-4 border-zinc-900 bg-zinc-800 absolute top-20 left-6 flex items-center justify-center shadow-xl">
+              <Building2 className="w-8 h-8 text-zinc-500 animate-pulse" />
+            </div>
+            <div className="space-y-3 pt-2">
+              <div className="h-7 w-2/3 bg-zinc-800 rounded-lg"></div>
+              <div className="h-4 w-1/3 bg-zinc-800/80 rounded-md"></div>
+              <div className="h-16 w-full bg-zinc-800/40 rounded-xl mt-4"></div>
+            </div>
+          </div>
+        ) : selectedPlace ? (
           <div className="w-full bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl relative transition-all animate-fade-in">
             {/* Banner Canvas */}
             <div className="h-32 sm:h-40 bg-gradient-to-r from-zinc-800 via-zinc-900 to-black relative overflow-hidden">
@@ -449,7 +436,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
