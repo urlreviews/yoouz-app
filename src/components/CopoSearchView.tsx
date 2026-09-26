@@ -705,67 +705,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <span>{searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
                   </a>
 
-                  {/* Structured Category Row */}
-                  {searchedPlace.category && 
-                   !searchedPlace.category.toLowerCase().includes("verified") && 
-                   searchedPlace.category.toLowerCase() !== "website" && 
-                   searchedPlace.category.toLowerCase() !== "business" && (
+                  {/* Structured Category Row & Sync Status */}
+                  {(searchedPlace.category || isEnriching) && (
                     <div className="flex items-center gap-2.5 flex-wrap my-1.5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
-                        <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                        <span>{searchedPlace.category}</span>
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Street Address & Location */}
-                  {(searchedPlace.address || (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide")) && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-300 mt-2 flex-wrap">
-                      <MapPin className="w-4 h-4 text-zinc-300 shrink-0" />
-                      <span className="font-medium">
-                        {[searchedPlace.address, (searchedPlace.city && searchedPlace.city !== "Online" && searchedPlace.city !== "Worldwide") ? searchedPlace.city : "", searchedPlace.country].filter(Boolean).join(", ")}
-                      </span>
-                      {searchedPlace.address && (
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([searchedPlace.name, searchedPlace.address, searchedPlace.city].filter(Boolean).join(", "))}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-0.5 ml-1 font-semibold"
-                        >
-                          <span>Directions</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                      {searchedPlace.category && 
+                       !searchedPlace.category.toLowerCase().includes("verified") && 
+                       searchedPlace.category.toLowerCase() !== "website" && 
+                       searchedPlace.category.toLowerCase() !== "business" && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
+                          <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <span>{searchedPlace.category}</span>
+                        </span>
+                      )}
+                      {isEnriching && (
+                        <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs px-2.5 py-1 bg-amber-400/10 rounded-md border border-amber-400/20 animate-pulse font-semibold">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Syncing details...</span>
+                        </span>
                       )}
                     </div>
                   )}
-
-                  {/* Contact & Hours Badges */}
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs text-zinc-300 mt-2.5">
-                    {searchedPlace.phone && (
-                      <a href={`tel:${searchedPlace.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
-                        <Phone className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                        <span>{searchedPlace.phone}</span>
-                      </a>
-                    )}
-                    {searchedPlace.email && !searchedPlace.email.toLowerCase().includes('4samet') && (
-                      <a href={`mailto:${searchedPlace.email}`} className="inline-flex items-center gap-1.5 bg-zinc-800/90 hover:bg-zinc-750 text-zinc-200 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors font-semibold">
-                        <Mail className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                        <span>{searchedPlace.email}</span>
-                      </a>
-                    )}
-                    {(searchedPlace.openingHours || (searchedPlace as any).hours) && !(searchedPlace.openingHours || (searchedPlace as any).hours).toLowerCase().includes("24/7") && (
-                      <div className="inline-flex items-center gap-1.5 bg-zinc-800/90 text-zinc-300 px-3 py-1.5 rounded-xl border border-zinc-700/60 font-semibold">
-                        <Clock className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                        <span>{searchedPlace.openingHours || (searchedPlace as any).hours}</span>
-                      </div>
-                    )}
-                    {isEnriching && (
-                      <div className="inline-flex items-center gap-1.5 text-amber-400 text-xs px-2.5 py-1 bg-amber-400/10 rounded-md border border-amber-400/20 animate-pulse">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Syncing details...</span>
-                      </div>
-                    )}
-                  </div>
 
                   {/* Action Dock Row: Star Rating Pill + Action Buttons on the SAME Horizontal Line */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
