@@ -146,7 +146,50 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       return;
     }
 
-    // Fetch full DuckDuckGo metadata first before displaying place to eliminate any intermediate fake logo flash
+    // 0ms INSTANT Display when domain is already known
+    if (cleanDom) {
+      const instantAvatar = item.logoUrl && !item.logoUrl.includes('domain=.com')
+        ? item.logoUrl 
+        : `/api/favicon?domain=${cleanDom}`;
+
+      const instantPlace: Place = {
+        id: cleanDom,
+        name: item.title,
+        category: item.category || "Verified Business",
+        categoryType: "all",
+        address: item.address || "",
+        city: "",
+        country: "",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 0,
+        ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: instantAvatar,
+        logoUrl: instantAvatar,
+        bannerUrl: "",
+        ogImage: "",
+        photos: [],
+        isOpen: true,
+        openingHours: "",
+        phone: "",
+        priceRange: "$$",
+        plusCode: "",
+        description: `${item.title} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+        popularKeywords: [],
+        amenities: [],
+        topDishes: [],
+        website: `https://${cleanDom}`,
+        brandDomain: cleanDom
+      };
+      setSelectedPlace(instantPlace);
+      setIsLoadingPlace(false);
+      if (onAddPlace) onAddPlace(instantPlace);
+    } else {
+      setIsLoadingPlace(true);
+    }
+
+    // Fetch full DuckDuckGo metadata in background for instant enrichment
     try {
       const fetchUrl = cleanDom 
         ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`

@@ -18412,9 +18412,17 @@ Return JSON:
     return null;
   }
 
+  const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
+
   async function resolveBusinessQuery(query: string): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
+
+    const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
+    if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
+      return cachedEntry.data;
+    }
 
     // 1. Explicit domain check
     if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
@@ -18573,7 +18581,7 @@ Return JSON:
         else if (cleanQ.toLowerCase().includes('london') || ddgRes.snippet.toLowerCase().includes('london')) siteCity = "London";
         else if (cleanQ.toLowerCase().includes('amsterdam') || ddgRes.snippet.toLowerCase().includes('amsterdam')) siteCity = "Amsterdam";
 
-        return {
+        const resolvedResult: ResolvedBusinessData = {
           domain: ddgRes.domain,
           websiteUrl: ddgRes.url,
           name: cleanName || formatBusinessName(cleanQ),
@@ -18589,6 +18597,8 @@ Return JSON:
           lat: 0,
           lng: 0
         };
+        BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedResult, timestamp: Date.now() });
+        return resolvedResult;
       }
     } catch(e) {
       console.warn('[DDG Web Search Engine Error in resolveBusinessQuery]:', e);
@@ -20161,6 +20171,19 @@ Return JSON:
           source: item.source
         });
       };
+
+      // 0. Instant DDG / Cache Pre-Resolution for Query (Ensures suggestions ALREADY contain real domain like vrijens.net)
+      const topEntity = await resolveBusinessQuery(q).catch(() => null);
+      if (topEntity && topEntity.domain) {
+        addSuggestion({
+          id: topEntity.domain,
+          title: topEntity.name || formatBusinessName(q),
+          domain: topEntity.domain,
+          logoUrl: `/api/favicon?domain=${topEntity.domain}`,
+          category: topEntity.category || "Verified Business",
+          source: "duckduckgo_instant"
+        });
+      }
 
       // 1. Search local DB places (Instant Database Index)
       const activeDb = (global as any).bunnyDb || db;
