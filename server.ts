@@ -20045,8 +20045,8 @@ Return JSON:
           title: item.title,
           domain: hasValidDomain ? dom : "",
           logoUrl: logo,
-          category: item.category || "Verified Business",
-          address: item.address || "",
+          category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
+          address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
           source: item.source
         });
       };
@@ -20070,7 +20070,7 @@ Return JSON:
                 title,
                 domain: hasDot ? bDom : "",
                 logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${bDom}` : ""),
-                category: row.category || "Verified Business",
+                category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
                 address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
                 source: "database"
               });
@@ -20090,7 +20090,7 @@ Return JSON:
             title: officialName,
             domain: validDomain,
             logoUrl: validDomain ? `/api/favicon?domain=${validDomain}` : "",
-            category: "Verified Brand",
+            category: "",
             source: "brand_index"
           });
           if (suggestions.length >= 8) break;
@@ -20156,7 +20156,7 @@ Return JSON:
             title: displayTitle,
             domain: finalDom,
             logoUrl: finalDom ? `/api/favicon?domain=${finalDom}` : "",
-            category: finalDom ? "Verified Brand" : "",
+            category: "",
             source: "autocomplete"
           });
         }

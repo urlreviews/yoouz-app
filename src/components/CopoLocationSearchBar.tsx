@@ -439,11 +439,23 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate" dir="auto">
                     <bdi dir="auto">{item.title}</bdi>
                   </div>
-                  <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5" dir="auto">
-                    {item.domain && <span className="text-zinc-500 font-mono">{item.domain}</span>}
-                    {item.category && <span>• {item.category}</span>}
-                    {item.address && <span>• {item.address}</span>}
-                  </div>
+                  {(item.domain || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && (
+                    <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5" dir="auto">
+                      {item.domain && <span className="text-zinc-500 font-mono">{item.domain}</span>}
+                      {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
+                        <>
+                          {item.domain && <span>•</span>}
+                          <span>{item.category}</span>
+                        </>
+                      )}
+                      {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
+                        <>
+                          {(item.domain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span>•</span>}
+                          <span>{item.address}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </button>
             );

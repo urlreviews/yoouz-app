@@ -1185,7 +1185,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
       existing.name.toLowerCase().includes("bensonbingham");
 
     const candidateName = (video.placeName && !isGenericPlaceName(video.placeName)) ? video.placeName : (domain ? domain : existing.name);
-    const updatedName = formatBusinessName(candidateName) || formatBusinessName(existing.name) || formatBusinessName(domain) || "Verified Business";
+    const updatedName = formatBusinessName(candidateName) || formatBusinessName(existing.name) || formatBusinessName(domain) || "Business";
 
     const isYoouz = existing.id === 'yoouz.com' || existing.brandDomain === 'yoouz.com' || existing.name?.toLowerCase() === 'yoouz' || domain === 'yoouz.com';
 
@@ -1222,7 +1222,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
 
   const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
   const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
-  const formattedName = formatBusinessName(video.placeName || domain) || "Verified Business";
+  const formattedName = formatBusinessName(video.placeName || domain) || "Business";
   const initialCategory = video.placeCategory || "Establishment";
   const initialCity = isYoouz ? "" : (video.placeCity || "");
   const initialCountry = isYoouz ? "" : (video.placeCountry || "");

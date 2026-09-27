@@ -472,7 +472,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           title: p.name || dom,
           domain: hasDot ? dom : "",
           logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
-          category: p.category || "Verified Business",
+          category: (p.category && p.category !== "Verified Business") ? p.category : "",
           address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
           source: "database"
         };
@@ -577,22 +577,21 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       <div className="min-w-0 flex-1">
                         <div className="text-white text-[15px] font-medium truncate">
                           <span>{title}</span>
-                          {isDbOrBrand && (
-                            <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
-                          )}
                         </div>
-                        {isDbOrBrand && (
+                        {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google"))) && (
                           <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
                             {hasDomain ? (
-                              <>
-                                <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{targetDomain.toLowerCase()}</span>
-                                <span className="text-zinc-600">•</span>
-                              </>
+                              <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{targetDomain.toLowerCase()}</span>
                             ) : null}
-                            <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category || "Verified Business"}</span>
-                            {item.address && (
+                            {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
                               <>
-                                <span className="text-zinc-700">•</span>
+                                {hasDomain && <span className="text-zinc-600">•</span>}
+                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category}</span>
+                              </>
+                            )}
+                            {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
+                              <>
+                                {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span className="text-zinc-700">•</span>}
                                 <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
                               </>
                             )}

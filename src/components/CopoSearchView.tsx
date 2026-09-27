@@ -79,7 +79,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           title: p.name || dom,
           domain: hasDot ? dom : "",
           logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
-          category: p.category || "Verified Business",
+          category: (p.category && !p.category.toLowerCase().includes("verified") && !p.category.toLowerCase().includes("google")) ? p.category : "",
           address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
           source: "database"
         };
@@ -350,7 +350,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const instantPlace: Place = {
         id: isRealDomain ? cleanUrl : domain,
         name: instantName,
-        category: preloadedMeta?.category || "Verified Business",
+        category: (preloadedMeta?.category && !preloadedMeta.category.toLowerCase().includes("verified")) ? preloadedMeta.category : "Website",
         categoryType: "all",
         address: preloadedMeta?.address || (instantCity ? `${instantCity}${instantCountry ? ', ' + instantCountry : ''}` : ""),
         city: instantCity,

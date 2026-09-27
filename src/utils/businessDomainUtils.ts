@@ -30,9 +30,9 @@ export function extractDomainFromInput(input: string): string {
  * e.g. "bakerydelight.com" -> "Bakery Delight"
  */
 export function formatBusinessNameFromDomain(domain: string): string {
-  if (!domain) return 'Verified Business';
+  if (!domain) return 'Business';
   const formatted = formatBusinessName(domain);
-  return formatted || 'Verified Business';
+  return formatted || 'Business';
 }
 
 /**
@@ -90,7 +90,7 @@ export function derivePlaceFromEmailOrDomain(
 
   // Special case: Yoouz official website
   const isYoouz = cleanDomain === 'yoouz.com' || cleanDomain === 'www.yoouz.com' || cleanDomain.includes('yoouz');
-  const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Verified Business');
+  const businessName = isYoouz ? 'Yoouz' : (cleanDomain ? formatBusinessNameFromDomain(cleanDomain) : 'Business');
   const logoUrl = isYoouz ? YOOUZ_LOGO_DATA_URI : getDomainLogoUrl(cleanDomain);
   const placeId = cleanDomain ? cleanDomain : 'place-custom';
 
