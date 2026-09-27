@@ -76,7 +76,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const [validationError, setValidationError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   
   const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
@@ -231,7 +230,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (submittedQuery) {
       setSubmittedQuery("");
       setQuery("");
-      setValidationError("");
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
@@ -273,7 +271,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     // If still not a valid domain, attempt to resolve via Google CSE
     if (!isValidDomainUrl(cleanUrl)) {
-      setValidationError("");
       console.info("[Search Mobile] Querying client-side Google CSE first for:", trimmed);
       let cseUrl: string | null = null;
       try {
@@ -308,16 +305,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // Reject non-domains that couldn't be resolved
-    if (!isValidDomainUrl(cleanUrl)) {
-      setValidationError("Please enter a valid business name or website (e.g. Starbucks, isrotel.co.il)");
-      setTimeout(() => setValidationError(""), 3500);
-      return;
-    }
+    const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    setValidationError("");
-
-    // Store ONLY clean URL (e.g. "uber.com", never "www." or "https://")
+    // Store recent searches
     const newRecent = [cleanUrl, ...recentSearches.filter(s => s !== cleanUrl)].slice(0, 10);
     setRecentSearches(newRecent);
     try {
@@ -326,15 +316,15 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
-      const instantLogo = getCleanLogoUrl(null, cleanUrl) || "";
-      const instantName = preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || cleanUrl;
+      const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
+      const instantName = preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const optimisticPlace: Place = {
-        id: cleanUrl.toLowerCase(),
+        id: isRealDomain ? cleanUrl.toLowerCase() : (cleanUrl.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
         name: instantName,
-        category: "Website",
+        category: "Verified Business",
         categoryType: "all",
         address: "",
-        city: "Online",
+        city: "",
         lat: 0,
         lng: 0,
         rating: 5,
@@ -348,19 +338,23 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
-        website: `https://${cleanUrl}`,
+        website: isRealDomain ? `https://${cleanUrl}` : "",
         priceRange: "N/A",
         plusCode: "",
         description: "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: cleanUrl
+        brandDomain: isRealDomain ? cleanUrl : ""
       };
       onAddPlace(optimisticPlace);
 
       // Immediately enrich with authentic address, phone, email, category in the background
-      fetch(`/api/url-metadata?url=${encodeURIComponent(cleanUrl)}`)
+      const searchEndpoint = isRealDomain 
+        ? `/api/url-metadata?url=${encodeURIComponent(cleanUrl)}`
+        : `/api/url-metadata?q=${encodeURIComponent(trimmed)}`;
+
+      fetch(searchEndpoint)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
@@ -379,15 +373,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
               logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
               avatarUrl: isValidLogo ? data.logo : optimisticPlace.avatarUrl,
+              website: data.url || optimisticPlace.website,
+              brandDomain: data.domain || optimisticPlace.brandDomain,
               description: data.description || optimisticPlace.description
             });
           }
         })
         .catch(() => {});
     }
-    
-    setQuery(cleanUrl);
-    setSubmittedQuery(cleanUrl);
+
+    setSubmittedQuery(trimmed);
   };
 
   const handleSelectSuggestion = (item: any) => {
@@ -496,7 +491,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               onChange={(e) => {
                 setQuery(e.target.value);
                 setSubmittedQuery("");
-                if (validationError) setValidationError("");
               }}
             />
             {query && (
@@ -506,7 +500,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   onClick={() => {
                     setQuery("");
                     setSubmittedQuery("");
-                    setValidationError("");
                     inputRef.current?.focus();
                   }}
                   className="p-1.5 text-zinc-400 hover:text-white rounded-full transition-colors cursor-pointer"
@@ -524,13 +517,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {t("common.search", "Search")}
           </button>
         </div>
-
-        {validationError && (
-          <div className="py-2 px-3 bg-red-500/15 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs font-medium animate-in fade-in slide-in-from-top-1">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-            <span>{validationError}</span>
-          </div>
-        )}
       </div>
       
       <div className="flex-1 overflow-y-auto w-full relative">

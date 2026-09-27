@@ -37,7 +37,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [query, setQuery] = useState(initialQuery);
   const [isSearching, setIsSearching] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -187,22 +186,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   };
 
-  // Validate URL strictly - rejects plain words, single characters like 'k', etc.
-  const isValidUrl = (urlString: string) => {
-    return isValidDomainUrl(urlString);
-  };
-
-  const isDeepUrl = (urlString: string) => {
-    try {
-      const parsed = new URL(urlString.startsWith("http") ? urlString : "https://" + urlString);
-      const hasPath = parsed.pathname !== "/" && parsed.pathname !== "";
-      const hasExtra = parsed.search !== "" || parsed.hash !== "";
-      return hasPath || hasExtra;
-    } catch {
-      return false;
-    }
-  };
-
   const handleSearch = async (e?: React.FormEvent, overrideQuery?: string, preferredName?: string) => {
     if (e) e.preventDefault();
     const rawQuery = (overrideQuery || query).trim();
@@ -291,33 +274,23 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
-    if (!isValidDomainUrl(cleanUrl)) {
-      setErrorMsg("Please enter a valid website address or business name (e.g. Starbucks, isrotel.co.il).");
-      setIsSearching(false);
-      return;
-    }
-
-    if (isDeepUrl(rawQuery)) {
-      setErrorMsg("Only base website addresses are allowed (e.g., example.com). Do not include subpages or articles.");
-      setIsSearching(false);
-      return;
-    }
-
-    setQuery(cleanUrl);
-    setErrorMsg("");
+    setQuery(rawQuery);
     setIsSearching(true);
 
     try {
       const domain = cleanUrl;
 
-      // 1. Check local places first by domain URL only
+      // 1. Check local places first by domain URL or name
+      const isRealDomain = isValidDomainUrl(domain);
       let foundPlace = places.find(p => {
         const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-        return (isValidDomainUrl(pDom) && pDom === domain) || p.id === domain || p.id === domain.replace(/[^a-zA-Z0-9]/g, "-");
+        if (isRealDomain && isValidDomainUrl(pDom) && pDom === domain) return true;
+        if (p.id.toLowerCase() === domain.toLowerCase()) return true;
+        if (p.name && p.name.toLowerCase() === rawQuery.toLowerCase()) return true;
+        return false;
       });
 
       // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
-      const isRealDomain = isValidDomainUrl(domain);
       const instantLogo: string = foundPlace?.logoUrl 
         || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "") 
         || (isRealDomain ? getCleanLogoUrl(null, domain) : "") 
@@ -331,8 +304,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || preloadedMeta?.title
         || preloadedMeta?.siteName
+        || foundPlace?.name
         || formatBusinessName(foundPlace?.name || domain, isRealDomain ? domain : undefined)
-        || domain;
+        || rawQuery;
 
       const instantPlace: Place = foundPlace || {
         id: isRealDomain ? domain : (domain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
@@ -362,9 +336,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: isRealDomain ? domain : ""
+        brandDomain: isRealDomain ? domain : (preloadedMeta?.domain || "")
       };
 
+      if (!foundPlace) {
+        foundPlace = instantPlace;
+      }
       setSearchedPlace(instantPlace);
       if (onAddPlace) {
         onAddPlace(instantPlace);
@@ -480,12 +457,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
       if (foundPlace) {
         setSearchedPlace(foundPlace);
-      } else {
-        setErrorMsg("Could not fetch information for this URL. Please try another.");
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg("An error occurred while verifying the URL.");
     } finally {
       setIsSearching(false);
     }
@@ -493,13 +467,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const handleFeelingLucky = () => {
     const popularWebsites = [
-      "wikipedia.org",
-      "nytimes.com",
       "booking.com",
-      "planity.com",
       "apple.com",
       "google.com",
-      "github.com",
       "airbnb.com"
     ];
 
@@ -511,7 +481,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const randomDomain = combined[Math.floor(Math.random() * combined.length)];
 
     setQuery(randomDomain);
-    setErrorMsg("");
     handleSearch(undefined, randomDomain);
   };
 
@@ -560,7 +529,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
                     onChange={(e) => {
                       setQuery(e.target.value);
-                      setErrorMsg("");
                     }}
                   />
                   {query && (
@@ -568,7 +536,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       type="button"
                       onClick={() => {
                         setQuery("");
-                        setErrorMsg("");
                         setSuggestions([]);
                         setShowDropdown(false);
                       }}
@@ -658,13 +625,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   })}
                 </div>
               )}
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="mt-6 text-xs font-medium text-red-400 bg-red-950/40 border border-red-800/50 rounded-xl py-2.5 px-3.5 flex items-start gap-2 animate-fade-in leading-relaxed max-w-md text-center">
-              <span className="font-bold text-red-500 mt-0.5">⚠️</span>
-              <span>{errorMsg}</span>
             </div>
           )}
         </div>
