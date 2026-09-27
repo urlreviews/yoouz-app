@@ -2,21 +2,45 @@
  * Yoouz Enterprise - Google Custom Search Engine (CSE) Client-Side Search Bridge
  * 
  * Runs client-side in the user's browser to execute official Google CSE queries.
- * Strictly takes the authentic 1st organic result from Google search index.
- * Rejects ads, search engines, tracking redirects, and Wikipedia.
+ * Intelligently prioritizes authentic official business websites over directory scrapers,
+ * aggregators, social networks, and Wikipedia.
  */
 
 export const DISALLOWED_SEARCH_DOMAINS = [
+  // Wikis & Search engines
   "wikipedia.org", "wikimedia.org", "wiktionary.org",
   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
   "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
   "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com", "ask.com",
   "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
+
+  // Social networks
   "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
-  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yellowpages.ca", "yell.com", "zocdoc.com", "glassdoor.com", "indeed.com",
-  "legaladviceme.com", "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com",
-  "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "bbb.org", "dnb.com", "zoominfo.com", "crunchbase.com",
+
+  // Business directories & Aggregators (Global & Israeli)
+  "hakkolasakim.com", "din.co.il", "d.co.il", "dnb.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
+  "top10.co.il", "opentenders.co.il", "bhol.co.il", "zap.co.il", "t.co.il", "b144.co.il", "index.co.il", 
+  "asakim.co.il", "israelbusiness.co.il", "cylex-israel.com", "cylex.com", "cylex-bedrijvensgids.be", "cylex-uk.co.uk",
+  "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "infobel.ae", "chamber.org.il", "duns100.co.il",
+  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yellowpages.ca", "yell.com", 
+  "whitepages.com", "superpages.com", "dexknows.com", "manta.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  
+  // Legal directories
+  "lawyer-il.co.il", "lawyers.org.il", "israelbar.org.il", "psakdin.co.il", "rasham.co.il", "lawyer.co.il",
+  "legaladviceme.com", "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", 
+  "superlawyers.com", "legal500.com", "chambers.com", "bestlawyers.com", "lawyer.com", "usnews.com",
+
+  // Review portals & B2B directories
+  "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "dnb.com", 
+  "zoominfo.com", "crunchbase.com", "pitchbook.com", "apollo.io", "lusha.com", "owler.com", "craft.co",
   "dubaibizdirectory.com", "chamberofcommerce.com", "mapquest.com", "waze.com", "kompass.com", "europages.com",
+  "opencorporates.com", "corporationwiki.com", "companieshouse.gov.uk", "sunbiz.org", "bizapedia.com",
+  "localemirates.com", "2gis.ae", "2gis.com", "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
+
+  // News portals
+  "themarker.com", "calcalist.co.il", "ynet.co.il", "mako.co.il", "haaretz.co.il", "globes.co.il", "maariv.co.il", "walla.co.il",
+
+  // Ad networks & Platforms
   "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
   "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
   "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
@@ -51,10 +75,67 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
   if (!domain || !domain.includes(".")) return false;
   if (domain.includes("xn--")) return false;
 
-  const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+  const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b) || domain.includes(b));
   if (isDisallowed) return false;
 
   return true;
+}
+
+/**
+ * Scores a candidate URL against the search query to identify the official business domain
+ */
+export function scoreCandidateUrl(url: string, query: string): number {
+  if (!url || !isAllowedOrganicUrl(url)) return -1000;
+  
+  let score = 50;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch (e) {
+    return -1000;
+  }
+
+  const hostname = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+  const domainRoot = hostname.split(".")[0];
+  const pathname = parsed.pathname.toLowerCase();
+
+  // 1. Check query brand keywords
+  const genericWords = new Set(["law", "office", "firm", "advocate", "attorney", "notary", "and", "the", "in", "at", "of", "for", "group", "services", "ltd", "inc", "llc", "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים"]);
+  const queryWords = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\s]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !genericWords.has(w));
+
+  for (const word of queryWords) {
+    if (hostname.includes(word) || domainRoot.includes(word)) {
+      score += 150; // Distinctive brand keyword matched in domain (e.g. "truman" in "truman.co.il")
+    }
+  }
+
+  // 2. Root domain vs deep directory path
+  if (pathname === "/" || pathname === "" || pathname.split("/").filter(Boolean).length <= 1) {
+    score += 40; // Homepage or clean top-level domain
+  } else {
+    // Penalize directory-like deep path slugs
+    if (
+      pathname.includes("/lawyers/") ||
+      pathname.includes("/attorneys/") ||
+      pathname.includes("/profile/") ||
+      pathname.includes("/listing/") ||
+      pathname.includes("/business/") ||
+      pathname.includes("/company/") ||
+      pathname.includes("/biz/") ||
+      pathname.includes("-077-") ||
+      pathname.includes("-03-") ||
+      pathname.includes("-05") ||
+      /\d{7,}/.test(pathname)
+    ) {
+      score -= 100;
+    }
+  }
+
+  return score;
 }
 
 export function extractTargetUrl(titleLink: HTMLAnchorElement | null): string | null {
@@ -132,7 +213,7 @@ export function ensureCseLoaded(): Promise<boolean> {
 }
 
 /**
- * Queries Google CSE client-side and resolves with the authentic 1st organic result URL
+ * Queries Google CSE client-side and resolves with the authentic official business URL
  */
 export async function queryGoogleCseForUrl(query: string): Promise<string | null> {
   const cleanQ = query.trim();
@@ -149,6 +230,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     let pollInterval: any = null;
     let observer: MutationObserver | null = null;
     let timeoutId: any = null;
+    const candidates = new Set<string>();
 
     const cleanup = () => {
       if (pollInterval) clearInterval(pollInterval);
@@ -157,34 +239,49 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       cseResultCallbacks.delete(handleCseResults);
     };
 
-    const finish = (resultUrl: string | null) => {
+    const finishWithBestCandidate = () => {
       if (resolved) return;
-      if (currentToken !== activeQueryToken) {
-        cleanup();
+      resolved = true;
+      cleanup();
+
+      const candidateList = Array.from(candidates);
+      if (candidateList.length === 0) {
         resolve(null);
         return;
       }
-      resolved = true;
-      cleanup();
-      if (resultUrl) {
-        console.info(`[Google CSE] Successfully resolved 1st organic result for "${cleanQ}": ${resultUrl}`);
+
+      // Sort candidate URLs by relevance score
+      candidateList.sort((a, b) => scoreCandidateUrl(b, cleanQ) - scoreCandidateUrl(a, cleanQ));
+      const best = candidateList[0];
+      const bestScore = scoreCandidateUrl(best, cleanQ);
+
+      if (bestScore > -500) {
+        console.info(`[Google CSE] Selected best authentic URL (score ${bestScore}): ${best}`);
+        resolve(best);
       } else {
-        console.warn(`[Google CSE] No organic result found for "${cleanQ}"`);
+        resolve(null);
       }
-      resolve(resultUrl);
     };
 
     // 1. Listen for results from Google's native search callbacks
-    const handleCseResults = (results: any[], searchQ?: string) => {
+    const handleCseResults = (results: any[]) => {
       if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
       for (let i = 0; i < results.length; i++) {
         const item = results[i];
         const targetUrl = item.url || item.unescapedUrl || (item.richSnippet?.cseImage?.src ? item.url : null);
         if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
-          console.info(`[Google CSE Native Listener] Result [${i}]:`, targetUrl);
-          finish(targetUrl);
-          return;
+          candidates.add(targetUrl);
+          // If this URL is an exact brand match, finish immediately!
+          if (scoreCandidateUrl(targetUrl, cleanQ) >= 150) {
+            finishWithBestCandidate();
+            return;
+          }
         }
+      }
+
+      if (candidates.size > 0) {
+        // Allow tiny 150ms buffer to collect any additional anchors, then finish
+        setTimeout(finishWithBestCandidate, 150);
       }
     };
 
@@ -217,7 +314,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         buttonEl.click();
       }
 
-      // 3. MutationObserver for instant sub-millisecond response when Google updates the DOM
+      // 3. MutationObserver for DOM updates
       try {
         observer = new MutationObserver(() => {
           if (resolved) return;
@@ -229,9 +326,11 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
             const rawHref = extractTargetUrl(anchor);
             if (rawHref && isAllowedOrganicUrl(rawHref)) {
-              console.info(`[Google CSE DOM Observer] Extracted:`, rawHref);
-              finish(rawHref);
-              return;
+              candidates.add(rawHref);
+              if (scoreCandidateUrl(rawHref, cleanQ) >= 150) {
+                finishWithBestCandidate();
+                return;
+              }
             }
           }
         });
@@ -240,7 +339,6 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     }
 
     // 4. Polling backup
-    const startTime = Date.now();
     pollInterval = setInterval(() => {
       if (resolved) {
         cleanup();
@@ -259,30 +357,23 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
           const rawHref = extractTargetUrl(anchor);
           if (rawHref && isAllowedOrganicUrl(rawHref)) {
-            finish(rawHref);
-            return;
-          }
-        }
-      }
-
-      const visibleUrls = document.querySelectorAll("#yoouz-hidden-cse-container .gs-visibleUrl, .gsc-resultsRoot .gs-visibleUrl");
-      if (visibleUrls && visibleUrls.length > 0) {
-        for (let i = 0; i < visibleUrls.length; i++) {
-          const text = (visibleUrls[i].textContent || "").trim();
-          if (text && text.includes(".") && !text.includes(" ")) {
-            const candidateUrl = text.startsWith("http") ? text : `https://${text}`;
-            if (isAllowedOrganicUrl(candidateUrl)) {
-              finish(candidateUrl);
+            candidates.add(rawHref);
+            if (scoreCandidateUrl(rawHref, cleanQ) >= 150) {
+              finishWithBestCandidate();
               return;
             }
           }
         }
       }
-    }, 60);
 
-    // 5. Max timeout of 3.5s
+      if (candidates.size > 0) {
+        finishWithBestCandidate();
+      }
+    }, 100);
+
+    // 5. Max timeout
     timeoutId = setTimeout(() => {
-      finish(null);
+      finishWithBestCandidate();
     }, 3500);
   });
 }

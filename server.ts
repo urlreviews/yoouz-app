@@ -18498,21 +18498,49 @@ Return JSON:
         const directoryDomains = [
           "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
           "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-          "legaladviceme.com", "findlawyer.ae", "localemirates.com", "infobel.ae", "infobel.com", "dubaibizdirectory.com", "2gis.ae", "2gis.com",
+          "hakkolasakim.com", "din.co.il", "d.co.il", "dnb.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
+          "top10.co.il", "opentenders.co.il", "bhol.co.il", "zap.co.il", "t.co.il", "b144.co.il", "index.co.il", 
+          "asakim.co.il", "israelbusiness.co.il", "cylex-israel.com", "cylex.com", "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "chamber.org.il", "duns100.co.il",
+          "legaladviceme.com", "findlawyer.ae", "localemirates.com", "infobel.ae", "dubaibizdirectory.com", "2gis.ae", "2gis.com",
           "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
-          "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com",
+          "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com", "legal500.com", "chambers.com",
           "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "bbb.org", "dnb.com", "zoominfo.com", "crunchbase.com",
           "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yell.com", "zocdoc.com"
         ];
 
-        // 1. Check for Direct Organic Business URL
-        for (const u of candidateUrls) {
-          if (!u || !u.startsWith("http")) continue;
+        // 1. Score candidate URLs to prioritize matching brand domains
+        const validCandidates = candidateUrls.filter(u => {
+          if (!u || !u.startsWith("http")) return false;
           const low = u.toLowerCase();
-          if (!directoryDomains.some(d => low.includes(d))) {
-            discoveredUrl = u;
-            break;
-          }
+          return !directoryDomains.some(d => low.includes(d));
+        });
+
+        if (validCandidates.length > 0) {
+          const queryWords = cleanQ
+            .toLowerCase()
+            .replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\s]/g, " ")
+            .split(/\s+/)
+            .filter(w => w.length >= 3 && !/^(law|office|firm|advocate|attorney|notary|and|the|in|at|of|for|group|services|ltd|inc|llc|משרד|עורך|דין|עורכי|נוטריון|משפטים)$/i.test(w));
+
+          validCandidates.sort((a, b) => {
+            let scoreA = 0;
+            let scoreB = 0;
+            try {
+              const domA = new URL(a).hostname.toLowerCase();
+              const domB = new URL(b).hostname.toLowerCase();
+              for (const w of queryWords) {
+                if (domA.includes(w)) scoreA += 100;
+                if (domB.includes(w)) scoreB += 100;
+              }
+              const pathA = new URL(a).pathname;
+              const pathB = new URL(b).pathname;
+              if (pathA === "/" || pathA === "") scoreA += 30;
+              if (pathB === "/" || pathB === "") scoreB += 30;
+            } catch (e) {}
+            return scoreB - scoreA;
+          });
+
+          discoveredUrl = validCandidates[0];
         }
 
         // 2. If all top results were directory profiles, fetch the top directory page to extract the outbound official website link
