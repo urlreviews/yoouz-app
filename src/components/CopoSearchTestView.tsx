@@ -411,15 +411,15 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                 {/* Bottom Horizontal Action Row: Star Rating Pill + Record Button */}
                 <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-zinc-800/80 mt-4">
                   {/* Star Rating Pill Badge */}
-                  <div className="inline-flex items-center gap-2.5 bg-zinc-800/90 border border-zinc-700/80 px-3.5 py-2 rounded-full shadow-md">
+                  <div className="inline-flex items-center gap-3.5 bg-zinc-800/90 border border-zinc-700/80 px-4.5 py-2.5 rounded-full shadow-md">
                     {totalReviewsCount > 0 ? (
                       <>
                         <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center text-amber-400 gap-0.5">
+                        <div className="flex items-center text-amber-400 gap-1.5">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "fill-zinc-700 text-zinc-700"}`}
+                              className={`w-4.5 h-4.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
                             />
                           ))}
                         </div>
@@ -429,12 +429,12 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                       </>
                     ) : (
                       <>
-                        <span className="font-bold text-zinc-400 text-sm leading-none">0.0</span>
-                        <div className="flex items-center text-zinc-600 gap-0.5">
+                        <span className="font-bold text-amber-400/70 text-sm leading-none">0.0</span>
+                        <div className="flex items-center text-amber-400/60 gap-1.5">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                              className="w-4.5 h-4.5 fill-none text-amber-400/50 stroke-[1.75]"
                             />
                           ))}
                         </div>

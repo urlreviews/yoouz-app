@@ -1036,31 +1036,31 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Rating & Category Hero Showcase Card */}
         <div className="mb-2 p-3.5 rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 border border-white/10 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             {dynamicReviewCount > 0 ? (
-              <div className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 px-3 py-1.5 rounded-xl shrink-0">
-                <span className="font-black text-amber-400 text-lg leading-none">{dynamicAvgRating.toFixed(1)}</span>
-                <div className="flex items-center text-amber-400 gap-0.5">
+              <div className="flex items-center gap-2.5 bg-gradient-to-r from-amber-400/20 via-amber-400/10 to-amber-500/5 border border-amber-400/40 px-3.5 py-2 rounded-xl shrink-0 shadow-[0_0_16px_rgba(251,191,36,0.18)]">
+                <span className="font-black text-amber-400 text-xl leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
+                <div className="flex items-center text-amber-400 gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3.5 h-3.5 ${
+                      className={`w-4.5 h-4.5 ${
                         i < Math.round(dynamicAvgRating)
-                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-                          : "fill-zinc-700 text-zinc-700"
+                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]"
+                          : "fill-zinc-800 text-zinc-700"
                       }`}
                     />
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-zinc-800/80 border border-zinc-700/60 px-3 py-1.5 rounded-xl shrink-0">
-                <span className="font-black text-zinc-400 text-sm leading-none">0.0</span>
-                <div className="flex items-center text-zinc-600 gap-0.5">
+              <div className="flex items-center gap-2.5 bg-amber-400/5 border border-amber-400/20 px-3.5 py-2 rounded-xl shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.06)]">
+                <span className="font-black text-amber-400/70 text-sm leading-none">0.0</span>
+                <div className="flex items-center text-amber-400/60 gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className="w-3.5 h-3.5 fill-none text-zinc-500 stroke-[1.5]"
+                      className="w-4.5 h-4.5 fill-none text-amber-400/50 stroke-[1.75]"
                     />
                   ))}
                 </div>
@@ -1069,14 +1069,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-white font-extrabold text-xs tracking-tight">
+                <span className="text-white font-extrabold text-sm tracking-tight">
                   {dynamicReviewCount > 0
                     ? `${dynamicReviewCount.toLocaleString()} ${dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}`
                     : t("place.noReviewsYetShort", "0 Reviews")}
                 </span>
               </div>
               {place.category && place.category !== "Verified Business" && (
-                <span className="text-zinc-400 text-[11px] font-medium truncate block">
+                <span className="text-zinc-400 text-xs font-medium truncate block mt-0.5">
                   {place.category}
                 </span>
               )}
@@ -1666,11 +1666,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   )}
                 </div>
 
-                {/* Row 1: Segmented Sort Switcher */}
-                <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-zinc-950 border border-zinc-800/80">
+                {/* Row 1: 4-Way Segmented Sort Switcher (Latest, Most Liked, Highest, Lowest) */}
+                <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-zinc-950 border border-zinc-800/80">
                   <button
                     onClick={() => setReviewSort("latest")}
-                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
                       reviewSort === "latest"
                         ? "bg-white text-zinc-950 shadow-sm"
                         : "text-zinc-400 hover:text-zinc-200"
@@ -1680,7 +1680,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </button>
                   <button
                     onClick={() => setReviewSort("popular")}
-                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
                       reviewSort === "popular"
                         ? "bg-white text-zinc-950 shadow-sm"
                         : "text-zinc-400 hover:text-zinc-200"
@@ -1690,27 +1690,38 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </button>
                   <button
                     onClick={() => setReviewSort("highest")}
-                    className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
                       reviewSort === "highest"
                         ? "bg-white text-zinc-950 shadow-sm"
                         : "text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
-                    {t("place.highestRated", "Top Rated")}
+                    {t("place.highestRated", "Highest")}
+                  </button>
+                  <button
+                    onClick={() => setReviewSort("lowest")}
+                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
+                      reviewSort === "lowest"
+                        ? "bg-white text-zinc-950 shadow-sm"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    }`}
+                  >
+                    {t("place.lowestRated", "Lowest")}
                   </button>
                 </div>
 
-                {/* Row 2: Striking Star Rating Filter Chips with Golden Accents */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 pb-0.5">
+                {/* Row 2: Striking 6-Column Star Rating Filter Bar - Symmetrical & Clean */}
+                <div className="grid grid-cols-6 gap-1 w-full pt-0.5 pb-0.5">
                   <button
                     onClick={() => setStarFilter("all")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
+                    className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1 cursor-pointer min-w-0 ${
                       starFilter === "all"
                         ? "bg-white border-white text-zinc-950 shadow-sm"
                         : "bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
                     }`}
                   >
-                    {t("place.all", "All")} ({rawPlaceVideos.length})
+                    <span>{t("place.all", "All")}</span>
+                    <span className="text-[10px] opacity-75">({rawPlaceVideos.length})</span>
                   </button>
                   {[5, 4, 3, 2, 1].map((stars) => {
                     const count = rawPlaceVideos.filter((v) => Math.round(v.rating || 5) === stars).length;
@@ -1720,17 +1731,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <button
                         key={stars}
                         onClick={() => setStarFilter(isSelected ? "all" : stars)}
-                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-0.5 cursor-pointer min-w-0 ${
                           isSelected
                             ? "bg-amber-400 text-zinc-950 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] font-black"
                             : count > 0
                             ? "bg-zinc-950/80 border-zinc-800 text-zinc-200 hover:border-amber-400/40 hover:text-white"
                             : "bg-zinc-950/40 border-zinc-850 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
                         }`}
+                        title={`${stars} Stars (${count})`}
                       >
                         <span>{stars}</span>
                         <Star
-                          className={`w-3.5 h-3.5 ${
+                          className={`w-3 h-3 shrink-0 ${
                             isSelected
                               ? "fill-zinc-950 text-zinc-950"
                               : count > 0
@@ -1739,8 +1751,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           }`}
                         />
                         {count > 0 && (
-                          <span className={`text-[10px] px-1 py-0.2 rounded-md ${
-                            isSelected ? "bg-black/20 text-zinc-950" : "bg-zinc-800 text-zinc-400"
+                          <span className={`text-[9px] px-1 py-0.2 rounded-md font-bold leading-none ${
+                            isSelected ? "bg-black/20 text-zinc-950" : "bg-zinc-800 text-zinc-300"
                           }`}>
                             {count}
                           </span>
