@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, MapPin, Globe, Check, X, Loader2, Sparkles, Building2, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { Country, State, City } from "country-state-city";
 import { cachedCountry, cachedState, cachedCity } from "../utils/locationCache";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
-import { POPULAR_HUBS, formatLocationSearchQuery, QuickLocationHub } from "../utils/locationSearchHelper";
+import { formatLocationSearchQuery } from "../utils/locationSearchHelper";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, isValidDomainUrl } from "../utils/placeUtils";
@@ -35,7 +35,6 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   suggestions = [],
   isLoadingSuggest = false,
   onSelectSuggestion,
-  compact = false,
   className = ""
 }) => {
   const { t } = useLanguage();
@@ -43,7 +42,6 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   const [country, setCountry] = useState(initialCountry);
   const [state, setState] = useState(initialState);
   const [city, setCity] = useState(initialCity);
-  const [showLocationPanel, setShowLocationPanel] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +63,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   }, []);
 
   // Compute states and cities dynamically based on selected country and state
-  const { isoCode, statesObj, hasStates, stateOptions, uniqueCityOptions, stateLabel } = useMemo(() => {
+  const { statesObj, hasStates, stateOptions, uniqueCityOptions, stateLabel } = useMemo(() => {
     if (!country) {
       return {
         isoCode: "",
@@ -117,13 +115,6 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     setCity("");
   };
 
-  const handleQuickHubSelect = (hub: QuickLocationHub) => {
-    setCountry(hub.country);
-    if (hub.state) setState(hub.state);
-    setCity(hub.city);
-    inputRef.current?.focus();
-  };
-
   const handleClearLocation = () => {
     setCountry("");
     setState("");
@@ -144,7 +135,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       return;
     }
 
-    // Format full query with location components for pinpoint Google CSE accuracy
+    // Format full query with location components for pinpoint search
     const { fullQuery } = formatLocationSearchQuery(trimmed, country, state, city);
     onSearch(fullQuery, { country, state, city, rawBusinessName: trimmed });
   };
@@ -154,7 +145,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       
       {/* 1. Main Business Name Search Input */}
       <form onSubmit={handleSubmit} className="w-full relative group">
-        <div className="w-full bg-zinc-900/90 backdrop-blur-2xl border border-zinc-700/80 hover:border-zinc-500/80 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10 rounded-2xl md:rounded-3xl p-2 md:p-2.5 shadow-2xl transition-all">
+        <div className="w-full bg-zinc-950 border border-zinc-800 hover:border-zinc-700 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-zinc-700/50 rounded-2xl md:rounded-3xl p-2 md:p-2.5 shadow-xl transition-all">
           <div className="flex items-center gap-2">
             
             {/* Search Input Icon & Text */}
@@ -173,7 +164,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 onFocus={() => {
                   if (suggestions.length > 0) setShowSuggestions(true);
                 }}
-                placeholder={t("search.placeholder", "Search business name (e.g. Hamad Bin Jarwan, MJP Solicitors)...")}
+                placeholder={t("search.placeholder", "Search business name...")}
                 className="w-full bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none py-2 pr-6 font-medium"
                 autoFocus={autoFocus}
               />
@@ -186,29 +177,12 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                     inputRef.current?.focus();
                   }}
                   className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer mr-1"
-                  title="Clear input"
+                  title="Clear"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-
-            {/* Toggle Location Panel Button (if compact) */}
-            {compact && (
-              <button
-                type="button"
-                onClick={() => setShowLocationPanel(!showLocationPanel)}
-                className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  country || city
-                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                    : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white"
-                }`}
-                title="Toggle Location Target"
-              >
-                <MapPin className="w-4 h-4 text-amber-400" />
-                <span className="hidden sm:inline">{city || country || "Location"}</span>
-              </button>
-            )}
 
             {/* Submit Search Button */}
             <button
@@ -226,72 +200,58 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         </div>
       </form>
 
-      {/* 2. Structured Location Filter Card - Exactly Identical Design & Layout to Edit Profile */}
-      {showLocationPanel && (
-        <div className="w-full bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-3.5 md:p-4 shadow-xl flex flex-col gap-3 animate-in fade-in duration-200">
+      {/* 2. Structured Location Filter Card - Identical Layout to Edit Profile */}
+      <div className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+            <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300">
+              {t("common.location", "Location")}
+            </label>
+          </div>
           
-          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-              <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-200">
-                {t("common.location", "Location Target (Country & City)")}
-              </label>
-            </div>
-            
-            {(country || city) && (
-              <button
-                type="button"
-                onClick={handleClearLocation}
-                className="text-[11px] font-bold text-zinc-400 hover:text-rose-400 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-                <span>Reset</span>
-              </button>
-            )}
-          </div>
+          {(country || city) && (
+            <button
+              type="button"
+              onClick={handleClearLocation}
+              className="text-[11px] font-bold text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
 
-          {/* Exact CountrySelector component from Edit Profile */}
-          <div className="space-y-1">
-            <CountrySelector
-              value={country}
-              onChange={handleCountryChange}
-            />
-          </div>
+        {/* Exact CountrySelector component */}
+        <div className="space-y-1">
+          <CountrySelector
+            value={country}
+            onChange={handleCountryChange}
+          />
+        </div>
 
-          {/* Cascading State/Region and City Selectors (identical to Edit Profile) */}
-          {country && (
-            <div className="grid grid-cols-2 gap-3 pt-0.5 animate-in fade-in slide-in-from-top-2 duration-200">
-              {hasStates ? (
-                <>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">
-                      {stateLabel}
-                    </span>
-                    <SearchableComboSelector
-                      value={state}
-                      onChange={(val) => {
-                        setState(val);
-                        setCity(""); // Reset city when state/region changes
-                      }}
-                      options={stateOptions}
-                      placeholder={stateLabel}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">
-                      {t("profile.city", "City")}
-                    </span>
-                    <SearchableComboSelector
-                      value={city}
-                      onChange={setCity}
-                      options={uniqueCityOptions}
-                      placeholder={t("profile.selectCity", "Select City")}
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="col-span-2 space-y-1">
-                  <span className="text-[10px] font-bold text-zinc-200 uppercase tracking-wide pl-1 block">
+        {/* Cascading State/Region and City Selectors */}
+        {country && (
+          <div className="grid grid-cols-2 gap-3 pt-0.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            {hasStates ? (
+              <>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                    {stateLabel}
+                  </span>
+                  <SearchableComboSelector
+                    value={state}
+                    onChange={(val) => {
+                      setState(val);
+                      setCity("");
+                    }}
+                    options={stateOptions}
+                    placeholder={stateLabel}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
                     {t("profile.city", "City")}
                   </span>
                   <SearchableComboSelector
@@ -301,51 +261,27 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                     placeholder={t("profile.selectCity", "Select City")}
                   />
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick 1-Tap Popular Location Hubs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pt-1">
-            <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-1">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              Quick Hubs:
-            </span>
-            {POPULAR_HUBS.map((hub) => {
-              const isSelected = country.toLowerCase() === hub.country.toLowerCase() && city.toLowerCase() === hub.city.toLowerCase();
-              return (
-                <button
-                  key={hub.label}
-                  type="button"
-                  onClick={() => handleQuickHubSelect(hub)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer border ${
-                    isSelected
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs"
-                      : "bg-zinc-950/60 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white hover:border-zinc-700"
-                  }`}
-                >
-                  <span>{hub.flag}</span>
-                  <span>{hub.label}</span>
-                </button>
-              );
-            })}
+              </>
+            ) : (
+              <div className="col-span-2 space-y-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                  {t("profile.city", "City")}
+                </span>
+                <SearchableComboSelector
+                  value={city}
+                  onChange={setCity}
+                  options={uniqueCityOptions}
+                  placeholder={t("profile.selectCity", "Select City")}
+                />
+              </div>
+            )}
           </div>
-
-          {/* Location Active Targeting Info */}
-          {(country || city) && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-950/70 border border-zinc-800/90 text-xs text-zinc-300 mt-0.5">
-              <span className="text-amber-400 font-bold">📍 Google Search Targeted To:</span>
-              <span className="font-bold text-white truncate">
-                {[city, state, country].filter(Boolean).join(", ")}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 3. Autocomplete / Live Suggestions Dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-[60px] left-0 right-0 bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
+        <div className="absolute top-[60px] left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
             const isDbOrBrand = item.source === "database" || item.source === "brand_index";
             const hasDomain = item.domain && item.domain.includes('.');
@@ -361,14 +297,14 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                     handleSubmit();
                   }
                 }}
-                className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
+                className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900 transition-colors text-left cursor-pointer group"
               >
                 {isDbOrBrand && hasDomain ? (
                   <CopoBrandLogo
                     domain={item.domain}
                     name={item.title}
                     logoUrl={item.logoUrl}
-                    className="w-8 h-8 rounded-lg border border-zinc-700 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
+                    className="w-8 h-8 rounded-lg border border-zinc-800 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
                     imageClassName="w-full h-full object-contain"
                   />
                 ) : (
@@ -377,7 +313,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
+                  <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                     {item.title}
                   </div>
                   <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5">

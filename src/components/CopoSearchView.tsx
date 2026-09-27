@@ -199,42 +199,53 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     setShowDropdown(false);
 
-    // Extract clean domain strictly (e.g. "www.uber.com" -> "uber.com", "https://bhol.co.il" -> "bhol.co.il")
-    let cleanUrl = extractCleanDomain(rawQuery);
+    const baseName = (locationDetails?.rawBusinessName || preferredName || rawQuery).trim();
+    const cleanUrlFromRaw = extractCleanDomain(rawQuery);
+    const cleanUrlFromBase = extractCleanDomain(baseName);
+    let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");
 
-    // If matching a place by domain or place ID, resolve its clean domain
+    // 1. First check if baseName or rawQuery matches an existing place in places array (mock / database)
     const matchingLocal = places.find(p => {
+      if (!p) return false;
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-      return pDom === cleanUrl || p.id.toLowerCase() === cleanUrl.replace(/[^a-z0-9]/g, "-");
+      if (cleanUrl && pDom === cleanUrl) return true;
+      if (cleanUrl && p.id.toLowerCase() === cleanUrl.replace(/[^a-z0-9]/g, "-")) return true;
+      
+      const pNameLower = (p.name || "").toLowerCase().trim();
+      const baseLower = baseName.toLowerCase();
+      const rawLower = rawQuery.toLowerCase();
+      if (pNameLower && (pNameLower === baseLower || pNameLower === rawLower || pNameLower.includes(baseLower) || baseLower.includes(pNameLower))) {
+        return true;
+      }
+      return false;
     });
 
     if (matchingLocal) {
-      cleanUrl = getCleanDomainUrl(matchingLocal);
+      console.info("[Search] Found local place match:", matchingLocal.name);
+      setSearchedPlace(matchingLocal);
+      setQuery(matchingLocal.name || baseName);
+      setIsSearching(false);
+      return;
     }
 
-    // If not a domain with a dot, check local places by name, known brands, or query API to resolve domain
+    // If not a domain with a dot, check known brands
     if (!isValidDomainUrl(cleanUrl)) {
-      const matchingByName = places.find(p => p.name && p.name.toLowerCase() === rawQuery.toLowerCase());
-      if (matchingByName) {
-        cleanUrl = getCleanDomainUrl(matchingByName);
-      } else {
-        const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
-          if (!k.includes('.')) return false;
-          const qL = rawQuery.toLowerCase().trim();
-          const vL = v.toLowerCase().trim();
-          const kL = k.toLowerCase().trim();
-          return (
-            vL === qL ||
-            kL === qL ||
-            kL.startsWith(qL) ||
-            vL.includes(qL) ||
-            qL.includes(vL) ||
-            (qL.includes("14") && kL.includes("now14"))
-          );
-        });
-        if (brandMatch) {
-          cleanUrl = brandMatch[0];
-        }
+      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
+        if (!k.includes('.')) return false;
+        const qL = baseName.toLowerCase().trim();
+        const vL = v.toLowerCase().trim();
+        const kL = k.toLowerCase().trim();
+        return (
+          vL === qL ||
+          kL === qL ||
+          kL.startsWith(qL) ||
+          vL.includes(qL) ||
+          qL.includes(vL) ||
+          (qL.includes("14") && kL.includes("now14"))
+        );
+      });
+      if (brandMatch) {
+        cleanUrl = brandMatch[0];
       }
     }
 
@@ -242,7 +253,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
       
-      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 5s max timeout
+      // 1. First, attempt to resolve the URL using our client-side Google CSE scraper with 5s max timeout
       console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
       let cseUrl: string | null = null;
       try {
@@ -280,46 +291,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
-    setQuery(rawQuery);
+    setQuery(baseName || rawQuery);
     setIsSearching(true);
 
     try {
-      const domain = cleanUrl;
+      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
+      const isRealDomain = isValidDomainUrl(cleanUrl);
 
-      // 1. Check local places first by domain URL or name
-      const isRealDomain = isValidDomainUrl(domain);
-      let foundPlace = places.find(p => {
-        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-        if (isRealDomain && isValidDomainUrl(pDom) && pDom === domain) return true;
-        if (p.id.toLowerCase() === domain.toLowerCase()) return true;
-        if (p.name && p.name.toLowerCase() === rawQuery.toLowerCase()) return true;
-        return false;
-      });
-
-      // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
-      const instantLogo: string = foundPlace?.logoUrl 
-        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "") 
-        || (isRealDomain ? getCleanLogoUrl(null, domain) : "") 
-        || (isRealDomain ? `/api/favicon?domain=${domain}` : "");
-      const instantBanner: string = foundPlace?.bannerUrl 
-        || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || (isRealDomain ? KNOWN_BRAND_BANNERS[domain] : "") 
+      // Instant place object
+      const instantLogo: string = (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "") 
+        || (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
+        || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "");
+      const instantBanner: string = (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
+        || (isRealDomain ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
         || "";
       const instantName = preferredName
         || locationDetails?.rawBusinessName
-        || (isRealDomain && KNOWN_OFFICIAL_NAMES[domain]) 
-        || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
+        || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
         || preloadedMeta?.title
         || preloadedMeta?.siteName
-        || foundPlace?.name
-        || formatBusinessName(foundPlace?.name || domain, isRealDomain ? domain : undefined)
+        || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
+        || baseName
         || rawQuery;
 
-      const instantCity = locationDetails?.city || foundPlace?.city || preloadedMeta?.city || (isRealDomain ? "Online" : "");
-      const instantCountry = locationDetails?.country || foundPlace?.country || preloadedMeta?.country || "";
+      const instantCity = locationDetails?.city || preloadedMeta?.city || (isRealDomain ? "Online" : "");
+      const instantCountry = locationDetails?.country || preloadedMeta?.country || "";
 
-      const instantPlace: Place = foundPlace || {
-        id: isRealDomain ? domain : (domain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
+      const instantPlace: Place = {
+        id: isRealDomain ? cleanUrl : domain,
         name: instantName,
         category: preloadedMeta?.category || "Verified Business",
         categoryType: "all",
@@ -339,28 +338,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         openingHours: preloadedMeta?.openingHours || "Available 24/7",
         isOpen: true,
         phone: preloadedMeta?.phone || "",
-        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org')) ? preloadedMeta.url : (isRealDomain && !domain.toLowerCase().includes('wikipedia.org') ? `https://${domain}` : ""),
+        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org')) ? preloadedMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
         priceRange: "N/A",
         plusCode: "",
         description: preloadedMeta?.description || "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: isRealDomain ? domain : (preloadedMeta?.domain || "")
+        brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || "")
       };
 
-      if (!foundPlace) {
-        foundPlace = instantPlace;
-      }
-      setSearchedPlace(instantPlace);
+      let currentPlace: Place = instantPlace;
+      setSearchedPlace(currentPlace);
       if (onAddPlace) {
-        onAddPlace(instantPlace);
+        onAddPlace(currentPlace);
       }
       
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
       setIsEnriching(true);
       try {
-         const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(domain)}`);
+         const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanUrl || domain)}`);
          if (resp.ok) {
            const data = await resp.json();
            if (data.title || data.domain) {
@@ -379,86 +376,38 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.image 
                : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
              
-             if (foundPlace) {
-               // Enrich existing place with fresh metadata
-               const isGenericName = (n: string) => {
-                 if (!n) return true;
-                 const l = n.toLowerCase();
-                 return l.includes("hostinger") || l.includes("untitled") || l.includes("react app") || l.includes("vite app") || l === "website" || l === foundPlace?.brandDomain;
-               };
+             const targetName = preferredName
+               || locationDetails?.rawBusinessName
+               || (domain && KNOWN_OFFICIAL_NAMES[domain])
+               || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+               || (!isGenericPlaceName(currentPlace.name) ? currentPlace.name : "")
+               || formatBusinessName(data.siteName || data.title, data.domain || domain)
+               || formatBusinessName(domain)
+               || instantName;
 
-               const targetName = preferredName
-                 || locationDetails?.rawBusinessName
-                 || (domain && KNOWN_OFFICIAL_NAMES[domain])
-                 || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
-                 || (!isGenericName(foundPlace.name) && !isGenericPlaceName(foundPlace.name) ? foundPlace.name : "")
-                 || formatBusinessName(data.siteName || data.title, data.domain || domain)
-                 || formatBusinessName(domain)
-                 || instantName;
-
-               foundPlace = {
-                 ...foundPlace,
-                 name: targetName || foundPlace.name,
-                 logoUrl: (foundPlace.logoUrl && isValidLogo(foundPlace.logoUrl)) ? foundPlace.logoUrl : (fetchedLogo || instantLogo),
-                 avatarUrl: (foundPlace.avatarUrl && isValidLogo(foundPlace.avatarUrl)) ? foundPlace.avatarUrl : (fetchedLogo || instantLogo),
-                 bannerUrl: (foundPlace.bannerUrl && !foundPlace.bannerUrl.includes("unsplash.com")) ? foundPlace.bannerUrl : (fetchedBanner || ""),
-                 ogImage: (foundPlace.ogImage && !foundPlace.ogImage.includes("unsplash.com")) ? foundPlace.ogImage : (fetchedBanner || ""),
-                 photos: (foundPlace.photos && foundPlace.photos.length > 0 && !foundPlace.photos[0].includes("unsplash.com")) ? foundPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
-                 description: foundPlace.description || data.description || "",
-                 category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
-                 address: (data.address && (!foundPlace.address || foundPlace.address === "Verified Location" || foundPlace.address.startsWith("http"))) ? data.address : (foundPlace.address || data.address || ""),
-                 city: locationDetails?.city || ((foundPlace.city && foundPlace.city !== "Online" && foundPlace.city !== "Worldwide") ? foundPlace.city : (data.city || foundPlace.city || "")),
-                 country: locationDetails?.country || foundPlace.country || data.country || "",
-                 phone: foundPlace.phone || data.phone || "",
-                 email: foundPlace.email || data.email || "",
-                 openingHours: data.openingHours || foundPlace.openingHours || (data.hours || foundPlace.hours || "Available 24/7"),
-                 hours: data.openingHours || foundPlace.openingHours || (data.hours || foundPlace.hours || "Available 24/7"),
-                 locations: (data.locations && data.locations.length > 0) ? data.locations : (foundPlace.locations || [])
-               };
-               setSearchedPlace(foundPlace);
-               if (onAddPlace) {
-                 onAddPlace(foundPlace);
-               }
-             } else {
-               const hasValidDataDomain = !!(data.domain && isValidDomainUrl(data.domain));
-               const finalDomain = hasValidDataDomain ? data.domain : (isRealDomain ? domain : "");
-               const newPlace: Place = {
-                 id: (finalDomain || domain || "website").toLowerCase(),
-                 name: preferredName || locationDetails?.rawBusinessName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, finalDomain || domain) || instantName || domain,
-                 category: data.category || "Website",
-                 categoryType: "all",
-                 address: data.address || (locationDetails?.city ? `${locationDetails.city}${locationDetails.country ? ', ' + locationDetails.country : ''}` : ""),
-                 city: locationDetails?.city || data.city || (finalDomain ? "Online" : ""),
-                 country: locationDetails?.country || data.country || "",
-                 lat: data.lat || 0,
-                 lng: data.lng || 0,
-                 rating: 5,
-                 totalReviews: 1,
-                 ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                 avatarUrl: fetchedLogo || instantLogo,
-                 logoUrl: fetchedLogo || instantLogo,
-                 bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
-                 ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : ""),
-                 photos: ((fetchedBanner && !fetchedBanner.includes("unsplash.com")) || (instantBanner && !instantBanner.includes("unsplash.com"))) ? [(fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : instantBanner] : [],
-                 openingHours: data.openingHours || "Available 24/7",
-                 isOpen: true,
-                 phone: data.phone || "",
-                 email: data.email || "",
-                 website: (data.url && isValidDomainUrl(data.url) && !data.url.toLowerCase().includes('wikipedia.org')) ? data.url : (finalDomain && !finalDomain.toLowerCase().includes('wikipedia.org') ? `https://${finalDomain}` : ""),
-                 priceRange: "N/A",
-                 plusCode: "",
-                 description: data.description || "",
-                 popularKeywords: [],
-                 amenities: [],
-                 topDishes: [],
-                 locations: data.locations || [],
-                 brandDomain: (finalDomain && !finalDomain.toLowerCase().includes('wikipedia.org')) ? finalDomain : ""
-               };
-               foundPlace = newPlace;
-               setSearchedPlace(newPlace);
-               if (onAddPlace) {
-                 onAddPlace(newPlace);
-               }
+             const updatedPlace: Place = {
+               ...currentPlace,
+               name: targetName || currentPlace.name,
+               logoUrl: (currentPlace.logoUrl && isValidLogo(currentPlace.logoUrl)) ? currentPlace.logoUrl : (fetchedLogo || instantLogo),
+               avatarUrl: (currentPlace.avatarUrl && isValidLogo(currentPlace.avatarUrl)) ? currentPlace.avatarUrl : (fetchedLogo || instantLogo),
+               bannerUrl: (currentPlace.bannerUrl && !currentPlace.bannerUrl.includes("unsplash.com")) ? currentPlace.bannerUrl : (fetchedBanner || ""),
+               ogImage: (currentPlace.ogImage && !currentPlace.ogImage.includes("unsplash.com")) ? currentPlace.ogImage : (fetchedBanner || ""),
+               photos: (currentPlace.photos && currentPlace.photos.length > 0 && !currentPlace.photos[0].includes("unsplash.com")) ? currentPlace.photos : (fetchedBanner ? [fetchedBanner] : []),
+               description: currentPlace.description || data.description || "",
+               category: (currentPlace.category && currentPlace.category !== "Website" && currentPlace.category !== "General") ? currentPlace.category : (data.category || currentPlace.category || "Website"),
+               address: (data.address && (!currentPlace.address || currentPlace.address === "Verified Location" || currentPlace.address.startsWith("http"))) ? data.address : (currentPlace.address || data.address || ""),
+               city: locationDetails?.city || ((currentPlace.city && currentPlace.city !== "Online" && currentPlace.city !== "Worldwide") ? currentPlace.city : (data.city || currentPlace.city || "")),
+               country: locationDetails?.country || currentPlace.country || data.country || "",
+               phone: currentPlace.phone || data.phone || "",
+               email: currentPlace.email || data.email || "",
+               openingHours: data.openingHours || currentPlace.openingHours || (data.hours || currentPlace.hours || "Available 24/7"),
+               hours: data.openingHours || currentPlace.openingHours || (data.hours || currentPlace.hours || "Available 24/7"),
+               locations: (data.locations && data.locations.length > 0) ? data.locations : (currentPlace.locations || [])
+             };
+             currentPlace = updatedPlace;
+             setSearchedPlace(updatedPlace);
+             if (onAddPlace) {
+               onAddPlace(updatedPlace);
              }
            }
          }
@@ -466,10 +415,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
          console.warn("Metadata fetch error:", err);
       } finally {
          setIsEnriching(false);
-      }
-
-      if (foundPlace) {
-        setSearchedPlace(foundPlace);
       }
     } catch (err) {
       console.error(err);

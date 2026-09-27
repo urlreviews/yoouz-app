@@ -196,15 +196,23 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     });
   }, [recentSearches, places, onAddPlace]);
 
-  const findMatchingPlace = (term: string): Place | undefined => {
-    const target = extractCleanDomain(term);
+  const findMatchingPlace = (term: string, preferredName?: string): Place | undefined => {
+    const base = (preferredName || term).trim();
+    const target = extractCleanDomain(base);
+    const rawTarget = extractCleanDomain(term);
     return places.find(p => {
+      if (!p) return false;
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-      return (target && pDom === target) ||
-             p.brandDomain?.toLowerCase() === target ||
-             p.name.toLowerCase() === term.toLowerCase() ||
-             p.id.toLowerCase() === target.replace(/[^a-z0-9]/g, "-") ||
-             p.id.toLowerCase() === term.toLowerCase().replace(/[^a-z0-9]/g, "-");
+      if (target && pDom === target) return true;
+      if (rawTarget && pDom === rawTarget) return true;
+      
+      const pNameLower = (p.name || "").toLowerCase().trim();
+      const baseLower = base.toLowerCase();
+      const termLower = term.toLowerCase();
+      if (pNameLower && (pNameLower === baseLower || pNameLower === termLower || pNameLower.includes(baseLower) || baseLower.includes(pNameLower))) {
+        return true;
+      }
+      return false;
     });
   };
 
@@ -249,8 +257,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (!raw || !raw.trim()) return;
     
     const trimmed = raw.trim();
+    const baseName = (preferredName || locationDetails?.rawBusinessName || trimmed).trim();
     // Resolve matching place clean domain if available
-    const matchedPlace = findMatchingPlace(trimmed);
+    const matchedPlace = findMatchingPlace(trimmed, baseName);
     let cleanUrl = matchedPlace ? getCleanDomainUrl(matchedPlace) : extractCleanDomain(trimmed);
 
     // If not a domain with a dot, check KNOWN_OFFICIAL_NAMES
