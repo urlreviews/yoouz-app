@@ -246,20 +246,18 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return;
     }
 
-    // If not a domain with a dot, check known brands
+    // If not a domain with a dot, check known brands (EXACT match only)
     if (!isValidDomainUrl(cleanUrl)) {
       const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
         if (!k.includes('.')) return false;
         const qL = baseName.toLowerCase().trim();
         const vL = v.toLowerCase().trim();
         const kL = k.toLowerCase().trim();
+        const kRoot = kL.split('.')[0];
         return (
           vL === qL ||
           kL === qL ||
-          kL.startsWith(qL) ||
-          vL.includes(qL) ||
-          qL.includes(vL) ||
-          (qL.includes("14") && kL.includes("now14"))
+          kRoot === qL
         );
       });
       if (brandMatch) {

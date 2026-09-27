@@ -18410,16 +18410,15 @@ Return JSON:
 
     const qLower = cleanQ.toLowerCase();
 
-    // 2. Known Official Dictionary lookup (forward and reverse substring matching)
+    // 2. Known Official Dictionary lookup (EXACT match only - never loose substrings that match generic categories)
     for (const [dom, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
       const nameLower = officialName.toLowerCase();
       const domLower = dom.toLowerCase();
+      const domRoot = dom.split('.')[0].toLowerCase();
       if (
         domLower === qLower ||
         nameLower === qLower ||
-        nameLower.includes(qLower) ||
-        qLower.includes(nameLower) ||
-        (dom.includes('.') && domLower.includes(qLower))
+        (dom.includes('.') && domRoot === qLower)
       ) {
         let validDom = dom.includes('.') ? dom : '';
         if (!validDom) {

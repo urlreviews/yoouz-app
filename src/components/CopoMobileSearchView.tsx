@@ -275,20 +275,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const matchedPlace = findMatchingPlace(trimmed, baseName);
     let cleanUrl = matchedPlace ? getCleanDomainUrl(matchedPlace) : extractCleanDomain(trimmed);
 
-    // If not a domain with a dot, check KNOWN_OFFICIAL_NAMES
+    // If not a domain with a dot, check KNOWN_OFFICIAL_NAMES (EXACT match only)
     if (!isValidDomainUrl(cleanUrl)) {
       const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
         if (!k.includes('.')) return false;
         const qL = trimmed.toLowerCase();
         const vL = v.toLowerCase();
         const kL = k.toLowerCase();
+        const kRoot = kL.split('.')[0];
         return (
           vL === qL ||
           kL === qL ||
-          kL.startsWith(qL) ||
-          vL.includes(qL) ||
-          qL.includes(vL) ||
-          (qL.includes("14") && kL.includes("now14"))
+          kRoot === qL
         );
       });
       if (brandMatch) {

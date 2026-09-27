@@ -99,8 +99,8 @@ export function scoreCandidateUrl(url: string, query: string): number {
   const domainRoot = hostname.split(".")[0];
   const pathname = parsed.pathname.toLowerCase();
 
-  // 1. Check query brand keywords
-  const genericWords = new Set(["law", "office", "firm", "advocate", "attorney", "notary", "and", "the", "in", "at", "of", "for", "group", "services", "ltd", "inc", "llc", "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים"]);
+  // 1. Check query brand & location keywords
+  const genericWords = new Set(["and", "the", "in", "at", "of", "for", "group", "services", "ltd", "inc", "llc", "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים"]);
   const queryWords = query
     .toLowerCase()
     .replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\s]/g, " ")
@@ -109,7 +109,7 @@ export function scoreCandidateUrl(url: string, query: string): number {
 
   for (const word of queryWords) {
     if (hostname.includes(word) || domainRoot.includes(word)) {
-      score += 150; // Distinctive brand keyword matched in domain (e.g. "truman" in "truman.co.il")
+      score += 150; // Distinctive keyword/city/brand matched in domain (e.g. "gent" in "thcgent.be", "truman" in "truman.co.il")
     }
   }
 
