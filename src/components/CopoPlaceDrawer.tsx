@@ -968,22 +968,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
           </div>
         ) : (
-          <div
-            className="absolute inset-0 w-full h-full flex flex-col items-center justify-center overflow-hidden transition-all duration-300"
-            style={{
-              background: (() => {
-                const bg = getDomainBrandGradient(drawerDomain || place.name || place.id);
-                return `linear-gradient(135deg, ${bg.from} 0%, ${bg.via} 50%, ${bg.to} 100%)`;
-              })()
-            }}
-          >
-            <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.2),transparent_70%)]" />
-            <div className="px-3.5 py-1.5 rounded-full bg-black/40 border border-white/20 backdrop-blur-md z-10 shadow-lg">
-              <span className="text-white font-black text-xs tracking-wider uppercase select-none">
-                {displayedPlaceName}
-              </span>
-            </div>
-          </div>
+          <div className="absolute inset-0 w-full h-full bg-zinc-950 border-b border-zinc-800/80" />
         )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}

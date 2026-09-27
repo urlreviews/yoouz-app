@@ -179,15 +179,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   return (
     <div className={containerClasses}>
-      {/* 1. Neutral Dark Glass Business Emblem Placeholder (Clean, professional dark theme, NEVER bright fake letter avatars) */}
+      {/* 1. Sleek Neutral Business Initial Emblem */}
       {(!shouldAttemptImage || !imgLoaded || hasError) && (
-        <div
-          className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-zinc-400 p-2 shadow-inner ${imageClassName}`}
-          style={{
-            background: "linear-gradient(135deg, #27272a 0%, #18181b 100%)"
-          }}
-        >
-          <Building2 className="w-1/2 h-1/2 text-zinc-400/90 animate-pulse" />
+        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-white p-2 ${imageClassName}`}>
+          <span className="font-black text-xl sm:text-2xl text-white tracking-tight">{initialLetter}</span>
         </div>
       )}
 

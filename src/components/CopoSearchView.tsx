@@ -664,43 +664,27 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
-            {/* Top Hero Banner Canvas */}
+            {/* Top Hero Banner Canvas - Render ONLY authentic website cover image or clean neutral header */}
             {(() => {
-              const brandTheme = getDomainBrandGradient(searchedPlace.brandDomain || searchedPlace.name);
-              const domainInitial = (searchedPlace.brandDomain || searchedPlace.name || "B").charAt(0).toUpperCase();
+              const rawBanner = searchedPlace.bannerUrl || searchedPlace.ogImage || (searchedPlace.photos && searchedPlace.photos[0]);
+              const hasRealBanner = rawBanner && typeof rawBanner === "string" && rawBanner.trim().length > 0 && !rawBanner.includes("placeholder") && !rawBanner.includes("unsplash.com") && !rawBanner.startsWith("data:image/svg");
+
+              if (hasRealBanner) {
+                return (
+                  <div className="w-full h-52 sm:h-72 relative overflow-hidden bg-zinc-950 flex items-center justify-center">
+                    <img 
+                      src={getProxiedImageUrl(rawBanner)} 
+                      alt={searchedPlace.name} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60" />
+                  </div>
+                );
+              }
 
               return (
-                <div 
-                  className="w-full h-64 sm:h-80 relative overflow-hidden flex items-center justify-center group"
-                  style={{
-                    background: `linear-gradient(135deg, ${brandTheme.from} 0%, ${brandTheme.via} 50%, ${brandTheme.to} 100%)`
-                  }}
-                >
-                  {/* Glowing Ambient Mesh Backdrop */}
-                  <div 
-                    className="absolute inset-0 pointer-events-none opacity-80"
-                    style={{
-                      backgroundImage: `radial-gradient(circle at 50% 30%, ${brandTheme.glow}, transparent 70%)`
-                    }}
-                  />
-                  <div className="absolute inset-0 opacity-15 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
-                  {/* Watermark Brand Typography Emblem */}
-                  <div className="absolute right-6 -bottom-8 pointer-events-none select-none opacity-10 font-black text-9xl sm:text-[140px] text-white tracking-tighter uppercase leading-none">
-                    {domainInitial}
-                  </div>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 select-none pointer-events-none animate-in fade-in duration-500">
-                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] max-w-lg mb-2">
-                      {searchedPlace.name}
-                    </h1>
-                    {searchedPlace.category && searchedPlace.category !== "Website" && (
-                      <p className="text-zinc-200 text-xs sm:text-sm font-extrabold tracking-widest uppercase opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-                        {searchedPlace.category}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <div className="w-full h-24 sm:h-32 bg-zinc-950 border-b border-zinc-800/80 relative" />
               );
             })()}
 

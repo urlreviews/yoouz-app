@@ -498,57 +498,6 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
-      <defs>
-        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#082f49"/>
-          <stop offset="50%" stop-color="#0369a1"/>
-          <stop offset="100%" stop-color="#0284c7"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="500" fill="url(#g)"/>
-      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
-      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
-      <g transform="translate(100, 160)">
-        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
-        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
-      </g>
-    </svg>`),
-  "www.brusselsdental.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
-      <defs>
-        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#082f49"/>
-          <stop offset="50%" stop-color="#0369a1"/>
-          <stop offset="100%" stop-color="#0284c7"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="500" fill="url(#g)"/>
-      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
-      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
-      <g transform="translate(100, 160)">
-        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
-        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
-      </g>
-    </svg>`),
-  "brusselsdental": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
-      <defs>
-        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#082f49"/>
-          <stop offset="50%" stop-color="#0369a1"/>
-          <stop offset="100%" stop-color="#0284c7"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="500" fill="url(#g)"/>
-      <circle cx="1050" cy="250" r="300" fill="#38bdf8" opacity="0.12"/>
-      <circle cx="150" cy="400" r="220" fill="#bae6fd" opacity="0.08"/>
-      <g transform="translate(100, 160)">
-        <text x="0" y="60" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="46" fill="#ffffff" letter-spacing="-0.5">Dental Treatment Center</text>
-        <text x="0" y="110" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="24" fill="#bae6fd" letter-spacing="0.5">Dentist Brussels ⋅ 235 Rue de la Loi, 1040 Brussels</text>
-      </g>
-    </svg>`),
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
