@@ -914,25 +914,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div className="px-6 pt-14 pb-3 bg-zinc-950 md:bg-zinc-900">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="min-w-0 flex-1 pr-2">
-              <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere]">
-                {(() => {
-                  const name = displayName || "";
-                  const words = name.split(" ");
-                  const lastWord = words.pop();
-                  return (
-                    <>
-                      {words.length > 0 && <span>{words.join(" ")} </span>}
-                      <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-bottom">
-                        <span className="break-words max-w-full" style={{ wordBreak: 'break-word' }}>{lastWord}</span>
-                        {isVerifiedReviewer && (
-                          <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
-                            <CheckCircle className="w-5 h-5 fill-white text-black shrink-0" />
-                          </span>
-                        )}
-                      </span>
-                    </>
-                  );
-                })()}
+              <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
+                <bdi dir="auto">{displayName || ""}</bdi>
+                {isVerifiedReviewer && (
+                  <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
+                    <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 inline-block align-middle" />
+                  </span>
+                )}
               </h2>
             </div>
 

@@ -991,30 +991,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]">
-              {(() => {
-                const name = (displayedPlaceName || "").trim();
-                const words = name.split(/\s+/);
-                if (words.length <= 1) {
-                  return (
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                      <span>{words[0] || name}</span>
-                      <CheckCircle className="w-[22px] h-[22px] fill-white text-zinc-950 shrink-0" />
-                    </span>
-                  );
-                }
-                const lastWord = words.pop();
-                const mainText = words.join(" ");
-                return (
-                  <>
-                    <span>{mainText} </span>
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                      <span>{lastWord}</span>
-                      <CheckCircle className="w-[22px] h-[22px] fill-white text-zinc-950 shrink-0" />
-                    </span>
-                  </>
-                );
-              })()}
+            <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
+              <bdi dir="auto">{(displayedPlaceName || "").trim()}</bdi>
+              <CheckCircle className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
             </h2>
           </div>
 

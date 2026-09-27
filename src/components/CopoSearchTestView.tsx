@@ -323,29 +323,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center min-w-0">
-                      <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors">
-                        {(() => {
-                          const words = (item.title || "").trim().split(/\s+/);
-                          if (words.length <= 1) {
-                            return (
-                              <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                <span>{words[0] || item.title}</span>
-                                <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                              </span>
-                            );
-                          }
-                          const lastWord = words.pop();
-                          const mainText = words.join(" ");
-                          return (
-                            <>
-                              <span>{mainText} </span>
-                              <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                <span>{lastWord}</span>
-                                <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                              </span>
-                            </>
-                          );
-                        })()}
+                      <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 flex-wrap" dir="auto">
+                        <bdi dir="auto">{item.title || ""}</bdi>
+                        <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
@@ -414,30 +394,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-extrabold text-white leading-snug">
-                    {(() => {
-                      const name = (selectedPlace.name || "").trim();
-                      const words = name.split(/\s+/);
-                      if (words.length <= 1) {
-                        return (
-                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{words[0] || name}</span>
-                            <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0" />
-                          </span>
-                        );
-                      }
-                      const lastWord = words.pop();
-                      const mainText = words.join(" ");
-                      return (
-                        <>
-                          <span>{mainText} </span>
-                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{lastWord}</span>
-                            <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0" />
-                          </span>
-                        </>
-                      );
-                    })()}
+                  <h2 className="text-2xl font-extrabold text-white leading-snug inline-flex items-center gap-2 flex-wrap" dir="auto">
+                    <bdi dir="auto">{(selectedPlace.name || "").trim()}</bdi>
+                    <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
                   </h2>
 
                   {/* Website Link Line */}

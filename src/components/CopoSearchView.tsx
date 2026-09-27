@@ -548,25 +548,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
                         || formatBusinessName(searchedPlace.name, dom)
                         || "";
-                      const words = name.trim().split(/\s+/);
-                      if (words.length <= 1) {
-                        return (
-                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{words[0] || name}</span>
-                            <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
-                          </span>
-                        );
-                      }
-                      const lastWord = words.pop();
-                      const mainText = words.join(" ");
                       return (
-                        <>
-                          <span>{mainText} </span>
-                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{lastWord}</span>
-                            <CheckCircle className="w-6 h-6 fill-white text-black shrink-0" />
-                          </span>
-                        </>
+                        <span className="inline-flex items-center gap-2 flex-wrap" dir="auto">
+                          <bdi dir="auto">{name}</bdi>
+                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-black shrink-0 inline-block align-middle" />
+                        </span>
                       );
                     })()}
                   </h2>

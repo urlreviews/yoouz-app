@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, MapPin, X, Loader2 } from "lucide-react";
+import { Search, MapPin, X, Loader2, AlertCircle } from "lucide-react";
 import { Country, State, City } from "country-state-city";
 import { cachedCountry, cachedState, cachedCity } from "../utils/locationCache";
 import { CountrySelector } from "./CountrySelector";
@@ -43,6 +43,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   const [state, setState] = useState(initialState);
   const [city, setCity] = useState(initialCity);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [locationError, setLocationError] = useState<"country" | "city" | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -113,12 +114,23 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     setCountry(newCountry);
     setState("");
     setCity("");
+    if (newCountry) {
+      setLocationError(null);
+    }
+  };
+
+  const handleCityChange = (newCity: string) => {
+    setCity(newCity);
+    if (newCity) {
+      setLocationError(null);
+    }
   };
 
   const handleClearLocation = () => {
     setCountry("");
     setState("");
     setCity("");
+    setLocationError(null);
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -128,12 +140,26 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
 
     setShowSuggestions(false);
 
-    // If the input is already a direct domain (e.g. "mjpsolicitors.co.uk" or "apple.com"), pass clean domain
+    // If the input is already a direct domain (e.g. "mjpsolicitors.co.uk" or "apple.com"), pass clean domain directly
     const cleanDom = extractCleanDomain(trimmed);
     if (isValidDomainUrl(cleanDom)) {
+      setLocationError(null);
       onSearch(cleanDom, { country, state, city, rawBusinessName: trimmed });
       return;
     }
+
+    // When searching by business name, country and city are mandatory
+    if (!country) {
+      setLocationError("country");
+      return;
+    }
+
+    if (!city) {
+      setLocationError("city");
+      return;
+    }
+
+    setLocationError(null);
 
     // Format full query with location components for pinpoint search
     const { fullQuery } = formatLocationSearchQuery(trimmed, country, state, city);
@@ -201,7 +227,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       </form>
 
       {/* 2. Structured Location Filter Card - Identical Layout to Edit Profile */}
-      <div className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+      <div className={`w-full bg-zinc-950 border ${locationError ? "border-rose-500/60 ring-1 ring-rose-500/20" : "border-zinc-800"} rounded-2xl p-4 shadow-xl flex flex-col gap-3 transition-all`}>
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -223,11 +249,24 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           )}
         </div>
 
+        {/* Validation error message if location missing */}
+        {locationError && (
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold animate-in fade-in slide-in-from-top-1 duration-150">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>
+              {locationError === "country"
+                ? "Please select a Country to target this business."
+                : "Please select a City to target this business."}
+            </span>
+          </div>
+        )}
+
         {/* Exact CountrySelector component */}
         <div className="space-y-1">
           <CountrySelector
             value={country}
             onChange={handleCountryChange}
+            hasError={locationError === "country"}
           />
         </div>
 
@@ -256,9 +295,10 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   </span>
                   <SearchableComboSelector
                     value={city}
-                    onChange={setCity}
+                    onChange={handleCityChange}
                     options={uniqueCityOptions}
                     placeholder={t("profile.selectCity", "Select City")}
+                    hasError={locationError === "city"}
                   />
                 </div>
               </>
@@ -269,9 +309,10 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 </span>
                 <SearchableComboSelector
                   value={city}
-                  onChange={setCity}
+                  onChange={handleCityChange}
                   options={uniqueCityOptions}
                   placeholder={t("profile.selectCity", "Select City")}
+                  hasError={locationError === "city"}
                 />
               </div>
             )}

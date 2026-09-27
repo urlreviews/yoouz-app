@@ -2,13 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Search, Check, Globe } from "lucide-react";
 import { countries as oldCountries, getCountryDialInfo } from "../utils/countries";
 import { cachedCountry } from "../utils/locationCache";
+import { matchCountryMultilingual } from "../utils/multilingualLocations";
 
 interface CountrySelectorProps {
   value: string;
   onChange: (country: string) => void;
+  hasError?: boolean;
 }
 
-export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChange }) => {
+export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChange, hasError = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +31,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
 
   const allCountryNames = cachedCountry.getAllCountries().map(c => c.name);
   const filteredCountries = allCountryNames.filter((country) =>
-    country.toLowerCase().includes(search.toLowerCase())
+    matchCountryMultilingual(country, search)
   );
 
   const selectedInfo = value ? getCountryDialInfo(value) : null;
@@ -42,7 +44,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer"
+        className={`w-full flex items-center justify-between bg-zinc-950 border ${hasError ? "border-rose-500/80 ring-1 ring-rose-500/40" : "border-zinc-800"} rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer`}
       >
         <div className="flex items-center gap-2 text-zinc-200">
           {selectedInfo?.flag ? (

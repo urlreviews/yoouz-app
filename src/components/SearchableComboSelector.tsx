@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Search, Check } from "lucide-react";
+import { matchOptionMultilingual } from "../utils/multilingualLocations";
 
 interface SearchableComboSelectorProps {
   value: string;
   onChange: (val: string) => void;
   options: string[];
   placeholder: string;
+  hasError?: boolean;
 }
 
 export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = ({
@@ -13,6 +15,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
   onChange,
   options,
   placeholder,
+  hasError = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -38,12 +41,12 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
   }, [options]);
 
   const filteredOptions = useMemo(() => {
-    const cleanSearch = search.trim().toLowerCase();
+    const cleanSearch = search.trim();
     if (!cleanSearch) {
       return uniqueOptions.slice(0, 50);
     }
     return uniqueOptions
-      .filter((option) => option.toLowerCase().includes(cleanSearch))
+      .filter((option) => matchOptionMultilingual(option, cleanSearch))
       .slice(0, 50);
   }, [uniqueOptions, search]);
 
@@ -55,7 +58,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer min-h-[44px]"
+        className={`w-full flex items-center justify-between bg-zinc-950 border ${hasError ? "border-rose-500/80 ring-1 ring-rose-500/40" : "border-zinc-800"} rounded-xl px-3.5 py-2.5 text-sm hover:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 transition-all text-left cursor-pointer min-h-[44px]`}
       >
         <span className={value ? "text-zinc-200 font-medium" : "text-zinc-200 font-medium"}>
           {value || placeholder}
