@@ -45,6 +45,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   const [businessName, setBusinessName] = useState(initialQuery);
   const [location, setLocation] = useState(initialLocation || initialCity || "");
   const [activeField, setActiveField] = useState<"business" | "location" | null>(null);
+  const [hasLocationError, setHasLocationError] = useState(false);
   const [showLocationInputMobile, setShowLocationInputMobile] = useState(Boolean(initialLocation || initialCity));
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -62,6 +63,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     if (initialLocation || initialCity) {
       setLocation(initialLocation || initialCity);
       setShowLocationInputMobile(true);
+      setHasLocationError(false);
     }
   }, [initialLocation, initialCity]);
 
@@ -77,6 +79,13 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLocationChange = (val: string) => {
+    setLocation(val);
+    if (val.trim()) {
+      setHasLocationError(false);
+    }
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmedBiz = businessName.trim();
@@ -89,6 +98,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     // If business input is already a direct domain (e.g. "mjpsolicitors.co.uk" or "apple.com"), pass clean domain directly
     const cleanDom = extractCleanDomain(trimmedBiz);
     if (isValidDomainUrl(cleanDom)) {
+      setHasLocationError(false);
       onSearch(cleanDom, {
         country: "",
         state: "",
@@ -99,11 +109,22 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       return;
     }
 
-    // Build the combined query if location is provided
-    let fullQuery = trimmedBiz;
-    if (trimmedLoc) {
-      fullQuery = `${trimmedBiz} ${trimmedLoc}`;
+    // When searching by business name, location is mandatory to pinpoint the authentic business
+    if (!trimmedLoc) {
+      setHasLocationError(true);
+      setActiveField("location");
+      setShowLocationInputMobile(true);
+      setTimeout(() => {
+        locInputRef.current?.focus();
+        mobileLocInputRef.current?.focus();
+      }, 60);
+      return;
     }
+
+    setHasLocationError(false);
+
+    // Build the combined query
+    const fullQuery = `${trimmedBiz} ${trimmedLoc}`.trim();
 
     onSearch(fullQuery, {
       country: "",
@@ -115,13 +136,15 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   };
 
   return (
-    <div className={`w-full relative ${className}`} ref={containerRef}>
+    <div className={`w-full flex flex-col gap-1.5 relative ${className}`} ref={containerRef}>
       <form onSubmit={handleSubmit} className="w-full">
         
         {/* ========================================================================= */}
         {/* Desktop View (>= 640px) - Luxury Glassmorphic Pill with Fluid Expansion */}
         {/* ========================================================================= */}
-        <div className="hidden sm:flex items-center gap-1 bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800/90 hover:border-zinc-700 focus-within:border-zinc-600 rounded-full p-2 md:p-2.5 shadow-2xl transition-all duration-300 ring-1 ring-white/5">
+        <div className={`hidden sm:flex items-center gap-1 bg-zinc-950/90 backdrop-blur-2xl border ${
+          hasLocationError ? "border-amber-400/60 ring-2 ring-amber-400/20" : "border-zinc-800/90 hover:border-zinc-700 focus-within:border-zinc-600"
+        } rounded-full p-2 md:p-2.5 shadow-2xl transition-all duration-300 ring-1 ring-white/5`}>
           
           {/* 1. Business / Name / Keyword Input */}
           <div 
@@ -168,22 +191,33 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           {/* Subtle Vertical Divider */}
           <div className="w-[1px] h-7 bg-zinc-800 mx-1 shrink-0" />
 
-          {/* 2. Location Input */}
+          {/* 2. Location Input with Mandatory Highlighting */}
           <div 
             className={`flex items-center relative min-w-0 px-3 py-2 rounded-full transition-all duration-200 ${
-              activeField === "location" ? "flex-[1.4] bg-zinc-900/60" : "flex-1"
+              hasLocationError
+                ? "flex-[1.5] bg-amber-400/10 ring-1 ring-amber-400/40"
+                : activeField === "location"
+                ? "flex-[1.4] bg-zinc-900/60"
+                : "flex-1"
             }`}
           >
-            <MapPin className={`w-5 h-5 shrink-0 mr-2.5 transition-colors ${activeField === "location" ? "text-white" : "text-zinc-400"}`} />
+            <MapPin className={`w-5 h-5 shrink-0 mr-2.5 transition-colors ${
+              hasLocationError ? "text-amber-400" : activeField === "location" ? "text-white" : "text-zinc-400"
+            }`} />
             <input
               ref={locInputRef}
               type="text"
               dir="auto"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onFocus={() => setActiveField("location")}
-              placeholder={t("search.locationPlaceholder", "Location")}
-              className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
+              onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => {
+                setActiveField("location");
+                setHasLocationError(false);
+              }}
+              placeholder={hasLocationError ? "Enter city or country..." : t("search.locationPlaceholder", "Location")}
+              className={`w-full bg-transparent text-[15px] lg:text-base focus:outline-none font-medium pr-7 transition-colors ${
+                hasLocationError ? "text-amber-200 placeholder:text-amber-400/70" : "text-white placeholder:text-zinc-500"
+              }`}
             />
             {location && (
               <button
@@ -220,7 +254,9 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         <div className="flex sm:hidden flex-col gap-2 w-full">
           
           {/* Main Primary Native Search Bar */}
-          <div className="w-full h-12 bg-zinc-900 border border-zinc-800/90 rounded-full px-3.5 flex items-center gap-2.5 shadow-sm focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 transition-all">
+          <div className={`w-full h-12 bg-zinc-900 border ${
+            hasLocationError ? "border-amber-400/60 ring-2 ring-amber-400/20" : "border-zinc-800/90"
+          } rounded-full px-3.5 flex items-center gap-2.5 shadow-sm focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 transition-all`}>
             <Search className="w-5 h-5 text-zinc-400 shrink-0" />
             
             <input
@@ -272,18 +308,22 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
                 location
                   ? "bg-white text-zinc-950 shadow-xs"
+                  : hasLocationError
+                  ? "bg-amber-400 text-zinc-950 font-bold ring-2 ring-amber-400/40"
                   : showLocationInputMobile
                   ? "bg-zinc-800 text-white border border-zinc-700"
                   : "bg-zinc-800/80 text-zinc-400 hover:text-white"
               }`}
             >
               <MapPin className="w-3 h-3 shrink-0" />
-              <span className="truncate max-w-[80px]">{location || t("search.locationPlaceholder", "Location")}</span>
+              <span className="truncate max-w-[80px]">
+                {location || (hasLocationError ? "Required" : t("search.locationPlaceholder", "Location"))}
+              </span>
               {location && (
                 <span
                   onClick={(e) => {
                     e.stopPropagation();
-                    setLocation("");
+                    handleLocationChange("");
                   }}
                   className="p-0.5 hover:text-red-500"
                 >
@@ -309,23 +349,27 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
 
           {/* Expandable Smooth Location Sub-row on Mobile */}
           {showLocationInputMobile && (
-            <div className="w-full h-10 bg-zinc-900/80 border border-zinc-800/80 rounded-full px-3.5 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
-              <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+            <div className={`w-full h-10 bg-zinc-900/90 border ${
+              hasLocationError ? "border-amber-400/60 bg-amber-400/5 ring-1 ring-amber-400/30" : "border-zinc-800/80"
+            } rounded-full px-3.5 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150`}>
+              <MapPin className={`w-4 h-4 shrink-0 ${hasLocationError ? "text-amber-400" : "text-zinc-400"}`} />
               <input
                 ref={mobileLocInputRef}
                 type="text"
                 dir="auto"
                 enterKeyHint="search"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder={t("search.locationPlaceholderMobile", "Enter city or country...")}
-                className="flex-1 min-w-0 bg-transparent text-white text-xs sm:text-sm placeholder:text-zinc-500 focus:outline-none font-medium"
+                onChange={(e) => handleLocationChange(e.target.value)}
+                placeholder={hasLocationError ? "Please enter city or country..." : t("search.locationPlaceholderMobile", "Enter city or country...")}
+                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none font-medium ${
+                  hasLocationError ? "text-amber-200 placeholder:text-amber-400/70" : "text-white placeholder:text-zinc-500"
+                }`}
               />
               {location && (
                 <button
                   type="button"
                   onClick={() => {
-                    setLocation("");
+                    handleLocationChange("");
                     mobileLocInputRef.current?.focus();
                   }}
                   className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
@@ -338,6 +382,14 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           )}
         </div>
       </form>
+
+      {/* Quiet micro validation feedback */}
+      {hasLocationError && (
+        <div className="px-4 py-0.5 text-xs text-amber-300 font-medium flex items-center gap-1.5 animate-in fade-in duration-200">
+          <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Please specify a city or country to target the authentic business.</span>
+        </div>
+      )}
 
       {/* Autocomplete / Live Suggestions Dropdown */}
       {showSuggestions && suggestions.length > 0 && (
