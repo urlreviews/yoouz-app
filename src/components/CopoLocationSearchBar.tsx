@@ -56,14 +56,16 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialQuery) setBusinessName(initialQuery);
+    setBusinessName(initialQuery || "");
   }, [initialQuery]);
 
   useEffect(() => {
+    setLocation(initialLocation || initialCity || "");
     if (initialLocation || initialCity) {
-      setLocation(initialLocation || initialCity);
       setShowLocationInputMobile(true);
       setHasLocationPulse(false);
+    } else {
+      setShowLocationInputMobile(false);
     }
   }, [initialLocation, initialCity]);
 
