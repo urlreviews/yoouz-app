@@ -651,12 +651,7 @@ export function extractDomain(str: string | null | undefined): string | null {
   }
 
   if (!clean.includes(".")) {
-    const alphanumeric = clean.replace(/[^a-z0-9]/g, "");
-    if (alphanumeric.length >= 3) {
-      clean = alphanumeric + ".com";
-    } else {
-      return null;
-    }
+    return null;
   }
 
   return clean;
@@ -757,11 +752,13 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
     return YOOUZ_LOGO_DATA_URI;
   }
 
+  const clean = (nameOrDomain || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
+  const letter = (clean.charAt(0) || "B").toUpperCase();
+  const fontSize = Math.round(size * 0.52);
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" fill="#ffffff"/>
-    <path d="m${Math.round(size*0.16)} ${Math.round(size*0.35)} ${Math.round(size*0.18)} -${Math.round(size*0.18)}h${Math.round(size*0.32)}l${Math.round(size*0.18)} ${Math.round(size*0.18)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M${Math.round(size*0.22)} ${Math.round(size*0.5)}v${Math.round(size*0.32)}a${Math.round(size*0.03)} ${Math.round(size*0.03)} 0 0 0 ${Math.round(size*0.03)} ${Math.round(size*0.03)}h${Math.round(size*0.5)}a${Math.round(size*0.03)} ${Math.round(size*0.03)} 0 0 0 ${Math.round(size*0.03)} -${Math.round(size*0.03)}v-${Math.round(size*0.32)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M${Math.round(size*0.16)} ${Math.round(size*0.35)}h${Math.round(size*0.68)}" fill="none" stroke="#a1a1aa" stroke-width="${Math.max(2, Math.round(size*0.05))}" stroke-linecap="round"/>
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.2)}" fill="#18181b"/>
+    <text x="50%" y="54%" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="${fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${letter}</text>
   </svg>`;
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

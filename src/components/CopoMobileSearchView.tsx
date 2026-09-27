@@ -280,6 +280,19 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           cleanUrl = resolvedDom;
         }
       }
+
+      // If still not resolved, query backend search index
+      if (!isValidDomainUrl(cleanUrl)) {
+        try {
+          const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`);
+          if (metaResp.ok) {
+            const meta = await metaResp.json();
+            if (meta && meta.domain && isValidDomainUrl(meta.domain)) {
+              cleanUrl = meta.domain;
+            }
+          }
+        } catch(e) {}
+      }
     }
 
     // Reject non-domains that couldn't be resolved

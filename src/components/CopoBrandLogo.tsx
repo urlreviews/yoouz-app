@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Building2 } from "lucide-react";
 import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "../utils/logoUtils";
+import { isValidDomainUrl } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -24,7 +24,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   website,
   logoUrl,
   bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-zinc-200/40 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 z-30 ring-1 ring-white/20",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center p-2 z-30 ring-1 ring-white/10",
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-sm",
   loading = "lazy",
@@ -35,10 +35,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Extract clean domain from any source
   const resolvedDomain = useMemo(() => {
-    if (domain) return extractDomain(domain);
-    if (website) return extractDomain(website);
-    if (logoUrl && !logoUrl.includes("brandfetch.io") && !logoUrl.startsWith("/api/")) return extractDomain(logoUrl);
-    if (name) return extractDomain(name);
+    if (domain && isValidDomainUrl(domain)) return extractDomain(domain);
+    if (website && isValidDomainUrl(website)) return extractDomain(website);
+    if (logoUrl && !logoUrl.includes("brandfetch.io") && !logoUrl.startsWith("/api/") && isValidDomainUrl(logoUrl)) return extractDomain(logoUrl);
+    if (name && isValidDomainUrl(name)) return extractDomain(name);
     return null;
   }, [domain, website, logoUrl, name]);
 
@@ -57,7 +57,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   const googleFaviconUrl = useMemo(() => {
     if (isYoouz) return null;
-    if (resolvedDomain && resolvedDomain.includes(".")) {
+    if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
       return `/api/favicon?domain=${resolvedDomain}`;
     }
     return null;
@@ -149,7 +149,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const containerClasses = [
     !hasPosition ? "relative" : "",
     !hasOverflow ? "overflow-hidden" : "",
-    "bg-white",
     className
   ].filter(Boolean).join(" ");
 

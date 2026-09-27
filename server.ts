@@ -9708,7 +9708,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     if (rawStr.endsWith("-be")) rawStr = rawStr.replace(/-be$/, ".be");
     if (rawStr.endsWith("-co-uk")) rawStr = rawStr.replace(/-co-uk$/, ".co.uk");
 
-    const domain = rawStr.includes(".") ? rawStr : (rawStr.length > 2 ? rawStr.replace(/[^a-z0-9]/g, "") + ".com" : "");
+    const domain = rawStr.includes(".") ? rawStr : "";
     
     let banner = r.placeBannerUrl || r.bannerUrl || r.ogImage || "";
     let logo = r.placeLogoUrl || r.logoUrl || "";
@@ -18285,9 +18285,19 @@ Return JSON:
           const rowId = (row.id as string) || "";
           
           // STRICT EXCLUSION: If the cached place ID has no dot (and is not one of the protected local IDs like 'yoouz'),
-          // it is a corrupted synthetic placeholder. Ignore it so we can re-resolve the genuine website!
+          // or is a legacy fabricated domain synthesized from the business name, ignore and purge it!
+          const rawNameClean = ((row.name as string) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+          const rowIdClean = rowId.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const isFabricatedNameDomain = (
+            rawNameClean.length >= 4 &&
+            (rowIdClean === rawNameClean + "com" || rowIdClean === rawNameClean)
+          );
+
           if (!rowId.includes('.') && rowId !== "yoouz" && rowId !== "vrijens" && rowId !== "dental-care") {
             console.info(`[Database Cache Lookup] Ignored corrupted cached ID "${rowId}" (missing domain dot). Force fresh resolution!`);
+          } else if (isFabricatedNameDomain) {
+            console.info(`[Database Cache Lookup] Ignored legacy fabricated domain ID "${rowId}" for "${row.name}". Purging and re-resolving!`);
+            bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
           } else {
             let parsedData: any = {};
             if (row.data) {
@@ -18586,50 +18596,13 @@ Return JSON:
 
 
 
-    // 6. Candidate TLD checking (for single-word brand names only)
-    const slug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let resolvedDomainFromTld = "";
-    if (!cleanQ.includes(' ') && slug.length >= 3) {
-      const candidates = [
-        `${slug}.com`,
-        `${slug}.be`,
-        `${slug}.nl`,
-        `${slug}.fr`,
-        `${slug}.de`,
-        `${slug}.org`,
-        `${slug}.net`,
-        `${slug}.io`
-      ];
-
-      for (const cand of candidates) {
-        try {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 600);
-          const headRes = await fetch(`https://${cand}`, {
-            method: 'HEAD',
-            signal: ctrl.signal,
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-          });
-          clearTimeout(tid);
-          if (headRes.ok || headRes.status < 400 || headRes.status === 403) {
-            resolvedDomainFromTld = cand;
-            if (!website) website = `https://${cand}`;
-            break;
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 7. Synthetic Verified Business Object (Guarantees every new business query receives complete metadata)
-    let fallbackPlaceId = resolvedDomainFromTld || (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : slug);
-    if (fallbackPlaceId && !fallbackPlaceId.includes('.')) {
-      fallbackPlaceId = fallbackPlaceId + '.com';
-    }
+    // 6. Verified Business Object (Strictly preserves authentic data, NEVER fabricates fake domains from search queries)
+    const fallbackPlaceId = (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
     const finalCleanTitle = formatBusinessName(cleanQ);
 
     const finalResult = {
-      domain: fallbackPlaceId,
-      websiteUrl: website || `https://${fallbackPlaceId}`,
+      domain: (fallbackPlaceId && fallbackPlaceId.includes('.')) ? fallbackPlaceId : "",
+      websiteUrl: website || ((fallbackPlaceId && fallbackPlaceId.includes('.')) ? `https://${fallbackPlaceId}` : ""),
       name: finalCleanTitle,
       category: detectedCategory,
       address: "",
@@ -18639,7 +18612,7 @@ Return JSON:
       email: "",
       openingHours: "Available 24/7",
       photo: photo || "",
-      description: description || `${finalCleanTitle} is a verified business and service provider on Yoouz, committed to delivering high quality services, verified expertise, and excellent customer satisfaction.`,
+      description: description || `${finalCleanTitle} is a verified business on Yoouz.`,
       lat: 0,
       lng: 0
     };
@@ -18666,12 +18639,12 @@ Return JSON:
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
         if (resolvedEntity) {
-          let autoPlaceId = resolvedEntity.domain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          if (!autoPlaceId.includes('.')) {
-            autoPlaceId = autoPlaceId + '.com';
-          }
-          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
-          const entityBanner = resolvedEntity.photo || `https://yoouz.com/og-banner.png?v=8`;
+          const hasRealDomain = !!(resolvedEntity.domain && resolvedEntity.domain.includes('.'));
+          const realDomain = hasRealDomain ? resolvedEntity.domain : "";
+          const autoPlaceId = realDomain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          
+          const entityLogo = resolvedEntity.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
+          const entityBanner = resolvedEntity.photo || "";
 
           const entityDoc = {
             id: autoPlaceId,
@@ -18695,15 +18668,15 @@ Return JSON:
             isOpen: true,
             phone: resolvedEntity.phone || "",
             email: resolvedEntity.email || "",
-            website: resolvedEntity.websiteUrl || (autoPlaceId.includes('.') ? `https://${autoPlaceId}` : ""),
+            website: resolvedEntity.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
             priceRange: "N/A",
             plusCode: "",
             locations: [],
-            description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+            description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz.`,
             popularKeywords: [],
             amenities: ["Verified Merchant", "Direct Sync"],
             topDishes: [],
-            brandDomain: autoPlaceId
+            brandDomain: realDomain
           };
 
           try {
@@ -18725,7 +18698,7 @@ Return JSON:
             image: entityBanner,
             logo: entityLogo,
             siteName: resolvedEntity.name,
-            domain: autoPlaceId,
+            domain: realDomain,
             url: entityDoc.website,
             address: resolvedEntity.address || "",
             city: resolvedEntity.city || "",
@@ -18748,19 +18721,18 @@ Return JSON:
         // Fallback to name search rather than throwing 400
         const ent = await resolveBusinessQuery(rawQuery);
         if (ent) {
-          let autoPlaceId = ent.domain || (ent.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          if (!autoPlaceId.includes('.')) {
-            autoPlaceId = autoPlaceId + '.com';
-          }
-          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
+          const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
+          const realDomain = hasRealDomain ? ent.domain : "";
+          const autoPlaceId = realDomain || (ent.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          const entityLogo = ent.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           return res.json({
             title: ent.name,
-            description: ent.description || `${ent.name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+            description: ent.description || `${ent.name} is a verified business on Yoouz.`,
             image: ent.photo || "",
             logo: entityLogo,
             siteName: ent.name,
-            domain: autoPlaceId,
-            url: ent.websiteUrl || `https://${autoPlaceId}`,
+            domain: realDomain,
+            url: ent.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
             address: ent.address || "",
             city: ent.city || "",
             country: ent.country || "",
@@ -18821,15 +18793,16 @@ Return JSON:
             console.warn(`[Scraper CAPTCHA Block] Detected security shield or extremely thin page for ${domain}. Forcing sub-second Free Web Search resolution!`);
             const freeFallback = await resolveBusinessQuery(domain);
             if (freeFallback) {
-              const fLogo = freeFallback.photo || `/api/favicon?domain=${domain}`;
+              const targetDom = (freeFallback.domain && freeFallback.domain.includes('.')) ? freeFallback.domain : (domain.includes('.') ? domain : "");
+              const fLogo = freeFallback.photo || (targetDom ? `/api/favicon?domain=${encodeURIComponent(targetDom)}` : "");
               return res.json({
                 title: freeFallback.name,
                 description: freeFallback.description || `${freeFallback.name} is a verified local business discoverable on Yoouz, providing authentic services.`,
                 image: freeFallback.photo || "",
                 logo: fLogo,
                 siteName: freeFallback.name,
-                domain: freeFallback.domain || domain,
-                url: freeFallback.websiteUrl || `https://${domain}`,
+                domain: targetDom,
+                url: freeFallback.websiteUrl || (targetDom ? `https://${targetDom}` : ""),
                 address: freeFallback.address || "",
                 city: freeFallback.city || "Online",
                 country: freeFallback.country || "",
@@ -20668,17 +20641,8 @@ Return JSON:
   });
 
   const renderFallbackSvg = (res: any, domainStr?: string) => {
-    // Sleek dark-theme neutral business emblem (never bright colored fake letter avatars)
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
-      <rect width="256" height="256" rx="60" fill="#18181b"/>
-      <rect x="2" y="2" width="252" height="252" rx="58" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
-      <path d="M72 208V80L128 48L184 80V208M96 112H112M144 112H160M96 144H112M144 144H160M96 176H112M144 176H160" stroke="#a1a1aa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    return res.status(200).send(svg);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.status(404).send("No favicon available");
   };
 
   // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari) and prevent 404 errors
@@ -22558,7 +22522,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const subSuffix = ` • Verified 60s Review`;
       const subSuffixWidth = getTextAdvanceWidth(subSuffix, 14, false);
 
-      const rawTargetDomain = queryParams.placeDomain || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : `${placeName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`));
+      const rawTargetDomain = queryParams.placeDomain || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : placeName));
       const targetDomain = rawTargetDomain.length > 30 ? rawTargetDomain.substring(0, 28) + "..." : rawTargetDomain;
       const videoReviewLine = `Video review for ${targetDomain}`;
       const videoReviewWidth = getTextAdvanceWidth(videoReviewLine, 14, false);

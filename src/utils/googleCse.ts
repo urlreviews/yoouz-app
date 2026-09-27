@@ -31,6 +31,30 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     container.appendChild(searchDiv);
     document.body.appendChild(container);
 
+    // Inject styles to guarantee Google CSE overlay results remain completely hidden offscreen
+    if (!document.getElementById("yoouz-cse-hide-style")) {
+      const style = document.createElement("style");
+      style.id = "yoouz-cse-hide-style";
+      style.textContent = `
+        .gsc-modal-background-image,
+        .gsc-modal-background-image-visible,
+        .gsc-results-wrapper-overlay,
+        .gsc-results-wrapper-visible,
+        .gsc-overflow-hidden {
+          position: fixed !important;
+          top: -9999px !important;
+          left: -9999px !important;
+          width: 1px !important;
+          height: 1px !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          z-index: -9999 !important;
+          overflow: hidden !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     // 2. Inject Google CSE Script dynamically if not already loaded
     if (!document.querySelector('script[src*="cse.google.com"]')) {
       console.info("[Google CSE] Injecting Google CSE script...");
@@ -78,13 +102,11 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
   if (!inputEl || !buttonEl) return null;
 
-  // 4. Purge any stale result elements from previous queries
-  if (container) {
-    const oldResults = container.querySelectorAll(".gsc-webResult, .gsc-result, .gsc-expansionArea, .gsc-resultsRoot");
-    oldResults.forEach(el => {
-      try { el.remove(); } catch (e) {}
-    });
-  }
+  // 4. Purge stale web result elements across the document from previous queries
+  const oldResults = document.querySelectorAll(".gsc-webResult, .gsc-result");
+  oldResults.forEach(el => {
+    try { el.remove(); } catch (e) {}
+  });
 
   // 5. Input the search query programmatically and dispatch input/change/keydown events
   inputEl.value = cleanQ;
@@ -92,7 +114,25 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
   inputEl.dispatchEvent(new Event("change", { bubbles: true }));
   inputEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 13, code: "Enter", bubbles: true }));
 
-  // 6. Trigger search execution
+  // Also submit form if available
+  const formEl = inputEl.form || inputEl.closest("form");
+  if (formEl) {
+    try {
+      formEl.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    } catch (e) {}
+  }
+
+  // 6. Trigger search execution via official CSE element API + button click
+  try {
+    const cseElements = (window as any).google?.search?.cse?.element?.getAllElements();
+    if (cseElements) {
+      Object.values(cseElements).forEach((el: any) => {
+        if (el && typeof el.execute === "function") {
+          el.execute(cleanQ);
+        }
+      });
+    }
+  } catch (e) {}
   buttonEl.click();
   console.info("[Google CSE] Search execution triggered programmatically.");
 
@@ -125,18 +165,12 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     return null;
   };
 
-  // 7. Monitor and wait for organic search results to appear (Polling every 50ms for sub-second speed)
+  // 7. Monitor and wait for organic search results to appear (Polling every 50ms across document)
   return new Promise((resolve) => {
     const checkStartTime = Date.now();
     const resultCheckInterval = setInterval(() => {
-      if (!container) {
-        clearInterval(resultCheckInterval);
-        resolve(null);
-        return;
-      }
-
-      // Google CSE renders web result components under ".gsc-webResult" or ".gsc-result"
-      const results = container.querySelectorAll(".gsc-webResult, .gsc-result");
+      // Google CSE renders web result components under ".gsc-webResult" or ".gsc-result" in the document
+      const results = document.querySelectorAll(".gsc-webResult, .gsc-result");
       if (results && results.length > 0) {
         
         // Loop through candidate elements to find the first 100% organic website link

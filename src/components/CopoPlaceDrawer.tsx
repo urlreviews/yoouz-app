@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getDomainBrandGradient, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -412,19 +412,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
-    if (place.website && place.website.trim() !== "" && !place.website.includes("maps.google.com") && (!place.website.includes("g.com") || place.id === "g.com")) {
+    if (place.website && isValidDomainUrl(place.website) && !place.website.includes("maps.google.com") && (!place.website.includes("g.com") || place.id === "g.com")) {
       const w = place.website.trim();
       return w.startsWith("http://") || w.startsWith("https://") ? w : `https://${w}`;
     }
-    if (drawerDomain && (drawerDomain !== "g.com" || place.id === "g.com")) {
+    if (drawerDomain && isValidDomainUrl(drawerDomain) && (drawerDomain !== "g.com" || place.id === "g.com")) {
       return `https://${drawerDomain}`;
     }
-    if (place.brandDomain && (place.brandDomain !== "g.com" || place.id === "g.com")) {
+    if (place.brandDomain && isValidDomainUrl(place.brandDomain) && (place.brandDomain !== "g.com" || place.id === "g.com")) {
       const d = extractCleanDomain(place.brandDomain);
-      if (d) return `https://${d}`;
+      if (d && isValidDomainUrl(d)) return `https://${d}`;
     }
     const cleanFromId = extractCleanDomain(place.id);
-    if (cleanFromId && cleanFromId.includes(".") && (cleanFromId !== "g.com" || place.id === "g.com")) {
+    if (cleanFromId && isValidDomainUrl(cleanFromId) && (cleanFromId !== "g.com" || place.id === "g.com")) {
       return `https://${cleanFromId}`;
     }
     return null;

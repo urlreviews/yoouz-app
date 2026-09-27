@@ -268,7 +268,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
           if (metaResp.ok) {
             preloadedMeta = await metaResp.json();
-            if (preloadedMeta && preloadedMeta.domain) {
+            if (preloadedMeta && preloadedMeta.domain && isValidDomainUrl(preloadedMeta.domain)) {
               cleanUrl = preloadedMeta.domain;
             }
           }
@@ -300,33 +300,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 1. Check local places first by domain URL only
       let foundPlace = places.find(p => {
         const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-        return pDom === domain || p.id === domain || p.id === domain.replace(/[^a-zA-Z0-9]/g, "-");
+        return (isValidDomainUrl(pDom) && pDom === domain) || p.id === domain || p.id === domain.replace(/[^a-zA-Z0-9]/g, "-");
       });
 
       // 2. Set instant optimistic place so there is ZERO delay, NO blank white state, and instant logo
+      const isRealDomain = isValidDomainUrl(domain);
       const instantLogo: string = foundPlace?.logoUrl 
-        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') ? preloadedMeta.logo : "") 
-        || getCleanLogoUrl(null, domain) 
-        || `/api/favicon?domain=${domain}`;
+        || (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "") 
+        || (isRealDomain ? getCleanLogoUrl(null, domain) : "") 
+        || (isRealDomain ? `/api/favicon?domain=${domain}` : "");
       const instantBanner: string = foundPlace?.bannerUrl 
         || (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || KNOWN_BRAND_BANNERS[domain] 
+        || (isRealDomain ? KNOWN_BRAND_BANNERS[domain] : "") 
         || "";
       const instantName = preferredName
-        || (domain && KNOWN_OFFICIAL_NAMES[domain]) 
-        || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl])
+        || (isRealDomain && KNOWN_OFFICIAL_NAMES[domain]) 
+        || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || preloadedMeta?.title
         || preloadedMeta?.siteName
-        || formatBusinessName(foundPlace?.name || domain, domain)
+        || formatBusinessName(foundPlace?.name || domain, isRealDomain ? domain : undefined)
         || domain;
 
       const instantPlace: Place = foundPlace || {
-        id: domain,
+        id: isRealDomain ? domain : domain.toLowerCase().replace(/[^a-z0-9]/g, "-"),
         name: instantName,
         category: preloadedMeta?.category || "Verified Business",
         categoryType: "all",
         address: preloadedMeta?.address || "",
-        city: preloadedMeta?.city || "Online",
+        city: preloadedMeta?.city || (isRealDomain ? "Online" : ""),
         country: preloadedMeta?.country || "",
         lat: preloadedMeta?.lat || 0,
         lng: preloadedMeta?.lng || 0,
@@ -341,14 +342,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         openingHours: preloadedMeta?.openingHours || "Available 24/7",
         isOpen: true,
         phone: preloadedMeta?.phone || "",
-        website: preloadedMeta?.url || (domain.includes('.') ? `https://${domain}` : ""),
+        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url)) ? preloadedMeta.url : (isRealDomain ? `https://${domain}` : ""),
         priceRange: "N/A",
         plusCode: "",
         description: preloadedMeta?.description || "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: domain
+        brandDomain: isRealDomain ? domain : ""
       };
 
       setSearchedPlace(instantPlace);
@@ -416,13 +417,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  onAddPlace(foundPlace);
                }
              } else {
+               const hasValidDataDomain = !!(data.domain && isValidDomainUrl(data.domain));
+               const finalDomain = hasValidDataDomain ? data.domain : (isRealDomain ? domain : "");
                const newPlace: Place = {
-                 id: (data.domain || domain || "website").toLowerCase(),
-                 name: preferredName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || domain) || instantName || data.domain || domain,
+                 id: (finalDomain || domain || "website").toLowerCase(),
+                 name: preferredName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, finalDomain || domain) || instantName || domain,
                  category: data.category || "Website",
                  categoryType: "all",
                  address: data.address || "",
-                 city: data.city || "Online",
+                 city: data.city || (finalDomain ? "Online" : ""),
                  country: data.country || "",
                  lat: data.lat || 0,
                  lng: data.lng || 0,
@@ -438,7 +441,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  isOpen: true,
                  phone: data.phone || "",
                  email: data.email || "",
-                 website: data.url || `https://${domain}`,
+                 website: (data.url && isValidDomainUrl(data.url)) ? data.url : (finalDomain ? `https://${finalDomain}` : ""),
                  priceRange: "N/A",
                  plusCode: "",
                  description: data.description || "",
@@ -446,7 +449,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  amenities: [],
                  topDishes: [],
                  locations: data.locations || [],
-                 brandDomain: data.domain || domain
+                 brandDomain: finalDomain
                };
                foundPlace = newPlace;
                setSearchedPlace(newPlace);
@@ -735,10 +738,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       );
                     })()}
                   </h2>
-                  <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-sm mt-0.5 mb-2">
-                    <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
-                    <span>{searchedPlace.website ? searchedPlace.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "") : (searchedPlace.brandDomain || "Website")}</span>
-                  </a>
+                  {searchedPlace.website && isValidDomainUrl(searchedPlace.website) ? (
+                    <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-sm mt-0.5 mb-2">
+                      <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
+                      <span>{searchedPlace.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
+                    </a>
+                  ) : null}
 
                   {/* Structured Category Row & Sync Status */}
                   {(searchedPlace.category || isEnriching) && (
