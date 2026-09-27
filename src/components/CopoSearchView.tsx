@@ -180,7 +180,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
       cseUrl = await Promise.race([
         queryGoogleCseForUrl(targetQuery),
-        cseTimeout(3000)
+        cseTimeout(5000)
       ]);
     } catch (cseErr) {
       console.warn("[Search] Google CSE resolve on suggestion click timed out or failed:", cseErr);
@@ -264,7 +264,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
         cseUrl = await Promise.race([
           queryGoogleCseForUrl(rawQuery),
-          cseTimeout(3000)
+          cseTimeout(5000)
         ]);
       } catch (cseErr) {
         console.warn("[Search] Client-side Google CSE took too long or errored, falling back immediately:", cseErr);

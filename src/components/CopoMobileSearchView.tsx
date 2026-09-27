@@ -267,7 +267,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
         cseUrl = await Promise.race([
           queryGoogleCseForUrl(trimmed),
-          cseTimeout(3000)
+          cseTimeout(5000)
         ]);
       } catch (cseErr) {
         console.warn("[Search Mobile] Client-side Google CSE took too long or errored:", cseErr);
@@ -385,7 +385,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
       cseUrl = await Promise.race([
         queryGoogleCseForUrl(targetQuery),
-        cseTimeout(3000)
+        cseTimeout(5000)
       ]);
     } catch (cseErr) {
       console.warn("[Search Mobile] Google CSE resolve on suggestion click timed out or failed:", cseErr);

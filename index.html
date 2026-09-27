@@ -199,8 +199,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google CSE Client-Side Pre-warming Script -->
+    <script async src="https://cse.google.com/cse.js?cx=e41632212e69a4efd"></script>
   </head>
   <body class="h-full bg-[#0a0a0c] text-[#202124] font-['Roboto',Arial,sans-serif] antialiased select-none overscroll-none">
+    <!-- Hidden Google CSE search container rendered statically for zero-latency queries -->
+    <div id="yoouz-hidden-cse-container" class="opacity-0 pointer-events-none fixed" style="top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;">
+      <div class="gcse-search"></div>
+    </div>
     <div id="root" class="h-full">
       <!-- Lightweight splash loader for instant feedback -->
       <div id="app-splash-loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:'Google Sans',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
