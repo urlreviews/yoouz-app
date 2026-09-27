@@ -542,7 +542,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               }
 
               return (
-                <div className="w-full h-24 sm:h-32 bg-zinc-950 border-b border-zinc-800/80 relative" />
+                <div className="w-full h-24 sm:h-32 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-zinc-800/80 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(63,63,70,0.15),transparent_50%)]" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 to-transparent" />
+                </div>
               );
             })()}
 

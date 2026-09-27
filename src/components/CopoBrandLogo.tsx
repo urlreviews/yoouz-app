@@ -174,10 +174,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   return (
     <div className={containerClasses}>
-      {/* 1. Sleek Neutral Business Initial Emblem */}
+      {/* 1. Universal Premium Minimalist Business Emblem Fallback (Elegant Chrome/Zinc Globe) */}
       {(!shouldAttemptImage || !imgLoaded || hasError) && (
-        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 text-white p-2 ${imageClassName}`}>
-          <span className="font-black text-xl sm:text-2xl text-white tracking-tight">{initialLetter}</span>
+        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-gradient-to-br from-zinc-850 to-zinc-950 p-3 ${imageClassName}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-1/2 h-1/2 text-zinc-400 opacity-80" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M3.6 9h16.8M3.6 15h16.8" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M11.5 3a17 17 0 0 0 0 18m1-18a17 17 0 0 1 0 18" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
         </div>
       )}
 

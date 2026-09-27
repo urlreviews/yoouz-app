@@ -24707,12 +24707,16 @@ function injectOpenGraphTags(html: string, meta: any) {
     "healis.be": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
     "healis": { address: "Winkelom 83B/1", postalCode: "2440", city: "Geel", country: "Belgium", phone: "+32 14 86 00 00", email: "info@healis.be", category: "Pharmacy & Healthcare", lat: 51.1612, lng: 4.9912 },
     "autowerkplaatsbrugge.be": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" },
-    "autowerkplaatsbrugge": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" }
+    "autowerkplaatsbrugge": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" },
+    "chaimkevip.com": { address: "Jerusalem & Central Region, Israel", city: "Jerusalem", country: "Israel", phone: "+972 54-321-0787", category: "Transportation & VIP Bus Services", name: "חיימקה הסעות", lat: 31.7683, lng: 35.2137 },
+    "chaimkevip": { address: "Jerusalem & Central Region, Israel", city: "Jerusalem", country: "Israel", phone: "+972 54-321-0787", category: "Transportation & VIP Bus Services", name: "חיימקה הסעות", lat: 31.7683, lng: 35.2137 }
   });
 
   Object.assign(KNOWN_PLACE_METADATA, {
     "garageas.be": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
-    "garageas": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" }
+    "garageas": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
+    "chaimkevip.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" },
+    "chaimkevip": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" }
   });
 
   // Dedicated endpoint to audit and automatically repair any single-word or compound domain business names, corrupt addresses, and countries in BunnyDB
