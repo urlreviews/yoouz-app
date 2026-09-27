@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2, CheckCircle, MapPin, Globe } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
+import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
@@ -238,7 +239,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
   };
 
-  const handleSearch = async (e: React.FormEvent | string, preferredName?: string) => {
+  const handleSearch = async (
+    e: React.FormEvent | string,
+    preferredName?: string,
+    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string }
+  ) => {
     if (typeof e !== 'string') e.preventDefault();
     const raw = typeof e === 'string' ? e : query;
     if (!raw || !raw.trim()) return;
@@ -317,14 +322,17 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
       const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
-      const instantName = preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
+      const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
+      const instantCity = locationDetails?.city || "";
+      const instantCountry = locationDetails?.country || "";
       const optimisticPlace: Place = {
         id: isRealDomain ? cleanUrl.toLowerCase() : (cleanUrl.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
         name: instantName,
         category: "Verified Business",
         categoryType: "all",
-        address: "",
-        city: "",
+        address: instantCity ? `${instantCity}${instantCountry ? ', ' + instantCountry : ''}` : "",
+        city: instantCity,
+        country: instantCountry,
         lat: 0,
         lng: 0,
         rating: 5,
@@ -362,11 +370,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             onAddPlace({
               ...optimisticPlace,
-              name: preferredName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              name: preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
               category: data.category || optimisticPlace.category,
               address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
-              city: data.city || optimisticPlace.city,
-              country: data.country || optimisticPlace.country,
+              city: locationDetails?.city || data.city || optimisticPlace.city,
+              country: locationDetails?.country || data.country || optimisticPlace.country,
               phone: data.phone || optimisticPlace.phone,
               email: data.email || optimisticPlace.email,
               bannerUrl: isValidBanner ? data.image : optimisticPlace.bannerUrl,
@@ -467,55 +475,30 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   return (
     <div className={`fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans transition-transform duration-250 ease-out ${isClosing ? 'translate-y-full' : 'animate-in slide-in-from-bottom'}`}>
       
-      {/* Top Search Bar */}
-      <div className="w-full flex flex-col p-3 pt-[max(12px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950 border-b border-zinc-800 gap-2">
-        <div className="w-full flex items-center gap-3">
+      {/* Top Search Header */}
+      <div className="w-full flex flex-col p-3 pt-[max(12px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 gap-2">
+        <div className="w-full flex items-center gap-2">
           <button 
              onClick={handleBack}
-             className="text-white p-1 hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
+             className="text-white p-2 hover:bg-zinc-800 rounded-full transition-colors cursor-pointer shrink-0"
              aria-label="Back"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <form onSubmit={handleSearch} className="flex-1 relative flex items-center group">
-            <div className="absolute left-3 text-zinc-400 group-focus-within:text-white transition-colors">
-              <Search className="w-4 h-4" />
-            </div>
-            <input
-              ref={inputRef}
-              type="text"
-              className="w-full bg-zinc-900 border border-zinc-800 text-white text-[15px] rounded-lg py-2.5 pl-9 pr-9 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all placeholder:text-zinc-500"
-              placeholder={t("search.placeholder", "Search any business...")}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSubmittedQuery("");
+          <div className="flex-1 min-w-0">
+            <CopoLocationSearchBar
+              compact={false}
+              initialQuery={query}
+              autoFocus={true}
+              suggestions={mergedSuggestions}
+              onSelectSuggestion={(item) => handleSelectSuggestion(item)}
+              onSearch={(fullQuery, locationDetails) => {
+                setQuery(fullQuery);
+                handleSearch(fullQuery, locationDetails.rawBusinessName, locationDetails);
               }}
             />
-            {query && (
-              <div className="absolute right-1 flex items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setSubmittedQuery("");
-                    inputRef.current?.focus();
-                  }}
-                  className="p-1.5 text-zinc-400 hover:text-white rounded-full transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </form>
-
-          <button 
-            onClick={handleSearch}
-            className="text-white font-bold text-[14px] px-1 active:opacity-70 transition-opacity whitespace-nowrap cursor-pointer"
-          >
-            {t("common.search", "Search")}
-          </button>
+          </div>
         </div>
       </div>
       

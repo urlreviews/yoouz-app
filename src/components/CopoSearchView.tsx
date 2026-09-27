@@ -5,6 +5,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGr
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
 
@@ -186,7 +187,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   };
 
-  const handleSearch = async (e?: React.FormEvent, overrideQuery?: string, preferredName?: string) => {
+  const handleSearch = async (
+    e?: React.FormEvent,
+    overrideQuery?: string,
+    preferredName?: string,
+    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string }
+  ) => {
     if (e) e.preventDefault();
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
@@ -236,7 +242,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
       
-      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 3s max timeout
+      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 5s max timeout
       console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
       let cseUrl: string | null = null;
       try {
@@ -300,6 +306,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (isRealDomain ? KNOWN_BRAND_BANNERS[domain] : "") 
         || "";
       const instantName = preferredName
+        || locationDetails?.rawBusinessName
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[domain]) 
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || preloadedMeta?.title
@@ -308,14 +315,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || formatBusinessName(foundPlace?.name || domain, isRealDomain ? domain : undefined)
         || rawQuery;
 
+      const instantCity = locationDetails?.city || foundPlace?.city || preloadedMeta?.city || (isRealDomain ? "Online" : "");
+      const instantCountry = locationDetails?.country || foundPlace?.country || preloadedMeta?.country || "";
+
       const instantPlace: Place = foundPlace || {
         id: isRealDomain ? domain : (domain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
         name: instantName,
         category: preloadedMeta?.category || "Verified Business",
         categoryType: "all",
-        address: preloadedMeta?.address || "",
-        city: preloadedMeta?.city || (isRealDomain ? "Online" : ""),
-        country: preloadedMeta?.country || "",
+        address: preloadedMeta?.address || (instantCity ? `${instantCity}${instantCountry ? ', ' + instantCountry : ''}` : ""),
+        city: instantCity,
+        country: instantCountry,
         lat: preloadedMeta?.lat || 0,
         lng: preloadedMeta?.lng || 0,
         rating: 5,
@@ -378,9 +388,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                };
 
                const targetName = preferredName
+                 || locationDetails?.rawBusinessName
                  || (domain && KNOWN_OFFICIAL_NAMES[domain])
                  || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+                 || (!isGenericName(foundPlace.name) && !isGenericPlaceName(foundPlace.name) ? foundPlace.name : "")
                  || formatBusinessName(data.siteName || data.title, data.domain || domain)
+                 || formatBusinessName(domain)
                  || instantName;
 
                foundPlace = {
@@ -394,8 +407,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  description: foundPlace.description || data.description || "",
                  category: (foundPlace.category && foundPlace.category !== "Website" && foundPlace.category !== "General") ? foundPlace.category : (data.category || foundPlace.category || "Website"),
                  address: (data.address && (!foundPlace.address || foundPlace.address === "Verified Location" || foundPlace.address.startsWith("http"))) ? data.address : (foundPlace.address || data.address || ""),
-                 city: (foundPlace.city && foundPlace.city !== "Online" && foundPlace.city !== "Worldwide") ? foundPlace.city : (data.city || foundPlace.city || ""),
-                 country: foundPlace.country || data.country || "",
+                 city: locationDetails?.city || ((foundPlace.city && foundPlace.city !== "Online" && foundPlace.city !== "Worldwide") ? foundPlace.city : (data.city || foundPlace.city || "")),
+                 country: locationDetails?.country || foundPlace.country || data.country || "",
                  phone: foundPlace.phone || data.phone || "",
                  email: foundPlace.email || data.email || "",
                  openingHours: data.openingHours || foundPlace.openingHours || (data.hours || foundPlace.hours || "Available 24/7"),
@@ -411,12 +424,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                const finalDomain = hasValidDataDomain ? data.domain : (isRealDomain ? domain : "");
                const newPlace: Place = {
                  id: (finalDomain || domain || "website").toLowerCase(),
-                 name: preferredName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, finalDomain || domain) || instantName || domain,
+                 name: preferredName || locationDetails?.rawBusinessName || (domain && KNOWN_OFFICIAL_NAMES[domain]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, finalDomain || domain) || instantName || domain,
                  category: data.category || "Website",
                  categoryType: "all",
-                 address: data.address || "",
-                 city: data.city || (finalDomain ? "Online" : ""),
-                 country: data.country || "",
+                 address: data.address || (locationDetails?.city ? `${locationDetails.city}${locationDetails.country ? ', ' + locationDetails.country : ''}` : ""),
+                 city: locationDetails?.city || data.city || (finalDomain ? "Online" : ""),
+                 country: locationDetails?.country || data.country || "",
                  lat: data.lat || 0,
                  lng: data.lng || 0,
                  rating: 5,
@@ -515,116 +528,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           {!hideSearchBar && (
-            <div className="w-full max-w-lg relative" ref={dropdownRef}>
-              <form onSubmit={(e) => handleSearch(e)} className="w-full flex flex-col items-center">
-                <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-white/10 transition-all">
-                  <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
-                  </div>
-                  <input
-                    type="text"
-                    className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
-                    placeholder={t("search.placeholder", "Search any business...")}
-                    value={query}
-                    onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                    }}
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQuery("");
-                        setSuggestions([]);
-                        setShowDropdown(false);
-                      }}
-                      className="absolute inset-y-0 right-[5.5rem] flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
-                      title="Clear search query"
-                    >
-                      <span className="text-xl font-medium leading-none">×</span>
-                    </button>
-                  )}
-                  <div className="absolute inset-y-0 right-1.5 flex items-center">
-                    <button
-                      type="submit"
-                      disabled={isSearching}
-                      className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-200 disabled:cursor-not-allowed text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
-                    >
-                      {isSearching || isLoadingSuggest ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        t("common.search", "Search")
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
-
-              {showDropdown && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto">
-                  {suggestions.map((item, idx) => {
-                    const isDbOrBrand = item.source === "database" || item.source === "brand_index";
-                    const hasDomain = item.domain && item.domain.includes('.');
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectSuggestion(item);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          handleSelectSuggestion(item);
-                        }}
-                        className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
-                      >
-                        {isDbOrBrand && hasDomain ? (
-                          <CopoBrandLogo
-                            domain={item.domain}
-                            name={item.title}
-                            logoUrl={item.logoUrl}
-                            className="w-8 h-8 rounded-lg border border-zinc-700 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
-                            imageClassName="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 shadow-xs flex items-center justify-center overflow-hidden shrink-0 text-zinc-400 group-hover:text-white transition-colors">
-                            <Search className="w-4 h-4 text-zinc-400" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center min-w-0">
-                            <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
-                              <span>{item.title}</span>
-                              {isDbOrBrand && (
-                                <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
-                              )}
-                            </div>
-                          </div>
-                          {isDbOrBrand && (
-                            <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                              {hasDomain ? (
-                                <>
-                                  <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{item.domain.toLowerCase()}</span>
-                                  <span className="text-zinc-500">•</span>
-                                </>
-                              ) : null}
-                              <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category || "Verified Business"}</span>
-                              {item.address && (
-                                <>
-                                  <span className="text-zinc-700">•</span>
-                                  <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+            <div className="w-full max-w-xl relative" ref={dropdownRef}>
+              <CopoLocationSearchBar
+                initialQuery={query}
+                isSearching={isSearching}
+                isLoadingSuggest={isLoadingSuggest}
+                suggestions={suggestions}
+                onSelectSuggestion={(item) => handleSelectSuggestion(item)}
+                onSearch={(fullQuery, locationDetails) => {
+                  handleSearch(undefined, fullQuery, locationDetails.rawBusinessName, locationDetails);
+                }}
+              />
             </div>
           )}
         </div>
