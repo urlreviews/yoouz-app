@@ -29,6 +29,7 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   "asakim.co.il", "israelbusiness.co.il", "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "infobel.ae", 
   "chamber.org.il", "duns100.co.il", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", 
   "yellowpages.ca", "yell.com", "whitepages.com", "superpages.com", "dexknows.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  "nadlano.co.il", "madlan.co.il", "yad2.co.il", "homeless.co.il", "allbiz.co.il", "kompass.co.il", "b2b.co.il",
   
   // Legal directories
   "lawyer-il.co.il", "lawyers.org.il", "israelbar.org.il", "psakdin.co.il", "rasham.co.il", "lawyer.co.il",
@@ -88,10 +89,20 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
 /**
  * Scores a candidate URL against the search query to identify the official business domain
  */
-export function scoreCandidateUrl(url: string, query: string): number {
+export function scoreCandidateUrl(url: string, query: string, rankIndex: number = 999): number {
   if (!url || !isAllowedOrganicUrl(url)) return -1000;
   
   let score = 50;
+
+  // Major organic rank priority: Google's #1 organic result receives highest priority
+  if (rankIndex === 0) {
+    score += 1000;
+  } else if (rankIndex === 1) {
+    score += 600;
+  } else if (rankIndex === 2) {
+    score += 300;
+  }
+
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -275,7 +286,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     let pollInterval: any = null;
     let observer: MutationObserver | null = null;
     let timeoutId: any = null;
-    const candidates = new Set<string>();
+    const candidateMap = new Map<string, number>();
 
     const cleanup = () => {
       if (pollInterval) clearInterval(pollInterval);
@@ -289,19 +300,26 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       resolved = true;
       cleanup();
 
-      const candidateList = Array.from(candidates);
+      const candidateList = Array.from(candidateMap.entries());
       if (candidateList.length === 0) {
         resolve(null);
         return;
       }
 
-      // Sort candidate URLs by relevance score
-      candidateList.sort((a, b) => scoreCandidateUrl(b, cleanQ) - scoreCandidateUrl(a, cleanQ));
-      const best = candidateList[0];
-      const bestScore = scoreCandidateUrl(best, cleanQ);
+      // Sort candidate URLs by relevance score (incorporating rank index)
+      candidateList.sort((a, b) => {
+        const scoreA = scoreCandidateUrl(a[0], cleanQ, a[1]);
+        const scoreB = scoreCandidateUrl(b[0], cleanQ, b[1]);
+        return scoreB - scoreA;
+      });
+
+      const bestEntry = candidateList[0];
+      const best = bestEntry[0];
+      const bestRank = bestEntry[1];
+      const bestScore = scoreCandidateUrl(best, cleanQ, bestRank);
 
       if (bestScore >= 50) {
-        console.info(`[Google CSE] Selected best authentic URL (score ${bestScore}): ${best}`);
+        console.info(`[Google CSE] Selected best authentic URL (rank #${bestRank + 1}, score ${bestScore}): ${best}`);
         resolve(best);
       } else {
         console.warn(`[Google CSE] Highest candidate scored below confidence threshold (${bestScore}): ${best}. Rejecting directory/unmatched results.`);
@@ -316,16 +334,18 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         const item = results[i];
         const targetUrl = item.url || item.unescapedUrl || (item.richSnippet?.cseImage?.src ? item.url : null);
         if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
-          candidates.add(targetUrl);
-          // If this URL is an exact brand match, finish immediately!
-          if (scoreCandidateUrl(targetUrl, cleanQ) >= 150) {
+          if (!candidateMap.has(targetUrl)) {
+            candidateMap.set(targetUrl, i); // Save organic rank index
+          }
+          // If Google's #1 organic result is an allowed URL, finish immediately!
+          if (i === 0 || scoreCandidateUrl(targetUrl, cleanQ, i) >= 1150) {
             finishWithBestCandidate();
             return;
           }
         }
       }
 
-      if (candidates.size > 0) {
+      if (candidateMap.size > 0) {
         // Allow tiny 150ms buffer to collect any additional anchors, then finish
         setTimeout(finishWithBestCandidate, 150);
       }
@@ -372,8 +392,10 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
             const rawHref = extractTargetUrl(anchor);
             if (rawHref && isAllowedOrganicUrl(rawHref)) {
-              candidates.add(rawHref);
-              if (scoreCandidateUrl(rawHref, cleanQ) >= 150) {
+              if (!candidateMap.has(rawHref)) {
+                candidateMap.set(rawHref, i);
+              }
+              if (i === 0 || scoreCandidateUrl(rawHref, cleanQ, i) >= 1150) {
                 finishWithBestCandidate();
                 return;
               }
@@ -403,8 +425,10 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
           const rawHref = extractTargetUrl(anchor);
           if (rawHref && isAllowedOrganicUrl(rawHref)) {
-            candidates.add(rawHref);
-            if (scoreCandidateUrl(rawHref, cleanQ) >= 150) {
+            if (!candidateMap.has(rawHref)) {
+              candidateMap.set(rawHref, i);
+            }
+            if (i === 0 || scoreCandidateUrl(rawHref, cleanQ, i) >= 1150) {
               finishWithBestCandidate();
               return;
             }
@@ -412,7 +436,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         }
       }
 
-      if (candidates.size > 0) {
+      if (candidateMap.size > 0) {
         finishWithBestCandidate();
       }
     }, 100);
