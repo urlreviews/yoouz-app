@@ -25,6 +25,7 @@ export interface CopoLocationSearchBarProps {
   suggestions?: any[];
   isLoadingSuggest?: boolean;
   onSelectSuggestion?: (item: any) => void;
+  onQueryChange?: (val: string) => void;
   compact?: boolean;
   className?: string;
 }
@@ -39,6 +40,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   suggestions = [],
   isLoadingSuggest = false,
   onSelectSuggestion,
+  onQueryChange,
   className = ""
 }) => {
   const { t } = useLanguage();
@@ -161,14 +163,23 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               dir="auto"
               value={businessName}
               onChange={(e) => {
-                setBusinessName(e.target.value);
-                if (e.target.value.trim() && suggestions.length > 0) {
+                const val = e.target.value;
+                setBusinessName(val);
+                if (onQueryChange) {
+                  onQueryChange(val);
+                }
+                if (val.trim()) {
                   setShowSuggestions(true);
+                } else {
+                  setShowSuggestions(false);
                 }
               }}
               onFocus={() => {
                 setActiveField("business");
-                if (suggestions.length > 0) setShowSuggestions(true);
+                if (onQueryChange) {
+                  onQueryChange(businessName);
+                }
+                setShowSuggestions(true);
               }}
               placeholder={t("search.businessPlaceholder", "Search business...")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
@@ -268,14 +279,23 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               enterKeyHint="search"
               value={businessName}
               onChange={(e) => {
-                setBusinessName(e.target.value);
-                if (e.target.value.trim() && suggestions.length > 0) {
+                const val = e.target.value;
+                setBusinessName(val);
+                if (onQueryChange) {
+                  onQueryChange(val);
+                }
+                if (val.trim()) {
                   setShowSuggestions(true);
+                } else {
+                  setShowSuggestions(false);
                 }
               }}
               onFocus={() => {
                 setActiveField("business");
-                if (suggestions.length > 0) setShowSuggestions(true);
+                if (onQueryChange) {
+                  onQueryChange(businessName);
+                }
+                setShowSuggestions(true);
               }}
               placeholder={t("search.businessPlaceholder", "Search business...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"

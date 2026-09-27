@@ -515,6 +515,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               initialQuery={query}
               autoFocus={true}
               suggestions={mergedSuggestions}
+              onQueryChange={(val) => setQuery(val)}
               onSelectSuggestion={(item) => handleSelectSuggestion(item)}
               onSearch={(fullQuery, locationDetails) => {
                 setQuery(fullQuery);

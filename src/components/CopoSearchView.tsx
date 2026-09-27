@@ -520,6 +520,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 isSearching={isSearching}
                 isLoadingSuggest={isLoadingSuggest}
                 suggestions={suggestions}
+                onQueryChange={(val) => setQuery(val)}
                 onSelectSuggestion={(item) => handleSelectSuggestion(item)}
                 onSearch={(fullQuery, locationDetails) => {
                   handleSearch(undefined, fullQuery, locationDetails.rawBusinessName, locationDetails);
