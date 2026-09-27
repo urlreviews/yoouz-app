@@ -20156,7 +20156,7 @@ Return JSON:
             title: displayTitle,
             domain: finalDom,
             logoUrl: finalDom ? `/api/favicon?domain=${finalDom}` : "",
-            category: finalDom ? "Verified Brand" : "Google Autocomplete",
+            category: finalDom ? "Verified Brand" : "",
             source: "autocomplete"
           });
         }
