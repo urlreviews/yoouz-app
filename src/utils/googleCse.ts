@@ -8,7 +8,7 @@
  * - Direct official Google CSE element execution (native searchCallbacks & programmatic DOM trigger).
  * - Always takes the 100% genuine FIRST organic result from Google.
  * - STRICT AD AND WIKIPEDIA FILTERING: Never takes Wikipedia pages or ads as business websites.
- * - Fully non-destructive: Never removes or mutates Google CSE DOM nodes to avoid crashing the engine.
+ * - Non-destructive and safe: Never hides document.body or corrupts Google CSE elements.
  */
 
 // Global registry of disallowed non-business domains
@@ -101,88 +101,55 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
   const currentToken = ++activeQueryToken;
   console.info(`[Google CSE] Initiating free client-side query resolution #${currentToken} for: "${cleanQ}"`);
 
-  // 1. Locate or create the hidden container for the Google CSE widget
+  // Ensure container exists
   let container = document.getElementById("yoouz-hidden-cse-container");
   if (!container) {
     container = document.createElement("div");
     container.id = "yoouz-hidden-cse-container";
     container.className = "opacity-0 pointer-events-none fixed";
     container.style.cssText = "top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;";
-    
-    const searchDiv = document.createElement("div");
-    searchDiv.className = "gcse-search";
-    searchDiv.setAttribute("data-gname", "yoouz_search");
-    
-    container.appendChild(searchDiv);
     document.body.appendChild(container);
   }
 
-  // Guarantee hide styles are present in document
-  if (!document.getElementById("yoouz-cse-hide-style")) {
-    const style = document.createElement("style");
-    style.id = "yoouz-cse-hide-style";
-    style.textContent = `
-      .gsc-modal-background-image,
-      .gsc-modal-background-image-visible,
-      .gsc-results-wrapper-overlay,
-      .gsc-results-wrapper-visible,
-      .gsc-overflow-hidden {
-        position: fixed !important;
-        top: -9999px !important;
-        left: -9999px !important;
-        width: 1px !important;
-        height: 1px !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        z-index: -9999 !important;
-        overflow: hidden !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // 2. Inject Google CSE Script dynamically if not already loaded
+  // Inject Google CSE script if missing
   if (!document.querySelector('script[src*="cse.google.com"]')) {
-    console.info("[Google CSE] Injecting Google CSE script...");
     const script = document.createElement("script");
     script.async = true;
     script.src = "https://cse.google.com/cse.js?cx=e41632212e69a4efd";
     document.head.appendChild(script);
   }
 
-  let inputEl: HTMLInputElement | null = null;
-  let buttonEl: HTMLElement | null = null;
-  const maxWait = 5000;
-  const startTime = Date.now();
-
-  // 3. Wait for the Google CSE search elements to be rendered in the DOM
-  const waitForCseRender = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
+  // Wait for Google CSE element API to be initialized (up to 3.5s)
+  const waitForCseElement = (): Promise<any> => {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
       const interval = setInterval(() => {
-        if (!container) {
-          clearInterval(interval);
-          reject(new Error("Container vanished."));
-          return;
+        const g = (window as any).google?.search?.cse?.element;
+        if (g) {
+          const el = g.getElement("yoouz_search") || (g.getAllElements && Object.values(g.getAllElements())[0]);
+          if (el && typeof el.execute === "function") {
+            clearInterval(interval);
+            resolve(el);
+            return;
+          }
         }
-        inputEl = container.querySelector("input.gsc-input") as HTMLInputElement;
-        buttonEl = container.querySelector("button.gsc-search-button, input.gsc-search-button") as HTMLElement;
-
-        if (inputEl && buttonEl) {
-          clearInterval(interval);
-          resolve();
-        } else if (Date.now() - startTime > maxWait) {
-          clearInterval(interval);
-          reject(new Error("Timeout waiting for Google CSE to render interface elements."));
+        if (container) {
+          const inputEl = container.querySelector("input.gsc-input") as HTMLInputElement;
+          if (inputEl) {
+            clearInterval(interval);
+            resolve(null);
+            return;
+          }
         }
-      }, 100);
+        if (Date.now() - startTime > 3500) {
+          clearInterval(interval);
+          resolve(null);
+        }
+      }, 50);
     });
   };
 
-  try {
-    await waitForCseRender();
-  } catch (err) {
-    console.warn("[Google CSE Error] Interface rendering failed:", err);
-  }
+  const cseEl = await waitForCseElement();
 
   return new Promise((resolve) => {
     let resolved = false;
@@ -200,7 +167,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       if (currentToken !== activeQueryToken) {
         cleanup();
         resolve(null);
-        return; // Stale query from previous search
+        return;
       }
       resolved = true;
       cleanup();
@@ -212,11 +179,9 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       resolve(resultUrl);
     };
 
-    // 4. Register official callback listener for Google CSE searchCallbacks
+    // 1. Native searchCallbacks listener
     const handleNativeResults = (results: any[]) => {
       if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
-      
-      // Loop sequentially to guarantee we take the FIRST authentic organic website (100% like Google)
       for (let i = 0; i < results.length; i++) {
         const item = results[i];
         const targetUrl = item.url || item.unescapedUrl;
@@ -230,35 +195,36 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
     (window as any).__yoouzOnCseResults = handleNativeResults;
 
-    // 5. Trigger search execution via official CSE element API + button click
-    if (inputEl) {
-      inputEl.value = cleanQ;
-      inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
-      inputEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 13, code: "Enter", bubbles: true }));
-    }
-
+    // 2. Trigger search execution
     try {
-      const gnameEl = (window as any).google?.search?.cse?.element?.getElement("yoouz_search");
-      if (gnameEl && typeof gnameEl.execute === "function") {
-        gnameEl.execute(cleanQ);
+      if (cseEl && typeof cseEl.execute === "function") {
+        cseEl.execute(cleanQ);
       } else {
-        const cseElements = (window as any).google?.search?.cse?.element?.getAllElements();
-        if (cseElements) {
-          Object.values(cseElements).forEach((el: any) => {
-            if (el && typeof el.execute === "function") {
-              el.execute(cleanQ);
-            }
-          });
+        const g = (window as any).google?.search?.cse?.element;
+        if (g && typeof g.getElement === "function") {
+          const namedEl = g.getElement("yoouz_search");
+          if (namedEl && typeof namedEl.execute === "function") {
+            namedEl.execute(cleanQ);
+          }
         }
       }
     } catch (e) {}
 
-    if (buttonEl) {
-      buttonEl.click();
+    // Fallback: input typing and button click
+    if (container) {
+      const inputEl = container.querySelector("input.gsc-input") as HTMLInputElement;
+      const buttonEl = container.querySelector("button.gsc-search-button, input.gsc-search-button") as HTMLElement;
+      if (inputEl) {
+        inputEl.value = cleanQ;
+        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      if (buttonEl) {
+        buttonEl.click();
+      }
     }
 
-    // 6. Parallel DOM polling watcher (NON-DESTRUCTIVE: reads without deleting nodes)
+    // 3. Parallel DOM polling watcher (queries both hidden container and document results)
     const checkStartTime = Date.now();
     pollInterval = setInterval(() => {
       if (resolved) {
@@ -266,46 +232,37 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         return;
       }
 
-      // Query result containers in DOM
-      const resultContainers = document.querySelectorAll(
-        ".gsc-resultsRoot .gsc-webResult, .gsc-results .gsc-webResult, .gsc-expansionArea .gsc-webResult, .gsc-webResult.gsc-result"
+      const candidateAnchors = document.querySelectorAll(
+        "#yoouz-hidden-cse-container a.gs-title, .gsc-resultsRoot a.gs-title, .gsc-webResult a.gs-title, a[data-ctorig]"
       );
 
-      if (resultContainers && resultContainers.length > 0) {
-        for (let i = 0; i < resultContainers.length; i++) {
-          const resultEl = resultContainers[i] as HTMLElement;
+      if (candidateAnchors && candidateAnchors.length > 0) {
+        for (let i = 0; i < candidateAnchors.length; i++) {
+          const anchor = candidateAnchors[i] as HTMLAnchorElement;
+          const resultEl = anchor.closest(".gsc-webResult, .gsc-result, .gs-result");
+          if (resultEl) {
+            const isAd = 
+              resultEl.closest(".gsc-adBlock") || 
+              resultEl.closest(".gsc-adBlockVertical") || 
+              resultEl.closest(".gsc-adsArea") ||
+              resultEl.classList.contains("gsc-adBlock") ||
+              resultEl.classList.contains("gsc-promotion");
+            if (isAd) continue;
+          }
 
-          // Skip ad blocks and promotions
-          const isAd = 
-            resultEl.closest(".gsc-adBlock") || 
-            resultEl.closest(".gsc-adBlockVertical") || 
-            resultEl.closest(".gsc-adBlockHorizontal") || 
-            resultEl.closest(".gsc-adsArea") ||
-            resultEl.classList.contains("gsc-adBlock") ||
-            resultEl.classList.contains("gsc-promotion") ||
-            resultEl.querySelector(".gs-promotion") ||
-            resultEl.querySelector("[class*=\"adBlock\"]") ||
-            resultEl.querySelector("[class*=\"promotion\"]");
-
-          if (isAd) continue;
-
-          // Find anchor tag for the organic result title
-          const titleLink = (resultEl.querySelector("a.gs-title") || resultEl.querySelector("a[data-ctorig]") || resultEl.querySelector("a[href]")) as HTMLAnchorElement;
-          if (titleLink) {
-            const rawHref = extractTargetUrl(titleLink);
-            if (rawHref && isAllowedOrganicUrl(rawHref)) {
-              console.info(`[Google CSE DOM Watcher] Extracted 1st organic result from DOM:`, rawHref);
-              finish(rawHref);
-              return;
-            }
+          const rawHref = extractTargetUrl(anchor);
+          if (rawHref && isAllowedOrganicUrl(rawHref)) {
+            console.info(`[Google CSE DOM Watcher] Extracted 1st organic result:`, rawHref);
+            finish(rawHref);
+            return;
           }
         }
       }
 
-      // Fail-safe timeout after 4.5 seconds
+      // 4.5 seconds timeout
       if (Date.now() - checkStartTime > 4500) {
         finish(null);
       }
-    }, 75);
+    }, 60);
   });
 }

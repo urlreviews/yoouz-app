@@ -252,7 +252,20 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     // If not a domain with a dot, check KNOWN_OFFICIAL_NAMES
     if (!isValidDomainUrl(cleanUrl)) {
-      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => k.includes('.') && (v.toLowerCase() === trimmed.toLowerCase() || k.toLowerCase().startsWith(trimmed.toLowerCase())));
+      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
+        if (!k.includes('.')) return false;
+        const qL = trimmed.toLowerCase();
+        const vL = v.toLowerCase();
+        const kL = k.toLowerCase();
+        return (
+          vL === qL ||
+          kL === qL ||
+          kL.startsWith(qL) ||
+          vL.includes(qL) ||
+          qL.includes(vL) ||
+          (qL.includes("14") && kL.includes("now14"))
+        );
+      });
       if (brandMatch) {
         cleanUrl = brandMatch[0];
       }

@@ -204,8 +204,7 @@
       .gsc-modal-background-image,
       .gsc-modal-background-image-visible,
       .gsc-results-wrapper-overlay,
-      .gsc-results-wrapper-visible,
-      .gsc-overflow-hidden {
+      .gsc-results-wrapper-visible {
         position: fixed !important;
         top: -9999px !important;
         left: -9999px !important;
@@ -216,9 +215,36 @@
         z-index: -9999 !important;
         overflow: hidden !important;
       }
+      body.gsc-overflow-hidden {
+        overflow: auto !important;
+        position: static !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
     </style>
     <script>
       window.__gcse = window.__gcse || {};
+      window.__gcse.parsetags = 'explicit';
+      window.__gcse.callback = function() {
+        if (window.google && window.google.search && window.google.search.cse && window.google.search.cse.element) {
+          try {
+            window.google.search.cse.element.render({
+              div: 'yoouz-hidden-cse-container',
+              tag: 'search',
+              gname: 'yoouz_search',
+              attributes: {
+                overlayResults: false,
+                enableHistory: false,
+                enableAutoComplete: false,
+                defaultToRefinement: false
+              }
+            });
+            console.info('[Google CSE] Explicitly rendered yoouz_search successfully.');
+          } catch (e) {
+            console.warn('[Google CSE] Explicit render error:', e);
+          }
+        }
+      };
       window.__gcse.searchCallbacks = {
         web: {
           ready: function(name, q, promos, results, resultsDiv) {
@@ -246,9 +272,7 @@
   </head>
   <body class="h-full bg-[#0a0a0c] text-[#202124] font-['Roboto',Arial,sans-serif] antialiased select-none overscroll-none">
     <!-- Hidden Google CSE search container rendered statically for zero-latency queries -->
-    <div id="yoouz-hidden-cse-container" class="opacity-0 pointer-events-none fixed" style="top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;">
-      <div class="gcse-search" data-gname="yoouz_search"></div>
-    </div>
+    <div id="yoouz-hidden-cse-container" class="opacity-0 pointer-events-none fixed" style="top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;"></div>
     <div id="root" class="h-full">
       <!-- Lightweight splash loader for instant feedback -->
       <div id="app-splash-loader" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:'Google Sans',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;">

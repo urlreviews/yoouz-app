@@ -18418,7 +18418,13 @@ Return JSON:
         qLower.includes(nameLower) ||
         (dom.includes('.') && domLower.includes(qLower))
       ) {
-        const validDom = dom.includes('.') ? dom : (KNOWN_OFFICIAL_NAMES[dom] && KNOWN_OFFICIAL_NAMES[dom].includes('.') ? KNOWN_OFFICIAL_NAMES[dom] : '');
+        let validDom = dom.includes('.') ? dom : '';
+        if (!validDom) {
+          const entryWithDot = Object.entries(KNOWN_OFFICIAL_NAMES).find(
+            ([k, v]) => k.includes('.') && (v.toLowerCase() === officialName.toLowerCase() || k.toLowerCase().startsWith(domLower))
+          );
+          if (entryWithDot) validDom = entryWithDot[0];
+        }
         if (validDom) {
           const loc = KNOWN_ENTITY_LOCATIONS[validDom] || KNOWN_ENTITY_LOCATIONS[validDom.split('.')[0]];
           return {

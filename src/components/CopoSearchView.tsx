@@ -229,7 +229,20 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       if (matchingByName) {
         cleanUrl = getCleanDomainUrl(matchingByName);
       } else {
-        const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => k.includes('.') && (v.toLowerCase() === rawQuery.toLowerCase() || k.toLowerCase().startsWith(rawQuery.toLowerCase())));
+        const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
+          if (!k.includes('.')) return false;
+          const qL = rawQuery.toLowerCase().trim();
+          const vL = v.toLowerCase().trim();
+          const kL = k.toLowerCase().trim();
+          return (
+            vL === qL ||
+            kL === qL ||
+            kL.startsWith(qL) ||
+            vL.includes(qL) ||
+            qL.includes(vL) ||
+            (qL.includes("14") && kL.includes("now14"))
+          );
+        });
         if (brandMatch) {
           cleanUrl = brandMatch[0];
         }
@@ -278,7 +291,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
-    if (!isValidDomainUrl(cleanUrl) && cleanUrl.length < 2) {
+    if (!isValidDomainUrl(cleanUrl)) {
       setErrorMsg("Please enter a valid website address or business name (e.g. Starbucks, isrotel.co.il).");
       setIsSearching(false);
       return;
