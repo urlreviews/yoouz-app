@@ -351,17 +351,48 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     .filter((url, idx, arr) => arr.indexOf(url) === idx)
     .slice(0, 5);
   
-  // Autocomplete matching by clean domain URL
-  const suggestions = query.trim().length > 1 
-    ? places
-        .filter(p => {
-          const cleanUrl = getCleanDomainUrl(p);
-          const cleanQ = extractCleanDomain(query);
-          return cleanUrl.toLowerCase().includes(cleanQ.toLowerCase()) ||
-                 cleanUrl.toLowerCase().includes(query.toLowerCase().trim());
-        })
-        .slice(0, 5)
-    : [];
+  // Get instant local DB matches by checking name, domain, id or category
+  const localMatches = React.useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return [];
+    return places
+      .filter(p => {
+        const pName = (p.name || '').toLowerCase();
+        const pDom = (p.brandDomain || p.website || p.id || '').toLowerCase();
+        const pCat = (p.category || '').toLowerCase();
+        return pName.includes(trimmed) || pDom.includes(trimmed) || pCat.includes(trimmed);
+      })
+      .slice(0, 5)
+      .map(p => {
+        const dom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
+        const hasDot = dom.includes('.');
+        return {
+          id: p.id,
+          title: p.name || dom,
+          domain: hasDot ? dom : "",
+          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          category: p.category || "Verified Business",
+          address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
+          source: "database"
+        };
+      });
+  }, [query, places]);
+
+  // Combine local matches with live suggestions fetched from the server to prevent any disappearing list elements
+  const mergedSuggestions = React.useMemo(() => {
+    const seen = new Set<string>();
+    const merged = [];
+    
+    for (const item of [...localMatches, ...liveSuggestions]) {
+      const key = (item.id || item.domain || item.title || "").toLowerCase().trim();
+      if (!key) continue;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+      }
+    }
+    return merged.slice(0, 8);
+  }, [localMatches, liveSuggestions]);
 
   return (
     <div className={`fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans transition-transform duration-250 ease-out ${isClosing ? 'translate-y-full' : 'animate-in slide-in-from-bottom'}`}>
@@ -444,19 +475,25 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <div className="p-4 flex flex-col gap-6">
             
             {/* Autocomplete Suggestions */}
-            {query.length > 0 && (liveSuggestions.length > 0 || suggestions.length > 0) && (
+            {query.length > 0 && mergedSuggestions.length > 0 && (
               <div className="flex flex-col">
-                {(liveSuggestions.length > 0 ? liveSuggestions : suggestions).map((item, idx) => {
-                  const isLive = liveSuggestions.length > 0;
-                  const title = isLive ? item.title : (item.name || getCleanDomainUrl(item));
-                  const targetDomain = isLive ? item.domain : getCleanDomainUrl(item);
+                {mergedSuggestions.map((item, idx) => {
+                  const title = item.title || item.name || getCleanDomainUrl(item);
+                  const targetDomain = item.domain || getCleanDomainUrl(item);
                   const searchArg = targetDomain || title;
-                  const itemLogo = isLive ? item.logoUrl : getItemLogoUrl(targetDomain, item);
+                  const itemLogo = item.logoUrl || getItemLogoUrl(targetDomain, item);
 
                   return (
                     <button 
                       key={idx}
-                      onClick={() => handleSearch(searchArg, title)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSearch(searchArg, title);
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleSearch(searchArg, title);
+                      }}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
                       {targetDomain || itemLogo ? (
@@ -499,11 +536,27 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             );
                           })()}
                         </div>
-                        {targetDomain && (
-                          <div className="text-zinc-500 text-xs truncate">
-                            {targetDomain}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
+                          {(() => {
+                            const dispDomain = targetDomain && targetDomain.includes('.') 
+                              ? targetDomain.toLowerCase() 
+                              : ((title || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "") + ".com");
+                            const dispCat = item.category || "Verified Business";
+                            return (
+                              <>
+                                <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
+                                <span className="text-zinc-600">•</span>
+                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{dispCat}</span>
+                              </>
+                            );
+                          })()}
+                          {item.address && (
+                            <>
+                              <span className="text-zinc-700">•</span>
+                              <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
                     </button>
@@ -536,7 +589,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onClick={() => handleSearch(cleanUrl)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSearch(cleanUrl);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          handleSearch(cleanUrl);
+                        }}
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 
@@ -569,7 +629,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onClick={() => handleSearch(cleanUrl)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSearch(cleanUrl);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          handleSearch(cleanUrl);
+                        }}
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 

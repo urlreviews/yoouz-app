@@ -293,6 +293,8 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "aldhabidentalcenter": "Al Dhabi Dental Center",
   "aldhabidentalclinic": "Al Dhabi Dental Center",
   "aldhabi": "Al Dhabi Dental Center",
+  "pearldentalnyc.com": "Pearl Dental NYC",
+  "pearldentalnyc": "Pearl Dental NYC",
   "thecapitalavenue": "The Capital Avenue",
   "thecapitalavenue.com": "The Capital Avenue",
   "thecapitalavenuerealestate": "The Capital Avenue Real Estate",

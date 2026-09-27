@@ -18642,22 +18642,29 @@ Guidelines for high-fidelity data extraction:
         
         if (dbResult.rows && dbResult.rows.length > 0) {
           const row = dbResult.rows[0];
-          let parsedData: any = {};
-          if (row.data) {
-            try {
-              parsedData = JSON.parse(row.data as string);
-            } catch(e) {}
-          }
-          const data: ResolvedBusinessData = {
-            domain: (row.id as string) || parsedData.brandDomain || parsedData.domain || "",
-            websiteUrl: (parsedData.website || parsedData.websiteUrl || (row.id ? `https://${row.id}` : "")),
-            name: (row.name as string) || parsedData.title || parsedData.name || "",
-            category: (row.category as string) || parsedData.category || "Verified Business",
-            address: (row.address as string) || parsedData.address || "",
-            city: (row.city as string) || parsedData.city || "",
-            country: (row.country as string) || parsedData.country || "",
-            phone: (parsedData.phone || row.phone || "") as string,
-            email: (parsedData.email || row.email || "") as string,
+          const rowId = (row.id as string) || "";
+          
+          // STRICT EXCLUSION: If the cached place ID has no dot (and is not one of the protected local IDs like 'yoouz'),
+          // it is a corrupted synthetic placeholder. Ignore it so we can re-resolve the genuine website!
+          if (!rowId.includes('.') && rowId !== "yoouz" && rowId !== "vrijens" && rowId !== "dental-care") {
+            console.info(`[Database Cache Lookup] Ignored corrupted cached ID "${rowId}" (missing domain dot). Force fresh resolution!`);
+          } else {
+            let parsedData: any = {};
+            if (row.data) {
+              try {
+                parsedData = JSON.parse(row.data as string);
+              } catch(e) {}
+            }
+            const data: ResolvedBusinessData = {
+              domain: (row.id as string) || parsedData.brandDomain || parsedData.domain || "",
+              websiteUrl: (parsedData.website || parsedData.websiteUrl || (row.id ? `https://${row.id}` : "")),
+              name: (row.name as string) || parsedData.title || parsedData.name || "",
+              category: (row.category as string) || parsedData.category || "Verified Business",
+              address: (row.address as string) || parsedData.address || "",
+              city: (row.city as string) || parsedData.city || "",
+              country: (row.country as string) || parsedData.country || "",
+              phone: (parsedData.phone || row.phone || "") as string,
+              email: (parsedData.email || row.email || "") as string,
             openingHours: (parsedData.openingHours || "Available 24/7") as string,
             photo: (parsedData.bannerUrl || parsedData.ogImage || parsedData.image || row.logoUrl || "") as string,
             description: (parsedData.description || "") as string,
@@ -18666,9 +18673,24 @@ Guidelines for high-fidelity data extraction:
           };
           BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
           return data;
+          }
         }
       } catch (dbErr) {
         console.warn("[Database Cache Lookup Error in resolveBusinessQuery]:", dbErr);
+      }
+    }
+
+    // 0.5 Live Grounded AI Search fallback BEFORE hitting legacy scrapers or search engines
+    if (!skipGemini && getGeminiClient()) {
+      try {
+        const geminiRes = await resolveBusinessQueryWithGemini(cleanQ);
+        if (geminiRes && geminiRes.domain) {
+          BUSINESS_QUERY_CACHE.set(cacheKey, { data: geminiRes, timestamp: Date.now() });
+          await persistToDb(geminiRes);
+          return geminiRes;
+        }
+      } catch (geminiErr) {
+        console.warn("[Gemini Grounded Search Fallback in resolveBusinessQuery]:", geminiErr);
       }
     }
 
@@ -19231,12 +19253,46 @@ Guidelines for high-fidelity data extraction:
             'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US'
           },
           redirect: 'follow',
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
         });
         
         if (fetchResponse.ok) {
           finalUrl = fetchResponse.url;
           html = await fetchResponse.text();
+          
+          // Ultra-fast CAPTCHA / Security Gate Shield detection
+          const lowerHtml = (html || "").toLowerCase();
+          const isBlocked = lowerHtml.includes("sgcaptcha") || 
+                            lowerHtml.includes("captcha") || 
+                            lowerHtml.includes("cloudflare") || 
+                            lowerHtml.includes("just a moment") || 
+                            lowerHtml.includes("attention required") || 
+                            lowerHtml.includes("ddos");
+                            
+          if (isBlocked || !html || html.length < 500) {
+            console.warn(`[Scraper CAPTCHA Block] Detected security shield or extremely thin page for ${domain}. Forcing sub-second Grounded Gemini resolution!`);
+            const geminiFallback = await resolveBusinessQuery(domain);
+            if (geminiFallback) {
+              const fLogo = geminiFallback.photo || `/api/favicon?domain=${domain}`;
+              return res.json({
+                title: geminiFallback.name,
+                description: geminiFallback.description || `${geminiFallback.name} is a verified local business discoverable on Yoouz, providing authentic services.`,
+                image: geminiFallback.photo || "",
+                logo: fLogo,
+                siteName: geminiFallback.name,
+                domain: geminiFallback.domain || domain,
+                url: geminiFallback.websiteUrl || `https://${domain}`,
+                address: geminiFallback.address || "",
+                city: geminiFallback.city || "Online",
+                country: geminiFallback.country || "",
+                phone: geminiFallback.phone || "",
+                email: geminiFallback.email || "",
+                category: geminiFallback.category || "Website",
+                openingHours: geminiFallback.openingHours || "Available 24/7",
+                locations: []
+              });
+            }
+          }
           
           if (html && html.length < 5000000) {
             try {
@@ -19426,7 +19482,7 @@ Guidelines for high-fidelity data extraction:
                 if (text) extractAssetsFromText(text, finalUrl);
               });
 
-              // 2. Fetch external JS bundles (crucial for Single Page Apps: Vite, React, Vue, Angular, Hostinger Horizons, Webpack, Nuxt, Next client)
+              // 2. Fetch external JS bundles in parallel with tight timeout to prevent sequential latency
               const scriptSrcs: string[] = [];
               $('script[src]').each((i, el) => {
                 const src = $(el).attr('src');
@@ -19437,15 +19493,21 @@ Guidelines for high-fidelity data extraction:
                 }
               });
 
-              for (const src of scriptSrcs.slice(0, 4)) {
-                try {
-                  const sRes = await fetch(src, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined });
-                  if (sRes.ok) {
-                    const jsText = await sRes.text();
-                    extractAssetsFromText(jsText, finalUrl);
-                  }
-                } catch (e) {}
-              }
+              await Promise.all(
+                scriptSrcs.slice(0, 3).map(async (src) => {
+                  try {
+                    const sRes = await fetch(src, { 
+                      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1200) : undefined 
+                    });
+                    if (sRes.ok) {
+                      const jsText = await sRes.text();
+                      if (jsText && jsText.length < 500000) { // Keep bundle buffer scanning lightweight and sub-second
+                        extractAssetsFromText(jsText, finalUrl);
+                      }
+                    }
+                  } catch (e) {}
+                })
+              );
 
               // 3. Support JSON-LD schemas with strict Organization / LocalBusiness / WebSite prioritization
               let jsonLdLogo = '';

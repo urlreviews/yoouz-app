@@ -572,6 +572,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         e.preventDefault();
                         handleSelectSuggestion(item);
                       }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleSelectSuggestion(item);
+                      }}
                       className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
                     >
                       {item.domain || item.logoUrl ? (
@@ -615,25 +619,23 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                          {item.domain ? (
-                            <>
-                              <span className="text-zinc-400 font-medium truncate">{item.domain}</span>
-                              {item.category && item.category !== "Verified Business" && (
-                                <>
-                                  <span className="text-zinc-600">•</span>
-                                  <span className="text-zinc-400 truncate">{item.category}</span>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            item.category && item.category !== "Verified Business" ? (
-                              <span className="text-zinc-400 truncate">{item.category}</span>
-                            ) : null
-                          )}
+                          {(() => {
+                            const dispDomain = item.domain && item.domain.includes('.') 
+                              ? item.domain.toLowerCase() 
+                              : ((item.title || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "") + ".com");
+                            const dispCat = item.category || "Verified Business";
+                            return (
+                              <>
+                                <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
+                                <span className="text-zinc-600">•</span>
+                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{dispCat}</span>
+                              </>
+                            );
+                          })()}
                           {item.address && (
                             <>
                               <span className="text-zinc-700">•</span>
-                              <span className="text-zinc-500 truncate">{item.address}</span>
+                              <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
                             </>
                           )}
                         </div>
@@ -689,6 +691,19 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <div className="absolute right-6 -bottom-8 pointer-events-none select-none opacity-10 font-black text-9xl sm:text-[140px] text-white tracking-tighter uppercase leading-none">
                     {domainInitial}
                   </div>
+
+                  {!(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 select-none pointer-events-none animate-in fade-in duration-500">
+                      <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] max-w-lg mb-2">
+                        {searchedPlace.name}
+                      </h1>
+                      {searchedPlace.category && searchedPlace.category !== "Website" && (
+                        <p className="text-zinc-200 text-xs sm:text-sm font-extrabold tracking-widest uppercase opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                          {searchedPlace.category}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
                     <>
@@ -757,7 +772,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   </h2>
                   <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-sm mt-0.5 mb-2">
                     <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
-                    <span>{searchedPlace.brandDomain || searchedPlace.website?.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
+                    <span>{searchedPlace.website ? searchedPlace.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "") : (searchedPlace.brandDomain || "Website")}</span>
                   </a>
 
                   {/* Structured Category Row & Sync Status */}
