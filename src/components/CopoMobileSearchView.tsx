@@ -540,15 +540,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   return (
                     <button 
                       key={idx}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleSelectSuggestion(item);
-                      }}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        handleSelectSuggestion(item);
-                      }}
-                      className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                      onClick={() => handleSelectSuggestion(item)}
+                      className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
                     >
                       {isDbOrBrand && hasDomain ? (
                         <div className="w-8 h-8 rounded-lg bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
@@ -621,15 +614,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSearch(cleanUrl);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          handleSearch(cleanUrl);
-                        }}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                        onClick={() => handleSearch(cleanUrl)}
+                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 
                           term={cleanUrl}
@@ -661,15 +647,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSearch(cleanUrl);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          handleSearch(cleanUrl);
-                        }}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
+                        onClick={() => handleSearch(cleanUrl)}
+                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 
                           term={cleanUrl}
