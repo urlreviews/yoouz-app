@@ -332,12 +332,15 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // Store recent searches
-    const newRecent = [cleanUrl, ...recentSearches.filter(s => s !== cleanUrl)].slice(0, 10);
-    setRecentSearches(newRecent);
-    try {
-      localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-    } catch {}
+    // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
+    const storeTerm = cleanUrl || trimmed;
+    if (storeTerm) {
+      const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+      setRecentSearches(newRecent);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+      } catch {}
+    }
 
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
@@ -346,7 +349,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
       const optimisticPlace: Place = {
-        id: isRealDomain ? cleanUrl.toLowerCase() : (cleanUrl.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
+        id: isRealDomain ? cleanUrl.toLowerCase() : (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
         name: instantName,
         category: "Verified Business",
         categoryType: "all",
@@ -525,6 +528,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       <div className="flex-1 overflow-y-auto w-full relative">
         {submittedQuery ? (
           <CopoSearchView
+            key={submittedQuery}
             places={places}
             videos={videos}
             onSelectVideo={onSelectVideo}
