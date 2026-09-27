@@ -18674,7 +18674,7 @@ Guidelines for high-fidelity data extraction:
 
     // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
     async function persistToDb(data: ResolvedBusinessData) {
-      if (!bunnyDb || !data.domain) return;
+      if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
       try {
         const autoPlaceId = data.domain;
         const logoUrl = data.photo || `/api/favicon?domain=${data.domain}`;

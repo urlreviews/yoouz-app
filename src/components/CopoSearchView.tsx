@@ -120,13 +120,37 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   // Click outside listener to close dropdown
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: Event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Pre-load Google CSE elements statically on mount for warm start and sub-second resolution
+  useEffect(() => {
+    let container = document.getElementById("yoouz-hidden-cse-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "yoouz-hidden-cse-container";
+      container.className = "opacity-0 pointer-events-none fixed";
+      container.style.cssText = "top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;";
+      
+      const searchDiv = document.createElement("div");
+      searchDiv.className = "gcse-search";
+      
+      container.appendChild(searchDiv);
+      document.body.appendChild(container);
+    }
+
+    if (!document.querySelector('script[src*="cse.google.com"]')) {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = "https://cse.google.com/cse.js?cx=e41632212e69a4efd";
+      document.head.appendChild(script);
+    }
   }, []);
 
   const handleSelectSuggestion = (item: any) => {
@@ -200,13 +224,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
       
-      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper
+      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 2.5s max timeout
       console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
       let cseUrl: string | null = null;
       try {
-        cseUrl = await queryGoogleCseForUrl(rawQuery);
+        const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
+        cseUrl = await Promise.race([
+          queryGoogleCseForUrl(rawQuery),
+          cseTimeout(2500)
+        ]);
       } catch (cseErr) {
-        console.warn("[Search] Client-side Google CSE error:", cseErr);
+        console.warn("[Search] Client-side Google CSE took too long or errored, falling back immediately:", cseErr);
       }
 
       if (cseUrl) {
@@ -534,14 +562,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </div>
               </form>
 
-              {/* Live Auto-Suggest Dropdown */}
               {showDropdown && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto">
                   {suggestions.map((item, idx) => (
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => handleSelectSuggestion(item)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectSuggestion(item);
+                      }}
                       className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
                     >
                       {item.domain || item.logoUrl ? (
