@@ -116,16 +116,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
   const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
 
-  // Reset error & fallback whenever currentSrc, domain, or logoUrl updates
+  // Reset error & fallback state ONLY when target domain/logo props change, NEVER on currentSrc
   useEffect(() => {
     setHasError(false);
     setTriedFaviconFallback(false);
-    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
-      setImgLoaded(true);
-    } else {
-      setImgLoaded(false);
-    }
-  }, [resolvedDomain, logoUrl, currentSrc]);
+    setImgLoaded(false);
+  }, [resolvedDomain, logoUrl, name]);
 
   useEffect(() => {
     if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {

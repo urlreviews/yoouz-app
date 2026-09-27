@@ -199,6 +199,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       if (resolved) return;
       if (currentToken !== activeQueryToken) {
         cleanup();
+        resolve(null);
         return; // Stale query from previous search
       }
       resolved = true;

@@ -18480,7 +18480,17 @@ Return JSON:
       clearTimeout(tid);
       if (osmRes.ok) {
         const list = await osmRes.json();
-        if (list && list[0]) osm = list[0];
+        if (list && list[0]) {
+          const candidate = list[0];
+          const qLower = cleanQ.toLowerCase();
+          const nameLower = (candidate.name || "").toLowerCase();
+          const displayLower = (candidate.display_name || "").toLowerCase();
+          const qWords = qLower.split(/\s+/).filter((w: string) => w.length >= 2);
+          const matches = qWords.length === 0 || qWords.some((w: string) => nameLower.includes(w) || displayLower.includes(w));
+          if (matches) {
+            osm = candidate;
+          }
+        }
       }
     } catch(e) {}
 
@@ -20640,8 +20650,16 @@ Return JSON:
   });
 
   const renderFallbackSvg = (res: any, domainStr?: string) => {
-    res.setHeader("Cache-Control", "public, max-age=86400");
-    return res.status(404).send("No favicon available");
+    const rawChar = (domainStr || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim().charAt(0) || "B";
+    const letter = rawChar.toUpperCase();
+    const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="#18181b"/>
+      <rect x="1" y="1" width="126" height="126" rx="27" stroke="#27272a" stroke-width="2" fill="none"/>
+      <text x="64" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="54" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${letter}</text>
+    </svg>`;
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
+    return res.status(200).send(fallbackSvg);
   };
 
   // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari) and prevent 404 errors

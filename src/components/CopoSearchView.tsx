@@ -322,7 +322,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || domain;
 
       const instantPlace: Place = foundPlace || {
-        id: isRealDomain ? domain : domain.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+        id: isRealDomain ? domain : (domain.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
         name: instantName,
         category: preloadedMeta?.category || "Verified Business",
         categoryType: "all",
