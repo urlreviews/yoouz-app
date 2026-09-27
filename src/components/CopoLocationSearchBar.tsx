@@ -141,7 +141,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setActiveField("business");
                 if (suggestions.length > 0) setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search business, service, or website...")}
+              placeholder={t("search.businessPlaceholder", "Search business...")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
               autoFocus={autoFocus}
             />
@@ -178,7 +178,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               onFocus={() => setActiveField("location")}
-              placeholder={t("search.locationPlaceholder", "Location (optional)")}
+              placeholder={t("search.locationPlaceholder", "Location")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
             />
             {location && (
@@ -230,7 +230,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setActiveField("business");
                 if (suggestions.length > 0) setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholderMobile", "Search business or website...")}
+              placeholder={t("search.businessPlaceholder", "Search business...")}
               className="w-full bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium pr-6"
               autoFocus={autoFocus}
             />
@@ -261,7 +261,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 onFocus={() => setActiveField("location")}
-                placeholder={t("search.locationPlaceholder", "Location (optional)")}
+                placeholder={t("search.locationPlaceholder", "Location")}
                 className="w-full bg-transparent text-white text-[14px] placeholder:text-zinc-500 focus:outline-none font-medium pr-6"
               />
               {location && (
