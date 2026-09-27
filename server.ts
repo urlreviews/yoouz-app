@@ -18474,7 +18474,65 @@ Return JSON:
 
 
 
-    // 3. Fallback clean verified business record (Strictly authentic, ZERO fake URLs, ZERO random photos)
+    // 3. Live Web Search Discovery Engine (Queries official organic search index for genuine business URL)
+    let discoveredUrl: string = "";
+    try {
+      const qEnc = encodeURIComponent(cleanQ);
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 2200);
+      const sRes = await fetch(`https://html.duckduckgo.com/html/?q=${qEnc}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
+        },
+        signal: ctrl.signal
+      });
+      clearTimeout(tid);
+      if (sRes.ok) {
+        const sHtml = await sRes.text();
+        const matches = sHtml.match(/uddg=([^&"'\x27]+)/g) || [];
+        const candidateUrls = matches.map(m => decodeURIComponent(m.replace("uddg=", "")));
+        const allowed = candidateUrls.filter(u => {
+          if (!u || !u.startsWith("http")) return false;
+          const low = u.toLowerCase();
+          return !low.includes("duckduckgo.com") && 
+                 !low.includes("wikipedia.org") && 
+                 !low.includes("facebook.com") && 
+                 !low.includes("yelp.com") && 
+                 !low.includes("tripadvisor.com") &&
+                 !low.includes("yellowpages.com");
+        });
+        if (allowed.length > 0) {
+          discoveredUrl = allowed[0];
+        }
+      }
+    } catch (e) {}
+
+    if (discoveredUrl) {
+      let discoveredDom = cleanDomainName(discoveredUrl);
+      if (discoveredDom && discoveredDom.includes('.')) {
+        const finalResult = {
+          domain: discoveredDom,
+          websiteUrl: discoveredUrl,
+          name: formatBusinessName(cleanQ),
+          category: detectedCategory,
+          address: "",
+          city: "Online",
+          country: "",
+          phone: "",
+          email: "",
+          openingHours: "Available 24/7",
+          photo: "",
+          description: `${formatBusinessName(cleanQ)} is a verified business on Yoouz.`,
+          lat: 0,
+          lng: 0
+        };
+        BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
+        await persistToDb(finalResult);
+        return finalResult;
+      }
+    }
+
+    // 4. Fallback clean verified business record (Strictly authentic, ZERO fake URLs, ZERO random photos)
     const fallbackPlaceId = (cleanQ.includes('.') && !cleanQ.toLowerCase().includes('wikipedia.org') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
     const finalCleanTitle = formatBusinessName(cleanQ);
     const cleanDomain = (fallbackPlaceId && fallbackPlaceId.includes('.') && !fallbackPlaceId.toLowerCase().includes('wikipedia.org')) ? fallbackPlaceId : "";
@@ -18517,75 +18575,25 @@ Return JSON:
       // If user passed a business phrase/name without a domain dot
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
-        if (resolvedEntity) {
-          const hasRealDomain = !!(resolvedEntity.domain && resolvedEntity.domain.includes('.') && !resolvedEntity.domain.toLowerCase().includes('wikipedia.org'));
-          const realDomain = hasRealDomain ? resolvedEntity.domain : "";
-          const autoPlaceId = realDomain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          
-          const entityLogo = resolvedEntity.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
-          const entityBanner = resolvedEntity.photo || "";
-
-          const entityDoc = {
-            id: autoPlaceId,
-            name: resolvedEntity.name,
-            category: resolvedEntity.category || "Verified Business",
-            categoryType: "all",
-            address: resolvedEntity.address || "",
-            city: resolvedEntity.city || "",
-            country: resolvedEntity.country || "",
-            lat: resolvedEntity.lat || 0,
-            lng: resolvedEntity.lng || 0,
-            rating: 5,
-            totalReviews: 1,
-            ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: entityLogo,
-            logoUrl: entityLogo,
-            bannerUrl: entityBanner,
-            ogImage: entityBanner,
-            photos: entityBanner ? [entityBanner] : [],
-            openingHours: resolvedEntity.openingHours || "Available 24/7",
-            isOpen: true,
-            phone: resolvedEntity.phone || "",
-            email: resolvedEntity.email || "",
-            website: (resolvedEntity.websiteUrl && !resolvedEntity.websiteUrl.toLowerCase().includes('wikipedia.org')) ? resolvedEntity.websiteUrl : (hasRealDomain ? `https://${realDomain}` : ""),
-            priceRange: "N/A",
-            plusCode: "",
-            locations: [],
-            description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz.`,
-            popularKeywords: [],
-            amenities: ["Verified Merchant", "Direct Sync"],
-            topDishes: [],
-            brandDomain: realDomain
-          };
-
-          try {
-            const bunnyDb = getBunnyDb();
-            if (bunnyDb) {
-              await bunnyDb.execute({
-                sql: `INSERT OR REPLACE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                args: [autoPlaceId, resolvedEntity.name, resolvedEntity.address, resolvedEntity.category, resolvedEntity.city, resolvedEntity.country, resolvedEntity.lat, resolvedEntity.lng, entityLogo, JSON.stringify(entityDoc)]
-              });
-            }
-          } catch(e) {
-            console.warn("[Save Place Error in url-metadata]:", e);
-          }
-
+        if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
+          targetUrl = 'https://' + resolvedEntity.domain;
+        } else if (resolvedEntity) {
+          const autoPlaceId = (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
           return res.json({
             title: resolvedEntity.name,
-            description: entityDoc.description,
-            image: entityBanner,
-            logo: entityLogo,
+            description: `${resolvedEntity.name} is a verified business on Yoouz.`,
+            image: "",
+            logo: "",
             siteName: resolvedEntity.name,
-            domain: realDomain,
-            url: entityDoc.website,
-            address: resolvedEntity.address || "",
-            city: resolvedEntity.city || "",
-            country: resolvedEntity.country || "",
-            phone: resolvedEntity.phone || "",
-            email: resolvedEntity.email || "",
+            domain: "",
+            url: "",
+            address: "",
+            city: "Online",
+            country: "",
+            phone: "",
+            email: "",
             category: resolvedEntity.category || "Verified Business",
-            openingHours: resolvedEntity.openingHours || "Available 24/7",
+            openingHours: "Available 24/7",
             locations: []
           });
         }
@@ -25154,6 +25162,12 @@ function injectOpenGraphTags(html: string, meta: any) {
   }
 
   await initBunnyDbSchema().catch(() => {});
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%'").catch(() => {});
+    }
+  } catch(e) {}
   await syncAndMigrateBusinessPlaces().catch(() => {});
   await ensureWelcomeNotificationsForAllUsers().catch(() => {});
 

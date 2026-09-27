@@ -49,11 +49,9 @@ export function extractCleanDomain(input?: string | null): string {
   if (clean.endsWith("-site")) clean = clean.replace(/-site$/, ".site");
   if (clean.endsWith("-digital")) clean = clean.replace(/-digital$/, ".digital");
   if (clean.endsWith("-agency")) clean = clean.replace(/-agency$/, ".agency");
-  
-  // Generic fallback for any hyphenated TLD (e.g. -sa, -in, -biz)
-  if (!clean.includes(".") && /-([a-z]{2,10})$/i.test(clean)) {
-    clean = clean.replace(/-([a-z]{2,10})$/i, ".$1");
-  }
+  if (clean.endsWith("-co-il")) clean = clean.replace(/-co-il$/, ".co.il");
+  if (clean.endsWith("-biz")) clean = clean.replace(/-biz$/, ".biz");
+  if (clean.endsWith("-info")) clean = clean.replace(/-info$/, ".info");
 
   // Strip again in case of www remaining
   clean = clean.replace(/^www[\.\-\/]/, "");
