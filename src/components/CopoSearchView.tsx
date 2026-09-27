@@ -153,7 +153,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   }, []);
 
-  const handleSelectSuggestion = (item: any) => {
+  const handleSelectSuggestion = async (item: any) => {
     setShowDropdown(false);
     
     // 1. Check if it matches a local database place first for INSTANT 0ms resolution
@@ -170,10 +170,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return;
     }
 
-    // 2. If not local, fall back to standard URL search flow
-    if (item.domain && item.domain.includes('.')) {
-      setQuery(item.domain);
-      handleSearch(undefined, item.domain, item.title);
+    // 2. Since it is not a local database match, resolve its GENUINE URL via Google CSE client-side first
+    setIsSearching(true);
+    let targetQuery = item.title;
+    console.info("[Search] Selected autocomplete suggestion. Querying Google CSE for genuine URL:", targetQuery);
+    
+    let cseUrl: string | null = null;
+    try {
+      const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
+      cseUrl = await Promise.race([
+        queryGoogleCseForUrl(targetQuery),
+        cseTimeout(3000)
+      ]);
+    } catch (cseErr) {
+      console.warn("[Search] Google CSE resolve on suggestion click timed out or failed:", cseErr);
+    }
+
+    let resolvedDom = item.domain;
+    if (cseUrl) {
+      const parsedDom = extractCleanDomain(cseUrl);
+      if (isValidDomainUrl(parsedDom)) {
+        console.info("[Search] Resolved genuine domain for suggestion click via Google CSE:", parsedDom);
+        resolvedDom = parsedDom;
+      }
+    }
+
+    if (resolvedDom && resolvedDom.includes('.')) {
+      setQuery(resolvedDom);
+      handleSearch(undefined, resolvedDom, item.title);
     } else {
       setQuery(item.title);
       handleSearch(undefined, item.title, item.title);

@@ -18499,124 +18499,7 @@ Return JSON:
   const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
   async function resolveBusinessQueryWithGemini(query: string): Promise<ResolvedBusinessData | null> {
-    const ai = getGeminiClient();
-    if (!ai) return null;
-
-    const contents = `Search Google or your extensive knowledge base for the business or company corresponding to the query or domain name: "${query}".
-Identify and extract its official, authentic business details.
-Guidelines for high-fidelity data extraction:
-1. "name": The official, branded business name (proper capitalization, e.g., '172 NYC Dental' or 'B&H Photo Video'). Do NOT guess, abbreviate, or merge words unless that is their official name. Do NOT split domain compound words arbitrarily.
-2. "websiteUrl": The official homepage URL of this business (e.g., 'https://172nycdental.com' or 'https://www.bhphotovideo.com').
-3. "domain": The clean, lowercased root domain (e.g., '172nycdental.com' or 'bhphotovideo.com').
-4. "category": A concise, standard industry category (e.g., 'Dentist & Dental Clinic', 'Camera & Electronics Store', 'Legal Services', 'Restaurant & Cafe', 'Plumbing & HVAC').
-5. "address": The official physical address (street, number, suite, zip code). If it is a purely online-only brand with no physical branch, specify its headquarters address or leave empty if none.
-6. "city": The official city of the business's branch or headquarters (e.g., 'New York').
-7. "country": The official country (e.g., 'United States', 'Belgium', 'Netherlands').
-8. "phone": The official public phone number of the business.
-9. "email": The official contact email of the business. Do NOT return private/personal emails (such as 4samet@gmail.com). Leave empty if not publicly available.
-10. "openingHours": Official opening hours (e.g., 'Monday - Friday: 9:00 AM - 6:00 PM, Saturday: 10:00 AM - 5:00 PM, Sunday: Closed'). Use 'Available 24/7' only for purely digital/online SaaS/apps.
-11. "description": A concise, professional, grounded 1-2 sentence description summarizing what the business offers.`;
-
-    const schema = {
-      type: Type.OBJECT,
-      properties: {
-        name: { type: Type.STRING },
-        websiteUrl: { type: Type.STRING },
-        domain: { type: Type.STRING },
-        category: { type: Type.STRING },
-        address: { type: Type.STRING },
-        city: { type: Type.STRING },
-        country: { type: Type.STRING },
-        phone: { type: Type.STRING },
-        email: { type: Type.STRING },
-        openingHours: { type: Type.STRING },
-        description: { type: Type.STRING }
-      },
-      required: [
-        "name", "websiteUrl", "domain", "category",
-        "address", "city", "country", "phone",
-        "email", "openingHours", "description"
-      ]
-    };
-
-    let response;
-    let usedGrounding = true;
-
-    try {
-      console.info(`[Gemini Grounded Search] Resolving query "${query}" using gemini-3.8-flash with Google Search Grounding...`);
-      response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: schema,
-          tools: [{ googleSearch: {} }] // ENABLE SEARCH GROUNDING!
-        }
-      });
-    } catch (groundingError: any) {
-      console.warn("[Gemini Grounded Search Tool Quota Exhausted / Blocked]:", groundingError.message || groundingError);
-      console.info(`[Gemini Free Fallback] Retrying query "${query}" using gemini-3.8-flash without explicit grounding tools...`);
-      try {
-        usedGrounding = false;
-        response = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
-          contents,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: schema
-          }
-        });
-      } catch (fallbackError: any) {
-        console.error("[Gemini Free Fallback Error]:", fallbackError.message || fallbackError);
-        return null;
-      }
-    }
-
-    try {
-      const text = response.text?.trim();
-      if (text) {
-        const parsed = JSON.parse(text);
-        if (parsed && parsed.name && parsed.domain) {
-          console.info(`[Gemini Grounded Search] Success (Grounding: ${usedGrounding}) for "${query}": Resolved name as "${parsed.name}", website: "${parsed.websiteUrl}"`);
-          
-          let cleanEmail = (parsed.email || "").trim();
-          if (cleanEmail.toLowerCase().includes("4samet") || cleanEmail.toLowerCase().includes("samet")) {
-            cleanEmail = "";
-          }
-
-          let resolvedDomain = parsed.domain.toLowerCase().replace(/^www\./, '').trim();
-          if (!resolvedDomain.includes('.')) {
-            resolvedDomain = resolvedDomain + '.com';
-          }
-          let resolvedWebsite = (parsed.websiteUrl || "").trim();
-          if (resolvedWebsite && !resolvedWebsite.startsWith('http://') && !resolvedWebsite.startsWith('https://')) {
-            resolvedWebsite = 'https://' + resolvedWebsite;
-          }
-          if (!resolvedWebsite || !resolvedWebsite.includes('.')) {
-            resolvedWebsite = `https://${resolvedDomain}`;
-          }
-
-          return {
-            domain: resolvedDomain,
-            websiteUrl: resolvedWebsite,
-            name: parsed.name,
-            category: parsed.category || "Verified Business",
-            address: parsed.address || "",
-            city: parsed.city || "Online",
-            country: parsed.country || "",
-            phone: parsed.phone || "",
-            email: cleanEmail,
-            openingHours: parsed.openingHours || "Available 24/7",
-            photo: "", // Will be parsed/scraped
-            description: parsed.description || "",
-            lat: 0,
-            lng: 0
-          };
-        }
-      }
-    } catch (e) {
-      console.error("[Gemini Grounded Search Error]:", e);
-    }
+    console.info(`[Gemini Grounded Search] Blocked. Gemini is completely disabled for search resolution.`);
     return null;
   }
 
@@ -19136,12 +19019,15 @@ Guidelines for high-fidelity data extraction:
     }
 
     // 7. Synthetic Verified Business Object (Guarantees every new business query receives complete metadata)
-    const fallbackPlaceId = resolvedDomainFromTld || (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : slug);
+    let fallbackPlaceId = resolvedDomainFromTld || (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : slug);
+    if (fallbackPlaceId && !fallbackPlaceId.includes('.')) {
+      fallbackPlaceId = fallbackPlaceId + '.com';
+    }
     const finalCleanTitle = formatBusinessName(cleanQ);
 
     const finalResult = {
-      domain: resolvedDomainFromTld || fallbackPlaceId,
-      websiteUrl: website || (resolvedDomainFromTld ? `https://${resolvedDomainFromTld}` : (fallbackPlaceId.includes('.') ? `https://${fallbackPlaceId}` : "")),
+      domain: fallbackPlaceId,
+      websiteUrl: website || `https://${fallbackPlaceId}`,
       name: finalCleanTitle,
       category: detectedCategory,
       address: "",
@@ -20818,10 +20704,18 @@ Guidelines for high-fidelity data extraction:
             ? KNOWN_OFFICIAL_NAMES[targetDom]
             : formatBusinessName(phraseClean) || phraseClean;
 
+          let finalDom = targetDom;
+          if (!finalDom) {
+            const cleanWord = phraseClean.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+            if (cleanWord) {
+              finalDom = cleanWord + ".com";
+            }
+          }
+
           addSuggestion({
             title: displayTitle,
-            domain: targetDom,
-            logoUrl: targetDom ? `/api/favicon?domain=${targetDom}` : "",
+            domain: finalDom,
+            logoUrl: finalDom ? `/api/favicon?domain=${finalDom}` : "",
             category: "Verified Business",
             source: "autocomplete"
           });

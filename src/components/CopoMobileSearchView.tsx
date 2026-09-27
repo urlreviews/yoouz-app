@@ -6,6 +6,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { queryGoogleCseForUrl } from "../utils/googleCse";
 
 interface CopoMobileSearchViewProps {
   places: Place[];
@@ -239,7 +240,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
   };
 
-  const handleSearch = (e: React.FormEvent | string, preferredName?: string) => {
+  const handleSearch = async (e: React.FormEvent | string, preferredName?: string) => {
     if (typeof e !== 'string') e.preventDefault();
     const raw = typeof e === 'string' ? e : query;
     if (!raw || !raw.trim()) return;
@@ -254,6 +255,30 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => k.includes('.') && (v.toLowerCase() === trimmed.toLowerCase() || k.toLowerCase().startsWith(trimmed.toLowerCase())));
       if (brandMatch) {
         cleanUrl = brandMatch[0];
+      }
+    }
+
+    // If still not a valid domain, attempt to resolve via Google CSE
+    if (!isValidDomainUrl(cleanUrl)) {
+      setValidationError("");
+      console.info("[Search Mobile] Querying client-side Google CSE first for:", trimmed);
+      let cseUrl: string | null = null;
+      try {
+        const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
+        cseUrl = await Promise.race([
+          queryGoogleCseForUrl(trimmed),
+          cseTimeout(3000)
+        ]);
+      } catch (cseErr) {
+        console.warn("[Search Mobile] Client-side Google CSE took too long or errored:", cseErr);
+      }
+
+      if (cseUrl) {
+        const resolvedDom = extractCleanDomain(cseUrl);
+        if (isValidDomainUrl(resolvedDom)) {
+          console.info("[Search Mobile] Successfully resolved domain via Google CSE:", resolvedDom);
+          cleanUrl = resolvedDom;
+        }
       }
     }
 
@@ -337,6 +362,120 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     
     setQuery(cleanUrl);
     setSubmittedQuery(cleanUrl);
+  };
+
+  const handleSelectSuggestion = async (item: any) => {
+    // 1. Check if it matches a local database place first for INSTANT 0ms resolution
+    const match = findMatchingPlace(item.domain || item.id || item.title);
+    if (match) {
+      console.info("[Search Mobile] Loading local database match instantly:", match.name);
+      const cleanDom = getCleanDomainUrl(match);
+      setQuery(cleanDom);
+      setSubmittedQuery(cleanDom);
+      return;
+    }
+
+    // 2. Since it is not a local database match, resolve genuine URL via Google CSE
+    setValidationError("");
+    let targetQuery = item.title;
+    console.info("[Search Mobile] Selected autocomplete suggestion. Querying Google CSE for genuine URL:", targetQuery);
+    
+    let cseUrl: string | null = null;
+    try {
+      const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
+      cseUrl = await Promise.race([
+        queryGoogleCseForUrl(targetQuery),
+        cseTimeout(3000)
+      ]);
+    } catch (cseErr) {
+      console.warn("[Search Mobile] Google CSE resolve on suggestion click timed out or failed:", cseErr);
+    }
+
+    let resolvedDom = item.domain;
+    if (cseUrl) {
+      const parsedDom = extractCleanDomain(cseUrl);
+      if (isValidDomainUrl(parsedDom)) {
+        console.info("[Search Mobile] Resolved genuine domain via Google CSE:", parsedDom);
+        resolvedDom = parsedDom;
+      }
+    }
+
+    if (resolvedDom && isValidDomainUrl(resolvedDom)) {
+      setQuery(resolvedDom);
+      setSubmittedQuery(resolvedDom);
+      
+      // Store in recent searches
+      const newRecent = [resolvedDom, ...recentSearches.filter(s => s !== resolvedDom)].slice(0, 10);
+      setRecentSearches(newRecent);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+      } catch {}
+
+      // Add optimistic place
+      if (onAddPlace) {
+        const instantLogo = getCleanLogoUrl(null, resolvedDom) || "";
+        const instantName = item.title || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || formatBusinessName(resolvedDom) || resolvedDom;
+        const optimisticPlace: Place = {
+          id: resolvedDom.toLowerCase(),
+          name: instantName,
+          category: item.category || "Website",
+          categoryType: "all",
+          address: "",
+          city: "Online",
+          lat: 0,
+          lng: 0,
+          rating: 5,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: instantLogo,
+          logoUrl: instantLogo,
+          bannerUrl: "",
+          ogImage: "",
+          photos: [],
+          openingHours: "Available 24/7",
+          isOpen: true,
+          phone: "",
+          website: `https://${resolvedDom}`,
+          priceRange: "N/A",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          brandDomain: resolvedDom
+        };
+        onAddPlace(optimisticPlace);
+
+        // Enrich in the background
+        fetch(`/api/url-metadata?url=${encodeURIComponent(resolvedDom)}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
+              const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
+              const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
+              onAddPlace({
+                ...optimisticPlace,
+                name: (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || resolvedDom) || optimisticPlace.name,
+                category: data.category || optimisticPlace.category,
+                address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
+                city: data.city || optimisticPlace.city,
+                country: data.country || optimisticPlace.country,
+                phone: data.phone || optimisticPlace.phone,
+                email: data.email || optimisticPlace.email,
+                bannerUrl: isValidBanner ? data.image : optimisticPlace.bannerUrl,
+                ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
+                logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
+                avatarUrl: isValidLogo ? data.logo : optimisticPlace.avatarUrl,
+                description: data.description || optimisticPlace.description
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    } else {
+      setValidationError("Please enter a valid business name or website (e.g. Starbucks, isrotel.co.il)");
+      setTimeout(() => setValidationError(""), 3500);
+    }
   };
   
   // Calculate real trending places mapped to clean URLs
@@ -488,11 +627,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       key={idx}
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleSearch(searchArg, title);
+                        handleSelectSuggestion(item);
                       }}
                       onTouchStart={(e) => {
                         e.preventDefault();
-                        handleSearch(searchArg, title);
+                        handleSelectSuggestion(item);
                       }}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
