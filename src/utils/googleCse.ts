@@ -153,6 +153,12 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
                 domain = new URL(href).hostname.replace(/^www\./i, "").toLowerCase();
               } catch (e) {}
 
+              // Strictly reject Punycode / IDN squatter domains (e.g. xn--...)
+              if (domain.includes("xn--")) {
+                console.info(`[Google CSE filter] Skipped Punycode/Squatter domain: "${domain}"`);
+                continue;
+              }
+
               const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
 
               if (isDisallowed) {
@@ -167,7 +173,10 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
                 !lowerHref.includes("doubleclick.net") &&
                 !lowerHref.includes("duckduckgo.com") &&
                 !lowerHref.includes("yandex.com") &&
-                !lowerHref.includes("bing.com")
+                !lowerHref.includes("bing.com") &&
+                !lowerHref.includes("/aclk") &&
+                !lowerHref.includes("adservice") &&
+                !lowerHref.includes("pagead")
               ) {
                 console.info(`[Google CSE Success] Extracted first organic URL: "${href}"`);
                 clearInterval(resultCheckInterval);
