@@ -20508,9 +20508,6 @@ Return JSON:
       }> = [];
       const seenKeys = new Set<string>();
 
-      // 0. Instant DDG / Cache Pre-Resolution for Query (Ensures suggestions ALREADY contain real domain like vrijens.net)
-      const topEntity = await resolveBusinessQuery(q, true).catch(() => null);
-
       const addSuggestion = (item: {
         id?: string;
         title: string;
@@ -20526,15 +20523,6 @@ Return JSON:
         let dom = (item.domain || "").toLowerCase().replace(/^www\./, "").trim();
         const normTitle = item.title.toLowerCase().trim();
 
-        // If domain is missing, but topEntity exists and item.title shares brand words with topEntity or q
-        if (!dom && topEntity?.domain) {
-          const brandAnchor = (topEntity.name || q).toLowerCase();
-          const brandWords = brandAnchor.split(/\s+/).filter(w => w.length >= 2);
-          if (brandWords.length > 0 && brandWords.some(w => normTitle.includes(w))) {
-            dom = topEntity.domain;
-          }
-        }
-
         const key = dom ? `${dom}:${normTitle}` : normTitle;
         if (seenKeys.has(normTitle) && !dom) return;
         if (seenKeys.has(key)) return;
@@ -20544,34 +20532,16 @@ Return JSON:
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         const logo = item.logoUrl || (hasValidDomain ? `/api/favicon?domain=${dom}` : "");
 
-        let displayCat = item.category || topEntity?.category || "Verified Business";
-        if (displayCat === "Verified Business" && topEntity?.category && topEntity.category !== "Verified Business") {
-          displayCat = topEntity.category;
-        }
-
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
           title: item.title,
           domain: hasValidDomain ? dom : "",
           logoUrl: logo,
-          category: displayCat,
+          category: item.category || "Verified Business",
           address: item.address || "",
           source: item.source
         });
       };
-
-      if (topEntity && topEntity.domain) {
-        let cityAddr = topEntity.city && topEntity.city !== "Online" ? `${topEntity.city}${topEntity.country ? ', ' + topEntity.country : ''}` : (topEntity.address || "");
-        addSuggestion({
-          id: topEntity.domain,
-          title: topEntity.name || formatBusinessName(q),
-          domain: topEntity.domain,
-          logoUrl: `/api/favicon?domain=${topEntity.domain}`,
-          category: topEntity.category || "Verified Business",
-          address: cityAddr,
-          source: "duckduckgo_instant"
-        });
-      }
 
       // 1. Search local DB places (Instant Database Index)
       const activeDb = (global as any).bunnyDb || db;
@@ -20704,19 +20674,13 @@ Return JSON:
             ? KNOWN_OFFICIAL_NAMES[targetDom]
             : formatBusinessName(phraseClean) || phraseClean;
 
-          let finalDom = targetDom;
-          if (!finalDom) {
-            const cleanWord = phraseClean.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
-            if (cleanWord) {
-              finalDom = cleanWord + ".com";
-            }
-          }
+          let finalDom = targetDom || "";
 
           addSuggestion({
             title: displayTitle,
             domain: finalDom,
             logoUrl: finalDom ? `/api/favicon?domain=${finalDom}` : "",
-            category: "Verified Business",
+            category: finalDom ? "Verified Brand" : "Google Autocomplete",
             source: "autocomplete"
           });
         }

@@ -635,7 +635,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       }}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
-                      {targetDomain || itemLogo ? (
+                      {targetDomain && targetDomain.includes('.') ? (
                         <div className="w-8 h-8 rounded-lg bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
                           <CopoBrandLogo 
                             domain={targetDomain}
@@ -647,44 +647,30 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                         </div>
                       ) : (
                         <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400">
-                          <Building2 className="w-4 h-4 text-zinc-400" />
+                          <Search className="w-4 h-4 text-zinc-400" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-white text-[15px] font-medium">
-                          {(() => {
-                            const words = (title || "").trim().split(/\s+/);
-                            if (words.length <= 1) {
-                              return (
-                                <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                  <span>{words[0] || title}</span>
-                                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                                </span>
-                              );
-                            }
-                            const lastWord = words.pop();
-                            const mainText = words.join(" ");
-                            return (
-                              <>
-                                <span>{mainText} </span>
-                                <span className="inline-flex items-center gap-1 whitespace-nowrap">
-                                  <span>{lastWord}</span>
-                                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                                </span>
-                              </>
-                            );
-                          })()}
+                        <div className="text-white text-[15px] font-medium truncate">
+                          <span>{title}</span>
+                          {targetDomain && (
+                            <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
+                          )}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
                           {(() => {
                             const dispDomain = targetDomain && targetDomain.includes('.') 
                               ? targetDomain.toLowerCase() 
-                              : ((title || "").toLowerCase().trim().replace(/[^a-z0-9]/g, "") + ".com");
+                              : "";
                             const dispCat = item.category || "Verified Business";
                             return (
                               <>
-                                <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
-                                <span className="text-zinc-600">•</span>
+                                {dispDomain ? (
+                                  <>
+                                    <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
+                                    <span className="text-zinc-600">•</span>
+                                  </>
+                                ) : null}
                                 <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{dispCat}</span>
                               </>
                             );
