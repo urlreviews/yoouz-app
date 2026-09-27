@@ -17,13 +17,18 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   // Social networks
   "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
 
-  // Business directories & Aggregators (Global & Israeli)
-  "hakkolasakim.com", "din.co.il", "d.co.il", "dnb.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
+  // Business directories & Aggregators (Global, US, UK, EU, Israeli, UAE)
+  "bestprosintown.com", "findglocal.com", "birdeye.com", "buildzoom.com", "porch.com", "angi.com", "angieslist.com",
+  "thumbtack.com", "houzz.com", "homeadvisor.com", "expertise.com", "bark.com", "usplaces.com", "yellowbook.com",
+  "localdatabase.com", "patch.com", "yellowbot.com", "citysearch.com", "ezlocal.com", "merchantcircle.com",
+  "topratedlocal.com", "cylex.us", "cylex.com", "cylex-israel.com", "cylex-bedrijvensgids.be", "cylex-uk.co.uk",
+  "hotfrog.com", "showmelocal.com", "local.com", "kudzu.com", "bizwiki.com", "manta.com", "opengovus.com",
+  "alignable.com", "nextdoor.com", "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "dnb.com", "dnb.co.il",
+  "hakkolasakim.com", "din.co.il", "d.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
   "top10.co.il", "opentenders.co.il", "bhol.co.il", "zap.co.il", "t.co.il", "b144.co.il", "index.co.il", 
-  "asakim.co.il", "israelbusiness.co.il", "cylex-israel.com", "cylex.com", "cylex-bedrijvensgids.be", "cylex-uk.co.uk",
-  "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "infobel.ae", "chamber.org.il", "duns100.co.il",
-  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yellowpages.ca", "yell.com", 
-  "whitepages.com", "superpages.com", "dexknows.com", "manta.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  "asakim.co.il", "israelbusiness.co.il", "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "infobel.ae", 
+  "chamber.org.il", "duns100.co.il", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", 
+  "yellowpages.ca", "yell.com", "whitepages.com", "superpages.com", "dexknows.com", "zocdoc.com", "glassdoor.com", "indeed.com",
   
   // Legal directories
   "lawyer-il.co.il", "lawyers.org.il", "israelbar.org.il", "psakdin.co.il", "rasham.co.il", "lawyer.co.il",
@@ -31,8 +36,7 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   "superlawyers.com", "legal500.com", "chambers.com", "bestlawyers.com", "lawyer.com", "usnews.com",
 
   // Review portals & B2B directories
-  "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "dnb.com", 
-  "zoominfo.com", "crunchbase.com", "pitchbook.com", "apollo.io", "lusha.com", "owler.com", "craft.co",
+  "clutch.co", "goodfirms.co", "zoominfo.com", "crunchbase.com", "pitchbook.com", "apollo.io", "lusha.com", "owler.com", "craft.co",
   "dubaibizdirectory.com", "chamberofcommerce.com", "mapquest.com", "waze.com", "kompass.com", "europages.com",
   "opencorporates.com", "corporationwiki.com", "companieshouse.gov.uk", "sunbiz.org", "bizapedia.com",
   "localemirates.com", "2gis.ae", "2gis.com", "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
@@ -99,40 +103,81 @@ export function scoreCandidateUrl(url: string, query: string): number {
   const domainRoot = hostname.split(".")[0];
   const pathname = parsed.pathname.toLowerCase();
 
-  // 1. Check query brand & location keywords
-  const genericWords = new Set(["and", "the", "in", "at", "of", "for", "group", "services", "ltd", "inc", "llc", "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים"]);
-  const queryWords = query
+  // Disallow directory path patterns immediately
+  if (
+    pathname.includes("/ca/") ||
+    pathname.includes("/us/") ||
+    pathname.includes("/uk/") ||
+    pathname.includes("/ny/") ||
+    pathname.includes("/fl/") ||
+    pathname.includes("/tx/") ||
+    pathname.includes("/city/") ||
+    pathname.includes("/location/") ||
+    pathname.includes("/lawyers/") ||
+    pathname.includes("/attorneys/") ||
+    pathname.includes("/profile/") ||
+    pathname.includes("/listing/") ||
+    pathname.includes("/business/") ||
+    pathname.includes("/company/") ||
+    pathname.includes("/biz/") ||
+    pathname.includes("/pros/") ||
+    pathname.includes("/contractors/") ||
+    pathname.includes("/plumbers/") ||
+    pathname.includes("/reviews/") ||
+    pathname.includes("-077-") ||
+    pathname.includes("-03-") ||
+    pathname.includes("-05") ||
+    /\d{7,}/.test(pathname)
+  ) {
+    // If hostname doesn't match the brand keywords, this is 100% an aggregator profile
+    score -= 800;
+  }
+
+  // 1. Extract core brand keywords (filter out generic category words & locations)
+  const genericWords = new Set([
+    "and", "the", "in", "at", "of", "for", "group", "services", "service", "ltd", "inc", "llc", "corp", "co",
+    "plumber", "plumbers", "plumbing", "contractor", "contractors", "electrician", "electricians", "cleaners",
+    "lawyer", "lawyers", "law", "firm", "attorney", "attorneys", "dentist", "dentists", "dental",
+    "doctor", "doctors", "clinic", "hospital", "hotel", "hotels", "motel", "resort",
+    "san", "diego", "los", "angeles", "new", "york", "chicago", "houston", "london", "paris", "dubai", "tel", "aviv",
+    "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים", "עסקים", "ישראל", "תל", "אביב", "ירושלים", "חיפה"
+  ]);
+
+  const allQueryWords = query
     .toLowerCase()
     .replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\s]/g, " ")
     .split(/\s+/)
-    .filter(w => w.length >= 3 && !genericWords.has(w));
+    .filter(w => w.length >= 2);
 
-  for (const word of queryWords) {
+  const brandWords = allQueryWords.filter(w => w.length >= 3 && !genericWords.has(w));
+  const wordsToMatch = brandWords.length > 0 ? brandWords : allQueryWords.filter(w => w.length >= 3);
+
+  let matchedBrandWords = 0;
+  for (const word of wordsToMatch) {
     if (hostname.includes(word) || domainRoot.includes(word)) {
-      score += 150; // Distinctive keyword/city/brand matched in domain (e.g. "gent" in "thcgent.be", "truman" in "truman.co.il")
+      matchedBrandWords++;
+      score += 250; // High reward for matching brand keyword in domain
     }
+  }
+
+  // Exact brand compound match (e.g. "eliterooter" in "eliterootersocal.com" or "thcgent" in "thcgent.be")
+  if (wordsToMatch.length >= 2) {
+    const combinedBrand = wordsToMatch.join("");
+    if (hostname.includes(combinedBrand)) {
+      score += 400;
+    }
+  }
+
+  // If none of the brand words matched in the hostname, heavily penalize non-root domains
+  if (wordsToMatch.length > 0 && matchedBrandWords === 0) {
+    score -= 400;
   }
 
   // 2. Root domain vs deep directory path
   if (pathname === "/" || pathname === "" || pathname.split("/").filter(Boolean).length <= 1) {
-    score += 40; // Homepage or clean top-level domain
+    score += 60; // Clean homepage / root domain
   } else {
-    // Penalize directory-like deep path slugs
-    if (
-      pathname.includes("/lawyers/") ||
-      pathname.includes("/attorneys/") ||
-      pathname.includes("/profile/") ||
-      pathname.includes("/listing/") ||
-      pathname.includes("/business/") ||
-      pathname.includes("/company/") ||
-      pathname.includes("/biz/") ||
-      pathname.includes("-077-") ||
-      pathname.includes("-03-") ||
-      pathname.includes("-05") ||
-      /\d{7,}/.test(pathname)
-    ) {
-      score -= 100;
-    }
+    score -= 100;
   }
 
   return score;
@@ -255,10 +300,11 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       const best = candidateList[0];
       const bestScore = scoreCandidateUrl(best, cleanQ);
 
-      if (bestScore > -500) {
+      if (bestScore >= 50) {
         console.info(`[Google CSE] Selected best authentic URL (score ${bestScore}): ${best}`);
         resolve(best);
       } else {
+        console.warn(`[Google CSE] Highest candidate scored below confidence threshold (${bestScore}): ${best}. Rejecting directory/unmatched results.`);
         resolve(null);
       }
     };
