@@ -192,6 +192,13 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "cleanton-management.co.il": "קלינטון ניהול ואחזקות",
+  "www.cleanton-management.co.il": "קלינטון ניהול ואחזקות",
+  "cleanton-management": "קלינטון ניהול ואחזקות",
+  "cleanton.co.il": "קלינטון ניהול ואחזקות",
+  "www.cleanton.co.il": "קלינטון ניהול ואחזקות",
+  "cleanton": "קלינטון ניהול ואחזקות",
+  "קלינטון ניהול ואחזקות": "קלינטון ניהול ואחזקות",
   "starbucks.com": "Starbucks",
   "starbucks": "Starbucks",
   "nike.com": "Nike",

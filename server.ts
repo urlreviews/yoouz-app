@@ -20606,12 +20606,12 @@ Return JSON:
   });
 
   const renderFallbackSvg = (res: any, domainStr?: string) => {
-    const rawChar = (domainStr || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim().charAt(0) || "B";
-    const letter = rawChar.toUpperCase();
-    const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-      <rect width="128" height="128" rx="28" fill="#18181b"/>
-      <rect x="1" y="1" width="126" height="126" rx="27" stroke="#27272a" stroke-width="2" fill="none"/>
-      <text x="64" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="54" font-weight="900" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${letter}</text>
+    const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#18181b"/>
+      <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.15)" stroke-width="0.8"/>
+      <circle cx="12" cy="12" r="6.5" stroke="#a1a1aa" stroke-width="1.2"/>
+      <path d="M6 10h12M6 14h12" stroke="#a1a1aa" stroke-width="1.2"/>
+      <path d="M11.5 5.5a11 11 0 0 0 0 13m1-13a11 11 0 0 1 0 13" stroke="#a1a1aa" stroke-width="1.2"/>
     </svg>`;
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
@@ -23198,7 +23198,24 @@ function escapeXml(unsafe: string) {
   });
 }
 
+const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#0f172a"/>
+  <circle cx="50" cy="50" r="38" fill="none" stroke="#eab308" stroke-width="2"/>
+  <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M35 75 V45 L50 32 L65 45 V75 Z" />
+    <path d="M45 75 V55 L50 50 L55 55 V75 Z" stroke="#fbbf24" stroke-width="2" />
+    <line x1="28" y1="75" x2="72" y2="75" stroke-width="2" />
+    <line x1="50" y1="32" x2="50" y2="75" stroke="#fbbf24" stroke-width="1" stroke-dasharray="2 2" />
+  </g>
+</svg>`;
+
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "cleanton-management.co.il": CLEANTON_LOGO_SVG,
+  "www.cleanton-management.co.il": CLEANTON_LOGO_SVG,
+  "cleanton-management": CLEANTON_LOGO_SVG,
+  "cleanton.co.il": CLEANTON_LOGO_SVG,
+  "www.cleanton.co.il": CLEANTON_LOGO_SVG,
+  "cleanton": CLEANTON_LOGO_SVG,
   "yoouz.com": "https://www.yoouz.com/favicon.svg",
   "www.yoouz.com": "https://www.yoouz.com/favicon.svg",
   "tajhotels.com": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
@@ -23352,34 +23369,31 @@ function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): str
   const raw = (nameOrDomain || "Business").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
   const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
   
-  let letters = "";
   if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
-    letters = "L500";
-  } else {
-    const words = clean.split(/[\s\-_\.]+/).filter(w => w.length > 0);
-    if (words.length >= 2) {
-      letters = words.slice(0, 3).map(w => w[0].toUpperCase()).join("");
-    } else if (clean.length > 0) {
-      letters = clean.substring(0, Math.min(3, clean.length)).toUpperCase();
-    } else {
-      letters = "B";
-    }
+    const letters = "L500";
+    const isGold = true;
+    const textColor = "#eab308";
+    const fontSize = Math.round(size * 0.28);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+      <defs>
+        <linearGradient id="monoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#18181b"/>
+          <stop offset="100%" stop-color="#09090b"/>
+        </linearGradient>
+      </defs>
+      <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="url(#monoGrad)"/>
+      <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="#27272a" stroke-width="3"/>
+      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${escapeXml(letters)}</text>
+    </svg>`;
   }
 
-  const isGold = letters === "L500" || letters.startsWith("L5");
-  const textColor = isGold ? "#eab308" : "#ffffff";
-  const fontSize = letters.length > 3 ? Math.round(size * 0.28) : letters.length > 2 ? Math.round(size * 0.34) : Math.round(size * 0.44);
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <defs>
-      <linearGradient id="monoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#18181b"/>
-        <stop offset="100%" stop-color="#09090b"/>
-      </linearGradient>
-    </defs>
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="url(#monoGrad)"/>
-    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="#27272a" stroke-width="3"/>
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${escapeXml(letters)}</text>
+  // Universal premium wireframe globe fallback for all other unbranded businesses
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none">
+    <rect width="24" height="24" rx="6" fill="#18181b"/>
+    <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.15)" stroke-width="0.8"/>
+    <circle cx="12" cy="12" r="6.5" stroke="#a1a1aa" stroke-width="1.2"/>
+    <path d="M6 10h12M6 14h12" stroke="#a1a1aa" stroke-width="1.2"/>
+    <path d="M11.5 5.5a11 11 0 0 0 0 13m1-13a11 11 0 0 1 0 13" stroke="#a1a1aa" stroke-width="1.2"/>
   </svg>`;
 }
 
@@ -24709,14 +24723,22 @@ function injectOpenGraphTags(html: string, meta: any) {
     "autowerkplaatsbrugge.be": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" },
     "autowerkplaatsbrugge": { address: "Maalsesteenweg 359A", postalCode: "8310", city: "St-Kruis (Brugge)", country: "Belgium", phone: "+32 50 37 67 46", email: "", category: "Auto Repair & Garage", lat: 51.2135, lng: 3.2541, name: "Auto Werkplaats Brugge" },
     "chaimkevip.com": { address: "Jerusalem & Central Region, Israel", city: "Jerusalem", country: "Israel", phone: "+972 54-321-0787", category: "Transportation & VIP Bus Services", name: "חיימקה הסעות", lat: 31.7683, lng: 35.2137 },
-    "chaimkevip": { address: "Jerusalem & Central Region, Israel", city: "Jerusalem", country: "Israel", phone: "+972 54-321-0787", category: "Transportation & VIP Bus Services", name: "חיימקה הסעות", lat: 31.7683, lng: 35.2137 }
+    "chaimkevip": { address: "Jerusalem & Central Region, Israel", city: "Jerusalem", country: "Israel", phone: "+972 54-321-0787", category: "Transportation & VIP Bus Services", name: "חיימקה הסעות", lat: 31.7683, lng: 35.2137 },
+    "cleanton-management.co.il": { address: "דרך מנחם בגין 154", city: "תל אביב יפו", country: "Israel", phone: "+972 3-550-3851", email: "cleantonn@gmail.com", category: "Building & Property Management", name: "קלינטון ניהול ואחזקות", lat: 32.0735, lng: 34.7915 },
+    "cleanton-management": { address: "דרך מנחם בגין 154", city: "תל אביב יפו", country: "Israel", phone: "+972 3-550-3851", email: "cleantonn@gmail.com", category: "Building & Property Management", name: "קלינטון ניהול ואחזקות", lat: 32.0735, lng: 34.7915 },
+    "cleanton.co.il": { address: "דרך מנחם בגין 154", city: "תל אביב יפו", country: "Israel", phone: "+972 3-550-3851", email: "cleantonn@gmail.com", category: "Building & Property Management", name: "קלינטון ניהול ואחזקות", lat: 32.0735, lng: 34.7915 },
+    "cleanton": { address: "דרך מנחם בגין 154", city: "תל אביב יפו", country: "Israel", phone: "+972 3-550-3851", email: "cleantonn@gmail.com", category: "Building & Property Management", name: "קלינטון ניהול ואחזקות", lat: 32.0735, lng: 34.7915 }
   });
 
   Object.assign(KNOWN_PLACE_METADATA, {
     "garageas.be": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
     "garageas": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
     "chaimkevip.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" },
-    "chaimkevip": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" }
+    "chaimkevip": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" },
+    "cleanton-management.co.il": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
+    "cleanton-management": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
+    "cleanton.co.il": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
+    "cleanton": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" }
   });
 
   // Dedicated endpoint to audit and automatically repair any single-word or compound domain business names, corrupt addresses, and countries in BunnyDB

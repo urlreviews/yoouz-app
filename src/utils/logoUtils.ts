@@ -39,11 +39,30 @@ export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="51
 
 export const YOOUZ_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(YOOUZ_LOGO_SVG)}`;
 
+const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#0f172a"/>
+  <circle cx="50" cy="50" r="38" fill="none" stroke="#eab308" stroke-width="2"/>
+  <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M35 75 V45 L50 32 L65 45 V75 Z" />
+    <path d="M45 75 V55 L50 50 L55 55 V75 Z" stroke="#fbbf24" stroke-width="2" />
+    <line x1="28" y1="75" x2="72" y2="75" stroke-width="2" />
+    <line x1="50" y1="32" x2="50" y2="75" stroke="#fbbf24" stroke-width="1" stroke-dasharray="2 2" />
+  </g>
+</svg>`;
+
+export const CLEANTON_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(CLEANTON_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
   "yoouz": YOOUZ_LOGO_DATA_URI,
+  "cleanton-management.co.il": CLEANTON_LOGO_DATA_URI,
+  "www.cleanton-management.co.il": CLEANTON_LOGO_DATA_URI,
+  "cleanton-management": CLEANTON_LOGO_DATA_URI,
+  "cleanton.co.il": CLEANTON_LOGO_DATA_URI,
+  "www.cleanton.co.il": CLEANTON_LOGO_DATA_URI,
+  "cleanton": CLEANTON_LOGO_DATA_URI,
   "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/logo-vip.png",
   "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/logo-vip.png",
   "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/logo-vip.png",
@@ -504,6 +523,12 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+  "cleanton-management.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.cleanton-management.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "cleanton-management": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "cleanton": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
