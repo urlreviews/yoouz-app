@@ -454,7 +454,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   return (
     <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
       {!searchedPlace ? (
-        <div className={`w-full max-w-2xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[10vh]'}`}>
+        <div className={`w-full max-w-3xl lg:max-w-4xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[10vh]'}`}>
           {/* Central Logo / Icon */}
           {!isMobileModal && (
             <>
@@ -473,7 +473,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           {!hideSearchBar && (
-            <div className="w-full max-w-xl relative" ref={dropdownRef}>
+            <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl px-2 sm:px-4 relative" ref={dropdownRef}>
               <CopoLocationSearchBar
                 initialQuery={query}
                 isSearching={isSearching}
