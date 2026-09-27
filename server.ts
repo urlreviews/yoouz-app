@@ -9222,6 +9222,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     "mcveaghfleming.co.nz": { name: "McVeagh Fleming Lawyers", address: "Level 14/188 Quay St, Auckland CBD", city: "Auckland", country: "New Zealand", phone: "+64 9 377 9966", category: "Legal Services", lat: -36.8436, lng: 174.7663 },
     "digitalpark.ae": { name: "Digital Park", address: "Dubai Silicon Oasis", city: "Dubai", country: "United Arab Emirates", phone: "+971 4 501 5555", category: "Technology & Coworking", lat: 25.1228, lng: 55.3783 },
     "aldhabidental.ae": { name: "Al Dhabi Dental Center", address: "Al Khalidiyah", city: "Abu Dhabi", country: "United Arab Emirates", phone: "+971 2 666 6120", category: "Dentist & Dental Clinic", lat: 24.4754, lng: 54.3475 },
+    "hbjadvocates.com": { name: "Hamad Bin Jarwan Advocates & Legal Consultants", address: "Office 502, Building C40, Audi Showroom, Rashed Bin Saeed St, Al Rawda", city: "Abu Dhabi", country: "United Arab Emirates", phone: "+971 2 444 4261", email: "info@hbjadvocates.com", category: "Legal Services", openingHours: "Sun - Thu: 08:30 - 18:00 · Fri & Sat: Closed", lat: 24.4419, lng: 54.3986 },
+    "www.hbjadvocates.com": { name: "Hamad Bin Jarwan Advocates & Legal Consultants", address: "Office 502, Building C40, Audi Showroom, Rashed Bin Saeed St, Al Rawda", city: "Abu Dhabi", country: "United Arab Emirates", phone: "+971 2 444 4261", email: "info@hbjadvocates.com", category: "Legal Services", openingHours: "Sun - Thu: 08:30 - 18:00 · Fri & Sat: Closed", lat: 24.4419, lng: 54.3986 },
+    "hbjadvocates": { name: "Hamad Bin Jarwan Advocates & Legal Consultants", address: "Office 502, Building C40, Audi Showroom, Rashed Bin Saeed St, Al Rawda", city: "Abu Dhabi", country: "United Arab Emirates", phone: "+971 2 444 4261", email: "info@hbjadvocates.com", category: "Legal Services", openingHours: "Sun - Thu: 08:30 - 18:00 · Fri & Sat: Closed", lat: 24.4419, lng: 54.3986 },
     "mylawyersadvice.com": { name: "My Lawyers Advice", address: "M-10, Greater Kailash Part 1", city: "New Delhi", country: "India", phone: "+91 90696 66999", category: "Legal Services", lat: 28.5492, lng: 77.2343 },
     "paulpowell.com": { name: "The Paul Powell Law Firm", address: "8918 Spanish Ridge Ave #100", city: "Las Vegas, NV", country: "United States", phone: "+1 (702) 479-7979", category: "Legal Services", lat: 36.1042, lng: -115.2863 },
     "jbsimonslaw.com": { name: "Simons Law Office", address: "75 Arlington St #500", city: "Boston, MA", country: "United States", phone: "+1 (617) 742-0007", category: "Legal Services", lat: 42.3512, lng: -71.0700 },
@@ -18479,7 +18482,7 @@ Return JSON:
     try {
       const qEnc = encodeURIComponent(cleanQ);
       const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 2200);
+      const tid = setTimeout(() => ctrl.abort(), 2500);
       const sRes = await fetch(`https://html.duckduckgo.com/html/?q=${qEnc}`, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
@@ -18491,18 +18494,66 @@ Return JSON:
         const sHtml = await sRes.text();
         const matches = sHtml.match(/uddg=([^&"'\x27]+)/g) || [];
         const candidateUrls = matches.map(m => decodeURIComponent(m.replace("uddg=", "")));
-        const allowed = candidateUrls.filter(u => {
-          if (!u || !u.startsWith("http")) return false;
+        
+        const directoryDomains = [
+          "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
+          "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+          "legaladviceme.com", "findlawyer.ae", "localemirates.com", "infobel.ae", "infobel.com", "dubaibizdirectory.com", "2gis.ae", "2gis.com",
+          "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
+          "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com",
+          "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "bbb.org", "dnb.com", "zoominfo.com", "crunchbase.com",
+          "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yell.com", "zocdoc.com"
+        ];
+
+        // 1. Check for Direct Organic Business URL
+        for (const u of candidateUrls) {
+          if (!u || !u.startsWith("http")) continue;
           const low = u.toLowerCase();
-          return !low.includes("duckduckgo.com") && 
-                 !low.includes("wikipedia.org") && 
-                 !low.includes("facebook.com") && 
-                 !low.includes("yelp.com") && 
-                 !low.includes("tripadvisor.com") &&
-                 !low.includes("yellowpages.com");
-        });
-        if (allowed.length > 0) {
-          discoveredUrl = allowed[0];
+          if (!directoryDomains.some(d => low.includes(d))) {
+            discoveredUrl = u;
+            break;
+          }
+        }
+
+        // 2. If all top results were directory profiles, fetch the top directory page to extract the outbound official website link
+        if (!discoveredUrl) {
+          const directoryCandidates = candidateUrls.filter(u => {
+            const low = u.toLowerCase();
+            return directoryDomains.some(d => low.includes(d) && !d.includes("google") && !d.includes("duckduckgo") && !d.includes("bing") && !d.includes("yahoo") && !d.includes("wikipedia"));
+          });
+
+          for (const dirUrl of directoryCandidates.slice(0, 2)) {
+            try {
+              const dCtrl = new AbortController();
+              const dtid = setTimeout(() => dCtrl.abort(), 2000);
+              const dRes = await fetch(dirUrl, {
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+                signal: dCtrl.signal
+              });
+              clearTimeout(dtid);
+              if (dRes && dRes.ok) {
+                const dHtml = await dRes.text();
+                const $ = cheerio.load(dHtml);
+                $("a[href^=\"http\"]").each((i: number, el: any) => {
+                  if (discoveredUrl) return;
+                  const href = $(el).attr("href") || "";
+                  const low = href.toLowerCase();
+                  if (
+                    !directoryDomains.some(d => low.includes(d)) &&
+                    !low.includes("schema.org") &&
+                    !low.includes("w3.org") &&
+                    !low.includes("wordpress") &&
+                    !low.includes("whatsapp") &&
+                    !low.includes("apple.com") &&
+                    !low.includes("android.com")
+                  ) {
+                    discoveredUrl = href;
+                  }
+                });
+                if (discoveredUrl) break;
+              }
+            } catch (dirErr) {}
+          }
         }
       }
     } catch (e) {}

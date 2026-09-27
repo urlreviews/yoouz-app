@@ -8,12 +8,15 @@
 
 export const DISALLOWED_SEARCH_DOMAINS = [
   "wikipedia.org", "wikimedia.org", "wiktionary.org",
-  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
+  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
   "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
   "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com", "ask.com",
   "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
   "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
-  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yellowpages.ca", "yell.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  "legaladviceme.com", "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com",
+  "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "bbb.org", "dnb.com", "zoominfo.com", "crunchbase.com",
+  "dubaibizdirectory.com", "chamberofcommerce.com", "mapquest.com", "waze.com", "kompass.com", "europages.com",
   "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
   "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
   "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
