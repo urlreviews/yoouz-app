@@ -153,7 +153,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   }, []);
 
-  const handleSelectSuggestion = async (item: any) => {
+  const handleSelectSuggestion = (item: any) => {
     setShowDropdown(false);
     
     // 1. Check if it matches a local database place first for INSTANT 0ms resolution
@@ -170,29 +170,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return;
     }
 
-    // 2. Since it is not a local database match, resolve its GENUINE URL via Google CSE client-side first
-    setIsSearching(true);
-    let targetQuery = item.title;
-    console.info("[Search] Selected autocomplete suggestion. Querying Google CSE for genuine URL:", targetQuery);
-    
-    let cseUrl: string | null = null;
-    try {
-      const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
-      cseUrl = await Promise.race([
-        queryGoogleCseForUrl(targetQuery),
-        cseTimeout(5000)
-      ]);
-    } catch (cseErr) {
-      console.warn("[Search] Google CSE resolve on suggestion click timed out or failed:", cseErr);
-    }
-
     let resolvedDom = item.domain;
-    if (cseUrl) {
-      const parsedDom = extractCleanDomain(cseUrl);
-      if (isValidDomainUrl(parsedDom)) {
-        console.info("[Search] Resolved genuine domain for suggestion click via Google CSE:", parsedDom);
-        resolvedDom = parsedDom;
-      }
+    if (!resolvedDom || !resolvedDom.includes('.')) {
+      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => 
+        k.includes('.') && (v.toLowerCase() === item.title.toLowerCase() || k.toLowerCase().startsWith(item.title.toLowerCase()))
+      );
+      if (brandMatch) resolvedDom = brandMatch[0];
     }
 
     if (resolvedDom && resolvedDom.includes('.')) {
@@ -707,33 +690,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     {domainInitial}
                   </div>
 
-                  {!(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 select-none pointer-events-none animate-in fade-in duration-500">
-                      <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] max-w-lg mb-2">
-                        {searchedPlace.name}
-                      </h1>
-                      {searchedPlace.category && searchedPlace.category !== "Website" && (
-                        <p className="text-zinc-200 text-xs sm:text-sm font-extrabold tracking-widest uppercase opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
-                          {searchedPlace.category}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {(searchedPlace.bannerUrl || searchedPlace.ogImage) && (
-                    <>
-                      <img 
-                        src={getProxiedImageUrl(searchedPlace.bannerUrl || searchedPlace.ogImage)} 
-                        alt="Banner" 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-75 z-10"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent z-10 pointer-events-none" />
-                    </>
-                  )}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 select-none pointer-events-none animate-in fade-in duration-500">
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] max-w-lg mb-2">
+                      {searchedPlace.name}
+                    </h1>
+                    {searchedPlace.category && searchedPlace.category !== "Website" && (
+                      <p className="text-zinc-200 text-xs sm:text-sm font-extrabold tracking-widest uppercase opacity-95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                        {searchedPlace.category}
+                      </p>
+                    )}
+                  </div>
                 </div>
               );
             })()}

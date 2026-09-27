@@ -78,16 +78,54 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
   if (!inputEl || !buttonEl) return null;
 
-  // 4. Input the search query programmatically and dispatch input/change events
+  // 4. Purge any stale result elements from previous queries
+  if (container) {
+    const oldResults = container.querySelectorAll(".gsc-webResult, .gsc-result, .gsc-expansionArea, .gsc-resultsRoot");
+    oldResults.forEach(el => {
+      try { el.remove(); } catch (e) {}
+    });
+  }
+
+  // 5. Input the search query programmatically and dispatch input/change/keydown events
   inputEl.value = cleanQ;
   inputEl.dispatchEvent(new Event("input", { bubbles: true }));
   inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+  inputEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 13, code: "Enter", bubbles: true }));
 
-  // 5. Trigger search execution
+  // 6. Trigger search execution
   buttonEl.click();
   console.info("[Google CSE] Search execution triggered programmatically.");
 
-  // 6. Monitor and wait for organic search results to appear (Strictly skipping Ads)
+  // Helper to extract genuine target website URL from CSE anchor tags (unwrapping Google redirects)
+  const extractTargetUrl = (titleLink: HTMLAnchorElement): string | null => {
+    if (!titleLink) return null;
+
+    // A. Check data-ctorig attribute (Google CSE's clean original URL attribute)
+    const ctOrig = titleLink.getAttribute("data-ctorig") || (titleLink.dataset ? titleLink.dataset.ctorig : null);
+    if (ctOrig && ctOrig.startsWith("http") && !ctOrig.includes("google.com/url")) {
+      return ctOrig;
+    }
+
+    // B. Check href attribute
+    let href = titleLink.getAttribute("href") || titleLink.href || "";
+    if (!href) return null;
+
+    // C. Unwrap Google redirect URLs (e.g. https://www.google.com/url?q=https://www.harel-group.co.il/&sa=U...)
+    if (href.includes("/url?") || href.includes("google.com/url") || href.includes("google.co.") || href.includes("google.")) {
+      try {
+        const parsed = new URL(href, window.location.origin);
+        const target = parsed.searchParams.get("q") || parsed.searchParams.get("url");
+        if (target && target.startsWith("http") && !target.includes("google.com")) {
+          return target;
+        }
+      } catch (e) {}
+    }
+
+    if (href.startsWith("http")) return href;
+    return null;
+  };
+
+  // 7. Monitor and wait for organic search results to appear (Polling every 50ms for sub-second speed)
   return new Promise((resolve) => {
     const checkStartTime = Date.now();
     const resultCheckInterval = setInterval(() => {
@@ -126,13 +164,12 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
           }
 
           // Fetch the title link anchor which contains the actual destination website
-          const titleLink = resultEl.querySelector("a.gs-title") as HTMLAnchorElement;
+          const titleLink = (resultEl.querySelector("a.gs-title") || resultEl.querySelector("a[href]")) as HTMLAnchorElement;
           if (titleLink) {
-            // Google CSE often uses 'data-ctorig' to store the genuine original website URL
-            const href = titleLink.getAttribute("data-ctorig") || titleLink.href || "";
+            const rawHref = extractTargetUrl(titleLink);
             
-            if (href && href.startsWith("http")) {
-              const lowerHref = href.toLowerCase();
+            if (rawHref && rawHref.startsWith("http")) {
+              const lowerHref = rawHref.toLowerCase();
 
               // Extra protection: list of search engines, news aggregators, social platforms, and directories to ignore
               const DISALLOWED_DOMAINS = [
@@ -150,7 +187,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
 
               let domain = "";
               try {
-                domain = new URL(href).hostname.replace(/^www\./i, "").toLowerCase();
+                domain = new URL(rawHref).hostname.replace(/^www\./i, "").toLowerCase();
               } catch (e) {}
 
               // Strictly reject Punycode / IDN squatter domains (e.g. xn--...)
@@ -178,9 +215,9 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
                 !lowerHref.includes("adservice") &&
                 !lowerHref.includes("pagead")
               ) {
-                console.info(`[Google CSE Success] Extracted first organic URL: "${href}"`);
+                console.info(`[Google CSE Success] Extracted first organic URL: "${rawHref}"`);
                 clearInterval(resultCheckInterval);
-                resolve(href);
+                resolve(rawHref);
                 return;
               }
             }
@@ -188,12 +225,12 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         }
       }
 
-      // Fail-safe timeout after 8 seconds of polling
-      if (Date.now() - checkStartTime > 8000) {
+      // Fail-safe timeout after 5 seconds of polling
+      if (Date.now() - checkStartTime > 5000) {
         console.warn("[Google CSE Timeout] Polling results timed out. No organic URL was extracted.");
         clearInterval(resultCheckInterval);
         resolve(null);
       }
-    }, 200);
+    }, 50);
   });
 }
