@@ -155,16 +155,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const handleSelectSuggestion = (item: any) => {
     setShowDropdown(false);
+    
+    // 1. Check if it matches a local database place first for INSTANT 0ms resolution
+    const match = places.find(p => {
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+      const itemDom = extractCleanDomain(item.domain || item.id || item.title);
+      return (pDom && pDom === itemDom) || p.id === item.id;
+    });
+
+    if (match) {
+      console.info("[Search] Loading local database match instantly:", match.name);
+      setSearchedPlace(match);
+      setQuery(match.name || item.title);
+      return;
+    }
+
+    // 2. If not local, fall back to standard URL search flow
     if (item.domain && item.domain.includes('.')) {
       setQuery(item.domain);
       handleSearch(undefined, item.domain, item.title);
-    } else if (item.id && places.some(p => p.id === item.id)) {
-      const match = places.find(p => p.id === item.id);
-      if (match) {
-        setSearchedPlace(match);
-        setQuery(match.name || item.title);
-        return;
-      }
     } else {
       setQuery(item.title);
       handleSearch(undefined, item.title, item.title);
@@ -224,14 +233,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
       
-      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 2.5s max timeout
+      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper with 3s max timeout
       console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
       let cseUrl: string | null = null;
       try {
         const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
         cseUrl = await Promise.race([
           queryGoogleCseForUrl(rawQuery),
-          cseTimeout(2500)
+          cseTimeout(3000)
         ]);
       } catch (cseErr) {
         console.warn("[Search] Client-side Google CSE took too long or errored, falling back immediately:", cseErr);

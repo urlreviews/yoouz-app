@@ -63,17 +63,7 @@ const multerUpload = multer({ storage: multerStorage, limits: { fileSize: 100 * 
 const searchCache = new Map<string, { places: any[]; source: string; timestamp: number }>();
 let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient() {
-  if (!geminiClient && process.env.GEMINI_API_KEY) {
-    geminiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
-    });
-  }
-  return geminiClient;
+  return null; // COMPLETELY AND PERMANENTLY REMOVED AND DISABLED
 }
 
 function getResendClient(): Resend | null {
@@ -18594,9 +18584,21 @@ Guidelines for high-fidelity data extraction:
             cleanEmail = "";
           }
 
+          let resolvedDomain = parsed.domain.toLowerCase().replace(/^www\./, '').trim();
+          if (!resolvedDomain.includes('.')) {
+            resolvedDomain = resolvedDomain + '.com';
+          }
+          let resolvedWebsite = (parsed.websiteUrl || "").trim();
+          if (resolvedWebsite && !resolvedWebsite.startsWith('http://') && !resolvedWebsite.startsWith('https://')) {
+            resolvedWebsite = 'https://' + resolvedWebsite;
+          }
+          if (!resolvedWebsite || !resolvedWebsite.includes('.')) {
+            resolvedWebsite = `https://${resolvedDomain}`;
+          }
+
           return {
-            domain: parsed.domain.toLowerCase().replace(/^www\./, ''),
-            websiteUrl: parsed.websiteUrl,
+            domain: resolvedDomain,
+            websiteUrl: resolvedWebsite,
             name: parsed.name,
             category: parsed.category || "Verified Business",
             address: parsed.address || "",
@@ -18616,6 +18618,47 @@ Guidelines for high-fidelity data extraction:
       console.error("[Gemini Grounded Search Error]:", e);
     }
     return null;
+  }
+
+  async function resolveDomainWithDuckDuckGo(query: string): Promise<string> {
+    try {
+      const res = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query + " official website"), {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Referer": "https://html.duckduckgo.com/"
+        }
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const re = /uddg=([^&"']+)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          try {
+            const url = decodeURIComponent(m[1]);
+            const u = new URL(url);
+            const host = u.hostname.toLowerCase().replace(/^www\./, "");
+            if (
+              !host.includes("duckduckgo") &&
+              !host.includes("facebook") &&
+              !host.includes("instagram") &&
+              !host.includes("wikipedia") &&
+              !host.includes("tripadvisor") &&
+              !host.includes("booking.com") &&
+              !host.includes("youtube") &&
+              !host.includes("linkedin") &&
+              !host.includes("twitter") &&
+              !host.includes("x.com") &&
+              !host.includes("yelp.com") &&
+              !host.includes("foursquare.com")
+            ) {
+              return host;
+            }
+          } catch(e) {}
+        }
+      }
+    } catch(e) {}
+    return "";
   }
 
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
@@ -18680,18 +18723,29 @@ Guidelines for high-fidelity data extraction:
       }
     }
 
-    // 0.5 Live Grounded AI Search fallback BEFORE hitting legacy scrapers or search engines
-    if (!skipGemini && getGeminiClient()) {
-      try {
-        const geminiRes = await resolveBusinessQueryWithGemini(cleanQ);
-        if (geminiRes && geminiRes.domain) {
-          BUSINESS_QUERY_CACHE.set(cacheKey, { data: geminiRes, timestamp: Date.now() });
-          await persistToDb(geminiRes);
-          return geminiRes;
-        }
-      } catch (geminiErr) {
-        console.warn("[Gemini Grounded Search Fallback in resolveBusinessQuery]:", geminiErr);
-      }
+    // 0.5 Live Free HTML Web Search Fallback (Zero cost, no API keys, no quotas!)
+    const freeDom = await resolveDomainWithDuckDuckGo(cleanQ);
+    if (freeDom && freeDom.includes('.')) {
+      const name = formatBusinessName(cleanQ) || freeDom;
+      const data: ResolvedBusinessData = {
+        domain: freeDom,
+        websiteUrl: `https://${freeDom}`,
+        name: name,
+        category: "Verified Business",
+        address: "",
+        city: "Online",
+        country: "",
+        phone: "",
+        email: "",
+        openingHours: "Available 24/7",
+        photo: "",
+        description: `${name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
+        lat: 0,
+        lng: 0
+      };
+      BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
+      await persistToDb(data);
+      return data;
     }
 
     // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
@@ -19124,8 +19178,11 @@ Guidelines for high-fidelity data extraction:
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
         if (resolvedEntity) {
-          const autoPlaceId = resolvedEntity.domain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}${autoPlaceId.includes('.') ? '' : '.com'}`;
+          let autoPlaceId = resolvedEntity.domain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          if (!autoPlaceId.includes('.')) {
+            autoPlaceId = autoPlaceId + '.com';
+          }
+          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
           const entityBanner = resolvedEntity.photo || `https://yoouz.com/og-banner.png?v=8`;
 
           const entityDoc = {
@@ -19203,8 +19260,11 @@ Guidelines for high-fidelity data extraction:
         // Fallback to name search rather than throwing 400
         const ent = await resolveBusinessQuery(rawQuery);
         if (ent) {
-          const autoPlaceId = (ent.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
-          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}.com`;
+          let autoPlaceId = ent.domain || (ent.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          if (!autoPlaceId.includes('.')) {
+            autoPlaceId = autoPlaceId + '.com';
+          }
+          const entityLogo = `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
@@ -19212,7 +19272,7 @@ Guidelines for high-fidelity data extraction:
             logo: entityLogo,
             siteName: ent.name,
             domain: autoPlaceId,
-            url: ent.websiteUrl || "",
+            url: ent.websiteUrl || `https://${autoPlaceId}`,
             address: ent.address || "",
             city: ent.city || "",
             country: ent.country || "",
@@ -19270,25 +19330,25 @@ Guidelines for high-fidelity data extraction:
                             lowerHtml.includes("ddos");
                             
           if (isBlocked || !html || html.length < 500) {
-            console.warn(`[Scraper CAPTCHA Block] Detected security shield or extremely thin page for ${domain}. Forcing sub-second Grounded Gemini resolution!`);
-            const geminiFallback = await resolveBusinessQuery(domain);
-            if (geminiFallback) {
-              const fLogo = geminiFallback.photo || `/api/favicon?domain=${domain}`;
+            console.warn(`[Scraper CAPTCHA Block] Detected security shield or extremely thin page for ${domain}. Forcing sub-second Free Web Search resolution!`);
+            const freeFallback = await resolveBusinessQuery(domain);
+            if (freeFallback) {
+              const fLogo = freeFallback.photo || `/api/favicon?domain=${domain}`;
               return res.json({
-                title: geminiFallback.name,
-                description: geminiFallback.description || `${geminiFallback.name} is a verified local business discoverable on Yoouz, providing authentic services.`,
-                image: geminiFallback.photo || "",
+                title: freeFallback.name,
+                description: freeFallback.description || `${freeFallback.name} is a verified local business discoverable on Yoouz, providing authentic services.`,
+                image: freeFallback.photo || "",
                 logo: fLogo,
-                siteName: geminiFallback.name,
-                domain: geminiFallback.domain || domain,
-                url: geminiFallback.websiteUrl || `https://${domain}`,
-                address: geminiFallback.address || "",
-                city: geminiFallback.city || "Online",
-                country: geminiFallback.country || "",
-                phone: geminiFallback.phone || "",
-                email: geminiFallback.email || "",
-                category: geminiFallback.category || "Website",
-                openingHours: geminiFallback.openingHours || "Available 24/7",
+                siteName: freeFallback.name,
+                domain: freeFallback.domain || domain,
+                url: freeFallback.websiteUrl || `https://${domain}`,
+                address: freeFallback.address || "",
+                city: freeFallback.city || "Online",
+                country: freeFallback.country || "",
+                phone: freeFallback.phone || "",
+                email: freeFallback.email || "",
+                category: freeFallback.category || "Website",
+                openingHours: freeFallback.openingHours || "Available 24/7",
                 locations: []
               });
             }

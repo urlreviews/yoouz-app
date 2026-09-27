@@ -5,7 +5,13 @@ dotenv.config();
 async function run() {
   const db = getBunnyDb();
   if (!db) return;
-  const rs = await db.execute("SELECT id, placeName, createdAt, updatedAt FROM videoReviews ORDER BY createdAt DESC LIMIT 10;");
-  console.log(JSON.stringify(rs.rows, null, 2));
+  
+  console.log("Deleting corrupted record...");
+  const rs = await db.execute("DELETE FROM places WHERE id = 'oraldentalstudionyc';");
+  console.log("Delete result:", rs);
+  
+  console.log("Verifying remaining records...");
+  const check = await db.execute("SELECT id, name FROM places WHERE id LIKE '%oral%';");
+  console.log(JSON.stringify(check.rows, null, 2));
 }
 run().catch(console.error);
