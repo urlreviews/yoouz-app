@@ -18474,7 +18474,94 @@ Return JSON:
 
 
 
-    // 3. OpenStreetMap Nominatim Live Entity Discovery (Global, Multi-Language, All Cities)
+    // 3. Fast Candidate Domain Discovery for Business Names
+    try {
+      const cleanAscii = cleanQ.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
+      const words = cleanAscii.split(/\s+/).filter(w => w.length >= 2);
+      if (words.length > 0) {
+        const domainCandidates: string[] = [];
+        // Combinations:
+        domainCandidates.push(words.join("") + ".com");
+        domainCandidates.push(words.join("-") + ".com");
+        if (words.length > 2) {
+          domainCandidates.push(words[0] + words[words.length - 1] + ".com");
+          domainCandidates.push(words[0] + "-" + words[words.length - 1] + ".com");
+        }
+        if (words.length >= 2) {
+          domainCandidates.push(words[0] + words[1] + ".com");
+        }
+        if (words[0].length >= 3) {
+          domainCandidates.push(words[0] + ".com");
+        }
+
+        const checkDom = async (dom: string): Promise<string | null> => {
+          try {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 1400);
+            const r = await fetch(`https://${dom}`, {
+              method: "HEAD",
+              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) YoouzBot/1.0" },
+              signal: ctrl.signal
+            });
+            clearTimeout(tid);
+            if (r.ok || (r.status >= 300 && r.status < 400)) {
+              return dom;
+            }
+          } catch(e) {}
+          return null;
+        };
+
+        const liveResults = await Promise.all(domainCandidates.map(checkDom));
+        const verifiedDom = liveResults.find(Boolean);
+        if (verifiedDom) {
+          website = `https://${verifiedDom}`;
+          // Scrape home page metadata
+          try {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 1800);
+            const pageRes = await fetch(website, {
+              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) YoouzBot/1.0" },
+              signal: ctrl.signal
+            });
+            clearTimeout(tid);
+            if (pageRes.ok) {
+              const html = await pageRes.text();
+              const ogImgMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+              const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) || html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
+              if (ogImgMatch && ogImgMatch[1]) {
+                const img = ogImgMatch[1];
+                photo = img.startsWith("http") ? img : (img.startsWith("//") ? `https:${img}` : `https://${verifiedDom}/${img.replace(/^\//, '')}`);
+              }
+              if (ogDescMatch && ogDescMatch[1]) {
+                description = ogDescMatch[1].trim();
+              }
+            }
+          } catch(e) {}
+
+          const finalRes: ResolvedBusinessData = {
+            domain: verifiedDom,
+            websiteUrl: website,
+            name: formatBusinessName(cleanQ),
+            category: detectedCategory,
+            address: "",
+            city: "Online",
+            country: "",
+            phone: phone || "",
+            email: "",
+            openingHours: "Available 24/7",
+            photo: photo || `/api/favicon?domain=${verifiedDom}`,
+            description: description || `${formatBusinessName(cleanQ)} is a verified business on Yoouz.`,
+            lat: 0,
+            lng: 0
+          };
+          BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalRes, timestamp: Date.now() });
+          await persistToDb(finalRes);
+          return finalRes;
+        }
+      }
+    } catch(e) {}
+
+    // 4. OpenStreetMap Nominatim Live Entity Discovery (Global, Multi-Language, All Cities)
     let osm: any = null;
     try {
       const ctrl = new AbortController();

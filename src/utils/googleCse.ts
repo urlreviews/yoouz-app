@@ -233,7 +233,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
       }
 
       const candidateAnchors = document.querySelectorAll(
-        "#yoouz-hidden-cse-container a.gs-title, .gsc-resultsRoot a.gs-title, .gsc-webResult a.gs-title, a[data-ctorig]"
+        "#yoouz-hidden-cse-container a.gs-title, #yoouz-hidden-cse-container .gsc-resultsRoot a, #yoouz-hidden-cse-container .gsc-webResult a, .gsc-resultsRoot a.gs-title, .gsc-webResult a.gs-title, a[data-ctorig]"
       );
 
       if (candidateAnchors && candidateAnchors.length > 0) {
@@ -259,8 +259,24 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
         }
       }
 
-      // 4.5 seconds timeout
-      if (Date.now() - checkStartTime > 4500) {
+      // Check visible URL elements (e.g. naqvilaw.com displayed as text)
+      const visibleUrls = document.querySelectorAll("#yoouz-hidden-cse-container .gs-visibleUrl, .gsc-resultsRoot .gs-visibleUrl");
+      if (visibleUrls && visibleUrls.length > 0) {
+        for (let i = 0; i < visibleUrls.length; i++) {
+          const text = (visibleUrls[i].textContent || "").trim();
+          if (text && text.includes(".") && !text.includes(" ")) {
+            const candidateUrl = text.startsWith("http") ? text : `https://${text}`;
+            if (isAllowedOrganicUrl(candidateUrl)) {
+              console.info(`[Google CSE Visible URL] Extracted domain from text:`, candidateUrl);
+              finish(candidateUrl);
+              return;
+            }
+          }
+        }
+      }
+
+      // 3.0 seconds timeout
+      if (Date.now() - checkStartTime > 3000) {
         finish(null);
       }
     }, 60);

@@ -225,9 +225,17 @@
     <script>
       window.__gcse = window.__gcse || {};
       window.__gcse.parsetags = 'explicit';
-      window.__gcse.callback = function() {
+      function initYoouzCse() {
         if (window.google && window.google.search && window.google.search.cse && window.google.search.cse.element) {
           try {
+            let container = document.getElementById('yoouz-hidden-cse-container');
+            if (!container) {
+              container = document.createElement('div');
+              container.id = 'yoouz-hidden-cse-container';
+              container.className = 'opacity-0 pointer-events-none fixed';
+              container.style.cssText = 'top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;';
+              document.body.appendChild(container);
+            }
             window.google.search.cse.element.render({
               div: 'yoouz-hidden-cse-container',
               tag: 'search',
@@ -243,6 +251,13 @@
           } catch (e) {
             console.warn('[Google CSE] Explicit render error:', e);
           }
+        }
+      }
+      window.__gcse.callback = function() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initYoouzCse);
+        } else {
+          initYoouzCse();
         }
       };
       window.__gcse.searchCallbacks = {
