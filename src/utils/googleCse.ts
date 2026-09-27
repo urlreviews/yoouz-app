@@ -134,6 +134,32 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
             if (href && href.startsWith("http")) {
               const lowerHref = href.toLowerCase();
 
+              // Extra protection: list of search engines, news aggregators, social platforms, and directories to ignore
+              const DISALLOWED_DOMAINS = [
+                "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
+                "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
+                "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
+                "wikipedia.org", "wikimedia.org", "wiktionary.org",
+                "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
+                "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
+                "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+                "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
+                "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
+                "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
+              ];
+
+              let domain = "";
+              try {
+                domain = new URL(href).hostname.replace(/^www\./i, "").toLowerCase();
+              } catch (e) {}
+
+              const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+
+              if (isDisallowed) {
+                console.info(`[Google CSE filter] Skipped disallowed domain: "${domain}"`);
+                continue;
+              }
+
               // Double-check URL to block redirects or search engine redirects
               if (
                 !lowerHref.includes("google.com/aclk") && 

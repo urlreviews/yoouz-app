@@ -18357,12 +18357,29 @@ Return JSON:
                   domain = new URL(rawHref).hostname.replace(/^www\./i, '').toLowerCase();
                 } catch(e) {}
 
-                candidates.push({
-                  url: rawHref,
-                  domain,
-                  title: rawTitle,
-                  snippet
-                });
+                const DISALLOWED_DOMAINS = [
+                  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
+                  "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
+                  "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
+                  "wikipedia.org", "wikimedia.org", "wiktionary.org",
+                  "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
+                  "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
+                  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+                  "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
+                  "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
+                  "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
+                ];
+
+                const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+
+                if (!isDisallowed && domain) {
+                  candidates.push({
+                    url: rawHref,
+                    domain,
+                    title: rawTitle,
+                    snippet
+                  });
+                }
               }
             }
           }
@@ -18438,17 +18455,34 @@ Return JSON:
                 !lowerHref.includes('adsystem') &&
                 !lowerHref.includes('/aclk')
               ) {
-                let domain = '';
-                try {
-                  domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
-                } catch(e) {}
+                 let domain = '';
+                 try {
+                   domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
+                 } catch(e) {}
 
-                candidates.push({
-                  url: href,
-                  domain,
-                  title,
-                  snippet
-                });
+                 const DISALLOWED_DOMAINS = [
+                   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
+                   "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
+                   "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
+                   "wikipedia.org", "wikimedia.org", "wiktionary.org",
+                   "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
+                   "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
+                   "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+                   "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
+                   "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
+                   "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
+                 ];
+
+                 const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+
+                 if (!isDisallowed && domain) {
+                   candidates.push({
+                     url: href,
+                     domain,
+                     title,
+                     snippet
+                   });
+                 }
               }
             }
           }
