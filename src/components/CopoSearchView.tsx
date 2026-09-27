@@ -39,6 +39,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
+  const searchRequestIdRef = useRef(0);
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
@@ -198,6 +199,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!rawQuery) return;
 
     setShowDropdown(false);
+    
+    // Instantly clear searched place to show searching/loader and purge previous search artifacts!
+    setSearchedPlace(null);
+
+    const currentRequestId = ++searchRequestIdRef.current;
 
     const baseName = (locationDetails?.rawBusinessName || preferredName || rawQuery).trim();
     const cleanUrlFromRaw = extractCleanDomain(rawQuery);
@@ -239,6 +245,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     });
 
     if (matchingLocal) {
+      if (currentRequestId !== searchRequestIdRef.current) return;
       console.info("[Search] Found authoritative local place match:", matchingLocal.name);
       setSearchedPlace(matchingLocal);
       setQuery(matchingLocal.name || baseName);
@@ -282,6 +289,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         console.warn("[Search] Client-side Google CSE took too long or errored, falling back immediately:", cseErr);
       }
 
+      if (currentRequestId !== searchRequestIdRef.current) return;
+
       if (cseUrl) {
         const resolvedDom = extractCleanDomain(cseUrl);
         if (isValidDomainUrl(resolvedDom) && !resolvedDom.toLowerCase().includes('wikipedia.org')) {
@@ -290,6 +299,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         }
       }
 
+      if (currentRequestId !== searchRequestIdRef.current) return;
+
       // 2. Fall back to backend /api/url-metadata?q=... if Google CSE didn't resolve a valid domain
       if (!isValidDomainUrl(cleanUrl)) {
         console.info("[Search] Google CSE fell back or didn't resolve. Querying backend search index...");
@@ -297,6 +308,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
           if (metaResp.ok) {
             preloadedMeta = await metaResp.json();
+            if (currentRequestId !== searchRequestIdRef.current) return;
             if (preloadedMeta && preloadedMeta.domain && isValidDomainUrl(preloadedMeta.domain) && !preloadedMeta.domain.toLowerCase().includes('wikipedia.org')) {
               cleanUrl = preloadedMeta.domain;
             }
@@ -306,6 +318,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         }
       }
     }
+
+    if (currentRequestId !== searchRequestIdRef.current) return;
 
     setQuery(baseName || rawQuery);
     setIsSearching(true);
@@ -364,6 +378,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || "")
       };
 
+      if (currentRequestId !== searchRequestIdRef.current) return;
+
       let currentPlace: Place = instantPlace;
       setSearchedPlace(currentPlace);
       if (onAddPlace) {
@@ -375,8 +391,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       try {
          const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
          const resp = await fetch(`/api/url-metadata?${queryParam}`);
+         if (currentRequestId !== searchRequestIdRef.current) return;
          if (resp.ok) {
            const data = await resp.json();
+           if (currentRequestId !== searchRequestIdRef.current) return;
            if (data.title || data.domain) {
              const isValidLogo = (l?: string | null): boolean => {
                if (!l || typeof l !== "string") return false;
@@ -427,7 +445,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                hours: data.openingHours || currentPlace.openingHours || (data.hours || currentPlace.hours || "Available 24/7"),
                locations: (data.locations && data.locations.length > 0) ? data.locations : (currentPlace.locations || [])
              };
-             currentPlace = updatedPlace;
+             currentPlace = updatedPlace; if (currentRequestId !== searchRequestIdRef.current) return;
              setSearchedPlace(updatedPlace);
              if (onAddPlace) {
                onAddPlace(updatedPlace);
@@ -437,12 +455,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       } catch (err) {
          console.warn("Metadata fetch error:", err);
       } finally {
-         setIsEnriching(false);
+         if (currentRequestId === searchRequestIdRef.current) setIsEnriching(false);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setIsSearching(false);
+      if (currentRequestId === searchRequestIdRef.current) setIsSearching(false);
     }
   };
 
