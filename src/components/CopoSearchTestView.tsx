@@ -189,7 +189,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       setIsLoadingPlace(true);
     }
 
-    // Fetch full DuckDuckGo metadata in background for instant enrichment
+    // Fetch full URL metadata in background for instant enrichment
     try {
       const fetchUrl = cleanDom 
         ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`

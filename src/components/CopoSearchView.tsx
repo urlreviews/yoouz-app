@@ -597,70 +597,66 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
               {showDropdown && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto">
-                  {suggestions.map((item, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleSelectSuggestion(item);
-                      }}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        handleSelectSuggestion(item);
-                      }}
-                      className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
-                    >
-                      {item.domain && item.domain.includes('.') ? (
-                        <CopoBrandLogo
-                          domain={item.domain}
-                          name={item.title}
-                          logoUrl={item.logoUrl}
-                          className="w-8 h-8 rounded-lg border border-zinc-700 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
-                          imageClassName="w-full h-full object-contain"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 shadow-xs flex items-center justify-center overflow-hidden shrink-0 text-zinc-400 group-hover:text-white transition-colors">
-                          <Search className="w-4 h-4 text-zinc-400" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center min-w-0">
-                          <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
-                            <span>{item.title}</span>
-                            {item.domain && (
-                              <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
-                            )}
+                  {suggestions.map((item, idx) => {
+                    const isDbOrBrand = item.source === "database" || item.source === "brand_index";
+                    const hasDomain = item.domain && item.domain.includes('.');
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(item);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(item);
+                        }}
+                        className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-800/80 transition-colors text-left cursor-pointer group"
+                      >
+                        {isDbOrBrand && hasDomain ? (
+                          <CopoBrandLogo
+                            domain={item.domain}
+                            name={item.title}
+                            logoUrl={item.logoUrl}
+                            className="w-8 h-8 rounded-lg border border-zinc-700 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
+                            imageClassName="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 shadow-xs flex items-center justify-center overflow-hidden shrink-0 text-zinc-400 group-hover:text-white transition-colors">
+                            <Search className="w-4 h-4 text-zinc-400" />
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                          {(() => {
-                            const dispDomain = item.domain && item.domain.includes('.') 
-                              ? item.domain.toLowerCase() 
-                              : "";
-                            const dispCat = item.category || "Verified Business";
-                            return (
-                              <>
-                                {dispDomain ? (
-                                  <>
-                                    <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
-                                    <span className="text-zinc-500">•</span>
-                                  </>
-                                ) : null}
-                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{dispCat}</span>
-                              </>
-                            );
-                          })()}
-                          {item.address && (
-                            <>
-                              <span className="text-zinc-700">•</span>
-                              <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
-                            </>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center min-w-0">
+                            <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors truncate">
+                              <span>{item.title}</span>
+                              {isDbOrBrand && (
+                                <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
+                              )}
+                            </div>
+                          </div>
+                          {isDbOrBrand && (
+                            <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                              {hasDomain ? (
+                                <>
+                                  <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{item.domain.toLowerCase()}</span>
+                                  <span className="text-zinc-500">•</span>
+                                </>
+                              ) : null}
+                              <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category || "Verified Business"}</span>
+                              {item.address && (
+                                <>
+                                  <span className="text-zinc-700">•</span>
+                                  <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

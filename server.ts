@@ -17101,40 +17101,16 @@ Respond ONLY with a JSON object:
               var scrapedCountry = locInfo.country;
               var scrapedCategory = locInfo.category;
             } else {
-              // Direct page fetch failed, try DDG search fallback
-              try {
-                const ddgRes = await searchDuckDuckGoWeb(domain);
-                if (ddgRes && ddgRes.title) {
-                  metaTitle = ddgRes.title;
-                  if (ddgRes.snippet) metaDesc = ddgRes.snippet;
-                }
-              } catch (ddgErr) {}
+              metaTitle = formatBusinessName(siteTitle, domain);
             }
           } catch (e) {
-            // Direct page fetch failed, try DDG search fallback
-            try {
-              const ddgRes = await searchDuckDuckGoWeb(domain);
-              if (ddgRes && ddgRes.title) {
-                metaTitle = ddgRes.title;
-                if (ddgRes.snippet) metaDesc = ddgRes.snippet;
-              }
-            } catch (ddgErr) {}
+            metaTitle = formatBusinessName(siteTitle, domain);
           }
 
           if (metaTitle && metaTitle !== siteTitle) {
             metaTitle = formatBusinessName(metaTitle, domain);
           } else {
-            try {
-              const ddgRes = await searchDuckDuckGoWeb(domain);
-              if (ddgRes && ddgRes.title) {
-                metaTitle = formatBusinessName(ddgRes.title, domain);
-                if (ddgRes.snippet) metaDesc = ddgRes.snippet;
-              } else {
-                metaTitle = formatBusinessName(siteTitle, domain);
-              }
-            } catch (ddgErr) {
-              metaTitle = formatBusinessName(siteTitle, domain);
-            }
+            metaTitle = formatBusinessName(siteTitle, domain);
           }
 
           const matchedKnownLoc = KNOWN_ENTITY_LOCATIONS[domain] || KNOWN_ENTITY_LOCATIONS[`www.${domain}`];
@@ -18280,269 +18256,7 @@ Return JSON:
     lng: number;
   }
 
-  interface DDGSearchResult {
-    url: string;
-    domain: string;
-    title: string;
-    snippet: string;
-  }
-
-  async function searchDuckDuckGoWeb(query: string): Promise<DDGSearchResult | null> {
-    const cleanQ = query.trim();
-    if (!cleanQ) return null;
-
-    try {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 3500);
-
-      const res = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanQ)}`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache'
-        },
-        signal: ctrl.signal
-      });
-      clearTimeout(tid);
-
-      if (res.ok) {
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        const candidates: DDGSearchResult[] = [];
-
-        $('.result').each((_, el) => {
-          const linkEl = $(el).find('a.result__a').first();
-          let rawHref = linkEl.attr('href') || '';
-          let rawTitle = linkEl.text().trim();
-          let snippet = $(el).find('.result__snippet').text().trim();
-
-          if (rawHref) {
-            if (rawHref.includes('uddg=')) {
-              try {
-                const match = rawHref.match(/uddg=([^&]+)/);
-                if (match) rawHref = decodeURIComponent(match[1]);
-              } catch(e) {}
-            } else if (rawHref.startsWith('//')) {
-              rawHref = 'https:' + rawHref;
-            }
-
-            if (rawHref.startsWith('http://') || rawHref.startsWith('https://')) {
-              const lowerHref = rawHref.toLowerCase();
-              if (
-                !lowerHref.includes('duckduckgo.com') && 
-                !lowerHref.includes('yandex.com') && 
-                !lowerHref.includes('bing.com') && 
-                !lowerHref.includes('ad-delivery') &&
-                !lowerHref.includes('doubleclick') &&
-                !lowerHref.includes('googleadservices') &&
-                !lowerHref.includes('google.com/aclk') &&
-                !lowerHref.includes('pagead') &&
-                !lowerHref.includes('adservice') &&
-                !lowerHref.includes('adsystem') &&
-                !lowerHref.includes('/aclk')
-              ) {
-                let domain = '';
-                try {
-                  domain = new URL(rawHref).hostname.replace(/^www\./i, '').toLowerCase();
-                } catch(e) {}
-
-                const DISALLOWED_DOMAINS = [
-                  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
-                  "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
-                  "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
-                  "wikipedia.org", "wikimedia.org", "wiktionary.org",
-                  "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
-                  "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
-                  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
-                  "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
-                  "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
-                  "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
-                ];
-
-                const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
-
-                if (!isDisallowed && domain) {
-                  candidates.push({
-                    url: rawHref,
-                    domain,
-                    title: rawTitle,
-                    snippet
-                  });
-                }
-              }
-            }
-          }
-        });
-
-        if (candidates.length > 0) {
-          const standaloneSite = candidates.slice(0, 3).find(c => 
-            c.domain && 
-            !c.domain.includes('facebook.com') && 
-            !c.domain.includes('instagram.com') && 
-            !c.domain.includes('linkedin.com') && 
-            !c.domain.includes('yelp.com') && 
-            !c.domain.includes('tripadvisor.com') && 
-            !c.domain.includes('yellowpages') &&
-            !c.domain.includes('wikipedia.org')
-          );
-
-          return standaloneSite || candidates[0];
-        }
-      }
-    } catch (e) {
-      console.warn('[DDG HTML Search Error]:', e);
-    }
-
-    try {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 3500);
-
-      const res = await fetch(`https://lite.duckduckgo.com/lite/`, {
-        method: 'POST',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'text/html'
-        },
-        body: `q=${encodeURIComponent(cleanQ)}`,
-        signal: ctrl.signal
-      });
-      clearTimeout(tid);
-
-      if (res.ok) {
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        const candidates: DDGSearchResult[] = [];
-
-        $('a.result-link').each((_, el) => {
-          let href = $(el).attr('href') || '';
-          let title = $(el).text().trim();
-          const snippet = $(el).parent().next('td.result-snippet').text().trim();
-
-          if (href) {
-            if (href.includes('uddg=')) {
-              try {
-                const match = href.match(/uddg=([^&]+)/);
-                if (match) href = decodeURIComponent(match[1]);
-              } catch(e) {}
-            } else if (href.startsWith('//')) {
-              href = 'https:' + href;
-            }
-
-            if (href.startsWith('http://') || href.startsWith('https://')) {
-              const lowerHref = href.toLowerCase();
-              if (
-                !lowerHref.includes('duckduckgo.com') && 
-                !lowerHref.includes('yandex.com') && 
-                !lowerHref.includes('bing.com') && 
-                !lowerHref.includes('ad-delivery') &&
-                !lowerHref.includes('doubleclick') &&
-                !lowerHref.includes('googleadservices') &&
-                !lowerHref.includes('google.com/aclk') &&
-                !lowerHref.includes('pagead') &&
-                !lowerHref.includes('adservice') &&
-                !lowerHref.includes('adsystem') &&
-                !lowerHref.includes('/aclk')
-              ) {
-                 let domain = '';
-                 try {
-                   domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
-                 } catch(e) {}
-
-                 const DISALLOWED_DOMAINS = [
-                   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
-                   "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
-                   "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
-                   "wikipedia.org", "wikimedia.org", "wiktionary.org",
-                   "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
-                   "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
-                   "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
-                   "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
-                   "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
-                   "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
-                 ];
-
-                 const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
-
-                 if (!isDisallowed && domain) {
-                   candidates.push({
-                     url: href,
-                     domain,
-                     title,
-                     snippet
-                   });
-                 }
-              }
-            }
-          }
-        });
-
-        if (candidates.length > 0) {
-          const standaloneSite = candidates.slice(0, 3).find(c => 
-            c.domain && 
-            !c.domain.includes('facebook.com') && 
-            !c.domain.includes('instagram.com') && 
-            !c.domain.includes('linkedin.com') && 
-            !c.domain.includes('yelp.com')
-          );
-          return standaloneSite || candidates[0];
-        }
-      }
-    } catch(e) {
-      console.warn('[DDG Lite Search Error]:', e);
-    }
-
-    return null;
-  }
-
   const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
-
-  async function resolveBusinessQueryWithGemini(query: string): Promise<ResolvedBusinessData | null> {
-    console.info(`[Gemini Grounded Search] Blocked. Gemini is completely disabled for search resolution.`);
-    return null;
-  }
-
-  async function resolveDomainWithDuckDuckGo(query: string): Promise<string> {
-    try {
-      const res = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query + " official website"), {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Referer": "https://html.duckduckgo.com/"
-        }
-      });
-      if (res.ok) {
-        const html = await res.text();
-        const re = /uddg=([^&"']+)/g;
-        let m;
-        while ((m = re.exec(html)) !== null) {
-          try {
-            const url = decodeURIComponent(m[1]);
-            const u = new URL(url);
-            const host = u.hostname.toLowerCase().replace(/^www\./, "");
-            if (
-              !host.includes("duckduckgo") &&
-              !host.includes("facebook") &&
-              !host.includes("instagram") &&
-              !host.includes("wikipedia") &&
-              !host.includes("tripadvisor") &&
-              !host.includes("booking.com") &&
-              !host.includes("youtube") &&
-              !host.includes("linkedin") &&
-              !host.includes("twitter") &&
-              !host.includes("x.com") &&
-              !host.includes("yelp.com") &&
-              !host.includes("foursquare.com")
-            ) {
-              return host;
-            }
-          } catch(e) {}
-        }
-      }
-    } catch(e) {}
-    return "";
-  }
 
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
@@ -18606,30 +18320,7 @@ Return JSON:
       }
     }
 
-    // 0.5 Live Free HTML Web Search Fallback (Zero cost, no API keys, no quotas!)
-    const freeDom = await resolveDomainWithDuckDuckGo(cleanQ);
-    if (freeDom && freeDom.includes('.')) {
-      const name = formatBusinessName(cleanQ) || freeDom;
-      const data: ResolvedBusinessData = {
-        domain: freeDom,
-        websiteUrl: `https://${freeDom}`,
-        name: name,
-        category: "Verified Business",
-        address: "",
-        city: "Online",
-        country: "",
-        phone: "",
-        email: "",
-        openingHours: "Available 24/7",
-        photo: "",
-        description: `${name} is a verified business on Yoouz, committed to delivering high quality services and customer satisfaction.`,
-        lat: 0,
-        lng: 0
-      };
-      BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
-      await persistToDb(data);
-      return data;
-    }
+
 
     // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
     async function persistToDb(data: ResolvedBusinessData) {
@@ -18765,81 +18456,7 @@ Return JSON:
     let phone = "";
     let detectedCategory = detectCategoryFromText(cleanQ);
 
-    // 3. Live DuckDuckGo Web Search Engine Resolution (Guarantees hyper-local & global real search results)
-    try {
-      let ddgRes = await searchDuckDuckGoWeb(cleanQ).catch(() => null);
 
-      if (!ddgRes || !ddgRes.domain) {
-        // If direct query didn't return a standalone domain (e.g. user typing "Trevor Caudle la" or "Trevor Caudle law pr"),
-        // check root brand query without trailing partial/extra words
-        const words = cleanQ.split(/\s+/).filter(Boolean);
-        if (words.length >= 2) {
-          for (let i = words.length - 1; i >= 1; i--) {
-            const subQuery = words.slice(0, i).join(' ');
-            const subCacheKey = subQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const cachedSub = BUSINESS_QUERY_CACHE.get(subCacheKey);
-            if (cachedSub && cachedSub.data?.domain) {
-              ddgRes = {
-                domain: cachedSub.data.domain,
-                url: cachedSub.data.websiteUrl || `https://${cachedSub.data.domain}`,
-                title: cachedSub.data.name,
-                snippet: cachedSub.data.description || ""
-              };
-              break;
-            }
-
-            const subDdgRes = await searchDuckDuckGoWeb(subQuery).catch(() => null);
-            if (subDdgRes && subDdgRes.domain) {
-              ddgRes = subDdgRes;
-              break;
-            }
-          }
-        }
-      }
-
-      if (ddgRes && ddgRes.url && ddgRes.domain) {
-        let cleanName = formatBusinessName(ddgRes.title || cleanQ, `${ddgRes.domain}:${cleanQ}`);
-        if (!cleanName || cleanName.length < 2) {
-          cleanName = formatBusinessName(cleanQ, `${ddgRes.domain}:${cleanQ}`);
-        }
-
-        let siteAddress = "";
-        let siteCity = "";
-        let siteCountry = "";
-        let sitePhone = "";
-        let siteCategory = detectCategoryFromText(`${cleanQ} ${ddgRes.title} ${ddgRes.snippet}`);
-
-        // Infer city from query or snippet
-        if (cleanQ.toLowerCase().includes('antwerp') || ddgRes.snippet.toLowerCase().includes('antwerp')) siteCity = "Antwerp";
-        else if (cleanQ.toLowerCase().includes('brussels') || ddgRes.snippet.toLowerCase().includes('brussels')) siteCity = "Brussels";
-        else if (cleanQ.toLowerCase().includes('paris') || ddgRes.snippet.toLowerCase().includes('paris')) siteCity = "Paris";
-        else if (cleanQ.toLowerCase().includes('london') || ddgRes.snippet.toLowerCase().includes('london')) siteCity = "London";
-        else if (cleanQ.toLowerCase().includes('amsterdam') || ddgRes.snippet.toLowerCase().includes('amsterdam')) siteCity = "Amsterdam";
-
-        const resolvedResult: ResolvedBusinessData = {
-          domain: ddgRes.domain,
-          websiteUrl: ddgRes.url,
-          name: cleanName || formatBusinessName(cleanQ),
-          category: siteCategory || detectedCategory,
-          address: siteAddress || "",
-          city: siteCity || "Online",
-          country: siteCountry || "",
-          phone: sitePhone || phone || "",
-          email: "",
-          openingHours: "Available 24/7",
-          photo: photo || "",
-          description: description || ddgRes.snippet || `${cleanName} is a verified local business discoverable on Yoouz, providing authentic services and verified customer reviews.`,
-          lat: 0,
-          lng: 0
-        };
-        BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedResult, timestamp: Date.now() });
-        await persistToDb(resolvedResult);
-
-        return resolvedResult;
-      }
-    } catch(e) {
-      console.warn('[DDG Web Search Engine Error in resolveBusinessQuery]:', e);
-    }
 
     // 3. OpenStreetMap Nominatim Live Entity Discovery (Global, Multi-Language, All Cities)
     let osm: any = null;
@@ -18967,22 +18584,7 @@ Return JSON:
       } catch (e) {}
     }
 
-    // 5. DuckDuckGo Instant Answer API for Global Brand & Website Lookup
-    try {
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 1200);
-      const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(cleanQ)}&format=json&no_html=1&skip_disambig=1`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-        signal: ctrl.signal
-      });
-      clearTimeout(tid);
-      if (ddgRes.ok) {
-        const ddgData = await ddgRes.json();
-        if (ddgData.Abstract && !description) description = ddgData.Abstract;
-        if (ddgData.Image && !photo) photo = ddgData.Image;
-        if (ddgData.AbstractURL && !website) website = ddgData.AbstractURL;
-      }
-    } catch (e) {}
+
 
     // 6. Candidate TLD checking (for single-word brand names only)
     const slug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -19978,26 +19580,12 @@ Return JSON:
                 lowerTitle.trim() === '' ||
                 lowerTitle.includes('attention required')
               ) {
-                let gotDdg = false;
-                try {
-                  const ddgRes = await searchDuckDuckGoWeb(domain);
-                  if (ddgRes && ddgRes.title) {
-                    title = ddgRes.title;
-                    if (ddgRes.snippet && !description) {
-                      description = ddgRes.snippet;
-                    }
-                    gotDdg = true;
-                  }
-                } catch (ddgErr) {}
-
-                if (!gotDdg) {
-                  const parts = domain.split('.');
-                  if (parts.length >= 2) {
-                    const mainPart = parts[parts.length - 2];
-                    title = mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
-                  } else {
-                    title = domain;
-                  }
+                const parts = domain.split('.');
+                if (parts.length >= 2) {
+                  const mainPart = parts[parts.length - 2];
+                  title = mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
+                } else {
+                  title = domain;
                 }
               }
             } catch (cheerioErr) {
@@ -20006,60 +19594,42 @@ Return JSON:
           }
         } else {
           try {
-            const geminiFallback = await resolveBusinessQuery(domain);
-            if (geminiFallback) {
-              title = geminiFallback.name;
-              siteName = geminiFallback.name;
-              description = geminiFallback.description || description;
-              effectiveAddress = geminiFallback.address || effectiveAddress;
-              effectiveCity = geminiFallback.city || effectiveCity;
-              effectiveCountry = geminiFallback.country || effectiveCountry;
-              effectivePhone = geminiFallback.phone || effectivePhone;
-              effectiveEmail = geminiFallback.email || effectiveEmail;
-              effectiveCategory = geminiFallback.category || effectiveCategory;
-              locInfo.openingHours = geminiFallback.openingHours || locInfo.openingHours;
-            } else {
-              const ddgRes = await searchDuckDuckGoWeb(domain);
-              if (ddgRes && ddgRes.title) {
-                title = ddgRes.title;
-                siteName = ddgRes.title;
-                if (ddgRes.snippet && !description) {
-                  description = ddgRes.snippet;
-                }
-              }
+            const businessFallback = await resolveBusinessQuery(domain);
+            if (businessFallback) {
+              title = businessFallback.name;
+              siteName = businessFallback.name;
+              description = businessFallback.description || description;
+              effectiveAddress = businessFallback.address || effectiveAddress;
+              effectiveCity = businessFallback.city || effectiveCity;
+              effectiveCountry = businessFallback.country || effectiveCountry;
+              effectivePhone = businessFallback.phone || effectivePhone;
+              effectiveEmail = businessFallback.email || effectiveEmail;
+              effectiveCategory = businessFallback.category || effectiveCategory;
+              locInfo.openingHours = businessFallback.openingHours || locInfo.openingHours;
             }
-          } catch (ddgErr) {}
+          } catch (fallbackErr) {}
           if (!title) {
             title = domain;
             siteName = domain;
           }
         }
       } catch (e) {
-        // Direct page fetch failed, try resolveBusinessQuery which has Gemini Grounded Search
+        // Direct page fetch failed, try resolveBusinessQuery
         try {
-          const geminiFallback = await resolveBusinessQuery(domain);
-          if (geminiFallback) {
-            title = geminiFallback.name;
-            siteName = geminiFallback.name;
-            description = geminiFallback.description || description;
-            effectiveAddress = geminiFallback.address || effectiveAddress;
-            effectiveCity = geminiFallback.city || effectiveCity;
-            effectiveCountry = geminiFallback.country || effectiveCountry;
-            effectivePhone = geminiFallback.phone || effectivePhone;
-            effectiveEmail = geminiFallback.email || effectiveEmail;
-            effectiveCategory = geminiFallback.category || effectiveCategory;
-            locInfo.openingHours = geminiFallback.openingHours || locInfo.openingHours;
-          } else {
-            const ddgRes = await searchDuckDuckGoWeb(domain);
-            if (ddgRes && ddgRes.title) {
-              title = ddgRes.title;
-              siteName = ddgRes.title;
-              if (ddgRes.snippet && !description) {
-                description = ddgRes.snippet;
-              }
-            }
+          const businessFallback = await resolveBusinessQuery(domain);
+          if (businessFallback) {
+            title = businessFallback.name;
+            siteName = businessFallback.name;
+            description = businessFallback.description || description;
+            effectiveAddress = businessFallback.address || effectiveAddress;
+            effectiveCity = businessFallback.city || effectiveCity;
+            effectiveCountry = businessFallback.country || effectiveCountry;
+            effectivePhone = businessFallback.phone || effectivePhone;
+            effectiveEmail = businessFallback.email || effectiveEmail;
+            effectiveCategory = businessFallback.category || effectiveCategory;
+            locInfo.openingHours = businessFallback.openingHours || locInfo.openingHours;
           }
-        } catch (ddgErr) {}
+        } catch (fallbackErr) {}
         if (!title) {
           title = domain;
           siteName = domain;
@@ -20589,59 +20159,27 @@ Return JSON:
         }
       }
 
-      // 3. Multi-Language Live Auto-Complete (Google Complete & DuckDuckGo AC concurrent with strict timeout)
+      // 3. Multi-Language Live Auto-Complete (Google Complete)
       if (suggestions.length < 8) {
-        const fetchTasks = [
-          // Google Suggest API (never blocked, all languages, sub-50ms)
-          (async () => {
-            const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 600);
-            try {
-              const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
-                signal: ctrl.signal
-              });
-              clearTimeout(tid);
-              if (res.ok) {
-                const list = await res.json();
-                if (Array.isArray(list) && Array.isArray(list[1])) {
-                  return list[1].slice(0, 6);
-                }
-              }
-            } catch(e) { clearTimeout(tid); }
-            return [];
-          })(),
-          // DuckDuckGo Autocomplete List (never blocked, fast)
-          (async () => {
-            const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 600);
-            try {
-              const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-                signal: ctrl.signal
-              });
-              clearTimeout(tid);
-              if (res.ok) {
-                const list = await res.json();
-                if (Array.isArray(list) && Array.isArray(list[1])) {
-                  return list[1].slice(0, 5);
-                }
-              }
-            } catch(e) { clearTimeout(tid); }
-            return [];
-          })()
-        ];
-
-        const results = await Promise.allSettled(fetchTasks);
         const combinedPhrases: string[] = [];
-        for (const r of results) {
-          if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-            for (const phrase of r.value) {
-              if (typeof phrase === 'string' && phrase.trim().length > 1 && !combinedPhrases.includes(phrase.trim())) {
-                combinedPhrases.push(phrase.trim());
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 600);
+          const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
+            signal: ctrl.signal
+          });
+          clearTimeout(tid);
+          if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list) && Array.isArray(list[1])) {
+              for (const phrase of list[1].slice(0, 8)) {
+                if (typeof phrase === 'string' && phrase.trim().length > 1 && !combinedPhrases.includes(phrase.trim())) {
+                  combinedPhrases.push(phrase.trim());
+                }
               }
             }
           }
-        }
+        } catch(e) {}
 
         for (const phrase of combinedPhrases) {
           if (suggestions.length >= 8) break;

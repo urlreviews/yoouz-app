@@ -619,7 +619,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 {mergedSuggestions.map((item, idx) => {
                   const title = item.title || item.name || getCleanDomainUrl(item);
                   const targetDomain = item.domain || getCleanDomainUrl(item);
-                  const searchArg = targetDomain || title;
+                  const isDbOrBrand = item.source === "database" || item.source === "brand_index";
+                  const hasDomain = targetDomain && targetDomain.includes('.');
                   const itemLogo = item.logoUrl || getItemLogoUrl(targetDomain, item);
 
                   return (
@@ -635,7 +636,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       }}
                       className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 px-2 rounded-lg transition-colors"
                     >
-                      {targetDomain && targetDomain.includes('.') ? (
+                      {isDbOrBrand && hasDomain ? (
                         <div className="w-8 h-8 rounded-lg bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
                           <CopoBrandLogo 
                             domain={targetDomain}
@@ -653,35 +654,27 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       <div className="min-w-0 flex-1">
                         <div className="text-white text-[15px] font-medium truncate">
                           <span>{title}</span>
-                          {targetDomain && (
+                          {isDbOrBrand && (
                             <CheckCircle className="inline-block ml-1.5 w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 align-middle" />
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
-                          {(() => {
-                            const dispDomain = targetDomain && targetDomain.includes('.') 
-                              ? targetDomain.toLowerCase() 
-                              : "";
-                            const dispCat = item.category || "Verified Business";
-                            return (
+                        {isDbOrBrand && (
+                          <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
+                            {hasDomain ? (
                               <>
-                                {dispDomain ? (
-                                  <>
-                                    <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{dispDomain}</span>
-                                    <span className="text-zinc-600">•</span>
-                                  </>
-                                ) : null}
-                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{dispCat}</span>
+                                <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{targetDomain.toLowerCase()}</span>
+                                <span className="text-zinc-600">•</span>
                               </>
-                            );
-                          })()}
-                          {item.address && (
-                            <>
-                              <span className="text-zinc-700">•</span>
-                              <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
-                            </>
-                          )}
-                        </div>
+                            ) : null}
+                            <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category || "Verified Business"}</span>
+                            {item.address && (
+                              <>
+                                <span className="text-zinc-700">•</span>
+                                <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
                     </button>
