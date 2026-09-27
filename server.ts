@@ -18586,23 +18586,22 @@ Return JSON:
           if (wData.type === 'standard' && wData.title) {
             if (!photo) photo = wData.originalimage?.source || wData.thumbnail?.source || "";
             if (!description) description = wData.extract || "";
-            if (wData.content_urls?.desktop?.page && !website) {
-              website = wData.content_urls.desktop.page;
-            }
+            // Strictly DO NOT assign Wikipedia page URLs as the official business website!
           }
         }
       } catch (e) {}
     }
 
-
-
-    // 6. Verified Business Object (Strictly preserves authentic data, NEVER fabricates fake domains from search queries)
-    const fallbackPlaceId = (cleanQ.includes('.') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
+    // 6. Verified Business Object (Strictly preserves authentic data, NEVER fabricates fake domains or sets Wikipedia as website)
+    const fallbackPlaceId = (cleanQ.includes('.') && !cleanQ.toLowerCase().includes('wikipedia.org') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
     const finalCleanTitle = formatBusinessName(cleanQ);
 
+    const cleanWebsite = (website && !website.toLowerCase().includes('wikipedia.org')) ? website : "";
+    const cleanDomain = (fallbackPlaceId && fallbackPlaceId.includes('.') && !fallbackPlaceId.toLowerCase().includes('wikipedia.org')) ? fallbackPlaceId : "";
+
     const finalResult = {
-      domain: (fallbackPlaceId && fallbackPlaceId.includes('.')) ? fallbackPlaceId : "",
-      websiteUrl: website || ((fallbackPlaceId && fallbackPlaceId.includes('.')) ? `https://${fallbackPlaceId}` : ""),
+      domain: cleanDomain,
+      websiteUrl: cleanWebsite || (cleanDomain ? `https://${cleanDomain}` : ""),
       name: finalCleanTitle,
       category: detectedCategory,
       address: "",
@@ -18639,7 +18638,7 @@ Return JSON:
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
         if (resolvedEntity) {
-          const hasRealDomain = !!(resolvedEntity.domain && resolvedEntity.domain.includes('.'));
+          const hasRealDomain = !!(resolvedEntity.domain && resolvedEntity.domain.includes('.') && !resolvedEntity.domain.toLowerCase().includes('wikipedia.org'));
           const realDomain = hasRealDomain ? resolvedEntity.domain : "";
           const autoPlaceId = realDomain || (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
           
@@ -18668,7 +18667,7 @@ Return JSON:
             isOpen: true,
             phone: resolvedEntity.phone || "",
             email: resolvedEntity.email || "",
-            website: resolvedEntity.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
+            website: (resolvedEntity.websiteUrl && !resolvedEntity.websiteUrl.toLowerCase().includes('wikipedia.org')) ? resolvedEntity.websiteUrl : (hasRealDomain ? `https://${realDomain}` : ""),
             priceRange: "N/A",
             plusCode: "",
             locations: [],

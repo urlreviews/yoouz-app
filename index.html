@@ -199,13 +199,55 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Google CSE Client-Side Pre-warming Script -->
+    <!-- Google CSE Client-Side Pre-warming Script & Callbacks -->
+    <style id="yoouz-cse-hide-style">
+      .gsc-modal-background-image,
+      .gsc-modal-background-image-visible,
+      .gsc-results-wrapper-overlay,
+      .gsc-results-wrapper-visible,
+      .gsc-overflow-hidden {
+        position: fixed !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: -9999 !important;
+        overflow: hidden !important;
+      }
+    </style>
+    <script>
+      window.__gcse = window.__gcse || {};
+      window.__gcse.searchCallbacks = {
+        web: {
+          ready: function(name, q, promos, results, resultsDiv) {
+            if (window.__yoouzOnCseResults && typeof window.__yoouzOnCseResults === 'function') {
+              try {
+                window.__yoouzOnCseResults(results, q);
+              } catch (e) {
+                console.warn('[Google CSE] Error in callback:', e);
+              }
+            }
+          },
+          rendered: function(name, q, promos, results) {
+            if (window.__yoouzOnCseResults && typeof window.__yoouzOnCseResults === 'function') {
+              try {
+                window.__yoouzOnCseResults(results, q);
+              } catch (e) {
+                console.warn('[Google CSE] Error in rendered callback:', e);
+              }
+            }
+          }
+        }
+      };
+    </script>
     <script async src="https://cse.google.com/cse.js?cx=e41632212e69a4efd"></script>
   </head>
   <body class="h-full bg-[#0a0a0c] text-[#202124] font-['Roboto',Arial,sans-serif] antialiased select-none overscroll-none">
     <!-- Hidden Google CSE search container rendered statically for zero-latency queries -->
     <div id="yoouz-hidden-cse-container" class="opacity-0 pointer-events-none fixed" style="top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;">
-      <div class="gcse-search"></div>
+      <div class="gcse-search" data-gname="yoouz_search"></div>
     </div>
     <div id="root" class="h-full">
       <!-- Lightweight splash loader for instant feedback -->

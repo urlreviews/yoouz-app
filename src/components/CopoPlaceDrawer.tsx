@@ -412,19 +412,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
-    if (place.website && isValidDomainUrl(place.website) && !place.website.includes("maps.google.com") && (!place.website.includes("g.com") || place.id === "g.com")) {
+    if (place.website && isValidDomainUrl(place.website) && !place.website.includes("maps.google.com") && !place.website.toLowerCase().includes("wikipedia.org") && (!place.website.includes("g.com") || place.id === "g.com")) {
       const w = place.website.trim();
       return w.startsWith("http://") || w.startsWith("https://") ? w : `https://${w}`;
     }
-    if (drawerDomain && isValidDomainUrl(drawerDomain) && (drawerDomain !== "g.com" || place.id === "g.com")) {
+    if (drawerDomain && isValidDomainUrl(drawerDomain) && !drawerDomain.toLowerCase().includes("wikipedia.org") && (drawerDomain !== "g.com" || place.id === "g.com")) {
       return `https://${drawerDomain}`;
     }
-    if (place.brandDomain && isValidDomainUrl(place.brandDomain) && (place.brandDomain !== "g.com" || place.id === "g.com")) {
+    if (place.brandDomain && isValidDomainUrl(place.brandDomain) && !place.brandDomain.toLowerCase().includes("wikipedia.org") && (place.brandDomain !== "g.com" || place.id === "g.com")) {
       const d = extractCleanDomain(place.brandDomain);
-      if (d && isValidDomainUrl(d)) return `https://${d}`;
+      if (d && isValidDomainUrl(d) && !d.toLowerCase().includes("wikipedia.org")) return `https://${d}`;
     }
     const cleanFromId = extractCleanDomain(place.id);
-    if (cleanFromId && isValidDomainUrl(cleanFromId) && (cleanFromId !== "g.com" || place.id === "g.com")) {
+    if (cleanFromId && isValidDomainUrl(cleanFromId) && !cleanFromId.toLowerCase().includes("wikipedia.org") && (cleanFromId !== "g.com" || place.id === "g.com")) {
       return `https://${cleanFromId}`;
     }
     return null;

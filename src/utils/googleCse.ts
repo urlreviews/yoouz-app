@@ -5,16 +5,101 @@
  * mechanism that runs completely inside the user's browser, bypassing backend API key quotas and rate limits.
  * 
  * Features:
- * - Direct DOM search execution inside a hidden, isolated Google CSE widget container.
- * - Robust client-side load balancing (runs from the user's personal IP).
- * - Multi-layered STRICT AD-FILTERING to guarantee that ad URLs are never scraped.
+ * - Direct official Google CSE element execution (native searchCallbacks & programmatic DOM trigger).
+ * - Always takes the 100% genuine FIRST organic result from Google.
+ * - STRICT AD AND WIKIPEDIA FILTERING: Never takes Wikipedia pages or ads as business websites.
+ * - Fully non-destructive: Never removes or mutates Google CSE DOM nodes to avoid crashing the engine.
  */
+
+// Global registry of disallowed non-business domains
+export const DISALLOWED_SEARCH_DOMAINS = [
+  "wikipedia.org", "wikimedia.org", "wiktionary.org",
+  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
+  "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
+  "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
+  "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
+  "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
+  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
+  "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
+  "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
+  "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
+];
+
+export function isAllowedOrganicUrl(rawHref: string): boolean {
+  if (!rawHref || !rawHref.startsWith("http")) return false;
+  const lowerHref = rawHref.toLowerCase();
+
+  // Strict check: Block advertisements, tracking redirects, and ad clicks
+  if (
+    lowerHref.includes("google.com/aclk") ||
+    lowerHref.includes("googleadservices.com") ||
+    lowerHref.includes("doubleclick.net") ||
+    lowerHref.includes("/aclk") ||
+    lowerHref.includes("adservice") ||
+    lowerHref.includes("pagead") ||
+    lowerHref.includes("googleads") ||
+    lowerHref.includes("duckduckgo.com/l/?") ||
+    lowerHref.includes("bing.com/aclick")
+  ) {
+    return false;
+  }
+
+  let domain = "";
+  try {
+    domain = new URL(rawHref).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch (e) {
+    return false;
+  }
+
+  if (!domain || !domain.includes(".")) return false;
+
+  // Reject Punycode / IDN squatter domains
+  if (domain.includes("xn--")) return false;
+
+  // Strictly block Wikipedia, search engines, social networks, and directories
+  const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+  if (isDisallowed) return false;
+
+  return true;
+}
+
+export function extractTargetUrl(titleLink: HTMLAnchorElement | null): string | null {
+  if (!titleLink) return null;
+
+  // A. Check data-ctorig attribute (Google CSE's clean original URL attribute)
+  const ctOrig = titleLink.getAttribute("data-ctorig") || (titleLink.dataset ? titleLink.dataset.ctorig : null);
+  if (ctOrig && ctOrig.startsWith("http") && !ctOrig.includes("google.com/url")) {
+    return ctOrig;
+  }
+
+  // B. Check href attribute
+  let href = titleLink.getAttribute("href") || titleLink.href || "";
+  if (!href) return null;
+
+  // C. Unwrap Google redirect URLs (e.g. https://www.google.com/url?q=https://example.com/&sa=U...)
+  if (href.includes("/url?") || href.includes("google.com/url") || href.includes("google.co.") || href.includes("google.")) {
+    try {
+      const parsed = new URL(href, window.location.origin);
+      const target = parsed.searchParams.get("q") || parsed.searchParams.get("url");
+      if (target && target.startsWith("http") && !target.includes("google.com")) {
+        return target;
+      }
+    } catch (e) {}
+  }
+
+  if (href.startsWith("http")) return href;
+  return null;
+}
+
+// Track currently active query resolver to handle race conditions cleanly
+let activeQueryToken = 0;
 
 export async function queryGoogleCseForUrl(query: string): Promise<string | null> {
   const cleanQ = query.trim();
   if (!cleanQ || cleanQ.length < 2) return null;
 
-  console.info(`[Google CSE] Initiating free client-side query resolution for: "${cleanQ}"`);
+  const currentToken = ++activeQueryToken;
+  console.info(`[Google CSE] Initiating free client-side query resolution #${currentToken} for: "${cleanQ}"`);
 
   // 1. Locate or create the hidden container for the Google CSE widget
   let container = document.getElementById("yoouz-hidden-cse-container");
@@ -22,52 +107,52 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     container = document.createElement("div");
     container.id = "yoouz-hidden-cse-container";
     container.className = "opacity-0 pointer-events-none fixed";
-    // Place far off-screen to keep the layout absolutely pristine and beautiful
     container.style.cssText = "top: -9999px; left: -9999px; width: 400px; height: 400px; overflow: hidden; z-index: -9999;";
     
     const searchDiv = document.createElement("div");
     searchDiv.className = "gcse-search";
+    searchDiv.setAttribute("data-gname", "yoouz_search");
     
     container.appendChild(searchDiv);
     document.body.appendChild(container);
+  }
 
-    // Inject styles to guarantee Google CSE overlay results remain completely hidden offscreen
-    if (!document.getElementById("yoouz-cse-hide-style")) {
-      const style = document.createElement("style");
-      style.id = "yoouz-cse-hide-style";
-      style.textContent = `
-        .gsc-modal-background-image,
-        .gsc-modal-background-image-visible,
-        .gsc-results-wrapper-overlay,
-        .gsc-results-wrapper-visible,
-        .gsc-overflow-hidden {
-          position: fixed !important;
-          top: -9999px !important;
-          left: -9999px !important;
-          width: 1px !important;
-          height: 1px !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-          z-index: -9999 !important;
-          overflow: hidden !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
+  // Guarantee hide styles are present in document
+  if (!document.getElementById("yoouz-cse-hide-style")) {
+    const style = document.createElement("style");
+    style.id = "yoouz-cse-hide-style";
+    style.textContent = `
+      .gsc-modal-background-image,
+      .gsc-modal-background-image-visible,
+      .gsc-results-wrapper-overlay,
+      .gsc-results-wrapper-visible,
+      .gsc-overflow-hidden {
+        position: fixed !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: -9999 !important;
+        overflow: hidden !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
-    // 2. Inject Google CSE Script dynamically if not already loaded
-    if (!document.querySelector('script[src*="cse.google.com"]')) {
-      console.info("[Google CSE] Injecting Google CSE script...");
-      const script = document.createElement("script");
-      script.async = true;
-      script.src = "https://cse.google.com/cse.js?cx=e41632212e69a4efd";
-      document.head.appendChild(script);
-    }
+  // 2. Inject Google CSE Script dynamically if not already loaded
+  if (!document.querySelector('script[src*="cse.google.com"]')) {
+    console.info("[Google CSE] Injecting Google CSE script...");
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://cse.google.com/cse.js?cx=e41632212e69a4efd";
+    document.head.appendChild(script);
   }
 
   let inputEl: HTMLInputElement | null = null;
   let buttonEl: HTMLElement | null = null;
-  const maxWait = 6000; // 6 seconds max element render wait
+  const maxWait = 5000;
   const startTime = Date.now();
 
   // 3. Wait for the Google CSE search elements to be rendered in the DOM
@@ -89,7 +174,7 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
           clearInterval(interval);
           reject(new Error("Timeout waiting for Google CSE to render interface elements."));
         }
-      }, 150);
+      }, 100);
     });
   };
 
@@ -97,88 +182,100 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
     await waitForCseRender();
   } catch (err) {
     console.warn("[Google CSE Error] Interface rendering failed:", err);
-    return null;
   }
 
-  if (!inputEl || !buttonEl) return null;
-
-  // 4. Purge stale web result elements across the document from previous queries
-  const oldResults = document.querySelectorAll(".gsc-webResult, .gsc-result");
-  oldResults.forEach(el => {
-    try { el.remove(); } catch (e) {}
-  });
-
-  // 5. Input the search query programmatically and dispatch input/change/keydown events
-  inputEl.value = cleanQ;
-  inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-  inputEl.dispatchEvent(new Event("change", { bubbles: true }));
-  inputEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 13, code: "Enter", bubbles: true }));
-
-  // Also submit form if available
-  const formEl = inputEl.form || inputEl.closest("form");
-  if (formEl) {
-    try {
-      formEl.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    } catch (e) {}
-  }
-
-  // 6. Trigger search execution via official CSE element API + button click
-  try {
-    const cseElements = (window as any).google?.search?.cse?.element?.getAllElements();
-    if (cseElements) {
-      Object.values(cseElements).forEach((el: any) => {
-        if (el && typeof el.execute === "function") {
-          el.execute(cleanQ);
-        }
-      });
-    }
-  } catch (e) {}
-  buttonEl.click();
-  console.info("[Google CSE] Search execution triggered programmatically.");
-
-  // Helper to extract genuine target website URL from CSE anchor tags (unwrapping Google redirects)
-  const extractTargetUrl = (titleLink: HTMLAnchorElement): string | null => {
-    if (!titleLink) return null;
-
-    // A. Check data-ctorig attribute (Google CSE's clean original URL attribute)
-    const ctOrig = titleLink.getAttribute("data-ctorig") || (titleLink.dataset ? titleLink.dataset.ctorig : null);
-    if (ctOrig && ctOrig.startsWith("http") && !ctOrig.includes("google.com/url")) {
-      return ctOrig;
-    }
-
-    // B. Check href attribute
-    let href = titleLink.getAttribute("href") || titleLink.href || "";
-    if (!href) return null;
-
-    // C. Unwrap Google redirect URLs (e.g. https://www.google.com/url?q=https://www.harel-group.co.il/&sa=U...)
-    if (href.includes("/url?") || href.includes("google.com/url") || href.includes("google.co.") || href.includes("google.")) {
-      try {
-        const parsed = new URL(href, window.location.origin);
-        const target = parsed.searchParams.get("q") || parsed.searchParams.get("url");
-        if (target && target.startsWith("http") && !target.includes("google.com")) {
-          return target;
-        }
-      } catch (e) {}
-    }
-
-    if (href.startsWith("http")) return href;
-    return null;
-  };
-
-  // 7. Monitor and wait for organic search results to appear (Polling every 50ms across document)
   return new Promise((resolve) => {
-    const checkStartTime = Date.now();
-    const resultCheckInterval = setInterval(() => {
-      // Google CSE renders web result components under ".gsc-webResult" or ".gsc-result" in the document
-      const results = document.querySelectorAll(".gsc-webResult, .gsc-result");
-      if (results && results.length > 0) {
-        
-        // Loop through candidate elements to find the first 100% organic website link
-        for (let i = 0; i < results.length; i++) {
-          const resultEl = results[i] as HTMLElement;
+    let resolved = false;
+    let pollInterval: any = null;
 
-          // STRICT AD DETECTION CHECK (Ignore promotional components and ad blocks completely)
-          const isAdBlock = 
+    const cleanup = () => {
+      if (pollInterval) clearInterval(pollInterval);
+      if ((window as any).__yoouzOnCseResults === handleNativeResults) {
+        (window as any).__yoouzOnCseResults = null;
+      }
+    };
+
+    const finish = (resultUrl: string | null) => {
+      if (resolved) return;
+      if (currentToken !== activeQueryToken) {
+        cleanup();
+        return; // Stale query from previous search
+      }
+      resolved = true;
+      cleanup();
+      if (resultUrl) {
+        console.info(`[Google CSE Success] Extracted 1st organic result for "${cleanQ}": ${resultUrl}`);
+      } else {
+        console.warn(`[Google CSE] No organic result found for "${cleanQ}"`);
+      }
+      resolve(resultUrl);
+    };
+
+    // 4. Register official callback listener for Google CSE searchCallbacks
+    const handleNativeResults = (results: any[]) => {
+      if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
+      
+      // Loop sequentially to guarantee we take the FIRST authentic organic website (100% like Google)
+      for (let i = 0; i < results.length; i++) {
+        const item = results[i];
+        const targetUrl = item.url || item.unescapedUrl;
+        if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
+          console.info(`[Google CSE Native Callback] Got 1st organic result at index ${i}:`, targetUrl);
+          finish(targetUrl);
+          return;
+        }
+      }
+    };
+
+    (window as any).__yoouzOnCseResults = handleNativeResults;
+
+    // 5. Trigger search execution via official CSE element API + button click
+    if (inputEl) {
+      inputEl.value = cleanQ;
+      inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+      inputEl.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 13, code: "Enter", bubbles: true }));
+    }
+
+    try {
+      const gnameEl = (window as any).google?.search?.cse?.element?.getElement("yoouz_search");
+      if (gnameEl && typeof gnameEl.execute === "function") {
+        gnameEl.execute(cleanQ);
+      } else {
+        const cseElements = (window as any).google?.search?.cse?.element?.getAllElements();
+        if (cseElements) {
+          Object.values(cseElements).forEach((el: any) => {
+            if (el && typeof el.execute === "function") {
+              el.execute(cleanQ);
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    if (buttonEl) {
+      buttonEl.click();
+    }
+
+    // 6. Parallel DOM polling watcher (NON-DESTRUCTIVE: reads without deleting nodes)
+    const checkStartTime = Date.now();
+    pollInterval = setInterval(() => {
+      if (resolved) {
+        cleanup();
+        return;
+      }
+
+      // Query result containers in DOM
+      const resultContainers = document.querySelectorAll(
+        ".gsc-resultsRoot .gsc-webResult, .gsc-results .gsc-webResult, .gsc-expansionArea .gsc-webResult, .gsc-webResult.gsc-result"
+      );
+
+      if (resultContainers && resultContainers.length > 0) {
+        for (let i = 0; i < resultContainers.length; i++) {
+          const resultEl = resultContainers[i] as HTMLElement;
+
+          // Skip ad blocks and promotions
+          const isAd = 
             resultEl.closest(".gsc-adBlock") || 
             resultEl.closest(".gsc-adBlockVertical") || 
             resultEl.closest(".gsc-adBlockHorizontal") || 
@@ -187,84 +284,27 @@ export async function queryGoogleCseForUrl(query: string): Promise<string | null
             resultEl.classList.contains("gsc-promotion") ||
             resultEl.querySelector(".gs-promotion") ||
             resultEl.querySelector("[class*=\"adBlock\"]") ||
-            resultEl.querySelector("[class*=\"promotion\"]") ||
-            resultEl.innerHTML.toLowerCase().includes("ad-delivery") ||
-            resultEl.innerHTML.toLowerCase().includes("doubleclick") ||
-            resultEl.innerHTML.toLowerCase().includes("googleadservices");
+            resultEl.querySelector("[class*=\"promotion\"]");
 
-          if (isAdBlock) {
-            console.info("[Google CSE ad-filter] Detected and successfully skipped advertisement container.");
-            continue;
-          }
+          if (isAd) continue;
 
-          // Fetch the title link anchor which contains the actual destination website
-          const titleLink = (resultEl.querySelector("a.gs-title") || resultEl.querySelector("a[href]")) as HTMLAnchorElement;
+          // Find anchor tag for the organic result title
+          const titleLink = (resultEl.querySelector("a.gs-title") || resultEl.querySelector("a[data-ctorig]") || resultEl.querySelector("a[href]")) as HTMLAnchorElement;
           if (titleLink) {
             const rawHref = extractTargetUrl(titleLink);
-            
-            if (rawHref && rawHref.startsWith("http")) {
-              const lowerHref = rawHref.toLowerCase();
-
-              // Extra protection: list of search engines, news aggregators, social platforms, and directories to ignore
-              const DISALLOWED_DOMAINS = [
-                "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in",
-                "news.google.com", "news.google.co.il", "news.google.co.uk", "news.google.ca", "news.google.de", "news.google.fr",
-                "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com", "search.com",
-                "wikipedia.org", "wikimedia.org", "wiktionary.org",
-                "youtube.com", "youtu.be", "vimeo.com", "dailymotion.com",
-                "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com", "tiktok.com", "pinterest.com", "snapchat.com",
-                "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "glassdoor.com", "indeed.com",
-                "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
-                "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
-                "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
-              ];
-
-              let domain = "";
-              try {
-                domain = new URL(rawHref).hostname.replace(/^www\./i, "").toLowerCase();
-              } catch (e) {}
-
-              // Strictly reject Punycode / IDN squatter domains (e.g. xn--...)
-              if (domain.includes("xn--")) {
-                console.info(`[Google CSE filter] Skipped Punycode/Squatter domain: "${domain}"`);
-                continue;
-              }
-
-              const isDisallowed = DISALLOWED_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
-
-              if (isDisallowed) {
-                console.info(`[Google CSE filter] Skipped disallowed domain: "${domain}"`);
-                continue;
-              }
-
-              // Double-check URL to block redirects or search engine redirects
-              if (
-                !lowerHref.includes("google.com/aclk") && 
-                !lowerHref.includes("googleadservices.com") &&
-                !lowerHref.includes("doubleclick.net") &&
-                !lowerHref.includes("duckduckgo.com") &&
-                !lowerHref.includes("yandex.com") &&
-                !lowerHref.includes("bing.com") &&
-                !lowerHref.includes("/aclk") &&
-                !lowerHref.includes("adservice") &&
-                !lowerHref.includes("pagead")
-              ) {
-                console.info(`[Google CSE Success] Extracted first organic URL: "${rawHref}"`);
-                clearInterval(resultCheckInterval);
-                resolve(rawHref);
-                return;
-              }
+            if (rawHref && isAllowedOrganicUrl(rawHref)) {
+              console.info(`[Google CSE DOM Watcher] Extracted 1st organic result from DOM:`, rawHref);
+              finish(rawHref);
+              return;
             }
           }
         }
       }
 
-      // Fail-safe timeout after 5 seconds of polling
-      if (Date.now() - checkStartTime > 5000) {
-        console.warn("[Google CSE Timeout] Polling results timed out. No organic URL was extracted.");
-        clearInterval(resultCheckInterval);
-        resolve(null);
+      // Fail-safe timeout after 4.5 seconds
+      if (Date.now() - checkStartTime > 4500) {
+        finish(null);
       }
-    }, 50);
+    }, 75);
   });
 }

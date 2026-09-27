@@ -255,7 +255,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
       if (cseUrl) {
         const resolvedDom = extractCleanDomain(cseUrl);
-        if (isValidDomainUrl(resolvedDom)) {
+        if (isValidDomainUrl(resolvedDom) && !resolvedDom.toLowerCase().includes('wikipedia.org')) {
           console.info("[Search] Successfully resolved domain via frontend Google CSE:", resolvedDom);
           cleanUrl = resolvedDom;
         }
@@ -268,7 +268,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
           if (metaResp.ok) {
             preloadedMeta = await metaResp.json();
-            if (preloadedMeta && preloadedMeta.domain && isValidDomainUrl(preloadedMeta.domain)) {
+            if (preloadedMeta && preloadedMeta.domain && isValidDomainUrl(preloadedMeta.domain) && !preloadedMeta.domain.toLowerCase().includes('wikipedia.org')) {
               cleanUrl = preloadedMeta.domain;
             }
           }
@@ -342,7 +342,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         openingHours: preloadedMeta?.openingHours || "Available 24/7",
         isOpen: true,
         phone: preloadedMeta?.phone || "",
-        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url)) ? preloadedMeta.url : (isRealDomain ? `https://${domain}` : ""),
+        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org')) ? preloadedMeta.url : (isRealDomain && !domain.toLowerCase().includes('wikipedia.org') ? `https://${domain}` : ""),
         priceRange: "N/A",
         plusCode: "",
         description: preloadedMeta?.description || "",
@@ -441,7 +441,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  isOpen: true,
                  phone: data.phone || "",
                  email: data.email || "",
-                 website: (data.url && isValidDomainUrl(data.url)) ? data.url : (finalDomain ? `https://${finalDomain}` : ""),
+                 website: (data.url && isValidDomainUrl(data.url) && !data.url.toLowerCase().includes('wikipedia.org')) ? data.url : (finalDomain && !finalDomain.toLowerCase().includes('wikipedia.org') ? `https://${finalDomain}` : ""),
                  priceRange: "N/A",
                  plusCode: "",
                  description: data.description || "",
@@ -449,7 +449,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                  amenities: [],
                  topDishes: [],
                  locations: data.locations || [],
-                 brandDomain: finalDomain
+                 brandDomain: (finalDomain && !finalDomain.toLowerCase().includes('wikipedia.org')) ? finalDomain : ""
                };
                foundPlace = newPlace;
                setSearchedPlace(newPlace);

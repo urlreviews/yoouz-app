@@ -275,7 +275,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
       if (cseUrl) {
         const resolvedDom = extractCleanDomain(cseUrl);
-        if (isValidDomainUrl(resolvedDom)) {
+        if (isValidDomainUrl(resolvedDom) && !resolvedDom.toLowerCase().includes('wikipedia.org')) {
           console.info("[Search Mobile] Successfully resolved domain via Google CSE:", resolvedDom);
           cleanUrl = resolvedDom;
         }
@@ -287,7 +287,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`);
           if (metaResp.ok) {
             const meta = await metaResp.json();
-            if (meta && meta.domain && isValidDomainUrl(meta.domain)) {
+            if (meta && meta.domain && isValidDomainUrl(meta.domain) && !meta.domain.toLowerCase().includes('wikipedia.org')) {
               cleanUrl = meta.domain;
             }
           }
