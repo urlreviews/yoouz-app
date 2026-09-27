@@ -204,24 +204,42 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const cleanUrlFromBase = extractCleanDomain(baseName);
     let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");
 
-    // 1. First check if baseName or rawQuery matches an existing place in places array (mock / database)
+    // 1. Only accept a local match if:
+    // a) cleanUrl is an exact domain (e.g. apple.com) that matches p.brandDomain or p.website, OR
+    // b) The place is a verified official brand in KNOWN_OFFICIAL_NAMES, OR
+    // c) The place has authentic reviews (> 0 reviews) and a verified website.
+    // Stale/synthetic unreviewed records must NOT bypass Google CSE!
     const matchingLocal = places.find(p => {
       if (!p) return false;
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-      if (cleanUrl && pDom === cleanUrl) return true;
-      if (cleanUrl && p.id.toLowerCase() === cleanUrl.replace(/[^a-z0-9]/g, "-")) return true;
+      const isRealDom = isValidDomainUrl(pDom);
+      const pReviews = (p.totalReviews || 0) > 0 || (p.reviews && p.reviews.length > 0);
+      
+      if (cleanUrl && pDom === cleanUrl && isRealDom) return true;
+      if (cleanUrl && p.id.toLowerCase() === cleanUrl.replace(/[^a-z0-9]/g, "-") && isRealDom) return true;
       
       const pNameLower = (p.name || "").toLowerCase().trim();
       const baseLower = baseName.toLowerCase();
       const rawLower = rawQuery.toLowerCase();
-      if (pNameLower && (pNameLower === baseLower || pNameLower === rawLower || pNameLower.includes(baseLower) || baseLower.includes(pNameLower))) {
+      
+      const isKnownBrand = Boolean(
+        (pDom && KNOWN_OFFICIAL_NAMES[pDom]) ||
+        (pNameLower && KNOWN_OFFICIAL_NAMES[pNameLower])
+      );
+      
+      if (isKnownBrand && (pNameLower === baseLower || pNameLower === rawLower)) {
         return true;
       }
+      
+      if (pReviews && isRealDom && (pNameLower === baseLower || pNameLower === rawLower)) {
+        return true;
+      }
+      
       return false;
     });
 
     if (matchingLocal) {
-      console.info("[Search] Found local place match:", matchingLocal.name);
+      console.info("[Search] Found authoritative local place match:", matchingLocal.name);
       setSearchedPlace(matchingLocal);
       setQuery(matchingLocal.name || baseName);
       setIsSearching(false);
@@ -357,7 +375,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
       setIsEnriching(true);
       try {
-         const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanUrl || domain)}`);
+         const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
+         const resp = await fetch(`/api/url-metadata?${queryParam}`);
          if (resp.ok) {
            const data = await resp.json();
            if (data.title || data.domain) {
@@ -367,10 +386,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                return true;
              };
 
-             const domainCleanLogo = data.domain ? getCleanLogoUrl(null, data.domain) : null;
+             const discoveredDom = (data.domain && isValidDomainUrl(data.domain) && !data.domain.includes('wikipedia.org')) ? data.domain : (isRealDomain ? cleanUrl : "");
+             const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom) : null;
              const fetchedLogo = isValidLogo(data.logo) 
                ? data.logo 
-               : (domainCleanLogo || instantLogo);
+               : (domainCleanLogo || (discoveredDom ? `/api/favicon?domain=${discoveredDom}` : "") || instantLogo);
 
              const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
                ? data.image 
@@ -378,18 +398,23 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              
              const targetName = preferredName
                || locationDetails?.rawBusinessName
-               || (domain && KNOWN_OFFICIAL_NAMES[domain])
+               || (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
                || (!isGenericPlaceName(currentPlace.name) ? currentPlace.name : "")
-               || formatBusinessName(data.siteName || data.title, data.domain || domain)
-               || formatBusinessName(domain)
+               || formatBusinessName(data.siteName || data.title, data.domain || discoveredDom)
+               || formatBusinessName(discoveredDom)
                || instantName;
 
              const updatedPlace: Place = {
                ...currentPlace,
+               id: discoveredDom || currentPlace.id,
+               brandDomain: discoveredDom || "",
+               website: (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org')) 
+                 ? data.url 
+                 : (discoveredDom ? `https://${discoveredDom}` : ""),
                name: targetName || currentPlace.name,
-               logoUrl: (currentPlace.logoUrl && isValidLogo(currentPlace.logoUrl)) ? currentPlace.logoUrl : (fetchedLogo || instantLogo),
-               avatarUrl: (currentPlace.avatarUrl && isValidLogo(currentPlace.avatarUrl)) ? currentPlace.avatarUrl : (fetchedLogo || instantLogo),
+               logoUrl: fetchedLogo || currentPlace.logoUrl || instantLogo,
+               avatarUrl: fetchedLogo || currentPlace.avatarUrl || instantLogo,
                bannerUrl: (currentPlace.bannerUrl && !currentPlace.bannerUrl.includes("unsplash.com")) ? currentPlace.bannerUrl : (fetchedBanner || ""),
                ogImage: (currentPlace.ogImage && !currentPlace.ogImage.includes("unsplash.com")) ? currentPlace.ogImage : (fetchedBanner || ""),
                photos: (currentPlace.photos && currentPlace.photos.length > 0 && !currentPlace.photos[0].includes("unsplash.com")) ? currentPlace.photos : (fetchedBanner ? [fetchedBanner] : []),

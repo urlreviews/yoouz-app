@@ -123,50 +123,34 @@ export function getPlaceSlug(placeSource: string | { placeWebsite?: string, plac
 }
 
 export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string, placeId?: string } | null | undefined): string {
-  if (!placeSource) return "yoouz.com";
+  if (!placeSource) return "";
   
   const isRevId = (str?: string) => !str ? false : (str.startsWith("rev") || /rev\d+/i.test(str) || /rev[0-9a-f]{8,}/i.test(str) || str.includes("rev17895"));
 
   if (typeof placeSource === "string") {
-    if (isRevId(placeSource)) return "yoouz.com";
+    if (isRevId(placeSource)) return "";
     const clean = extractCleanDomain(placeSource);
     if (clean && clean.includes(".") && !isRevId(clean)) return clean;
-    if (clean && !isRevId(clean)) return `${clean}.com`;
-    return "yoouz.com";
+    if (clean && !isRevId(clean)) return clean;
+    return "";
   }
 
   let urlSource = "";
-  if (placeSource.brandDomain) urlSource = placeSource.brandDomain;
-  else if (placeSource.placeWebsite) urlSource = placeSource.placeWebsite;
-  else if (placeSource.website) urlSource = placeSource.website;
-  else if (placeSource.placeId && !isRevId(placeSource.placeId)) urlSource = placeSource.placeId;
-  else if (placeSource.placeName && !isRevId(placeSource.placeName)) urlSource = placeSource.placeName;
+  if (placeSource.brandDomain && placeSource.brandDomain.includes('.')) urlSource = placeSource.brandDomain;
+  else if (placeSource.placeWebsite && placeSource.placeWebsite.includes('.')) urlSource = placeSource.placeWebsite;
+  else if (placeSource.website && placeSource.website.includes('.')) urlSource = placeSource.website;
+  else if (placeSource.placeId && !isRevId(placeSource.placeId) && placeSource.placeId.includes('.')) urlSource = placeSource.placeId;
+  else if (placeSource.id && !isRevId(placeSource.id) && placeSource.id.includes('.')) urlSource = placeSource.id;
   else if (placeSource.name && !isRevId(placeSource.name)) urlSource = placeSource.name;
-  else if (placeSource.id && !isRevId(placeSource.id)) urlSource = placeSource.id;
+  else if (placeSource.placeName && !isRevId(placeSource.placeName)) urlSource = placeSource.placeName;
 
   if (!urlSource || isRevId(urlSource) || urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
-    return "yoouz.com";
+    return "";
   }
 
   let domain = extractCleanDomain(urlSource);
-  
   if (!domain || isRevId(domain)) {
-    if (placeSource.name || placeSource.placeName) {
-      const pName = (placeSource.name || placeSource.placeName || "").trim();
-      if (pName && !isRevId(pName)) {
-        const cleanName = pName.toLowerCase().replace(/^www[\.\-]/, "").replace(/[^a-z0-9]/g, "");
-        if (cleanName) return `${cleanName}.com`;
-      }
-    }
-    return "yoouz.com";
-  }
-
-  if (!domain.includes(".")) {
-    domain = domain.split('|')[0].replace(/[^a-z0-9]/g, "") + ".com";
-  }
-
-  if (isRevId(domain) || domain.startsWith("rev")) {
-    return "yoouz.com";
+    return (placeSource.name || placeSource.placeName || "").trim();
   }
 
   return domain;

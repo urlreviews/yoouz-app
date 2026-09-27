@@ -203,13 +203,26 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     return places.find(p => {
       if (!p) return false;
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-      if (target && pDom === target) return true;
-      if (rawTarget && pDom === rawTarget) return true;
+      const isRealDom = isValidDomainUrl(pDom);
+      const pReviews = (p.totalReviews || 0) > 0 || (p.reviews && p.reviews.length > 0);
+
+      if (target && pDom === target && isRealDom) return true;
+      if (rawTarget && pDom === rawTarget && isRealDom) return true;
       
       const pNameLower = (p.name || "").toLowerCase().trim();
       const baseLower = base.toLowerCase();
       const termLower = term.toLowerCase();
-      if (pNameLower && (pNameLower === baseLower || pNameLower === termLower || pNameLower.includes(baseLower) || baseLower.includes(pNameLower))) {
+
+      const isKnownBrand = Boolean(
+        (pDom && KNOWN_OFFICIAL_NAMES[pDom]) ||
+        (pNameLower && KNOWN_OFFICIAL_NAMES[pNameLower])
+      );
+      
+      if (isKnownBrand && (pNameLower === baseLower || pNameLower === termLower)) {
+        return true;
+      }
+      
+      if (pReviews && isRealDom && (pNameLower === baseLower || pNameLower === termLower)) {
         return true;
       }
       return false;
