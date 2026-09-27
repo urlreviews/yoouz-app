@@ -6,6 +6,7 @@ import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDoma
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { useLanguage } from "../i18n/LanguageContext";
+import { queryGoogleCseForUrl } from "../utils/googleCse";
 
 interface CopoSearchViewProps {
   places: Place[];
@@ -198,15 +199,39 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     let preloadedMeta: any = null;
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
+      
+      // 1. First, attempt to resolve the URL using our free client-side Google CSE scraper
+      console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
+      let cseUrl: string | null = null;
       try {
-        const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
-        if (metaResp.ok) {
-          preloadedMeta = await metaResp.json();
-          if (preloadedMeta && preloadedMeta.domain) {
-            cleanUrl = preloadedMeta.domain;
-          }
+        cseUrl = await queryGoogleCseForUrl(rawQuery);
+      } catch (cseErr) {
+        console.warn("[Search] Client-side Google CSE error:", cseErr);
+      }
+
+      if (cseUrl) {
+        const resolvedDom = extractCleanDomain(cseUrl);
+        if (isValidDomainUrl(resolvedDom)) {
+          console.info("[Search] Successfully resolved domain via frontend Google CSE:", resolvedDom);
+          cleanUrl = resolvedDom;
         }
-      } catch(e) {}
+      }
+
+      // 2. Fall back to backend /api/url-metadata?q=... if Google CSE didn't resolve a valid domain
+      if (!isValidDomainUrl(cleanUrl)) {
+        console.info("[Search] Google CSE fell back or didn't resolve. Querying backend search index...");
+        try {
+          const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
+          if (metaResp.ok) {
+            preloadedMeta = await metaResp.json();
+            if (preloadedMeta && preloadedMeta.domain) {
+              cleanUrl = preloadedMeta.domain;
+            }
+          }
+        } catch(e) {
+          console.error("[Search] Backend search resolution fallback failed:", e);
+        }
+      }
     }
 
     if (!isValidDomainUrl(cleanUrl) && cleanUrl.length < 2) {

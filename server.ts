@@ -18344,7 +18344,13 @@ Return JSON:
                 !lowerHref.includes('yandex.com') && 
                 !lowerHref.includes('bing.com') && 
                 !lowerHref.includes('ad-delivery') &&
-                !lowerHref.includes('doubleclick')
+                !lowerHref.includes('doubleclick') &&
+                !lowerHref.includes('googleadservices') &&
+                !lowerHref.includes('google.com/aclk') &&
+                !lowerHref.includes('pagead') &&
+                !lowerHref.includes('adservice') &&
+                !lowerHref.includes('adsystem') &&
+                !lowerHref.includes('/aclk')
               ) {
                 let domain = '';
                 try {
@@ -18418,17 +18424,32 @@ Return JSON:
             }
 
             if (href.startsWith('http://') || href.startsWith('https://')) {
-              let domain = '';
-              try {
-                domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
-              } catch(e) {}
+              const lowerHref = href.toLowerCase();
+              if (
+                !lowerHref.includes('duckduckgo.com') && 
+                !lowerHref.includes('yandex.com') && 
+                !lowerHref.includes('bing.com') && 
+                !lowerHref.includes('ad-delivery') &&
+                !lowerHref.includes('doubleclick') &&
+                !lowerHref.includes('googleadservices') &&
+                !lowerHref.includes('google.com/aclk') &&
+                !lowerHref.includes('pagead') &&
+                !lowerHref.includes('adservice') &&
+                !lowerHref.includes('adsystem') &&
+                !lowerHref.includes('/aclk')
+              ) {
+                let domain = '';
+                try {
+                  domain = new URL(href).hostname.replace(/^www\./i, '').toLowerCase();
+                } catch(e) {}
 
-              candidates.push({
-                url: href,
-                domain,
-                title,
-                snippet
-              });
+                candidates.push({
+                  url: href,
+                  domain,
+                  title,
+                  snippet
+                });
+              }
             }
           }
         });
