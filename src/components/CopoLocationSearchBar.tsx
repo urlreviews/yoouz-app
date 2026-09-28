@@ -127,7 +127,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search places, brands, cities...")}
+              placeholder={t("search.businessPlaceholder", "Search business...")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
               autoFocus={autoFocus}
             />
@@ -203,7 +203,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search places, brands, cities...")}
+              placeholder={t("search.businessPlaceholder", "Search business...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"
               autoFocus={autoFocus}
             />

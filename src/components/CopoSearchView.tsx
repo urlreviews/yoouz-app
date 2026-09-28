@@ -677,19 +677,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   return (
     <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
       {!searchedPlace ? (
-        <div className={`w-full max-w-3xl lg:max-w-4xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[10vh]'}`}>
-          {/* Central Logo / Icon */}
+        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[12vh]'}`}>
+          {/* Title & Subtitle */}
           {!isMobileModal && (
             <>
-              <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in text-zinc-200">
-                <Globe className="w-8 h-8 text-zinc-200" strokeWidth={1.5} />
-              </div>
-
               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
                 {t("search.title", "Review Any Business")}
               </h1>
               
-              <p className="text-zinc-200 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
+              <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
                 {t("search.subtitle", "Search any business to watch authentic video reviews or record your own.")}
               </p>
             </>
@@ -712,7 +708,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           {!hideSearchBar && (
-            <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl px-2 sm:px-4 relative" ref={dropdownRef}>
+            <div className="w-full max-w-xl px-2 sm:px-0 relative" ref={dropdownRef}>
               <CopoLocationSearchBar
                 initialQuery={query}
                 isSearching={isSearching}

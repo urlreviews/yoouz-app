@@ -675,47 +675,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   return (
     <div className={`fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans transition-transform duration-250 ease-out ${isClosing ? 'translate-y-full' : 'animate-in slide-in-from-bottom'}`}>
       
-      {/* Top Search Header - Yelp Style */}
-      <div className="w-full flex flex-col pt-[max(10px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 shadow-md">
-        
-        {/* Header Navigation Bar (Cancel | Yoouz Logo | Search) */}
-        <div className="w-full h-12 flex items-center justify-between px-3">
-          <button 
-             onClick={handleBack}
-             className="text-zinc-300 hover:text-white font-medium text-sm px-2 py-1 -ml-1 transition-colors cursor-pointer"
-          >
-            {submittedQuery ? "Back" : "Cancel"}
-          </button>
-          
-          <div className="flex items-center gap-1.5 select-none">
-            <img src="/favicon.svg" alt="Yoouz" className="w-5 h-5 rounded-md" />
-            <span className="font-black text-lg tracking-tight text-white">yoouz</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => executeSearch()}
-            disabled={!query.trim() || isSearching}
-            className="text-white font-bold text-sm px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
-          >
+      {/* Top Search Header - Clean Single Bar iOS Style */}
+      <div className="w-full pt-[max(12px,env(safe-area-inset-top))] px-3 pb-3 sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 shadow-md">
+        <div className="w-full flex items-center gap-2.5">
+          <div className="flex-1 h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 flex items-center gap-2.5 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-white/10 transition-all shadow-inner">
             {isSearching ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                <span className="text-white text-xs">Searching...</span>
-              </>
+              <Loader2 className="w-4.5 h-4.5 text-amber-400 animate-spin shrink-0" />
             ) : (
-              <span>Search</span>
-            )}
-          </button>
-        </div>
-
-        {/* Single Unified Search Bar */}
-        <div className="w-full px-3 pb-3 pt-1">
-          <div className="w-full h-12 bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 flex items-center gap-3 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 transition-all shadow-inner">
-            {isSearching ? (
-              <Loader2 className="w-5 h-5 text-amber-400 animate-spin shrink-0" />
-            ) : (
-              <Search className="w-5 h-5 text-zinc-400 shrink-0" />
+              <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
             )}
             <input
               ref={businessInputRef}
@@ -737,8 +704,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   executeSearch();
                 }
               }}
-              placeholder={t("search.businessPlaceholder", "Search places, brands, cities...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[15px] sm:text-[16px] font-medium placeholder:text-zinc-500 focus:outline-none"
+              placeholder={t("search.businessPlaceholder", "Search business...")}
+              className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
               autoFocus={true}
             />
             {query && (
@@ -749,13 +716,21 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   if (submittedQuery) setSubmittedQuery("");
                   businessInputRef.current?.focus();
                 }}
-                className="p-1.5 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
+                className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
                 title="Clear"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          <button 
+            type="button"
+            onClick={handleBack}
+            className="text-zinc-300 hover:text-white active:scale-95 font-medium text-[15px] px-1.5 py-2 transition-colors cursor-pointer shrink-0"
+          >
+            {submittedQuery ? "Back" : "Cancel"}
+          </button>
         </div>
       </div>
       

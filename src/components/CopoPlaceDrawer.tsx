@@ -459,6 +459,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, rawPlaceVideos, allVideos]);
 
+  const isYoouzWebsite = (url?: string | null): boolean => {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes("yoouz.com") || l === "yoouz" || l === "https://yoouz.com";
+  };
+
   // Background auto-enrichment: Fetch and sync rich metadata & business description from URL or Business Name
   useEffect(() => {
     const cleanTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
