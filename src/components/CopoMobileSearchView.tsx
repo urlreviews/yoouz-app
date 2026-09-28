@@ -617,17 +617,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       .catch(() => {});
   };
   
-  // Calculate real trending places mapped to clean URLs
-  const trending = [...places]
-    .map(p => {
-      const count = videos.filter(v => isPlaceReviewMatch(v, p)).length;
-      return { place: p, count };
-    })
-    .sort((a, b) => b.count - a.count)
-    .map(item => getCleanDomainUrl(item.place))
-    .filter(url => url && isValidDomainUrl(url))
-    .filter((url, idx, arr) => arr.indexOf(url) === idx)
-    .slice(0, 5);
+  // Calculate real trending places mapped to clean items
+  const trending = React.useMemo(() => {
+    return [...places]
+      .map(p => {
+        const count = videos.filter(v => isPlaceReviewMatch(v, p)).length;
+        return { place: p, count };
+      })
+      .sort((a, b) => b.count - a.count)
+      .map(item => item.place)
+      .filter((p, idx, arr) => arr.findIndex(x => x.id === p.id) === idx)
+      .slice(0, 8);
+  }, [places, videos]);
   
   // Get instant local DB matches by checking name, domain, id or category
   const localMatches = React.useMemo(() => {
@@ -856,31 +857,65 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     Clear All
                   </button>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col divide-y divide-zinc-900/60">
                   {recentSearches.map((s, idx) => {
                     const place = findMatchingPlace(s);
-                    const cleanUrl = getCleanDomainUrl(place || s);
-                    if (!cleanUrl || !isValidDomainUrl(cleanUrl)) return null;
+                    const cleanUrl = getCleanDomainUrl(place || s) || (isValidDomainUrl(s) ? extractCleanDomain(s) : "");
+                    const title = place?.name 
+                      || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
+                      || (cleanUrl ? formatBusinessName(cleanUrl) : s);
+                    const loc = place?.city ? `${place.address ? place.address + ', ' : ''}${place.city}` : (place?.country || "");
+                    const cat = place?.category && place.category !== "Website" && place.category !== "Verified Business" ? place.category : "";
 
                     return (
                       <button 
                         key={idx}
                         onClick={() => {
-                          setQuery(cleanUrl);
-                          executeSearch(cleanUrl);
+                          if (place) {
+                            onOpenPlace(place.id);
+                          } else {
+                            handleSelectSuggestion({
+                              title,
+                              domain: cleanUrl,
+                              category: cat,
+                              address: loc
+                            });
+                          }
                         }}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
+                        className="flex items-center gap-3.5 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-xl transition-colors group"
                       >
                         <SearchBusinessBadge 
-                          term={cleanUrl}
+                          term={cleanUrl || title}
                           place={place}
                           iconType="clock"
                           getItemLogoUrl={getItemLogoUrl}
                         />
-                        <span className="text-white text-[15px] font-normal truncate">
-                          {cleanUrl}
-                        </span>
-                        <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
+                            {title}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                            {cleanUrl && (
+                              <span className="text-zinc-300 font-medium truncate flex items-center gap-1 font-mono text-[12px]">
+                                <Globe className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <span>{cleanUrl}</span>
+                              </span>
+                            )}
+                            {cat && (
+                              <>
+                                {cleanUrl && <span className="text-zinc-600">•</span>}
+                                <span className="text-zinc-400 truncate text-[12px]">{cat}</span>
+                              </>
+                            )}
+                            {loc && (
+                              <>
+                                {(cleanUrl || cat) && <span className="text-zinc-600">•</span>}
+                                <span className="text-zinc-400 truncate text-[12px]">{loc}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
                     );
                   })}
@@ -892,31 +927,53 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {query.length === 0 && trending.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
-                <div className="flex flex-col">
-                  {trending.map((s, idx) => {
-                    const place = findMatchingPlace(s);
-                    const cleanUrl = getCleanDomainUrl(place || s);
-                    if (!cleanUrl || !isValidDomainUrl(cleanUrl)) return null;
+                <div className="flex flex-col divide-y divide-zinc-900/60">
+                  {trending.map((place, idx) => {
+                    const cleanUrl = getCleanDomainUrl(place);
+                    const title = place.name 
+                      || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
+                      || (cleanUrl ? formatBusinessName(cleanUrl) : "Business");
+                    const loc = place.city ? `${place.address ? place.address + ', ' : ''}${place.city}` : (place.country || "");
+                    const cat = place.category && place.category !== "Website" && place.category !== "Verified Business" ? place.category : "";
 
                     return (
                       <button 
                         key={idx}
-                        onClick={() => {
-                          setQuery(cleanUrl);
-                          executeSearch(cleanUrl);
-                        }}
-                        className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
+                        onClick={() => onOpenPlace(place.id)}
+                        className="flex items-center gap-3.5 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-xl transition-colors group"
                       >
                         <SearchBusinessBadge 
-                          term={cleanUrl}
+                          term={cleanUrl || title}
                           place={place}
                           iconType="trending"
                           getItemLogoUrl={getItemLogoUrl}
                         />
-                        <span className="text-white text-[15px] font-normal truncate">
-                          {cleanUrl}
-                        </span>
-                        <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
+                            {title}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                            {cleanUrl && (
+                              <span className="text-zinc-300 font-medium truncate flex items-center gap-1 font-mono text-[12px]">
+                                <Globe className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <span>{cleanUrl}</span>
+                              </span>
+                            )}
+                            {cat && (
+                              <>
+                                {cleanUrl && <span className="text-zinc-600">•</span>}
+                                <span className="text-zinc-400 truncate text-[12px]">{cat}</span>
+                              </>
+                            )}
+                            {loc && (
+                              <>
+                                {(cleanUrl || cat) && <span className="text-zinc-600">•</span>}
+                                <span className="text-zinc-400 truncate text-[12px]">{loc}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
                     );
                   })}
