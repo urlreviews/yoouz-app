@@ -992,12 +992,46 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       {/* Business Title & Structured Sub-Header Metadata */}
       <div className="px-6 pt-14 pb-4 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80">
         {/* Title & Follow Action Bar */}
-        <div className="flex items-start justify-between gap-3 w-full mb-3">
+        <div className="flex items-start justify-between gap-3 w-full mb-2">
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
-              <bdi dir="auto">{(displayedPlaceName || "").trim()}</bdi>
-              <CheckCircle className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
-            </h2>
+            {(() => {
+              const fullName = (displayedPlaceName || "").trim();
+              const words = fullName.split(/\s+/);
+              if (words.length <= 1) {
+                return (
+                  <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]" dir="auto">
+                    <span className="inline-block whitespace-nowrap">
+                      <bdi dir="auto">{fullName}</bdi>
+                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 inline-block align-middle ml-1.5 -mt-0.5 shrink-0" />
+                    </span>
+                  </h2>
+                );
+              }
+              const allExceptLast = words.slice(0, -1).join(" ");
+              const lastWord = words[words.length - 1];
+              return (
+                <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]" dir="auto">
+                  <bdi dir="auto">{allExceptLast}</bdi>{" "}
+                  <span className="inline-block whitespace-nowrap">
+                    <bdi dir="auto">{lastWord}</bdi>
+                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 inline-block align-middle ml-1.5 -mt-0.5 shrink-0" />
+                  </span>
+                </h2>
+              );
+            })()}
+
+            {/* Official Website / Domain Link under Business Name */}
+            {displayWebsiteClean && (
+              <a
+                href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-1 mb-1 transition-colors cursor-pointer group"
+              >
+                <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                <span className="truncate">{displayWebsiteClean}</span>
+              </a>
+            )}
           </div>
 
           {/* Business Follow Button */}
