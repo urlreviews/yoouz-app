@@ -18769,26 +18769,98 @@ Return JSON:
 
 
 
-    // 1. Explicit domain check
+    // 1. Explicit domain check - Live scrape the website directly so real banner, phone, address, and description are stored
     if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
       const cleanDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
       const loc = KNOWN_ENTITY_LOCATIONS[cleanDom] || KNOWN_ENTITY_LOCATIONS[cleanDom.split('.')[0]];
-      return {
+      
+      let domTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name || formatBusinessName(cleanDom);
+      let domDesc = loc?.description || "";
+      let domPhoto = (loc as any)?.bannerUrl || (loc as any)?.photo || "";
+      let domAddress = loc?.address || "";
+      let domCity = loc?.city || "Online";
+      let domCountry = loc?.country || "";
+      let domPhone = loc?.phone || "";
+      let domEmail = loc?.email || "";
+      let domCategory = loc?.category || "Website";
+      let domOpeningHours = loc?.openingHours || "Available 24/7";
+      let domLat = loc?.lat || 0;
+      let domLng = loc?.lng || 0;
+
+      try {
+        const protocols = [`https://${cleanDom}`, `http://${cleanDom}`, `https://www.${cleanDom}`];
+        for (const targetUrl of protocols) {
+          try {
+            const dResp = await fetch(targetUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9'
+              },
+              redirect: 'follow',
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+            });
+            if (dResp.ok) {
+              const dHtml = await dResp.text();
+              if (dHtml && dHtml.length > 300) {
+                const d$ = cheerio.load(dHtml);
+                const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text();
+                if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
+                  domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
+                }
+                const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content');
+                if (ogDesc && ogDesc.trim().length > 10) {
+                  domDesc = ogDesc.trim();
+                } else if (!domDesc) {
+                  const firstP = d$('main p, article p, .about p, #about p, p').first().text().trim();
+                  if (firstP && firstP.length > 20 && firstP.length < 350) {
+                    domDesc = firstP;
+                  }
+                }
+                const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content');
+                if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
+                  try {
+                    domPhoto = new URL(ogImg, dResp.url || targetUrl).toString();
+                  } catch(e) {
+                    domPhoto = ogImg;
+                  }
+                }
+                const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, dResp.url || targetUrl, cleanDom);
+                if (scrapedLoc.address && (!domAddress || domAddress === "Verified Location")) domAddress = scrapedLoc.address;
+                if (scrapedLoc.city && (!domCity || domCity === "Online")) domCity = scrapedLoc.city;
+                if (scrapedLoc.country && !domCountry) domCountry = scrapedLoc.country;
+                if (scrapedLoc.phone && !domPhone) domPhone = scrapedLoc.phone;
+                if (scrapedLoc.email && !domEmail) domEmail = scrapedLoc.email;
+                if (scrapedLoc.category && (!domCategory || domCategory === "Website")) domCategory = scrapedLoc.category;
+                if (scrapedLoc.openingHours && (!domOpeningHours || domOpeningHours === "Available 24/7")) domOpeningHours = scrapedLoc.openingHours;
+                if (scrapedLoc.lat && !domLat) domLat = scrapedLoc.lat;
+                if (scrapedLoc.lng && !domLng) domLng = scrapedLoc.lng;
+                break;
+              }
+            }
+          } catch(errProtocol) {}
+        }
+      } catch (scrapeErr) {}
+
+      const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
         websiteUrl: `https://${cleanDom}`,
-        name: KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name || formatBusinessName(cleanDom),
-        category: loc?.category || "Website",
-        address: loc?.address || "",
-        city: loc?.city || "",
-        country: loc?.country || "",
-        phone: loc?.phone || "",
-        email: loc?.email || "",
-        openingHours: loc?.openingHours || "",
-        photo: "",
-        description: "",
-        lat: loc?.lat || 0,
-        lng: loc?.lng || 0
+        name: domTitle,
+        category: domCategory,
+        address: domAddress,
+        city: domCity,
+        country: domCountry,
+        phone: domPhone,
+        email: domEmail,
+        openingHours: domOpeningHours,
+        photo: domPhoto,
+        description: domDesc,
+        lat: domLat,
+        lng: domLng
       };
+      BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedDomData, timestamp: Date.now() });
+      await persistToDb(resolvedDomData);
+      return resolvedDomData;
     }
 
     const qLower = cleanQ.toLowerCase();
@@ -19169,18 +19241,28 @@ Return JSON:
       let effectiveCategory = "";
       
       try {
-        const fetchResponse = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US'
-          },
-          redirect: 'follow',
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
-        });
+        let fetchResponse: any = null;
+        const candidateFetchUrls = [url, `https://www.${domain}`, `http://${domain}`];
+        for (const cUrl of candidateFetchUrls) {
+          try {
+            const resp = await fetch(cUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US'
+              },
+              redirect: 'follow',
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+            });
+            if (resp.ok) {
+              fetchResponse = resp;
+              break;
+            }
+          } catch(eFetch) {}
+        }
         
-        if (fetchResponse.ok) {
+        if (fetchResponse && fetchResponse.ok) {
           finalUrl = fetchResponse.url;
           html = await fetchResponse.text();
           
@@ -20203,33 +20285,12 @@ Return JSON:
       }
 
       if (!description || description.toLowerCase() === "home" || description.toLowerCase() === "welcome" || description.includes("Verified Yoouz business listing") || description === "No description available.") {
-        const placeName = isYoouz ? "Yoouz" : (title || cleanDomain);
         if (isYoouz) {
-          description = "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.";
-        } else {
-          let locStr = "";
-          if (effectiveCity && effectiveCity !== "Online" && effectiveCity !== "Worldwide") {
-            locStr = ` in ${effectiveCity}${effectiveCountry ? ', ' + effectiveCountry : ''}`;
-          } else if (effectiveAddress && !effectiveAddress.startsWith("http")) {
-            locStr = ` located at ${effectiveAddress}`;
-          } else {
-            locStr = ` online at ${cleanDomain}`;
-          }
-          const catLower = effectiveCategory.toLowerCase();
-          if (catLower.includes("dentist") || catLower.includes("dental")) {
-            description = `${placeName} is a trusted dental clinic${locStr}, providing comprehensive oral healthcare, preventive checkups, cosmetic dentistry, and patient-centered dental care.`;
-          } else if (catLower.includes("law") || catLower.includes("legal") || catLower.includes("attorney")) {
-            description = `${placeName} is a dedicated law practice${locStr}, offering expert legal counsel, professional representation, and trusted advisory services for clients.`;
-          } else if (catLower.includes("restaurant") || catLower.includes("cafe") || catLower.includes("food") || catLower.includes("bistro")) {
-            description = `${placeName} is a popular dining destination${locStr}, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.`;
-          } else if (catLower.includes("hotel") || catLower.includes("resort") || catLower.includes("hospitality")) {
-            description = `${placeName} is a premier hospitality destination${locStr}, offering comfortable accommodations, top-tier amenities, and attentive guest service.`;
-          } else if (catLower.includes("spa") || catLower.includes("massage") || catLower.includes("wellness") || catLower.includes("therapy")) {
-            description = `${placeName} is a dedicated wellness and therapy center${locStr}, providing restorative treatments, professional care, and personalized wellness services.`;
-          } else if (catLower.includes("auto") || catLower.includes("car") || catLower.includes("vehicle") || catLower.includes("rental")) {
-            description = `${placeName} is a dependable automotive service provider${locStr}, delivering reliable vehicle solutions and quality customer support.`;
-          } else {
-            description = `${placeName} is a verified business and service provider${locStr}, committed to delivering high quality services, verified expertise, and excellent customer satisfaction.`;
+          description = "Official verified profile for Yoouz. Discover authentic 60-second video reviews by real customers. Zero fake text reviews.";
+        } else if ($) {
+          const pageP = $('main p, article p, .about p, #about p, p').first().text().trim();
+          if (pageP && pageP.length > 20 && pageP.length < 400 && !pageP.toLowerCase().includes('cookie') && !pageP.toLowerCase().includes('javascript')) {
+            description = pageP;
           }
         }
       }

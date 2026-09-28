@@ -479,6 +479,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.description.includes("Verified video review destination") ||
       place.description.includes("Verified Yoouz business listing") ||
       place.description.includes("Verified Google Maps") ||
+      place.description.includes("is a verified business and service provider") ||
+      place.description.includes("is a premier provider") ||
+      place.description.includes("committed to delivering high quality") ||
+      place.description.includes("committed to delivering high-quality") ||
+      place.description.includes("exceptional client satisfaction") ||
       place.description === "No description available.";
 
     const isGenericName = !place.name ||

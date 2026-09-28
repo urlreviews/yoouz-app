@@ -681,9 +681,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const totalReviewsCount = placeVideos.length;
 
   return (
-    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
+    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-8 md:pt-12 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
       {!searchedPlace ? (
-        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-4' : 'my-auto py-12 md:py-16'}`}>
+        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-4 md:mt-8'}`}>
           {/* Title & Subtitle */}
           {!isMobileModal && (
             <>

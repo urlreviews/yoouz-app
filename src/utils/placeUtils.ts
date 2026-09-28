@@ -1377,8 +1377,16 @@ export function generateSmartPlaceDescription(params: {
     return `${name} provides professional, reliable emergency and maintenance services${locStr}, dedicated to quality workmanship and prompt client care.`;
   }
 
-  // Default professional business description
-  return `${name} is a premier provider${locStr}, committed to delivering high-quality products, professional capabilities, and exceptional client satisfaction.`;
+  // If specific category is detected with location
+  if (cat && cat !== "website" && cat !== "establishment" && cat !== "all") {
+    return `${name} · ${cat}${locStr ? ` · ${locStr.replace(/^\s*(in|online at|located at)\s*/i, "")}` : ""}`;
+  }
+
+  // Default clean business representation
+  if (domain && isValidDomainUrl(domain)) {
+    return `${name} · Official business profile for ${domain}`;
+  }
+  return `${name}${locStr ? ` · ${locStr.replace(/^\s*(in|online at|located at)\s*/i, "")}` : ""}`;
 }
 
 /**
@@ -1396,6 +1404,11 @@ export function getEffectivePlaceDescription(place?: any, fallbackCategory?: str
     rawDesc.includes("Verified Yoouz business listing") ||
     rawDesc.includes("Verified Yoouz location review") ||
     rawDesc.includes("Verified video review destination") ||
+    rawDesc.includes("is a verified business and service provider") ||
+    rawDesc.includes("is a premier provider") ||
+    rawDesc.includes("committed to delivering high quality") ||
+    rawDesc.includes("committed to delivering high-quality") ||
+    rawDesc.includes("exceptional client satisfaction") ||
     rawDesc.toLowerCase().includes("verified business") ||
     rawDesc.includes("No description available");
 
