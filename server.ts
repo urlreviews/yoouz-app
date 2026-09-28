@@ -24741,6 +24741,60 @@ function injectOpenGraphTags(html: string, meta: any) {
     "cleanton": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" }
   });
 
+  // Dedicated endpoint to flush all metadata memory caches and sanitize place asset domain mismatches
+  app.post("/api/admin/flush-metadata-cache", express.json(), async (_req, res) => {
+    try {
+      if (typeof searchSuggestCache !== "undefined") {
+        searchSuggestCache.clear();
+      }
+      if (typeof placeLogoBufferCache !== "undefined") {
+        placeLogoBufferCache.clear();
+      }
+      if (typeof failedRecoveryCache !== "undefined") {
+        failedRecoveryCache.clear();
+      }
+      if (typeof feedCache !== "undefined") {
+        feedCache.lastFetched = 0;
+      }
+
+      const bunnyDb = getBunnyDb();
+      let cleanedCount = 0;
+      if (bunnyDb) {
+        const rs = await bunnyDb.execute("SELECT id, logoUrl, bannerUrl, brandDomain, website, data FROM places;");
+        for (const row of (rs.rows as any[])) {
+          let doc: any = {};
+          try { doc = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
+          const pDom = cleanDomainName(doc.brandDomain || doc.website || row.id || "");
+          let updated = false;
+
+          if (doc.bannerUrl && typeof doc.bannerUrl === 'string' && doc.bannerUrl.startsWith("http")) {
+            const bannerDom = cleanDomainName(doc.bannerUrl);
+            if (pDom && bannerDom && !bannerDom.includes(pDom) && !pDom.includes(bannerDom) && !bannerDom.includes("b-cdn.net") && !bannerDom.includes("pexels") && !bannerDom.includes("google")) {
+              doc.bannerUrl = "";
+              doc.photos = [];
+              updated = true;
+            }
+          }
+          if (updated) {
+            cleanedCount++;
+            await bunnyDb.execute(
+              "UPDATE places SET data = ? WHERE id = ?;",
+              [JSON.stringify(doc), row.id]
+            );
+          }
+        }
+      }
+
+      return res.json({
+        success: true,
+        cleanedCount,
+        message: `Successfully flushed in-memory metadata caches and sanitized ${cleanedCount} place asset reference(s).`
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err?.message || "Failed to flush metadata cache" });
+    }
+  });
+
   // Dedicated endpoint to audit and automatically repair any single-word or compound domain business names, corrupt addresses, and countries in BunnyDB
   app.all("/api/admin/repair-business-names", async (req, res) => {
     try {

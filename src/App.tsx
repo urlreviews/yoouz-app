@@ -6242,6 +6242,7 @@ export function App() {
         {/* Place Drawer */}
         {selectedPlaceIdForDrawer && drawerPlace && (
           <CopoPlaceDrawer
+            key={drawerPlace.id || drawerPlace.brandDomain || drawerPlace.website || drawerPlace.name}
             place={drawerPlace}
             allVideos={videos}
             onClose={handleCloseDrawers}

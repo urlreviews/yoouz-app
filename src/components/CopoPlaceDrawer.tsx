@@ -123,14 +123,17 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
-  // Reset image errors and banner state when place changes
+  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place changes
   useEffect(() => {
     setBannerError(false);
     setPhotoIndex(0);
     setLogoError(false);
     setFetchedBannerUrl(null);
-    fetchedTargetUrlsRef.current.clear();
-  }, [place?.id]);
+    setIsHoveredUnfollow(false);
+    if (fetchedTargetUrlsRef.current) {
+      fetchedTargetUrlsRef.current.clear();
+    }
+  }, [place?.id, place?.website, place?.name, place?.brandDomain]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {

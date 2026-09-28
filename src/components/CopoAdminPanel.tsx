@@ -290,6 +290,37 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const [isFlushingMetadataCache, setIsFlushingMetadataCache] = useState(false);
+
+  const handleFlushMetadataAndAssetCache = async () => {
+    setIsFlushingMetadataCache(true);
+    try {
+      // Clear client-side local storage caches
+      try {
+        localStorage.removeItem("yoouz_recent_searches");
+        localStorage.removeItem("url_metadata_cache");
+      } catch (e) {}
+
+      const res = await fetch("/api/admin/flush-metadata-cache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        showToast(data.message || `Metadata cache flushed! Sanitized ${data.cleanedCount || 0} place asset(s).`);
+        if (typeof fetchHealthDiagnostic === "function") {
+          fetchHealthDiagnostic();
+        }
+      } else {
+        showToast(data?.error || "Error flushing metadata cache");
+      }
+    } catch (e: any) {
+      showToast("Network error flushing metadata cache");
+    } finally {
+      setIsFlushingMetadataCache(false);
+    }
+  };
+
   const handleRepairAllBusinessNames = async () => {
     setIsRepairingBrandNames(true);
     try {
@@ -4456,6 +4487,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
                     Showing <span className="text-white font-bold">{filteredPhysicalPlaces.length}</span> venues
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleFlushMetadataAndAssetCache}
+                    disabled={isFlushingMetadataCache}
+                    className="px-3 py-1.5 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 hover:text-white rounded-xl text-xs font-bold border border-amber-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Flush all in-memory search metadata caches and sanitize place banner/logo domain references"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isFlushingMetadataCache ? 'animate-spin' : ''}`} />
+                    <span>{isFlushingMetadataCache ? "Flushing..." : "Flush Metadata Cache"}</span>
+                  </button>
 
                   <button
                     type="button"
