@@ -27,6 +27,7 @@ export interface CopoLocationSearchBarProps {
   onSelectSuggestion?: (item: any) => void;
   onQueryChange?: (val: string) => void;
   compact?: boolean;
+  hideDropdown?: boolean;
   className?: string;
 }
 
@@ -41,6 +42,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   isLoadingSuggest = false,
   onSelectSuggestion,
   onQueryChange,
+  hideDropdown = false,
   className = ""
 }) => {
   const { t } = useLanguage();
@@ -403,8 +405,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         </div>
       </form>
 
-      {/* Autocomplete / Live Suggestions Dropdown */}
-      {showSuggestions && suggestions.length > 0 && (
+      {/* Autocomplete / Live Suggestions Dropdown (Only rendered when not handled by parent container) */}
+      {!hideDropdown && showSuggestions && suggestions.length > 0 && (
         <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
             const isDbOrBrand = item.source === "database" || item.source === "brand_index";

@@ -512,6 +512,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <div className="flex-1 min-w-0">
             <CopoLocationSearchBar
               compact={false}
+              hideDropdown={true}
               initialQuery={query}
               autoFocus={true}
               suggestions={mergedSuggestions}
@@ -526,7 +527,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto w-full relative">
+      <div className="flex-1 overflow-y-auto w-full relative pb-24">
         {submittedQuery ? (
           <CopoSearchView
             key={submittedQuery}
@@ -541,11 +542,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             hideSearchBar={true}
           />
         ) : (
-          <div className="p-4 flex flex-col gap-6">
+          <div className="p-3 sm:p-4 flex flex-col gap-6">
             
             {/* Autocomplete Suggestions */}
             {query.length > 0 && mergedSuggestions.length > 0 && (
-              <div className="flex flex-col">
+              <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
                   const title = item.title || item.name || getCleanDomainUrl(item);
                   const targetDomain = item.domain || getCleanDomainUrl(item);
@@ -557,10 +558,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     <button 
                       key={idx}
                       onClick={() => handleSelectSuggestion(item)}
-                      className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
+                      className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group"
                     >
                       {isDbOrBrand && hasDomain ? (
-                        <div className="w-8 h-8 rounded-lg bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                        <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-zinc-200/80 flex items-center justify-center shrink-0 p-1 overflow-hidden">
                           <CopoBrandLogo 
                             domain={targetDomain}
                             name={title}
@@ -570,35 +571,35 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           />
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400">
-                          <Search className="w-4 h-4 text-zinc-400" />
+                        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                          <Search className="w-4.5 h-4.5 text-zinc-400" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-white text-[15px] font-medium truncate">
+                        <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors">
                           <span>{title}</span>
                         </div>
                         {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google"))) && (
-                          <div className="flex items-center gap-2 text-xs text-zinc-500 truncate mt-0.5">
+                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
                             {hasDomain ? (
-                              <span className="text-zinc-400 font-semibold truncate text-[11px] sm:text-xs">{targetDomain.toLowerCase()}</span>
+                              <span className="text-zinc-300 font-semibold truncate text-[12px]">{targetDomain.toLowerCase()}</span>
                             ) : null}
                             {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
                               <>
                                 {hasDomain && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[11px] sm:text-xs">{item.category}</span>
+                                <span className="text-zinc-400 truncate text-[12px]">{item.category}</span>
                               </>
                             )}
                             {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
                               <>
                                 {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span className="text-zinc-700">•</span>}
-                                <span className="text-zinc-500 truncate text-[11px] sm:text-xs">{item.address}</span>
+                                <span className="text-zinc-400 truncate text-[12px]">{item.address}</span>
                               </>
                             )}
                           </div>
                         )}
                       </div>
-                      <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50" />
+                      <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
                   );
                 })}
