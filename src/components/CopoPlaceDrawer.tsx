@@ -1111,69 +1111,65 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
         </div>
 
-        {/* Rating & Category Hero Showcase Card */}
-        <div className="mb-2.5 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
+        {/* Rating & Action Hero Showcase Header Box */}
+        <div className="mb-3.5 p-3 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3 shadow-md">
+          {/* Star Rating Section */}
+          <div className="flex items-center gap-2.5">
             {dynamicReviewCount > 0 ? (
-              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-xl shrink-0">
-                <span className="font-extrabold text-amber-400 text-lg leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
-                <div className="flex items-center text-amber-400 gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.round(dynamicAvgRating)
-                          ? "fill-amber-400 text-amber-400"
-                          : "fill-zinc-800 text-zinc-700"
-                      }`}
-                    />
-                  ))}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-white text-[17px] leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
+                  <div className="flex items-center text-amber-400 gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < Math.round(dynamicAvgRating)
+                            ? "fill-amber-400 text-amber-400"
+                            : "fill-zinc-800 text-zinc-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
+                <span className="text-zinc-400 font-semibold text-[11px] mt-1">
+                  {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
+                </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-xl shrink-0">
-                <span className="font-extrabold text-amber-400/70 text-sm leading-none">0.0</span>
-                <div className="flex items-center text-amber-400/60 gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
-                    />
-                  ))}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-zinc-400 text-[17px] leading-none tracking-tight">0.0</span>
+                  <div className="flex items-center text-zinc-600 gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-4 h-4 fill-none text-zinc-600 stroke-[1.75]"
+                      />
+                    ))}
+                  </div>
                 </div>
+                <span className="text-zinc-400 font-semibold text-[11px] mt-1">
+                  0 {t("place.reviews", "Reviews")}
+                </span>
               </div>
             )}
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white font-extrabold text-sm tracking-tight">
-                  {dynamicReviewCount > 0
-                    ? `${dynamicReviewCount.toLocaleString()} ${dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}`
-                    : t("place.noReviewsYetShort", "0 Reviews")}
-                </span>
-              </div>
-              {place.category && place.category !== "Verified Business" && (
-                <span className="text-zinc-400 text-xs font-medium truncate block mt-0.5">
-                  {place.category}
-                </span>
-              )}
-            </div>
           </div>
-        </div>
 
-        {/* Primary Record Video Review Hero Button - Prominently Displayed Under Star Rating */}
-        <button
-          id="btn-record-video-review-main"
-          type="button"
-          onClick={() => {
-            triggerHaptic("medium");
-            onRecordForPlace(place);
-          }}
-          className="w-full mb-3 h-11 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm border border-zinc-800 active:scale-98 transition-all cursor-pointer group"
-        >
-          <Camera className="w-4 h-4 text-zinc-200 group-hover:scale-105 transition-transform" />
-          <span>{t("place.recordVideoReview", "Record Video Review")}</span>
-        </button>
+          {/* Premium Record Video Review Pill Button (Matches Follow Button Style) */}
+          <button
+            id="btn-record-video-review-main"
+            type="button"
+            onClick={() => {
+              triggerHaptic("medium");
+              onRecordForPlace(place);
+            }}
+            className="bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-bold text-xs px-4.5 py-2.5 rounded-full shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0 border border-white cursor-pointer group"
+          >
+            <Video className="w-3.5 h-3.5 text-zinc-950 fill-zinc-950" />
+            <span>{t("place.recordVideoReview", "Record Review")}</span>
+          </button>
+        </div>
       </div>
 
       {/* Google Maps Tabs: Overview | Reviews | About */}
