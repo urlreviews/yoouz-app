@@ -198,14 +198,14 @@ export const searchCitySuggestions = (query: string, maxResults = 8): CitySugges
   const results: CitySuggestion[] = [];
   const seen = new Set<string>();
 
-  const getNormKey = (cityName: string, countryName: string) => {
-    return `${cityName.toLowerCase().trim()}:${countryName.toLowerCase().trim()}`;
+  const getNormKey = (cityName: string) => {
+    return cityName.toLowerCase().trim();
   };
 
   // 1. Check popular hubs first for exact prefix matches
   for (const h of POPULAR_HUBS) {
     if (h.city.toLowerCase().startsWith(q) || h.label.toLowerCase().startsWith(q)) {
-      const key = getNormKey(h.city, h.country);
+      const key = getNormKey(h.city);
       if (!seen.has(key)) {
         seen.add(key);
         results.push({
@@ -227,7 +227,7 @@ export const searchCitySuggestions = (query: string, maxResults = 8): CitySugges
         if (results.length >= maxResults * 2) break;
         const cLower = cityName.toLowerCase();
         if (cLower.startsWith(q) || (q.length >= 3 && cLower.includes(q))) {
-          const key = getNormKey(cityName, country);
+          const key = getNormKey(cityName);
           if (!seen.has(key)) {
             seen.add(key);
             results.push({
@@ -246,7 +246,7 @@ export const searchCitySuggestions = (query: string, maxResults = 8): CitySugges
             if (results.length >= maxResults * 2) break;
             const cLower = cityName.toLowerCase();
             if (cLower.startsWith(q) || (q.length >= 3 && cLower.includes(q))) {
-              const key = getNormKey(cityName, country);
+              const key = getNormKey(cityName);
               if (!seen.has(key)) {
                 seen.add(key);
                 results.push({

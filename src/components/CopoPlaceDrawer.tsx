@@ -587,6 +587,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 
+  const brandGrad = React.useMemo(() => {
+    return getDomainBrandGradient(drawerDomain || place.brandDomain || place.name);
+  }, [drawerDomain, place.brandDomain, place.name]);
+
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     const cleanD = (drawerDomain || "").replace(/^www\./, "").toLowerCase().trim();
@@ -971,7 +975,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
           </div>
         ) : (
-          <div className="absolute inset-0 w-full h-full bg-zinc-950 border-b border-zinc-800/80" />
+          <div 
+            className="absolute inset-0 w-full h-full border-b border-zinc-800/80 flex items-center justify-center overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 50%, ${brandGrad.to} 100%)`
+            }}
+          >
+            <div 
+              className="absolute inset-0 opacity-40 pointer-events-none" 
+              style={{
+                backgroundImage: `radial-gradient(circle at 50% 30%, ${brandGrad.glow} 0%, transparent 70%)`
+              }}
+            />
+            <Globe className="w-16 h-16 sm:w-20 sm:h-20 text-white/10" />
+          </div>
         )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}

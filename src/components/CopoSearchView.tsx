@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
@@ -181,41 +181,54 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       if (brandMatch) resolvedDom = brandMatch[0];
     }
 
-    const targetDom = isValidDomainUrl(resolvedDom) ? extractCleanDomain(resolvedDom) : "";
+    let targetDom = isValidDomainUrl(resolvedDom) ? extractCleanDomain(resolvedDom) : "";
+    if (!targetDom && item.title) {
+      const tLower = item.title.toLowerCase().trim();
+      for (const [domKey, nameVal] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+        if (nameVal.toLowerCase() === tLower || domKey.toLowerCase() === tLower) {
+          if (domKey.includes('.')) {
+            targetDom = domKey;
+            break;
+          }
+        }
+      }
+    }
 
     // 2. If suggestion has a valid domain URL (e.g. "apple.com"):
     if (isValidDomainUrl(targetDom)) {
       const placeId = targetDom.toLowerCase();
-      const instantLogo = item.logoUrl || getCleanLogoUrl(null, targetDom) || `/api/favicon?domain=${targetDom}`;
-      const instantName = KNOWN_OFFICIAL_NAMES[targetDom] || item.title || formatBusinessName(targetDom);
+      const knownHead = KNOWN_LOCATIONS[targetDom] || KNOWN_LOCATIONS[targetDom.split('.')[0]];
+      const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || getCleanLogoUrl(null, targetDom) || `/api/favicon?domain=${targetDom}`;
+      const instantName = knownHead?.name || KNOWN_OFFICIAL_NAMES[targetDom] || item.title || formatBusinessName(targetDom);
 
       const instantPlace: Place = {
         id: placeId,
         name: instantName,
-        category: (item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Website",
+        category: knownHead?.category || ((item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Verified Business"),
         categoryType: "all",
-        address: item.address || "",
-        city: item.city || "",
-        country: item.country || "",
-        lat: 0,
-        lng: 0,
-        rating: 5,
-        totalReviews: 1,
+        address: knownHead?.address || item.address || "",
+        city: knownHead?.city || item.city || "",
+        country: knownHead?.country || item.country || "",
+        lat: knownHead?.lat || 0,
+        lng: knownHead?.lng || 0,
+        rating: knownHead?.rating || 5,
+        totalReviews: knownHead?.totalReviews || 1,
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
         avatarUrl: instantLogo,
         logoUrl: instantLogo,
-        bannerUrl: "",
-        ogImage: "",
-        photos: [],
-        openingHours: "Available 24/7",
+        bannerUrl: knownHead?.bannerUrl || "",
+        ogImage: knownHead?.bannerUrl || "",
+        photos: knownHead?.photos || [],
+        openingHours: knownHead?.openingHours || "Available 24/7",
         isOpen: true,
-        phone: "",
+        phone: knownHead?.phone || "",
+        email: knownHead?.email || "",
         website: `https://${targetDom}`,
-        priceRange: "N/A",
+        priceRange: knownHead?.priceRange || "N/A",
         plusCode: "",
-        description: "",
+        description: knownHead?.description || "",
         popularKeywords: [],
-        amenities: [],
+        amenities: knownHead?.amenities || [],
         topDishes: [],
         brandDomain: targetDom
       };
@@ -403,7 +416,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         })
         .catch(() => null);
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 650));
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
 
       const winner = await Promise.race([
         Promise.any([csePromise, backendPromise]).catch(() => null),

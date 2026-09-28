@@ -404,7 +404,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
 
       {/* City / Location Suggestions Dropdown */}
       {!hideDropdown && activeField === "location" && citySuggestions.length > 0 && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-900 max-h-[300px] overflow-y-auto animate-in fade-in duration-150">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[300px] overflow-y-auto animate-in fade-in duration-150">
           <div className="px-4 py-2 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
             <MapPin className="w-3.5 h-3.5 text-zinc-400" />
             <span>Matching Cities & Neighborhoods</span>
@@ -421,7 +421,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 bizInputRef.current?.focus();
                 mobileBizInputRef.current?.focus();
               }}
-              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group border-b border-zinc-850/60 last:border-0"
             >
               <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 flex items-center justify-center shrink-0 text-zinc-400 group-hover:text-white transition-colors">
                 <MapPin className="w-4 h-4 text-zinc-400" />
@@ -444,9 +444,12 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
             const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
-            const targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
-            const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain) && targetDomain !== "yoouz.com");
-            const isDbOrBrand = (item.source === "database" || item.source === "brand_index") && hasDomain;
+            let targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+            if (!targetDomain && item.title) {
+              const cleanSlug = item.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+              if (cleanSlug.length >= 2) targetDomain = `${cleanSlug}.com`;
+            }
+            const hasDomain = Boolean(targetDomain && targetDomain.includes('.'));
 
             return (
               <button
@@ -461,7 +464,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }}
                 className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
               >
-                {isDbOrBrand && hasDomain ? (
+                {hasDomain ? (
                   <CopoBrandLogo
                     domain={targetDomain}
                     name={item.title}
@@ -478,23 +481,21 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate" dir="auto">
                     <bdi dir="auto">{item.title}</bdi>
                   </div>
-                  {(hasDomain || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && (
-                    <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5" dir="auto">
-                      {hasDomain && <span className="text-zinc-500 font-mono">{targetDomain}</span>}
-                      {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
-                        <>
-                          {hasDomain && <span>•</span>}
-                          <span>{item.category}</span>
-                        </>
-                      )}
-                      {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
-                        <>
-                          {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span>•</span>}
-                          <span>{item.address}</span>
-                        </>
-                      )}
-                    </div>
-                  )}
+                  <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5" dir="auto">
+                    {hasDomain && <span className="text-zinc-300 font-medium font-mono">{targetDomain}</span>}
+                    {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
+                      <>
+                        {hasDomain && <span>•</span>}
+                        <span>{item.category}</span>
+                      </>
+                    )}
+                    {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
+                      <>
+                        {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span>•</span>}
+                        <span>{item.address}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </button>
             );

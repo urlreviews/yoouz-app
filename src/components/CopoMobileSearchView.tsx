@@ -5,7 +5,7 @@ import { CopoSearchView } from "./CopoSearchView";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
+import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
 import { searchCitySuggestions, CitySuggestion } from "../utils/locationSearchHelper";
@@ -501,10 +501,22 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     businessInputRef.current?.blur();
     locationInputRef.current?.blur();
 
-    const rawDom = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
-    const cleanDom = isValidDomainUrl(rawDom) ? extractCleanDomain(rawDom) : "";
+    let rawDom = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+    let cleanDom = isValidDomainUrl(rawDom) ? extractCleanDomain(rawDom) : "";
     const title = item.title || item.name || cleanDom || query;
     const loc = location.trim();
+
+    if (!cleanDom && title) {
+      const tLower = title.toLowerCase().trim();
+      for (const [domKey, nameVal] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+        if (nameVal.toLowerCase() === tLower || domKey.toLowerCase() === tLower) {
+          if (domKey.includes('.')) {
+            cleanDom = domKey;
+            break;
+          }
+        }
+      }
+    }
 
     // 1. Check if place already matches in places list
     const existing = findMatchingPlace(cleanDom || title, title);
@@ -521,11 +533,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       return;
     }
 
-    // 2. If suggestion has a valid clean domain URL (e.g. "apple.com" or "uber.com")
+    // 2. If suggestion has a valid clean domain URL (e.g. "apple.com" or "theviewnyc.com")
     if (isValidDomainUrl(cleanDom)) {
       const placeId = cleanDom.toLowerCase();
-      const instantLogo = item.logoUrl || getCleanLogoUrl(null, cleanDom) || `/api/favicon?domain=${cleanDom}`;
-      const instantName = KNOWN_OFFICIAL_NAMES[cleanDom] || title || formatBusinessName(cleanDom);
+      const knownHead = KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]];
+      const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || getCleanLogoUrl(null, cleanDom) || `/api/favicon?domain=${cleanDom}`;
+      const instantName = knownHead?.name || KNOWN_OFFICIAL_NAMES[cleanDom] || title || formatBusinessName(cleanDom);
 
       const storeTerm = cleanDom;
       const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
@@ -538,30 +551,31 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         const newPlace: Place = {
           id: placeId,
           name: instantName,
-          category: item.category || "Verified Business",
+          category: knownHead?.category || item.category || "Verified Business",
           categoryType: "all",
-          address: item.address || "",
-          city: loc || "",
-          country: "",
-          lat: 0,
-          lng: 0,
-          rating: 5,
-          totalReviews: 1,
+          address: knownHead?.address || item.address || "",
+          city: knownHead?.city || loc || "",
+          country: knownHead?.country || "",
+          lat: knownHead?.lat || 0,
+          lng: knownHead?.lng || 0,
+          rating: knownHead?.rating || 5,
+          totalReviews: knownHead?.totalReviews || 1,
           ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
           avatarUrl: instantLogo,
           logoUrl: instantLogo,
-          bannerUrl: "",
-          ogImage: "",
-          photos: [],
-          openingHours: "Available 24/7",
+          bannerUrl: knownHead?.bannerUrl || "",
+          ogImage: knownHead?.bannerUrl || "",
+          photos: knownHead?.photos || [],
+          openingHours: knownHead?.openingHours || "Available 24/7",
           isOpen: true,
-          phone: "",
+          phone: knownHead?.phone || "",
+          email: knownHead?.email || "",
           website: `https://${cleanDom}`,
-          priceRange: "N/A",
+          priceRange: knownHead?.priceRange || "N/A",
           plusCode: "",
-          description: "",
+          description: knownHead?.description || "",
           popularKeywords: [],
-          amenities: [],
+          amenities: knownHead?.amenities || [],
           topDishes: [],
           brandDomain: cleanDom
         };
@@ -572,9 +586,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
 
     // 3. Otherwise, for phrase/keyword query suggestions without a domain dot (e.g. "The Terrace Club"):
-    // Set query & execute search so Google CSE & backend metadata resolves authentic business domain & details!
+    // Set query & run search so Google CSE & backend metadata resolves authentic business domain & search results!
     setQuery(title);
-    executeSearch(title, title);
+    const finalQ = loc ? `${title} ${loc}` : title;
+    setSubmittedQuery(finalQ);
   };
   
   // Calculate real trending places mapped to clean URLs
@@ -846,10 +861,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
                   const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
-                  const targetDomain = getCleanDomainUrl(item) || (isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "");
+                  let targetDomain = getCleanDomainUrl(item) || (isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "");
                   const title = item.title || item.name || (targetDomain ? formatBusinessName(targetDomain) : query);
-                  const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain) && targetDomain !== "yoouz.com");
-                  const isDbOrBrand = (item.source === "database" || item.source === "brand_index") || hasDomain;
+                  if (!targetDomain && title) {
+                    const cleanSlug = title.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    if (cleanSlug.length >= 2) targetDomain = `${cleanSlug}.com`;
+                  }
+                  const hasDomain = Boolean(targetDomain && targetDomain.includes('.'));
                   const itemLogo = item.logoUrl || (hasDomain ? getItemLogoUrl(targetDomain, item) : null);
 
                   const words = title.trim().split(/\s+/);
@@ -860,9 +878,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     <button 
                       key={idx}
                       onClick={() => handleSelectSuggestion(item)}
-                      className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group"
+                      className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group border-b border-zinc-900/80 last:border-0"
                     >
-                      {isDbOrBrand && hasDomain ? (
+                      {hasDomain ? (
                         <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-zinc-200/80 flex items-center justify-center shrink-0 p-1 overflow-hidden">
                           <CopoBrandLogo 
                             domain={targetDomain}
@@ -894,28 +912,26 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             </span>
                           )}
                         </div>
-                        {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google"))) && (
-                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                            {hasDomain ? (
-                              <span className="text-zinc-300 font-semibold truncate text-[12px] flex items-center gap-1">
-                                <Globe className="w-3 h-3 text-zinc-400 shrink-0" />
-                                <span>{targetDomain.toLowerCase()}</span>
-                              </span>
-                            ) : null}
-                            {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
-                              <>
-                                {hasDomain && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{item.category}</span>
-                              </>
-                            )}
-                            {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
-                              <>
-                                {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span className="text-zinc-700">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{item.address}</span>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
+                          {hasDomain ? (
+                            <span className="text-zinc-300 font-semibold truncate text-[12px] flex items-center gap-1 font-mono">
+                              <Globe className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span>{targetDomain.toLowerCase()}</span>
+                            </span>
+                          ) : null}
+                          {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
+                            <>
+                              {hasDomain && <span className="text-zinc-600">•</span>}
+                              <span className="text-zinc-400 truncate text-[12px]">{item.category}</span>
+                            </>
+                          )}
+                          {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
+                            <>
+                              {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span className="text-zinc-700">•</span>}
+                              <span className="text-zinc-400 truncate text-[12px]">{item.address}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>

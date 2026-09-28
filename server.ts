@@ -9188,7 +9188,151 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     });
   });
 
-  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; locations?: any[] }> = {
+  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; rating?: number; totalReviews?: number; priceRange?: string; description?: string; bannerUrl?: string; photos?: string[]; amenities?: string[]; locations?: any[] }> = {
+    "theviewnyc.com": { 
+      name: "The View Restaurant & Lounge", 
+      address: "1535 Broadway", 
+      postalCode: "10036", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (212) 704-8900", 
+      email: "info@theviewnyc.com", 
+      openingHours: "Wed - Sun: 16:00 - 24:00 · Mon & Tue: Closed", 
+      category: "Restaurant & Rooftop Lounge", 
+      rating: 4.4, 
+      totalReviews: 636, 
+      priceRange: "$$$$", 
+      description: "Iconic revolving rooftop restaurant and lounge atop the New York Marriott Marquis, offering breathtaking 360-degree panoramic skyline views, artisan cocktails, and exquisite American dining.", 
+      bannerUrl: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      amenities: ["Revolving Rooftop", "Panoramic Views", "Private Dining", "Great Cocktails", "Vegan Options"], 
+      lat: 40.7587, 
+      lng: -73.9862 
+    },
+    "www.theviewnyc.com": { 
+      name: "The View Restaurant & Lounge", 
+      address: "1535 Broadway", 
+      postalCode: "10036", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (212) 704-8900", 
+      email: "info@theviewnyc.com", 
+      openingHours: "Wed - Sun: 16:00 - 24:00 · Mon & Tue: Closed", 
+      category: "Restaurant & Rooftop Lounge", 
+      rating: 4.4, 
+      totalReviews: 636, 
+      priceRange: "$$$$", 
+      description: "Iconic revolving rooftop restaurant and lounge atop the New York Marriott Marquis, offering breathtaking 360-degree panoramic skyline views, artisan cocktails, and exquisite American dining.", 
+      bannerUrl: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      amenities: ["Revolving Rooftop", "Panoramic Views", "Private Dining", "Great Cocktails", "Vegan Options"], 
+      lat: 40.7587, 
+      lng: -73.9862 
+    },
+    "theviewnyc": { 
+      name: "The View Restaurant & Lounge", 
+      address: "1535 Broadway", 
+      postalCode: "10036", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (212) 704-8900", 
+      openingHours: "Wed - Sun: 16:00 - 24:00 · Mon & Tue: Closed", 
+      category: "Restaurant & Rooftop Lounge", 
+      rating: 4.4, 
+      totalReviews: 636, 
+      lat: 40.7587, 
+      lng: -73.9862 
+    },
+    "monumentvalleyview.com": { 
+      name: "The View Hotel Monument Valley", 
+      address: "Indian Rte 42", 
+      postalCode: "84536", 
+      city: "Monument Valley, UT", 
+      country: "United States", 
+      phone: "+1 (435) 727-5555", 
+      email: "info@monumentvalleyview.com", 
+      openingHours: "Open 24/7 · Check-in 16:00", 
+      category: "Hotel & Resort", 
+      rating: 4.5, 
+      totalReviews: 1850, 
+      priceRange: "$$$", 
+      description: "Iconic Navajo-owned luxury hotel nestled inside the Monument Valley Tribal Park with private balconies facing the world-famous Mittens sandstone formations.", 
+      bannerUrl: "https://images.pexels.com/photos/2253818/pexels-photo-2253818.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/2253818/pexels-photo-2253818.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      lat: 36.9830, 
+      lng: -110.1114 
+    },
+    "www.monumentvalleyview.com": { 
+      name: "The View Hotel Monument Valley", 
+      address: "Indian Rte 42", 
+      postalCode: "84536", 
+      city: "Monument Valley, UT", 
+      country: "United States", 
+      phone: "+1 (435) 727-5555", 
+      email: "info@monumentvalleyview.com", 
+      openingHours: "Open 24/7 · Check-in 16:00", 
+      category: "Hotel & Resort", 
+      rating: 4.5, 
+      totalReviews: 1850, 
+      priceRange: "$$$", 
+      description: "Iconic Navajo-owned luxury hotel nestled inside the Monument Valley Tribal Park with private balconies facing the world-famous Mittens sandstone formations.", 
+      bannerUrl: "https://images.pexels.com/photos/2253818/pexels-photo-2253818.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/2253818/pexels-photo-2253818.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      lat: 36.9830, 
+      lng: -110.1114 
+    },
+    "theview.tv": { 
+      name: "The View", 
+      address: "57 W 66th St", 
+      postalCode: "10023", 
+      city: "New York, NY", 
+      country: "United States", 
+      category: "Television & Media", 
+      openingHours: "Mon - Fri: 11:00 AM EST", 
+      description: "ABC's Emmy Award-winning daytime talk show featuring provocative conversation, breaking news, politics, and celebrity interviews.", 
+      lat: 40.7745, 
+      lng: -73.9801 
+    },
+    "www.theview.tv": { 
+      name: "The View", 
+      address: "57 W 66th St", 
+      postalCode: "10023", 
+      city: "New York, NY", 
+      country: "United States", 
+      category: "Television & Media", 
+      openingHours: "Mon - Fri: 11:00 AM EST", 
+      description: "ABC's Emmy Award-winning daytime talk show featuring provocative conversation, breaking news, politics, and celebrity interviews.", 
+      lat: 40.7745, 
+      lng: -73.9801 
+    },
+    "terraceclub.com": { 
+      name: "The Terrace Club", 
+      address: "25 W 51st St, 7th Floor", 
+      postalCode: "10019", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (212) 397-8501", 
+      openingHours: "Mon - Fri: 07:00 - 23:00 · Sat & Sun: Closed", 
+      category: "Private Club & Rooftop Lounge", 
+      rating: 4.3, 
+      totalReviews: 412, 
+      lat: 40.7601, 
+      lng: -73.9789 
+    },
+    "empirehotelnyc.com": { 
+      name: "Empire Hotel Rooftop Pool & Lounge", 
+      address: "44 W 63rd St", 
+      postalCode: "10023", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (212) 265-7400", 
+      openingHours: "Mon - Sun: 11:00 - 02:00", 
+      category: "Hotel & Rooftop Lounge", 
+      rating: 4.2, 
+      totalReviews: 1240, 
+      lat: 40.7716, 
+      lng: -73.9827 
+    },
     "starbucks.com": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
     "www.starbucks.com": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
     "starbucks": { name: "Starbucks", address: "2401 Utah Ave S", postalCode: "98134", city: "Seattle, WA", country: "United States", phone: "+1 (800) 782-7282", email: "info@starbucks.com", openingHours: "Mon - Sun: 05:30 - 21:00", category: "Coffee Shop & Roastery", lat: 47.5802, lng: -122.3352 },
@@ -20151,12 +20295,21 @@ Return JSON:
             : formatBusinessName(phraseClean) || phraseClean;
 
           let finalDom = targetDom || "";
+          if (!finalDom) {
+            const cleanSlug = phraseClean.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (cleanSlug.length >= 2) {
+              finalDom = `${cleanSlug}.com`;
+            }
+          }
+
+          const knownLoc = finalDom ? (KNOWN_ENTITY_LOCATIONS[finalDom] || KNOWN_ENTITY_LOCATIONS[finalDom.split('.')[0]]) : null;
 
           addSuggestion({
-            title: displayTitle,
+            title: knownLoc?.name || displayTitle,
             domain: finalDom,
-            logoUrl: finalDom ? `/api/favicon?domain=${finalDom}` : "",
-            category: "",
+            logoUrl: `/api/favicon?domain=${finalDom}`,
+            category: knownLoc?.category || "",
+            address: knownLoc?.city ? `${knownLoc.address ? knownLoc.address + ', ' : ''}${knownLoc.city}` : "",
             source: "autocomplete"
           });
         }
