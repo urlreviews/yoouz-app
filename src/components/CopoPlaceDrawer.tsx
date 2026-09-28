@@ -461,7 +461,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return l.includes("yoouz.com") || l === "yoouz" || l === "https://yoouz.com";
   };
 
-  // Background auto-enrichment: Fetch and sync rich metadata & business description from URL or Business Name
+  // Background auto-enrichment: Fetch and sync rich metadata & business business description from URL or Business Name
+  const enrichmentRetryCountRef = useRef(0);
   useEffect(() => {
     const rawTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
     const cleanTargetUrl = (rawTargetUrl && isValidDomainUrl(rawTargetUrl)) ? rawTargetUrl : null;
@@ -490,6 +491,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.name.toLowerCase().includes("untitled") ||
       place.name.toLowerCase() === "website";
 
+    const isSlugDomain = drawerDomain && !drawerDomain.includes(".");
+
     const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
     const hasValidLogo = Boolean(
       place.logoUrl &&
@@ -503,50 +506,66 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsPhone = !hasGenuinePhone;
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone || needsHours) {
-      fetchedTargetUrlsRef.current.add(targetKey);
-      let isMounted = true;
-      const endpoint = targetUrl
-        ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
-        : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
+    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone || needsHours || isSlugDomain) {
+      const runEnrichment = () => {
+        fetchedTargetUrlsRef.current.add(targetKey);
+        let isMounted = true;
+        const endpoint = targetUrl
+          ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
+          : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
 
-      fetch(endpoint)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (isMounted && data) {
-            if (data.image) {
-              setFetchedBannerUrl(data.image);
+        fetch(endpoint)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (isMounted && data) {
+              const hasActualData = data.image || (data.logo && !hasValidLogo) || data.address || data.phone;
+              
+              if (data.image) {
+                setFetchedBannerUrl(data.image);
+              }
+              if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
+                onUpdatePlace({
+                  ...place,
+                  name: (data.title && isGenericName) ? data.title : place.name,
+                  description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
+                  address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
+                  city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
+                  country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
+                  phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
+                  email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
+                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
+                  openingHours: data.openingHours || place.openingHours || "",
+                  locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
+                  lat: data.lat || place.lat || 0,
+                  lng: data.lng || place.lng || 0,
+                  bannerUrl: place.bannerUrl || data.image || "",
+                  ogImage: place.ogImage || data.image || "",
+                  logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
+                  avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
+                  brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
+                  website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
+                  photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
+                });
+              }
+
+              // Self-healing retry: If we still don't have core data (banner/logo/address), retry up to 2 more times
+              if (!hasActualData && enrichmentRetryCountRef.current < 2) {
+                enrichmentRetryCountRef.current++;
+                setTimeout(runEnrichment, 4000);
+              }
             }
-            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
-              onUpdatePlace({
-                ...place,
-                name: (data.title && isGenericName) ? data.title : place.name,
-                description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
-                address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
-                city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
-                country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
-                phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
-                email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
-                category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
-                openingHours: data.openingHours || place.openingHours || "",
-                locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
-                lat: data.lat || place.lat || 0,
-                lng: data.lng || place.lng || 0,
-                bannerUrl: place.bannerUrl || data.image || "",
-                ogImage: place.ogImage || data.image || "",
-                logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
-                avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
-                brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
-                website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
-              });
+          })
+          .catch(() => {
+            if (enrichmentRetryCountRef.current < 2) {
+              enrichmentRetryCountRef.current++;
+              setTimeout(runEnrichment, 4000);
             }
-          }
-        })
-        .catch(() => {});
-      return () => {
-        isMounted = false;
+          });
+
+        return () => { isMounted = false; };
       };
+
+      return runEnrichment();
     }
   }, [place.id, place.name, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
 
