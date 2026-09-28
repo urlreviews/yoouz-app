@@ -436,13 +436,103 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     });
   };
 
-  const handleSelectSuggestion = (item: any) => {
-    const title = item.title || item.name || item.domain || query;
+  const handleSelectSuggestion = async (item: any) => {
+    const rawDom = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+    const cleanDom = isValidDomainUrl(rawDom) ? extractCleanDomain(rawDom) : "";
+    const title = item.title || item.name || cleanDom || query;
+
+    // 1. Check if place already matches in places list
+    const existing = findMatchingPlace(cleanDom || title, title);
+    if (existing) {
+      // Store in recents
+      const storeTerm = getCleanDomainUrl(existing) || cleanDom || title;
+      if (storeTerm) {
+        const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+        setRecentSearches(newRecent);
+        try {
+          localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+        } catch {}
+      }
+      onOpenPlace(existing.id);
+      return;
+    }
+
+    // 2. If it's a domain or known brand, register immediately and open place directly
+    if (cleanDom && isValidDomainUrl(cleanDom)) {
+      const placeId = cleanDom.toLowerCase();
+      const instantLogo = item.logoUrl || getCleanLogoUrl(null, cleanDom) || "";
+      const instantName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || formatBusinessName(cleanDom);
+      const instantAddress = item.address || "";
+      const instantCategory = item.category || "Verified Business";
+
+      if (onAddPlace) {
+        const newPlace: Place = {
+          id: placeId,
+          name: instantName,
+          category: instantCategory,
+          categoryType: "all",
+          address: instantAddress,
+          city: location.trim() || "",
+          country: "",
+          lat: 0,
+          lng: 0,
+          rating: 5,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: instantLogo,
+          logoUrl: instantLogo,
+          bannerUrl: "",
+          ogImage: "",
+          photos: [],
+          openingHours: "Available 24/7",
+          isOpen: true,
+          phone: "",
+          website: `https://${cleanDom}`,
+          priceRange: "N/A",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          brandDomain: cleanDom
+        };
+        onAddPlace(newPlace);
+
+        // Background enrich details
+        fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && onAddPlace) {
+              onAddPlace({
+                ...newPlace,
+                name: data.siteName || data.title || newPlace.name,
+                category: data.category || newPlace.category,
+                address: data.address || newPlace.address,
+                phone: data.phone || newPlace.phone,
+                bannerUrl: data.image || newPlace.bannerUrl,
+                logoUrl: data.logo || newPlace.logoUrl,
+                description: data.description || newPlace.description
+              });
+            }
+          })
+          .catch(() => {});
+      }
+
+      // Store in recents
+      const newRecent = [cleanDom, ...recentSearches.filter(s => s && s !== cleanDom)].slice(0, 10);
+      setRecentSearches(newRecent);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+      } catch {}
+
+      onOpenPlace(placeId);
+      return;
+    }
+
+    // 3. Fallback for general search suggestions (e.g. phrases) -> execute search directly
     const loc = location.trim();
-    const cleanDom = item.domain && isValidDomainUrl(item.domain) ? extractCleanDomain(item.domain) : "";
-    const chosen = cleanDom || title;
-    const finalQ = loc ? `${chosen} ${loc}` : chosen;
-    setQuery(chosen);
+    const finalQ = loc ? `${title} ${loc}` : title;
+    setQuery(title);
     handleSearch(finalQ, title, {
       country: "",
       state: "",

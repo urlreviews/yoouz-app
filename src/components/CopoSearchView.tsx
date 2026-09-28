@@ -582,7 +582,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               />
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 w-full flex-1">
                   <h2 
                     onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
                     className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors"
@@ -628,65 +628,65 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       )}
                     </div>
                   )}
+                </div>
+              </div>
 
-                  {/* Action Dock: Star Rating + Clean Action Buttons */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pt-4 border-t border-zinc-800/80 mt-4">
-                    {/* Star Rating Badge */}
-                    <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-zinc-800/90 px-3.5 py-2 rounded-xl shadow-xs self-start">
-                      {totalReviewsCount > 0 ? (
-                        <>
-                          <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
-                          <div className="flex items-center text-amber-400 gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-zinc-300 font-bold text-xs border-l border-zinc-800 pl-2.5">
-                            {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-bold text-amber-400/70 text-sm leading-none">0.0</span>
-                          <div className="flex items-center text-amber-400/60 gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
-                              />
-                            ))}
-                          </div>
-                          <span className="text-zinc-400 font-medium text-xs border-l border-zinc-800 pl-2.5">
-                            0 reviews
-                          </span>
-                        </>
-                      )}
-                    </div>
+              {/* Action Dock: Star Rating + Clean Action Buttons Across the Full Width */}
+              <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pt-4 border-t border-zinc-800/80 mt-4">
+                {/* Star Rating Badge */}
+                <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-zinc-800/90 px-3.5 py-2 rounded-xl shadow-xs self-start">
+                  {totalReviewsCount > 0 ? (
+                    <>
+                      <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
+                      <div className="flex items-center text-amber-400 gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-zinc-300 font-bold text-xs border-l border-zinc-800 pl-2.5">
+                        {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-bold text-amber-400/70 text-sm leading-none">0.0</span>
+                      <div className="flex items-center text-amber-400/60 gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
+                          />
+                        ))}
+                      </div>
+                      <span className="text-zinc-400 font-medium text-xs border-l border-zinc-800 pl-2.5">
+                        0 reviews
+                      </span>
+                    </>
+                  )}
+                </div>
 
-                    {/* Action Buttons: Clean 2-column on mobile, inline on desktop */}
-                    <div className="grid grid-cols-2 gap-2.5 w-full sm:w-auto">
-                      <button
-                        type="button"
-                        onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                        className="h-11 px-4 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-white font-bold border border-zinc-700/80 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm active:scale-95 whitespace-nowrap"
-                      >
-                        <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
-                        <span className="truncate">{t("search.viewBusiness", "View Business")}</span>
-                      </button>
+                {/* Action Buttons: Full-width 2-column grid on mobile, inline on desktop */}
+                <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                    className="h-12 px-5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-white font-bold border border-zinc-700/80 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-95 whitespace-nowrap"
+                  >
+                    <Building2 className="w-4.5 h-4.5 text-zinc-300 shrink-0" />
+                    <span className="truncate">{t("search.viewBusiness", "View Business")}</span>
+                  </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                        className="h-11 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm active:scale-95 whitespace-nowrap"
-                      >
-                        <Video className="w-4 h-4 text-zinc-950 shrink-0" />
-                        <span className="truncate">{t("record.record_review", "Record Review")}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
+                    className="h-12 px-5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-95 whitespace-nowrap"
+                  >
+                    <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0" />
+                    <span className="truncate">{t("record.record_review", "Record Review")}</span>
+                  </button>
                 </div>
               </div>
             </div>
