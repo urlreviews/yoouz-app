@@ -18982,8 +18982,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     // 3. Official Google Discovery Engine (Extreme Resilience & Decryption)
     let discoveredUrl: string = "";
     try {
-      const qEnc = encodeURIComponent(`${cleanQ} official website`);
-      
+      const broadenLocal = (q: string, att: number): string => {
+        let cl = q.trim().replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
+        const wrds = cl.split(/\s+/);
+        if (wrds.length <= 1) return cl;
+        if (att >= 2 && wrds.length > 2) return wrds.slice(0, -1).join(" ");
+        if (att >= 4 && wrds.length > 1) return wrds.slice(0, 1).join(" ");
+        return cl;
+      };
+
       const userAgents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -18991,11 +18998,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
       ];
 
-      // Extreme Google-Only Discovery Engine (5 attempts with tighter timeouts to prevent 504)
-      for (let attempt = 0; attempt < 5; attempt++) {
+      // Extreme Google-Only Discovery Engine (8 high-speed attempts with query broadening)
+      for (let attempt = 0; attempt < 8; attempt++) {
         if (discoveredUrl) break;
         try {
+          const currentQ = broadenLocal(cleanQ, attempt);
+          const qEnc = encodeURIComponent(`${currentQ} official website`);
           const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
+          
           const sRes = await fetch(googleUrl, {
             headers: {
               "User-Agent": userAgents[attempt % userAgents.length],
@@ -19003,21 +19013,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               "Referer": "https://www.google.com/",
               "Cache-Control": "no-cache"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
           });
           
           if (!sRes.ok) {
-            await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
+            await new Promise(r => setTimeout(r, 200 * (attempt + 1)));
             continue;
           }
 
           const html = await sRes.text();
           if (!html || html.length < 500) continue;
           
-          // 1. Primary Extraction: All organic links
           const rawMatches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
-          
-          // 2. Secondary Extraction: Google Redirect Links (/url?q=...)
           const redirectMatches = html.match(/\/url\?q=https?:\/\/[^&"'>\s]+/gi) || [];
           const decodedRedirects = redirectMatches.map(m => {
             try { return decodeURIComponent(m.replace("/url?q=", "")); } catch(e) { return ""; }
@@ -19028,53 +19035,43 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const directoryDomains = [
             "google.com", "google.co.il", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
             "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
-            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com"
+            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
+            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com"
           ];
 
           const validCandidates = matches.filter(u => {
             try {
-              const low = u.toLowerCase();
               const host = new URL(u).hostname.toLowerCase();
-              // Prevent common search engine and directory noise
               const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
-              return !isNoise && !low.includes("schema.org") && !low.includes("w3.org") && !low.includes("googleadservices");
+              return !isNoise && !u.toLowerCase().includes("schema.org") && !u.toLowerCase().includes("w3.org");
             } catch(e) { return false; }
           });
 
           if (validCandidates.length > 0) {
-            const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+            const queryWords = currentQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
             validCandidates.sort((a, b) => {
-              let scoreA = 0;
-              let scoreB = 0;
+              let scoreA = 0; let scoreB = 0;
               try {
                 const domA = new URL(a).hostname.toLowerCase().replace(/^www\./, "");
                 const domB = new URL(b).hostname.toLowerCase().replace(/^www\./, "");
-                
                 queryWords.forEach(w => {
                   if (domA.includes(w)) scoreA += 150;
                   if (domB.includes(w)) scoreB += 150;
                 });
-                
-                // Root domain bonus
                 if (new URL(a).pathname.length <= 1) scoreA += 100;
                 if (new URL(b).pathname.length <= 1) scoreB += 100;
-                
-                // Exact slug match (e.g. "parkpl" in "parkpl.co")
-                const slugA = domA.split('.')[0];
-                const slugB = domB.split('.')[0];
+                const slugA = domA.split('.')[0]; const slugB = domB.split('.')[0];
                 if (queryWords.some(w => slugA === w || w.includes(slugA) || slugA.includes(w))) scoreA += 300;
                 if (queryWords.some(w => slugB === w || w.includes(slugB) || slugB.includes(w))) scoreB += 300;
-                
               } catch(e) {}
               return scoreB - scoreA;
             });
             discoveredUrl = validCandidates[0];
-            console.info(`[Discovery] Successfully found official website for "${cleanQ}": ${discoveredUrl}`);
             break; 
           }
-          await new Promise(r => setTimeout(r, 600));
+          await new Promise(r => setTimeout(r, 100));
         } catch (e) {
-          await new Promise(r => setTimeout(r, 400));
+          await new Promise(r => setTimeout(r, 100));
         }
       }
     } catch (e) {

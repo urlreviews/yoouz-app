@@ -281,16 +281,43 @@ export function ensureCseLoaded(): Promise<boolean> {
 }
 
 /**
+ * Strips common prefixes and locations to broaden a search query
+ */
+function broadenSearchQuery(q: string, attempt: number): string {
+  let cleaned = q.trim();
+  // Strip common business prefixes in English and Hebrew
+  cleaned = cleaned.replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
+  
+  const words = cleaned.split(/\s+/);
+  if (words.length <= 1) return cleaned;
+
+  // On later attempts, try stripping the last word (often a city like "Los Angeles" or "Tel Aviv")
+  if (attempt >= 2 && words.length > 2) {
+    return words.slice(0, -1).join(" ");
+  }
+  if (attempt >= 3 && words.length > 1) {
+    return words.slice(0, 1).join(" ");
+  }
+  
+  return cleaned;
+}
+
+/**
  * Queries Google CSE client-side and resolves with the authentic official business URL
- * Supports multiple retry attempts for maximum reliability.
+ * Supports multiple retry attempts and query broadening for maximum reliability.
  */
 export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3): Promise<string | null> {
-  const cleanQ = query.trim();
-  if (!cleanQ || cleanQ.length < 2) return null;
+  const rawQuery = query.trim();
+  if (!rawQuery || rawQuery.length < 2) return null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const currentToken = ++activeQueryToken;
+      let cleanQ = attempt === 0 ? rawQuery : broadenSearchQuery(rawQuery, attempt);
+      if (attempt > 0 && !cleanQ.toLowerCase().includes("website") && !cleanQ.toLowerCase().includes("official")) {
+        cleanQ = `${cleanQ} official website`;
+      }
+      
       if (attempt > 0) {
         console.info(`[Google CSE] Retrying search for: "${cleanQ}" (attempt ${attempt + 1}/${maxRetries + 1}, token #${currentToken})`);
       } else {
@@ -445,3 +472,4 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
 
   return null;
 }
+

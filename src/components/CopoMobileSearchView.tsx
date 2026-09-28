@@ -354,7 +354,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         })
         .catch(() => null);
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 18000));
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 25000));
 
       const winner = await Promise.race([
         Promise.any([csePromise, backendPromise]).catch(() => null),
