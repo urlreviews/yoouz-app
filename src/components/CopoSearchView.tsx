@@ -249,9 +249,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               name: meta.siteName || meta.title || instantPlace.name,
               category: meta.category || instantPlace.category,
               address: meta.address || instantPlace.address,
+              city: meta.city || instantPlace.city,
+              country: meta.country || instantPlace.country,
               phone: meta.phone || instantPlace.phone,
+              email: meta.email || instantPlace.email,
+              openingHours: meta.openingHours || instantPlace.openingHours,
+              locations: (meta.locations && meta.locations.length > 0) ? meta.locations : instantPlace.locations,
               bannerUrl: meta.image || instantPlace.bannerUrl,
               logoUrl: meta.logo || instantPlace.logoUrl,
+              avatarUrl: meta.logo || instantPlace.avatarUrl,
               website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
               brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : ""),
               description: meta.description || instantPlace.description
@@ -675,9 +681,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const totalReviewsCount = placeVideos.length;
 
   return (
-    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-10 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
+    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
       {!searchedPlace ? (
-        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-[12vh]'}`}>
+        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-4' : 'my-auto py-12 md:py-16'}`}>
           {/* Title & Subtitle */}
           {!isMobileModal && (
             <>

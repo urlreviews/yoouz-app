@@ -436,6 +436,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               country: locationDetails?.country || data.country || optimisticPlace.country,
               phone: data.phone || optimisticPlace.phone,
               email: data.email || optimisticPlace.email,
+              openingHours: data.openingHours || optimisticPlace.openingHours || "",
+              locations: (data.locations && data.locations.length > 0) ? data.locations : (optimisticPlace.locations || []),
               bannerUrl: isValidBanner ? data.image : optimisticPlace.bannerUrl,
               ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
               logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
@@ -814,26 +816,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                          {hasDomain ? (
-                            <span className="text-zinc-300 font-semibold truncate text-[12px] flex items-center gap-1 font-mono">
-                              <Globe className="w-3 h-3 text-zinc-400 shrink-0" />
-                              <span>{targetDomain.toLowerCase()}</span>
-                            </span>
-                          ) : null}
-                          {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
-                            <>
-                              {hasDomain && <span className="text-zinc-600">•</span>}
-                              <span className="text-zinc-400 truncate text-[12px]">{item.category}</span>
-                            </>
-                          )}
-                          {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
-                            <>
-                              {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span className="text-zinc-700">•</span>}
-                              <span className="text-zinc-400 truncate text-[12px]">{item.address}</span>
-                            </>
-                          )}
-                        </div>
+                        {hasDomain ? (
+                          <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
+                            {targetDomain.toLowerCase()}
+                          </div>
+                        ) : null}
                       </div>
                       <Search className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
@@ -864,8 +851,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     const title = place?.name 
                       || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
                       || (cleanUrl ? formatBusinessName(cleanUrl) : s);
-                    const loc = place?.city ? `${place.address ? place.address + ', ' : ''}${place.city}` : (place?.country || "");
-                    const cat = place?.category && place.category !== "Website" && place.category !== "Verified Business" ? place.category : "";
 
                     return (
                       <button 
@@ -876,9 +861,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           } else {
                             handleSelectSuggestion({
                               title,
-                              domain: cleanUrl,
-                              category: cat,
-                              address: loc
+                              domain: cleanUrl
                             });
                           }
                         }}
@@ -894,26 +877,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
                             {title}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                            {cleanUrl && (
-                              <span className="text-zinc-300 font-medium truncate flex items-center gap-1 font-mono text-[12px]">
-                                <Globe className="w-3 h-3 text-zinc-500 shrink-0" />
-                                <span>{cleanUrl}</span>
-                              </span>
-                            )}
-                            {cat && (
-                              <>
-                                {cleanUrl && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{cat}</span>
-                              </>
-                            )}
-                            {loc && (
-                              <>
-                                {(cleanUrl || cat) && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{loc}</span>
-                              </>
-                            )}
-                          </div>
+                          {cleanUrl ? (
+                            <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
+                              {cleanUrl}
+                            </div>
+                          ) : null}
                         </div>
                         <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>
@@ -933,8 +901,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     const title = place.name 
                       || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
                       || (cleanUrl ? formatBusinessName(cleanUrl) : "Business");
-                    const loc = place.city ? `${place.address ? place.address + ', ' : ''}${place.city}` : (place.country || "");
-                    const cat = place.category && place.category !== "Website" && place.category !== "Verified Business" ? place.category : "";
 
                     return (
                       <button 
@@ -952,26 +918,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
                             {title}
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
-                            {cleanUrl && (
-                              <span className="text-zinc-300 font-medium truncate flex items-center gap-1 font-mono text-[12px]">
-                                <Globe className="w-3 h-3 text-zinc-500 shrink-0" />
-                                <span>{cleanUrl}</span>
-                              </span>
-                            )}
-                            {cat && (
-                              <>
-                                {cleanUrl && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{cat}</span>
-                              </>
-                            )}
-                            {loc && (
-                              <>
-                                {(cleanUrl || cat) && <span className="text-zinc-600">•</span>}
-                                <span className="text-zinc-400 truncate text-[12px]">{loc}</span>
-                              </>
-                            )}
-                          </div>
+                          {cleanUrl ? (
+                            <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
+                              {cleanUrl}
+                            </div>
+                          ) : null}
                         </div>
                         <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                       </button>

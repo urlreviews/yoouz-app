@@ -17986,7 +17986,7 @@ Return JSON:
     }
   }
 
-  function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string, targetCityHint?: string) {
+  async function extractWebsiteLocationAndContact($: any, html: string, finalUrl: string, cleanDomain: string, targetCityHint?: string) {
     let address = "";
     let city = "";
     let country = "";
@@ -18452,6 +18452,163 @@ Return JSON:
         const isOnlinePlatform = cleanDomain === "yoouz.com" || cleanDomain === "google.com" || cleanDomain === "apple.com" || cleanDomain === "uber.com";
         openingHours = parseWebsiteOpeningHours($, html, isOnlinePlatform);
       }
+
+      // 14. Deep Subpage Discovery & Crawling if essential contact info is missing
+      if ($ && finalUrl && (!phone || !address || !email || !openingHours)) {
+        try {
+          const candidateLinks: string[] = [];
+          $('a[href]').each((_: any, el: any) => {
+            const href = $(el).attr('href') || '';
+            const text = ($(el).text() || '').toLowerCase();
+            const hrefLow = href.toLowerCase();
+            if (
+              hrefLow.includes('contact') || 
+              hrefLow.includes('about') || 
+              hrefLow.includes('over-ons') || 
+              hrefLow.includes('kontakt') || 
+              hrefLow.includes('location') || 
+              hrefLow.includes('branches') || 
+              hrefLow.includes('stores') || 
+              hrefLow.includes('find-us') ||
+              hrefLow.includes('reach-us') ||
+              text.includes('contact') || 
+              text.includes('about') || 
+              text.includes('over ons') || 
+              text.includes('kontakt') ||
+              text.includes('locations') || 
+              text.includes('branches')
+            ) {
+              try {
+                const fullCandidate = new URL(href, finalUrl).toString();
+                const candDom = new URL(fullCandidate).hostname.replace(/^www\./, '').toLowerCase();
+                const baseDom = cleanDomain.replace(/^www\./, '').toLowerCase();
+                if (candDom === baseDom && !candidateLinks.includes(fullCandidate) && !fullCandidate.includes('#') && !fullCandidate.includes('mailto:') && !fullCandidate.includes('tel:')) {
+                  candidateLinks.push(fullCandidate);
+                }
+              } catch (uErr) {}
+            }
+          });
+
+          // Fetch up to 2 candidate subpages concurrently
+          for (const candUrl of candidateLinks.slice(0, 2)) {
+            if (phone && address && email && openingHours) break;
+            try {
+              const subResp = await fetch(candUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                },
+                redirect: 'follow',
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+              });
+              if (subResp.ok) {
+                const subHtml = await subResp.text();
+                if (subHtml && subHtml.length > 300 && subHtml.length < 3000000) {
+                  const sub$ = cheerio.load(subHtml);
+                  
+                  // 1. Tel links
+                  if (!phone) {
+                    sub$('a[href^="tel:"]').each((_: any, telEl: any) => {
+                      if (phone) return;
+                      const rawT = sub$(telEl).attr('href')?.replace(/^tel:\s*/i, '').trim() || '';
+                      if (isValidPhoneNumber(rawT)) phone = formatServerPhoneNumber(rawT, country);
+                    });
+                  }
+                  
+                  // 2. Mailto links
+                  if (!email) {
+                    sub$('a[href^="mailto:"]').each((_: any, mailEl: any) => {
+                      if (email) return;
+                      const rawM = sub$(mailEl).attr('href')?.replace(/^mailto:\s*/i, '').split('?')[0].trim() || '';
+                      if (rawM.includes('@') && !rawM.includes('example.com') && !rawM.includes('@gmail.com')) email = rawM;
+                    });
+                  }
+                  
+                  // 3. Schema on subpage
+                  sub$('script[type="application/ld+json"]').each((_: any, jEl: any) => {
+                    try {
+                      const data = JSON.parse(sub$(jEl).html() || '{}');
+                      const scanSub = (obj: any) => {
+                        if (!obj || typeof obj !== 'object') return;
+                        if (!phone && (obj.telephone || obj.phone)) {
+                          const t = String(obj.telephone || obj.phone).trim();
+                          if (isValidPhoneNumber(t)) phone = formatServerPhoneNumber(t, country);
+                        }
+                        if (!email && obj.email) {
+                          const em = String(obj.email).trim();
+                          if (em.includes('@') && !em.includes('example.com')) email = em;
+                        }
+                        if (!address && obj.address) {
+                          if (typeof obj.address === 'string' && obj.address.length > 5) {
+                            address = obj.address.trim();
+                          } else if (typeof obj.address === 'object') {
+                            const street = obj.address.streetAddress || obj.address.street || '';
+                            const cty = obj.address.addressLocality || obj.address.city || '';
+                            const postal = obj.address.postalCode || '';
+                            if (street) {
+                              address = cty ? `${street}, ${postal ? postal + ' ' : ''}${cty}` : street;
+                              if (cty && !city) city = cty;
+                            }
+                          }
+                        }
+                        if (!openingHours && (obj.openingHours || obj.openingHoursSpecification)) {
+                          const oh = obj.openingHours || obj.openingHoursSpecification;
+                          if (typeof oh === 'string') openingHours = oh.trim();
+                        }
+                        for (const k of Object.keys(obj)) scanSub(obj[k]);
+                      };
+                      scanSub(data);
+                    } catch(e) {}
+                  });
+
+                  // 4. Microdata
+                  if (!phone) {
+                    const subTel = sub$('[itemprop="telephone"], [itemprop="phone"]').first().text() || sub$('[itemprop="telephone"]').attr('content');
+                    if (subTel && isValidPhoneNumber(subTel)) phone = formatServerPhoneNumber(subTel.trim(), country);
+                  }
+                  if (!address) {
+                    const subStreet = sub$('[itemprop="streetAddress"]').first().text()?.trim();
+                    const subLoc = sub$('[itemprop="addressLocality"]').first().text()?.trim();
+                    const subZip = sub$('[itemprop="postalCode"]').first().text()?.trim();
+                    if (subStreet) {
+                      address = subLoc ? `${subStreet}, ${subZip ? subZip + ' ' : ''}${subLoc}` : subStreet;
+                      if (subLoc && !city) city = subLoc;
+                    }
+                  }
+
+                  // 5. Contact block text
+                  if (!phone) {
+                    const subText = sub$('#contact, .contact, footer, address, .address').text().replace(/\s+/g, ' ');
+                    const pMatch = subText.match(/\b(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon)\b\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
+                    if (pMatch && isValidPhoneNumber(pMatch[1].trim())) {
+                      phone = formatServerPhoneNumber(pMatch[1].trim(), country);
+                    }
+                  }
+
+                  // 6. Map links on subpage
+                  if (!address || !lat) {
+                    sub$('a[href*="google.com/maps"], a[href*="maps.google"], iframe[src*="google.com/maps"]').each((_: any, mEl: any) => {
+                      const mHref = sub$(mEl).attr('href') || sub$(mEl).attr('src') || '';
+                      const coordsMatch = mHref.match(/@([0-9\.\-]+),([0-9\.\-]+)/) || mHref.match(/!2d([0-9\.\-]+)!3d([0-9\.\-]+)/);
+                      if (coordsMatch && !lat) {
+                        lat = parseFloat(coordsMatch[1]);
+                        lng = parseFloat(coordsMatch[2]);
+                      }
+                      const dirMatch = mHref.match(/maps\/dir\/\/([^\/@\?#]+)/) || mHref.match(/maps\/search\/([^\/@\?#]+)/) || mHref.match(/maps\/place\/([^\/@\?#]+)/);
+                      if (dirMatch && !address) {
+                        try {
+                          const rawDest = decodeURIComponent(dirMatch[1]).replace(/\+/g, ' ').trim();
+                          if (rawDest.length > 4 && !rawDest.startsWith('http')) address = rawDest;
+                        } catch(e) {}
+                      }
+                    });
+                  }
+                }
+              }
+            } catch (subErr) {}
+          }
+        } catch (crawlErr) {}
+      }
     }
 
     return { 
@@ -18814,21 +18971,77 @@ Return JSON:
     if (discoveredUrl) {
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
+        let scTitle = formatBusinessName(cleanQ);
+        let scDesc = `${scTitle} is a verified business on Yoouz.`;
+        let scImage = "";
+        let scAddress = "";
+        let scCity = "Online";
+        let scCountry = "";
+        let scPhone = "";
+        let scEmail = "";
+        let scCategory = detectedCategory;
+        let scOpeningHours = "Available 24/7";
+        let scLat = 0;
+        let scLng = 0;
+
+        try {
+          const fetchResp = await fetch(discoveredUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            },
+            redirect: 'follow',
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+          });
+          if (fetchResp.ok) {
+            const scHtml = await fetchResp.text();
+            if (scHtml && scHtml.length > 500) {
+              const sc$ = cheerio.load(scHtml);
+              const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text();
+              if (metaT && metaT.trim().length > 1) {
+                scTitle = formatBusinessName(metaT.trim(), discoveredDom);
+              }
+              const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content');
+              if (metaDesc && metaDesc.trim().length > 10) {
+                scDesc = metaDesc.trim();
+              }
+              const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content');
+              if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com')) {
+                try {
+                  scImage = new URL(metaImg, fetchResp.url || discoveredUrl).toString();
+                } catch (e) {
+                  scImage = metaImg;
+                }
+              }
+              const locData = await extractWebsiteLocationAndContact(sc$, scHtml, fetchResp.url || discoveredUrl, discoveredDom);
+              if (locData.address) scAddress = locData.address;
+              if (locData.city) scCity = locData.city;
+              if (locData.country) scCountry = locData.country;
+              if (locData.phone) scPhone = locData.phone;
+              if (locData.email) scEmail = locData.email;
+              if (locData.category) scCategory = locData.category;
+              if (locData.openingHours) scOpeningHours = locData.openingHours;
+              if (locData.lat) scLat = locData.lat;
+              if (locData.lng) scLng = locData.lng;
+            }
+          }
+        } catch (scErr) {}
+
         const finalResult = {
           domain: discoveredDom,
           websiteUrl: discoveredUrl,
-          name: formatBusinessName(cleanQ),
-          category: detectedCategory,
-          address: "",
-          city: "Online",
-          country: "",
-          phone: "",
-          email: "",
-          openingHours: "Available 24/7",
-          photo: "",
-          description: `${formatBusinessName(cleanQ)} is a verified business on Yoouz.`,
-          lat: 0,
-          lng: 0
+          name: scTitle || formatBusinessName(cleanQ),
+          category: scCategory || detectedCategory,
+          address: scAddress,
+          city: scCity || "Online",
+          country: scCountry,
+          phone: scPhone,
+          email: scEmail,
+          openingHours: scOpeningHours,
+          photo: scImage,
+          description: scDesc,
+          lat: scLat,
+          lng: scLng
         };
         BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
         await persistToDb(finalResult);
@@ -19963,7 +20176,7 @@ Return JSON:
       if (logo) logo = sanitizeProxy(logo);
 
       // Extract rich location, phone, email, and category
-      const scrapedLocInfo = extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
+      const scrapedLocInfo = await extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
       if (!locInfo || Object.keys(locInfo).length === 0) {
         locInfo = scrapedLocInfo;
       }

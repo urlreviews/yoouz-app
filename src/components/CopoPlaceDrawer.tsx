@@ -499,8 +499,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsLogo = !hasValidLogo;
     const needsLocation = !place.address || place.address.trim() === "" || place.address === "Verified Location" || isAddressUrl;
     const needsPhone = !hasGenuinePhone;
+    const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone) {
+    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone || needsHours) {
       fetchedTargetUrlsRef.current.add(targetKey);
       let isMounted = true;
       const endpoint = targetUrl
@@ -514,7 +515,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (data.image) {
               setFetchedBannerUrl(data.image);
             }
-            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category)) {
+            if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
               onUpdatePlace({
                 ...place,
                 name: (data.title && isGenericName) ? data.title : place.name,
@@ -525,6 +526,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
                 email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
                 category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
+                openingHours: data.openingHours || place.openingHours || "",
+                locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
+                lat: data.lat || place.lat || 0,
+                lng: data.lng || place.lng || 0,
                 bannerUrl: place.bannerUrl || data.image || "",
                 ogImage: place.ogImage || data.image || "",
                 logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
