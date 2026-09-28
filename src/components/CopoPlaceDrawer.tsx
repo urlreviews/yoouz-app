@@ -463,13 +463,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Background auto-enrichment: Fetch and sync rich metadata & business business description from URL or Business Name
   const enrichmentRetryCountRef = useRef(0);
+  const discoveryAttemptsRef = useRef(0);
   useEffect(() => {
     const rawTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
     const cleanTargetUrl = (rawTargetUrl && isValidDomainUrl(rawTargetUrl)) ? rawTargetUrl : null;
     const targetUrl = isYoouzWebsite(cleanTargetUrl) ? "" : cleanTargetUrl;
     const targetKey = targetUrl || (place.name && place.name !== "Yoouz" ? `name:${place.name}` : "");
     
-    if (!targetKey || fetchedTargetUrlsRef.current.has(targetKey)) {
+    if (!targetKey) return;
+    
+    // If we already successfully fetched data for this key, don't re-run unless it was a partial failure
+    const hasCoreData = Boolean(
+      place.logoUrl && !place.logoUrl.includes('tap/0.png') &&
+      place.bannerUrl && !isBadBanner(place.bannerUrl) &&
+      place.address && place.address !== "Verified Location"
+    );
+    
+    if (fetchedTargetUrlsRef.current.has(targetKey) && hasCoreData) {
       return;
     }
 
@@ -518,7 +528,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           .then((res) => (res.ok ? res.json() : null))
           .then((data) => {
             if (isMounted && data) {
-              const hasActualData = data.image || (data.logo && !hasValidLogo) || data.address || data.phone;
+              const hasActualData = Boolean(
+                data.image || 
+                (data.logo && !data.logo.includes('tap/0.png')) || 
+                (data.address && data.address !== "Verified Location") || 
+                data.phone
+              );
               
               if (data.image) {
                 setFetchedBannerUrl(data.image);
@@ -548,17 +563,21 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 });
               }
 
-              // Self-healing retry: If we still don't have core data (banner/logo/address), retry up to 2 more times
-              if (!hasActualData && enrichmentRetryCountRef.current < 2) {
-                enrichmentRetryCountRef.current++;
-                setTimeout(runEnrichment, 4000);
+              // Infinite Discovery Policy: Keep retrying up to 20 times (every 3 seconds) 
+              // until discovery succeeds or a real domain is found.
+              if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 20) {
+                discoveryAttemptsRef.current++;
+                setTimeout(runEnrichment, 3000);
               }
+            } else if (isMounted && discoveryAttemptsRef.current < 20) {
+              discoveryAttemptsRef.current++;
+              setTimeout(runEnrichment, 3000);
             }
           })
           .catch(() => {
-            if (enrichmentRetryCountRef.current < 2) {
-              enrichmentRetryCountRef.current++;
-              setTimeout(runEnrichment, 4000);
+            if (isMounted && discoveryAttemptsRef.current < 20) {
+              discoveryAttemptsRef.current++;
+              setTimeout(runEnrichment, 3000);
             }
           });
 

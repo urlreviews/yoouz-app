@@ -18979,81 +18979,73 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // 3. Elite Discovery Engine (Hardened & Multi-Stage)
+    // 3. Official Google Discovery Engine (Strict & Resilient)
     let discoveredUrl: string = "";
     try {
-      const searchStages = [
-        encodeURIComponent(`${cleanQ} official website`),
-        encodeURIComponent(cleanQ)
-      ];
-
-      for (const qEnc of searchStages) {
+      const qEnc = encodeURIComponent(`${cleanQ} official website`);
+      
+      // Resilient Google-Only Discovery Loop
+      for (let attempt = 0; attempt < 5; attempt++) {
         if (discoveredUrl) break;
-        
-        const searchUrls = [
-          `https://www.google.com/search?q=${qEnc}`,
-          `https://duckduckgo.com/html/?q=${qEnc}`,
-          `https://www.bing.com/search?q=${qEnc}`
-        ];
+        try {
+          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=10`;
+          const sRes = await fetch(googleUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+              "Accept-Language": "en-US,en;q=0.9"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+          });
+          
+          if (!sRes.ok) {
+            // Wait briefly before next attempt if blocked
+            await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+            continue;
+          }
 
-        for (const sUrl of searchUrls) {
-          if (discoveredUrl) break;
-          try {
-            const sRes = await fetch(sUrl, {
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                "Accept-Language": "en-US,en;q=0.9"
-              },
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+          const html = await sRes.text();
+          const matches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
+          
+          const directoryDomains = [
+            "google.com", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
+            "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "mapquest.com", "waze.com",
+            "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com"
+          ];
+
+          const validCandidates = Array.from(new Set(matches.filter(u => {
+            const low = u.toLowerCase();
+            return !directoryDomains.some(d => low.includes(d)) && !low.includes("schema.org") && !low.includes("w3.org");
+          })));
+
+          if (validCandidates.length > 0) {
+            const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+            validCandidates.sort((a, b) => {
+              let scoreA = 0;
+              let scoreB = 0;
+              try {
+                const domA = new URL(a).hostname.toLowerCase();
+                const domB = new URL(b).hostname.toLowerCase();
+                queryWords.forEach(w => {
+                  if (domA.includes(w)) scoreA += 50;
+                  if (domB.includes(w)) scoreB += 50;
+                });
+                if (new URL(a).pathname.length <= 1) scoreA += 20;
+                if (new URL(b).pathname.length <= 1) scoreB += 20;
+                if (domA.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreA += 100;
+                if (domB.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreB += 100;
+              } catch(e) {}
+              return scoreB - scoreA;
             });
-            if (!sRes.ok) continue;
-            const html = await sRes.text();
-            
-            // Advanced URL extraction (prioritizing clear links)
-            const matches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
-            
-            const directoryDomains = [
-              "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
-              "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-              "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
-              "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "mapquest.com", "waze.com",
-              "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com"
-            ];
-
-            const validCandidates = Array.from(new Set(matches.filter(u => {
-              const low = u.toLowerCase();
-              return !directoryDomains.some(d => low.includes(d)) && !low.includes("schema.org") && !low.includes("w3.org") && !low.includes("google");
-            })));
-
-            if (validCandidates.length > 0) {
-              const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
-              validCandidates.sort((a, b) => {
-                let scoreA = 0;
-                let scoreB = 0;
-                try {
-                  const domA = new URL(a).hostname.toLowerCase();
-                  const domB = new URL(b).hostname.toLowerCase();
-                  queryWords.forEach(w => {
-                    if (domA.includes(w)) scoreA += 50;
-                    if (domB.includes(w)) scoreB += 50;
-                  });
-                  // Official sites usually have short paths
-                  if (new URL(a).pathname.length <= 1) scoreA += 20;
-                  if (new URL(b).pathname.length <= 1) scoreB += 20;
-                  
-                  // Brand match boost
-                  if (domA.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreA += 100;
-                  if (domB.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreB += 100;
-                } catch(e) {}
-                return scoreB - scoreA;
-              });
-              discoveredUrl = validCandidates[0];
-            }
-          } catch (e) {}
+            discoveredUrl = validCandidates[0];
+            break; 
+          }
+        } catch (e) {
+          await new Promise(r => setTimeout(r, 200));
         }
       }
     } catch (e) {
-      console.error("[Elite Discovery Stage Error]:", e.message);
+      console.error("[Google Discovery Error]:", e.message);
     }
 
     if (discoveredUrl) {
@@ -19137,32 +19129,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
     }
 
-    // 4. Clean verified business record (Strictly authentic, ZERO fake URLs, ZERO random photos)
-    const fallbackPlaceId = (cleanQ.includes('.') && !cleanQ.toLowerCase().includes('wikipedia.org') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
-    const finalCleanTitle = formatBusinessName(cleanQ);
-    const cleanDomain = (fallbackPlaceId && fallbackPlaceId.includes('.') && !fallbackPlaceId.toLowerCase().includes('wikipedia.org')) ? fallbackPlaceId : "";
-
-    const finalResult = {
-      domain: cleanDomain,
-      websiteUrl: cleanDomain ? `https://${cleanDomain}` : "",
-      name: finalCleanTitle,
-      category: detectedCategory,
-      address: "",
-      city: "Online",
-      country: "",
-      phone: "",
-      email: "",
-      openingHours: "Available 24/7",
-      photo: "",
-      description: cleanDomain ? `${finalCleanTitle} is a verified business on Yoouz.` : "",
-      lat: 0,
-      lng: 0,
-      isPendingDiscovery: !cleanDomain
-    };
-
-    BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
-    await persistToDb(finalResult);
-    return finalResult;
+    return null; // STRICT POLICY: No official domain = No profile details.
   }
 
   async function resolveDomainForBusinessQuery(query: string): Promise<string> {
