@@ -323,7 +323,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         .catch(() => null);
 
       const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`)
-        .then(r => r.ok ? r.json() : null)
+        .then(async r => {
+          if (r.status === 504 || r.status === 502) {
+            console.warn("[Search] Backend timeout (504). Relying on client-side CSE.");
+            return null;
+          }
+          return r.ok ? r.json() : null;
+        })
         .then(meta => {
           if (meta) preloadedMeta = meta;
           const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
@@ -331,7 +337,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         })
         .catch(() => null);
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 18000));
 
       const winner = await Promise.race([
         Promise.any([csePromise, backendPromise]).catch(() => null),

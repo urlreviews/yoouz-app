@@ -258,6 +258,8 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "14": "עכשיו 14",
   "mjpsolicitors.co.uk": "MJP Solicitors",
   "mjp solicitors": "MJP Solicitors",
+  "tailorlofts.com": "Tailor Lofts",
+  "tailor lofts": "Tailor Lofts",
   "mjpsolicitors": "MJP Solicitors",
   "eliterootersocal.com": "Elite Rooter",
   "eliterooter.com": "Elite Rooter",

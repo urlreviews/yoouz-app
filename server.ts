@@ -18991,11 +18991,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
       ];
 
-      // Extreme Google-Only Discovery Loop (20 attempts for absolute certainty)
-      for (let attempt = 0; attempt < 20; attempt++) {
+      // Extreme Google-Only Discovery Engine (5 attempts with tighter timeouts to prevent 504)
+      for (let attempt = 0; attempt < 5; attempt++) {
         if (discoveredUrl) break;
         try {
-          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=25&hl=en&gl=us`;
+          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
           const sRes = await fetch(googleUrl, {
             headers: {
               "User-Agent": userAgents[attempt % userAgents.length],
@@ -19003,12 +19003,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               "Referer": "https://www.google.com/",
               "Cache-Control": "no-cache"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
           });
           
           if (!sRes.ok) {
-            console.warn(`[Google Discovery] Attempt ${attempt + 1} failed (HTTP ${sRes.status}). Retrying...`);
-            await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+            await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
             continue;
           }
 
