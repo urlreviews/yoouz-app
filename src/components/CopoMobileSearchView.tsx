@@ -562,7 +562,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   executeSearch();
                 }
               }}
-              placeholder={t("search.businessPlaceholder", "Search business, brand, domain...")}
+              placeholder={t("search.businessPlaceholder", "Search business...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
               autoFocus={true}
             />
