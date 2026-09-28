@@ -6984,16 +6984,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                                 log.statusColor === 'emerald' || log.status === 'scraped' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                 log.status === 'db_cache_hit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                log.status === 'resolved_by_search' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                log.status === 'resolved_by_search' || log.status === 'resolved_by_discovery' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                                 log.status === 'initiated' ? 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' :
-                                log.status === 'critical_error' || log.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                                log.status === 'critical_error' || log.status === 'failed' || log.status === 'discovery_failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 ring-1 ring-rose-500/30' :
                                 'bg-zinc-800 text-zinc-300 border-zinc-700'
                               }`}>
                                 {log.status.toUpperCase().replace(/_/g, ' ')}
                               </span>
-                              {log.error && (
-                                <div className="text-[9px] text-rose-400 mt-1 font-mono max-w-[150px] truncate" title={log.error}>
-                                  ERR: {log.error}
+                              {(log.error || log.status === 'discovery_failed') && (
+                                <div className="text-[9px] text-rose-400 mt-1 font-mono max-w-[150px] whitespace-normal leading-tight">
+                                  {log.error || "CRITICAL: No official website discovered for this brand query."}
                                 </div>
                               )}
                             </td>

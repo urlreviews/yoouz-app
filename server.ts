@@ -18979,44 +18979,68 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // 3. Official Google Discovery Engine (Strict & Resilient)
+    // 3. Official Google Discovery Engine (Extreme Resilience & Decryption)
     let discoveredUrl: string = "";
     try {
       const qEnc = encodeURIComponent(`${cleanQ} official website`);
       
-      // Resilient Google-Only Discovery Loop
-      for (let attempt = 0; attempt < 5; attempt++) {
+      const userAgents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
+      ];
+
+      // Extreme Google-Only Discovery Loop (20 attempts for absolute certainty)
+      for (let attempt = 0; attempt < 20; attempt++) {
         if (discoveredUrl) break;
         try {
-          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=10`;
+          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=25&hl=en&gl=us`;
           const sRes = await fetch(googleUrl, {
             headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-              "Accept-Language": "en-US,en;q=0.9"
+              "User-Agent": userAgents[attempt % userAgents.length],
+              "Accept-Language": "en-US,en;q=0.9",
+              "Referer": "https://www.google.com/",
+              "Cache-Control": "no-cache"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
           });
           
           if (!sRes.ok) {
-            // Wait briefly before next attempt if blocked
-            await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+            console.warn(`[Google Discovery] Attempt ${attempt + 1} failed (HTTP ${sRes.status}). Retrying...`);
+            await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
             continue;
           }
 
           const html = await sRes.text();
-          const matches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
+          if (!html || html.length < 500) continue;
+          
+          // 1. Primary Extraction: All organic links
+          const rawMatches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
+          
+          // 2. Secondary Extraction: Google Redirect Links (/url?q=...)
+          const redirectMatches = html.match(/\/url\?q=https?:\/\/[^&"'>\s]+/gi) || [];
+          const decodedRedirects = redirectMatches.map(m => {
+            try { return decodeURIComponent(m.replace("/url?q=", "")); } catch(e) { return ""; }
+          }).filter(Boolean);
+
+          const matches = Array.from(new Set([...rawMatches, ...decodedRedirects]));
           
           const directoryDomains = [
-            "google.com", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
-            "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "mapquest.com", "waze.com",
-            "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com"
+            "google.com", "google.co.il", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
+            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com"
           ];
 
-          const validCandidates = Array.from(new Set(matches.filter(u => {
-            const low = u.toLowerCase();
-            return !directoryDomains.some(d => low.includes(d)) && !low.includes("schema.org") && !low.includes("w3.org");
-          })));
+          const validCandidates = matches.filter(u => {
+            try {
+              const low = u.toLowerCase();
+              const host = new URL(u).hostname.toLowerCase();
+              // Prevent common search engine and directory noise
+              const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
+              return !isNoise && !low.includes("schema.org") && !low.includes("w3.org") && !low.includes("googleadservices");
+            } catch(e) { return false; }
+          });
 
           if (validCandidates.length > 0) {
             const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
@@ -19024,31 +19048,42 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               let scoreA = 0;
               let scoreB = 0;
               try {
-                const domA = new URL(a).hostname.toLowerCase();
-                const domB = new URL(b).hostname.toLowerCase();
+                const domA = new URL(a).hostname.toLowerCase().replace(/^www\./, "");
+                const domB = new URL(b).hostname.toLowerCase().replace(/^www\./, "");
+                
                 queryWords.forEach(w => {
-                  if (domA.includes(w)) scoreA += 50;
-                  if (domB.includes(w)) scoreB += 50;
+                  if (domA.includes(w)) scoreA += 150;
+                  if (domB.includes(w)) scoreB += 150;
                 });
-                if (new URL(a).pathname.length <= 1) scoreA += 20;
-                if (new URL(b).pathname.length <= 1) scoreB += 20;
-                if (domA.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreA += 100;
-                if (domB.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreB += 100;
+                
+                // Root domain bonus
+                if (new URL(a).pathname.length <= 1) scoreA += 100;
+                if (new URL(b).pathname.length <= 1) scoreB += 100;
+                
+                // Exact slug match (e.g. "parkpl" in "parkpl.co")
+                const slugA = domA.split('.')[0];
+                const slugB = domB.split('.')[0];
+                if (queryWords.some(w => slugA === w || w.includes(slugA) || slugA.includes(w))) scoreA += 300;
+                if (queryWords.some(w => slugB === w || w.includes(slugB) || slugB.includes(w))) scoreB += 300;
+                
               } catch(e) {}
               return scoreB - scoreA;
             });
             discoveredUrl = validCandidates[0];
+            console.info(`[Discovery] Successfully found official website for "${cleanQ}": ${discoveredUrl}`);
             break; 
           }
+          await new Promise(r => setTimeout(r, 600));
         } catch (e) {
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 400));
         }
       }
     } catch (e) {
-      console.error("[Google Discovery Error]:", e.message);
+      console.error("[Google Discovery Critical Error]:", e.message);
     }
 
     if (discoveredUrl) {
+      logSearchIntel(cleanQ, cleanDomainName(discoveredUrl), "resolved_by_discovery", { source: "google_discovery_loop" });
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
         let scTitle = formatBusinessName(cleanQ, discoveredDom);
@@ -19127,6 +19162,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         await persistToDb(finalResult);
         return finalResult;
       }
+    }
+
+    if (!discoveredUrl) {
+      logSearchIntel(cleanQ, "", "discovery_failed", { error: "No official website found after extreme discovery attempts" });
     }
 
     return null; // STRICT POLICY: No official domain = No profile details.
@@ -19245,7 +19284,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             locations: []
           });
         }
-        return res.status(400).json({ error: 'Invalid URL or Domain' });
+        return res.status(202).json({ status: 'pending', message: 'Discovery in progress' });
       }
       let url = parsedUrl.origin;
       const domain = parsedUrl.hostname;
@@ -19379,6 +19418,43 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               
               const rawTitle = getMetaContent('title') || $('title').text() || '';
               description = getMetaContent('description') || $('meta[name="description"]').attr('content') || '';
+              siteName = getMetaContent('site_name') || '';
+
+              // Better Logo Extraction
+              const logoSelectors = [
+                'link[rel="apple-touch-icon-precomposed"]',
+                'link[rel="apple-touch-icon"]',
+                'link[rel="icon"][sizes="192x192"]',
+                'link[rel="icon"][sizes="180x180"]',
+                'link[rel="shortcut icon"]',
+                'link[rel="icon"]',
+                'meta[property="og:logo"]'
+              ];
+              
+              for (const sel of logoSelectors) {
+                const href = $(sel).attr('href') || $(sel).attr('content');
+                if (href && !href.includes('google.com') && !href.startsWith('data:')) {
+                  try {
+                    logo = new URL(href, finalUrl).toString();
+                    break;
+                  } catch (e) {}
+                }
+              }
+              if (!logo) logo = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+              // Better Banner Image Extraction
+              const ogImg = getMetaContent('image');
+              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
+                try {
+                  image = new URL(ogImg, finalUrl).toString();
+                } catch (e) {
+                  image = ogImg;
+                }
+              }
+
+              if (rawTitle && !isGenericOrPlaceholderTitle(rawTitle)) {
+                title = rawTitle.trim();
+              }
 
               const isGenericOrPlaceholderTitle = (t: string) => {
                 if (!t) return true;

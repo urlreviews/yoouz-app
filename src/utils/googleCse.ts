@@ -282,180 +282,166 @@ export function ensureCseLoaded(): Promise<boolean> {
 
 /**
  * Queries Google CSE client-side and resolves with the authentic official business URL
+ * Supports multiple retry attempts for maximum reliability.
  */
-export async function queryGoogleCseForUrl(query: string): Promise<string | null> {
+export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3): Promise<string | null> {
   const cleanQ = query.trim();
   if (!cleanQ || cleanQ.length < 2) return null;
 
-  const currentToken = ++activeQueryToken;
-  console.info(`[Google CSE] Initiating Google search for: "${cleanQ}" (token #${currentToken})`);
-
-  // Wait for CSE initialization
-  await ensureCseLoaded();
-
-  return new Promise((resolve) => {
-    let resolved = false;
-    let pollInterval: any = null;
-    let observer: MutationObserver | null = null;
-    let timeoutId: any = null;
-    const candidateMap = new Map<string, number>();
-
-    const cleanup = () => {
-      if (pollInterval) clearInterval(pollInterval);
-      if (timeoutId) clearTimeout(timeoutId);
-      if (observer) observer.disconnect();
-      cseResultCallbacks.delete(handleCseResults);
-    };
-
-    const finishWithBestCandidate = () => {
-      if (resolved) return;
-      resolved = true;
-      cleanup();
-
-      const candidateList = Array.from(candidateMap.entries());
-      if (candidateList.length === 0) {
-        resolve(null);
-        return;
-      }
-
-      // Sort candidate URLs by relevance score (incorporating rank index)
-      candidateList.sort((a, b) => {
-        const scoreA = scoreCandidateUrl(a[0], cleanQ, a[1]);
-        const scoreB = scoreCandidateUrl(b[0], cleanQ, b[1]);
-        return scoreB - scoreA;
-      });
-
-      const bestEntry = candidateList[0];
-      const best = bestEntry[0];
-      const bestRank = bestEntry[1];
-      const bestScore = scoreCandidateUrl(best, cleanQ, bestRank);
-
-      if (bestScore >= 50) {
-        console.info(`[Google CSE] Selected best authentic URL (rank #${bestRank + 1}, score ${bestScore}): ${best}`);
-        resolve(best);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const currentToken = ++activeQueryToken;
+      if (attempt > 0) {
+        console.info(`[Google CSE] Retrying search for: "${cleanQ}" (attempt ${attempt + 1}/${maxRetries + 1}, token #${currentToken})`);
       } else {
-        console.warn(`[Google CSE] Highest candidate scored below confidence threshold (${bestScore}): ${best}. Rejecting directory/unmatched results.`);
-        resolve(null);
+        console.info(`[Google CSE] Initiating Google search for: "${cleanQ}" (token #${currentToken})`);
       }
-    };
 
-    // 1. Listen for results from Google's native search callbacks
-    const handleCseResults = (results: any[]) => {
-      if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
-      for (let i = 0; i < results.length; i++) {
-        const item = results[i];
-        const targetUrl = item.url || item.unescapedUrl || (item.richSnippet?.cseImage?.src ? item.url : null);
-        if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
-          if (!candidateMap.has(targetUrl)) {
-            candidateMap.set(targetUrl, i); // Save organic rank index
-          }
-          // If Google's #1 organic result is an allowed URL, finish immediately!
-          if (i === 0 || scoreCandidateUrl(targetUrl, cleanQ, i) >= 1150) {
-            finishWithBestCandidate();
+      // Wait for CSE initialization
+      await ensureCseLoaded();
+
+      const result = await new Promise<string | null>((resolve) => {
+        let resolved = false;
+        let pollInterval: any = null;
+        let observer: MutationObserver | null = null;
+        let timeoutId: any = null;
+        const candidateMap = new Map<string, number>();
+
+        const cleanup = () => {
+          if (pollInterval) clearInterval(pollInterval);
+          if (timeoutId) clearTimeout(timeoutId);
+          if (observer) observer.disconnect();
+          cseResultCallbacks.delete(handleCseResults);
+        };
+
+        const finishWithBestCandidate = () => {
+          if (resolved) return;
+          resolved = true;
+          cleanup();
+
+          const candidateList = Array.from(candidateMap.entries());
+          if (candidateList.length === 0) {
+            resolve(null);
             return;
           }
-        }
-      }
 
-      if (candidateMap.size > 0) {
-        // Allow tiny 150ms buffer to collect any additional anchors, then finish
-        setTimeout(finishWithBestCandidate, 150);
-      }
-    };
+          // Sort candidate URLs by relevance score
+          candidateList.sort((a, b) => {
+            const scoreA = scoreCandidateUrl(a[0], cleanQ, a[1]);
+            const scoreB = scoreCandidateUrl(b[0], cleanQ, b[1]);
+            return scoreB - scoreA;
+          });
 
-    cseResultCallbacks.add(handleCseResults);
+          const bestEntry = candidateList[0];
+          const best = bestEntry[0];
+          const bestRank = bestEntry[1];
+          const bestScore = scoreCandidateUrl(best, cleanQ, bestRank);
 
-    // 2. Trigger search execution
-    try {
-      const g = (window as any).google?.search?.cse?.element;
-      if (g) {
-        const namedEl = g.getElement("yoouz_search") || (g.getAllElements && Object.values(g.getAllElements())[0]);
-        if (namedEl && typeof namedEl.execute === "function") {
-          namedEl.execute(cleanQ);
-        }
-      }
-    } catch (e) {
-      console.warn("[Google CSE] execute error:", e);
-    }
+          if (bestScore >= 50) {
+            console.info(`[Google CSE] Selected best authentic URL (rank #${bestRank + 1}, score ${bestScore}): ${best}`);
+            resolve(best);
+          } else {
+            resolve(null);
+          }
+        };
 
-    // Secondary trigger: Fill the hidden search input and submit
-    const container = document.getElementById("yoouz-hidden-cse-container");
-    if (container) {
-      const inputEl = container.querySelector("input.gsc-input") as HTMLInputElement;
-      const buttonEl = container.querySelector("button.gsc-search-button, input.gsc-search-button") as HTMLElement;
-      if (inputEl) {
-        inputEl.value = cleanQ;
-        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-        inputEl.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      if (buttonEl) {
-        buttonEl.click();
-      }
-
-      // 3. MutationObserver for DOM updates
-      try {
-        observer = new MutationObserver(() => {
-          if (resolved) return;
-          const candidateAnchors = container.querySelectorAll("a.gs-title, .gsc-resultsRoot a, .gsc-webResult a, a[data-ctorig]");
-          for (let i = 0; i < candidateAnchors.length; i++) {
-            const anchor = candidateAnchors[i] as HTMLAnchorElement;
-            const isAd = anchor.closest(".gsc-adBlock, .gsc-adBlockVertical, .gsc-adsArea, .gsc-promotion");
-            if (isAd) continue;
-
-            const rawHref = extractTargetUrl(anchor);
-            if (rawHref && isAllowedOrganicUrl(rawHref)) {
-              if (!candidateMap.has(rawHref)) {
-                candidateMap.set(rawHref, i);
+        const handleCseResults = (results: any[]) => {
+          if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
+          for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            const targetUrl = item.url || item.unescapedUrl || (item.richSnippet?.cseImage?.src ? item.url : null);
+            if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
+              if (!candidateMap.has(targetUrl)) {
+                candidateMap.set(targetUrl, i);
               }
-              if (i === 0 || scoreCandidateUrl(rawHref, cleanQ, i) >= 1150) {
+              if (i === 0 || scoreCandidateUrl(targetUrl, cleanQ, i) >= 1150) {
                 finishWithBestCandidate();
                 return;
               }
             }
           }
-        });
-        observer.observe(container, { childList: true, subtree: true, attributes: true });
-      } catch (err) {}
-    }
+          if (candidateMap.size > 0) {
+            setTimeout(finishWithBestCandidate, 150);
+          }
+        };
 
-    // 4. Polling backup
-    pollInterval = setInterval(() => {
-      if (resolved) {
-        cleanup();
-        return;
-      }
+        cseResultCallbacks.add(handleCseResults);
 
-      const candidateAnchors = document.querySelectorAll(
-        "#yoouz-hidden-cse-container a.gs-title, #yoouz-hidden-cse-container .gsc-webResult a, .gsc-resultsRoot a.gs-title, a[data-ctorig]"
-      );
-
-      if (candidateAnchors && candidateAnchors.length > 0) {
-        for (let i = 0; i < candidateAnchors.length; i++) {
-          const anchor = candidateAnchors[i] as HTMLAnchorElement;
-          const isAd = anchor.closest(".gsc-adBlock, .gsc-adBlockVertical, .gsc-adsArea, .gsc-promotion");
-          if (isAd) continue;
-
-          const rawHref = extractTargetUrl(anchor);
-          if (rawHref && isAllowedOrganicUrl(rawHref)) {
-            if (!candidateMap.has(rawHref)) {
-              candidateMap.set(rawHref, i);
-            }
-            if (i === 0 || scoreCandidateUrl(rawHref, cleanQ, i) >= 1150) {
-              finishWithBestCandidate();
-              return;
+        try {
+          const g = (window as any).google?.search?.cse?.element;
+          if (g) {
+            const namedEl = g.getElement("yoouz_search") || (g.getAllElements && Object.values(g.getAllElements())[0]);
+            if (namedEl && typeof namedEl.execute === "function") {
+              namedEl.execute(cleanQ);
             }
           }
+        } catch (e) {}
+
+        const container = document.getElementById("yoouz-hidden-cse-container");
+        if (container) {
+          const inputEl = container.querySelector("input.gsc-input") as HTMLInputElement;
+          const buttonEl = container.querySelector("button.gsc-search-button, input.gsc-search-button") as HTMLElement;
+          if (inputEl) {
+            inputEl.value = cleanQ;
+            inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+            inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          if (buttonEl) buttonEl.click();
+
+          try {
+            observer = new MutationObserver(() => {
+              if (resolved) return;
+              const candidateAnchors = container.querySelectorAll("a.gs-title, .gsc-resultsRoot a, .gsc-webResult a, a[data-ctorig]");
+              for (let i = 0; i < candidateAnchors.length; i++) {
+                const anchor = candidateAnchors[i] as HTMLAnchorElement;
+                const isAd = anchor.closest(".gsc-adBlock, .gsc-adBlockVertical, .gsc-adsArea, .gsc-promotion");
+                if (isAd) continue;
+
+                const rawHref = extractTargetUrl(anchor);
+                if (rawHref && isAllowedOrganicUrl(rawHref)) {
+                  if (!candidateMap.has(rawHref)) candidateMap.set(rawHref, i);
+                  if (i === 0 || scoreCandidateUrl(rawHref, cleanQ, i) >= 1150) {
+                    finishWithBestCandidate();
+                    return;
+                  }
+                }
+              }
+            });
+            observer.observe(container, { childList: true, subtree: true, attributes: true });
+          } catch (err) {}
         }
-      }
 
-      if (candidateMap.size > 0) {
-        finishWithBestCandidate();
-      }
-    }, 100);
+        pollInterval = setInterval(() => {
+          if (resolved) return;
+          const anchors = document.querySelectorAll("#yoouz-hidden-cse-container a.gs-title, a[data-ctorig]");
+          if (anchors.length > 0) {
+            for (let i = 0; i < anchors.length; i++) {
+              const anchor = anchors[i] as HTMLAnchorElement;
+              const isAd = anchor.closest(".gsc-adBlock, .gsc-adBlockVertical, .gsc-adsArea, .gsc-promotion");
+              if (isAd) continue;
+              const href = extractTargetUrl(anchor);
+              if (href && isAllowedOrganicUrl(href)) {
+                if (!candidateMap.has(href)) candidateMap.set(href, i);
+              }
+            }
+          }
+          if (candidateMap.size > 0) finishWithBestCandidate();
+        }, 200);
 
-    // 5. Max timeout
-    timeoutId = setTimeout(() => {
-      finishWithBestCandidate();
-    }, 3500);
-  });
+        timeoutId = setTimeout(() => {
+          finishWithBestCandidate();
+        }, 4500);
+      });
+
+      if (result) return result;
+      // Wait a bit before next attempt
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1200));
+      }
+    } catch (err) {
+      console.warn(`[Google CSE] Attempt ${attempt + 1} failed:`, err);
+    }
+  }
+
+  return null;
 }
