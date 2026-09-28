@@ -1112,18 +1112,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
 
         {/* Rating & Category Hero Showcase Card */}
-        <div className="mb-2.5 p-3.5 rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 border border-white/10 shadow-xl backdrop-blur-xl flex items-center justify-between gap-3">
+        <div className="mb-2.5 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             {dynamicReviewCount > 0 ? (
-              <div className="flex items-center gap-2.5 bg-gradient-to-r from-amber-400/20 via-amber-400/10 to-amber-500/5 border border-amber-400/40 px-3.5 py-2 rounded-xl shrink-0 shadow-[0_0_16px_rgba(251,191,36,0.18)]">
-                <span className="font-black text-amber-400 text-xl leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
-                <div className="flex items-center text-amber-400 gap-1">
+              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-xl shrink-0">
+                <span className="font-extrabold text-amber-400 text-lg leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
+                <div className="flex items-center text-amber-400 gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4.5 h-4.5 ${
+                      className={`w-4 h-4 ${
                         i < Math.round(dynamicAvgRating)
-                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]"
+                          ? "fill-amber-400 text-amber-400"
                           : "fill-zinc-800 text-zinc-700"
                       }`}
                     />
@@ -1131,13 +1131,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2.5 bg-amber-400/5 border border-amber-400/20 px-3.5 py-2 rounded-xl shrink-0 shadow-[0_0_12px_rgba(251,191,36,0.06)]">
-                <span className="font-black text-amber-400/70 text-sm leading-none">0.0</span>
-                <div className="flex items-center text-amber-400/60 gap-1">
+              <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 px-3 py-1.5 rounded-xl shrink-0">
+                <span className="font-extrabold text-amber-400/70 text-sm leading-none">0.0</span>
+                <div className="flex items-center text-amber-400/60 gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className="w-4.5 h-4.5 fill-none text-amber-400/50 stroke-[1.75]"
+                      className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
                     />
                   ))}
                 </div>
@@ -1169,12 +1169,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             triggerHaptic("medium");
             onRecordForPlace(place);
           }}
-          className="w-full mb-3 h-12 px-5 rounded-2xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-black text-sm shadow-xl shadow-white/10 active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer border border-white/40 ring-1 ring-white/20 group"
+          className="w-full mb-3 h-11 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm border border-zinc-800 active:scale-98 transition-all cursor-pointer group"
         >
-          <div className="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-md">
-            <Video className="w-4.5 h-4.5 text-white fill-current" />
-          </div>
-          <span className="tracking-tight text-[15px]">{t("record.record_review", "Record Video Review")}</span>
+          <Camera className="w-4 h-4 text-zinc-200 group-hover:scale-105 transition-transform" />
+          <span>{t("place.recordVideoReview", "Record Video Review")}</span>
         </button>
       </div>
 
