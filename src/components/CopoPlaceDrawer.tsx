@@ -1164,9 +1164,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-bold text-xs px-4.5 py-2.5 rounded-full shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0 border border-white cursor-pointer group"
+            className="bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 text-white font-bold text-xs px-4.5 py-2.5 rounded-full shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0 border border-zinc-700 cursor-pointer group"
           >
-            <Video className="w-3.5 h-3.5 text-zinc-950 fill-zinc-950" />
+            <Video className="w-3.5 h-3.5 text-zinc-200 shrink-0 stroke-[2]" />
             <span>{t("place.recordVideoReview", "Record Review")}</span>
           </button>
         </div>
@@ -1651,14 +1651,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         );
                       })}
                     </div>
-
-                    <button
-                      onClick={() => onRecordForPlace(place)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:bg-zinc-700 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs active:scale-98 transition-all cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4 text-zinc-200" />
-                      <span>{t("place.recordVideoReview", "Record Video Review")}</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -1901,17 +1893,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   })}
                 </div>
               )}
-
-              {/* Record Review CTA */}
-              <div className="pt-4 text-center border-t border-zinc-800">
-                <button 
-                  onClick={() => onRecordForPlace(place)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>{t("place.recordVideoReview", "Record Video Review")}</span>
-                </button>
-              </div>
             </div>
           )}
 
