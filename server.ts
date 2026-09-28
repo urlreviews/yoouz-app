@@ -18321,7 +18321,7 @@ Return JSON:
           if (email) return;
           const raw = $(el).attr("href")?.replace(/^mailto:\s*/i, "").split("?")[0].trim() || "";
           const l = raw.toLowerCase();
-          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("@gmail.com") && !l.includes("@yahoo.com")) {
+          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("yourname@") && !l.includes("email@")) {
             email = raw;
           }
         });
@@ -18340,7 +18340,7 @@ Return JSON:
               }
               if (obj.email && !email) {
                 const em = String(obj.email).trim();
-                if (em.includes("@") && !em.includes("example.com") && !em.includes("@gmail.com")) email = em;
+                if (em.includes("@") && !em.includes("example.com")) email = em;
               }
               if (obj.address) {
                 const a = obj.address;

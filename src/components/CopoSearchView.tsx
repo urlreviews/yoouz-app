@@ -246,6 +246,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       setSearchedPlace(matchingLocal);
       setQuery(matchingLocal.name || baseName);
       setIsSearching(false);
+      if (onOpenPlace) {
+        onOpenPlace(matchingLocal.id);
+      }
       return;
     }
 
@@ -413,6 +416,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       setSearchedPlace(currentPlace);
       if (onAddPlace) {
         onAddPlace(currentPlace);
+      }
+      if (onOpenPlace) {
+        onOpenPlace(currentPlace.id);
       }
       
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
