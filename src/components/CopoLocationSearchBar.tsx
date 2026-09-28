@@ -294,6 +294,18 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               </button>
             );
           })}
+          
+          {/* Subtle Google attribution at the very bottom of the results list */}
+          <div className="w-full px-4 py-2 border-t border-zinc-800/50 bg-zinc-950/50 flex justify-end">
+            <div className="flex items-center gap-1 opacity-20 hover:opacity-40 transition-opacity pointer-events-none grayscale brightness-[0.4]">
+              <span className="text-[8px] font-medium text-zinc-500 uppercase tracking-widest">Enhanced by</span>
+              <img 
+                src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" 
+                alt="Google"
+                className="h-2 w-auto object-contain"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -569,18 +569,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 }}
               />
 
-              {/* Google Attribution - Required for Free CSE */}
-              <div className="w-full flex justify-end mt-2 px-4 opacity-50 hover:opacity-100 transition-opacity">
-                <div className="flex items-center gap-1.5 grayscale brightness-200">
-                  <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Enhanced by</span>
-                  <img 
-                    src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" 
-                    alt="Google"
-                    className="h-3 w-auto object-contain"
-                  />
-                </div>
-              </div>
-
               {/* Searching card removed for premium clean UI */}
             </div>
           )}
