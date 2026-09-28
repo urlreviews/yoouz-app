@@ -264,11 +264,76 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return;
     }
 
-    // 3. Otherwise, for text phrase query suggestions without a domain dot (e.g. "The Terrace Club"):
-    // Set query & execute search so Google CSE & backend metadata resolves authentic business domain & details!
+    // 3. If phrase/keyword suggestion without domain
     const qStr = item.title || query;
-    setQuery(qStr);
-    handleSearch(undefined, qStr);
+    const placeId = (targetDom || qStr).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business";
+    const knownHead = KNOWN_LOCATIONS[qStr.toLowerCase()] || null;
+    const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || "";
+    const instantName = knownHead?.name || qStr;
+
+    const instantPlace: Place = {
+      id: placeId,
+      name: instantName,
+      category: knownHead?.category || ((item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Verified Business"),
+      categoryType: "all",
+      address: knownHead?.address || item.address || "",
+      city: knownHead?.city || item.city || "",
+      country: knownHead?.country || item.country || "",
+      lat: knownHead?.lat || 0,
+      lng: knownHead?.lng || 0,
+      rating: knownHead?.rating || 5,
+      totalReviews: knownHead?.totalReviews || 1,
+      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      avatarUrl: instantLogo,
+      logoUrl: instantLogo,
+      bannerUrl: knownHead?.bannerUrl || "",
+      ogImage: knownHead?.bannerUrl || "",
+      photos: knownHead?.photos || [],
+      openingHours: knownHead?.openingHours || "Available 24/7",
+      isOpen: true,
+      phone: knownHead?.phone || "",
+      email: knownHead?.email || "",
+      website: targetDom ? `https://${targetDom}` : "",
+      priceRange: knownHead?.priceRange || "N/A",
+      plusCode: "",
+      description: knownHead?.description || "",
+      popularKeywords: [],
+      amenities: knownHead?.amenities || [],
+      topDishes: [],
+      brandDomain: targetDom || undefined
+    };
+
+    setSearchedPlace(instantPlace);
+    setQuery(instantName);
+    if (onAddPlace) onAddPlace(instantPlace);
+    if (onOpenPlace) onOpenPlace(instantPlace.id);
+
+    // Asynchronously enrich details in background
+    fetch(`/api/url-metadata?q=${encodeURIComponent(qStr)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(meta => {
+        if (meta) {
+          const updated: Place = {
+            ...instantPlace,
+            name: meta.siteName || meta.title || instantPlace.name,
+            category: (meta.category && meta.category !== "Website") ? meta.category : instantPlace.category,
+            address: meta.address || instantPlace.address,
+            city: meta.city || instantPlace.city,
+            country: meta.country || instantPlace.country,
+            phone: meta.phone || instantPlace.phone,
+            email: meta.email || instantPlace.email,
+            bannerUrl: meta.image || instantPlace.bannerUrl,
+            logoUrl: meta.logo || instantPlace.logoUrl,
+            website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
+            brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : undefined),
+            description: meta.description || instantPlace.description,
+            photos: meta.image ? Array.from(new Set([meta.image, ...(instantPlace.photos || [])])) : instantPlace.photos
+          };
+          setSearchedPlace(updated);
+          if (onAddPlace) onAddPlace(updated);
+        }
+      })
+      .catch(() => {});
   };
 
   const handleSearch = async (

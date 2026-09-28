@@ -459,11 +459,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, rawPlaceVideos, allVideos]);
 
-  // Background auto-enrichment: Fetch and sync rich metadata & business description from URL
+  // Background auto-enrichment: Fetch and sync rich metadata & business description from URL or Business Name
   useEffect(() => {
-    const targetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    const cleanTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    const targetUrl = isYoouzWebsite(cleanTargetUrl) ? "" : cleanTargetUrl;
+    const targetKey = targetUrl || (place.name && place.name !== "Yoouz" ? `name:${place.name}` : "");
     
-    if (!targetUrl || fetchedTargetUrlsRef.current.has(targetUrl)) {
+    if (!targetKey || fetchedTargetUrlsRef.current.has(targetKey)) {
       return;
     }
 
@@ -492,10 +494,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsLocation = !place.address || place.address.trim() === "" || place.address === "Verified Location" || isAddressUrl;
     const needsPhone = !hasGenuinePhone;
 
-    if (targetUrl && (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone)) {
-      fetchedTargetUrlsRef.current.add(targetUrl);
+    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone) {
+      fetchedTargetUrlsRef.current.add(targetKey);
       let isMounted = true;
-      fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
+      const endpoint = targetUrl
+        ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
+        : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
+
+      fetch(endpoint)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (isMounted && data) {
@@ -518,6 +524,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
                 avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
                 brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
+                website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
                 photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
               });
             }
@@ -528,7 +535,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         isMounted = false;
       };
     }
-  }, [place.id, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
+  }, [place.id, place.name, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";

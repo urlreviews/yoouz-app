@@ -534,62 +534,87 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
 
     // 2. If suggestion has a valid clean domain URL (e.g. "apple.com" or "theviewnyc.com")
-    if (isValidDomainUrl(cleanDom)) {
-      const placeId = cleanDom.toLowerCase();
-      const knownHead = KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]];
-      const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || getCleanLogoUrl(null, cleanDom) || `/api/favicon?domain=${cleanDom}`;
-      const instantName = knownHead?.name || KNOWN_OFFICIAL_NAMES[cleanDom] || title || formatBusinessName(cleanDom);
+    const placeId = cleanDom ? cleanDom.toLowerCase() : (title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
+    const knownHead = cleanDom ? (KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]]) : (KNOWN_LOCATIONS[title.toLowerCase()] || null);
+    const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
+    const instantName = knownHead?.name || (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : query);
 
-      const storeTerm = cleanDom;
-      const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-      setRecentSearches(newRecent);
-      try {
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-      } catch {}
+    const storeTerm = cleanDom || title;
+    const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+    setRecentSearches(newRecent);
+    try {
+      localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+    } catch {}
 
-      if (onAddPlace) {
-        const newPlace: Place = {
-          id: placeId,
-          name: instantName,
-          category: knownHead?.category || item.category || "Verified Business",
-          categoryType: "all",
-          address: knownHead?.address || item.address || "",
-          city: knownHead?.city || loc || "",
-          country: knownHead?.country || "",
-          lat: knownHead?.lat || 0,
-          lng: knownHead?.lng || 0,
-          rating: knownHead?.rating || 5,
-          totalReviews: knownHead?.totalReviews || 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-          avatarUrl: instantLogo,
-          logoUrl: instantLogo,
-          bannerUrl: knownHead?.bannerUrl || "",
-          ogImage: knownHead?.bannerUrl || "",
-          photos: knownHead?.photos || [],
-          openingHours: knownHead?.openingHours || "Available 24/7",
-          isOpen: true,
-          phone: knownHead?.phone || "",
-          email: knownHead?.email || "",
-          website: `https://${cleanDom}`,
-          priceRange: knownHead?.priceRange || "N/A",
-          plusCode: "",
-          description: knownHead?.description || "",
-          popularKeywords: [],
-          amenities: knownHead?.amenities || [],
-          topDishes: [],
-          brandDomain: cleanDom
-        };
-        onAddPlace(newPlace);
-      }
-      onOpenPlace(placeId);
-      return;
+    const newPlace: Place = {
+      id: placeId,
+      name: instantName,
+      category: knownHead?.category || item.category || "Verified Business",
+      categoryType: "all",
+      address: knownHead?.address || item.address || "",
+      city: knownHead?.city || loc || "",
+      country: knownHead?.country || "",
+      lat: knownHead?.lat || 0,
+      lng: knownHead?.lng || 0,
+      rating: knownHead?.rating || 5,
+      totalReviews: knownHead?.totalReviews || 1,
+      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      avatarUrl: instantLogo,
+      logoUrl: instantLogo,
+      bannerUrl: knownHead?.bannerUrl || "",
+      ogImage: knownHead?.bannerUrl || "",
+      photos: knownHead?.photos || [],
+      openingHours: knownHead?.openingHours || "Available 24/7",
+      isOpen: true,
+      phone: knownHead?.phone || "",
+      email: knownHead?.email || "",
+      website: cleanDom ? `https://${cleanDom}` : "",
+      priceRange: knownHead?.priceRange || "N/A",
+      plusCode: "",
+      description: knownHead?.description || "",
+      popularKeywords: [],
+      amenities: knownHead?.amenities || [],
+      topDishes: [],
+      brandDomain: cleanDom || undefined
+    };
+
+    if (onAddPlace) {
+      onAddPlace(newPlace);
     }
+    onOpenPlace(placeId);
 
-    // 3. Otherwise, for phrase/keyword query suggestions without a domain dot (e.g. "The Terrace Club"):
-    // Set query & run search so Google CSE & backend metadata resolves authentic business domain & search results!
-    setQuery(title);
-    const finalQ = loc ? `${title} ${loc}` : title;
-    setSubmittedQuery(finalQ);
+    // Asynchronously fetch and enrich metadata from backend
+    const enrichEndpoint = cleanDom 
+      ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
+      : `/api/url-metadata?q=${encodeURIComponent(title)}`;
+
+    fetch(enrichEndpoint)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && onAddPlace) {
+          const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
+          const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
+          onAddPlace({
+            ...newPlace,
+            name: (data.siteName && !data.siteName.toLowerCase().includes("hostinger")) ? data.siteName : (data.title || newPlace.name),
+            category: (data.category && data.category !== "Website") ? data.category : newPlace.category,
+            address: (data.address && !data.address.startsWith("http")) ? data.address : newPlace.address,
+            city: data.city || newPlace.city,
+            country: data.country || newPlace.country,
+            phone: data.phone || newPlace.phone,
+            email: data.email || newPlace.email,
+            bannerUrl: isValidBanner ? data.image : newPlace.bannerUrl,
+            ogImage: isValidBanner ? data.image : newPlace.ogImage,
+            logoUrl: isValidLogo ? data.logo : newPlace.logoUrl,
+            avatarUrl: isValidLogo ? data.logo : newPlace.avatarUrl,
+            website: data.url || newPlace.website || (data.domain ? `https://${data.domain}` : ""),
+            brandDomain: data.domain || newPlace.brandDomain || (data.url ? extractCleanDomain(data.url) : undefined),
+            description: data.description || newPlace.description,
+            photos: data.image ? Array.from(new Set([data.image, ...(newPlace.photos || [])])) : newPlace.photos
+          });
+        }
+      })
+      .catch(() => {});
   };
   
   // Calculate real trending places mapped to clean URLs
@@ -684,14 +709,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           </button>
         </div>
 
-        {/* Dual Yelp-Style Stacked Search Bars */}
-        <div className="w-full flex flex-col gap-2 px-3 pb-3 pt-1">
-          {/* Box 1: Business name / keyword */}
-          <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all">
+        {/* Single Unified Search Bar */}
+        <div className="w-full px-3 pb-3 pt-1">
+          <div className="w-full h-12 bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 flex items-center gap-3 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 transition-all shadow-inner">
             {isSearching ? (
-              <Loader2 className="w-4.5 h-4.5 text-amber-400 animate-spin shrink-0" />
+              <Loader2 className="w-5 h-5 text-amber-400 animate-spin shrink-0" />
             ) : (
-              <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+              <Search className="w-5 h-5 text-zinc-400 shrink-0" />
             )}
             <input
               ref={businessInputRef}
@@ -713,8 +737,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   executeSearch();
                 }
               }}
-              placeholder={t("search.businessPlaceholder", "Search business...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
+              placeholder={t("search.businessPlaceholder", "Search places, brands, cities...")}
+              className="flex-1 min-w-0 bg-transparent text-white text-[15px] sm:text-[16px] font-medium placeholder:text-zinc-500 focus:outline-none"
               autoFocus={true}
             />
             {query && (
@@ -725,72 +749,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   if (submittedQuery) setSubmittedQuery("");
                   businessInputRef.current?.focus();
                 }}
-                className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
                 title="Clear"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-
-          {/* Box 2: Location (the same kind of search bar under that only for location!) */}
-          {(showLocationBar || query.trim().length > 0 || location.trim().length > 0 || isFocusedLocation) ? (
-            <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all animate-in fade-in slide-in-from-top-1 duration-150">
-              <MapPin className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
-              <input
-                ref={locationInputRef}
-                type="text"
-                dir="auto"
-                enterKeyHint="search"
-                value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  if (submittedQuery) setSubmittedQuery("");
-                }}
-                onFocus={() => {
-                  setIsFocusedLocation(true);
-                  if (submittedQuery) setSubmittedQuery("");
-                }}
-                onBlur={() => {
-                  setTimeout(() => setIsFocusedLocation(false), 250);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    executeSearch();
-                  }
-                }}
-                placeholder={t("search.locationPlaceholder", "Location")}
-                className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
-              />
-              {location && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLocation("");
-                    if (submittedQuery) setSubmittedQuery("");
-                    locationInputRef.current?.focus();
-                  }}
-                  className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
-                  title="Clear Location"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setShowLocationBar(true);
-                setTimeout(() => locationInputRef.current?.focus(), 50);
-              }}
-              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 self-start px-1 py-0.5 transition-colors cursor-pointer"
-            >
-              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Add location</span>
-            </button>
-          )}
         </div>
       </div>
       
@@ -820,44 +785,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           </div>
         ) : (
           <div className="p-3 sm:p-4 flex flex-col gap-6">
-            
-            {/* City Autocomplete Suggestions when focused or typing in location */}
-            {isFocusedLocation && location.trim().length > 0 && mobileCitySuggestions.length > 0 ? (
-              <div className="flex flex-col rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl divide-y divide-zinc-900">
-                <div className="px-4 py-2.5 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Matching Cities & Neighborhoods</span>
-                </div>
-                {mobileCitySuggestions.map((c, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setLocation(c.city);
-                      setIsFocusedLocation(false);
-                      businessInputRef.current?.focus();
-                    }}
-                    className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group"
-                  >
-                    <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                      <MapPin className="w-4.5 h-4.5 text-zinc-400" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-zinc-200 transition-colors">
-                        {c.city}
-                      </div>
-                      <div className="text-xs text-zinc-400 truncate mt-0.5">
-                        {c.state ? `${c.state}, ${c.country}` : c.country}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : null}
 
             {/* Business Autocomplete Suggestions */}
-            {!isFocusedLocation && query.length > 0 && mergedSuggestions.length > 0 && (
+            {query.length > 0 && mergedSuggestions.length > 0 && (
               <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
                   const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
