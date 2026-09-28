@@ -3642,7 +3642,18 @@ export function App() {
           const pDomain = extractCleanDomain(p.website || p.brandDomain || p.id || p.name);
           if (pDomain) return pDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
         }
-        return p.id === searchId || (p.name && p.name.toLowerCase() === searchId.toLowerCase());
+        const searchIdLow = searchId.toLowerCase().trim();
+        const pIdLow = (p.id || '').toLowerCase().trim();
+        const pDomLow = (p.brandDomain || '').toLowerCase().trim();
+        const pWebDomLow = extractCleanDomain(p.website || '').toLowerCase().trim();
+        const pNameLow = (p.name || '').toLowerCase().trim();
+
+        return (
+          pIdLow === searchIdLow ||
+          pDomLow === searchIdLow ||
+          (pWebDomLow && pWebDomLow === searchIdLow) ||
+          (pNameLow && pNameLow === searchIdLow)
+        );
       }
     );
     if (!found) {
@@ -3827,13 +3838,24 @@ export function App() {
                   locations: (metaData.locations && metaData.locations.length > 0) ? metaData.locations : (fetchedPlace?.locations || []),
                   brandDomain: metaData.domain || cleanId
                 };
+                const canonicalId = (metaData.domain || cleanId).toLowerCase().trim();
                 setPlaces(prev => {
-                  const exists = prev.some(p => p.id === enriched.id);
+                  const exists = prev.some(p => p.id === enriched.id || p.id === cleanId);
                   if (exists) {
-                    return prev.map(p => p.id === enriched.id ? { ...p, ...enriched } : p);
+                    return prev.map(p => (p.id === enriched.id || p.id === cleanId) ? { ...p, ...enriched, id: canonicalId } : p);
                   }
                   return [enriched, ...prev];
                 });
+
+                if (canonicalId && canonicalId !== cleanId && canonicalId.includes('.')) {
+                  setSelectedPlaceIdForDrawer(canonicalId);
+                  try {
+                    const cleanPath = `/place/${encodeURIComponent(canonicalId)}`;
+                    if (window.location.pathname !== cleanPath) {
+                      window.history.replaceState(null, "", cleanPath);
+                    }
+                  } catch(e) {}
+                }
               }
             })
             .catch(() => {});

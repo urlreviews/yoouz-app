@@ -179,8 +179,9 @@ export function scoreCandidateUrl(url: string, query: string, rankIndex: number 
     }
   }
 
-  // If none of the brand words matched in the hostname, heavily penalize non-root domains
-  if (wordsToMatch.length > 0 && matchedBrandWords === 0) {
+  // If none of the brand words matched in the hostname, only penalize if Latin query AND not top organic rank
+  const isNonLatinQuery = wordsToMatch.some(w => /[^\x00-\x7F]/.test(w));
+  if (wordsToMatch.length > 0 && matchedBrandWords === 0 && !isNonLatinQuery && rankIndex > 0) {
     score -= 400;
   }
 
@@ -243,6 +244,16 @@ export function ensureCseLoaded(): Promise<boolean> {
     if (typeof window === "undefined" || typeof document === "undefined") {
       resolve(false);
       return;
+    }
+
+    // Automatically mount hidden CSE container in DOM if missing
+    let container = document.getElementById("yoouz-hidden-cse-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "yoouz-hidden-cse-container";
+      container.setAttribute("style", "position: fixed; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; top: -9999px; left: -9999px; z-index: -9999;");
+      container.innerHTML = '<div class="gcse-search" data-gname="yoouz_search"></div>';
+      document.body.appendChild(container);
     }
 
     if (!document.querySelector('script[src*="cse.google.com"]')) {

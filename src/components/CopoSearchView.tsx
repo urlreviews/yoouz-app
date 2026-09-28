@@ -158,188 +158,29 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const handleSelectSuggestion = (item: any) => {
     setShowDropdown(false);
     
-    // 1. Check if it matches a local database place first for INSTANT 0ms resolution
+    // 1. Check if it matches a complete local database place first for INSTANT 0ms resolution
     const match = places.find(p => {
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
       const itemDom = extractCleanDomain(item.domain || item.id || item.title);
-      return (pDom && pDom === itemDom) || p.id === item.id;
+      const hasReviews = (p.totalReviews || 0) > 0 || (p.reviews && p.reviews.length > 0);
+      const isComplete = Boolean(p.address && p.phone && p.bannerUrl);
+      return ((pDom && itemDom && pDom === itemDom) || p.id === item.id) && (hasReviews || isComplete);
     });
 
     if (match) {
-      console.info("[Search] Loading local database match instantly:", match.name);
+      console.info("[Search] Loading complete local database match instantly:", match.name);
       setSearchedPlace(match);
       setQuery(match.name || item.title);
       if (onOpenPlace) onOpenPlace(match.id);
       return;
     }
 
-    let resolvedDom = item.domain;
-    if (!resolvedDom || !resolvedDom.includes('.')) {
-      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => 
-        k.includes('.') && (v.toLowerCase() === item.title.toLowerCase() || k.toLowerCase().startsWith(item.title.toLowerCase()))
-      );
-      if (brandMatch) resolvedDom = brandMatch[0];
-    }
-
-    let targetDom = isValidDomainUrl(resolvedDom) ? extractCleanDomain(resolvedDom) : "";
-    if (!targetDom && item.title) {
-      const tLower = item.title.toLowerCase().trim();
-      for (const [domKey, nameVal] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
-        if (nameVal.toLowerCase() === tLower || domKey.toLowerCase() === tLower) {
-          if (domKey.includes('.')) {
-            targetDom = domKey;
-            break;
-          }
-        }
-      }
-    }
-
-    // 2. If suggestion has a valid domain URL (e.g. "apple.com"):
-    if (isValidDomainUrl(targetDom)) {
-      const placeId = targetDom.toLowerCase();
-      const knownHead = KNOWN_LOCATIONS[targetDom] || KNOWN_LOCATIONS[targetDom.split('.')[0]];
-      const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || getCleanLogoUrl(null, targetDom) || `/api/favicon?domain=${targetDom}`;
-      const instantName = knownHead?.name || KNOWN_OFFICIAL_NAMES[targetDom] || item.title || formatBusinessName(targetDom);
-
-      const instantPlace: Place = {
-        id: placeId,
-        name: instantName,
-        category: knownHead?.category || ((item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Verified Business"),
-        categoryType: "all",
-        address: knownHead?.address || item.address || "",
-        city: knownHead?.city || item.city || "",
-        country: knownHead?.country || item.country || "",
-        lat: knownHead?.lat || 0,
-        lng: knownHead?.lng || 0,
-        rating: knownHead?.rating || 5,
-        totalReviews: knownHead?.totalReviews || 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: instantLogo,
-        logoUrl: instantLogo,
-        bannerUrl: knownHead?.bannerUrl || "",
-        ogImage: knownHead?.bannerUrl || "",
-        photos: knownHead?.photos || [],
-        openingHours: knownHead?.openingHours || "Available 24/7",
-        isOpen: true,
-        phone: knownHead?.phone || "",
-        email: knownHead?.email || "",
-        website: `https://${targetDom}`,
-        priceRange: knownHead?.priceRange || "N/A",
-        plusCode: "",
-        description: knownHead?.description || "",
-        popularKeywords: [],
-        amenities: knownHead?.amenities || [],
-        topDishes: [],
-        brandDomain: targetDom
-      };
-
-      setSearchedPlace(instantPlace);
-      setQuery(instantName);
-      if (onAddPlace) onAddPlace(instantPlace);
-      if (onOpenPlace) onOpenPlace(instantPlace.id);
-
-      // Asynchronously enrich details in background
-      const enrichUrl = `/api/url-metadata?url=${encodeURIComponent(targetDom)}`;
-      fetch(enrichUrl)
-        .then(r => r.ok ? r.json() : null)
-        .then(meta => {
-          if (meta) {
-            const updated: Place = {
-              ...instantPlace,
-              name: meta.siteName || meta.title || instantPlace.name,
-              category: meta.category || instantPlace.category,
-              address: meta.address || instantPlace.address,
-              city: meta.city || instantPlace.city,
-              country: meta.country || instantPlace.country,
-              phone: meta.phone || instantPlace.phone,
-              email: meta.email || instantPlace.email,
-              openingHours: meta.openingHours || instantPlace.openingHours,
-              locations: (meta.locations && meta.locations.length > 0) ? meta.locations : instantPlace.locations,
-              bannerUrl: meta.image || instantPlace.bannerUrl,
-              logoUrl: meta.logo || instantPlace.logoUrl,
-              avatarUrl: meta.logo || instantPlace.avatarUrl,
-              website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
-              brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : ""),
-              description: meta.description || instantPlace.description
-            };
-            setSearchedPlace(updated);
-            if (onAddPlace) onAddPlace(updated);
-          }
-        })
-        .catch(() => {});
-      return;
-    }
-
-    // 3. If phrase/keyword suggestion without domain
-    const qStr = item.title || query;
-    const placeId = (targetDom || qStr).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business";
-    const knownHead = (KNOWN_LOCATIONS[qStr.toLowerCase()] || null) as any;
-    const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || "";
-    const instantName = knownHead?.name || qStr;
-
-    const instantPlace: Place = {
-      id: placeId,
-      name: instantName,
-      category: knownHead?.category || ((item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Verified Business"),
-      categoryType: "all",
-      address: knownHead?.address || item.address || "",
-      city: knownHead?.city || item.city || "",
-      country: knownHead?.country || item.country || "",
-      lat: knownHead?.lat || 0,
-      lng: knownHead?.lng || 0,
-      rating: knownHead?.rating || 5,
-      totalReviews: knownHead?.totalReviews || 1,
-      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: instantLogo,
-      logoUrl: instantLogo,
-      bannerUrl: knownHead?.bannerUrl || "",
-      ogImage: knownHead?.bannerUrl || "",
-      photos: knownHead?.photos || [],
-      openingHours: knownHead?.openingHours || "Available 24/7",
-      isOpen: true,
-      phone: knownHead?.phone || "",
-      email: knownHead?.email || "",
-      website: targetDom ? `https://${targetDom}` : "",
-      priceRange: knownHead?.priceRange || "N/A",
-      plusCode: "",
-      description: knownHead?.description || "",
-      popularKeywords: [],
-      amenities: knownHead?.amenities || [],
-      topDishes: [],
-      brandDomain: targetDom || undefined
-    };
-
-    setSearchedPlace(instantPlace);
-    setQuery(instantName);
-    if (onAddPlace) onAddPlace(instantPlace);
-    if (onOpenPlace) onOpenPlace(instantPlace.id);
-
-    // Asynchronously enrich details in background
-    fetch(`/api/url-metadata?q=${encodeURIComponent(qStr)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(meta => {
-        if (meta) {
-          const updated: Place = {
-            ...instantPlace,
-            name: meta.siteName || meta.title || instantPlace.name,
-            category: (meta.category && meta.category !== "Website") ? meta.category : instantPlace.category,
-            address: meta.address || instantPlace.address,
-            city: meta.city || instantPlace.city,
-            country: meta.country || instantPlace.country,
-            phone: meta.phone || instantPlace.phone,
-            email: meta.email || instantPlace.email,
-            bannerUrl: meta.image || instantPlace.bannerUrl,
-            logoUrl: meta.logo || instantPlace.logoUrl,
-            website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
-            brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : undefined),
-            description: meta.description || instantPlace.description,
-            photos: meta.image ? Array.from(new Set([meta.image, ...(instantPlace.photos || [])])) : instantPlace.photos
-          };
-          setSearchedPlace(updated);
-          if (onAddPlace) onAddPlace(updated);
-        }
-      })
-      .catch(() => {});
+    const targetQuery = (item.domain && isValidDomainUrl(item.domain)) ? item.domain : (item.title || query);
+    handleSearch(undefined, targetQuery, item.title, {
+      country: item.country,
+      city: item.city,
+      rawBusinessName: item.title
+    });
   };
 
   const handleSearch = async (
@@ -637,6 +478,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              setSearchedPlace(updatedPlace);
              if (onAddPlace) {
                onAddPlace(updatedPlace);
+             }
+             if (discoveredDom && onOpenPlace) {
+               onOpenPlace(discoveredDom);
              }
            }
          }
