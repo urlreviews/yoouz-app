@@ -516,13 +516,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       } catch {}
     }
 
-    // If no location provided, perform background search in result list
-    if (!loc) {
-      setQuery(title);
-      setSubmittedQuery(title);
-      return;
-    }
-
     // 1. Check if place already matches in places list
     const existing = findMatchingPlace(cleanDom || title, title);
     if (existing) {
