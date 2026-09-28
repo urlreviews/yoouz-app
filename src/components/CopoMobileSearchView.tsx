@@ -711,6 +711,21 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
               autoFocus={true}
             />
+            
+            {/* Google Attribution - Required for Free CSE */}
+            {!query && !submittedQuery && (
+              <div className="absolute right-12 bottom-1.5 opacity-30 pointer-events-none">
+                <div className="flex items-center gap-1 grayscale brightness-200">
+                  <span className="text-[8px] font-medium text-zinc-500 uppercase tracking-widest">Enhanced by</span>
+                  <img 
+                    src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" 
+                    alt="Google"
+                    className="h-2 w-auto object-contain"
+                  />
+                </div>
+              </div>
+            )}
+
             {query && (
               <button
                 type="button"

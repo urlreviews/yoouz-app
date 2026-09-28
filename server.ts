@@ -19096,6 +19096,45 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let targetUrl = rawQuery;
       let resolvedEntity: ResolvedBusinessData | null = null;
 
+      // 0. Instant Database Cache Check (Zero-Scrape Path)
+      const activeDb = (global as any).bunnyDb || db;
+      if (activeDb && targetUrl && !targetUrl.includes(' ')) {
+        try {
+          const cleanDom = targetUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0].toLowerCase();
+          if (cleanDom.includes('.')) {
+            const cachedPlace = await activeDb.execute({
+              sql: `SELECT id, name, category, address, city, country, logoUrl, data FROM places WHERE id = ? LIMIT 1`,
+              args: [cleanDom]
+            });
+            if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
+              const row: any = cachedPlace.rows[0];
+              const pData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+              console.log(`[Database Cache Hit] Serving instant business metadata for: ${cleanDom}`);
+              logSearchIntel(rawQuery, cleanDom, "db_cache_hit");
+              return res.json({
+                title: row.name || pData.name,
+                description: pData.description || `${row.name} is a verified business on Yoouz.`,
+                image: pData.bannerUrl || pData.ogImage || pData.image || "",
+                logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || "",
+                siteName: row.name || pData.name,
+                domain: cleanDom,
+                url: pData.website || `https://${cleanDom}`,
+                address: row.address || pData.address || "",
+                city: row.city || pData.city || "",
+                country: row.country || pData.country || "",
+                phone: pData.phone || "",
+                email: pData.email || "",
+                category: row.category || pData.category || "Verified Business",
+                openingHours: pData.openingHours || "",
+                locations: pData.locations || []
+              });
+            }
+          }
+        } catch (dbErr) {
+          console.warn("[UrlMetadata DB Cache Check Error]:", dbErr);
+        }
+      }
+
       // If user passed a business phrase/name without a domain dot
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery);
@@ -20407,7 +20446,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         source: "direct_scrape"
       });
 
-      res.json({ 
+      const resultPayload = { 
         title, 
         description, 
         image, 
@@ -20422,8 +20461,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         email: effectiveEmail,
         category: effectiveCategory,
         openingHours: locInfo.openingHours || "",
-        locations: locInfo.locations || []
-      });
+        locations: locInfo.locations || [],
+        name: title,
+        websiteUrl: finalUrl
+      };
+
+      // Background persist to DB cache
+      persistToDb(resultPayload as any).catch(e => console.error("[Background Persist Error]:", e));
+
+      res.json(resultPayload);
     } catch (e) {
       logSearchIntel(String(req.query.url || ""), "", "critical_error", { error: String(e.message) });
       console.error('SERVER ERROR:', e);
