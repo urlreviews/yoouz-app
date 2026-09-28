@@ -18249,7 +18249,7 @@ Return JSON:
                 break;
               }
 
-              if (!street && /[A-Za-zÀ-ÿ\s\.\-']+\s+\d+[a-zA-Z]?$/.test(next) && !next.includes("@") && !next.includes(":") && !/telefoon|telephone|gesloten|closed/i.test(next)) {
+              if (!street && /[A-Za-zÀ-ÿ\u0590-\u05FF\s\.\-']+\s+\d+[a-zA-Z]?$/.test(next) && !next.includes("@") && !next.includes(":") && !/telefoon|telephone|gesloten|closed|פתוח|סגור/i.test(next)) {
                 street = next;
               } else if (!bPhone && /(\+?\d[\d\s\(\)\-\.]{7,18})/.test(next) && !next.includes(":") && !next.includes("19.5999")) {
                 const numMatch = next.match(/(\+?\d[\d\s\(\)\-\.]{7,18})/);
@@ -18659,7 +18659,19 @@ Return JSON:
     lng: number;
   }
 
-  const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
+  const SEARCH_INTEL_LOG: any[] = [];
+function logSearchIntel(query: string, domain: string, status: string, details: any = {}) {
+  SEARCH_INTEL_LOG.unshift({
+    timestamp: Date.now(),
+    query,
+    domain,
+    status,
+    ...details
+  });
+  if (SEARCH_INTEL_LOG.length > 100) SEARCH_INTEL_LOG.pop();
+}
+
+const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
@@ -18932,6 +18944,7 @@ Return JSON:
     const detectCategoryFromText = (text: string): string => {
       const l = text.toLowerCase();
       if (/law|legal|attorney|attorneys|lawyer|lawyers|advocaat|advocaten|law\s*group|law\s*firm|procurateur|עורך דין|משפטים/i.test(l)) return "Legal Services";
+      if (/ניהול|אחזקה|מבנים|ניהול ואחזקה|אחזקת מבנים/i.test(l)) return "Management & Maintenance";
       if (/barber|haircut|barbershop|hair\s*salon|coiffeur|kapper/i.test(l)) return "Barber & Hair Salon";
       if (/hotel|resort|suites|inn|lodge|motel|מלון|מלונות/i.test(l)) return "Hotel & Hospitality";
       if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen|brasserie|dining|מסעדה|קפה|מאפייה/i.test(l)) return "Restaurant & Cafe";
@@ -18959,9 +18972,14 @@ Return JSON:
     let discoveredUrl: string = "";
     try {
       const qEnc = encodeURIComponent(cleanQ);
+      const isHebrew = /[\u0590-\u05FF]/.test(cleanQ);
+      const searchUrl = isHebrew 
+        ? `https://html.duckduckgo.com/html/?q=${qEnc}&kl=il-he`
+        : `https://html.duckduckgo.com/html/?q=${qEnc}`;
+        
       const ctrl = new AbortController();
       const tid = setTimeout(() => ctrl.abort(), 2500);
-      const sRes = await fetch(`https://html.duckduckgo.com/html/?q=${qEnc}`, {
+      const sRes = await fetch(searchUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
         },
@@ -19182,6 +19200,8 @@ Return JSON:
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
       
+      logSearchIntel(rawQuery, "", "initiated");
+      
       let targetUrl = rawQuery;
       let resolvedEntity: ResolvedBusinessData | null = null;
 
@@ -19305,6 +19325,7 @@ Return JSON:
             if (freeFallback) {
               const targetDom = (freeFallback.domain && freeFallback.domain.includes('.')) ? freeFallback.domain : (domain.includes('.') ? domain : "");
               const fLogo = freeFallback.photo || (targetDom ? `/api/favicon?domain=${encodeURIComponent(targetDom)}` : "");
+              logSearchIntel(rawQuery, targetDom, "fallback_resolved", { source: "resolveBusinessQuery" });
               return res.json({
                 title: freeFallback.name,
                 description: freeFallback.description || `${freeFallback.name} is a verified local business discoverable on Yoouz, providing authentic services.`,
@@ -20488,6 +20509,13 @@ Return JSON:
         }
       } catch (bErr) {}
       
+      logSearchIntel(rawQuery, cleanDomain, "scraped", { 
+        title, 
+        phone: effectivePhone, 
+        email: effectiveEmail,
+        source: "direct_scrape"
+      });
+
       res.json({ 
         title, 
         description, 
@@ -20506,9 +20534,14 @@ Return JSON:
         locations: locInfo.locations || []
       });
     } catch (e) {
+      logSearchIntel(String(req.query.url || ""), "", "critical_error", { error: String(e.message) });
       console.error('SERVER ERROR:', e);
       res.status(500).json({ error: e.message });
     }
+  });
+
+  app.get('/api/admin/search-intel', (req, res) => {
+    res.json({ logs: SEARCH_INTEL_LOG });
   });
 
   // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache

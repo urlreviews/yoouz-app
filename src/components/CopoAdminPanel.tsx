@@ -132,7 +132,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "messages" | "broadcast" | "database";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "messages" | "broadcast" | "database" | "search";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -291,6 +291,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   const [isFlushingMetadataCache, setIsFlushingMetadataCache] = useState(false);
+  const [searchIntelLogs, setSearchIntelLogs] = useState<any[]>([]);
+  const [isFetchingSearchIntel, setIsFetchingSearchIntel] = useState(false);
+
+  const fetchSearchIntel = async () => {
+    setIsFetchingSearchIntel(true);
+    try {
+      const res = await fetch("/api/admin/search-intel");
+      if (res.ok) {
+        const data = await res.json();
+        setSearchIntelLogs(data.logs || []);
+      }
+    } catch (e) {}
+    finally {
+      setIsFetchingSearchIntel(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "search") {
+      fetchSearchIntel();
+      const interval = setInterval(fetchSearchIntel, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   const handleFlushMetadataAndAssetCache = async () => {
     setIsFlushingMetadataCache(true);
@@ -2420,6 +2444,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className="flex items-center gap-3.5">
                 <Database className="w-5 h-5 shrink-0 text-white" />
                 <span>Database</span>
+              </div>
+            </button>
+
+            {/* 12. Search Intel */}
+            <button
+              onClick={() => setActiveTab("search")}
+              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                activeTab === "search"
+                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
+              }`}
+            >
+              <div className="flex items-center gap-3.5">
+                <Search className="w-5 h-5 shrink-0 text-white" />
+                <span>Search Intel</span>
               </div>
             </button>
           </div>
@@ -6882,6 +6921,122 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB: SEARCH INTELLIGENCE & SCRAPER MONITORING */}
+          {activeTab === "search" && (
+            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight">Search Intelligence & Scraper Intel</h2>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Live monitoring of Google CSE discovery, DuckDuckGo fallbacks, and multi-language scraping operations.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={fetchSearchIntel}
+                  disabled={isFetchingSearchIntel}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-zinc-700 cursor-pointer shadow-sm"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSearchIntel ? "animate-spin" : ""}`} />
+                  <span>Refresh Intel</span>
+                </button>
+              </div>
+
+              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden shadow-md">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[800px]">
+                    <thead className="bg-zinc-950 border-b border-zinc-800">
+                      <tr>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Timestamp</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Search Query</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Resolved Domain</th>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Scraped Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/60">
+                      {searchIntelLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-5 py-20 text-center text-zinc-500 font-bold">
+                            No search operations recorded in current session.
+                          </td>
+                        </tr>
+                      ) : (
+                        searchIntelLogs.map((log, idx) => (
+                          <tr key={idx} className="hover:bg-zinc-850/40 transition-colors group">
+                            <td className="px-5 py-4 font-mono text-[10px] text-zinc-400">
+                              {new Date(log.timestamp).toLocaleTimeString()}
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
+                                {log.query}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                log.status === 'scraped' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                log.status === 'initiated' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                                'bg-zinc-800 text-zinc-300 border-zinc-700'
+                              }`}>
+                                {log.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              {log.domain ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-5 h-5 rounded-md bg-white p-0.5 overflow-hidden">
+                                    <img 
+                                      src={`https://www.google.com/s2/favicons?domain=${log.domain}&sz=32`} 
+                                      className="w-full h-full object-contain"
+                                      alt="" 
+                                    />
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-zinc-300">{log.domain}</span>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-zinc-500 italic">Unresolved</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-4">
+                              <div className="space-y-1">
+                                {log.title && (
+                                  <div className="text-[11px] text-white font-bold truncate max-w-xs">{log.title}</div>
+                                )}
+                                <div className="flex flex-wrap gap-2">
+                                  {log.phone && (
+                                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                                      <Phone className="w-2.5 h-2.5" /> {log.phone}
+                                    </span>
+                                  )}
+                                  {log.email && (
+                                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                                      <Mail className="w-2.5 h-2.5" /> {log.email}
+                                    </span>
+                                  )}
+                                  {log.source && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono">
+                                      src:{log.source}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
         </main>

@@ -21,15 +21,14 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   "bestprosintown.com", "findglocal.com", "birdeye.com", "buildzoom.com", "porch.com", "angi.com", "angieslist.com",
   "thumbtack.com", "houzz.com", "homeadvisor.com", "expertise.com", "bark.com", "usplaces.com", "yellowbook.com",
   "localdatabase.com", "patch.com", "yellowbot.com", "citysearch.com", "ezlocal.com", "merchantcircle.com",
-  "topratedlocal.com", "cylex.us", "cylex.com", "cylex-israel.com", "cylex-bedrijvensgids.be", "cylex-uk.co.uk",
+  "topratedlocal.com", "cylex.us", "cylex.com", "cylex-bedrijvensgids.be", "cylex-uk.co.uk",
   "hotfrog.com", "showmelocal.com", "local.com", "kudzu.com", "bizwiki.com", "manta.com", "opengovus.com",
-  "alignable.com", "nextdoor.com", "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "dnb.com", "dnb.co.il",
-  "hakkolasakim.com", "din.co.il", "d.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
-  "top10.co.il", "opentenders.co.il", "bhol.co.il", "zap.co.il", "t.co.il", "b144.co.il", "index.co.il", 
-  "asakim.co.il", "israelbusiness.co.il", "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "infobel.ae", 
+  "alignable.com", "nextdoor.com", "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "dnb.com", 
+  "opentenders.co.il", "bhol.co.il", "index.co.il", 
+  "bizpages.org", "find-open.com", "infobel.com", "infobel.ae", 
   "chamber.org.il", "duns100.co.il", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", 
   "yellowpages.ca", "yell.com", "whitepages.com", "superpages.com", "dexknows.com", "zocdoc.com", "glassdoor.com", "indeed.com",
-  "nadlano.co.il", "madlan.co.il", "yad2.co.il", "homeless.co.il", "allbiz.co.il", "kompass.co.il", "b2b.co.il",
+  "nadlano.co.il", "madlan.co.il", "yad2.co.il", "homeless.co.il", "kompass.co.il", "b2b.co.il",
   
   // Legal directories
   "lawyer-il.co.il", "lawyers.org.il", "israelbar.org.il", "psakdin.co.il", "rasham.co.il", "lawyer.co.il",
@@ -151,7 +150,8 @@ export function scoreCandidateUrl(url: string, query: string, rankIndex: number 
     "lawyer", "lawyers", "law", "firm", "attorney", "attorneys", "dentist", "dentists", "dental",
     "doctor", "doctors", "clinic", "hospital", "hotel", "hotels", "motel", "resort",
     "san", "diego", "los", "angeles", "new", "york", "chicago", "houston", "london", "paris", "dubai", "tel", "aviv",
-    "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים", "עסקים", "ישראל", "תל", "אביב", "ירושלים", "חיפה"
+    "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים", "עסקים", "ישראל", "תל", "אביב", "ירושלים", "חיפה",
+    "ניהול", "אחזקה", "אחזקת", "מבנים", "שרות", "שירות", "שירותי", "בע מ", "בע\"מ"
   ]);
 
   const allQueryWords = query
