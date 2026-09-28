@@ -382,7 +382,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Clean, official human-readable business name for the Place Page and Drawer
   const displayedPlaceName = React.useMemo(() => {
-    // 1. Highest Priority: Verified KNOWN_OFFICIAL_NAMES dictionary
+    // 1. Highest Priority: Exact user search query or suggestion place name if provided and non-generic
+    if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
+      return place.name.trim();
+    }
+
+    // 2. Verified KNOWN_OFFICIAL_NAMES dictionary
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
       return KNOWN_OFFICIAL_NAMES[drawerDomain];
     }
@@ -394,21 +399,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return KNOWN_OFFICIAL_NAMES[place.brandDomain];
     }
 
-    // 2. Official scraped place name on the Place record
+    // 3. Official scraped place name on the Place record
     if (place?.name && !isGenericPlaceName(place.name)) {
       const formatted = formatBusinessName(place.name);
       if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
         return formatted;
       }
-    }
-
-    // 3. Multi-word video review placeName (if clean and not a generic domain split)
-    const matchingVid = (rawPlaceVideos || []).find(
-      (v) => v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com") && v.placeName.trim().length > 2
-    );
-    if (matchingVid?.placeName && !isGenericPlaceName(matchingVid.placeName)) {
-      const formatted = formatBusinessName(matchingVid.placeName);
-      if (formatted && formatted.length > 2 && !formatted.includes(".com")) return formatted;
     }
 
     return formatBusinessName(place?.id) || place?.name || "";
@@ -1595,21 +1591,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {rawPlaceVideos.length === 0 ? (
-                  <div className="bg-zinc-950/60 rounded-xl p-5 text-center border border-zinc-800/80 space-y-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center mx-auto">
-                      <Video className="w-4 h-4" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-white">{t("place.beFirstToReviewTitle", "Be the first to video review")}</p>
-                      <p className="text-[11px] text-zinc-400">{t("place.beFirstCreator", "Be the first creator to post a video review for")} {displayedPlaceName}!</p>
-                    </div>
-                    <button
-                      onClick={() => onRecordForPlace(place)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 font-bold text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>{t("place.postVideoReview", "Post Video Review")}</span>
-                    </button>
+                  <div className="text-center py-3 text-xs text-zinc-400 font-medium">
+                    {t("place.noReviewsYetShort", "No video reviews yet.")}
                   </div>
                 ) : (
                   <div className="space-y-3">
