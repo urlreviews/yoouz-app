@@ -59,6 +59,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       setSuggestions([]);
       setIsLoadingSuggest(false);
       setShowDropdown(false);
+      setSearchedPlace(null);
       return;
     }
 
@@ -168,6 +169,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       console.info("[Search] Loading local database match instantly:", match.name);
       setSearchedPlace(match);
       setQuery(match.name || item.title);
+      if (onOpenPlace) onOpenPlace(match.id);
       return;
     }
 
@@ -179,13 +181,68 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       if (brandMatch) resolvedDom = brandMatch[0];
     }
 
-    if (resolvedDom && resolvedDom.includes('.')) {
-      setQuery(resolvedDom);
-      handleSearch(undefined, resolvedDom, item.title);
-    } else {
-      setQuery(item.title);
-      handleSearch(undefined, item.title, item.title);
-    }
+    const targetDom = isValidDomainUrl(resolvedDom) ? extractCleanDomain(resolvedDom) : "";
+    const placeId = (targetDom || item.id || (item.title || "").toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business").toLowerCase();
+    const instantLogo = item.logoUrl || (targetDom ? getCleanLogoUrl(null, targetDom) : "") || (targetDom ? `/api/favicon?domain=${targetDom}` : "");
+    const instantName = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || item.title || (targetDom ? formatBusinessName(targetDom) : item.title);
+
+    const instantPlace: Place = {
+      id: placeId,
+      name: instantName,
+      category: (item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Website",
+      categoryType: "all",
+      address: item.address || "",
+      city: item.city || "",
+      country: item.country || "",
+      lat: 0,
+      lng: 0,
+      rating: 5,
+      totalReviews: 1,
+      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      avatarUrl: instantLogo,
+      logoUrl: instantLogo,
+      bannerUrl: "",
+      ogImage: "",
+      photos: [],
+      openingHours: "Available 24/7",
+      isOpen: true,
+      phone: "",
+      website: targetDom ? `https://${targetDom}` : "",
+      priceRange: "N/A",
+      plusCode: "",
+      description: "",
+      popularKeywords: [],
+      amenities: [],
+      topDishes: [],
+      brandDomain: targetDom || ""
+    };
+
+    setSearchedPlace(instantPlace);
+    setQuery(instantName);
+    if (onAddPlace) onAddPlace(instantPlace);
+    if (onOpenPlace) onOpenPlace(instantPlace.id);
+
+    // Asynchronously enrich details in background
+    const enrichUrl = targetDom 
+      ? `/api/url-metadata?url=${encodeURIComponent(targetDom)}`
+      : `/api/url-metadata?q=${encodeURIComponent(item.title)}`;
+    fetch(enrichUrl)
+      .then(r => r.ok ? r.json() : null)
+      .then(meta => {
+        if (meta && onAddPlace) {
+          onAddPlace({
+            ...instantPlace,
+            name: meta.siteName || meta.title || instantPlace.name,
+            category: meta.category || instantPlace.category,
+            address: meta.address || instantPlace.address,
+            phone: meta.phone || instantPlace.phone,
+            bannerUrl: meta.image || instantPlace.bannerUrl,
+            logoUrl: meta.logo || instantPlace.logoUrl,
+            description: meta.description || instantPlace.description
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const handleSearch = async (
@@ -200,8 +257,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     setShowDropdown(false);
     
-    // Instantly clear searched place to show searching/loader and purge previous search artifacts!
+    // Instantly clear searched place and suggestions to purge previous search artifacts!
     setSearchedPlace(null);
+    setSuggestions([]);
 
     const currentRequestId = ++searchRequestIdRef.current;
 
@@ -273,49 +331,76 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
 
     let preloadedMeta: any = null;
+
+    // 0ms Fast Path: Check if suggestions already resolved a clean domain or matching place while typing
+    if (!isValidDomainUrl(cleanUrl) && suggestions && suggestions.length > 0) {
+      const qLower = baseName.toLowerCase().trim();
+      const matchInSuggest = suggestions.find(s => {
+        const sDom = s.domain ? extractCleanDomain(s.domain) : "";
+        const sTitle = (s.title || "").toLowerCase().trim();
+        if (!sDom && !sTitle) return false;
+        const domMatches = isValidDomainUrl(sDom) && (
+          sDom === qLower || 
+          sDom.startsWith(qLower) || 
+          qLower.startsWith(sDom) || 
+          sDom.split('.')[0] === qLower
+        );
+        const titleMatches = sTitle && (
+          sTitle === qLower || 
+          sTitle.startsWith(qLower) || 
+          qLower.startsWith(sTitle)
+        );
+        return domMatches || (isValidDomainUrl(sDom) && titleMatches);
+      });
+      if (matchInSuggest) {
+        if (matchInSuggest.domain && isValidDomainUrl(extractCleanDomain(matchInSuggest.domain))) {
+          cleanUrl = extractCleanDomain(matchInSuggest.domain);
+        }
+        if (!preloadedMeta) {
+          preloadedMeta = {
+            title: matchInSuggest.title,
+            domain: cleanUrl,
+            logo: matchInSuggest.logoUrl,
+            category: matchInSuggest.category,
+            address: matchInSuggest.address
+          };
+        }
+        console.info("[Search] Resolved instantly from pre-fetched suggestions:", cleanUrl || matchInSuggest.title);
+      }
+    }
+
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
+      console.info("[Search] Fast parallel resolution for:", rawQuery);
       
-      // 1. First, attempt to resolve the URL using our client-side Google CSE scraper with 5s max timeout
-      console.info("[Search] Querying client-side Google CSE first for:", rawQuery);
-      let cseUrl: string | null = null;
-      try {
-        const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
-        cseUrl = await Promise.race([
-          queryGoogleCseForUrl(rawQuery),
-          cseTimeout(5000)
-        ]);
-      } catch (cseErr) {
-        console.warn("[Search] Client-side Google CSE took too long or errored, falling back immediately:", cseErr);
-      }
+      const csePromise = queryGoogleCseForUrl(rawQuery)
+        .then(url => {
+          if (!url) return null;
+          const dom = extractCleanDomain(url);
+          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
+        })
+        .catch(() => null);
+
+      const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(meta => {
+          if (meta) preloadedMeta = meta;
+          const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
+          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
+        })
+        .catch(() => null);
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 650));
+
+      const winner = await Promise.race([
+        Promise.any([csePromise, backendPromise]).catch(() => null),
+        timeoutPromise
+      ]);
 
       if (currentRequestId !== searchRequestIdRef.current) return;
 
-      if (cseUrl) {
-        const resolvedDom = extractCleanDomain(cseUrl);
-        if (isValidDomainUrl(resolvedDom) && !resolvedDom.toLowerCase().includes('wikipedia.org')) {
-          console.info("[Search] Successfully resolved domain via frontend Google CSE:", resolvedDom);
-          cleanUrl = resolvedDom;
-        }
-      }
-
-      if (currentRequestId !== searchRequestIdRef.current) return;
-
-      // 2. Fall back to backend /api/url-metadata?q=... if Google CSE didn't resolve a valid domain
-      if (!isValidDomainUrl(cleanUrl)) {
-        console.info("[Search] Google CSE fell back or didn't resolve. Querying backend search index...");
-        try {
-          const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
-          if (metaResp.ok) {
-            preloadedMeta = await metaResp.json();
-            if (currentRequestId !== searchRequestIdRef.current) return;
-            if (preloadedMeta && preloadedMeta.domain && isValidDomainUrl(preloadedMeta.domain) && !preloadedMeta.domain.toLowerCase().includes('wikipedia.org')) {
-              cleanUrl = preloadedMeta.domain;
-            }
-          }
-        } catch(e) {
-          console.error("[Search] Backend search resolution fallback failed:", e);
-        }
+      if (winner && isValidDomainUrl(winner)) {
+        cleanUrl = winner;
       }
     }
 
@@ -513,6 +598,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </>
           )}
 
+          {/* Always render animated moving indicator when isSearching, even if hideSearchBar={true} */}
+          {hideSearchBar && isSearching && (
+            <div className="w-full py-16 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200">
+              <div className="relative flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-2xl">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+                </div>
+                <div className="absolute -inset-1 rounded-2xl bg-amber-400/10 animate-ping pointer-events-none" />
+              </div>
+              <div className="text-center px-4">
+                <h4 className="text-white font-bold text-base">Searching business records...</h4>
+                <p className="text-zinc-400 text-xs mt-1">Retrieving authentic reviews & verified details</p>
+              </div>
+            </div>
+          )}
+
           {!hideSearchBar && (
             <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl px-2 sm:px-4 relative" ref={dropdownRef}>
               <CopoLocationSearchBar
@@ -520,12 +621,36 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 isSearching={isSearching}
                 isLoadingSuggest={isLoadingSuggest}
                 suggestions={suggestions}
-                onQueryChange={(val) => setQuery(val)}
+                onQueryChange={(val) => {
+                  setQuery(val);
+                  if (!val.trim()) {
+                    setSearchedPlace(null);
+                    setSuggestions([]);
+                  }
+                }}
                 onSelectSuggestion={(item) => handleSelectSuggestion(item)}
                 onSearch={(fullQuery, locationDetails) => {
                   handleSearch(undefined, fullQuery, locationDetails.rawBusinessName, locationDetails);
                 }}
               />
+
+              {isSearching && (
+                <div className="w-full mt-6 animate-in fade-in duration-200">
+                  <div className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 flex items-center gap-4 shadow-xl backdrop-blur-md">
+                    <div className="relative flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+                      </div>
+                      <div className="absolute -inset-0.5 rounded-xl bg-amber-400/10 animate-ping pointer-events-none" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-bold text-sm truncate">Searching business records...</h4>
+                      <p className="text-zinc-400 text-xs mt-0.5">Finding authentic reviews & verified details</p>
+                    </div>
+                    <span className="text-xs font-bold text-amber-400/90 uppercase tracking-wider hidden sm:inline">Searching...</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -631,49 +756,51 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </div>
               </div>
 
-              {/* Action Dock: Star Rating + Clean Action Buttons Across the Full Width */}
-              <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pt-4 border-t border-zinc-800/80 mt-4">
-                {/* Star Rating Badge */}
-                <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-zinc-800/90 px-3.5 py-2 rounded-xl shadow-xs self-start">
-                  {totalReviewsCount > 0 ? (
-                    <>
-                      <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
-                      <div className="flex items-center text-amber-400 gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-zinc-300 font-bold text-xs border-l border-zinc-800 pl-2.5">
-                        {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-bold text-amber-400/70 text-sm leading-none">0.0</span>
-                      <div className="flex items-center text-amber-400/60 gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-zinc-400 font-medium text-xs border-l border-zinc-800 pl-2.5">
-                        0 reviews
-                      </span>
-                    </>
-                  )}
+              {/* Action Dock: Star Rating + Clean Action Buttons Across Full Width */}
+              <div className="w-full flex flex-col gap-4 pt-4 border-t border-zinc-800/80 mt-4">
+                <div className="w-full flex items-center justify-between flex-wrap gap-3">
+                  {/* Star Rating Badge */}
+                  <div className="inline-flex items-center gap-3 bg-zinc-900/90 border border-zinc-800/90 px-3.5 py-2 rounded-xl shadow-xs">
+                    {totalReviewsCount > 0 ? (
+                      <>
+                        <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
+                        <div className="flex items-center text-amber-400 gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-300 font-bold text-xs border-l border-zinc-800 pl-2.5">
+                          {totalReviewsCount} {totalReviewsCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-bold text-amber-400/70 text-sm leading-none">0.0</span>
+                        <div className="flex items-center text-amber-400/60 gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="w-4 h-4 fill-none text-amber-400/50 stroke-[1.75]"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-zinc-400 font-medium text-xs border-l border-zinc-800 pl-2.5">
+                          0 reviews
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Action Buttons: Full-width 2-column grid on mobile, inline on desktop */}
-                <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                {/* Primary Action Buttons: Equal 2-Column Grid spanning full width with zero awkward empty space */}
+                <div className="grid grid-cols-2 gap-3 w-full">
                   <button
                     type="button"
                     onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                    className="h-12 px-5 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-white font-bold border border-zinc-700/80 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-95 whitespace-nowrap"
+                    className="w-full h-12 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-white font-bold border border-zinc-700/80 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
                   >
                     <Building2 className="w-4.5 h-4.5 text-zinc-300 shrink-0" />
                     <span className="truncate">{t("search.viewBusiness", "View Business")}</span>
@@ -682,7 +809,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
-                    className="h-12 px-5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-95 whitespace-nowrap"
+                    className="w-full h-12 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
                   >
                     <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0" />
                     <span className="truncate">{t("record.record_review", "Record Review")}</span>

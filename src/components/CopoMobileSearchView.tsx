@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2, CheckCircle, MapPin, Globe } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp, X, AlertCircle, Building2, CheckCircle, MapPin, Globe, Loader2 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
@@ -78,6 +78,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [showLocationBar, setShowLocationBar] = useState(false);
   const [isFocusedLocation, setIsFocusedLocation] = useState(false);
   const businessInputRef = useRef<HTMLInputElement>(null);
@@ -256,6 +257,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (submittedQuery) {
       setSubmittedQuery("");
       setQuery("");
+      setLiveSuggestions([]);
       setTimeout(() => {
         businessInputRef.current?.focus();
       }, 100);
@@ -273,6 +275,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const raw = typeof e === 'string' ? e : query;
     if (!raw || !raw.trim()) return;
     
+    setIsSearching(true);
     const trimmed = raw.trim();
     const baseName = (preferredName || locationDetails?.rawBusinessName || trimmed).trim();
     // Resolve matching place clean domain if available
@@ -298,39 +301,62 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // If still not a valid domain, attempt to resolve via Google CSE
+    // 0ms Fast Path: Check if live suggestions already resolved a clean domain while typing
+    if (!isValidDomainUrl(cleanUrl) && liveSuggestions && liveSuggestions.length > 0) {
+      const qLower = trimmed.toLowerCase();
+      const matchInSuggest = liveSuggestions.find(s => {
+        const sDom = s.domain ? extractCleanDomain(s.domain) : "";
+        const sTitle = (s.title || s.name || "").toLowerCase().trim();
+        if (!sDom && !sTitle) return false;
+
+        const domMatches = isValidDomainUrl(sDom) && (
+          sDom === qLower || 
+          sDom.startsWith(qLower) || 
+          qLower.startsWith(sDom) || 
+          sDom.split('.')[0] === qLower
+        );
+        const titleMatches = sTitle && (
+          sTitle === qLower || 
+          sTitle.startsWith(qLower) || 
+          qLower.startsWith(sTitle)
+        );
+        return domMatches || (isValidDomainUrl(sDom) && titleMatches);
+      });
+      if (matchInSuggest?.domain) {
+        cleanUrl = extractCleanDomain(matchInSuggest.domain);
+        console.info("[Search Mobile] Resolved instantly from pre-fetched suggestions:", cleanUrl);
+      }
+    }
+
+    // Fast parallel resolution: Google CSE + Backend /api/url-metadata with tight 1200ms timeout
     if (!isValidDomainUrl(cleanUrl)) {
-      console.info("[Search Mobile] Querying client-side Google CSE first for:", trimmed);
-      let cseUrl: string | null = null;
-      try {
-        const cseTimeout = (ms: number) => new Promise<null>((_, reject) => setTimeout(() => reject(new Error("CSE Timeout")), ms));
-        cseUrl = await Promise.race([
-          queryGoogleCseForUrl(trimmed),
-          cseTimeout(5000)
-        ]);
-      } catch (cseErr) {
-        console.warn("[Search Mobile] Client-side Google CSE took too long or errored:", cseErr);
-      }
+      console.info("[Search Mobile] Fast parallel resolution for:", trimmed);
+      
+      const csePromise = queryGoogleCseForUrl(trimmed)
+        .then(url => {
+          if (!url) return null;
+          const dom = extractCleanDomain(url);
+          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
+        })
+        .catch(() => null);
 
-      if (cseUrl) {
-        const resolvedDom = extractCleanDomain(cseUrl);
-        if (isValidDomainUrl(resolvedDom) && !resolvedDom.toLowerCase().includes('wikipedia.org')) {
-          console.info("[Search Mobile] Successfully resolved domain via Google CSE:", resolvedDom);
-          cleanUrl = resolvedDom;
-        }
-      }
+      const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(meta => {
+          const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
+          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
+        })
+        .catch(() => null);
 
-      // If still not resolved, query backend search index
-      if (!isValidDomainUrl(cleanUrl)) {
-        try {
-          const metaResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`);
-          if (metaResp.ok) {
-            const meta = await metaResp.json();
-            if (meta && meta.domain && isValidDomainUrl(meta.domain) && !meta.domain.toLowerCase().includes('wikipedia.org')) {
-              cleanUrl = meta.domain;
-            }
-          }
-        } catch(e) {}
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200));
+
+      const winner = await Promise.race([
+        Promise.any([csePromise, backendPromise]).catch(() => null),
+        timeoutPromise
+      ]);
+
+      if (winner && isValidDomainUrl(winner)) {
+        cleanUrl = winner;
       }
     }
 
@@ -417,6 +443,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         .catch(() => {});
     }
 
+    setIsSearching(false);
     setSubmittedQuery(trimmed);
   };
 
@@ -424,19 +451,43 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const rawBiz = (targetQuery !== undefined ? targetQuery : query).trim();
     if (!rawBiz) return;
 
+    businessInputRef.current?.blur();
+    locationInputRef.current?.blur();
+
     const loc = location.trim();
     const finalQ = loc ? `${rawBiz} ${loc}` : rawBiz;
 
-    handleSearch(finalQ, preferredName || rawBiz, {
-      country: "",
-      state: "",
-      city: loc,
-      rawBusinessName: rawBiz,
-      rawLocation: loc
+    // 0ms Check 1: Authoritative matching place in local places list
+    const matchedPlace = findMatchingPlace(rawBiz, preferredName || rawBiz);
+    if (matchedPlace) {
+      onOpenPlace(matchedPlace.id);
+      return;
+    }
+
+    // 0ms Check 2: Check pre-fetched suggestions in memory strictly
+    const topMatch = mergedSuggestions.find(s => {
+      const sTitle = (s.title || s.name || "").toLowerCase().trim();
+      const sDom = (s.domain || "").toLowerCase().trim();
+      const qLower = rawBiz.toLowerCase().trim();
+      if (!qLower) return false;
+      const domMatches = sDom && (sDom === qLower || sDom.startsWith(qLower) || sDom.split('.')[0] === qLower);
+      const titleMatches = sTitle && (sTitle === qLower || sTitle.startsWith(qLower));
+      return domMatches || titleMatches;
     });
+
+    if (topMatch) {
+      handleSelectSuggestion(topMatch);
+      return;
+    }
+
+    // Direct transition to results view
+    setSubmittedQuery(finalQ);
   };
 
   const handleSelectSuggestion = async (item: any) => {
+    businessInputRef.current?.blur();
+    locationInputRef.current?.blur();
+
     const rawDom = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
     const cleanDom = isValidDomainUrl(rawDom) ? extractCleanDomain(rawDom) : "";
     const title = item.title || item.name || cleanDom || query;
@@ -457,89 +508,80 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       return;
     }
 
-    // 2. If it's a domain or known brand, register immediately and open place directly
-    if (cleanDom && isValidDomainUrl(cleanDom)) {
-      const placeId = cleanDom.toLowerCase();
-      const instantLogo = item.logoUrl || getCleanLogoUrl(null, cleanDom) || "";
-      const instantName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || formatBusinessName(cleanDom);
-      const instantAddress = item.address || "";
-      const instantCategory = item.category || "Verified Business";
+    // 2. Register place immediately into memory and database for 0ms instant display
+    const placeId = (cleanDom || item.id || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business").toLowerCase();
+    const instantLogo = item.logoUrl || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
+    const instantName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : title);
+    const instantAddress = item.address || (location.trim() ? location.trim() : "");
+    const instantCategory = item.category || "Verified Business";
 
-      if (onAddPlace) {
-        const newPlace: Place = {
-          id: placeId,
-          name: instantName,
-          category: instantCategory,
-          categoryType: "all",
-          address: instantAddress,
-          city: location.trim() || "",
-          country: "",
-          lat: 0,
-          lng: 0,
-          rating: 5,
-          totalReviews: 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-          avatarUrl: instantLogo,
-          logoUrl: instantLogo,
-          bannerUrl: "",
-          ogImage: "",
-          photos: [],
-          openingHours: "Available 24/7",
-          isOpen: true,
-          phone: "",
-          website: `https://${cleanDom}`,
-          priceRange: "N/A",
-          plusCode: "",
-          description: "",
-          popularKeywords: [],
-          amenities: [],
-          topDishes: [],
-          brandDomain: cleanDom
-        };
-        onAddPlace(newPlace);
+    if (onAddPlace) {
+      const newPlace: Place = {
+        id: placeId,
+        name: instantName,
+        category: instantCategory,
+        categoryType: "all",
+        address: instantAddress,
+        city: location.trim() || "",
+        country: "",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: instantLogo,
+        logoUrl: instantLogo,
+        bannerUrl: "",
+        ogImage: "",
+        photos: [],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: cleanDom ? `https://${cleanDom}` : "",
+        priceRange: "N/A",
+        plusCode: "",
+        description: "",
+        popularKeywords: [],
+        amenities: [],
+        topDishes: [],
+        brandDomain: cleanDom || ""
+      };
+      onAddPlace(newPlace);
 
-        // Background enrich details
-        fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(data => {
-            if (data && onAddPlace) {
-              onAddPlace({
-                ...newPlace,
-                name: data.siteName || data.title || newPlace.name,
-                category: data.category || newPlace.category,
-                address: data.address || newPlace.address,
-                phone: data.phone || newPlace.phone,
-                bannerUrl: data.image || newPlace.bannerUrl,
-                logoUrl: data.logo || newPlace.logoUrl,
-                description: data.description || newPlace.description
-              });
-            }
-          })
-          .catch(() => {});
-      }
+      // Background asynchronous enrichment
+      const enrichUrl = cleanDom
+        ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
+        : `/api/url-metadata?q=${encodeURIComponent(title + (location.trim() ? ' ' + location.trim() : ''))}`;
 
-      // Store in recents
-      const newRecent = [cleanDom, ...recentSearches.filter(s => s && s !== cleanDom)].slice(0, 10);
-      setRecentSearches(newRecent);
-      try {
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-      } catch {}
-
-      onOpenPlace(placeId);
-      return;
+      fetch(enrichUrl)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && onAddPlace) {
+            onAddPlace({
+              ...newPlace,
+              name: data.siteName || data.title || newPlace.name,
+              category: data.category || newPlace.category,
+              address: data.address || newPlace.address,
+              phone: data.phone || newPlace.phone,
+              bannerUrl: data.image || newPlace.bannerUrl,
+              logoUrl: data.logo || newPlace.logoUrl,
+              description: data.description || newPlace.description
+            });
+          }
+        })
+        .catch(() => {});
     }
 
-    // 3. Fallback for general search suggestions (e.g. phrases) -> execute search directly
-    const loc = location.trim();
-    const finalQ = loc ? `${title} ${loc}` : title;
-    setQuery(title);
-    handleSearch(finalQ, title, {
-      country: "",
-      state: "",
-      city: loc,
-      rawBusinessName: title,
-      rawLocation: loc
-    });
+    // Store in recents
+    const storeTerm = cleanDom || title;
+    const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+    setRecentSearches(newRecent);
+    try {
+      localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+    } catch {}
+
+    // INSTANTLY OPEN THE BUSINESS PAGE
+    onOpenPlace(placeId);
   };
   
   // Calculate real trending places mapped to clean URLs
@@ -620,10 +662,17 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <button
             type="button"
             onClick={() => executeSearch()}
-            disabled={!query.trim()}
-            className="text-white font-bold text-sm px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+            disabled={!query.trim() || isSearching}
+            className="text-white font-bold text-sm px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
           >
-            Search
+            {isSearching ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                <span className="text-white text-xs">Searching...</span>
+              </>
+            ) : (
+              <span>Search</span>
+            )}
           </button>
         </div>
 
@@ -631,7 +680,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         <div className="w-full flex flex-col gap-2 px-3 pb-3 pt-1">
           {/* Box 1: Business name / keyword */}
           <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all">
-            <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+            {isSearching ? (
+              <Loader2 className="w-4.5 h-4.5 text-amber-400 animate-spin shrink-0" />
+            ) : (
+              <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+            )}
             <input
               ref={businessInputRef}
               type="text"
@@ -745,6 +798,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             initialQuery={submittedQuery}
             hideSearchBar={true}
           />
+        ) : isSearching ? (
+          <div className="p-6 flex flex-col items-center justify-center pt-24 gap-4 animate-in fade-in duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-2xl">
+              <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-white font-bold text-base">Searching businesses...</h3>
+              <p className="text-zinc-400 text-xs mt-1">Retrieving authentic business records & reviews</p>
+            </div>
+          </div>
         ) : (
           <div className="p-3 sm:p-4 flex flex-col gap-6">
             

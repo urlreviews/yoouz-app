@@ -279,6 +279,10 @@ export function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
+  const handleOpenSearchModal = () => {
+    setSearchResetKey((prev) => prev + 1);
+    setIsSearchModalOpen(true);
+  };
   const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState<boolean>(false);
   const [isMobileNavDrawerOpen, setIsMobileNavDrawerOpen] = useState<boolean>(false);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>(() => {
@@ -6405,7 +6409,7 @@ export function App() {
             if (section === "home") {
               // Stay on embed
             } else if (section === "search") {
-              setIsSearchModalOpen(true);
+              handleOpenSearchModal();
             } else if (section === "record_review") {
               setIsCreateModalOpen(true);
             } else if (section === "business") {
@@ -6426,7 +6430,7 @@ export function App() {
           }}
           onOpenSearch={() => {
             setIsMobileNavDrawerOpen(false);
-            setIsSearchModalOpen(true);
+            handleOpenSearchModal();
           }}
           onOpenAuth={(intent) => {
             setIsMobileNavDrawerOpen(false);
@@ -6649,7 +6653,7 @@ export function App() {
           }}
           unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
-          onOpenSearch={() => setIsSearchModalOpen(true)}
+          onOpenSearch={handleOpenSearchModal}
           onOpenCreateModal={() => {
             if (!currentUser || !isProfileComplete(currentUser)) {
               setAuthIntent('record');
@@ -7492,7 +7496,7 @@ export function App() {
             return;
           }
           if (section === "search") {
-            setIsSearchModalOpen(true);
+            handleOpenSearchModal();
             return;
           }
           if ((section as string) === "business") {
@@ -7526,7 +7530,7 @@ export function App() {
             setIsCreateModalOpen(true);
           }
         }}
-        onOpenSearch={() => setIsSearchModalOpen(true)}
+        onOpenSearch={handleOpenSearchModal}
         onOpenAuth={(intent) => {
           setAuthIntent((intent as AuthIntent) || 'general');
           setIsAuthModalOpen(true);

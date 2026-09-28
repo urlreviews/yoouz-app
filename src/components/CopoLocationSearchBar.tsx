@@ -181,6 +181,9 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 onClick={() => {
                   setBusinessName("");
                   setShowSuggestions(false);
+                  if (onQueryChange) {
+                    onQueryChange("");
+                  }
                   bizInputRef.current?.focus();
                 }}
                 className="absolute right-2 p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
@@ -241,10 +244,19 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           <button
             type="submit"
             disabled={isSearching || !businessName.trim()}
-            className="h-11 md:h-12 px-7 md:px-8 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 text-sm md:text-[15px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 shrink-0"
+            className={`h-11 md:h-12 px-7 md:px-8 rounded-full font-bold text-sm md:text-[15px] transition-all flex items-center justify-center gap-2 shadow-lg shrink-0 ${
+              isSearching
+                ? "bg-zinc-800 text-white cursor-wait"
+                : !businessName.trim()
+                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                : "bg-white hover:bg-zinc-200 text-zinc-950 cursor-pointer active:scale-95"
+            }`}
           >
-            {isSearching || isLoadingSuggest ? (
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+            {isSearching ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span className="text-white text-xs md:text-sm font-semibold">Searching...</span>
+              </>
             ) : (
               <span>{t("common.search", "Search")}</span>
             )}
@@ -297,6 +309,9 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 onClick={() => {
                   setBusinessName("");
                   setShowSuggestions(false);
+                  if (onQueryChange) {
+                    onQueryChange("");
+                  }
                   mobileBizInputRef.current?.focus();
                 }}
                 className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
@@ -359,10 +374,19 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           <button
             type="submit"
             disabled={isSearching || !businessName.trim()}
-            className="w-full h-11 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-sm cursor-pointer mt-0.5"
+            className={`w-full h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-sm mt-0.5 ${
+              isSearching
+                ? "bg-zinc-800 text-white cursor-wait"
+                : !businessName.trim()
+                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                : "bg-white hover:bg-zinc-200 text-zinc-950 cursor-pointer"
+            }`}
           >
-            {isSearching || isLoadingSuggest ? (
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+            {isSearching ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                <span className="text-white">Searching...</span>
+              </>
             ) : (
               <span>{t("common.search", "Search")}</span>
             )}
