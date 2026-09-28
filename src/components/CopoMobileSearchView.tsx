@@ -467,30 +467,33 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const loc = (locationDetails?.city || location).trim();
     const finalQ = loc ? `${rawBiz} ${loc}` : rawBiz;
 
-    // 0ms Check 1: Authoritative matching place in local places list
-    const matchedPlace = findMatchingPlace(rawBiz, preferredName || rawBiz);
-    if (matchedPlace) {
-      onOpenPlace(matchedPlace.id);
-      return;
+    // Strict Rule: ONLY open the place profile drawer if location was explicitly provided by the user!
+    if (loc) {
+      // 0ms Check 1: Authoritative matching place in local places list
+      const matchedPlace = findMatchingPlace(rawBiz, preferredName || rawBiz);
+      if (matchedPlace) {
+        onOpenPlace(matchedPlace.id);
+        return;
+      }
+
+      // 0ms Check 2: Check pre-fetched suggestions in memory strictly
+      const topMatch = mergedSuggestions.find(s => {
+        const sTitle = (s.title || s.name || "").toLowerCase().trim();
+        const sDom = (s.domain || "").toLowerCase().trim();
+        const qLower = rawBiz.toLowerCase().trim();
+        if (!qLower) return false;
+        const domMatches = sDom && (sDom === qLower || sDom.startsWith(qLower) || sDom.split('.')[0] === qLower);
+        const titleMatches = sTitle && (sTitle === qLower || sTitle.startsWith(qLower));
+        return domMatches || titleMatches;
+      });
+
+      if (topMatch) {
+        handleSelectSuggestion(topMatch);
+        return;
+      }
     }
 
-    // 0ms Check 2: Check pre-fetched suggestions in memory strictly
-    const topMatch = mergedSuggestions.find(s => {
-      const sTitle = (s.title || s.name || "").toLowerCase().trim();
-      const sDom = (s.domain || "").toLowerCase().trim();
-      const qLower = rawBiz.toLowerCase().trim();
-      if (!qLower) return false;
-      const domMatches = sDom && (sDom === qLower || sDom.startsWith(qLower) || sDom.split('.')[0] === qLower);
-      const titleMatches = sTitle && (sTitle === qLower || sTitle.startsWith(qLower));
-      return domMatches || titleMatches;
-    });
-
-    if (topMatch) {
-      handleSelectSuggestion(topMatch);
-      return;
-    }
-
-    // Direct transition to results view
+    // Direct transition to background search results view
     setSubmittedQuery(finalQ);
   };
 
@@ -501,19 +504,28 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const rawDom = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
     const cleanDom = isValidDomainUrl(rawDom) ? extractCleanDomain(rawDom) : "";
     const title = item.title || item.name || cleanDom || query;
+    const loc = location.trim();
+
+    // Store in recents
+    const storeTerm = cleanDom || title;
+    if (storeTerm) {
+      const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+      setRecentSearches(newRecent);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+      } catch {}
+    }
+
+    // If no location provided, perform background search in result list
+    if (!loc) {
+      setQuery(title);
+      setSubmittedQuery(title);
+      return;
+    }
 
     // 1. Check if place already matches in places list
     const existing = findMatchingPlace(cleanDom || title, title);
     if (existing) {
-      // Store in recents
-      const storeTerm = getCleanDomainUrl(existing) || cleanDom || title;
-      if (storeTerm) {
-        const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-        setRecentSearches(newRecent);
-        try {
-          localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-        } catch {}
-      }
       onOpenPlace(existing.id);
       return;
     }
@@ -522,7 +534,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const placeId = (cleanDom || item.id || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business").toLowerCase();
     const instantLogo = item.logoUrl || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
     const instantName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : title);
-    const instantAddress = item.address || (location.trim() ? location.trim() : "");
+    const instantAddress = item.address || (loc ? loc : "");
     const instantCategory = item.category || "Verified Business";
 
     if (onAddPlace) {
@@ -532,7 +544,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         category: instantCategory,
         categoryType: "all",
         address: instantAddress,
-        city: location.trim() || "",
+        city: loc || "",
         country: "",
         lat: 0,
         lng: 0,
@@ -561,7 +573,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       // Background asynchronous enrichment
       const enrichUrl = cleanDom
         ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
-        : `/api/url-metadata?q=${encodeURIComponent(title + (location.trim() ? ' ' + location.trim() : ''))}`;
+        : `/api/url-metadata?q=${encodeURIComponent(title + (loc ? ' ' + loc : ''))}`;
 
       fetch(enrichUrl)
         .then(r => r.ok ? r.json() : null)
@@ -584,15 +596,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         .catch(() => {});
     }
 
-    // Store in recents
-    const storeTerm = cleanDom || title;
-    const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-    setRecentSearches(newRecent);
-    try {
-      localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-    } catch {}
-
-    // INSTANTLY OPEN THE BUSINESS PAGE
+    // INSTANTLY OPEN THE BUSINESS PAGE IF LOCATION WAS PROVIDED
     onOpenPlace(placeId);
   };
   
@@ -840,11 +844,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       e.preventDefault();
                       setLocation(c.city);
                       setIsFocusedLocation(false);
-                      if (query.trim()) {
-                        executeSearch(query, undefined, { city: c.city, country: c.country, state: c.state, rawBusinessName: query });
-                      } else {
-                        businessInputRef.current?.focus();
-                      }
+                      businessInputRef.current?.focus();
                     }}
                     className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group"
                   >
@@ -868,12 +868,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {!isFocusedLocation && query.length > 0 && mergedSuggestions.length > 0 && (
               <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
-                  const title = item.title || item.name || (item.domain && isValidDomainUrl(item.domain) ? item.domain : query);
                   const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
-                  const targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+                  const targetDomain = getCleanDomainUrl(item) || (isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "");
+                  const title = item.title || item.name || (targetDomain ? formatBusinessName(targetDomain) : query);
                   const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain) && targetDomain !== "yoouz.com");
-                  const isDbOrBrand = (item.source === "database" || item.source === "brand_index") && hasDomain;
+                  const isDbOrBrand = (item.source === "database" || item.source === "brand_index") || hasDomain;
                   const itemLogo = item.logoUrl || (hasDomain ? getItemLogoUrl(targetDomain, item) : null);
+
+                  const words = title.trim().split(/\s+/);
+                  const allExceptLast = words.length > 1 ? words.slice(0, -1).join(" ") : "";
+                  const lastWord = words.length > 1 ? words[words.length - 1] : title.trim();
 
                   return (
                     <button 
@@ -897,13 +901,29 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors">
-                          <span>{title}</span>
+                        <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors" dir="auto">
+                          {words.length > 1 ? (
+                            <span>
+                              <bdi dir="auto">{allExceptLast}</bdi>{" "}
+                              <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                                <bdi dir="auto">{lastWord}</bdi>
+                                <CheckCircle className="w-4 h-4 fill-white text-zinc-950 ml-1 shrink-0 -mt-0.5" />
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                              <bdi dir="auto">{title}</bdi>
+                              <CheckCircle className="w-4 h-4 fill-white text-zinc-950 ml-1 shrink-0 -mt-0.5" />
+                            </span>
+                          )}
                         </div>
                         {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google"))) && (
                           <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
                             {hasDomain ? (
-                              <span className="text-zinc-300 font-semibold truncate text-[12px]">{targetDomain.toLowerCase()}</span>
+                              <span className="text-zinc-300 font-semibold truncate text-[12px] flex items-center gap-1">
+                                <Globe className="w-3 h-3 text-zinc-400 shrink-0" />
+                                <span>{targetDomain.toLowerCase()}</span>
+                              </span>
                             ) : null}
                             {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
                               <>

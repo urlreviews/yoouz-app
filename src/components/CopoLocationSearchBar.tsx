@@ -418,30 +418,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setLocation(c.city);
                 setActiveField(null);
                 setShowSuggestions(false);
-                if (businessName.trim()) {
-                  const trimmedBiz = businessName.trim();
-                  const cleanDom = extractCleanDomain(trimmedBiz);
-                  if (isValidDomainUrl(cleanDom)) {
-                    onSearch(cleanDom, {
-                      country: c.country,
-                      state: c.state || "",
-                      city: c.city,
-                      rawBusinessName: trimmedBiz,
-                      rawLocation: c.city
-                    });
-                  } else {
-                    onSearch(`${trimmedBiz} ${c.city}`.trim(), {
-                      country: c.country,
-                      state: c.state || "",
-                      city: c.city,
-                      rawBusinessName: trimmedBiz,
-                      rawLocation: c.city
-                    });
-                  }
-                } else {
-                  bizInputRef.current?.focus();
-                  mobileBizInputRef.current?.focus();
-                }
+                bizInputRef.current?.focus();
+                mobileBizInputRef.current?.focus();
               }}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
             >

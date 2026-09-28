@@ -755,7 +755,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {/* Official Website / Domain Link under Business Name */}
                   {(() => {
                     const rawWeb = searchedPlace.website;
-                    const cleanDom = searchedPlace.brandDomain 
+                    const cleanDom = getCleanDomainUrl(searchedPlace)
+                      || searchedPlace.brandDomain 
                       || extractCleanDomain(searchedPlace.website || "")
                       || extractCleanDomain(searchedPlace.id || "")
                       || extractCleanDomain(searchedPlace.name || "")
