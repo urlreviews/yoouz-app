@@ -273,7 +273,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     // 3. If phrase/keyword suggestion without domain
     const qStr = item.title || query;
     const placeId = (targetDom || qStr).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business";
-    const knownHead = KNOWN_LOCATIONS[qStr.toLowerCase()] || null;
+    const knownHead = (KNOWN_LOCATIONS[qStr.toLowerCase()] || null) as any;
     const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || "";
     const instantName = knownHead?.name || qStr;
 

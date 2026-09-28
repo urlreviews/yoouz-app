@@ -17322,7 +17322,7 @@ Respond ONLY with a JSON object:
               if (desc && desc.trim()) metaDesc = desc.trim();
               if (img && img.trim()) ogImage = img.trim();
 
-              const locInfo = extractWebsiteLocationAndContact($, html, targetUrl, domain);
+              const locInfo = await extractWebsiteLocationAndContact($, html, targetUrl, domain);
               if (locInfo.phone) metaPhone = locInfo.phone;
               if (locInfo.email) metaEmail = locInfo.email;
               var scrapedAddress = locInfo.address;
@@ -18306,7 +18306,7 @@ Return JSON:
       if (!phone) {
         // Search inside rendered text ONLY (never raw html!)
         const contactText = contactElements.text().replace(/\s+/g, " ");
-        const contactPhoneMatch = contactText.match(/\b(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail)\b\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
+        const contactPhoneMatch = contactText.match(/(?:Telefoon|Telephone|Phone|Tel|Tél|Telefon|Bel\s*of\s*mail|טלפון|טל|נייד|פקס|שירות\s*לקוחות|هاتف|جوال|الهاتف|teléfono|telefono|mobiel)\s*[:.]?\s*([+]?[0-9\s\(\)\.\-\/]{7,25})/i);
         if (contactPhoneMatch) {
           const candidate = contactPhoneMatch[1].trim().replace(/\s+$/, "");
           if (isValidPhoneNumber(candidate)) {
@@ -18377,8 +18377,8 @@ Return JSON:
 
         for (let i = 0; i < domLines.length; i++) {
           const line = domLines[i];
-          const streetPattern = /^([A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+\s+\d+[a-zA-Z]?|\d{1,5}\s+[A-ZÀ-ÿ][a-zà-ÿA-Z0-9\s\.\-']+)$/;
-          const postalCityPattern = /^(?:[A-Z]{2}-?)?(\d{4,5})\s+([A-ZÀ-ÿ][a-zà-ÿA-Z\s\-]+)$/;
+          const streetPattern = /^([\p{L}][\p{L}\p{N}\s\.\-']+\s+\d+[\p{L}]?|\d{1,5}\s+[\p{L}][\p{L}\p{N}\s\.\-']+)$/u;
+          const postalCityPattern = /^(?:[\p{L}]{2}-?)?(\d{4,5})\s+([\p{L}\s\-]+)$/u;
 
           if (streetPattern.test(line) && !line.toLowerCase().includes("telefoon") && !line.toLowerCase().includes("telephone") && !line.toLowerCase().includes("fax") && !line.toLowerCase().includes("openingsuren") && !line.toLowerCase().includes("btw") && !line.toLowerCase().includes("email")) {
             const nextLine = domLines[i + 1] || "";
@@ -18471,12 +18471,29 @@ Return JSON:
               hrefLow.includes('stores') || 
               hrefLow.includes('find-us') ||
               hrefLow.includes('reach-us') ||
+              hrefLow.includes('צור-קשר') ||
+              hrefLow.includes('צור_קשר') ||
+              hrefLow.includes('אודות') ||
+              hrefLow.includes('סניפים') ||
+              hrefLow.includes('מיקום') ||
+              hrefLow.includes('contacto') ||
+              hrefLow.includes('ubicacion') ||
+              hrefLow.includes('coordonnees') ||
               text.includes('contact') || 
               text.includes('about') || 
               text.includes('over ons') || 
               text.includes('kontakt') ||
               text.includes('locations') || 
-              text.includes('branches')
+              text.includes('branches') ||
+              text.includes('צור קשר') ||
+              text.includes('אודות') ||
+              text.includes('סניפים') ||
+              text.includes('מיקום') ||
+              text.includes('اتصل') ||
+              text.includes('تواصل') ||
+              text.includes('من نحن') ||
+              text.includes('contacto') ||
+              text.includes('ubicación')
             ) {
               try {
                 const fullCandidate = new URL(href, finalUrl).toString();
@@ -18679,36 +18696,43 @@ Return JSON:
             (rowIdClean === rawNameClean + "com" || rowIdClean === rawNameClean)
           );
 
+          let parsedData: any = {};
+          if (row.data) {
+            try {
+              parsedData = JSON.parse(row.data as string);
+            } catch(e) {}
+          }
+          const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
+          const isGeneric = isGenericPlaceNameServer(rowName);
+          const isMissingAllDetails = !row.address && !parsedData.phone && !parsedData.bannerUrl && !parsedData.ogImage && !parsedData.description;
+
           if (!rowId.includes('.') && rowId !== "yoouz" && rowId !== "vrijens" && rowId !== "dental-care") {
             console.info(`[Database Cache Lookup] Ignored corrupted cached ID "${rowId}" (missing domain dot). Force fresh resolution!`);
           } else if (isFabricatedNameDomain) {
             console.info(`[Database Cache Lookup] Ignored legacy fabricated domain ID "${rowId}" for "${row.name}". Purging and re-resolving!`);
             bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
+          } else if (isGeneric || isMissingAllDetails) {
+            console.info(`[Database Cache Lookup] Ignored incomplete or generic cached entry "${rowId}" ("${rowName}"). Purging and re-resolving!`);
+            bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
           } else {
-            let parsedData: any = {};
-            if (row.data) {
-              try {
-                parsedData = JSON.parse(row.data as string);
-              } catch(e) {}
-            }
             const data: ResolvedBusinessData = {
               domain: (row.id as string) || parsedData.brandDomain || parsedData.domain || "",
               websiteUrl: (parsedData.website || parsedData.websiteUrl || (row.id ? `https://${row.id}` : "")),
-              name: (row.name as string) || parsedData.title || parsedData.name || "",
+              name: rowName,
               category: (row.category as string) || parsedData.category || "Verified Business",
               address: (row.address as string) || parsedData.address || "",
               city: (row.city as string) || parsedData.city || "",
               country: (row.country as string) || parsedData.country || "",
               phone: (parsedData.phone || row.phone || "") as string,
               email: (parsedData.email || row.email || "") as string,
-            openingHours: (parsedData.openingHours || "Available 24/7") as string,
-            photo: (parsedData.bannerUrl || parsedData.ogImage || parsedData.image || row.logoUrl || "") as string,
-            description: (parsedData.description || "") as string,
-            lat: Number(row.latitude) || 0,
-            lng: Number(row.longitude) || 0
-          };
-          BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
-          return data;
+              openingHours: (parsedData.openingHours || "Available 24/7") as string,
+              photo: (parsedData.bannerUrl || parsedData.ogImage || parsedData.image || row.logoUrl || "") as string,
+              description: (parsedData.description || "") as string,
+              lat: Number(row.latitude) || 0,
+              lng: Number(row.longitude) || 0
+            };
+            BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
+            return data;
           }
         }
       } catch (dbErr) {
@@ -18972,7 +18996,7 @@ Return JSON:
         if (validCandidates.length > 0) {
           const queryWords = cleanQ
             .toLowerCase()
-            .replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\s]/g, " ")
+            .replace(/[^\p{L}\p{N}\s]/gu, " ")
             .split(/\s+/)
             .filter(w => w.length >= 3 && !/^(law|office|firm|advocate|attorney|notary|and|the|in|at|of|for|group|services|ltd|inc|llc|משרד|עורך|דין|עורכי|נוטריון|משפטים)$/i.test(w));
 
@@ -19043,7 +19067,7 @@ Return JSON:
     if (discoveredUrl) {
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
-        let scTitle = formatBusinessName(cleanQ);
+        let scTitle = formatBusinessName(cleanQ, discoveredDom);
         let scDesc = `${scTitle} is a verified business on Yoouz.`;
         let scImage = "";
         let scAddress = "";
@@ -20634,7 +20658,7 @@ Return JSON:
           let targetDom = "";
 
           // Check if phrase has genuine domain dot
-          if (phraseClean.includes(".") && !phraseClean.includes(" ") && isValidDomain(phraseClean)) {
+          if (phraseClean.includes(".") && !phraseClean.includes(" ") && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(phraseClean)) {
             targetDom = cleanDomainName(phraseClean);
           } else {
             // Check if matches known brand / location dictionary (forward and reverse)

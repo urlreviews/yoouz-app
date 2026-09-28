@@ -660,13 +660,18 @@ export function isGenericPlaceName(name?: string | null): boolean {
     "official website",
     "website",
     "page",
+    "pages",
     "business",
     "business place",
     "verified business",
-    "verified business place"
+    "verified business place",
+    "hotel", "hotels", "restaurant", "restaurants", "cafe", "cafes", "barber", "clinic", "garage", "pharmacy", "lawyer", "hospital",
+    "מלון", "בית מלון", "מלונות", "מסעדה", "מסעדות", "בית קפה", "קפה", "ספא", "צימר", "צימרים", "פונדק", "אכסניה", "אכסניית",
+    "עורך דין", "עורכי דין", "מרפאה", "מוסך", "מסעדת", "חנות", "בית מרקחת", "מספרה", "אופטיקה", "קניון",
+    "סופרמרקט", "סוכנות", "משרד", "משרד עורכי דין"
   ]);
   if (genericWords.has(lower)) return true;
-  if (/^(home|welcome|index|default|main page|official site)\s*[|\-–—:•]/i.test(lower)) return true;
+  if (/^(home|welcome|index|default|main page|official site|hotel|restaurant|cafe|מלון|מסעדה|צימר)\s*[|\-–—:•]/i.test(lower)) return true;
   return false;
 }
 
@@ -753,8 +758,16 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
-  // If already a clean capitalized multi-word human title (e.g. "Empire Hotel Rooftop Pool", "The 14 Street Y"), preserve in full directly!
-  if (!isDomainLike && trimmed && /^[A-Z0-9][A-Za-z0-9\s&'’\.,\-]+$/i.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 70) {
+  // If already a clean capitalized multi-word human title (e.g. "Empire Hotel Rooftop Pool", "מלון פרא רמת הגולן"), preserve in full directly!
+  if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 80 && !trimmed.includes('|') && !trimmed.includes(':')) {
+    if (queryContext) {
+      const cleanQ = queryContext.trim();
+      if (cleanQ.length >= 3 && !cleanQ.includes('.') && !isGenericPlaceName(cleanQ)) {
+        if (cleanQ.toLowerCase().includes(trimmed.toLowerCase()) || trimmed.toLowerCase().includes(cleanQ.toLowerCase())) {
+          return cleanQ.length >= trimmed.length ? cleanQ : trimmed;
+        }
+      }
+    }
     return trimmed;
   }
 
@@ -832,7 +845,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (queryContext) {
     const qTrim = queryContext.trim();
     const qWords = qTrim.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|inc|llc|pc|corp)$/i.test(w));
-    if (qWords.length >= 1 && /^[A-Z0-9][A-Za-z0-9\s&'’\.,\-]+$/i.test(qTrim) && !qTrim.includes('.')) {
+    if (qWords.length >= 1 && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(qTrim) && !qTrim.includes('.')) {
       const qLower = qTrim.toLowerCase();
       const trimmedLower = trimmed.toLowerCase();
 
@@ -2293,7 +2306,7 @@ export function recordDeletedPlacesInLocalStorage(variants: string[]): string[] 
 /**
  * Verified headquarters and coordinates for known entities to guarantee 100% pin accuracy in Google Maps previews
  */
-export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, { name?: string; address?: string; postalCode?: string; city?: string; state?: string; country?: string; phone?: string; email?: string; openingHours?: string; category?: string; lat?: number; lng?: number; locations?: any[] }> = {
+export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, any> = {
   "lernerandrowe.com": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowe": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
   "lernerandrowelaw": { address: "2701 E Camelback Rd #140", city: "Phoenix", state: "AZ", country: "United States", lat: 33.5092, lng: -112.0238 },
