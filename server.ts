@@ -19198,7 +19198,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             });
             if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
               const row: any = cachedPlace.rows[0];
-              const pData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+              let pData: any = {};
+              try {
+                pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+              } catch(e) {
+                console.warn("[UrlMetadata] Failed to parse cached JSON data for:", cleanDom);
+              }
               console.log(`[Database Cache Hit] Serving instant business metadata for: ${cleanDom}`);
               logSearchIntel(rawQuery, cleanDom, "db_cache_hit");
               return res.json({
@@ -20546,7 +20551,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       updatedAt = CURRENT_TIMESTAMP
                     WHERE id = $9`,
               args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
-            });
+            }).catch(e => console.error("[Scraper DB Update Error]:", e));
             image = mergedBanner || image;
             logo = mergedLogo || logo;
             effectiveAddress = mergedAddress || effectiveAddress;
@@ -20563,7 +20568,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
               args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
-            });
+            }).catch(e => console.error("[Scraper DB Insert Error]:", e));
           }
         }
       } catch (bErr) {}

@@ -368,6 +368,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
+    // STRICT POLICY: Do not register "fake" optimistic places without a verified official domain.
+    if (!isRealDomain) {
+      console.warn("[Search Mobile] No verified domain found for:", trimmed);
+      setIsSearching(false);
+      setSubmittedQuery(trimmed);
+      return;
+    }
+
     // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
     const storeTerm = cleanUrl || trimmed;
     if (storeTerm) {
@@ -535,9 +543,15 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       return;
     }
 
-    // 2. If suggestion has a valid clean domain URL (e.g. "apple.com" or "theviewnyc.com")
-    const placeId = cleanDom ? cleanDom.toLowerCase() : (title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
-    const knownHead = cleanDom ? (KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]]) : (KNOWN_LOCATIONS[title.toLowerCase()] || null);
+    // 2. STRICT POLICY: ONLY allow opening profiles with a valid verified official domain!
+    if (!cleanDom || !isValidDomainUrl(cleanDom)) {
+      console.warn("[Search Mobile] Refusing to open fake profile without domain for:", title);
+      // Optional: show local error toast
+      return;
+    }
+
+    const placeId = cleanDom.toLowerCase();
+    const knownHead = KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]];
     const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
     const instantName = knownHead?.name || (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : query);
 

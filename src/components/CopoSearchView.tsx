@@ -347,6 +347,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (currentRequestId !== searchRequestIdRef.current) return;
 
+    // STRICT POLICY: Do not open "fake" profiles without a verified official domain.
+    if (!isValidDomainUrl(cleanUrl)) {
+      console.warn("[Search] No official domain discovered for:", rawQuery);
+      setIsSearching(false);
+      return;
+    }
+
     setQuery(baseName || rawQuery);
     setIsSearching(true);
 

@@ -633,6 +633,19 @@ export function App() {
 
         if (placeParam) {
           const cleanPlaceId = decodeURIComponent(placeParam);
+          
+          // STRICT POLICY: Do not allow opening profiles for unverified slug IDs that aren't in the database.
+          // Profiles MUST have an official domain to exist unless they are already registered in the system.
+          const isRealDom = isValidDomainUrl(cleanPlaceId);
+          const inLocalDb = (places || []).some((p: Place) => p.id === cleanPlaceId);
+          
+          if (!isRealDom && !inLocalDb) {
+            console.warn("[App] Blocking navigation to unverified placeholder profile:", cleanPlaceId);
+            window.history.replaceState(null, "", "/");
+            setSelectedPlaceIdForDrawer(null);
+            return;
+          }
+
           setSelectedPlaceIdForDrawer(cleanPlaceId);
           setSelectedAuthorForDrawer(null);
 
