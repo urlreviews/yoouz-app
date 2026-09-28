@@ -752,15 +752,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             hideSearchBar={true}
           />
         ) : isSearching ? (
-          <div className="p-6 flex flex-col items-center justify-center pt-24 gap-4 animate-in fade-in duration-150">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-2xl">
-              <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-white font-bold text-base">Searching businesses...</h3>
-              <p className="text-zinc-400 text-xs mt-1">Retrieving authentic business records & reviews</p>
-            </div>
-          </div>
+          <div className="flex-1" />
         ) : (
           <div className="p-3 sm:p-4 flex flex-col gap-6">
 

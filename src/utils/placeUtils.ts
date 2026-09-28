@@ -2938,10 +2938,12 @@ export function formatPhoneNumber(raw?: string | null): string {
   }
 
   // US/Canada (+1)
-  if (clean.startsWith("+1") || (digitsOnly.startsWith("1") && digitsOnly.length === 11)) {
-    const rest = digitsOnly.startsWith("1") ? digitsOnly.slice(1) : digitsOnly;
+  const isUSPotential = digitsOnly.length === 10 || (digitsOnly.length === 11 && digitsOnly.startsWith("1"));
+  if (clean.startsWith("+1") || isUSPotential) {
+    const rest = digitsOnly.length === 11 ? digitsOnly.slice(1) : digitsOnly;
     if (rest.length === 10) {
-      return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
+      // Professional international format: +1 XXX XXX XXXX
+      return `+1 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
     }
   }
 

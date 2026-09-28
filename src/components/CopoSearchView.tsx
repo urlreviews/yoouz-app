@@ -547,21 +547,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </>
           )}
 
-          {/* Always render animated moving indicator when isSearching, even if hideSearchBar={true} */}
-          {hideSearchBar && isSearching && (
-            <div className="w-full py-16 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-200">
-              <div className="relative flex items-center justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-2xl">
-                  <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-                </div>
-                <div className="absolute -inset-1 rounded-2xl bg-amber-400/10 animate-ping pointer-events-none" />
-              </div>
-              <div className="text-center px-4">
-                <h4 className="text-white font-bold text-base">Searching business records...</h4>
-                <p className="text-zinc-400 text-xs mt-1">Retrieving authentic reviews & verified details</p>
-              </div>
-            </div>
-          )}
+          {/* Loading indicator removed for premium clean UI */}
 
           {!hideSearchBar && (
             <div className="w-full max-w-xl px-2 sm:px-0 relative" ref={dropdownRef}>
@@ -583,23 +569,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 }}
               />
 
-              {isSearching && (
-                <div className="w-full mt-6 animate-in fade-in duration-200">
-                  <div className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 flex items-center gap-4 shadow-xl backdrop-blur-md">
-                    <div className="relative flex items-center justify-center shrink-0">
-                      <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
-                      </div>
-                      <div className="absolute -inset-0.5 rounded-xl bg-amber-400/10 animate-ping pointer-events-none" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-bold text-sm truncate">Searching business records...</h4>
-                      <p className="text-zinc-400 text-xs mt-0.5">Finding authentic reviews & verified details</p>
-                    </div>
-                    <span className="text-xs font-bold text-amber-400/90 uppercase tracking-wider hidden sm:inline">Searching...</span>
-                  </div>
-                </div>
-              )}
+              {/* Searching card removed for premium clean UI */}
             </div>
           )}
         </div>

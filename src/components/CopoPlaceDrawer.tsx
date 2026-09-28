@@ -113,7 +113,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
   // to avoid the network fetch flicker.
-  const criticalImagesLoaded = useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
+  useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
@@ -123,7 +123,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
-  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place changes
+  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place ID changes
   useEffect(() => {
     setBannerError(false);
     setPhotoIndex(0);
@@ -133,7 +133,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     if (fetchedTargetUrlsRef.current) {
       fetchedTargetUrlsRef.current.clear();
     }
-  }, [place?.id, place?.website, place?.name, place?.brandDomain]);
+  }, [place?.id]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {
