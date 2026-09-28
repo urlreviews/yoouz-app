@@ -182,71 +182,80 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
 
     const targetDom = isValidDomainUrl(resolvedDom) ? extractCleanDomain(resolvedDom) : "";
-    const placeId = (targetDom || item.id || (item.title || "").toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business").toLowerCase();
-    const instantLogo = item.logoUrl || (targetDom ? getCleanLogoUrl(null, targetDom) : "") || (targetDom ? `/api/favicon?domain=${targetDom}` : "");
-    const instantName = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || item.title || (targetDom ? formatBusinessName(targetDom) : item.title);
 
-    const instantPlace: Place = {
-      id: placeId,
-      name: instantName,
-      category: (item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Website",
-      categoryType: "all",
-      address: item.address || "",
-      city: item.city || "",
-      country: item.country || "",
-      lat: 0,
-      lng: 0,
-      rating: 5,
-      totalReviews: 1,
-      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: instantLogo,
-      logoUrl: instantLogo,
-      bannerUrl: "",
-      ogImage: "",
-      photos: [],
-      openingHours: "Available 24/7",
-      isOpen: true,
-      phone: "",
-      website: targetDom ? `https://${targetDom}` : "",
-      priceRange: "N/A",
-      plusCode: "",
-      description: "",
-      popularKeywords: [],
-      amenities: [],
-      topDishes: [],
-      brandDomain: targetDom || ""
-    };
+    // 2. If suggestion has a valid domain URL (e.g. "apple.com"):
+    if (isValidDomainUrl(targetDom)) {
+      const placeId = targetDom.toLowerCase();
+      const instantLogo = item.logoUrl || getCleanLogoUrl(null, targetDom) || `/api/favicon?domain=${targetDom}`;
+      const instantName = KNOWN_OFFICIAL_NAMES[targetDom] || item.title || formatBusinessName(targetDom);
 
-    setSearchedPlace(instantPlace);
-    setQuery(instantName);
-    if (onAddPlace) onAddPlace(instantPlace);
-    if (onOpenPlace) onOpenPlace(instantPlace.id);
+      const instantPlace: Place = {
+        id: placeId,
+        name: instantName,
+        category: (item.category && !item.category.toLowerCase().includes("verified")) ? item.category : "Website",
+        categoryType: "all",
+        address: item.address || "",
+        city: item.city || "",
+        country: item.country || "",
+        lat: 0,
+        lng: 0,
+        rating: 5,
+        totalReviews: 1,
+        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        avatarUrl: instantLogo,
+        logoUrl: instantLogo,
+        bannerUrl: "",
+        ogImage: "",
+        photos: [],
+        openingHours: "Available 24/7",
+        isOpen: true,
+        phone: "",
+        website: `https://${targetDom}`,
+        priceRange: "N/A",
+        plusCode: "",
+        description: "",
+        popularKeywords: [],
+        amenities: [],
+        topDishes: [],
+        brandDomain: targetDom
+      };
 
-    // Asynchronously enrich details in background
-    const enrichUrl = targetDom 
-      ? `/api/url-metadata?url=${encodeURIComponent(targetDom)}`
-      : `/api/url-metadata?q=${encodeURIComponent(item.title)}`;
-    fetch(enrichUrl)
-      .then(r => r.ok ? r.json() : null)
-      .then(meta => {
-        if (meta) {
-          const updated: Place = {
-            ...instantPlace,
-            name: meta.siteName || meta.title || instantPlace.name,
-            category: meta.category || instantPlace.category,
-            address: meta.address || instantPlace.address,
-            phone: meta.phone || instantPlace.phone,
-            bannerUrl: meta.image || instantPlace.bannerUrl,
-            logoUrl: meta.logo || instantPlace.logoUrl,
-            website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
-            brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : ""),
-            description: meta.description || instantPlace.description
-          };
-          setSearchedPlace(updated);
-          if (onAddPlace) onAddPlace(updated);
-        }
-      })
-      .catch(() => {});
+      setSearchedPlace(instantPlace);
+      setQuery(instantName);
+      if (onAddPlace) onAddPlace(instantPlace);
+      if (onOpenPlace) onOpenPlace(instantPlace.id);
+
+      // Asynchronously enrich details in background
+      const enrichUrl = `/api/url-metadata?url=${encodeURIComponent(targetDom)}`;
+      fetch(enrichUrl)
+        .then(r => r.ok ? r.json() : null)
+        .then(meta => {
+          if (meta) {
+            const updated: Place = {
+              ...instantPlace,
+              name: meta.siteName || meta.title || instantPlace.name,
+              category: meta.category || instantPlace.category,
+              address: meta.address || instantPlace.address,
+              phone: meta.phone || instantPlace.phone,
+              bannerUrl: meta.image || instantPlace.bannerUrl,
+              logoUrl: meta.logo || instantPlace.logoUrl,
+              website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
+              brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : ""),
+              description: meta.description || instantPlace.description
+            };
+            setSearchedPlace(updated);
+            if (onAddPlace) onAddPlace(updated);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // 3. Otherwise, for text phrase query suggestions without a domain dot (e.g. "The Terrace Club"):
+    // Set query & execute search so Google CSE & backend metadata resolves authentic business domain & details!
+    const qStr = item.title || query;
+    setQuery(qStr);
+    handleSearch(undefined, qStr);
   };
 
   const handleSearch = async (

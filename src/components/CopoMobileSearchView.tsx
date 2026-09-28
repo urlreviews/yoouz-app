@@ -506,91 +506,75 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const title = item.title || item.name || cleanDom || query;
     const loc = location.trim();
 
-    // Store in recents
-    const storeTerm = cleanDom || title;
-    if (storeTerm) {
+    // 1. Check if place already matches in places list
+    const existing = findMatchingPlace(cleanDom || title, title);
+    if (existing) {
+      const storeTerm = getCleanDomainUrl(existing) || cleanDom || title;
+      if (storeTerm) {
+        const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+        setRecentSearches(newRecent);
+        try {
+          localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+        } catch {}
+      }
+      onOpenPlace(existing.id);
+      return;
+    }
+
+    // 2. If suggestion has a valid clean domain URL (e.g. "apple.com" or "uber.com")
+    if (isValidDomainUrl(cleanDom)) {
+      const placeId = cleanDom.toLowerCase();
+      const instantLogo = item.logoUrl || getCleanLogoUrl(null, cleanDom) || `/api/favicon?domain=${cleanDom}`;
+      const instantName = KNOWN_OFFICIAL_NAMES[cleanDom] || title || formatBusinessName(cleanDom);
+
+      const storeTerm = cleanDom;
       const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
       setRecentSearches(newRecent);
       try {
         localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
       } catch {}
-    }
 
-    // 1. Check if place already matches in places list
-    const existing = findMatchingPlace(cleanDom || title, title);
-    if (existing) {
-      onOpenPlace(existing.id);
+      if (onAddPlace) {
+        const newPlace: Place = {
+          id: placeId,
+          name: instantName,
+          category: item.category || "Verified Business",
+          categoryType: "all",
+          address: item.address || "",
+          city: loc || "",
+          country: "",
+          lat: 0,
+          lng: 0,
+          rating: 5,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: instantLogo,
+          logoUrl: instantLogo,
+          bannerUrl: "",
+          ogImage: "",
+          photos: [],
+          openingHours: "Available 24/7",
+          isOpen: true,
+          phone: "",
+          website: `https://${cleanDom}`,
+          priceRange: "N/A",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          brandDomain: cleanDom
+        };
+        onAddPlace(newPlace);
+      }
+      onOpenPlace(placeId);
       return;
     }
 
-    // 2. Register place immediately into memory and database for 0ms instant display
-    const placeId = (cleanDom || item.id || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business").toLowerCase();
-    const instantLogo = item.logoUrl || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
-    const instantName = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : title);
-    const instantAddress = item.address || (loc ? loc : "");
-    const instantCategory = item.category || "Verified Business";
-
-    if (onAddPlace) {
-      const newPlace: Place = {
-        id: placeId,
-        name: instantName,
-        category: instantCategory,
-        categoryType: "all",
-        address: instantAddress,
-        city: loc || "",
-        country: "",
-        lat: 0,
-        lng: 0,
-        rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: instantLogo,
-        logoUrl: instantLogo,
-        bannerUrl: "",
-        ogImage: "",
-        photos: [],
-        openingHours: "Available 24/7",
-        isOpen: true,
-        phone: "",
-        website: cleanDom ? `https://${cleanDom}` : "",
-        priceRange: "N/A",
-        plusCode: "",
-        description: "",
-        popularKeywords: [],
-        amenities: [],
-        topDishes: [],
-        brandDomain: cleanDom || ""
-      };
-      onAddPlace(newPlace);
-
-      // Background asynchronous enrichment
-      const enrichUrl = cleanDom
-        ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
-        : `/api/url-metadata?q=${encodeURIComponent(title + (loc ? ' ' + loc : ''))}`;
-
-      fetch(enrichUrl)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data && onAddPlace) {
-            onAddPlace({
-              ...newPlace,
-              name: data.siteName || data.title || newPlace.name,
-              category: data.category || newPlace.category,
-              address: data.address || newPlace.address,
-              phone: data.phone || newPlace.phone,
-              bannerUrl: data.image || newPlace.bannerUrl,
-              logoUrl: data.logo || newPlace.logoUrl,
-              website: data.url || newPlace.website || (data.domain ? `https://${data.domain}` : ""),
-              brandDomain: data.domain || newPlace.brandDomain || (data.url ? extractCleanDomain(data.url) : ""),
-              description: data.description || newPlace.description
-            });
-          }
-        })
-        .catch(() => {});
-    }
-
-    // INSTANTLY OPEN THE BUSINESS PAGE IF LOCATION WAS PROVIDED
-    onOpenPlace(placeId);
+    // 3. Otherwise, for phrase/keyword query suggestions without a domain dot (e.g. "The Terrace Club"):
+    // Set query & execute search so Google CSE & backend metadata resolves authentic business domain & details!
+    setQuery(title);
+    executeSearch(title, title);
   };
   
   // Calculate real trending places mapped to clean URLs
