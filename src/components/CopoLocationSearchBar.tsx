@@ -115,22 +115,10 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       return;
     }
 
-    // When searching by business name, smoothly focus location field if empty
-    if (!trimmedLoc) {
-      setHasLocationPulse(true);
-      setActiveField("location");
-      setShowLocationInputMobile(true);
-      setTimeout(() => {
-        locInputRef.current?.focus();
-        mobileLocInputRef.current?.focus();
-      }, 50);
-      return;
-    }
-
     setHasLocationPulse(false);
 
     // Build the combined query
-    const fullQuery = `${trimmedBiz} ${trimmedLoc}`.trim();
+    const fullQuery = trimmedLoc ? `${trimmedBiz} ${trimmedLoc}`.trim() : trimmedBiz;
 
     onSearch(fullQuery, {
       country: "",
@@ -264,14 +252,12 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* Mobile View (< 640px) - Ultra Clean Native App Pill & Inline Location */}
+        {/* Mobile View (< 640px) - Native App 2-Line Search Card with Auto-Location  */}
         {/* ========================================================================= */}
-        <div className="flex sm:hidden flex-col gap-2 w-full">
+        <div className="flex sm:hidden flex-col gap-1.5 w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl p-2 shadow-lg transition-all focus-within:border-zinc-700">
           
-          {/* Main Primary Native Search Bar */}
-          <div className={`w-full h-12 bg-zinc-900 border ${
-            hasLocationPulse ? "border-zinc-500 ring-2 ring-white/20" : "border-zinc-800/90"
-          } rounded-full px-3.5 flex items-center gap-2.5 shadow-sm focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 transition-all`}>
+          {/* Row 1: Business / Domain Input (Bigger text) */}
+          <div className="flex items-center gap-2.5 px-2 py-1 min-w-0">
             <Search className="w-5 h-5 text-zinc-400 shrink-0" />
             
             <input
@@ -300,7 +286,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setShowSuggestions(true);
               }}
               placeholder={t("search.businessPlaceholder", "Search business...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"
+              className="flex-1 min-w-0 bg-transparent text-white text-base placeholder:text-zinc-500 focus:outline-none font-bold"
               autoFocus={autoFocus}
             />
 
@@ -320,88 +306,57 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               </button>
             )}
 
-            {/* Location Pill Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowLocationInputMobile(!showLocationInputMobile);
-                if (!showLocationInputMobile) {
-                  setTimeout(() => mobileLocInputRef.current?.focus(), 50);
-                }
-              }}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
-                location
-                  ? "bg-white text-zinc-950 shadow-xs"
-                  : hasLocationPulse
-                  ? "bg-zinc-700 text-white ring-1 ring-white/40"
-                  : showLocationInputMobile
-                  ? "bg-zinc-800 text-white border border-zinc-700"
-                  : "bg-zinc-800/80 text-zinc-400 hover:text-white"
-              }`}
-            >
-              <MapPin className="w-3 h-3 shrink-0" />
-              <span className="truncate max-w-[80px]">
-                {location || t("search.locationPlaceholder", "Location")}
-              </span>
-              {location && (
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLocationChange("");
-                  }}
-                  className="p-0.5 hover:text-red-500"
-                >
-                  <X className="w-3 h-3" />
-                </span>
-              )}
-            </button>
-
             {/* Submit Action Pill Button on Mobile */}
             <button
               type="submit"
               disabled={isSearching || !businessName.trim()}
-              className="w-8 h-8 rounded-full bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-90 shadow-sm"
+              className="w-9 h-9 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm"
               title="Search"
             >
               {isSearching || isLoadingSuggest ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
               ) : (
                 <ArrowRight className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
               )}
             </button>
           </div>
 
-          {/* Expandable Smooth Location Sub-row on Mobile */}
-          {showLocationInputMobile && (
-            <div className={`w-full h-10 bg-zinc-900/90 border ${
-              hasLocationPulse ? "border-zinc-500 ring-1 ring-white/20" : "border-zinc-800/80"
-            } rounded-full px-3.5 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150`}>
-              <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
-              <input
-                ref={mobileLocInputRef}
-                type="text"
-                dir="auto"
-                enterKeyHint="search"
-                value={location}
-                onChange={(e) => handleLocationChange(e.target.value)}
-                placeholder={t("search.locationPlaceholderMobile", "Enter city or country...")}
-                className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none font-medium"
-              />
-              {location && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleLocationChange("");
-                    mobileLocInputRef.current?.focus();
-                  }}
-                  className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
-                  title="Clear Location"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          )}
+          {/* Hairline Divider */}
+          <div className="w-full h-[1px] bg-zinc-800/80 my-0.5" />
+
+          {/* Row 2: Location Input */}
+          <div className="flex items-center gap-2 px-2 py-1 min-w-0">
+            <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+            
+            <input
+              ref={mobileLocInputRef}
+              type="text"
+              dir="auto"
+              enterKeyHint="search"
+              value={location}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => {
+                setActiveField("location");
+                setHasLocationPulse(false);
+              }}
+              placeholder={t("search.locationPlaceholder", "Location")}
+              className="flex-1 min-w-0 bg-transparent text-xs text-white placeholder:text-zinc-500 focus:outline-none font-medium"
+            />
+
+            {location && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleLocationChange("");
+                  mobileLocInputRef.current?.focus();
+                }}
+                className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
+                title="Clear Location"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </form>
 
@@ -409,8 +364,11 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
       {!hideDropdown && showSuggestions && suggestions.length > 0 && (
         <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
-            const isDbOrBrand = item.source === "database" || item.source === "brand_index";
-            const hasDomain = item.domain && item.domain.includes('.');
+            const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+            const targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+            const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain) && targetDomain !== "yoouz.com");
+            const isDbOrBrand = (item.source === "database" || item.source === "brand_index") && hasDomain;
+
             return (
               <button
                 key={idx}
@@ -418,7 +376,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 onClick={() => {
                   if (onSelectSuggestion) onSelectSuggestion(item);
                   else {
-                    setBusinessName(item.title || item.domain);
+                    setBusinessName(item.title || targetDomain || businessName);
                     handleSubmit();
                   }
                 }}
@@ -426,7 +384,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               >
                 {isDbOrBrand && hasDomain ? (
                   <CopoBrandLogo
-                    domain={item.domain}
+                    domain={targetDomain}
                     name={item.title}
                     logoUrl={item.logoUrl}
                     className="w-8 h-8 rounded-lg border border-zinc-800 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
@@ -441,18 +399,18 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate" dir="auto">
                     <bdi dir="auto">{item.title}</bdi>
                   </div>
-                  {(item.domain || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && (
+                  {(hasDomain || (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && (
                     <div className="text-xs text-zinc-400 truncate flex items-center gap-2 mt-0.5" dir="auto">
-                      {item.domain && <span className="text-zinc-500 font-mono">{item.domain}</span>}
+                      {hasDomain && <span className="text-zinc-500 font-mono">{targetDomain}</span>}
                       {item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website" && (
                         <>
-                          {item.domain && <span>•</span>}
+                          {hasDomain && <span>•</span>}
                           <span>{item.category}</span>
                         </>
                       )}
                       {item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google") && (
                         <>
-                          {(item.domain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span>•</span>}
+                          {(hasDomain || (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website")) && <span>•</span>}
                           <span>{item.address}</span>
                         </>
                       )}

@@ -548,11 +548,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {query.length > 0 && mergedSuggestions.length > 0 && (
               <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
-                  const title = item.title || item.name || getCleanDomainUrl(item);
-                  const targetDomain = item.domain || getCleanDomainUrl(item);
-                  const isDbOrBrand = item.source === "database" || item.source === "brand_index";
-                  const hasDomain = targetDomain && targetDomain.includes('.');
-                  const itemLogo = item.logoUrl || getItemLogoUrl(targetDomain, item);
+                  const title = item.title || item.name || (item.domain && isValidDomainUrl(item.domain) ? item.domain : query);
+                  const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+                  const targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+                  const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain) && targetDomain !== "yoouz.com");
+                  const isDbOrBrand = (item.source === "database" || item.source === "brand_index") && hasDomain;
+                  const itemLogo = item.logoUrl || (hasDomain ? getItemLogoUrl(targetDomain, item) : null);
 
                   return (
                     <button 

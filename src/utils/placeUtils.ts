@@ -91,7 +91,8 @@ export function getCleanDomainUrl(item?: string | { brandDomain?: string; websit
 
   if (typeof item === "string") {
     if (isRevId(item)) return "yoouz.com";
-    return extractCleanDomain(item);
+    const cleanStr = extractCleanDomain(item);
+    return isValidDomainUrl(cleanStr) ? cleanStr : "";
   }
   // If Place or Place-like object
   let domainSource = item.brandDomain || item.placeWebsite || item.website;
@@ -101,16 +102,16 @@ export function getCleanDomainUrl(item?: string | { brandDomain?: string; websit
   if (!domainSource && item.id && !isRevId(item.id)) domainSource = item.id;
 
   const clean = extractCleanDomain(domainSource || "");
-  if (clean && clean.includes(".") && !isRevId(clean)) return clean;
+  if (clean && clean.includes(".") && !isRevId(clean) && isValidDomainUrl(clean)) return clean;
   if (item.brandDomain) {
     const brandClean = extractCleanDomain(item.brandDomain);
-    if (brandClean && brandClean.includes(".") && !isRevId(brandClean)) return brandClean;
+    if (brandClean && brandClean.includes(".") && !isRevId(brandClean) && isValidDomainUrl(brandClean)) return brandClean;
   }
   if (item.website || item.placeWebsite) {
     const webClean = extractCleanDomain(item.website || item.placeWebsite);
-    if (webClean && webClean.includes(".") && !isRevId(webClean)) return webClean;
+    if (webClean && webClean.includes(".") && !isRevId(webClean) && isValidDomainUrl(webClean)) return webClean;
   }
-  return (clean && !isRevId(clean)) ? clean : "yoouz.com";
+  return (clean && !isRevId(clean) && isValidDomainUrl(clean)) ? clean : "";
 }
 
 /**
