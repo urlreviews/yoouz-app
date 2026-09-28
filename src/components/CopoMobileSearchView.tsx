@@ -863,11 +863,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
                   let targetDomain = getCleanDomainUrl(item) || (isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "");
                   const title = item.title || item.name || (targetDomain ? formatBusinessName(targetDomain) : query);
-                  if (!targetDomain && title) {
-                    const cleanSlug = title.toLowerCase().replace(/[^a-z0-9]/g, "");
-                    if (cleanSlug.length >= 2) targetDomain = `${cleanSlug}.com`;
-                  }
-                  const hasDomain = Boolean(targetDomain && targetDomain.includes('.'));
+                  const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain));
                   const itemLogo = item.logoUrl || (hasDomain ? getItemLogoUrl(targetDomain, item) : null);
 
                   const words = title.trim().split(/\s+/);

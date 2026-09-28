@@ -9319,6 +9319,88 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       lat: 40.7601, 
       lng: -73.9789 
     },
+    "smythtavern.com": { 
+      name: "Smyth Tavern", 
+      address: "85 W Broadway", 
+      postalCode: "10007", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (646) 813-9090", 
+      email: "info@smythtavern.com", 
+      openingHours: "Sun - Wed: 07:00 - 22:00 · Thu - Sat: 07:00 - 22:30", 
+      category: "Tavern & American Restaurant", 
+      rating: 4.5, 
+      totalReviews: 480, 
+      priceRange: "$$$", 
+      description: "Smyth Tavern in Tribeca offers fresh seafood, raw bar, dry-aged steaks, and homemade pastas with curated art and exceptional hospitality on West Broadway.", 
+      bannerUrl: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", "https://images.pexels.com/photos/941861/pexels-photo-941861.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      amenities: ["Raw Bar", "Dry-Aged Steaks", "Outdoor Dining", "Private Dining", "Full Bar"], 
+      lat: 40.7161, 
+      lng: -74.0094 
+    },
+    "www.smythtavern.com": { 
+      name: "Smyth Tavern", 
+      address: "85 W Broadway", 
+      postalCode: "10007", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (646) 813-9090", 
+      email: "info@smythtavern.com", 
+      openingHours: "Sun - Wed: 07:00 - 22:00 · Thu - Sat: 07:00 - 22:30", 
+      category: "Tavern & American Restaurant", 
+      rating: 4.5, 
+      totalReviews: 480, 
+      priceRange: "$$$", 
+      description: "Smyth Tavern in Tribeca offers fresh seafood, raw bar, dry-aged steaks, and homemade pastas with curated art and exceptional hospitality on West Broadway.", 
+      bannerUrl: "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", 
+      photos: ["https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg?auto=compress&cs=tinysrgb&w=1200", "https://images.pexels.com/photos/941861/pexels-photo-941861.jpeg?auto=compress&cs=tinysrgb&w=1200"], 
+      amenities: ["Raw Bar", "Dry-Aged Steaks", "Outdoor Dining", "Private Dining", "Full Bar"], 
+      lat: 40.7161, 
+      lng: -74.0094 
+    },
+    "smythtavern": { 
+      name: "Smyth Tavern", 
+      address: "85 W Broadway", 
+      postalCode: "10007", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (646) 813-9090", 
+      openingHours: "Sun - Wed: 07:00 - 22:00 · Thu - Sat: 07:00 - 22:30", 
+      category: "Tavern & American Restaurant", 
+      rating: 4.5, 
+      totalReviews: 480, 
+      lat: 40.7161, 
+      lng: -74.0094 
+    },
+    "thesmythny.com": { 
+      name: "Smyth Tribeca", 
+      address: "85 W Broadway", 
+      postalCode: "10007", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (917) 997-8655", 
+      category: "Boutique Hotel & Suites", 
+      openingHours: "Open 24/7", 
+      rating: 4.4, 
+      totalReviews: 520, 
+      lat: 40.7161, 
+      lng: -74.0094 
+    },
+    "smythtribeca.com": { 
+      name: "Smyth Tribeca", 
+      address: "85 W Broadway", 
+      postalCode: "10007", 
+      city: "New York, NY", 
+      country: "United States", 
+      phone: "+1 (917) 997-8655", 
+      category: "Boutique Hotel & Suites", 
+      openingHours: "Open 24/7", 
+      rating: 4.4, 
+      totalReviews: 520, 
+      lat: 40.7161, 
+      lng: -74.0094 
+    },
     "empirehotelnyc.com": { 
       name: "Empire Hotel Rooftop Pool & Lounge", 
       address: "44 W 63rd St", 
@@ -20263,17 +20345,25 @@ Return JSON:
           }
         } catch(e) {}
 
+        const JUNK_KEYWORDS = ['menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook', 'instagram', 'twitter', 'near me', 'wiki', 'wikipedia'];
+
         for (const phrase of combinedPhrases) {
           if (suggestions.length >= 8) break;
           const phraseClean = phrase.trim();
           const phraseLower = phraseClean.toLowerCase();
+
+          // Skip junk phrases (e.g., "smith's tavern menu", "smith's tavern photos")
+          if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
+            continue;
+          }
+
           let targetDom = "";
 
-          // Check if phrase has domain dot
-          if (phraseClean.includes(".") && !phraseClean.includes(" ")) {
+          // Check if phrase has genuine domain dot
+          if (phraseClean.includes(".") && !phraseClean.includes(" ") && isValidDomain(phraseClean)) {
             targetDom = cleanDomainName(phraseClean);
           } else {
-            // Check if matches known brand dictionary (forward and reverse)
+            // Check if matches known brand / location dictionary (forward and reverse)
             const matchedEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
               const kLower = k.toLowerCase();
               const vLower = v.toLowerCase();
@@ -20290,27 +20380,20 @@ Return JSON:
             }
           }
 
-          const displayTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
-            ? KNOWN_OFFICIAL_NAMES[targetDom]
-            : formatBusinessName(phraseClean) || phraseClean;
+          const knownLoc = targetDom ? (KNOWN_ENTITY_LOCATIONS[targetDom] || KNOWN_ENTITY_LOCATIONS[targetDom.split('.')[0]]) : null;
 
-          let finalDom = targetDom || "";
-          if (!finalDom) {
-            const cleanSlug = phraseClean.toLowerCase().replace(/[^a-z0-9]/g, "");
-            if (cleanSlug.length >= 2) {
-              finalDom = `${cleanSlug}.com`;
-            }
-          }
-
-          const knownLoc = finalDom ? (KNOWN_ENTITY_LOCATIONS[finalDom] || KNOWN_ENTITY_LOCATIONS[finalDom.split('.')[0]]) : null;
+          const displayTitle = knownLoc?.name 
+            || (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
+            || formatBusinessName(phraseClean) 
+            || phraseClean;
 
           addSuggestion({
-            title: knownLoc?.name || displayTitle,
-            domain: finalDom,
-            logoUrl: `/api/favicon?domain=${finalDom}`,
+            title: displayTitle,
+            domain: targetDom,
+            logoUrl: targetDom ? `/api/favicon?domain=${targetDom}` : "",
             category: knownLoc?.category || "",
             address: knownLoc?.city ? `${knownLoc.address ? knownLoc.address + ', ' : ''}${knownLoc.city}` : "",
-            source: "autocomplete"
+            source: targetDom ? "brand_index" : "autocomplete"
           });
         }
       }

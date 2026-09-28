@@ -445,11 +445,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           {suggestions.map((item, idx) => {
             const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
             let targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
-            if (!targetDomain && item.title) {
-              const cleanSlug = item.title.toLowerCase().replace(/[^a-z0-9]/g, "");
-              if (cleanSlug.length >= 2) targetDomain = `${cleanSlug}.com`;
-            }
-            const hasDomain = Boolean(targetDomain && targetDomain.includes('.'));
+            const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain));
 
             return (
               <button
