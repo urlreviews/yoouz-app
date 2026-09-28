@@ -6935,7 +6935,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div>
                     <h2 className="text-xl font-black text-white tracking-tight">Search Intelligence & Scraper Intel</h2>
                     <p className="text-xs text-zinc-400 mt-0.5">
-                      Live monitoring of Google CSE discovery, DuckDuckGo fallbacks, and multi-language scraping operations.
+                      Live monitoring of Google CSE discovery and authentic multi-language scraping operations.
                     </p>
                   </div>
                 </div>
