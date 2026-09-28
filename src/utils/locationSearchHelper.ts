@@ -192,12 +192,7 @@ export interface CitySuggestion {
 export const searchCitySuggestions = (query: string, maxResults = 8): CitySuggestion[] => {
   const q = (query || "").toLowerCase().trim();
   if (!q) {
-    return POPULAR_HUBS.slice(0, maxResults).map(h => ({
-      city: h.city,
-      state: h.state,
-      country: h.country,
-      label: h.state ? `${h.city}, ${h.state}` : `${h.city}, ${h.country}`
-    }));
+    return [];
   }
 
   const results: CitySuggestion[] = [];

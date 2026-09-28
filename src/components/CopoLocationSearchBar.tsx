@@ -87,7 +87,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   }, []);
 
   const citySuggestions = useMemo(() => {
-    if (activeField !== "location") return [];
+    if (activeField !== "location" || !location.trim()) return [];
     return searchCitySuggestions(location, 6);
   }, [activeField, location]);
 
@@ -407,7 +407,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-850 max-h-[300px] overflow-y-auto animate-in fade-in duration-150">
           <div className="px-4 py-2 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
             <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Select City or Region</span>
+            <span>Matching Cities & Neighborhoods</span>
           </div>
           {citySuggestions.map((c, idx) => (
             <button

@@ -88,6 +88,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
 
   const mobileCitySuggestions = React.useMemo(() => {
+    if (!location.trim()) return [];
     return searchCitySuggestions(location, 6);
   }, [location]);
 
@@ -825,11 +826,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           <div className="p-3 sm:p-4 flex flex-col gap-6">
             
             {/* City Autocomplete Suggestions when focused or typing in location */}
-            {isFocusedLocation && mobileCitySuggestions.length > 0 ? (
+            {isFocusedLocation && location.trim().length > 0 && mobileCitySuggestions.length > 0 ? (
               <div className="flex flex-col rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl divide-y divide-zinc-900/90">
                 <div className="px-4 py-2.5 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
                   <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Suggested Cities & Locations</span>
+                  <span>Matching Cities & Neighborhoods</span>
                 </div>
                 {mobileCitySuggestions.map((c, idx) => (
                   <button

@@ -418,11 +418,13 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 }}
               />
               <div>
-                <h4 className="font-semibold text-sm flex items-center gap-1 group-hover:text-zinc-200 transition-colors min-w-0">
-                  <span className="truncate">{currentReview.author.name}</span>
-                  {currentReview.author.isVerified && (
-                    <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                  )}
+                <h4 className="font-semibold text-sm group-hover:text-zinc-200 transition-colors min-w-0 leading-snug">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="truncate">{currentReview.author.name}</span>
+                    {currentReview.author.isVerified && (
+                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 inline-block align-middle" />
+                    )}
+                  </span>
                 </h4>
                 <div className="flex items-center gap-1.5 text-[11px] text-zinc-200">
                   <div className="flex items-center text-amber-400">

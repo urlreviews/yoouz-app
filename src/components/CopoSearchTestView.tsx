@@ -394,18 +394,45 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-extrabold text-white leading-snug inline-flex items-center gap-2 flex-wrap" dir="auto">
-                    <bdi dir="auto">{(selectedPlace.name || "").trim()}</bdi>
-                    <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
+                  <h2 className="text-2xl font-extrabold text-white leading-snug break-words tracking-tight" dir="auto">
+                    {(() => {
+                      const fullName = (selectedPlace.name || "").trim();
+                      const words = fullName.split(/\s+/);
+                      if (words.length <= 1) {
+                        return (
+                          <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                            <bdi dir="auto">{fullName}</bdi>
+                            <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
+                          </span>
+                        );
+                      }
+                      const allExceptLast = words.slice(0, -1).join(" ");
+                      const lastWord = words[words.length - 1];
+                      return (
+                        <span>
+                          <bdi dir="auto">{allExceptLast}</bdi>{" "}
+                          <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                            <bdi dir="auto">{lastWord}</bdi>
+                            <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
+                          </span>
+                        </span>
+                      );
+                    })()}
                   </h2>
 
                   {/* Website Link Line */}
-                  {selectedPlace.website && selectedPlace.website !== "https://" && selectedPlace.brandDomain && (
-                    <a href={selectedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 text-xs font-medium mt-1">
-                      <Globe className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>{selectedPlace.brandDomain}</span>
-                    </a>
-                  )}
+                  {(() => {
+                    const web = selectedPlace.website;
+                    const dom = selectedPlace.brandDomain || extractCleanDomain(web || selectedPlace.id);
+                    if (!dom || dom === "yoouz.com") return null;
+                    const href = (web && web.startsWith("http")) ? web : `https://${dom}`;
+                    return (
+                      <a href={href} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 text-xs font-medium mt-1 transition-colors group">
+                        <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
+                        <span>{dom}</span>
+                      </a>
+                    );
+                  })()}
                 </div>
 
                 {/* Bottom Horizontal Action Row: Star Rating Pill + Record Button */}

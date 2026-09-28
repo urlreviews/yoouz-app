@@ -755,7 +755,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   {/* Official Website / Domain Link under Business Name */}
                   {(() => {
                     const rawWeb = searchedPlace.website;
-                    const cleanDom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
+                    const cleanDom = searchedPlace.brandDomain 
+                      || extractCleanDomain(searchedPlace.website || "")
+                      || extractCleanDomain(searchedPlace.id || "")
+                      || extractCleanDomain(searchedPlace.name || "")
+                      || extractCleanDomain(initialQuery || query || "");
+                    
                     let effectiveWeb = "";
                     if (rawWeb && isValidDomainUrl(rawWeb) && !rawWeb.includes("maps.google.com") && !rawWeb.toLowerCase().includes("wikipedia.org")) {
                       effectiveWeb = rawWeb.startsWith("http://") || rawWeb.startsWith("https://") ? rawWeb : `https://${rawWeb}`;
