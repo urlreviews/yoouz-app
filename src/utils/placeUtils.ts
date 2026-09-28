@@ -727,6 +727,21 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     return KNOWN_OFFICIAL_NAMES[cleanKey];
   }
 
+  const isDomainLike = 
+    trimmed.includes("://") || 
+    trimmed.toLowerCase().startsWith("www.") || 
+    trimmed.toLowerCase().startsWith("www-") ||
+    trimmed.toLowerCase().startsWith("http:") ||
+    trimmed.toLowerCase().startsWith("https:") ||
+    /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
+    /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
+    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
+
+  // If already a clean capitalized multi-word human title (e.g. "Empire Hotel Rooftop Pool", "The 14 Street Y"), preserve in full directly!
+  if (!isDomainLike && trimmed && /^[A-Z0-9][A-Za-z0-9\s&'’\.,\-]+$/i.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 70) {
+    return trimmed;
+  }
+
   // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
   trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
   trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
@@ -746,7 +761,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   }
 
   // 2.6 Clean leading generic industry descriptors if followed by the actual brand name (e.g., "Law Firm Wanted Law" -> "Wanted Law")
-  trimmed = trimmed.replace(/^(?:Law\s+Firm|Advocatenkantoor|Advocaten|Lawyer|Lawyers|Attorneys|Dental\s+Clinic|Tandartspraktijk|Restaurant|Bistro|Hotel|Auto\s+Garage|Carrosserie)\s+(?=[A-Z0-9])/i, "").trim();
+  // (Do NOT strip valid brand words like Hotel or Restaurant)
 
   // 3. Clean up scraped SEO titles (e.g., "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
   const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
@@ -871,17 +886,6 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       return formatBusinessName(domRoot);
     }
   }
-
-  // 4. If it is an explicit URL, domain, or domain-like string (e.g. "https://...", "www.domain.com", "domain.com", "tajhotels-com", "bhol.co.il", "digitalpark.ae")
-  const isDomainLike = 
-    trimmed.includes("://") || 
-    trimmed.toLowerCase().startsWith("www.") || 
-    trimmed.toLowerCase().startsWith("www-") ||
-    trimmed.toLowerCase().startsWith("http:") ||
-    trimmed.toLowerCase().startsWith("https:") ||
-    /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
-    /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
-    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
   // 3c. If the string is already a clean capitalized business name from metadata, preserve directly
   if (!isDomainLike && trimmed && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(trimmed) && trimmed.length <= 50) {
@@ -1286,8 +1290,8 @@ export function generateSmartPlaceDescription(params: {
   domain?: string;
   address?: string;
 }): string {
-  const name = (params.name || params.domain || "This business").trim();
-  const domain = (params.domain || "").toLowerCase();
+  const name = (params.name && params.name.trim() !== "" ? params.name : (params.domain && isValidDomainUrl(params.domain) ? formatBusinessName(params.domain) : "This business")).trim();
+  const domain = (params.domain && isValidDomainUrl(params.domain) ? params.domain : "").toLowerCase();
   const cat = (params.category || "").toLowerCase();
   const nameLower = name.toLowerCase();
 
@@ -1304,8 +1308,8 @@ export function generateSmartPlaceDescription(params: {
     locStr = ` in ${params.country}`;
   } else if (params.address && !params.address.startsWith("http") && params.address !== "Verified Location") {
     locStr = ` located at ${params.address}`;
-  } else if (params.domain) {
-    locStr = ` online at ${params.domain}`;
+  } else if (domain && isValidDomainUrl(domain)) {
+    locStr = ` online at ${domain}`;
   }
 
   // Domain/name specific known descriptions
