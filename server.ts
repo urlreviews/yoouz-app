@@ -18794,8 +18794,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         };
         
         await bunnyDb.execute({
-          sql: `INSERT OR REPLACE INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO UPDATE SET 
+                  name = EXCLUDED.name,
+                  address = EXCLUDED.address,
+                  category = EXCLUDED.category,
+                  city = EXCLUDED.city,
+                  country = EXCLUDED.country,
+                  latitude = EXCLUDED.latitude,
+                  longitude = EXCLUDED.longitude,
+                  logoUrl = EXCLUDED.logoUrl,
+                  data = EXCLUDED.data,
+                  updatedAt = CURRENT_TIMESTAMP`,
           args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
         });
       } catch(e) {
@@ -18968,68 +18979,81 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // 3. Elite Discovery Engine (Restored & Hardened)
+    // 3. Elite Discovery Engine (Hardened & Multi-Stage)
     let discoveredUrl: string = "";
     try {
-      const qEnc = encodeURIComponent(`${cleanQ} official website`);
-      const searchUrls = [
-        `https://www.google.com/search?q=${qEnc}`,
-        `https://duckduckgo.com/html/?q=${qEnc}`,
-        `https://www.bing.com/search?q=${qEnc}`
+      const searchStages = [
+        encodeURIComponent(`${cleanQ} official website`),
+        encodeURIComponent(cleanQ)
       ];
 
-      // Try discovery with a sub-second timeout per candidate
-      for (const sUrl of searchUrls) {
+      for (const qEnc of searchStages) {
         if (discoveredUrl) break;
-        try {
-          const sRes = await fetch(sUrl, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined
-          });
-          if (!sRes.ok) continue;
-          const html = await sRes.text();
-          
-          // Universal URL extractor for search results
-          const matches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
-          
-          const directoryDomains = [
-            "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
-            "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
-            "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "mapquest.com", "waze.com",
-            "b144.co.il", "d.co.il", "zap.co.il", "t.co.il"
-          ];
+        
+        const searchUrls = [
+          `https://www.google.com/search?q=${qEnc}`,
+          `https://duckduckgo.com/html/?q=${qEnc}`,
+          `https://www.bing.com/search?q=${qEnc}`
+        ];
 
-          const validCandidates = matches.filter(u => {
-            const low = u.toLowerCase();
-            return !directoryDomains.some(d => low.includes(d)) && !low.includes("schema.org") && !low.includes("w3.org");
-          });
-
-          if (validCandidates.length > 0) {
-            // Priority Scoring
-            const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
-            validCandidates.sort((a, b) => {
-              let scoreA = 0;
-              let scoreB = 0;
-              const domA = new URL(a).hostname.toLowerCase();
-              const domB = new URL(b).hostname.toLowerCase();
-              queryWords.forEach(w => {
-                if (domA.includes(w)) scoreA += 10;
-                if (domB.includes(w)) scoreB += 10;
-              });
-              // Short domains (official ones) get a boost
-              scoreA += (30 - domA.length);
-              scoreB += (30 - domB.length);
-              return scoreB - scoreA;
+        for (const sUrl of searchUrls) {
+          if (discoveredUrl) break;
+          try {
+            const sRes = await fetch(sUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9"
+              },
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
             });
-            discoveredUrl = validCandidates[0];
-          }
-        } catch (e) {}
+            if (!sRes.ok) continue;
+            const html = await sRes.text();
+            
+            // Advanced URL extraction (prioritizing clear links)
+            const matches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
+            
+            const directoryDomains = [
+              "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
+              "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+              "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
+              "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "zocdoc.com", "mapquest.com", "waze.com",
+              "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com"
+            ];
+
+            const validCandidates = Array.from(new Set(matches.filter(u => {
+              const low = u.toLowerCase();
+              return !directoryDomains.some(d => low.includes(d)) && !low.includes("schema.org") && !low.includes("w3.org") && !low.includes("google");
+            })));
+
+            if (validCandidates.length > 0) {
+              const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+              validCandidates.sort((a, b) => {
+                let scoreA = 0;
+                let scoreB = 0;
+                try {
+                  const domA = new URL(a).hostname.toLowerCase();
+                  const domB = new URL(b).hostname.toLowerCase();
+                  queryWords.forEach(w => {
+                    if (domA.includes(w)) scoreA += 50;
+                    if (domB.includes(w)) scoreB += 50;
+                  });
+                  // Official sites usually have short paths
+                  if (new URL(a).pathname.length <= 1) scoreA += 20;
+                  if (new URL(b).pathname.length <= 1) scoreB += 20;
+                  
+                  // Brand match boost
+                  if (domA.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreA += 100;
+                  if (domB.replace(/\.[a-z]+$/, '').includes(queryWords[0])) scoreB += 100;
+                } catch(e) {}
+                return scoreB - scoreA;
+              });
+              discoveredUrl = validCandidates[0];
+            }
+          } catch (e) {}
+        }
       }
     } catch (e) {
-      console.error("[Elite Discovery Error]:", e.message);
+      console.error("[Elite Discovery Stage Error]:", e.message);
     }
 
     if (discoveredUrl) {
@@ -19113,7 +19137,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
     }
 
-    // 4. Fallback clean verified business record (Strictly authentic, ZERO fake URLs, ZERO random photos)
+    // 4. Clean verified business record (Strictly authentic, ZERO fake URLs, ZERO random photos)
     const fallbackPlaceId = (cleanQ.includes('.') && !cleanQ.toLowerCase().includes('wikipedia.org') ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '') : "");
     const finalCleanTitle = formatBusinessName(cleanQ);
     const cleanDomain = (fallbackPlaceId && fallbackPlaceId.includes('.') && !fallbackPlaceId.toLowerCase().includes('wikipedia.org')) ? fallbackPlaceId : "";
@@ -19130,9 +19154,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       email: "",
       openingHours: "Available 24/7",
       photo: "",
-      description: `${finalCleanTitle} is a verified business on Yoouz.`,
+      description: cleanDomain ? `${finalCleanTitle} is a verified business on Yoouz.` : "",
       lat: 0,
-      lng: 0
+      lng: 0,
+      isPendingDiscovery: !cleanDomain
     };
 
     BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
@@ -20467,16 +20492,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             await bunnyDb.execute({
               sql: `UPDATE places SET 
-                      name = ?,
-                      logoUrl = ?,
-                      address = COALESCE(NULLIF(?, ''), places.address),
-                      city = COALESCE(NULLIF(?, ''), places.city),
-                      country = COALESCE(NULLIF(?, ''), places.country),
-                      latitude = ?,
-                      longitude = ?,
-                      data = ?,
+                      name = $1,
+                      logoUrl = $2,
+                      address = COALESCE(NULLIF($3, ''), places.address),
+                      city = COALESCE(NULLIF($4, ''), places.city),
+                      country = COALESCE(NULLIF($5, ''), places.country),
+                      latitude = $6,
+                      longitude = $7,
+                      data = $8,
                       updatedAt = CURRENT_TIMESTAMP
-                    WHERE id = ?`,
+                    WHERE id = $9`,
               args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
             });
             image = mergedBanner || image;
