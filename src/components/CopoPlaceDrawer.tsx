@@ -463,7 +463,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Background auto-enrichment: Fetch and sync rich metadata & business description from URL or Business Name
   useEffect(() => {
-    const cleanTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    const rawTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    const cleanTargetUrl = (rawTargetUrl && isValidDomainUrl(rawTargetUrl)) ? rawTargetUrl : null;
     const targetUrl = isYoouzWebsite(cleanTargetUrl) ? "" : cleanTargetUrl;
     const targetKey = targetUrl || (place.name && place.name !== "Yoouz" ? `name:${place.name}` : "");
     

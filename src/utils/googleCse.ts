@@ -149,6 +149,7 @@ export function scoreCandidateUrl(url: string, query: string, rankIndex: number 
     "plumber", "plumbers", "plumbing", "contractor", "contractors", "electrician", "electricians", "cleaners",
     "lawyer", "lawyers", "law", "firm", "attorney", "attorneys", "dentist", "dentists", "dental",
     "doctor", "doctors", "clinic", "hospital", "hotel", "hotels", "motel", "resort",
+    "management", "office", "center", "suite", "plaza", "avenue", "street", "building", "real", "estate", "group", "holdings",
     "san", "diego", "los", "angeles", "new", "york", "chicago", "houston", "london", "paris", "dubai", "tel", "aviv",
     "משרד", "עורך", "דין", "עורכי", "נוטריון", "משפטים", "עסקים", "ישראל", "תל", "אביב", "ירושלים", "חיפה",
     "ניהול", "אחזקה", "אחזקת", "מבנים", "שרות", "שירות", "שירותי", "בע מ", "בע\"מ"

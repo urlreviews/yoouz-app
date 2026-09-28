@@ -18994,6 +18994,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const directoryDomains = [
           "wikipedia.org", "wikimedia.org", "wiktionary.org", "duckduckgo.com", "bing.com", "google.com", "yahoo.com",
           "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+          "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com",
           "hakkolasakim.com", "din.co.il", "d.co.il", "dnb.co.il", "checkid.co.il", "guidestar.org.il", "myleague.co.il", 
           "top10.co.il", "opentenders.co.il", "bhol.co.il", "zap.co.il", "t.co.il", "b144.co.il", "index.co.il", 
           "asakim.co.il", "israelbusiness.co.il", "cylex-israel.com", "cylex.com", "bizpages.org", "find-open.com", "find-open.co.il", "infobel.com", "chamber.org.il", "duns100.co.il",
@@ -19001,7 +19002,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
           "findlaw.com", "lawyers.com", "justia.com", "martindale.com", "hg.org", "avvo.com", "superlawyers.com", "legal500.com", "chambers.com",
           "clutch.co", "goodfirms.co", "trustpilot.com", "sitejabber.com", "bbb.org", "dnb.com", "zoominfo.com", "crunchbase.com",
-          "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yell.com", "zocdoc.com"
+          "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "yellowpages.ae", "yell.com", "zocdoc.com", "mapquest.com", "waze.com"
         ];
 
         // 1. Score candidate URLs to prioritize matching brand domains
@@ -19016,7 +19017,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             .toLowerCase()
             .replace(/[^\p{L}\p{N}\s]/gu, " ")
             .split(/\s+/)
-            .filter(w => w.length >= 3 && !/^(law|office|firm|advocate|attorney|notary|and|the|in|at|of|for|group|services|ltd|inc|llc|משרד|עורך|דין|עורכי|נוטריון|משפטים)$/i.test(w));
+            .filter(w => w.length >= 3 && !/^(law|office|firm|management|center|suite|plaza|avenue|street|building|advocate|attorney|notary|and|the|in|at|of|for|group|services|ltd|inc|llc|משרד|עורך|דין|עורכי|נוטריון|משפטים)$/i.test(w));
 
           validCandidates.sort((a, b) => {
             let scoreA = 0;
