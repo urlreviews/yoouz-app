@@ -76,8 +76,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const { t } = useLanguage();
   const [isClosing, setIsClosing] = useState(false);
   const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showLocationBar, setShowLocationBar] = useState(false);
+  const [isFocusedLocation, setIsFocusedLocation] = useState(false);
+  const businessInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
   
   const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
 
@@ -134,7 +138,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     
     // Auto focus on mount
     setTimeout(() => {
-      inputRef.current?.focus();
+      businessInputRef.current?.focus();
     }, 100);
   }, [places]);
 
@@ -253,7 +257,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       setSubmittedQuery("");
       setQuery("");
       setTimeout(() => {
-        inputRef.current?.focus();
+        businessInputRef.current?.focus();
       }, 100);
     } else {
       handleClose();
@@ -263,7 +267,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const handleSearch = async (
     e: React.FormEvent | string,
     preferredName?: string,
-    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string }
+    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string; rawLocation?: string }
   ) => {
     if (typeof e !== 'string') e.preventDefault();
     const raw = typeof e === 'string' ? e : query;
@@ -416,28 +420,36 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     setSubmittedQuery(trimmed);
   };
 
+  const executeSearch = (targetQuery?: string, preferredName?: string) => {
+    const rawBiz = (targetQuery !== undefined ? targetQuery : query).trim();
+    if (!rawBiz) return;
+
+    const loc = location.trim();
+    const finalQ = loc ? `${rawBiz} ${loc}` : rawBiz;
+
+    handleSearch(finalQ, preferredName || rawBiz, {
+      country: "",
+      state: "",
+      city: loc,
+      rawBusinessName: rawBiz,
+      rawLocation: loc
+    });
+  };
+
   const handleSelectSuggestion = (item: any) => {
-    // 1. Check if it matches a local database place first for INSTANT 0ms resolution
-    const match = findMatchingPlace(item.domain || item.id || item.title);
-    if (match) {
-      console.info("[Search Mobile] Loading local database match instantly:", match.name);
-      const cleanDom = getCleanDomainUrl(match);
-      setQuery(cleanDom);
-      setSubmittedQuery(cleanDom);
-      return;
-    }
-
-    let resolvedDom = item.domain;
-    if (!resolvedDom || !resolvedDom.includes('.')) {
-      const brandMatch = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => 
-        k.includes('.') && (v.toLowerCase() === item.title.toLowerCase() || k.toLowerCase().startsWith(item.title.toLowerCase()))
-      );
-      if (brandMatch) resolvedDom = brandMatch[0];
-    }
-
-    const searchTarget = (resolvedDom && isValidDomainUrl(resolvedDom)) ? resolvedDom : item.title;
-    setQuery(searchTarget);
-    handleSearch(searchTarget);
+    const title = item.title || item.name || item.domain || query;
+    const loc = location.trim();
+    const cleanDom = item.domain && isValidDomainUrl(item.domain) ? extractCleanDomain(item.domain) : "";
+    const chosen = cleanDom || title;
+    const finalQ = loc ? `${chosen} ${loc}` : chosen;
+    setQuery(chosen);
+    handleSearch(finalQ, title, {
+      country: "",
+      state: "",
+      city: loc,
+      rawBusinessName: title,
+      rawLocation: loc
+    });
   };
   
   // Calculate real trending places mapped to clean URLs
@@ -498,32 +510,134 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   return (
     <div className={`fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans transition-transform duration-250 ease-out ${isClosing ? 'translate-y-full' : 'animate-in slide-in-from-bottom'}`}>
       
-      {/* Top Search Header */}
-      <div className="w-full flex flex-col p-3 pt-[max(12px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800 gap-2">
-        <div className="w-full flex items-center gap-2">
+      {/* Top Search Header - Yelp Style */}
+      <div className="w-full flex flex-col pt-[max(10px,env(safe-area-inset-top))] sticky top-0 z-50 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 shadow-md">
+        
+        {/* Header Navigation Bar (Cancel | Yoouz Logo | Search) */}
+        <div className="w-full h-12 flex items-center justify-between px-3">
           <button 
              onClick={handleBack}
-             className="text-white p-2 hover:bg-zinc-800 rounded-full transition-colors cursor-pointer shrink-0"
-             aria-label="Back"
+             className="text-zinc-300 hover:text-white font-medium text-sm px-2 py-1 -ml-1 transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-5 h-5" />
+            {submittedQuery ? "Back" : "Cancel"}
           </button>
           
-          <div className="flex-1 min-w-0">
-            <CopoLocationSearchBar
-              compact={false}
-              hideDropdown={true}
-              initialQuery={query}
-              autoFocus={true}
-              suggestions={mergedSuggestions}
-              onQueryChange={(val) => setQuery(val)}
-              onSelectSuggestion={(item) => handleSelectSuggestion(item)}
-              onSearch={(fullQuery, locationDetails) => {
-                setQuery(fullQuery);
-                handleSearch(fullQuery, locationDetails.rawBusinessName, locationDetails);
-              }}
-            />
+          <div className="flex items-center gap-1.5 select-none">
+            <img src="/favicon.svg" alt="Yoouz" className="w-5 h-5 rounded-md" />
+            <span className="font-black text-lg tracking-tight text-white">yoouz</span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => executeSearch()}
+            disabled={!query.trim()}
+            className="text-white font-bold text-sm px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+          >
+            Search
+          </button>
+        </div>
+
+        {/* Dual Yelp-Style Stacked Search Bars */}
+        <div className="w-full flex flex-col gap-2 px-3 pb-3 pt-1">
+          {/* Box 1: Business name / keyword */}
+          <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all">
+            <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+            <input
+              ref={businessInputRef}
+              type="text"
+              dir="auto"
+              enterKeyHint="search"
+              value={query}
+              onChange={(e) => {
+                const val = e.target.value;
+                setQuery(val);
+                if (submittedQuery) setSubmittedQuery("");
+              }}
+              onFocus={() => {
+                if (submittedQuery) setSubmittedQuery("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  executeSearch();
+                }
+              }}
+              placeholder={t("search.businessPlaceholder", "Search business, brand, domain...")}
+              className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
+              autoFocus={true}
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  if (submittedQuery) setSubmittedQuery("");
+                  businessInputRef.current?.focus();
+                }}
+                className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
+                title="Clear"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Box 2: Location (the same kind of search bar under that only for location!) */}
+          {(showLocationBar || query.trim().length > 0 || location.trim().length > 0 || isFocusedLocation) ? (
+            <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+              <MapPin className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+              <input
+                ref={locationInputRef}
+                type="text"
+                dir="auto"
+                enterKeyHint="search"
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  if (submittedQuery) setSubmittedQuery("");
+                }}
+                onFocus={() => {
+                  setIsFocusedLocation(true);
+                  if (submittedQuery) setSubmittedQuery("");
+                }}
+                onBlur={() => setIsFocusedLocation(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    executeSearch();
+                  }
+                }}
+                placeholder={t("search.locationPlaceholder", "Location")}
+                className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
+              />
+              {location && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLocation("");
+                    if (submittedQuery) setSubmittedQuery("");
+                    locationInputRef.current?.focus();
+                  }}
+                  className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
+                  title="Clear Location"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setShowLocationBar(true);
+                setTimeout(() => locationInputRef.current?.focus(), 50);
+              }}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 self-start px-1 py-0.5 transition-colors cursor-pointer"
+            >
+              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Add location</span>
+            </button>
+          )}
         </div>
       </div>
       
@@ -631,7 +745,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onClick={() => handleSearch(cleanUrl)}
+                        onClick={() => {
+                          setQuery(cleanUrl);
+                          executeSearch(cleanUrl);
+                        }}
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 
@@ -664,7 +781,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onClick={() => handleSearch(cleanUrl)}
+                        onClick={() => {
+                          setQuery(cleanUrl);
+                          executeSearch(cleanUrl);
+                        }}
                         className="flex items-center gap-3 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-lg transition-colors"
                       >
                         <SearchBusinessBadge 

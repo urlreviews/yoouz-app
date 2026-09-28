@@ -252,13 +252,13 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* Mobile View (< 640px) - Native App 2-Line Search Card with Auto-Location  */}
+        {/* Mobile View (< 640px) - Yelp-Style Twin Stacked Search Bars               */}
         {/* ========================================================================= */}
-        <div className="flex sm:hidden flex-col gap-1.5 w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl p-2 shadow-lg transition-all focus-within:border-zinc-700">
+        <div className="flex sm:hidden flex-col gap-2 w-full">
           
-          {/* Row 1: Business / Domain Input (Bigger text) */}
-          <div className="flex items-center gap-2.5 px-2 py-1 min-w-0">
-            <Search className="w-5 h-5 text-zinc-400 shrink-0" />
+          {/* Box 1: Business / Domain Input */}
+          <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all">
+            <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
             
             <input
               ref={mobileBizInputRef}
@@ -285,8 +285,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search business...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-base placeholder:text-zinc-500 focus:outline-none font-bold"
+              placeholder={t("search.businessPlaceholder", "Search business, brand, domain...")}
+              className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"
               autoFocus={autoFocus}
             />
 
@@ -299,64 +299,74 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   setShowSuggestions(false);
                   mobileBizInputRef.current?.focus();
                 }}
-                className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0"
+                className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
                 title="Clear"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-
-            {/* Submit Action Pill Button on Mobile */}
-            <button
-              type="submit"
-              disabled={isSearching || !businessName.trim()}
-              className="w-9 h-9 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm"
-              title="Search"
-            >
-              {isSearching || isLoadingSuggest ? (
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-              ) : (
-                <ArrowRight className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
-              )}
-            </button>
           </div>
 
-          {/* Hairline Divider */}
-          <div className="w-full h-[1px] bg-zinc-800/80 my-0.5" />
-
-          {/* Row 2: Location Input */}
-          <div className="flex items-center gap-2 px-2 py-1 min-w-0">
-            <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
-            
-            <input
-              ref={mobileLocInputRef}
-              type="text"
-              dir="auto"
-              enterKeyHint="search"
-              value={location}
-              onChange={(e) => handleLocationChange(e.target.value)}
-              onFocus={() => {
-                setActiveField("location");
-                setHasLocationPulse(false);
-              }}
-              placeholder={t("search.locationPlaceholder", "Location")}
-              className="flex-1 min-w-0 bg-transparent text-xs text-white placeholder:text-zinc-500 focus:outline-none font-medium"
-            />
-
-            {location && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleLocationChange("");
-                  mobileLocInputRef.current?.focus();
+          {/* Box 2: Location Input (Revealed automatically under business box) */}
+          {(businessName.trim().length > 0 || location.trim().length > 0 || showLocationInputMobile || activeField === "location") ? (
+            <div className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-3 flex items-center gap-2.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-white/10 transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+              <MapPin className="w-4.5 h-4.5 text-zinc-400 shrink-0" />
+              
+              <input
+                ref={mobileLocInputRef}
+                type="text"
+                dir="auto"
+                enterKeyHint="search"
+                value={location}
+                onChange={(e) => handleLocationChange(e.target.value)}
+                onFocus={() => {
+                  setActiveField("location");
+                  setHasLocationPulse(false);
                 }}
-                className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
-                title="Clear Location"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+                placeholder={t("search.locationPlaceholder", "Location")}
+                className="flex-1 min-w-0 bg-transparent text-[15px] text-white placeholder:text-zinc-500 focus:outline-none font-medium"
+              />
+
+              {location && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleLocationChange("");
+                    mobileLocInputRef.current?.focus();
+                  }}
+                  className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
+                  title="Clear Location"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setShowLocationInputMobile(true);
+                setTimeout(() => mobileLocInputRef.current?.focus(), 50);
+              }}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 self-start px-1 py-0.5 transition-colors cursor-pointer"
+            >
+              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Add location</span>
+            </button>
+          )}
+
+          {/* Clean Mobile Search Action Button */}
+          <button
+            type="submit"
+            disabled={isSearching || !businessName.trim()}
+            className="w-full h-11 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-sm cursor-pointer mt-0.5"
+          >
+            {isSearching || isLoadingSuggest ? (
+              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+            ) : (
+              <span>{t("common.search", "Search")}</span>
             )}
-          </div>
+          </button>
         </div>
       </form>
 
