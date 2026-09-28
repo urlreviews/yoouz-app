@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, MapPin, X, Loader2, ArrowRight } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, isValidDomainUrl } from "../utils/placeUtils";
+import { searchCitySuggestions, CitySuggestion } from "../utils/locationSearchHelper";
 
 export interface CopoLocationSearchBarProps {
   onSearch: (
@@ -85,8 +86,15 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const citySuggestions = useMemo(() => {
+    if (activeField !== "location") return [];
+    return searchCitySuggestions(location, 6);
+  }, [activeField, location]);
+
   const handleLocationChange = (val: string) => {
     setLocation(val);
+    setActiveField("location");
+    setShowSuggestions(false);
     if (val.trim()) {
       setHasLocationPulse(false);
     }
@@ -394,8 +402,67 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         </div>
       </form>
 
-      {/* Autocomplete / Live Suggestions Dropdown (Only rendered when not handled by parent container) */}
-      {!hideDropdown && showSuggestions && suggestions.length > 0 && (
+      {/* City / Location Suggestions Dropdown */}
+      {!hideDropdown && activeField === "location" && citySuggestions.length > 0 && (
+        <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-850 max-h-[300px] overflow-y-auto animate-in fade-in duration-150">
+          <div className="px-4 py-2 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
+            <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Select City or Region</span>
+          </div>
+          {citySuggestions.map((c, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setLocation(c.city);
+                setActiveField(null);
+                setShowSuggestions(false);
+                if (businessName.trim()) {
+                  const trimmedBiz = businessName.trim();
+                  const cleanDom = extractCleanDomain(trimmedBiz);
+                  if (isValidDomainUrl(cleanDom)) {
+                    onSearch(cleanDom, {
+                      country: c.country,
+                      state: c.state || "",
+                      city: c.city,
+                      rawBusinessName: trimmedBiz,
+                      rawLocation: c.city
+                    });
+                  } else {
+                    onSearch(`${trimmedBiz} ${c.city}`.trim(), {
+                      country: c.country,
+                      state: c.state || "",
+                      city: c.city,
+                      rawBusinessName: trimmedBiz,
+                      rawLocation: c.city
+                    });
+                  }
+                } else {
+                  bizInputRef.current?.focus();
+                  mobileBizInputRef.current?.focus();
+                }
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
+            >
+              <div className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 flex items-center justify-center shrink-0 text-zinc-400 group-hover:text-white transition-colors">
+                <MapPin className="w-4 h-4 text-zinc-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
+                  {c.city}
+                </div>
+                <div className="text-xs text-zinc-400 truncate">
+                  {c.state ? `${c.state}, ${c.country}` : c.country}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Autocomplete / Live Business Suggestions Dropdown */}
+      {!hideDropdown && activeField === "business" && showSuggestions && suggestions.length > 0 && (
         <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
             const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));

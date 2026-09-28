@@ -8,6 +8,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
+import { searchCitySuggestions, CitySuggestion } from "../utils/locationSearchHelper";
 
 interface CopoMobileSearchViewProps {
   places: Place[];
@@ -85,6 +86,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const locationInputRef = useRef<HTMLInputElement>(null);
   
   const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
+
+  const mobileCitySuggestions = React.useMemo(() => {
+    return searchCitySuggestions(location, 6);
+  }, [location]);
 
   // Live Auto-Suggest debounce
   useEffect(() => {
@@ -434,8 +439,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
               logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
               avatarUrl: isValidLogo ? data.logo : optimisticPlace.avatarUrl,
-              website: data.url || optimisticPlace.website,
-              brandDomain: data.domain || optimisticPlace.brandDomain,
+              website: data.url || optimisticPlace.website || (data.domain ? `https://${data.domain}` : ""),
+              brandDomain: data.domain || optimisticPlace.brandDomain || (data.url ? extractCleanDomain(data.url) : ""),
               description: data.description || optimisticPlace.description
             });
           }
@@ -447,14 +452,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     setSubmittedQuery(trimmed);
   };
 
-  const executeSearch = (targetQuery?: string, preferredName?: string) => {
+  const executeSearch = (
+    targetQuery?: string, 
+    preferredName?: string,
+    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string; rawLocation?: string }
+  ) => {
     const rawBiz = (targetQuery !== undefined ? targetQuery : query).trim();
     if (!rawBiz) return;
 
     businessInputRef.current?.blur();
     locationInputRef.current?.blur();
 
-    const loc = location.trim();
+    const loc = (locationDetails?.city || location).trim();
     const finalQ = loc ? `${rawBiz} ${loc}` : rawBiz;
 
     // 0ms Check 1: Authoritative matching place in local places list
@@ -565,6 +574,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               phone: data.phone || newPlace.phone,
               bannerUrl: data.image || newPlace.bannerUrl,
               logoUrl: data.logo || newPlace.logoUrl,
+              website: data.url || newPlace.website || (data.domain ? `https://${data.domain}` : ""),
+              brandDomain: data.domain || newPlace.brandDomain || (data.url ? extractCleanDomain(data.url) : ""),
               description: data.description || newPlace.description
             });
           }
@@ -743,7 +754,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   setIsFocusedLocation(true);
                   if (submittedQuery) setSubmittedQuery("");
                 }}
-                onBlur={() => setIsFocusedLocation(false)}
+                onBlur={() => {
+                  setTimeout(() => setIsFocusedLocation(false), 250);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -811,8 +824,47 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         ) : (
           <div className="p-3 sm:p-4 flex flex-col gap-6">
             
-            {/* Autocomplete Suggestions */}
-            {query.length > 0 && mergedSuggestions.length > 0 && (
+            {/* City Autocomplete Suggestions when focused or typing in location */}
+            {isFocusedLocation && mobileCitySuggestions.length > 0 ? (
+              <div className="flex flex-col rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl divide-y divide-zinc-900/90">
+                <div className="px-4 py-2.5 bg-zinc-900/80 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-800/80">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Suggested Cities & Locations</span>
+                </div>
+                {mobileCitySuggestions.map((c, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setLocation(c.city);
+                      setIsFocusedLocation(false);
+                      if (query.trim()) {
+                        executeSearch(query, undefined, { city: c.city, country: c.country, state: c.state, rawBusinessName: query });
+                      } else {
+                        businessInputRef.current?.focus();
+                      }
+                    }}
+                    className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group"
+                  >
+                    <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                      <MapPin className="w-4.5 h-4.5 text-zinc-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-zinc-200 transition-colors">
+                        {c.city}
+                      </div>
+                      <div className="text-xs text-zinc-400 truncate mt-0.5">
+                        {c.state ? `${c.state}, ${c.country}` : c.country}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Business Autocomplete Suggestions */}
+            {!isFocusedLocation && query.length > 0 && mergedSuggestions.length > 0 && (
               <div className="flex flex-col divide-y divide-zinc-900/90 rounded-2xl bg-zinc-950 border border-zinc-800/80 overflow-hidden shadow-xl">
                 {mergedSuggestions.map((item, idx) => {
                   const title = item.title || item.name || (item.domain && isValidDomainUrl(item.domain) ? item.domain : query);

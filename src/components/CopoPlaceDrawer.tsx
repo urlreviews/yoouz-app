@@ -999,10 +999,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               const words = fullName.split(/\s+/);
               if (words.length <= 1) {
                 return (
-                  <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]" dir="auto">
-                    <span className="inline-block whitespace-nowrap">
+                  <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
+                    <span className="inline-flex items-center whitespace-nowrap shrink-0" dir="auto">
                       <bdi dir="auto">{fullName}</bdi>
-                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 inline-block align-middle ml-1.5 -mt-0.5 shrink-0" />
+                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 ml-1.5 -mt-0.5 shrink-0" />
                     </span>
                   </h2>
                 );
@@ -1010,11 +1010,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               const allExceptLast = words.slice(0, -1).join(" ");
               const lastWord = words[words.length - 1];
               return (
-                <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words [overflow-wrap:anywhere]" dir="auto">
+                <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
                   <bdi dir="auto">{allExceptLast}</bdi>{" "}
-                  <span className="inline-block whitespace-nowrap">
+                  <span className="inline-flex items-center whitespace-nowrap shrink-0">
                     <bdi dir="auto">{lastWord}</bdi>
-                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 inline-block align-middle ml-1.5 -mt-0.5 shrink-0" />
+                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 ml-1.5 -mt-0.5 shrink-0" />
                   </span>
                 </h2>
               );

@@ -872,10 +872,30 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                   />
                   <div className="min-w-0 flex-1 py-0.5">
-                    <span className="flex items-center gap-1 leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2 [overflow-wrap:anywhere]">
-                      <span className="line-clamp-2 [overflow-wrap:anywhere]">{cardName}</span>
-                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0 inline-block align-text-top ml-0.5" />
-                    </span>
+                    {(() => {
+                      const words = (cardName || "").trim().split(/\s+/);
+                      if (words.length <= 1) {
+                        return (
+                          <span className="leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
+                            <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                              <bdi dir="auto">{cardName}</bdi>
+                              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0 ml-1" />
+                            </span>
+                          </span>
+                        );
+                      }
+                      const allExceptLast = words.slice(0, -1).join(" ");
+                      const lastWord = words[words.length - 1];
+                      return (
+                        <span className="leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
+                          <bdi dir="auto">{allExceptLast}</bdi>{" "}
+                          <span className="inline-flex items-center whitespace-nowrap shrink-0">
+                            <bdi dir="auto">{lastWord}</bdi>
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0 ml-1" />
+                          </span>
+                        </span>
+                      );
+                    })()}
                     {!isEmbed && (
                       <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
                         <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />

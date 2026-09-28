@@ -118,6 +118,7 @@ export function App() {
         if (Array.isArray(parsed)) {
           const list = parsed
             .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
+            .filter((p: any) => Boolean(p && p.id && p.id !== "business" && p.id !== "business-1"))
             .map((p: any) => {
               // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
               if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {

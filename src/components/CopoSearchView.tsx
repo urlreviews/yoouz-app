@@ -229,8 +229,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     fetch(enrichUrl)
       .then(r => r.ok ? r.json() : null)
       .then(meta => {
-        if (meta && onAddPlace) {
-          onAddPlace({
+        if (meta) {
+          const updated: Place = {
             ...instantPlace,
             name: meta.siteName || meta.title || instantPlace.name,
             category: meta.category || instantPlace.category,
@@ -238,8 +238,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             phone: meta.phone || instantPlace.phone,
             bannerUrl: meta.image || instantPlace.bannerUrl,
             logoUrl: meta.logo || instantPlace.logoUrl,
+            website: meta.url || instantPlace.website || (meta.domain ? `https://${meta.domain}` : ""),
+            brandDomain: meta.domain || instantPlace.brandDomain || (meta.url ? extractCleanDomain(meta.url) : ""),
             description: meta.description || instantPlace.description
-          });
+          };
+          setSearchedPlace(updated);
+          if (onAddPlace) onAddPlace(updated);
         }
       })
       .catch(() => {});
@@ -413,24 +417,30 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
       const isRealDomain = isValidDomainUrl(cleanUrl);
 
-      // Instant place object
-      const instantLogo: string = (preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "") 
-        || (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
-        || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "");
-      const instantBanner: string = (preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || (isRealDomain ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
+      const isMetaMatchingCurrent = Boolean(
+        preloadedMeta && (
+          (isRealDomain && preloadedMeta.domain && extractCleanDomain(preloadedMeta.domain) === cleanUrl) ||
+          (preloadedMeta.title && baseName && preloadedMeta.title.toLowerCase().includes(baseName.toLowerCase()))
+        )
+      );
+
+      // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
+      const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
+        || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
+        || (isMetaMatchingCurrent && preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
+      const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
+        || (isMetaMatchingCurrent && preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
         || "";
       const instantName = preferredName
         || locationDetails?.rawBusinessName
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-        || preloadedMeta?.title
-        || preloadedMeta?.siteName
+        || (isMetaMatchingCurrent && (preloadedMeta?.title || preloadedMeta?.siteName))
         || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
         || baseName
         || rawQuery;
 
-      const instantCity = locationDetails?.city || preloadedMeta?.city || (isRealDomain ? "Online" : "");
-      const instantCountry = locationDetails?.country || preloadedMeta?.country || "";
+      const instantCity = locationDetails?.city || (isMetaMatchingCurrent ? preloadedMeta?.city : "") || (isRealDomain ? "Online" : "");
+      const instantCountry = locationDetails?.country || (isMetaMatchingCurrent ? preloadedMeta?.country : "") || "";
 
       const instantPlace: Place = {
         id: isRealDomain ? cleanUrl : domain,
@@ -710,7 +720,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <div className="min-w-0 w-full flex-1">
                   <h2 
                     onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                    className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors"
+                    className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors leading-snug break-words tracking-tight"
                   >
                     {(() => {
                       const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
@@ -722,9 +732,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       const words = fullName.split(/\s+/);
                       if (words.length <= 1) {
                         return (
-                          <span className="inline-block whitespace-nowrap" dir="auto">
+                          <span className="inline-flex items-center whitespace-nowrap shrink-0" dir="auto">
                             <bdi dir="auto">{fullName}</bdi>
-                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-black shrink-0 inline-block align-middle ml-1.5 -mt-0.5" />
+                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
                           </span>
                         );
                       }
@@ -733,20 +743,39 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       return (
                         <span dir="auto">
                           <bdi dir="auto">{allExceptLast}</bdi>{" "}
-                          <span className="inline-block whitespace-nowrap">
+                          <span className="inline-flex items-center whitespace-nowrap shrink-0">
                             <bdi dir="auto">{lastWord}</bdi>
-                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-black shrink-0 inline-block align-middle ml-1.5 -mt-0.5" />
+                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
                           </span>
                         </span>
                       );
                     })()}
                   </h2>
-                  {searchedPlace.website && isValidDomainUrl(searchedPlace.website) ? (
-                    <a href={searchedPlace.website} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-sm mt-0.5 mb-2">
-                      <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
-                      <span>{searchedPlace.website.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "")}</span>
-                    </a>
-                  ) : null}
+
+                  {/* Official Website / Domain Link under Business Name */}
+                  {(() => {
+                    const rawWeb = searchedPlace.website;
+                    const cleanDom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
+                    let effectiveWeb = "";
+                    if (rawWeb && isValidDomainUrl(rawWeb) && !rawWeb.includes("maps.google.com") && !rawWeb.toLowerCase().includes("wikipedia.org")) {
+                      effectiveWeb = rawWeb.startsWith("http://") || rawWeb.startsWith("https://") ? rawWeb : `https://${rawWeb}`;
+                    } else if (cleanDom && isValidDomainUrl(cleanDom) && cleanDom !== "yoouz.com" && !cleanDom.toLowerCase().includes("wikipedia.org")) {
+                      effectiveWeb = `https://${cleanDom}`;
+                    }
+                    if (!effectiveWeb) return null;
+                    const cleanDisplay = effectiveWeb.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "");
+                    return (
+                      <a 
+                        href={effectiveWeb} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 mb-2 transition-colors cursor-pointer group"
+                      >
+                        <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                        <span className="truncate">{cleanDisplay}</span>
+                      </a>
+                    );
+                  })()}
 
                   {/* Structured Category Row & Sync Status */}
                   {(searchedPlace.category || isEnriching) && (

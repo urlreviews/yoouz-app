@@ -178,3 +178,98 @@ export const formatLocationSearchQuery = (
     displayLocation: locParts.join(", ")
   };
 };
+
+export interface CitySuggestion {
+  city: string;
+  state?: string;
+  country: string;
+  label: string;
+}
+
+/**
+ * Fast search of global cities for auto-suggesting cities when typing in location input
+ */
+export const searchCitySuggestions = (query: string, maxResults = 8): CitySuggestion[] => {
+  const q = (query || "").toLowerCase().trim();
+  if (!q) {
+    return POPULAR_HUBS.slice(0, maxResults).map(h => ({
+      city: h.city,
+      state: h.state,
+      country: h.country,
+      label: h.state ? `${h.city}, ${h.state}` : `${h.city}, ${h.country}`
+    }));
+  }
+
+  const results: CitySuggestion[] = [];
+  const seen = new Set<string>();
+
+  // 1. Check popular hubs first for exact prefix matches
+  for (const h of POPULAR_HUBS) {
+    if (h.city.toLowerCase().startsWith(q) || h.label.toLowerCase().startsWith(q)) {
+      const key = `${h.city.toLowerCase()}:${h.country.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({
+          city: h.city,
+          state: h.state,
+          country: h.country,
+          label: h.state ? `${h.city}, ${h.state}` : `${h.city}, ${h.country}`
+        });
+      }
+    }
+  }
+
+  // 2. Search through curated locationData
+  for (const [country, config] of Object.entries(locationData)) {
+    if (results.length >= maxResults * 2) break;
+
+    if (Array.isArray(config.cities)) {
+      for (const cityName of config.cities) {
+        if (results.length >= maxResults * 2) break;
+        const cLower = cityName.toLowerCase();
+        if (cLower.startsWith(q) || (q.length >= 3 && cLower.includes(q))) {
+          const key = `${cLower}:${country.toLowerCase()}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            results.push({
+              city: cityName,
+              country,
+              label: `${cityName}, ${country}`
+            });
+          }
+        }
+      }
+    } else if (typeof config.cities === 'object') {
+      for (const [stateName, cityList] of Object.entries(config.cities)) {
+        if (results.length >= maxResults * 2) break;
+        if (Array.isArray(cityList)) {
+          for (const cityName of cityList) {
+            if (results.length >= maxResults * 2) break;
+            const cLower = cityName.toLowerCase();
+            if (cLower.startsWith(q) || (q.length >= 3 && cLower.includes(q))) {
+              const key = `${cLower}:${stateName.toLowerCase()}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                results.push({
+                  city: cityName,
+                  state: stateName,
+                  country,
+                  label: `${cityName}, ${stateName}`
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Sort: prefix matches first, then shorter city names
+  return results.sort((a, b) => {
+    const aStarts = a.city.toLowerCase().startsWith(q);
+    const bStarts = b.city.toLowerCase().startsWith(q);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+    return a.city.length - b.city.length;
+  }).slice(0, maxResults);
+};
