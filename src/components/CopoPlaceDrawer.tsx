@@ -435,7 +435,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const displayWebsiteClean = React.useMemo(() => {
     if (!effectiveWebsite) return null;
-    return effectiveWebsite.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "");
+    return extractCleanDomain(effectiveWebsite);
   }, [effectiveWebsite]);
 
   // Check if any video review for this place has a high quality banner or logo
