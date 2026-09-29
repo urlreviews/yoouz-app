@@ -58,9 +58,9 @@ async function scrapeWithFirecrawl(url: string) {
           url,
           formats: ['html', 'markdown'],
           onlyMainContent: false,
-          waitFor: 2000
+          waitFor: 1000
         }),
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(30000) : undefined // Increased to 30s
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
       });
 
       if (!response.ok) {
@@ -75,6 +75,25 @@ async function scrapeWithFirecrawl(url: string) {
       lastError = error.message;
       console.error(`[Firecrawl] Connection to ${baseUrl} failed:`, error.message);
     }
+  }
+
+  // Resilient direct fetch fallback when Firecrawl container is unprovisioned or busy
+  try {
+    console.log(`[Firecrawl Fallback] Direct fetching URL: ${url}`);
+    const directResp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
+      },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+    });
+    if (directResp.ok) {
+      const html = await directResp.text();
+      return { html, metadata: {} };
+    }
+  } catch (dErr) {
+    console.warn(`[Firecrawl Direct Fallback Error]:`, dErr.message);
   }
 
   throw new Error(`FIRECRAWL_ALL_ATTEMPTS_FAILED: ${lastError}`);
@@ -18846,6 +18865,157 @@ function logSearchIntel(query: string, domain: string, status: string, details: 
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
+const DIRECTORY_DOMAINS = new Set([
+  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be",
+  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+  "duckduckgo.com", "bing.com", "yahoo.com", "live.com", "microsoft.com",
+  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "whitepages.com", "superpages.com",
+  "fiverr.com", "upwork.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com",
+  "mapquest.com", "waze.com", "booking.com", "expedia.com", "hotels.com"
+]);
+
+function isValidCandidate(urlStr: string): boolean {
+  if (!urlStr || !urlStr.startsWith('http')) return false;
+  try {
+    const parsed = new URL(urlStr);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    if (!host || !host.includes('.')) return false;
+    if (host === 'apps.apple.com' || host === 'play.google.com') return false;
+    if (DIRECTORY_DOMAINS.has(host) || Array.from(DIRECTORY_DOMAINS).some(d => host === d || host.endsWith('.' + d))) return false;
+    if (urlStr.includes('/aclk?') || urlStr.includes('/search?') || urlStr.includes('/ck/a?')) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function decodeBingUrl(rawUrl: string): string {
+  try {
+    const match = rawUrl.match(/[?&]u=a1([^&]+)/);
+    if (match) {
+      let b64 = match[1];
+      while (b64.length % 4 !== 0) b64 += '=';
+      const decoded = Buffer.from(b64, 'base64').toString('utf-8');
+      if (decoded.startsWith('http')) return decoded;
+    }
+  } catch {}
+  return rawUrl;
+}
+
+function scoreCandidate(urlStr: string, query: string): number {
+  try {
+    const parsed = new URL(urlStr);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    const cleanQ = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanHost = host.split('.')[0].replace(/[^a-z0-9]/g, '');
+    let score = 0;
+    
+    // Exact domain slug match
+    if (cleanHost === cleanQ) score += 60;
+    else if (cleanHost.startsWith(cleanQ) || cleanQ.startsWith(cleanHost)) score += 35;
+    else if (host.includes(cleanQ)) score += 25;
+
+    // Query words matching host
+    const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    let matchedWords = 0;
+    for (const w of words) {
+      if (host.includes(w)) matchedWords++;
+    }
+    score += matchedWords * 20;
+
+    // Prefer shorter path
+    if (parsed.pathname === '/' || parsed.pathname === '') score += 10;
+    else if (parsed.pathname.split('/').length <= 3) score += 5;
+
+    // Penalize generic aggregator words if not in query
+    if (!query.toLowerCase().includes('hostel') && host.includes('hostel')) score -= 50;
+    if (!query.toLowerCase().includes('hotel') && host.includes('hotel')) score -= 30;
+
+    return score;
+  } catch {
+    return -999;
+  }
+}
+
+async function fastSearchDiscovery(query: string): Promise<string | null> {
+  const qEnc = encodeURIComponent(query);
+
+  const [ddgResults, bingResults] = await Promise.all([
+    (async () => {
+      try {
+        const resp = await fetch(`https://html.duckduckgo.com/html/?q=${qEnc}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+        });
+        if (!resp.ok) return [];
+        const html = await resp.text();
+        const urls: string[] = [];
+        
+        for (const m of html.matchAll(/uddg=([^&"'>\s]+)/gi)) {
+          try {
+            const dec = decodeURIComponent(m[1]);
+            if (isValidCandidate(dec)) urls.push(dec);
+          } catch {}
+        }
+        
+        const $ = cheerio.load(html);
+        $('.result__url').each((_, el) => {
+          let text = $(el).text().trim();
+          if (text) {
+            if (!text.startsWith('http')) text = 'https://' + text;
+            if (isValidCandidate(text)) urls.push(text);
+          }
+        });
+        return urls;
+      } catch {
+        return [];
+      }
+    })(),
+    (async () => {
+      try {
+        const resp = await fetch(`https://www.bing.com/search?q=${qEnc}&setlang=en`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9'
+          },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+        });
+        if (!resp.ok) return [];
+        const html = await resp.text();
+        const $ = cheerio.load(html);
+        const urls: string[] = [];
+        $('li.b_algo h2 a').each((_, el) => {
+          const raw = $(el).attr('href');
+          if (raw) {
+            const dec = decodeBingUrl(raw);
+            if (isValidCandidate(dec)) urls.push(dec);
+          }
+        });
+        return urls;
+      } catch {
+        return [];
+      }
+    })()
+  ]);
+
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+  for (const u of [...bingResults, ...ddgResults]) {
+    if (!seen.has(u)) {
+      seen.add(u);
+      candidates.push(u);
+    }
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => scoreCandidate(b, query) - scoreCandidate(a, query));
+  return candidates[0] || null;
+}
+
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
@@ -19088,8 +19258,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // 3. Official Google Discovery Engine (Extreme Resilience & Decryption)
+    // 3. Official Discovery Engine (Fast Multi-Engine Discovery + Fallbacks)
     let discoveredUrl: string = "";
+    try {
+      console.log(`[Fast Discovery] Running parallel multi-engine discovery for: "${cleanQ}"`);
+      const fastResult = await fastSearchDiscovery(cleanQ).catch(() => null);
+      if (fastResult) {
+        console.log(`[Fast Discovery] Found official URL for "${cleanQ}": ${fastResult}`);
+        discoveredUrl = fastResult;
+      }
+    } catch (fdErr) {
+      console.warn(`[Fast Discovery Error]:`, fdErr);
+    }
     try {
       const broadenLocal = (q: string, att: number): string => {
         let cl = q.trim().replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
@@ -19411,7 +19591,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const searchRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/search`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: `${rawQuery} official website`, limit: 1 })
+              body: JSON.stringify({ query: `${rawQuery} official website`, limit: 1 }),
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
             }).then(r => r.ok ? r.json() : null).catch(() => null);
 
             if (searchRes && searchRes.success && searchRes.data && searchRes.data.length > 0) {
@@ -19425,7 +19606,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const scrapeRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: rawQuery, formats: ['markdown', 'html'] })
+              body: JSON.stringify({ url: rawQuery, formats: ['markdown', 'html'] }),
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
             }).then(r => r.ok ? r.json() : null).catch(() => null);
 
             if (scrapeRes && scrapeRes.success && scrapeRes.data) {
