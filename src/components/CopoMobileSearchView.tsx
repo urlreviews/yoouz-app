@@ -113,6 +113,24 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     return () => clearTimeout(timer);
   }, [query]);
   
+  // Autocomplete Predictive Pre-Scraping / Pre-fetching for Mobile Search
+  const preloadedDomainsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!liveSuggestions || liveSuggestions.length === 0) return;
+    
+    // Select the top 3 suggested candidates to pre-fetch in the background while typing on mobile
+    const candidates = liveSuggestions.slice(0, 3);
+    candidates.forEach(item => {
+      const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+      const cleanDom = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+      if (cleanDom && cleanDom.includes('.') && !preloadedDomainsRef.current.has(cleanDom)) {
+        preloadedDomainsRef.current.add(cleanDom);
+        console.info(`[Predictive Pre-Scraping Mobile] Pre-loading and scraping domain: ${cleanDom}`);
+        fetch(`/api/url-metadata?url=${encodeURIComponent('https://' + cleanDom)}&preload=true`).catch(() => {});
+      }
+    });
+  }, [liveSuggestions]);
+
   // Recent searches (stored as clean domain URLs e.g. "uber.com", "bhol.co.il")
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   

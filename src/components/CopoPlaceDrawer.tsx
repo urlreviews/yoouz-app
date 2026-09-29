@@ -1481,10 +1481,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         href={effectiveWebsite}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 flex items-center gap-1"
+                        className="px-4 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
                       >
                         <span>{t("place.visit", "Visit")}</span>
-                        <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>

@@ -120,6 +120,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     return () => clearTimeout(timer);
   }, [query, places]);
 
+  // Autocomplete Predictive Pre-Scraping / Pre-fetching
+  const preloadedDomainsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!suggestions || suggestions.length === 0) return;
+    
+    // Select the top 3 suggested candidates to pre-fetch in the background while typing
+    const candidates = suggestions.slice(0, 3);
+    candidates.forEach(item => {
+      const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
+      const cleanDom = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+      if (cleanDom && cleanDom.includes('.') && !preloadedDomainsRef.current.has(cleanDom)) {
+        preloadedDomainsRef.current.add(cleanDom);
+        console.info(`[Predictive Pre-Scraping] Pre-loading and scraping domain in background: ${cleanDom}`);
+        // Fire non-blocking asynchronous fetch to scrape and persist to database cache
+        fetch(`/api/url-metadata?url=${encodeURIComponent('https://' + cleanDom)}&preload=true`).catch(() => {});
+      }
+    });
+  }, [suggestions]);
+
   // Click outside listener to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
