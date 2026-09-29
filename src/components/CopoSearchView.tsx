@@ -355,7 +355,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     // SUCCESS: We found a real official domain.
     if (isValidDomainUrl(cleanUrl)) {
-      console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}.`);
+      console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
       console.warn("[Search] Discovery completed but no official domain was found for:", rawQuery);
       setIsSearching(false);

@@ -370,7 +370,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     // SUCCESS: We found a real official domain.
     if (isRealDomain) {
-      console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}.`);
+      console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
       console.warn("[Search Mobile] Discovery completed but no verified domain found for:", trimmed);
       setIsSearching(false);

@@ -19003,9 +19003,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       // Extreme Google-Only Discovery Engine (15 high-speed attempts with query variations)
       const variations = [
         `${cleanQ}`,
-        `${cleanQ} official website`,
-        `${cleanQ} homepage`,
-        `${cleanQ} contact`
+        `${cleanQ} info`,
+        `${cleanQ} official`,
+        `${cleanQ} website`
       ];
 
       for (let attempt = 0; attempt < 15; attempt++) {
@@ -19025,7 +19025,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               "Accept-Language": "en-US,en;q=0.9",
               "Referer": "https://www.google.com/",
               "Cache-Control": "no-cache",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+              "Cookie": "CONSENT=YES+cb.20210328-17-p0.en+FX+417; SOCS=IAAeAg"
             },
             signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
           }).catch(() => null);
@@ -19045,51 +19046,37 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
              continue;
           }
           
-          const rawMatches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
-          const redirectMatches = html.match(/\/url\?q=https?:\/\/[^&"'>\s]+/gi) || [];
-          const decodedRedirects = redirectMatches.map(m => {
-            try { return decodeURIComponent(m.replace("/url?q=", "")); } catch(e) { return ""; }
-          }).filter(Boolean);
-
-          const matches = Array.from(new Set([...rawMatches, ...decodedRedirects]));
+          const matches = Array.from(new Set([
+            ...html.matchAll(/https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*/gi),
+            ...html.matchAll(/\/url\?q=(https?:\/\/[^&"'>\s]+)/gi),
+            ...html.matchAll(/href="(https?:\/\/[^"]+)"/gi),
+            ...html.matchAll(/data-url="(https?:\/\/[^"]+)"/gi)
+          ].map(m => {
+            const u = m[1] || m[0];
+            try { return decodeURIComponent(u); } catch(e) { return u; }
+          }))).filter(u => u && u.startsWith('http') && !u.includes('google.com/search') && !u.includes('google.co.il/search'));
           
           const directoryDomains = [
             "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
             "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
             "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
             "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
-            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org"
-          ];
+            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net"
+          ].filter(d => !["apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com"].includes(d));
 
           const validCandidates = matches.filter(u => {
             try {
               const uLower = u.toLowerCase();
               if (uLower.includes("google.com/search") || uLower.includes("google.co.il/search") || uLower.includes("google.com/url")) return false;
+              if (uLower.includes("accounts.google.com") || uLower.includes("support.google.com")) return false;
               const host = new URL(u).hostname.toLowerCase();
               const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
-              return !isNoise && !uLower.includes("schema.org") && !uLower.includes("w3.org") && !uLower.includes("javascript:");
+              return !isNoise && !uLower.includes("javascript:");
             } catch(e) { return false; }
           });
 
           if (validCandidates.length > 0) {
-            const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
-            validCandidates.sort((a, b) => {
-              let scoreA = 0; let scoreB = 0;
-              try {
-                const domA = new URL(a).hostname.toLowerCase().replace(/^www\./, "");
-                const domB = new URL(b).hostname.toLowerCase().replace(/^www\./, "");
-                queryWords.forEach(w => {
-                  if (domA.includes(w)) scoreA += 150;
-                  if (domB.includes(w)) scoreB += 150;
-                });
-                if (new URL(a).pathname.length <= 1) scoreA += 100;
-                if (new URL(b).pathname.length <= 1) scoreB += 100;
-                const slugA = domA.split('.')[0]; const slugB = domB.split('.')[0];
-                if (queryWords.some(w => slugA === w || w.includes(slugA) || slugA.includes(w))) scoreA += 300;
-                if (queryWords.some(w => slugB === w || w.includes(slugB) || slugB.includes(w))) scoreB += 300;
-              } catch(e) {}
-              return scoreB - scoreA;
-            });
+            // Pick the first valid organic candidate immediately - that's usually the official site
             discoveredUrl = validCandidates[0];
             break; 
           }
@@ -19154,7 +19141,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (locData.country) scCountry = locData.country;
               if (locData.phone) scPhone = locData.phone;
               if (locData.email) scEmail = locData.email;
-              if (locData.category) scCategory = locData.category;
+              if (locData.category && locData.category !== "Verified Business") scCategory = locData.category;
               if (locData.openingHours) scOpeningHours = locData.openingHours;
               if (locData.lat) scLat = locData.lat;
               if (locData.lng) scLng = locData.lng;

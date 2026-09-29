@@ -171,11 +171,18 @@ export function scoreCandidateUrl(url: string, query: string, rankIndex: number 
     }
   }
 
-  // Exact brand compound match (e.g. "eliterooter" in "eliterootersocal.com" or "thcgent" in "thcgent.be")
+  // Exact brand compound match
   if (wordsToMatch.length >= 2) {
     const combinedBrand = wordsToMatch.join("");
-    if (hostname.includes(combinedBrand)) {
-      score += 400;
+    if (hostname.includes(combinedBrand) || hostname.replace(/\./g, "").includes(combinedBrand)) {
+      score += 500;
+    }
+  }
+
+  // Partial match reward
+  for (const word of wordsToMatch) {
+    if (hostname.includes(word)) {
+       score += 150;
     }
   }
 
@@ -373,21 +380,21 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
 
         const handleCseResults = (results: any[]) => {
           if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
+          console.info(`[Google CSE] Found ${results.length} results for: "${cleanQ}"`);
           for (let i = 0; i < results.length; i++) {
             const item = results[i];
             const targetUrl = item.url || item.unescapedUrl || (item.richSnippet?.cseImage?.src ? item.url : null);
-            if (targetUrl && isAllowedOrganicUrl(targetUrl)) {
-              if (!candidateMap.has(targetUrl)) {
-                candidateMap.set(targetUrl, i);
-              }
-              if (i === 0 || scoreCandidateUrl(targetUrl, cleanQ, i) >= 1150) {
-                finishWithBestCandidate();
+            if (targetUrl) {
+              const allowed = isAllowedOrganicUrl(targetUrl);
+              console.info(`[Google CSE] Candidate #${i + 1}: ${targetUrl} (Allowed: ${allowed})`);
+              if (allowed) {
+                console.info(`[Google CSE] SUCCESS! Selecting #${i + 1}: ${targetUrl}`);
+                resolve(targetUrl);
+                resolved = true;
+                cleanup();
                 return;
               }
             }
-          }
-          if (candidateMap.size > 0) {
-            setTimeout(finishWithBestCandidate, 150);
           }
         };
 
