@@ -379,7 +379,13 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
         };
 
         const handleCseResults = (results: any[]) => {
-          if (resolved || !results || !Array.isArray(results) || results.length === 0) return;
+          if (resolved || !results || !Array.isArray(results)) return;
+          
+          if (results.length === 0) {
+            console.warn(`[Google CSE] Zero results for query: "${cleanQ}".`);
+            return;
+          }
+
           console.info(`[Google CSE] Found ${results.length} results for: "${cleanQ}"`);
           for (let i = 0; i < results.length; i++) {
             const item = results[i];

@@ -18685,70 +18685,70 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     const bunnyDb = getBunnyDb();
 
-    // 0. Persistent Database Cache Lookup BEFORE hitting Gemini
+    // 0. Persistent Database Cache Lookup (Global Brain)
     if (bunnyDb) {
       try {
         const cleanQDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+        // Search by domain, exact name, or partial name match to find already discovered businesses
         const dbResult = await bunnyDb.execute({
           sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
-                WHERE LOWER(id) = ? OR LOWER(name) = ? OR LOWER(id) = ? LIMIT 1`,
-          args: [cleanQ.toLowerCase(), cleanQ.toLowerCase(), cleanQDom]
+                WHERE LOWER(id) = ? OR LOWER(name) = ? OR LOWER(id) = ? 
+                OR (LOWER(name) LIKE ? AND (city = ? OR country = ?))
+                LIMIT 1`,
+          args: [cleanQ.toLowerCase(), cleanQ.toLowerCase(), cleanQDom, `%${cleanQ.toLowerCase()}%`, "Online", ""]
         });
         
         if (dbResult.rows && dbResult.rows.length > 0) {
           const row = dbResult.rows[0];
           const rowId = (row.id as string) || "";
           
-          // STRICT EXCLUSION: If the cached place ID has no dot (and is not one of the protected local IDs like 'yoouz'),
-          // or is a legacy fabricated domain synthesized from the business name, ignore and purge it!
-          const rawNameClean = ((row.name as string) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
-          const rowIdClean = rowId.toLowerCase().replace(/[^a-z0-9]/g, '');
-          const isFabricatedNameDomain = (
-            rawNameClean.length >= 4 &&
-            (rowIdClean === rawNameClean + "com" || rowIdClean === rawNameClean)
-          );
+          if (rowId && rowId.includes('.')) {
+            // Guard against legacy fabricated domains synthesized from business names
+            const rawNameClean = ((row.name as string) || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+            const rowIdClean = rowId.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const isFabricatedNameDomain = (
+              rawNameClean.length >= 4 &&
+              (rowIdClean === rawNameClean + "com" || rowIdClean === rawNameClean)
+            );
 
-          let parsedData: any = {};
-          if (row.data) {
-            try {
-              parsedData = JSON.parse(row.data as string);
-            } catch(e) {}
-          }
-          const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
-          const isGeneric = isGenericPlaceNameServer(rowName);
-          const isMissingAllDetails = !row.address && !parsedData.phone && !parsedData.bannerUrl && !parsedData.ogImage && !parsedData.description;
+            let parsedData: any = {};
+            if (row.data) {
+              try { parsedData = JSON.parse(row.data as string); } catch(e) {}
+            }
+            const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
+            const isGeneric = isGenericPlaceNameServer(rowName);
+            const isMissingDetails = !row.address && !parsedData.phone && !parsedData.bannerUrl && !parsedData.ogImage && !parsedData.description;
 
-          if (!rowId.includes('.') && rowId !== "yoouz" && rowId !== "vrijens" && rowId !== "dental-care") {
-            console.info(`[Database Cache Lookup] Ignored corrupted cached ID "${rowId}" (missing domain dot). Force fresh resolution!`);
-          } else if (isFabricatedNameDomain) {
-            console.info(`[Database Cache Lookup] Ignored legacy fabricated domain ID "${rowId}" for "${row.name}". Purging and re-resolving!`);
-            bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
-          } else if (isGeneric || isMissingAllDetails) {
-            console.info(`[Database Cache Lookup] Ignored incomplete or generic cached entry "${rowId}" ("${rowName}"). Purging and re-resolving!`);
-            bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
-          } else {
-            const data: ResolvedBusinessData = {
-              domain: (row.id as string) || parsedData.brandDomain || parsedData.domain || "",
-              websiteUrl: (parsedData.website || parsedData.websiteUrl || (row.id ? `https://${row.id}` : "")),
-              name: rowName,
-              category: (row.category as string) || parsedData.category || "Verified Business",
-              address: (row.address as string) || parsedData.address || "",
-              city: (row.city as string) || parsedData.city || "",
-              country: (row.country as string) || parsedData.country || "",
-              phone: (parsedData.phone || row.phone || "") as string,
-              email: (parsedData.email || row.email || "") as string,
-              openingHours: (parsedData.openingHours || "Available 24/7") as string,
-              photo: (parsedData.bannerUrl || parsedData.ogImage || parsedData.image || row.logoUrl || "") as string,
-              description: (parsedData.description || "") as string,
-              lat: Number(row.latitude) || 0,
-              lng: Number(row.longitude) || 0
-            };
-            BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
-            return data;
+            if (isFabricatedNameDomain) {
+              console.info(`[Database Cache] Purged fabricated domain: ${rowId}`);
+              bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
+            } else if (isGeneric && isMissingDetails) {
+              console.info(`[Database Cache] Ignored low-quality generic cache: ${rowName}`);
+            } else {
+              console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
+              const data: ResolvedBusinessData = {
+                domain: rowId,
+                websiteUrl: (parsedData.website || parsedData.url || parsedData.websiteUrl || `https://${rowId}`),
+                name: rowName,
+                category: (row.category as string) || parsedData.category || "Verified Business",
+                address: (row.address as string) || parsedData.address || "",
+                city: (row.city as string) || parsedData.city || "Online",
+                country: (row.country as string) || parsedData.country || "",
+                phone: (parsedData.phone || "") as string,
+                email: (parsedData.email || "") as string,
+                openingHours: (parsedData.openingHours || "Available 24/7") as string,
+                photo: (row.logoUrl as string) || parsedData.logo || parsedData.image || parsedData.ogImage || "",
+                description: (parsedData.description || "") as string,
+                lat: Number(row.latitude) || 0,
+                lng: Number(row.longitude) || 0
+              };
+              BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
+              return data;
+            }
           }
         }
       } catch (dbErr) {
-        console.warn("[Database Cache Lookup Error in resolveBusinessQuery]:", dbErr);
+        console.warn("[Global Brain Cache Error]:", dbErr);
       }
     }
 
@@ -19000,15 +19000,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme Google-Only Discovery Engine (15 high-speed attempts with query variations)
+      // Extreme Google-Only Discovery Engine (20 high-speed attempts with broader query variations)
       const variations = [
         `${cleanQ}`,
-        `${cleanQ} info`,
+        `${cleanQ} website`,
         `${cleanQ} official`,
-        `${cleanQ} website`
+        `${cleanQ} business`,
+        `${cleanQ} site`,
+        `${cleanQ} location`,
+        `${cleanQ} contact`
       ];
 
-      for (let attempt = 0; attempt < 15; attempt++) {
+      for (let attempt = 0; attempt < 20; attempt++) {
         if (discoveredUrl) break;
         try {
           const varIdx = attempt % variations.length;
@@ -19050,11 +19053,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             ...html.matchAll(/https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*/gi),
             ...html.matchAll(/\/url\?q=(https?:\/\/[^&"'>\s]+)/gi),
             ...html.matchAll(/href="(https?:\/\/[^"]+)"/gi),
-            ...html.matchAll(/data-url="(https?:\/\/[^"]+)"/gi)
+            ...html.matchAll(/data-url="(https?:\/\/[^"]+)"/gi),
+            ...html.matchAll(/ping="(https?:\/\/[^"]+)"/gi)
           ].map(m => {
             const u = m[1] || m[0];
             try { return decodeURIComponent(u); } catch(e) { return u; }
-          }))).filter(u => u && u.startsWith('http') && !u.includes('google.com/search') && !u.includes('google.co.il/search'));
+          }))).filter(u => {
+            if (!u || !u.startsWith('http')) return false;
+            const uLower = u.toLowerCase();
+            return !uLower.includes('google.com') && 
+                   !uLower.includes('google.co.il') && 
+                   !uLower.includes('gstatic.com') &&
+                   !uLower.includes('googleadservices.com') &&
+                   !uLower.includes('doubleclick.net');
+          });
           
           const directoryDomains = [
             "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
@@ -19188,6 +19200,66 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
       
+      const firecrawlUrl = process.env.FIRECRAWL_API_URL || "http://localhost:3002";
+      if (firecrawlUrl && (req.query.force_firecrawl || !rawQuery.includes('.') || req.query.scrape)) {
+        try {
+          console.log(`[Firecrawl Bridge] Processing "${rawQuery}" via: ${firecrawlUrl}`);
+          
+          // 1. Search Mode: If input is a name, find the URL
+          if (!rawQuery.includes('.') || req.query.force_search) {
+            const searchRes = await fetch(`${firecrawlUrl}/v1/search`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: `${rawQuery} official website`, limit: 1 })
+            }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+            if (searchRes && searchRes.success && searchRes.data && searchRes.data.length > 0) {
+              rawQuery = searchRes.data[0].url;
+              console.log(`[Firecrawl Bridge] Found URL: ${rawQuery}`);
+            }
+          }
+
+          // 2. Scrape Mode: Get metadata from the URL
+          if (rawQuery.startsWith('http')) {
+            const scrapeRes = await fetch(`${firecrawlUrl}/v1/scrape`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url: rawQuery, formats: ['markdown', 'html'] })
+            }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+            if (scrapeRes && scrapeRes.success && scrapeRes.data) {
+              const data = scrapeRes.data;
+              const metadata = data.metadata || {};
+              const domain = rawQuery.replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0].toLowerCase();
+              
+              const resolved = {
+                title: metadata.title || formatBusinessName(rawQuery, domain),
+                description: metadata.description || "",
+                image: metadata.ogImage || metadata.image || "",
+                logo: metadata.ogImage || metadata.image || `/api/favicon?domain=${domain}`,
+                siteName: metadata.siteName || metadata.title || "",
+                domain: domain,
+                url: rawQuery,
+                address: "", // Firecrawl markdown can be parsed for this later
+                city: "Online",
+                country: "",
+                phone: "",
+                email: "",
+                category: "Verified Business",
+                openingHours: "Available 24/7",
+                locations: []
+              };
+              
+              console.log(`[Firecrawl Bridge] Scrape Success for: ${domain}`);
+              logSearchIntel(rawQuery, domain, "firecrawl_success");
+              return res.json(resolved);
+            }
+          }
+        } catch (fErr) {
+          console.error("[Firecrawl Bridge Error]:", fErr.message);
+        }
+      }
+
       logSearchIntel(rawQuery, "", "initiated");
       
       let targetUrl = rawQuery;
