@@ -1050,18 +1050,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : (
           <div 
-            className="absolute inset-0 w-full h-full border-b border-zinc-800/80 flex items-center justify-center overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 50%, ${brandGrad.to} 100%)`
-            }}
+            className="absolute inset-0 w-full h-full border-b border-zinc-900 bg-zinc-950 flex items-center justify-center overflow-hidden"
           >
+            {/* Ambient Pulsing Glow Backdrop */}
             <div 
-              className="absolute inset-0 opacity-40 pointer-events-none" 
+              className="absolute inset-0 opacity-25 pointer-events-none animate-pulse duration-[3000ms]" 
               style={{
-                backgroundImage: `radial-gradient(circle at 50% 30%, ${brandGrad.glow} 0%, transparent 70%)`
+                background: `radial-gradient(circle at 50% 40%, ${brandGrad.glow || 'rgba(255,255,255,0.05)'} 0%, transparent 65%)`
               }}
             />
-            <Globe className="w-16 h-16 sm:w-20 sm:h-20 text-white/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-85" />
           </div>
         )}
 

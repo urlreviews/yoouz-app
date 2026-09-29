@@ -111,6 +111,7 @@ interface ResolvedBusinessData {
   email: string;
   openingHours: string;
   photo: string;
+  logo?: string;
   description: string;
   lat: number;
   lng: number;
@@ -122,7 +123,7 @@ async function persistToDb(data: ResolvedBusinessData) {
   if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
   try {
     const autoPlaceId = data.domain;
-    const logoUrl = data.photo || `/api/favicon?domain=${data.domain}`;
+    const logoUrl = data.logo || "";
     const autoPlaceDoc = {
       id: autoPlaceId,
       name: data.name,
@@ -18846,6 +18847,7 @@ Return JSON:
     email: string;
     openingHours: string;
     photo: string;
+    logo?: string;
     description: string;
     lat: number;
     lng: number;
@@ -18895,31 +18897,97 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
     let title = $('meta[property="og:title"]').attr('content') || $('title').text() || "";
 
     const ogImg = $('meta[property="og:image"]').attr('content');
-    if (ogImg && !ogImg.includes("favicon") && !ogImg.includes("placeholder") && !ogImg.includes("pixel.gif")) {
-      const rawOg = ogImg.includes('https://') ? 'https://' + ogImg.split('https://').pop() : ogImg;
-      banner = imPrefix ? `${imPrefix}${rawOg}` : rawOg;
+
+    // Collect all raw image URLs from HTML tags and inline styles
+    const allImageUrls: string[] = [];
+    if (ogImg) allImageUrls.push(ogImg);
+    const twitterImg = $('meta[name="twitter:image"]').attr('content') || $('meta[property="twitter:image"]').attr('content');
+    if (twitterImg) allImageUrls.push(twitterImg);
+
+    $('img').each((_, el) => {
+      const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original');
+      if (src) allImageUrls.push(src);
+    });
+
+    const inlineBgs = (html.match(/url\s*\(\s*['"]?([^'")]+)['"]?\s*\)/gi) || []) as string[];
+    inlineBgs.forEach(match => {
+      const cleanMatch = match.replace(/url\s*\(\s*['"]?|['"]?\s*\)/gi, '').trim();
+      if (cleanMatch && !cleanMatch.startsWith('data:')) {
+        allImageUrls.push(cleanMatch);
+      }
+    });
+
+    // Clean and normalize matched URLs to be relative or absolute to the target domain
+    const uniqueRawUrls = Array.from(new Set(allImageUrls))
+      .map(u => u.trim())
+      .filter(u => {
+        if (!u || u.startsWith('data:') || u.includes('pixel.gif') || u.includes('blank.gif') || u.includes('transparent')) return false;
+        const lower = u.toLowerCase();
+        if (lower.includes('favicon') || lower.includes('.ico') || lower.includes('avatar') || lower.includes('32x32') || lower.includes('16x16') || lower.includes('60x60')) return false;
+        return true;
+      });
+
+    const cleanUrls = uniqueRawUrls.map(u => {
+      const idx = u.indexOf('https://');
+      if (idx !== -1) return 'https://' + u.slice(idx + 8).split('/')[0] + '/' + u.slice(idx + 8).split('/').slice(1).join('/');
+      const hIdx = u.indexOf('http://');
+      if (hIdx !== -1) return 'http://' + u.slice(hIdx + 7).split('/')[0] + '/' + u.slice(hIdx + 7).split('/').slice(1).join('/');
+      
+      if (u.startsWith('/')) return `https://${cleanDom}${u}`;
+      return `https://${cleanDom}/${u}`;
+    });
+
+    // High-Fidelity Banner and Logo Ranking Algorithm
+    let bestLogo = "";
+    let bestBanner = "";
+    let highestLogoScore = -1000;
+    let highestBannerScore = -1000;
+
+    cleanUrls.forEach(origUrl => {
+      const lower = origUrl.toLowerCase();
+      
+      // LOGO Score calculation
+      let logoScore = 0;
+      if (lower.includes('logo')) logoScore += 100;
+      if (lower.includes('brand')) logoScore += 50;
+      if (lower.includes('header')) logoScore += 20;
+      if (lower.includes('cropped')) logoScore -= 20;
+      if (lower.includes('300x') || lower.includes('150x')) logoScore += 10;
+      if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('banner') || lower.includes('hero')) logoScore -= 80;
+      
+      if (logoScore > highestLogoScore) {
+        highestLogoScore = logoScore;
+        bestLogo = origUrl;
+      }
+
+      // BANNER Score calculation
+      let bannerScore = 0;
+      if (lower.includes('hero') || lower.includes('banner') || lower.includes('header') || lower.includes('cover') || lower.includes('background') || lower.includes('widescreen')) bannerScore += 100;
+      if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('1200x') || lower.includes('1920x') || lower.includes('2560x')) bannerScore += 80;
+      if (lower.includes('house') || lower.includes('cleaning') || lower.includes('cleaner') || lower.includes('room') || lower.includes('office') || lower.includes('lobby') || lower.includes('carpet')) bannerScore += 40;
+      if (lower.includes('logo') || lower.includes('icon') || lower.includes('favicon')) bannerScore -= 120;
+      if (lower.includes('150x') || lower.includes('300x')) bannerScore -= 85;
+      if (lower.includes('/wp-content/uploads/')) bannerScore += 15;
+
+      if (bannerScore > highestBannerScore) {
+        highestBannerScore = bannerScore;
+        bestBanner = origUrl;
+      }
+    });
+
+    if (bestLogo && highestLogoScore > 0) {
+      logo = imPrefix ? `${imPrefix}${bestLogo}` : bestLogo;
     }
-
-    const uploadMatches = html.match(/https?:\/\/[^\s"'<>]+\/wp-content\/uploads\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp)/gi) || [];
-    const cleanUploads = uploadMatches
-      .map(m => m.includes("https://") ? "https://" + m.split("https://").pop() : m)
-      .filter(m => !m.startsWith("data:") && !m.includes("favicon") && !m.includes("icon"));
-
-    const logoCandidate = cleanUploads.find(m => m.toLowerCase().includes("logo") && !m.includes("60x") && !m.includes("32x")) || "";
-    if (logoCandidate) logo = imPrefix ? `${imPrefix}${logoCandidate}` : logoCandidate;
-
-    const bannerCandidate = cleanUploads.find(m => 
-      !m.toLowerCase().includes("logo") && 
-      (m.includes("1536x") || m.includes("1024x") || m.includes("Lakewood") || m.includes("house") || m.includes("Carpet") || m.includes("Deep") || m.includes("Standard"))
-    ) || cleanUploads.find(m => !m.toLowerCase().includes("logo")) || "";
-    if (bannerCandidate) banner = imPrefix ? `${imPrefix}${bannerCandidate}` : bannerCandidate;
+    if (bestBanner && highestBannerScore > -20) {
+      banner = imPrefix ? `${imPrefix}${bestBanner}` : bestBanner;
+    }
 
     return {
       title,
       description: desc,
       banner,
       logo,
-      photos: Array.from(new Set(cleanUploads.map(u => imPrefix ? `${imPrefix}${u}` : u))).slice(0, 10)
+      photos: Array.from(new Set(cleanUrls.map(u => imPrefix ? `${imPrefix}${u}` : u))).slice(0, 10)
     };
   } catch (e: any) {
     return null;
@@ -19022,6 +19090,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let domTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name || formatBusinessName(cleanDom);
       let domDesc = loc?.description || "";
       let domPhoto = (loc as any)?.bannerUrl || (loc as any)?.photo || "";
+      let domLogo = (loc as any)?.logoUrl || "";
       let domAddress = loc?.address || "";
       let domCity = loc?.city || "Online";
       let domCountry = loc?.country || "";
@@ -19066,6 +19135,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   domPhoto = ogImg;
                 }
               }
+
+              // Extract high-resolution Logo from img tags inside webpage HTML (never favicons)
+              let scrapedLogo = "";
+              d$('img').each((_, el) => {
+                const src = d$(el).attr('src') || d$(el).attr('data-src') || d$(el).attr('data-lazy-src') || d$(el).attr('data-original') || '';
+                const alt = d$(el).attr('alt') || '';
+                if (!src || src.startsWith('data:') || src.toLowerCase().includes('favicon') || src.toLowerCase().includes('.ico')) return;
+                
+                const lowerSrc = src.toLowerCase();
+                const lowerAlt = alt.toLowerCase();
+                
+                if (lowerSrc.includes('logo') || lowerAlt.includes('logo') || lowerSrc.includes('brand') || lowerAlt.includes('brand')) {
+                  if (!scrapedLogo && !lowerSrc.includes('60x') && !lowerSrc.includes('32x') && !lowerSrc.includes('16x')) {
+                    try {
+                      scrapedLogo = new URL(src, targetUrl).toString();
+                    } catch (e) {
+                      scrapedLogo = src;
+                    }
+                  }
+                }
+              });
+              if (scrapedLogo) domLogo = scrapedLogo;
               
               const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, targetUrl, cleanDom);
               if (scrapedLoc.address && (!domAddress || domAddress === "Verified Location")) domAddress = scrapedLoc.address;
@@ -19129,12 +19220,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       }
 
-      // If we still lack photo/banner or description after direct scrape and search intel, check the high-fidelity web archive
-      if (!domPhoto || !domDesc) {
+      // If we still lack photo/banner, logo, or description after direct scrape and search intel, check the high-fidelity web archive
+      if (!domPhoto || !domLogo || !domDesc) {
         try {
           const archiveData = await fetchArchiveMetadata(cleanDom);
           if (archiveData) {
             if (archiveData.banner && !domPhoto) domPhoto = archiveData.banner;
+            if (archiveData.logo && !domLogo) domLogo = archiveData.logo;
             if (archiveData.description && !domDesc) domDesc = archiveData.description;
             if (archiveData.title && (!domTitle || isGenericPlaceNameServer(domTitle))) domTitle = archiveData.title;
           }
@@ -19153,6 +19245,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         email: domEmail,
         openingHours: domOpeningHours,
         photo: domPhoto,
+        logo: domLogo,
         description: domDesc,
         lat: domLat,
         lng: domLng
@@ -19681,13 +19774,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (eliteFallback) {
               const targetDom = eliteFallback.domain || domain;
               let bannerImg = eliteFallback.photo || "";
-              let logoImg = `/api/favicon?domain=${targetDom}`;
+              let logoImg = eliteFallback.logo || `/api/favicon?domain=${targetDom}`;
 
-              if (!bannerImg) {
+              if (!bannerImg || !eliteFallback.logo) {
                 try {
                   const arc = await fetchArchiveMetadata(targetDom);
-                  if (arc?.banner) bannerImg = arc.banner;
-                  if (arc?.logo) logoImg = arc.logo;
+                  if (arc?.banner && !bannerImg) bannerImg = arc.banner;
+                  if (arc?.logo && (!eliteFallback.logo || logoImg.includes('favicon'))) logoImg = arc.logo;
                 } catch(e) {}
               }
 
