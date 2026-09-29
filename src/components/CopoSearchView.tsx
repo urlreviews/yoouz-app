@@ -130,11 +130,30 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     candidates.forEach(item => {
       const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
       const cleanDom = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+      
       if (cleanDom && cleanDom.includes('.') && !preloadedDomainsRef.current.has(cleanDom)) {
         preloadedDomainsRef.current.add(cleanDom);
         console.info(`[Predictive Pre-Scraping] Pre-loading and scraping domain in background: ${cleanDom}`);
         // Fire non-blocking asynchronous fetch to scrape and persist to database cache
         fetch(`/api/url-metadata?url=${encodeURIComponent('https://' + cleanDom)}&preload=true`).catch(() => {});
+      } else if (!cleanDom && item.title) {
+        // Pre-resolve and pre-scrape plain business names from the dropdown list in the background
+        const phraseKey = item.title.toLowerCase().trim();
+        if (!preloadedDomainsRef.current.has(phraseKey)) {
+          preloadedDomainsRef.current.add(phraseKey);
+          console.info(`[Predictive Pre-Resolve] Pre-resolving domain and scraping for name: ${item.title}`);
+          fetch(`/api/url-metadata?url=${encodeURIComponent(item.title)}&preload=true`)
+            .then(res => res.json())
+            .then(data => {
+              const resolvedDom = data.domain;
+              if (resolvedDom && resolvedDom.includes('.') && !preloadedDomainsRef.current.has(resolvedDom)) {
+                preloadedDomainsRef.current.add(resolvedDom);
+                console.info(`[Predictive Pre-Scraping after Resolve] Scraping pre-resolved: ${resolvedDom}`);
+                fetch(`/api/url-metadata?url=${encodeURIComponent('https://' + resolvedDom)}&preload=true`).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
       }
     });
   }, [suggestions]);
