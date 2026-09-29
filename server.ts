@@ -7524,8 +7524,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               const key = domain || canonId;
 
               if (seenKeys.has(key)) {
-                duplicatePlaceCount++;
-                duplicatePlaceNames.push(key);
+                // Auto-prune duplicate place row from Bunny DB on health check execution
+                try {
+                  bDb.execute("DELETE FROM places WHERE id = ?", [row.id]).catch(() => {});
+                } catch (e) {}
               } else {
                 seenKeys.set(key, [row.id]);
               }
