@@ -319,10 +319,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleFlushMetadataAndAssetCache = async () => {
     setIsFlushingMetadataCache(true);
     try {
-      // Clear client-side local storage caches
+      // Clear client-side search & metadata caches
       try {
         localStorage.removeItem("yoouz_recent_searches");
         localStorage.removeItem("url_metadata_cache");
+        localStorage.removeItem("copo_recent_searches");
+        localStorage.removeItem("copo_search_cache");
+        sessionStorage.removeItem("url_metadata_cache");
+        sessionStorage.removeItem("yoouz_search_cache");
       } catch (e) {}
 
       const res = await fetch("/api/admin/flush-metadata-cache", {
@@ -331,7 +335,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       });
       const data = await res.json();
       if (data && data.success) {
-        showToast(data.message || `Metadata cache flushed! Sanitized ${data.cleanedCount || 0} place asset(s).`);
+        showToast(data.message || `Metadata & search query cache flushed! Sanitized ${data.cleanedCount || 0} place asset(s).`);
+        window.dispatchEvent(new CustomEvent("copo-cache-flushed"));
         if (typeof fetchHealthDiagnostic === "function") {
           fetchHealthDiagnostic();
         }
@@ -2930,7 +2935,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
                       duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
                       business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard",
-                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard"
+                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard",
+                      consecutive_search_profile_cache_isolation_guard: "50. Consecutive Search & Profile Cache Isolation Guard"
                     };
 
                     const title = titles[key] || key;
@@ -3008,7 +3014,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
                       duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
                       business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard",
-                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard"
+                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard",
+                      consecutive_search_profile_cache_isolation_guard: "50. Consecutive Search & Profile Cache Isolation Guard"
                     };
 
                     const icons: Record<string, string> = {
@@ -3061,7 +3068,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       business_web_listing_logo_banner_contrast_guard: "✨",
                       duplicate_notification_prevention_live_guard: "🔔",
                       business_name_word_separation_integrity_guard: "🏢",
-                      zero_mock_business_data_geocoding_guard: "📍"
+                      zero_mock_business_data_geocoding_guard: "📍",
+                      consecutive_search_profile_cache_isolation_guard: "🔒"
                     };
 
                     const isExpanded = expandedSubsystems[key] || false;

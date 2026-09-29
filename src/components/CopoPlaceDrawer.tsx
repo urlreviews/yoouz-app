@@ -125,7 +125,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
-  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place ID changes
+  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place identity changes
   useEffect(() => {
     setBannerError(false);
     setPhotoIndex(0);
@@ -137,7 +137,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     if (fetchedTargetUrlsRef.current) {
       fetchedTargetUrlsRef.current.clear();
     }
-  }, [place?.id]);
+  }, [place?.id, place?.brandDomain, place?.website, place?.name]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {
@@ -434,9 +434,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain]);
 
   const displayWebsiteClean = React.useMemo(() => {
-    if (!effectiveWebsite) return null;
-    return extractCleanDomain(effectiveWebsite);
-  }, [effectiveWebsite]);
+    const raw = effectiveWebsite || drawerDomain || place.brandDomain || place.website || place.id;
+    if (!raw) return null;
+    const clean = extractCleanDomain(raw);
+    return clean && isValidDomainUrl(clean) ? clean : (clean || null);
+  }, [effectiveWebsite, drawerDomain, place.brandDomain, place.website, place.id]);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {

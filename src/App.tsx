@@ -3718,10 +3718,17 @@ export function App() {
     }
 
     if (found) {
+      const foundDomain = extractCleanDomain(found.brandDomain || found.website || found.id || found.name);
+      
+      // Only match reviews that strictly belong to THIS exact place or domain
       const matchingVideoWithName = videos.find(
-        (v) =>
-          (isPlaceReviewMatch(v, found!) || v.placeId === found!.id) &&
-          Boolean(v.placeName && v.placeName.trim() !== "" && !v.placeName.includes(".com"))
+        (v) => {
+          const vDomain = extractCleanDomain(v.placeWebsite || (v.placeId?.includes(".") ? v.placeId : "") || (v.placeName?.includes(".") ? v.placeName : ""));
+          if (foundDomain && vDomain) {
+            return foundDomain.toLowerCase() === vDomain.toLowerCase();
+          }
+          return v.placeId === found!.id;
+        }
       );
       if (matchingVideoWithName?.placeName) {
         const candidateName = formatBusinessName(matchingVideoWithName.placeName);
@@ -3730,8 +3737,7 @@ export function App() {
           found.name.toLowerCase() === (found.brandDomain || "").toLowerCase() ||
           found.name.includes(".") ||
           !found.name.includes(" ") ||
-          found.name.toLowerCase() === "website" ||
-          found.name.toLowerCase().includes("bensonbingham");
+          found.name.toLowerCase() === "website";
         if (candidateName && (isCurrentNameDomainLike || !found.name)) {
           found = {
             ...found,
@@ -3741,11 +3747,13 @@ export function App() {
       }
 
       const matchingVideoWithBanner = videos.find(
-        (v) =>
-          (isPlaceReviewMatch(v, found!) || v.placeId === found!.id) &&
-          Boolean((v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || v.placeWebsite)
+        (v) => {
+          const vDomain = extractCleanDomain(v.placeWebsite || (v.placeId?.includes(".") ? v.placeId : "") || (v.placeName?.includes(".") ? v.placeName : ""));
+          const matches = foundDomain && vDomain ? foundDomain.toLowerCase() === vDomain.toLowerCase() : v.placeId === found!.id;
+          return matches && Boolean((v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage || v.placeWebsite);
+        }
       );
-      const reviewDomain = extractCleanDomain(found.brandDomain || matchingVideoWithBanner?.placeWebsite || found.website || found.id || found.name);
+      const reviewDomain = extractCleanDomain(found.brandDomain || matchingVideoWithBanner?.placeWebsite || found.website || found.id);
       const reviewWebsite = matchingVideoWithBanner?.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
       const currentWebsite = found.website && found.website.trim() !== "" && !found.website.includes("maps.google.com") ? found.website : "";
       const effectiveWeb = currentWebsite || reviewWebsite;
@@ -3755,10 +3763,10 @@ export function App() {
         const logo = matchingVideoWithBanner?.placeLogoUrl;
         found = {
           ...found,
-          bannerUrl: found.bannerUrl || banner || found.bannerUrl,
-          ogImage: found.ogImage || banner || found.ogImage,
-          logoUrl: found.logoUrl || logo || found.logoUrl,
-          avatarUrl: found.avatarUrl || logo || found.avatarUrl,
+          bannerUrl: found.bannerUrl || banner || "",
+          ogImage: found.ogImage || banner || "",
+          logoUrl: found.logoUrl || logo || "",
+          avatarUrl: found.avatarUrl || logo || "",
           website: effectiveWeb || found.website || "",
           brandDomain: found.brandDomain || (reviewDomain && reviewDomain.includes(".") ? reviewDomain : undefined),
           photos: found.photos && found.photos.length > 0 ? found.photos : (banner ? [banner] : [])
@@ -6282,7 +6290,7 @@ export function App() {
         {/* Place Drawer */}
         {selectedPlaceIdForDrawer && drawerPlace && (
           <CopoPlaceDrawer
-            key={drawerPlace.id || drawerPlace.brandDomain || drawerPlace.website || drawerPlace.name}
+            key={`${drawerPlace.id}_${drawerPlace.brandDomain || ''}_${drawerPlace.website || ''}_${drawerPlace.name || ''}`}
             place={drawerPlace}
             allVideos={videos}
             onClose={handleCloseDrawers}

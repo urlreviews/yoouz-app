@@ -7,7 +7,8 @@ export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v30";
 
 /**
  * Cleanly extracts domain name from URL or text string
- * e.g., "https://www.tajhotels.com/categories" -> "tajhotels.com"
+ * e.g., "https://www.jenny.be/en" -> "jenny.be"
+ * "https://www.tajhotels.com/categories" -> "tajhotels.com"
  * "www-tajhotels-com" -> "tajhotels.com"
  * "tajhotels-com" -> "tajhotels.com"
  * "fiverr.com" -> "fiverr.com"
@@ -16,14 +17,28 @@ export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
   let clean = input.trim().toLowerCase();
   
-  // Remove protocol
-  clean = clean.replace(/^https?:\/\//, "");
-  // Remove www. or www- or www/
-  clean = clean.replace(/^www[\.\-\/]/, "");
+  // Try standard URL hostname parsing if valid protocol or leading slashes
+  try {
+    if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("//")) {
+      const urlObj = new URL(clean.startsWith("//") ? `https:${clean}` : clean);
+      if (urlObj.hostname) {
+        clean = urlObj.hostname;
+      }
+    }
+  } catch (e) {}
+
+  // Remove any remaining protocol
+  clean = clean.replace(/^https?:\/\//i, "");
+  // Remove leading slashes
+  clean = clean.replace(/^\/+/, "");
+  // Remove www. or www- or www/ or www2. or www3.
+  clean = clean.replace(/^www\d*[\.\-\/]/i, "");
   // Remove query, hash, and subpath
   clean = clean.split("/")[0].split("?")[0].split("#")[0];
   // Remove trailing colon and port
   clean = clean.split(":")[0];
+  // Remove any trailing slashes or dots
+  clean = clean.replace(/[\/\.]+$/, "").trim();
   
   // If slug like "fiverr-com", "digitalpark-ae", "mastercard-com", "legal500-com"
   if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
@@ -52,9 +67,15 @@ export function extractCleanDomain(input?: string | null): string {
   if (clean.endsWith("-co-il")) clean = clean.replace(/-co-il$/, ".co.il");
   if (clean.endsWith("-biz")) clean = clean.replace(/-biz$/, ".biz");
   if (clean.endsWith("-info")) clean = clean.replace(/-info$/, ".info");
+  if (clean.endsWith("-nl")) clean = clean.replace(/-nl$/, ".nl");
+  if (clean.endsWith("-es")) clean = clean.replace(/-es$/, ".es");
+  if (clean.endsWith("-it")) clean = clean.replace(/-it$/, ".it");
 
   // Strip again in case of www remaining
-  clean = clean.replace(/^www[\.\-\/]/, "");
+  clean = clean.replace(/^www\d*[\.\-\/]/i, "");
+
+  // Strip any trailing slash or path residue
+  clean = clean.split("/")[0].replace(/[\/\.]+$/, "").trim();
 
   return clean;
 }
@@ -216,6 +237,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.cleanton.co.il": "קלינטון ניהול ואחזקות",
   "cleanton": "קלינטון ניהול ואחזקות",
   "קלינטון ניהול ואחזקות": "קלינטון ניהול ואחזקות",
+  "maidforla.com": "Maid For LA",
+  "www.maidforla.com": "Maid For LA",
+  "maidforla": "Maid For LA",
+  "inforegio.be": "Inforegio",
+  "inforegio": "Inforegio",
+  "freelancer.com": "Freelancer",
+  "freelancer": "Freelancer",
   "starbucks.com": "Starbucks",
   "starbucks": "Starbucks",
   "nike.com": "Nike",

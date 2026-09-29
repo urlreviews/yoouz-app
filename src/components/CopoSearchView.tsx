@@ -280,7 +280,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     let preloadedMeta: any = null;
 
-    // 0ms Fast Path: Check if suggestions already resolved a clean domain or matching place while typing
+    // Fast Path: Check if suggestions already resolved an exact clean domain or exact matching place while typing
     if (!isValidDomainUrl(cleanUrl) && suggestions && suggestions.length > 0) {
       const qLower = baseName.toLowerCase().trim();
       const matchInSuggest = suggestions.find(s => {
@@ -289,15 +289,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         if (!sDom && !sTitle) return false;
         const domMatches = isValidDomainUrl(sDom) && (
           sDom === qLower || 
-          sDom.startsWith(qLower) || 
-          qLower.startsWith(sDom) || 
           sDom.split('.')[0] === qLower
         );
-        const titleMatches = sTitle && (
-          sTitle === qLower || 
-          sTitle.startsWith(qLower) || 
-          qLower.startsWith(sTitle)
-        );
+        const titleMatches = sTitle && sTitle === qLower;
         return domMatches || (isValidDomainUrl(sDom) && titleMatches);
       });
       if (matchInSuggest) {
@@ -360,7 +354,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const isMetaMatchingCurrent = Boolean(
         preloadedMeta && (
           (isRealDomain && preloadedMeta.domain && extractCleanDomain(preloadedMeta.domain) === cleanUrl) ||
-          (preloadedMeta.title && baseName && preloadedMeta.title.toLowerCase().includes(baseName.toLowerCase()))
+          (preloadedMeta.title && baseName && preloadedMeta.title.toLowerCase().trim() === baseName.toLowerCase().trim())
         )
       );
 
