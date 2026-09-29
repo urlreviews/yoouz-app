@@ -57,14 +57,17 @@ async function scrapeWithFirecrawl(url: string) {
     });
 
     if (!response.ok) {
-      throw new Error(`Firecrawl error: ${response.statusText}`);
+      const errText = await response.text().catch(() => "");
+      console.warn(`[Firecrawl] Error ${response.status}: ${response.statusText} ${errText.substring(0, 100)}`);
+      throw new Error(`FIRECRAWL_ERROR_${response.status}`);
     }
 
     const result = await response.json();
     return result.data || result;
   } catch (error) {
-    console.error("[Firecrawl] Scraping failed for:", url, error);
-    return null;
+    if (error.message?.includes("FIRECRAWL_ERROR")) throw error;
+    console.error("[Firecrawl] Connectivity failed for:", url, error.message);
+    throw new Error("FIRECRAWL_CONNECTIVITY_FAILED");
   }
 }
 
@@ -18940,7 +18943,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         for (const targetUrl of protocols) {
           try {
             console.log(`[Firecrawl] Scraping official domain candidate: ${targetUrl}`);
-            const scrapeData = await scrapeWithFirecrawl(targetUrl);
+            const scrapeData = await scrapeWithFirecrawl(targetUrl).catch(() => null);
             
             if (scrapeData && scrapeData.html) {
               const dHtml = scrapeData.html;
@@ -19117,7 +19120,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
           
           console.log(`[Google Discovery] Using Firecrawl to fetch results for: "${currentQ}" (Attempt ${attempt + 1}/8)`);
-          const scrapeData = await scrapeWithFirecrawl(googleUrl);
+          let scrapeData: any = null;
+          try {
+            scrapeData = await scrapeWithFirecrawl(googleUrl);
+          } catch (fErr) {
+            console.warn(`[Google Discovery] Firecrawl unavailable (${fErr.message}), falling back to direct fetch...`);
+            // Fallback to direct fetch with random User-Agent
+            const resp = await fetch(googleUrl, {
+              headers: {
+                'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9'
+              },
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+            });
+            if (resp.ok) {
+              const h = await resp.text();
+              scrapeData = { html: h };
+            }
+          }
           
           if (!scrapeData || !scrapeData.html) {
             continue;
@@ -19198,7 +19219,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         try {
           console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
-          const scrapeData = await scrapeWithFirecrawl(discoveredUrl);
+          const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
           
           if (scrapeData && scrapeData.html) {
             const scHtml = scrapeData.html;
@@ -19269,6 +19290,38 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const res = await resolveBusinessQuery(query);
     return res?.domain || "";
   }
+
+  // Debug endpoint to check Firecrawl connectivity
+  app.get('/api/debug-firecrawl', async (req, res) => {
+    const results: any = {
+      timestamp: new Date().toISOString(),
+      firecrawl_url: FIRECRAWL_BASE_URL,
+      env_url: process.env.FIRECRAWL_API_URL || "not set",
+      checks: {}
+    };
+
+    try {
+      const rootCheck = await fetch(`${FIRECRAWL_BASE_URL}/`, { signal: AbortSignal.timeout(3000) })
+        .then(r => ({ status: r.status, ok: r.ok }))
+        .catch(e => ({ error: e.message }));
+      results.checks.root = rootCheck;
+
+      const scrapeCheck = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://example.com' }),
+        signal: AbortSignal.timeout(5000)
+      })
+      .then(r => ({ status: r.status, ok: r.ok }))
+      .catch(e => ({ error: e.message }));
+      results.checks.scrape_endpoint = scrapeCheck;
+
+    } catch (err) {
+      results.error = err.message;
+    }
+
+    res.json(results);
+  });
 
   app.get('/api/url-metadata', async (req, res) => {
     try {

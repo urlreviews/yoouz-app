@@ -193,6 +193,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
 
+    // Clean query to remove obvious typos and junk that breaks Google search
+    const cleanRawQuery = rawQuery
+      .replace(/brussles/gi, "brussels")
+      .replace(/restuarant/gi, "restaurant")
+      .replace(/airlin\s/gi, "airline ")
+      .trim();
+
     setShowDropdown(false);
     
     // Instantly clear searched place and suggestions to purge previous search artifacts!
@@ -201,7 +208,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     const currentRequestId = ++searchRequestIdRef.current;
 
-    const baseName = (locationDetails?.rawBusinessName || preferredName || rawQuery).trim();
+    const baseName = (locationDetails?.rawBusinessName || preferredName || cleanRawQuery).trim();
     const cleanUrlFromRaw = extractCleanDomain(rawQuery);
     const cleanUrlFromBase = extractCleanDomain(baseName);
     let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");

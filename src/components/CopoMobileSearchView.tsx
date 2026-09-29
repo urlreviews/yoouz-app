@@ -281,8 +281,15 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const raw = typeof e === 'string' ? e : query;
     if (!raw || !raw.trim()) return;
     
+    // Clean query to remove obvious typos and junk that breaks Google search
+    const cleanRaw = raw.trim()
+      .replace(/brussles/gi, "brussels")
+      .replace(/restuarant/gi, "restaurant")
+      .replace(/airlin\s/gi, "airline ")
+      .trim();
+
     setIsSearching(true);
-    const trimmed = raw.trim();
+    const trimmed = cleanRaw;
     const baseName = (preferredName || locationDetails?.rawBusinessName || trimmed).trim();
     // Resolve matching place clean domain if available
     const matchedPlace = findMatchingPlace(trimmed, baseName);
