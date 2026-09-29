@@ -18018,7 +18018,7 @@ Return JSON:
     return true;
   }
 
-  function formatServerPhoneNumber(raw?: string | null, _countryContext?: string): string {
+  function formatServerPhoneNumber(raw?: string | null, countryContext?: string): string {
     if (!raw || typeof raw !== "string") return "";
     let clean = raw.trim();
     if (!isValidPhoneNumber(clean)) return "";
@@ -18031,8 +18031,48 @@ Return JSON:
     const digitsOnly = clean.replace(/[^0-9]/g, "");
     if (!digitsOnly) return "";
 
-    // Belgium (+32)
-    if (clean.startsWith("+32") || (digitsOnly.startsWith("32") && digitsOnly.length >= 9)) {
+    const ctx = (countryContext || "").toLowerCase().trim();
+    const isIsrael = ctx.endsWith(".il") || ctx.includes(".co.il") || ctx.includes("israel") || ctx.includes("ישראל") || ctx.includes("tel aviv") || ctx.includes("jerusalem") || ctx.includes("haifa") || ctx.includes("eilat") || ctx.includes("ramat gan") || ctx.includes("herzliya");
+    const isBelgium = ctx.endsWith(".be") || ctx.includes("belgium") || ctx.includes("belgië") || ctx.includes("belgique") || ctx.includes("brussels") || ctx.includes("antwerp") || ctx.includes("gent") || ctx.includes("leuven");
+    const isFrance = ctx.endsWith(".fr") || ctx.includes("france") || ctx.includes("paris");
+    const isUK = ctx.endsWith(".uk") || ctx.includes(".co.uk") || ctx.includes("united kingdom") || ctx.includes("london") || ctx.includes("england");
+    const isNetherlands = ctx.endsWith(".nl") || ctx.includes("netherlands") || ctx.includes("nederland") || ctx.includes("amsterdam");
+    const isGermany = ctx.endsWith(".de") || ctx.includes("germany") || ctx.includes("deutschland") || ctx.includes("berlin") || ctx.includes("munich");
+    const isSpain = ctx.endsWith(".es") || ctx.includes("spain") || ctx.includes("españa") || ctx.includes("madrid");
+    const isItaly = ctx.endsWith(".it") || ctx.includes("italy") || ctx.includes("italia") || ctx.includes("rome") || ctx.includes("milan");
+    const isUAE = ctx.endsWith(".ae") || ctx.includes("uae") || ctx.includes("dubai") || ctx.includes("abu dhabi");
+    const isAustralia = ctx.endsWith(".au") || ctx.includes(".com.au") || ctx.includes("australia") || ctx.includes("sydney") || ctx.includes("melbourne");
+    const isNZ = ctx.endsWith(".nz") || ctx.includes(".co.nz") || ctx.includes("new zealand") || ctx.includes("auckland");
+    const isUSCanada = ctx.endsWith(".us") || ctx.endsWith(".ca") || ctx.includes("united states") || ctx.includes("usa") || ctx.includes("canada") || ctx.includes("new york") || ctx.includes("los angeles") || ctx.includes("chicago") || ctx.includes("phoenix") || ctx.includes("las vegas") || ctx.includes("boston") || ctx.includes("miami");
+
+    // 1. Israel (+972)
+    if (
+      clean.startsWith("+972") || 
+      (digitsOnly.startsWith("972") && (digitsOnly.length === 11 || digitsOnly.length === 12)) ||
+      (isIsrael && (digitsOnly.startsWith("05") || digitsOnly.startsWith("02") || digitsOnly.startsWith("03") || digitsOnly.startsWith("04") || digitsOnly.startsWith("08") || digitsOnly.startsWith("09") || digitsOnly.startsWith("07"))) ||
+      (!hasPlus && !isBelgium && !isFrance && !isUK && !isUSCanada && (digitsOnly.startsWith("050") || digitsOnly.startsWith("051") || digitsOnly.startsWith("052") || digitsOnly.startsWith("053") || digitsOnly.startsWith("054") || digitsOnly.startsWith("055") || digitsOnly.startsWith("056") || digitsOnly.startsWith("058") || digitsOnly.startsWith("059")) && digitsOnly.length === 10)
+    ) {
+      let local = digitsOnly;
+      if (local.startsWith("972")) local = local.slice(3);
+      if (local.startsWith("0")) local = local.slice(1);
+
+      // Mobile numbers (9 digits without leading 0, starts with 50..59)
+      if (/^5[0-9]/.test(local) && local.length === 9) {
+        return `+972 ${local.slice(0, 2)}-${local.slice(2, 5)}-${local.slice(5)}`;
+      }
+      // Landline numbers (8 digits without leading 0, starts with 2, 3, 4, 8, 9)
+      if (/^[23489]/.test(local) && local.length === 8) {
+        return `+972 ${local[0]}-${local.slice(1, 4)}-${local.slice(4)}`;
+      }
+      // VoIP / non-geographic (9 digits without leading 0, starts with 7)
+      if (/^7/.test(local) && local.length === 9) {
+        return `+972 ${local.slice(0, 2)}-${local.slice(2, 5)}-${local.slice(5)}`;
+      }
+      return `+972 ${local}`;
+    }
+
+    // 2. Belgium (+32)
+    if (clean.startsWith("+32") || (digitsOnly.startsWith("32") && digitsOnly.length >= 9) || (isBelgium && digitsOnly.startsWith("0") && (digitsOnly.length === 9 || digitsOnly.length === 10))) {
       const rest = digitsOnly.startsWith("32") ? digitsOnly.slice(2) : digitsOnly;
       const local = rest.startsWith("0") ? rest.slice(1) : rest;
       if (/^[2349]/.test(local) && local.length === 8) {
@@ -18054,58 +18094,40 @@ Return JSON:
     }
 
     // Belgium local format starting with 0
-    if (digitsOnly.startsWith("0") && digitsOnly.length === 9) {
+    if (digitsOnly.startsWith("0") && digitsOnly.length === 9 && isBelgium) {
       const local = digitsOnly.slice(1);
       if (/^[2349]/.test(local)) {
         return `+32 ${local[0]} ${local.slice(1, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
       }
       return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
     }
-    if (digitsOnly.startsWith("04") && digitsOnly.length === 10) {
+    if (digitsOnly.startsWith("04") && digitsOnly.length === 10 && (isBelgium || (!isIsrael && !isFrance && !isUK && !isUSCanada))) {
       const local = digitsOnly.slice(1);
       return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
     }
 
-    // Netherlands (+31)
-    if (clean.startsWith("+31") || (digitsOnly.startsWith("31") && digitsOnly.length >= 10)) {
+    // 3. Netherlands (+31)
+    if (clean.startsWith("+31") || (digitsOnly.startsWith("31") && digitsOnly.length >= 10) || (isNetherlands && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
       const rest = digitsOnly.startsWith("31") ? digitsOnly.slice(2) : digitsOnly;
       const local = rest.startsWith("0") ? rest.slice(1) : rest;
       if (local.length === 9) {
         return `+31 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
       }
+      return `+31 ${local}`;
     }
 
-    // US/Canada (+1)
-    if (clean.startsWith("+1") || (digitsOnly.startsWith("1") && digitsOnly.length === 11)) {
-      const rest = digitsOnly.startsWith("1") ? digitsOnly.slice(1) : digitsOnly;
-      if (rest.length === 10) {
-        return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
-      }
-    }
-
-    // UAE (+971)
-    if (clean.startsWith("+971") || (digitsOnly.startsWith("971") && digitsOnly.length >= 11)) {
-      const rest = digitsOnly.startsWith("971") ? digitsOnly.slice(3) : digitsOnly;
-      const local = rest.startsWith("0") ? rest.slice(1) : rest;
-      if (local.length === 8) {
-        return `+971 ${local[0]} ${local.slice(1, 4)} ${local.slice(4)}`;
-      }
-      if (local.length === 9) {
-        return `+971 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
-      }
-    }
-
-    // France (+33)
-    if (clean.startsWith("+33") || (digitsOnly.startsWith("33") && digitsOnly.length === 11)) {
+    // 4. France (+33)
+    if (clean.startsWith("+33") || (digitsOnly.startsWith("33") && digitsOnly.length === 11) || (isFrance && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
       const rest = digitsOnly.startsWith("33") ? digitsOnly.slice(2) : digitsOnly;
       const local = rest.startsWith("0") ? rest.slice(1) : rest;
       if (local.length === 9) {
         return `+33 ${local[0]} ${local.slice(1, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
       }
+      return `+33 ${local}`;
     }
 
-    // UK (+44)
-    if (clean.startsWith("+44") || (digitsOnly.startsWith("44") && digitsOnly.length >= 12)) {
+    // 5. UK (+44)
+    if (clean.startsWith("+44") || (digitsOnly.startsWith("44") && digitsOnly.length >= 12) || (isUK && digitsOnly.startsWith("0") && (digitsOnly.length === 10 || digitsOnly.length === 11))) {
       const rest = digitsOnly.startsWith("44") ? digitsOnly.slice(2) : digitsOnly;
       const local = rest.startsWith("0") ? rest.slice(1) : rest;
       if (local.startsWith("20") && local.length === 10) {
@@ -18114,13 +18136,69 @@ Return JSON:
       if (local.length === 10) {
         return `+44 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
       }
+      return `+44 ${local}`;
     }
 
-    // Spain (+34)
-    if (clean.startsWith("+34") || (digitsOnly.startsWith("34") && digitsOnly.length === 11)) {
+    // 6. Germany (+49)
+    if (clean.startsWith("+49") || (digitsOnly.startsWith("49") && digitsOnly.length >= 11) || (isGermany && digitsOnly.startsWith("0") && digitsOnly.length >= 10)) {
+      const rest = digitsOnly.startsWith("49") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      return `+49 ${local.slice(0, 3)} ${local.slice(3, 7)} ${local.slice(7)}`;
+    }
+
+    // 7. Spain (+34)
+    if (clean.startsWith("+34") || (digitsOnly.startsWith("34") && digitsOnly.length === 11) || (isSpain && digitsOnly.length === 9)) {
       const rest = digitsOnly.startsWith("34") ? digitsOnly.slice(2) : digitsOnly;
-      if (rest.length === 9) {
-        return `+34 ${rest.slice(0, 2)} ${rest.slice(2, 5)} ${rest.slice(5, 7)} ${rest.slice(7)}`;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.length === 9) {
+        return `+34 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+      }
+      return `+34 ${local}`;
+    }
+
+    // 8. Italy (+39)
+    if (clean.startsWith("+39") || (digitsOnly.startsWith("39") && digitsOnly.length >= 11) || (isItaly && digitsOnly.length >= 9)) {
+      const rest = digitsOnly.startsWith("39") ? digitsOnly.slice(2) : digitsOnly;
+      return `+39 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+    }
+
+    // 9. UAE (+971)
+    if (clean.startsWith("+971") || (digitsOnly.startsWith("971") && digitsOnly.length >= 11) || (isUAE && digitsOnly.startsWith("0") && (digitsOnly.length === 9 || digitsOnly.length === 10))) {
+      const rest = digitsOnly.startsWith("971") ? digitsOnly.slice(3) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      if (local.length === 8) {
+        return `+971 ${local[0]} ${local.slice(1, 4)} ${local.slice(4)}`;
+      }
+      if (local.length === 9) {
+        return `+971 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+      }
+      return `+971 ${local}`;
+    }
+
+    // 10. Australia (+61) & New Zealand (+64)
+    if (clean.startsWith("+61") || (digitsOnly.startsWith("61") && digitsOnly.length >= 11) || (isAustralia && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
+      const rest = digitsOnly.startsWith("61") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      return `+61 ${local.slice(0, 1)} ${local.slice(1, 5)} ${local.slice(5)}`;
+    }
+    if (clean.startsWith("+64") || (digitsOnly.startsWith("64") && digitsOnly.length >= 10) || (isNZ && digitsOnly.startsWith("0"))) {
+      const rest = digitsOnly.startsWith("64") ? digitsOnly.slice(2) : digitsOnly;
+      const local = rest.startsWith("0") ? rest.slice(1) : rest;
+      return `+64 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+    }
+
+    // 11. US/Canada (+1)
+    const isStrictUS = (
+      clean.startsWith("+1") || 
+      (digitsOnly.startsWith("1") && digitsOnly.length === 11 && /^[2-9]/.test(digitsOnly.slice(1))) ||
+      (isUSCanada && digitsOnly.length === 10 && /^[2-9]/.test(digitsOnly)) ||
+      (!isIsrael && !isBelgium && !isFrance && !isUK && !isNetherlands && !isGermany && !isSpain && !isItaly && !isUAE && !isAustralia && digitsOnly.length === 10 && /^[2-9]/.test(digitsOnly))
+    );
+
+    if (isStrictUS) {
+      const rest = (digitsOnly.length === 11 && digitsOnly.startsWith("1")) ? digitsOnly.slice(1) : digitsOnly;
+      if (rest.length === 10 && /^[2-9]/.test(rest)) {
+        return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
       }
     }
 
@@ -18648,11 +18726,22 @@ Return JSON:
       }
 
       if (!city) {
-        if (/Brussels|Bruxelles/i.test(combinedText) || cleanDomain.includes("brussels")) city = "Brussels";
+        if (/Tel Aviv|תל אביב/i.test(combinedText) || cleanDomain.includes("telaviv") || cleanDomain.includes("raytlv")) city = "Tel Aviv";
+        else if (/Jerusalem|ירושלים/i.test(combinedText)) city = "Jerusalem";
+        else if (/Haifa|חיפה/i.test(combinedText)) city = "Haifa";
+        else if (/Eilat|אילת/i.test(combinedText)) city = "Eilat";
+        else if (/Ramat Gan|רמת גן/i.test(combinedText)) city = "Ramat Gan";
+        else if (/Herzliya|הרצליה/i.test(combinedText)) city = "Herzliya";
+        else if (/Petah Tikva|פתח תקווה/i.test(combinedText)) city = "Petah Tikva";
+        else if (/Rishon LeZion|ראשון לציון/i.test(combinedText)) city = "Rishon LeZion";
+        else if (/Brussels|Bruxelles/i.test(combinedText) || cleanDomain.includes("brussels")) city = "Brussels";
         else if (/Berchem/i.test(combinedText)) city = "Berchem";
         else if (/Leuven/i.test(combinedText)) city = "Leuven";
         else if (/Antwerp|Antwerpen/i.test(combinedText) || cleanDomain.includes("antwerp")) city = "Antwerp";
         else if (/Wilrijk/i.test(combinedText)) city = "Wilrijk";
+        else if (/Gent|Ghent/i.test(combinedText)) city = "Gent";
+        else if (/Namur/i.test(combinedText)) city = "Namur";
+        else if (/Liège|Liege/i.test(combinedText)) city = "Liège";
         else if (/Paris/i.test(combinedText)) city = "Paris";
         else if (/\bLondon\b/i.test(combinedText)) city = "London";
         else if (/New York/i.test(combinedText)) city = "New York";
@@ -18663,17 +18752,28 @@ Return JSON:
         else if (/Auckland/i.test(combinedText)) city = "Auckland";
         else if (/Madrid/i.test(combinedText)) city = "Madrid";
         else if (/Amsterdam/i.test(combinedText)) city = "Amsterdam";
+        else if (/Berlin/i.test(combinedText)) city = "Berlin";
+        else if (/Munich|München/i.test(combinedText)) city = "Munich";
+        else if (/Rome|Roma/i.test(combinedText)) city = "Rome";
+        else if (/Milan|Milano/i.test(combinedText)) city = "Milan";
+        else if (/Sydney/i.test(combinedText)) city = "Sydney";
+        else if (/Melbourne/i.test(combinedText)) city = "Melbourne";
+        else if (cleanDomain.endsWith(".co.il") || cleanDomain.endsWith(".il")) city = "Tel Aviv";
       }
 
       if (!country) {
-        if (/\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk" || city === "Berchem" || city === "Leuven") country = "Belgium";
-        else if (/\bNetherlands\b|\bNederland\b/i.test(combinedText) || city === "Amsterdam") country = "Netherlands";
-        else if (/\bFrance\b/i.test(combinedText) || city === "Paris") country = "France";
-        else if (/\bUnited Kingdom\b|\bGreat Britain\b|\bEngland\b/i.test(combinedText) || city === "London") country = "United Kingdom";
-        else if (/\bUnited Arab Emirates\b|\bUAE\b/i.test(combinedText) || city === "Dubai" || city === "Abu Dhabi") country = "United Arab Emirates";
-        else if (/\bNew Zealand\b/i.test(combinedText) || city === "Auckland") country = "New Zealand";
-        else if (/\bSpain\b|\bEspaña\b/i.test(combinedText) || city === "Madrid") country = "Spain";
-        else if (/\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
+        if (cleanDomain.endsWith(".co.il") || cleanDomain.endsWith(".il") || /\bIsrael\b|\bישראל\b/i.test(combinedText) || city === "Tel Aviv" || city === "Jerusalem" || city === "Haifa" || city === "Eilat" || city === "Ramat Gan" || city === "Herzliya") country = "Israel";
+        else if (cleanDomain.endsWith(".be") || /\bBelgium\b|\bBelgië\b|\bBelgique\b/i.test(combinedText) || city === "Brussels" || city === "Antwerp" || city === "Wilrijk" || city === "Berchem" || city === "Leuven" || city === "Gent" || city === "Namur" || city === "Liège") country = "Belgium";
+        else if (cleanDomain.endsWith(".nl") || /\bNetherlands\b|\bNederland\b/i.test(combinedText) || city === "Amsterdam") country = "Netherlands";
+        else if (cleanDomain.endsWith(".fr") || /\bFrance\b/i.test(combinedText) || city === "Paris") country = "France";
+        else if (cleanDomain.endsWith(".uk") || cleanDomain.endsWith(".co.uk") || /\bUnited Kingdom\b|\bGreat Britain\b|\bEngland\b/i.test(combinedText) || city === "London") country = "United Kingdom";
+        else if (cleanDomain.endsWith(".de") || /\bGermany\b|\bDeutschland\b/i.test(combinedText) || city === "Berlin" || city === "Munich") country = "Germany";
+        else if (cleanDomain.endsWith(".es") || /\bSpain\b|\bEspaña\b/i.test(combinedText) || city === "Madrid") country = "Spain";
+        else if (cleanDomain.endsWith(".it") || /\bItaly\b|\bItalia\b/i.test(combinedText) || city === "Rome" || city === "Milan") country = "Italy";
+        else if (cleanDomain.endsWith(".ae") || /\bUnited Arab Emirates\b|\bUAE\b/i.test(combinedText) || city === "Dubai" || city === "Abu Dhabi") country = "United Arab Emirates";
+        else if (cleanDomain.endsWith(".au") || cleanDomain.endsWith(".com.au") || /\bAustralia\b/i.test(combinedText) || city === "Sydney" || city === "Melbourne") country = "Australia";
+        else if (cleanDomain.endsWith(".nz") || cleanDomain.endsWith(".co.nz") || /\bNew Zealand\b/i.test(combinedText) || city === "Auckland") country = "New Zealand";
+        else if (cleanDomain.endsWith(".us") || cleanDomain.endsWith(".ca") || /\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
       }
 
       // 12. Industry Category classification

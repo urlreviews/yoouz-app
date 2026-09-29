@@ -814,14 +814,16 @@ export function getDomainBrandGradient(domainOrName?: string | null): {
   }
 
   const GRADIENTS = [
-    { from: "#0f172a", via: "#1e1b4b", to: "#09090b", accent: "#6366f1", glow: "rgba(99, 102, 241, 0.25)" }, // Indigo Midnight
-    { from: "#022c22", via: "#064e3b", to: "#09090b", accent: "#10b981", glow: "rgba(16, 185, 129, 0.25)" }, // Emerald Forest
-    { from: "#1e1b4b", via: "#3b0764", to: "#09090b", accent: "#a855f7", glow: "rgba(168, 85, 247, 0.25)" }, // Royal Purple
-    { from: "#450a0a", via: "#1c1917", to: "#09090b", accent: "#ef4444", glow: "rgba(239, 68, 68, 0.25)" },  // Crimson Slate
-    { from: "#082f49", via: "#0c4a6e", to: "#09090b", accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.25)" }, // Oceanic Cyan
-    { from: "#451a03", via: "#292524", to: "#09090b", accent: "#f59e0b", glow: "rgba(245, 158, 11, 0.25)" }, // Amber Obsidian
-    { from: "#172554", via: "#1e3a8a", to: "#09090b", accent: "#3b82f6", glow: "rgba(59, 130, 246, 0.25)" }, // Sapphire Blue
-    { from: "#500724", via: "#3b0764", to: "#09090b", accent: "#ec4899", glow: "rgba(236, 72, 153, 0.25)" }, // Velvet Rose
+    { from: "#1e1b4b", via: "#312e81", to: "#0f172a", accent: "#818cf8", glow: "rgba(129, 140, 248, 0.45)" }, // Electric Indigo
+    { from: "#064e3b", via: "#047857", to: "#022c22", accent: "#34d399", glow: "rgba(52, 211, 153, 0.45)" }, // Vivid Emerald
+    { from: "#3b0764", via: "#581c87", to: "#1e1b4b", accent: "#c084fc", glow: "rgba(192, 132, 252, 0.45)" }, // Royal Violet
+    { from: "#450a0a", via: "#7f1d1d", to: "#18181b", accent: "#f87171", glow: "rgba(248, 113, 113, 0.45)" }, // Crimson Sunset
+    { from: "#083344", via: "#0e7490", to: "#022c22", accent: "#38bdf8", glow: "rgba(56, 189, 248, 0.45)" }, // Oceanic Cyan
+    { from: "#451a03", via: "#78350f", to: "#1c1917", accent: "#fbbf24", glow: "rgba(251, 191, 36, 0.45)" }, // Warm Amber Gold
+    { from: "#172554", via: "#1d4ed8", to: "#0f172a", accent: "#60a5fa", glow: "rgba(96, 165, 250, 0.45)" }, // Sapphire Azure
+    { from: "#500724", via: "#831843", to: "#1f1322", accent: "#f472b6", glow: "rgba(244, 114, 182, 0.45)" }, // Vibrant Rose
+    { from: "#14532d", via: "#15803d", to: "#052e16", accent: "#4ade80", glow: "rgba(74, 222, 128, 0.45)" }, // Lush Forest
+    { from: "#312e81", via: "#4338ca", to: "#18181b", accent: "#a5b4fc", glow: "rgba(165, 180, 252, 0.45)" }, // Deep Cobalt
   ];
 
   return GRADIENTS[Math.abs(hash) % GRADIENTS.length];

@@ -2973,9 +2973,10 @@ export function getGoogleMapsEmbedUrl(place?: Partial<Place> | null, customDispl
 }
 
 /**
- * Formats phone numbers into professional international standard representation with clean spacing
+ * Formats phone numbers into professional international standard representation with clean spacing and accurate country area codes.
+ * Correctly detects country from explicit dialing codes (+972, +32, +1, +44, +33, etc.) or contextual domain / address / country hints (.co.il, Israel, Belgium, etc.).
  */
-export function formatPhoneNumber(raw?: string | null): string {
+export function formatPhoneNumber(raw?: string | null, countryOrDomainContext?: string | null): string {
   if (!raw || typeof raw !== "string") return "";
   let clean = raw.trim();
   if (!clean || clean.length < 5) return clean;
@@ -2987,11 +2988,54 @@ export function formatPhoneNumber(raw?: string | null): string {
 
   const hasPlus = clean.startsWith("+");
   const digitsOnly = clean.replace(/[^0-9]/g, "");
-
   if (!digitsOnly) return clean;
 
-  // Belgium (+32)
-  if (clean.startsWith("+32") || (digitsOnly.startsWith("32") && digitsOnly.length >= 9)) {
+  const ctx = (countryOrDomainContext || "").toLowerCase().trim();
+  const isIsraelContext = ctx.endsWith(".il") || ctx.includes(".co.il") || ctx.includes("israel") || ctx.includes("ישראל") || ctx.includes("tel aviv") || ctx.includes("jerusalem") || ctx.includes("haifa") || ctx.includes("eilat") || ctx.includes("ramat gan") || ctx.includes("herzliya");
+  const isBelgiumContext = ctx.endsWith(".be") || ctx.includes("belgium") || ctx.includes("belgië") || ctx.includes("belgique") || ctx.includes("brussels") || ctx.includes("antwerp") || ctx.includes("gent") || ctx.includes("leuven");
+  const isFranceContext = ctx.endsWith(".fr") || ctx.includes("france") || ctx.includes("paris");
+  const isUKContext = ctx.endsWith(".uk") || ctx.includes(".co.uk") || ctx.includes("united kingdom") || ctx.includes("london") || ctx.includes("england");
+  const isNetherlandsContext = ctx.endsWith(".nl") || ctx.includes("netherlands") || ctx.includes("nederland") || ctx.includes("amsterdam");
+  const isGermanyContext = ctx.endsWith(".de") || ctx.includes("germany") || ctx.includes("deutschland") || ctx.includes("berlin") || ctx.includes("munich");
+  const isSpainContext = ctx.endsWith(".es") || ctx.includes("spain") || ctx.includes("españa") || ctx.includes("madrid");
+  const isItalyContext = ctx.endsWith(".it") || ctx.includes("italy") || ctx.includes("italia") || ctx.includes("rome") || ctx.includes("milan");
+  const isUAEContext = ctx.endsWith(".ae") || ctx.includes("uae") || ctx.includes("dubai") || ctx.includes("abu dhabi");
+  const isAustraliaContext = ctx.endsWith(".au") || ctx.includes(".com.au") || ctx.includes("australia") || ctx.includes("sydney") || ctx.includes("melbourne");
+  const isNZContext = ctx.endsWith(".nz") || ctx.includes(".co.nz") || ctx.includes("new zealand") || ctx.includes("auckland");
+  const isUSCanadaContext = ctx.endsWith(".us") || ctx.endsWith(".ca") || ctx.includes("united states") || ctx.includes("usa") || ctx.includes("canada") || ctx.includes("new york") || ctx.includes("los angeles") || ctx.includes("chicago") || ctx.includes("phoenix") || ctx.includes("las vegas") || ctx.includes("boston") || ctx.includes("miami");
+
+  // 1. Israel (+972)
+  if (
+    clean.startsWith("+972") || 
+    (digitsOnly.startsWith("972") && (digitsOnly.length === 11 || digitsOnly.length === 12)) ||
+    (isIsraelContext && (digitsOnly.startsWith("05") || digitsOnly.startsWith("02") || digitsOnly.startsWith("03") || digitsOnly.startsWith("04") || digitsOnly.startsWith("08") || digitsOnly.startsWith("09") || digitsOnly.startsWith("07"))) ||
+    (!hasPlus && !isBelgiumContext && !isFranceContext && !isUKContext && !isUSCanadaContext && (digitsOnly.startsWith("050") || digitsOnly.startsWith("051") || digitsOnly.startsWith("052") || digitsOnly.startsWith("053") || digitsOnly.startsWith("054") || digitsOnly.startsWith("055") || digitsOnly.startsWith("056") || digitsOnly.startsWith("058") || digitsOnly.startsWith("059")) && digitsOnly.length === 10)
+  ) {
+    let local = digitsOnly;
+    if (local.startsWith("972")) local = local.slice(3);
+    if (local.startsWith("0")) local = local.slice(1);
+
+    // Mobile numbers (9 digits without leading 0, starts with 50, 51, 52, 53, 54, 55, 56, 58, 59)
+    if (/^5[0-9]/.test(local) && local.length === 9) {
+      return `+972 ${local.slice(0, 2)}-${local.slice(2, 5)}-${local.slice(5)}`;
+    }
+    // Landline numbers (8 digits without leading 0, starts with 2, 3, 4, 8, 9)
+    if (/^[23489]/.test(local) && local.length === 8) {
+      return `+972 ${local[0]}-${local.slice(1, 4)}-${local.slice(4)}`;
+    }
+    // VoIP / non-geographic (9 digits without leading 0, starts with 7)
+    if (/^7/.test(local) && local.length === 9) {
+      return `+972 ${local.slice(0, 2)}-${local.slice(2, 5)}-${local.slice(5)}`;
+    }
+    return `+972 ${local}`;
+  }
+
+  // 2. Belgium (+32)
+  if (
+    clean.startsWith("+32") || 
+    (digitsOnly.startsWith("32") && digitsOnly.length >= 9) ||
+    (isBelgiumContext && digitsOnly.startsWith("0") && (digitsOnly.length === 9 || digitsOnly.length === 10))
+  ) {
     const rest = digitsOnly.startsWith("32") ? digitsOnly.slice(2) : digitsOnly;
     const local = rest.startsWith("0") ? rest.slice(1) : rest;
     
@@ -3007,7 +3051,6 @@ export function formatPhoneNumber(raw?: string | null): string {
     if (/^4[5-9]/.test(local) && local.length === 9) {
       return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
     }
-    // Generic Belgium 8-9 digits fallback
     if (local.length === 8) {
       return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
     }
@@ -3017,52 +3060,41 @@ export function formatPhoneNumber(raw?: string | null): string {
     return `+32 ${local}`;
   }
 
-  // Belgium local format starting with 0 (e.g. 03 888 68 88 or 02 231 04 32 or 081 31 21 91)
-  if (digitsOnly.startsWith("0") && digitsOnly.length === 9) {
+  // Belgium local format starting with 0
+  if (digitsOnly.startsWith("0") && digitsOnly.length === 9 && isBelgiumContext) {
     const local = digitsOnly.slice(1);
     if (/^[2349]/.test(local)) {
       return `+32 ${local[0]} ${local.slice(1, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
     }
     return `+32 ${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6)}`;
   }
-  if (digitsOnly.startsWith("04") && digitsOnly.length === 10) {
+  if (digitsOnly.startsWith("04") && digitsOnly.length === 10 && (isBelgiumContext || (!isIsraelContext && !isFranceContext && !isUKContext && !isUSCanadaContext))) {
     const local = digitsOnly.slice(1);
     return `+32 ${local.slice(0, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
   }
 
-  // US/Canada (+1)
-  const isUSPotential = digitsOnly.length === 10 || (digitsOnly.length === 11 && digitsOnly.startsWith("1"));
-  if (clean.startsWith("+1") || isUSPotential) {
-    const rest = digitsOnly.length === 11 ? digitsOnly.slice(1) : digitsOnly;
-    if (rest.length === 10) {
-      // Professional international format: +1 XXX XXX XXXX
-      return `+1 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
-    }
-  }
-
-  // UAE (+971)
-  if (clean.startsWith("+971") || (digitsOnly.startsWith("971") && digitsOnly.length >= 11)) {
-    const rest = digitsOnly.startsWith("971") ? digitsOnly.slice(3) : digitsOnly;
+  // 3. Netherlands (+31)
+  if (clean.startsWith("+31") || (digitsOnly.startsWith("31") && digitsOnly.length >= 10) || (isNetherlandsContext && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
+    const rest = digitsOnly.startsWith("31") ? digitsOnly.slice(2) : digitsOnly;
     const local = rest.startsWith("0") ? rest.slice(1) : rest;
-    if (local.length === 8) {
-      return `+971 ${local[0]} ${local.slice(1, 4)} ${local.slice(4)}`;
-    }
     if (local.length === 9) {
-      return `+971 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+      return `+31 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
     }
+    return `+31 ${local}`;
   }
 
-  // France (+33)
-  if (clean.startsWith("+33") || (digitsOnly.startsWith("33") && digitsOnly.length === 11)) {
+  // 4. France (+33)
+  if (clean.startsWith("+33") || (digitsOnly.startsWith("33") && digitsOnly.length === 11) || (isFranceContext && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
     const rest = digitsOnly.startsWith("33") ? digitsOnly.slice(2) : digitsOnly;
     const local = rest.startsWith("0") ? rest.slice(1) : rest;
     if (local.length === 9) {
       return `+33 ${local[0]} ${local.slice(1, 3)} ${local.slice(3, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
     }
+    return `+33 ${local}`;
   }
 
-  // UK (+44)
-  if (clean.startsWith("+44") || (digitsOnly.startsWith("44") && digitsOnly.length >= 12)) {
+  // 5. UK (+44)
+  if (clean.startsWith("+44") || (digitsOnly.startsWith("44") && digitsOnly.length >= 12) || (isUKContext && digitsOnly.startsWith("0") && (digitsOnly.length === 10 || digitsOnly.length === 11))) {
     const rest = digitsOnly.startsWith("44") ? digitsOnly.slice(2) : digitsOnly;
     const local = rest.startsWith("0") ? rest.slice(1) : rest;
     if (local.startsWith("20") && local.length === 10) {
@@ -3071,13 +3103,71 @@ export function formatPhoneNumber(raw?: string | null): string {
     if (local.length === 10) {
       return `+44 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
     }
+    return `+44 ${local}`;
   }
 
-  // Spain (+34)
-  if (clean.startsWith("+34") || (digitsOnly.startsWith("34") && digitsOnly.length === 11)) {
+  // 6. Germany (+49)
+  if (clean.startsWith("+49") || (digitsOnly.startsWith("49") && digitsOnly.length >= 11) || (isGermanyContext && digitsOnly.startsWith("0") && digitsOnly.length >= 10)) {
+    const rest = digitsOnly.startsWith("49") ? digitsOnly.slice(2) : digitsOnly;
+    const local = rest.startsWith("0") ? rest.slice(1) : rest;
+    return `+49 ${local.slice(0, 3)} ${local.slice(3, 7)} ${local.slice(7)}`;
+  }
+
+  // 7. Spain (+34)
+  if (clean.startsWith("+34") || (digitsOnly.startsWith("34") && digitsOnly.length === 11) || (isSpainContext && digitsOnly.length === 9)) {
     const rest = digitsOnly.startsWith("34") ? digitsOnly.slice(2) : digitsOnly;
-    if (rest.length === 9) {
-      return `+34 ${rest.slice(0, 2)} ${rest.slice(2, 5)} ${rest.slice(5, 7)} ${rest.slice(7)}`;
+    const local = rest.startsWith("0") ? rest.slice(1) : rest;
+    if (local.length === 9) {
+      return `+34 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+    }
+    return `+34 ${local}`;
+  }
+
+  // 8. Italy (+39)
+  if (clean.startsWith("+39") || (digitsOnly.startsWith("39") && digitsOnly.length >= 11) || (isItalyContext && digitsOnly.length >= 9)) {
+    const rest = digitsOnly.startsWith("39") ? digitsOnly.slice(2) : digitsOnly;
+    return `+39 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+  }
+
+  // 9. UAE (+971)
+  if (clean.startsWith("+971") || (digitsOnly.startsWith("971") && digitsOnly.length >= 11) || (isUAEContext && digitsOnly.startsWith("0") && (digitsOnly.length === 9 || digitsOnly.length === 10))) {
+    const rest = digitsOnly.startsWith("971") ? digitsOnly.slice(3) : digitsOnly;
+    const local = rest.startsWith("0") ? rest.slice(1) : rest;
+    if (local.length === 8) {
+      return `+971 ${local[0]} ${local.slice(1, 4)} ${local.slice(4)}`;
+    }
+    if (local.length === 9) {
+      return `+971 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+    }
+    return `+971 ${local}`;
+  }
+
+  // 10. Australia (+61) & New Zealand (+64)
+  if (clean.startsWith("+61") || (digitsOnly.startsWith("61") && digitsOnly.length >= 11) || (isAustraliaContext && digitsOnly.startsWith("0") && digitsOnly.length === 10)) {
+    const rest = digitsOnly.startsWith("61") ? digitsOnly.slice(2) : digitsOnly;
+    const local = rest.startsWith("0") ? rest.slice(1) : rest;
+    return `+61 ${local.slice(0, 1)} ${local.slice(1, 5)} ${local.slice(5)}`;
+  }
+  if (clean.startsWith("+64") || (digitsOnly.startsWith("64") && digitsOnly.length >= 10) || (isNZContext && digitsOnly.startsWith("0"))) {
+    const rest = digitsOnly.startsWith("64") ? digitsOnly.slice(2) : digitsOnly;
+    const local = rest.startsWith("0") ? rest.slice(1) : rest;
+    return `+64 ${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5)}`;
+  }
+
+  // 11. US/Canada (+1)
+  // Crucial: In North America (NANP), valid area codes always start with 2-9 (never 0 or 1).
+  // Numbers starting with 0 are domestic European/Middle-Eastern/Asian numbers and NOT +1.
+  const isStrictUS = (
+    clean.startsWith("+1") || 
+    (digitsOnly.startsWith("1") && digitsOnly.length === 11 && /^[2-9]/.test(digitsOnly.slice(1))) ||
+    (isUSCanadaContext && digitsOnly.length === 10 && /^[2-9]/.test(digitsOnly)) ||
+    (!isIsraelContext && !isBelgiumContext && !isFranceContext && !isUKContext && !isNetherlandsContext && !isGermanyContext && !isSpainContext && !isItalyContext && !isUAEContext && !isAustraliaContext && digitsOnly.length === 10 && /^[2-9]/.test(digitsOnly))
+  );
+
+  if (isStrictUS) {
+    const rest = (digitsOnly.length === 11 && digitsOnly.startsWith("1")) ? digitsOnly.slice(1) : digitsOnly;
+    if (rest.length === 10 && /^[2-9]/.test(rest)) {
+      return `+1 (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
     }
   }
 

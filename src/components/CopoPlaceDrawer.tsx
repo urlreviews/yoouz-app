@@ -1028,7 +1028,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center group">
+          <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1055,20 +1055,39 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               }}
             />
             {/* Subtle overlay */}
-            <div className="absolute inset-0 bg-black/5 z-20 pointer-events-none" />
+            <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
         ) : (
           <div 
-            className="absolute inset-0 w-full h-full border-b border-zinc-900 bg-zinc-950 flex items-center justify-center overflow-hidden"
+            className="absolute inset-0 w-full h-full border-b border-zinc-800/80 flex items-center justify-center overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 55%, ${brandGrad.to} 100%)`
+            }}
           >
-            {/* Ambient Pulsing Glow Backdrop */}
+            {/* Ambient Animated Radial Flare */}
             <div 
-              className="absolute inset-0 opacity-25 pointer-events-none animate-pulse duration-[3000ms]" 
+              className="absolute inset-0 opacity-80 pointer-events-none animate-pulse duration-[4000ms]" 
               style={{
-                background: `radial-gradient(circle at 50% 40%, ${brandGrad.glow || 'rgba(255,255,255,0.05)'} 0%, transparent 65%)`
+                background: `radial-gradient(ellipse at 75% 30%, ${brandGrad.glow || 'rgba(99,102,241,0.45)'} 0%, transparent 60%)`
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-85" />
+            
+            {/* Geometric Mesh Texture Overlay */}
+            <div 
+              className="absolute inset-0 opacity-15 pointer-events-none"
+              style={{
+                backgroundImage: `radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)`,
+                backgroundSize: `20px 20px`
+              }}
+            />
+
+            {/* Subtle Translucent Brand Initials Watermark in Background */}
+            <div className="absolute right-6 -bottom-4 select-none pointer-events-none opacity-15 font-black text-7xl sm:text-9xl tracking-tighter text-white uppercase italic">
+              {(drawerDomain || place.brandDomain || displayedPlaceName || "Yoouz").replace(/^www\./, "").slice(0, 3)}
+            </div>
+
+            {/* Bottom edge shadow gradient for seamless contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-black/20 pointer-events-none" />
           </div>
         )}
 
@@ -1451,7 +1470,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.phone", "Phone Number")}</span>
                         {hasGenuinePhone ? (
                           <span className="text-xs font-bold text-white block truncate">
-                            {formatPhoneNumber(effectivePhone)}
+                            {formatPhoneNumber(effectivePhone, drawerDomain || place.brandDomain || place.website || place.country || place.city || place.address || place.formattedAddress)}
                           </span>
                         ) : (
                           <span className="text-xs font-medium text-zinc-500 block">{t("place.phoneNotProvided", "Not provided")}</span>
