@@ -368,9 +368,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // STRICT POLICY: Do not register "fake" optimistic places without a verified official domain.
-    if (!isRealDomain) {
-      console.warn("[Search Mobile] No verified domain found for:", trimmed);
+    // SUCCESS: We found a real official domain.
+    if (isRealDomain) {
+      console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}.`);
+    } else {
+      console.warn("[Search Mobile] Discovery completed but no verified domain found for:", trimmed);
       setIsSearching(false);
       setSubmittedQuery(trimmed);
       return;

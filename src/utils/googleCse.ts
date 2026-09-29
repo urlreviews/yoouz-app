@@ -78,7 +78,7 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
   if (!domain || !domain.includes(".")) return false;
   if (domain.includes("xn--")) return false;
 
-  const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b) || domain.includes(b));
+  const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
   if (isDisallowed) return false;
 
   return true;
@@ -313,7 +313,7 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
     try {
       const currentToken = ++activeQueryToken;
       let cleanQ = attempt === 0 ? rawQuery : broadenSearchQuery(rawQuery, attempt);
-      if (attempt > 0 && !cleanQ.toLowerCase().includes("website") && !cleanQ.toLowerCase().includes("official")) {
+      if (attempt > 0 && !cleanQ.toLowerCase().includes("website") && !cleanQ.toLowerCase().includes("official") && attempt < 3) {
         cleanQ = `${cleanQ} official website`;
       }
       

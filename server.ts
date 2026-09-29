@@ -19002,10 +19002,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // Extreme Google-Only Discovery Engine (15 high-speed attempts with query variations)
       const variations = [
+        `${cleanQ}`,
         `${cleanQ} official website`,
         `${cleanQ} homepage`,
-        `${cleanQ}`,
-        `${cleanQ} contact us`
+        `${cleanQ} contact`
       ];
 
       for (let attempt = 0; attempt < 15; attempt++) {
@@ -19027,7 +19027,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               "Cache-Control": "no-cache",
               "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
           }).catch(() => null);
           
           if (!sRes || !sRes.ok) {
