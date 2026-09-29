@@ -150,7 +150,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!document.querySelector('script[src*="cse.google.com"]')) {
       const script = document.createElement("script");
       script.async = true;
-      script.src = "https://cse.google.com/cse.js?cx=e41632212e69a4efd";
+      script.src = "https://cse.google.com/cse.js?cx=02c810e31e5104b39";
       document.head.appendChild(script);
     }
   }, []);
@@ -338,11 +338,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (currentRequestId !== searchRequestIdRef.current) return;
 
-    // Real official domain or named business profile
+    // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
     if (isValidDomainUrl(cleanUrl)) {
       console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
-      console.info("[Search] Domain discovery completed. Opening named business profile for:", rawQuery);
+      console.warn("[Search] No official website domain found. Halting search to prevent creating fallback pages.");
+      setIsSearching(false);
+      return;
     }
 
     setQuery(baseName || rawQuery);

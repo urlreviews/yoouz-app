@@ -19514,25 +19514,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             locations: []
           });
         }
-        const formattedName = formatBusinessName(rawQuery);
-        const namedSlug = rawQuery.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.]/g, '');
-        return res.json({
-          title: formattedName,
-          description: `${formattedName} is a verified business on Yoouz.`,
-          image: "",
-          logo: `/api/favicon?domain=${encodeURIComponent(namedSlug)}`,
-          siteName: formattedName,
-          domain: namedSlug,
-          url: "",
-          address: "",
-          city: "Online",
-          country: "",
-          phone: "",
-          email: "",
-          category: "Verified Business",
-          openingHours: "Available 24/7",
-          locations: []
-        });
+        return res.status(400).json({ error: "No official business domain found" });
       }
 
       let url = parsedUrl.origin;
