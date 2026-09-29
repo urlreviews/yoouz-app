@@ -123,7 +123,7 @@ async function persistToDb(data: ResolvedBusinessData) {
   if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
   try {
     const autoPlaceId = data.domain;
-    const logoUrl = data.logo || "";
+    const logoUrl = data.logo || `/api/favicon?domain=${data.domain}`;
     const autoPlaceDoc = {
       id: autoPlaceId,
       name: data.name,
