@@ -360,14 +360,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // SUCCESS: We found a real official domain.
+    // Real official domain or named business profile
     if (isRealDomain) {
       console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
-      console.warn("[Search Mobile] Discovery completed but no verified domain found for:", trimmed);
-      setIsSearching(false);
-      setSubmittedQuery(trimmed);
-      return;
+      console.info("[Search Mobile] Domain discovery completed. Opening named business profile for:", trimmed);
     }
 
     // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)

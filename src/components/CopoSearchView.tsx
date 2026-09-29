@@ -338,13 +338,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (currentRequestId !== searchRequestIdRef.current) return;
 
-    // SUCCESS: We found a real official domain.
+    // Real official domain or named business profile
     if (isValidDomainUrl(cleanUrl)) {
       console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
-      console.warn("[Search] Discovery completed but no official domain was found for:", rawQuery);
-      setIsSearching(false);
-      return;
+      console.info("[Search] Domain discovery completed. Opening named business profile for:", rawQuery);
     }
 
     setQuery(baseName || rawQuery);

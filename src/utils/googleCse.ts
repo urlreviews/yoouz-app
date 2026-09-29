@@ -294,14 +294,21 @@ function broadenSearchQuery(q: string, attempt: number): string {
   // Strip common business prefixes in English and Hebrew
   cleaned = cleaned.replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
   
+  if (attempt >= 1) {
+    const strippedSuffix = cleaned.replace(/\s+(property management|management|services|service|corp|corporation|inc|llc|ltd|gmbh|co|group|agency|firm|solutions|tech|store|shop)$/i, "");
+    if (strippedSuffix && strippedSuffix !== cleaned && strippedSuffix.length >= 2) {
+      return strippedSuffix;
+    }
+  }
+
   const words = cleaned.split(/\s+/);
   if (words.length <= 1) return cleaned;
 
-  // On later attempts, try stripping the last word (often a city like "Los Angeles" or "Tel Aviv")
-  if (attempt >= 2 && words.length > 2) {
+  // On later attempts, try stripping the last word (often a descriptive suffix or city)
+  if (attempt >= 1 && words.length > 2) {
     return words.slice(0, -1).join(" ");
   }
-  if (attempt >= 3 && words.length > 1) {
+  if (attempt >= 2 && words.length > 1) {
     return words.slice(0, 1).join(" ");
   }
   
@@ -312,7 +319,7 @@ function broadenSearchQuery(q: string, attempt: number): string {
  * Queries Google CSE client-side and resolves with the authentic official business URL
  * Supports multiple retry attempts and query broadening for maximum reliability.
  */
-export async function queryGoogleCseForUrl(query: string, maxRetries: number = 1): Promise<string | null> {
+export async function queryGoogleCseForUrl(query: string, maxRetries: number = 2): Promise<string | null> {
   const rawQuery = query.trim();
   if (!rawQuery || rawQuery.length < 2) return null;
 
@@ -380,6 +387,7 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 1
           
           if (results.length === 0) {
             console.warn(`[Google CSE] Zero results for query: "${cleanQ}".`);
+            finishWithBestCandidate();
             return;
           }
 
