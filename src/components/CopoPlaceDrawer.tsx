@@ -1452,7 +1452,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     {hasGenuinePhone && (
                       <a
                         href={`tel:${effectivePhone}`}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0"
+                        className="w-16 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
                       >
                         {t("place.call", "Call")}
                       </a>
@@ -1481,7 +1481,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         href={effectiveWebsite}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-4 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
+                        className="w-16 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
                       >
                         <span>{t("place.visit", "Visit")}</span>
                       </a>
@@ -1502,7 +1502,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                       <a
                         href={`mailto:${effectiveEmail}`}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0"
+                        className="w-16 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
                       >
                         {t("place.email", "Email")}
                       </a>
