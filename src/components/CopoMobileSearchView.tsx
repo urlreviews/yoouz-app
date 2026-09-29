@@ -341,36 +341,20 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // Fast parallel resolution: Google CSE + Backend /api/url-metadata with tight 1200ms timeout
+    // Direct official business resolution exclusively via Google CSE
     if (!isValidDomainUrl(cleanUrl)) {
-      console.info("[Search Mobile] Fast parallel resolution for:", trimmed);
+      console.info("[Search Mobile] Resolving official domain exclusively via Google CSE for:", trimmed);
       
-      const csePromise = queryGoogleCseForUrl(trimmed)
-        .then(url => {
-          if (!url) throw new Error("CSE_NO_RESULT");
-          const dom = extractCleanDomain(url);
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
-          throw new Error("CSE_INVALID_DOMAIN");
-        });
-
-      const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(meta => {
-          if (!meta) throw new Error("BACKEND_NO_META");
-          const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
-          throw new Error("BACKEND_INVALID_DOMAIN");
-        });
-
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
-
-      const winner = await Promise.race([
-        Promise.any([csePromise, backendPromise]).catch(() => null),
-        timeoutPromise
-      ]);
-
-      if (winner && isValidDomainUrl(winner)) {
-        cleanUrl = winner;
+      try {
+        const cseUrl = await queryGoogleCseForUrl(trimmed);
+        if (cseUrl) {
+          const dom = extractCleanDomain(cseUrl);
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) {
+            cleanUrl = dom;
+          }
+        }
+      } catch (cseErr) {
+        console.warn("[Search Mobile] Google CSE resolution error:", cseErr);
       }
     }
 

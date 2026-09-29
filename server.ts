@@ -158,7 +158,7 @@ async function persistToDb(data: ResolvedBusinessData) {
     
     await bunnyDb.execute({
       sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT (id) DO UPDATE SET 
               name = EXCLUDED.name,
               address = EXCLUDED.address,
@@ -18865,157 +18865,6 @@ function logSearchIntel(query: string, domain: string, status: string, details: 
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-const DIRECTORY_DOMAINS = new Set([
-  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be",
-  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-  "duckduckgo.com", "bing.com", "yahoo.com", "live.com", "microsoft.com",
-  "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", "whitepages.com", "superpages.com",
-  "fiverr.com", "upwork.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com",
-  "mapquest.com", "waze.com", "booking.com", "expedia.com", "hotels.com"
-]);
-
-function isValidCandidate(urlStr: string): boolean {
-  if (!urlStr || !urlStr.startsWith('http')) return false;
-  try {
-    const parsed = new URL(urlStr);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-    if (!host || !host.includes('.')) return false;
-    if (host === 'apps.apple.com' || host === 'play.google.com') return false;
-    if (DIRECTORY_DOMAINS.has(host) || Array.from(DIRECTORY_DOMAINS).some(d => host === d || host.endsWith('.' + d))) return false;
-    if (urlStr.includes('/aclk?') || urlStr.includes('/search?') || urlStr.includes('/ck/a?')) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function decodeBingUrl(rawUrl: string): string {
-  try {
-    const match = rawUrl.match(/[?&]u=a1([^&]+)/);
-    if (match) {
-      let b64 = match[1];
-      while (b64.length % 4 !== 0) b64 += '=';
-      const decoded = Buffer.from(b64, 'base64').toString('utf-8');
-      if (decoded.startsWith('http')) return decoded;
-    }
-  } catch {}
-  return rawUrl;
-}
-
-function scoreCandidate(urlStr: string, query: string): number {
-  try {
-    const parsed = new URL(urlStr);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-    const cleanQ = query.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanHost = host.split('.')[0].replace(/[^a-z0-9]/g, '');
-    let score = 0;
-    
-    // Exact domain slug match
-    if (cleanHost === cleanQ) score += 60;
-    else if (cleanHost.startsWith(cleanQ) || cleanQ.startsWith(cleanHost)) score += 35;
-    else if (host.includes(cleanQ)) score += 25;
-
-    // Query words matching host
-    const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    let matchedWords = 0;
-    for (const w of words) {
-      if (host.includes(w)) matchedWords++;
-    }
-    score += matchedWords * 20;
-
-    // Prefer shorter path
-    if (parsed.pathname === '/' || parsed.pathname === '') score += 10;
-    else if (parsed.pathname.split('/').length <= 3) score += 5;
-
-    // Penalize generic aggregator words if not in query
-    if (!query.toLowerCase().includes('hostel') && host.includes('hostel')) score -= 50;
-    if (!query.toLowerCase().includes('hotel') && host.includes('hotel')) score -= 30;
-
-    return score;
-  } catch {
-    return -999;
-  }
-}
-
-async function fastSearchDiscovery(query: string): Promise<string | null> {
-  const qEnc = encodeURIComponent(query);
-
-  const [ddgResults, bingResults] = await Promise.all([
-    (async () => {
-      try {
-        const resp = await fetch(`https://html.duckduckgo.com/html/?q=${qEnc}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-          },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
-        });
-        if (!resp.ok) return [];
-        const html = await resp.text();
-        const urls: string[] = [];
-        
-        for (const m of html.matchAll(/uddg=([^&"'>\s]+)/gi)) {
-          try {
-            const dec = decodeURIComponent(m[1]);
-            if (isValidCandidate(dec)) urls.push(dec);
-          } catch {}
-        }
-        
-        const $ = cheerio.load(html);
-        $('.result__url').each((_, el) => {
-          let text = $(el).text().trim();
-          if (text) {
-            if (!text.startsWith('http')) text = 'https://' + text;
-            if (isValidCandidate(text)) urls.push(text);
-          }
-        });
-        return urls;
-      } catch {
-        return [];
-      }
-    })(),
-    (async () => {
-      try {
-        const resp = await fetch(`https://www.bing.com/search?q=${qEnc}&setlang=en`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9'
-          },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
-        });
-        if (!resp.ok) return [];
-        const html = await resp.text();
-        const $ = cheerio.load(html);
-        const urls: string[] = [];
-        $('li.b_algo h2 a').each((_, el) => {
-          const raw = $(el).attr('href');
-          if (raw) {
-            const dec = decodeBingUrl(raw);
-            if (isValidCandidate(dec)) urls.push(dec);
-          }
-        });
-        return urls;
-      } catch {
-        return [];
-      }
-    })()
-  ]);
-
-  const seen = new Set<string>();
-  const candidates: string[] = [];
-  for (const u of [...bingResults, ...ddgResults]) {
-    if (!seen.has(u)) {
-      seen.add(u);
-      candidates.push(u);
-    }
-  }
-
-  if (candidates.length === 0) return null;
-  candidates.sort((a, b) => scoreCandidate(b, query) - scoreCandidate(a, query));
-  return candidates[0] || null;
-}
-
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
@@ -19258,18 +19107,8 @@ async function fastSearchDiscovery(query: string): Promise<string | null> {
 
 
 
-    // 3. Official Discovery Engine (Fast Multi-Engine Discovery + Fallbacks)
+    // 3. Official Discovery Engine (Google Search)
     let discoveredUrl: string = "";
-    try {
-      console.log(`[Fast Discovery] Running parallel multi-engine discovery for: "${cleanQ}"`);
-      const fastResult = await fastSearchDiscovery(cleanQ).catch(() => null);
-      if (fastResult) {
-        console.log(`[Fast Discovery] Found official URL for "${cleanQ}": ${fastResult}`);
-        discoveredUrl = fastResult;
-      }
-    } catch (fdErr) {
-      console.warn(`[Fast Discovery Error]:`, fdErr);
-    }
     try {
       const broadenLocal = (q: string, att: number): string => {
         let cl = q.trim().replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
@@ -19339,45 +19178,8 @@ async function fastSearchDiscovery(query: string): Promise<string | null> {
               if (discoveredUrl) break;
             } catch (sErr) {}
 
-            console.warn(`[Google Discovery] Firecrawl search also failed, trying DuckDuckGo fallback...`);
-            
-            try {
-              console.log(`[Google Discovery] Trying DuckDuckGo JSON API...`);
-              const ddgApiUrl = `https://api.duckduckgo.com/?q=${qEnc}&format=json&no_html=1`;
-              const ddgApiResp = await fetch(ddgApiUrl, { signal: AbortSignal.timeout(5000) });
-              if (ddgApiResp.ok) {
-                const ddgData = await ddgApiResp.json();
-                if (ddgData.AbstractURL && ddgData.AbstractURL.startsWith('http')) {
-                  console.log(`[Google Discovery] Found URL via DuckDuckGo API: ${ddgData.AbstractURL}`);
-                  discoveredUrl = ddgData.AbstractURL;
-                  break;
-                }
-              }
-            } catch (apiErr) {}
-
-            try {
-              const ddgUrl = `https://duckduckgo.com/html/?q=${qEnc}`;
-              const ddgResp = await fetch(ddgUrl, {
-                headers: {
-                  'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
-                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                },
-                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
-              });
-              
-              if (ddgResp.ok) {
-                const ddgHtml = await ddgResp.text();
-                if (ddgHtml.length > 500) {
-                  console.log(`[Google Discovery] Successfully fetched DuckDuckGo results`);
-                  scrapeData = { html: ddgHtml };
-                }
-              }
-            } catch (ddgErr) {
-              console.warn(`[Google Discovery] DuckDuckGo fallback failed:`, ddgErr.message);
-            }
-
             if (!scrapeData) {
-              console.warn(`[Google Discovery] All engine fallbacks failed, trying direct Google fetch (last resort)...`);
+              console.warn(`[Google Discovery] Firecrawl search failed, trying direct Google fetch (last resort)...`);
               // Fallback to direct fetch with random User-Agent
               const resp = await fetch(googleUrl, {
                 headers: {
@@ -19582,100 +19384,33 @@ async function fastSearchDiscovery(query: string): Promise<string | null> {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
       
-      if (FIRECRAWL_BASE_URL && (req.query.force_firecrawl || !rawQuery.includes('.') || req.query.scrape)) {
-        try {
-          console.log(`[Firecrawl Bridge] Processing "${rawQuery}" via: ${FIRECRAWL_BASE_URL}`);
-          
-          // 1. Search Mode: If input is a name, find the URL
-          if (!rawQuery.includes('.') || req.query.force_search) {
-            const searchRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/search`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: `${rawQuery} official website`, limit: 1 }),
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
-            }).then(r => r.ok ? r.json() : null).catch(() => null);
-
-            if (searchRes && searchRes.success && searchRes.data && searchRes.data.length > 0) {
-              rawQuery = searchRes.data[0].url;
-              console.log(`[Firecrawl Bridge] Found URL: ${rawQuery}`);
-            }
-          }
-
-          // 2. Scrape Mode: Get metadata from the URL
-          if (rawQuery.startsWith('http')) {
-            const scrapeRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: rawQuery, formats: ['markdown', 'html'] }),
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
-            }).then(r => r.ok ? r.json() : null).catch(() => null);
-
-            if (scrapeRes && scrapeRes.success && scrapeRes.data) {
-              const data = scrapeRes.data;
-              const metadata = data.metadata || {};
-              const domain = rawQuery.replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0].toLowerCase();
-              
-              const resolved = {
-                title: metadata.title || formatBusinessName(rawQuery, domain),
-                description: metadata.description || "",
-                image: metadata.ogImage || metadata.image || "",
-                logo: metadata.ogImage || metadata.image || `/api/favicon?domain=${domain}`,
-                siteName: metadata.siteName || metadata.title || "",
-                domain: domain,
-                url: rawQuery,
-                address: "", // Firecrawl markdown can be parsed for this later
-                city: "Online",
-                country: "",
-                phone: "",
-                email: "",
-                category: "Verified Business",
-                openingHours: "Available 24/7",
-                locations: []
-              };
-              
-              console.log(`[Firecrawl Bridge] Scrape Success for: ${domain}`);
-              logSearchIntel(rawQuery, domain, "firecrawl_success");
-              return res.json(resolved);
-            }
-          }
-        } catch (fErr) {
-          console.error("[Firecrawl Bridge Error]:", fErr.message);
-        }
-      }
-
-      logSearchIntel(rawQuery, "", "initiated");
-      
-      let targetUrl = rawQuery;
-      let resolvedEntity: ResolvedBusinessData | null = null;
-
-      // 0. Instant Database Cache Check (Zero-Scrape Path)
+      // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path)
       const activeDb = (global as any).bunnyDb || db;
-      if (activeDb && targetUrl && !targetUrl.includes(' ')) {
+      if (activeDb && rawQuery) {
         try {
-          const cleanDom = targetUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0].toLowerCase();
-          if (cleanDom.includes('.')) {
-            const cachedPlace = await activeDb.execute({
-              sql: `SELECT id, name, category, address, city, country, logoUrl, data FROM places WHERE id = ? LIMIT 1`,
-              args: [cleanDom]
-            });
-            if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
-              const row: any = cachedPlace.rows[0];
-              let pData: any = {};
-              try {
-                pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-              } catch(e) {
-                console.warn("[UrlMetadata] Failed to parse cached JSON data for:", cleanDom);
-              }
-              console.log(`[Database Cache Hit] Serving instant business metadata for: ${cleanDom}`);
-              logSearchIntel(rawQuery, cleanDom, "db_cache_hit");
+          const cleanQDom = rawQuery.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+          const cachedPlace = await activeDb.execute({
+            sql: `SELECT id, name, category, address, city, country, logoUrl, data FROM places 
+                  WHERE LOWER(id) = ? OR LOWER(name) = ? OR LOWER(id) = ? 
+                  LIMIT 1`,
+            args: [cleanQDom, rawQuery.toLowerCase(), rawQuery.toLowerCase()]
+          });
+          if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
+            const row: any = cachedPlace.rows[0];
+            let pData: any = {};
+            try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
+            const matchedDom = row.id && row.id.includes('.') ? row.id : (cleanQDom.includes('.') ? cleanQDom : "");
+            if (matchedDom) {
+              console.log(`[Database Cache Hit] Serving instant metadata for: "${rawQuery}" -> ${matchedDom}`);
+              logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               return res.json({
                 title: row.name || pData.name,
                 description: pData.description || `${row.name} is a verified business on Yoouz.`,
                 image: pData.bannerUrl || pData.ogImage || pData.image || "",
-                logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || "",
+                logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`,
                 siteName: row.name || pData.name,
-                domain: cleanDom,
-                url: pData.website || `https://${cleanDom}`,
+                domain: matchedDom,
+                url: pData.website || `https://${matchedDom}`,
                 address: row.address || pData.address || "",
                 city: row.city || pData.city || "",
                 country: row.country || pData.country || "",
@@ -19692,11 +19427,35 @@ async function fastSearchDiscovery(query: string): Promise<string | null> {
         }
       }
 
-      // If user passed a business phrase/name without a domain dot
+      logSearchIntel(rawQuery, "", "initiated");
+      
+      let targetUrl = rawQuery;
+      let resolvedEntity: ResolvedBusinessData | null = null;
+
+      // 1. If user passed a business phrase/name without a domain dot, resolve directly via Fast Discovery Engine
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
-          targetUrl = 'https://' + resolvedEntity.domain;
+          const realDomain = resolvedEntity.domain;
+          const entityLogo = resolvedEntity.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
+          logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
+          return res.json({
+            title: resolvedEntity.name,
+            description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz.`,
+            image: resolvedEntity.photo || "",
+            logo: entityLogo,
+            siteName: resolvedEntity.name,
+            domain: realDomain,
+            url: resolvedEntity.websiteUrl || `https://${realDomain}`,
+            address: resolvedEntity.address || "",
+            city: resolvedEntity.city || "Online",
+            country: resolvedEntity.country || "",
+            phone: resolvedEntity.phone || "",
+            email: resolvedEntity.email || "",
+            category: resolvedEntity.category || "Verified Business",
+            openingHours: resolvedEntity.openingHours || "Available 24/7",
+            locations: []
+          });
         } else if (resolvedEntity) {
           return res.json({
             title: resolvedEntity.name,
@@ -20994,16 +20753,16 @@ async function fastSearchDiscovery(query: string): Promise<string | null> {
 
             await bunnyDb.execute({
               sql: `UPDATE places SET 
-                      name = $1,
-                      logoUrl = $2,
-                      address = COALESCE(NULLIF($3, ''), places.address),
-                      city = COALESCE(NULLIF($4, ''), places.city),
-                      country = COALESCE(NULLIF($5, ''), places.country),
-                      latitude = $6,
-                      longitude = $7,
-                      data = $8,
+                      name = ?,
+                      logoUrl = ?,
+                      address = COALESCE(NULLIF(?, ''), places.address),
+                      city = COALESCE(NULLIF(?, ''), places.city),
+                      country = COALESCE(NULLIF(?, ''), places.country),
+                      latitude = ?,
+                      longitude = ?,
+                      data = ?,
                       updatedAt = CURRENT_TIMESTAMP
-                    WHERE id = $9`,
+                    WHERE id = ?`,
               args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
             }).catch(e => console.error("[Scraper DB Update Error]:", e));
             image = mergedBanner || image;

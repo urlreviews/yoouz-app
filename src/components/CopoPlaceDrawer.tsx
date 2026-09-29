@@ -535,7 +535,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 data.phone
               );
               
-              if (data.image) {
+              if (data.image && !place.bannerUrl && !place.ogImage) {
                 setFetchedBannerUrl(data.image);
               }
               if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {

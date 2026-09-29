@@ -319,44 +319,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
-      console.info("[Search] Fast parallel resolution for:", rawQuery);
+      console.info("[Search] Resolving official domain exclusively via Google CSE for:", rawQuery);
       
-      const csePromise = queryGoogleCseForUrl(rawQuery)
-        .then(url => {
-          if (!url) throw new Error("CSE_NO_RESULT");
-          const dom = extractCleanDomain(url);
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
-          throw new Error("CSE_INVALID_DOMAIN");
-        });
-
-      const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`)
-        .then(async r => {
-          if (r.status === 504 || r.status === 502) {
-            console.warn("[Search] Backend timeout (504). Relying on client-side CSE.");
-            throw new Error("BACKEND_TIMEOUT");
+      try {
+        const cseUrl = await queryGoogleCseForUrl(rawQuery);
+        if (cseUrl) {
+          const dom = extractCleanDomain(cseUrl);
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) {
+            cleanUrl = dom;
           }
-          return r.ok ? r.json() : null;
-        })
-        .then(meta => {
-          if (!meta) throw new Error("BACKEND_NO_META");
-          preloadedMeta = meta;
-          const dom = meta.domain ? extractCleanDomain(meta.domain) : "";
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
-          throw new Error("BACKEND_INVALID_DOMAIN");
-        });
-
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
-
-      const winner = await Promise.race([
-        Promise.any([csePromise, backendPromise]).catch(() => null),
-        timeoutPromise
-      ]);
+        }
+      } catch (cseErr) {
+        console.warn("[Search] Google CSE resolution error:", cseErr);
+      }
 
       if (currentRequestId !== searchRequestIdRef.current) return;
-
-      if (winner && isValidDomainUrl(winner)) {
-        cleanUrl = winner;
-      }
     }
 
     if (currentRequestId !== searchRequestIdRef.current) return;
