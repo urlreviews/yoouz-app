@@ -38,6 +38,167 @@ import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils
 
 dotenv.config();
 
+const FIRECRAWL_BASE_URL = "https://mc-rb4zzrxvx1.bunny.run";
+
+async function scrapeWithFirecrawl(url: string) {
+  try {
+    const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['html', 'markdown'],
+        onlyMainContent: false,
+        waitFor: 1000
+      }),
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(15000) : undefined
+    });
+
+    if (!response.ok) {
+      throw new Error(`Firecrawl error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  } catch (error) {
+    console.error("[Firecrawl] Scraping failed for:", url, error);
+    return null;
+  }
+}
+
+interface ResolvedBusinessData {
+  domain: string;
+  websiteUrl: string;
+  name: string;
+  category: string;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  email: string;
+  openingHours: string;
+  photo: string;
+  description: string;
+  lat: number;
+  lng: number;
+}
+
+// Helper function to persist resolved result to Database so that subsequent lookups are instant & free
+async function persistToDb(data: ResolvedBusinessData) {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
+  try {
+    const autoPlaceId = data.domain;
+    const logoUrl = data.photo || `/api/favicon?domain=${data.domain}`;
+    const autoPlaceDoc = {
+      id: autoPlaceId,
+      name: data.name,
+      category: data.category,
+      categoryType: "all",
+      address: data.address,
+      city: data.city,
+      country: data.country,
+      lat: data.lat || 0,
+      lng: data.lng || 0,
+      rating: 5,
+      totalReviews: 1,
+      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      avatarUrl: logoUrl,
+      logoUrl: logoUrl,
+      bannerUrl: data.photo || "",
+      ogImage: data.photo || "",
+      photos: data.photo ? [data.photo] : [],
+      openingHours: data.openingHours || "",
+      isOpen: true,
+      phone: data.phone,
+      email: data.email,
+      website: data.websiteUrl || `https://${data.domain}`,
+      priceRange: "N/A",
+      plusCode: "",
+      locations: [],
+      description: data.description || "",
+      popularKeywords: [],
+      amenities: [],
+      topDishes: [],
+      brandDomain: data.domain
+    };
+    
+    await bunnyDb.execute({
+      sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET 
+              name = EXCLUDED.name,
+              address = EXCLUDED.address,
+              category = EXCLUDED.category,
+              city = EXCLUDED.city,
+              country = EXCLUDED.country,
+              latitude = EXCLUDED.latitude,
+              longitude = EXCLUDED.longitude,
+              logoUrl = EXCLUDED.logoUrl,
+              data = EXCLUDED.data,
+              updatedAt = CURRENT_TIMESTAMP`,
+      args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
+    });
+  } catch(e) {
+    console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
+  }
+}
+
+function isCorruptedBusinessNameServer(name?: string | null): boolean {
+  if (!name) return false;
+  const lower = name.trim().toLowerCase();
+  if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
+  if (/^(st-)?kruis\s*tel[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone|call|contact|address|location|postcode|zipcode|vat|be\s*0\d{3})[:\s]/i.test(lower)) return true;
+  if (/^(tel|fax|gsm|phone)\b/i.test(lower) && /\d{3}/.test(lower)) return true;
+  if (/^maalsesteenweg/i.test(lower) || /^postcode/i.test(lower)) return true;
+  return false;
+}
+
+function isGenericPlaceNameServer(name?: string | null): boolean {
+  if (!name) return true;
+  if (isCorruptedBusinessNameServer(name)) return true;
+  const lower = name.trim().toLowerCase();
+  const genericWords = new Set([
+    "home",
+    "home page",
+    "homepage",
+    "welcome",
+    "welcome to",
+    "index",
+    "index page",
+    "main",
+    "main page",
+    "default",
+    "official site",
+    "official website",
+    "website",
+    "page",
+    "business",
+    "business place",
+    "verified business",
+    "verified business place"
+  ]);
+  if (genericWords.has(lower)) return true;
+  if (/^(home|welcome|index|default|main page|official site)\s*[|\-–—:•]/i.test(lower)) return true;
+  return false;
+}
+
+const isGenericOrPlaceholderTitle = (t: string) => {
+  if (!t) return true;
+  if (isCorruptedBusinessNameServer(t)) return true;
+  const lower = t.trim().toLowerCase();
+  const genericList = [
+    'hostinger horizons', 'react app', 'vite + react', 'vite app', 'create react app',
+    'document', 'untitled', 'untitled document', 'home', 'home page', 'homepage',
+    'my app', 'web app', 'website', 'just another wordpress site', 'wix.com',
+    'squarespace', 'elementor', 'site title', 'default title', 'loading...', 'app', 'index'
+  ];
+  return genericList.includes(lower) || lower.startsWith('loading') || lower.startsWith('untitled');
+};
+
 const clientGetDoc: any = null;
 const clientDoc: any = null;
 const clientGetDocs: any = null;
@@ -18754,68 +18915,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
-    async function persistToDb(data: ResolvedBusinessData) {
-      if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
-      try {
-        const autoPlaceId = data.domain;
-        const logoUrl = data.photo || `/api/favicon?domain=${data.domain}`;
-        const autoPlaceDoc = {
-          id: autoPlaceId,
-          name: data.name,
-          category: data.category,
-          categoryType: "all",
-          address: data.address,
-          city: data.city,
-          country: data.country,
-          lat: data.lat || 0,
-          lng: data.lng || 0,
-          rating: 5,
-          totalReviews: 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-          avatarUrl: logoUrl,
-          logoUrl: logoUrl,
-          bannerUrl: data.photo || "",
-          ogImage: data.photo || "",
-          photos: data.photo ? [data.photo] : [],
-          openingHours: data.openingHours || "",
-          isOpen: true,
-          phone: data.phone,
-          email: data.email,
-          website: data.websiteUrl || `https://${data.domain}`,
-          priceRange: "N/A",
-          plusCode: "",
-          locations: [],
-          description: data.description || "",
-          popularKeywords: [],
-          amenities: [],
-          topDishes: [],
-          brandDomain: data.domain
-        };
-        
-        await bunnyDb.execute({
-          sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
-                ON CONFLICT (id) DO UPDATE SET 
-                  name = EXCLUDED.name,
-                  address = EXCLUDED.address,
-                  category = EXCLUDED.category,
-                  city = EXCLUDED.city,
-                  country = EXCLUDED.country,
-                  latitude = EXCLUDED.latitude,
-                  longitude = EXCLUDED.longitude,
-                  logoUrl = EXCLUDED.logoUrl,
-                  data = EXCLUDED.data,
-                  updatedAt = CURRENT_TIMESTAMP`,
-          args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
-        });
-      } catch(e) {
-        console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
-      }
-    }
-
-
-
     // 1. Explicit domain check - Live scrape the website directly so real banner, phone, address, and description are stored
     if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
       const cleanDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
@@ -18838,52 +18937,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const protocols = [`https://${cleanDom}`, `http://${cleanDom}`, `https://www.${cleanDom}`];
         for (const targetUrl of protocols) {
           try {
-            const dResp = await fetch(targetUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9'
-              },
-              redirect: 'follow',
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
-            });
-            if (dResp.ok) {
-              const dHtml = await dResp.text();
-              if (dHtml && dHtml.length > 300) {
-                const d$ = cheerio.load(dHtml);
-                const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text();
-                if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
-                  domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
-                }
-                const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content');
-                if (ogDesc && ogDesc.trim().length > 10) {
-                  domDesc = ogDesc.trim();
-                } else if (!domDesc) {
-                  const firstP = d$('main p, article p, .about p, #about p, p').first().text().trim();
-                  if (firstP && firstP.length > 20 && firstP.length < 350) {
-                    domDesc = firstP;
-                  }
-                }
-                const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content');
-                if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
-                  try {
-                    domPhoto = new URL(ogImg, dResp.url || targetUrl).toString();
-                  } catch(e) {
-                    domPhoto = ogImg;
-                  }
-                }
-                const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, dResp.url || targetUrl, cleanDom);
-                if (scrapedLoc.address && (!domAddress || domAddress === "Verified Location")) domAddress = scrapedLoc.address;
-                if (scrapedLoc.city && (!domCity || domCity === "Online")) domCity = scrapedLoc.city;
-                if (scrapedLoc.country && !domCountry) domCountry = scrapedLoc.country;
-                if (scrapedLoc.phone && !domPhone) domPhone = scrapedLoc.phone;
-                if (scrapedLoc.email && !domEmail) domEmail = scrapedLoc.email;
-                if (scrapedLoc.category && (!domCategory || domCategory === "Website")) domCategory = scrapedLoc.category;
-                if (scrapedLoc.openingHours && (!domOpeningHours || domOpeningHours === "Available 24/7")) domOpeningHours = scrapedLoc.openingHours;
-                if (scrapedLoc.lat && !domLat) domLat = scrapedLoc.lat;
-                if (scrapedLoc.lng && !domLng) domLng = scrapedLoc.lng;
-                break;
+            console.log(`[Firecrawl] Scraping official domain candidate: ${targetUrl}`);
+            const scrapeData = await scrapeWithFirecrawl(targetUrl);
+            
+            if (scrapeData && scrapeData.html) {
+              const dHtml = scrapeData.html;
+              const d$ = cheerio.load(dHtml);
+              
+              const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeData.metadata?.title;
+              if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
+                domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
               }
+              
+              const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
+              if (ogDesc && ogDesc.trim().length > 10) {
+                domDesc = ogDesc.trim();
+              } else if (!domDesc) {
+                const firstP = d$('main p, article p, .about p, #about p, p').first().text().trim();
+                if (firstP && firstP.length > 20 && firstP.length < 350) {
+                  domDesc = firstP;
+                }
+              }
+              
+              const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
+              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
+                try {
+                  domPhoto = new URL(ogImg, targetUrl).toString();
+                } catch(e) {
+                  domPhoto = ogImg;
+                }
+              }
+              
+              const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, targetUrl, cleanDom);
+              if (scrapedLoc.address && (!domAddress || domAddress === "Verified Location")) domAddress = scrapedLoc.address;
+              if (scrapedLoc.city && (!domCity || domCity === "Online")) domCity = scrapedLoc.city;
+              if (scrapedLoc.country && !domCountry) domCountry = scrapedLoc.country;
+              if (scrapedLoc.phone && !domPhone) domPhone = scrapedLoc.phone;
+              if (scrapedLoc.email && !domEmail) domEmail = scrapedLoc.email;
+              if (scrapedLoc.category && (!domCategory || domCategory === "Website")) domCategory = scrapedLoc.category;
+              if (scrapedLoc.openingHours && (!domOpeningHours || domOpeningHours === "Available 24/7")) domOpeningHours = scrapedLoc.openingHours;
+              if (scrapedLoc.lat && !domLat) domLat = scrapedLoc.lat;
+              if (scrapedLoc.lng && !domLng) domLng = scrapedLoc.lng;
+              break;
             }
           } catch(errProtocol) {}
         }
@@ -19119,45 +19214,42 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         let scLng = 0;
 
         try {
-          const fetchResp = await fetch(discoveredUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-            },
-            redirect: 'follow',
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-          });
-          if (fetchResp.ok) {
-            const scHtml = await fetchResp.text();
-            if (scHtml && scHtml.length > 500) {
-              const sc$ = cheerio.load(scHtml);
-              const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text();
-              if (metaT && metaT.trim().length > 1) {
-                scTitle = formatBusinessName(metaT.trim(), discoveredDom);
-              }
-              const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content');
-              if (metaDesc && metaDesc.trim().length > 10) {
-                scDesc = metaDesc.trim();
-              }
-              const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content');
-              if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com')) {
-                try {
-                  scImage = new URL(metaImg, fetchResp.url || discoveredUrl).toString();
-                } catch (e) {
-                  scImage = metaImg;
-                }
-              }
-              const locData = await extractWebsiteLocationAndContact(sc$, scHtml, fetchResp.url || discoveredUrl, discoveredDom);
-              if (locData.address) scAddress = locData.address;
-              if (locData.city) scCity = locData.city;
-              if (locData.country) scCountry = locData.country;
-              if (locData.phone) scPhone = locData.phone;
-              if (locData.email) scEmail = locData.email;
-              if (locData.category && locData.category !== "Verified Business") scCategory = locData.category;
-              if (locData.openingHours) scOpeningHours = locData.openingHours;
-              if (locData.lat) scLat = locData.lat;
-              if (locData.lng) scLng = locData.lng;
+          console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
+          const scrapeData = await scrapeWithFirecrawl(discoveredUrl);
+          
+          if (scrapeData && scrapeData.html) {
+            const scHtml = scrapeData.html;
+            const sc$ = cheerio.load(scHtml);
+            
+            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeData.metadata?.title;
+            if (metaT && metaT.trim().length > 1) {
+              scTitle = formatBusinessName(metaT.trim(), discoveredDom);
             }
+            
+            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
+            if (metaDesc && metaDesc.trim().length > 10) {
+              scDesc = metaDesc.trim();
+            }
+            
+            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
+            if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com')) {
+              try {
+                scImage = new URL(metaImg, discoveredUrl).toString();
+              } catch (e) {
+                scImage = metaImg;
+              }
+            }
+            
+            const locData = await extractWebsiteLocationAndContact(sc$, scHtml, discoveredUrl, discoveredDom);
+            if (locData.address) scAddress = locData.address;
+            if (locData.city) scCity = locData.city;
+            if (locData.country) scCountry = locData.country;
+            if (locData.phone) scPhone = locData.phone;
+            if (locData.email) scEmail = locData.email;
+            if (locData.category && locData.category !== "Verified Business") scCategory = locData.category;
+            if (locData.openingHours) scOpeningHours = locData.openingHours;
+            if (locData.lat) scLat = locData.lat;
+            if (locData.lng) scLng = locData.lng;
           }
         } catch (scErr) {}
 
@@ -19544,19 +19636,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (rawTitle && !isGenericOrPlaceholderTitle(rawTitle)) {
                 title = rawTitle.trim();
               }
-
-              const isGenericOrPlaceholderTitle = (t: string) => {
-                if (!t) return true;
-                if (isCorruptedBusinessNameServer(t)) return true;
-                const lower = t.trim().toLowerCase();
-                const genericList = [
-                  'hostinger horizons', 'react app', 'vite + react', 'vite app', 'create react app',
-                  'document', 'untitled', 'untitled document', 'home', 'home page', 'homepage',
-                  'my app', 'web app', 'website', 'just another wordpress site', 'wix.com',
-                  'squarespace', 'elementor', 'site title', 'default title', 'loading...', 'app', 'index'
-                ];
-                return genericList.includes(lower) || lower.startsWith('loading') || lower.startsWith('untitled');
-              };
 
               const getCleanImgSrc = ($el: any): string => {
                 if (!$el || $el.length === 0) return '';
@@ -24480,17 +24559,6 @@ function cleanDomainName(urlStr: any) {
   }
 }
 
-function isCorruptedBusinessNameServer(name?: string | null): boolean {
-  if (!name) return false;
-  const lower = name.trim().toLowerCase();
-  if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
-  if (/^(st-)?kruis\s*tel[:\s]/i.test(lower)) return true;
-  if (/^(tel|fax|gsm|phone|call|contact|address|location|postcode|zipcode|vat|be\s*0\d{3})[:\s]/i.test(lower)) return true;
-  if (/^(tel|fax|gsm|phone)\b/i.test(lower) && /\d{3}/.test(lower)) return true;
-  if (/^maalsesteenweg/i.test(lower) || /^postcode/i.test(lower)) return true;
-  return false;
-}
-
 function splitCompoundWords(str: string): string {
   let s = str.trim();
   // If already a clean capitalized word (e.g. "Proximus", "Multipharma"), do not split
@@ -24514,36 +24582,6 @@ function splitCompoundWords(str: string): string {
   s = parts.join(" ").replace(/\s+/g, " ").trim();
   return s;
 }
-
-function isGenericPlaceNameServer(name?: string | null): boolean {
-  if (!name) return true;
-  if (isCorruptedBusinessNameServer(name)) return true;
-  const lower = name.trim().toLowerCase();
-  const genericWords = new Set([
-    "home",
-    "home page",
-    "homepage",
-    "welcome",
-    "welcome to",
-    "index",
-    "index page",
-    "main",
-    "main page",
-    "default",
-    "official site",
-    "official website",
-    "website",
-    "page",
-    "business",
-    "business place",
-    "verified business",
-    "verified business place"
-  ]);
-  if (genericWords.has(lower)) return true;
-  if (/^(home|welcome|index|default|main page|official site)\s*[|\-–—:•]/i.test(lower)) return true;
-  return false;
-}
-
 function formatBusinessName(name?: string | null, domain?: string | null): string {
   const cleanDom = domain ? cleanDomainName(domain) : "";
   const domRoot = cleanDom ? cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] : "";
