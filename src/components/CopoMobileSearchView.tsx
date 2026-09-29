@@ -341,20 +341,21 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // Direct official business resolution exclusively via Google CSE
+    // Direct official business resolution via DuckDuckGo + Firecrawl backend search
     if (!isValidDomainUrl(cleanUrl)) {
-      console.info("[Search Mobile] Resolving official domain exclusively via Google CSE for:", trimmed);
+      console.info("[Search Mobile] Resolving official domain via DuckDuckGo + Firecrawl for:", trimmed);
       
       try {
-        const cseUrl = await queryGoogleCseForUrl(trimmed);
-        if (cseUrl) {
-          const dom = extractCleanDomain(cseUrl);
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) {
-            cleanUrl = dom;
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`);
+        if (backendResp.ok) {
+          const data = await backendResp.json();
+          if (data && data.domain && isValidDomainUrl(data.domain)) {
+            cleanUrl = data.domain;
+            console.info("[Search Mobile] Backend search successfully resolved domain:", cleanUrl);
           }
         }
-      } catch (cseErr) {
-        console.warn("[Search Mobile] Google CSE resolution error:", cseErr);
+      } catch (bErr) {
+        console.warn("[Search Mobile] Backend search error:", bErr);
       }
     }
 
@@ -366,6 +367,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     } else {
       console.warn("[Search Mobile] No official website domain found. Halting search to prevent creating fallback pages.");
       setIsSearching(false);
+      alert(`No official business website could be found for "${trimmed}". Please try searching with a more specific query or with the official website domain.`);
       return;
     }
 

@@ -319,18 +319,20 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
-      console.info("[Search] Resolving official domain exclusively via Google CSE for:", rawQuery);
+      console.info("[Search] Resolving official domain via DuckDuckGo + Firecrawl for:", rawQuery);
       
       try {
-        const cseUrl = await queryGoogleCseForUrl(rawQuery);
-        if (cseUrl) {
-          const dom = extractCleanDomain(cseUrl);
-          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) {
-            cleanUrl = dom;
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
+        if (backendResp.ok) {
+          const data = await backendResp.json();
+          if (data && data.domain && isValidDomainUrl(data.domain)) {
+            cleanUrl = data.domain;
+            preloadedMeta = data;
+            console.info("[Search] Backend search successfully resolved domain:", cleanUrl);
           }
         }
-      } catch (cseErr) {
-        console.warn("[Search] Google CSE resolution error:", cseErr);
+      } catch (bErr) {
+        console.warn("[Search] Backend search error:", bErr);
       }
 
       if (currentRequestId !== searchRequestIdRef.current) return;
@@ -344,6 +346,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     } else {
       console.warn("[Search] No official website domain found. Halting search to prevent creating fallback pages.");
       setIsSearching(false);
+      alert(`No official business website could be found for "${rawQuery}". Please try searching with a more specific query or with the official website domain.`);
       return;
     }
 

@@ -19128,7 +19128,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme Google-Only Discovery Engine (4 high-speed attempts with fallbacks)
+      // Extreme DuckDuckGo-Only Discovery Engine (4 high-speed attempts with realistic headers)
       const variations = [
         `${cleanQ}`,
         `${cleanQ} website`,
@@ -19145,83 +19145,47 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
           
           const qEnc = encodeURIComponent(currentQ);
-          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
+          const ddgUrl = `https://html.duckduckgo.com/html/?q=${qEnc}`;
           
-          console.log(`[Google Discovery] Using Firecrawl to fetch results for: "${currentQ}" (Attempt ${attempt + 1}/8)`);
-          let scrapeData: any = null;
-          try {
-            scrapeData = await scrapeWithFirecrawl(googleUrl);
-          } catch (fErr) {
-            console.warn(`[Google Discovery] Firecrawl scrape failed (${fErr.message}), trying Firecrawl search fallback...`);
-            
-            // Try Firecrawl's own search endpoint as a fallback before direct fetch
-            try {
-              const urlsToTry = [FIRECRAWL_BASE_URL, FIRECRAWL_PUBLIC_URL];
-              for (const baseUrl of urlsToTry) {
-                if (!baseUrl) continue;
-                const searchRes = await fetch(`${baseUrl}/v1/search`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ query: currentQ, limit: 3 }),
-                  signal: AbortSignal.timeout(10000)
-                }).then(r => r.ok ? r.json() : null).catch(() => null);
-
-                if (searchRes?.success && searchRes.data?.length > 0) {
-                  const firstUrl = searchRes.data[0].url;
-                  if (firstUrl && firstUrl.startsWith('http')) {
-                    console.log(`[Google Discovery] Found URL via Firecrawl search: ${firstUrl}`);
-                    discoveredUrl = firstUrl;
-                    break;
-                  }
-                }
-              }
-              if (discoveredUrl) break;
-            } catch (sErr) {}
-
-            if (!scrapeData) {
-              console.warn(`[Google Discovery] Firecrawl search failed, trying direct Google fetch (last resort)...`);
-              // Fallback to direct fetch with random User-Agent
-              const resp = await fetch(googleUrl, {
-                headers: {
-                  'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
-                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                  'Accept-Language': 'en-US,en;q=0.9'
-                },
-                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
-              });
-              if (resp.ok) {
-                const h = await resp.text();
-                scrapeData = { html: h };
-              }
-            }
-          }
+          console.log(`[DuckDuckGo Discovery] Fetching search results for: "${currentQ}" (Attempt ${attempt + 1}/4)`);
           
-          if (!scrapeData || !scrapeData.html) {
+          const resp = await fetch(ddgUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'DNT': '1',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1',
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Mode': 'navigate',
+              'Sec-Fetch-Site': 'none',
+              'Sec-Fetch-User': '?1'
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+          });
+
+          if (!resp.ok) {
+            console.warn(`[DuckDuckGo Discovery] HTTP Error ${resp.status}: ${resp.statusText}`);
             continue;
           }
 
-          const html = scrapeData.html;
+          const html = await resp.text();
           if (!html || html.length < 500) continue;
           
-          // Extract URLs using robust regex
-          const matches = Array.from(new Set([
-            ...html.matchAll(/https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*/gi),
-            ...html.matchAll(/\/url\?q=(https?:\/\/[^&"'>\s]+)/gi),
-            ...html.matchAll(/href="(https?:\/\/[^"]+)"/gi),
-            ...html.matchAll(/data-url="(https?:\/\/[^"]+)"/gi),
-            ...html.matchAll(/ping="(https?:\/\/[^"]+)"/gi)
-          ].map(m => {
-            const u = m[1] || m[0];
-            try { return decodeURIComponent(u); } catch(e) { return u; }
-          }))).filter(u => {
-            if (!u || !u.startsWith('http')) return false;
-            const uLower = u.toLowerCase();
-            return !uLower.includes('google.com') && 
-                   !uLower.includes('google.co.il') && 
-                   !uLower.includes('gstatic.com') &&
-                   !uLower.includes('googleadservices.com') &&
-                   !uLower.includes('doubleclick.net');
-          });
+          // Extract URLs from uddg parameters
+          const matches: string[] = [];
+          const regex = /uddg=([^&"'>\s]+)/gi;
+          let match;
+          while ((match = regex.exec(html)) !== null) {
+            let u = match[1];
+            try {
+              u = decodeURIComponent(u);
+              if (u.startsWith('http')) {
+                matches.push(u);
+              }
+            } catch (err) {}
+          }
           
           const directoryDomains = [
             "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
@@ -19229,13 +19193,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
             "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
             "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net"
-          ].filter(d => !["apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com"].includes(d));
+          ];
 
           const validCandidates = matches.filter(u => {
             try {
               const uLower = u.toLowerCase();
-              if (uLower.includes("google.com/search") || uLower.includes("google.co.il/search") || uLower.includes("google.com/url")) return false;
-              if (uLower.includes("accounts.google.com") || uLower.includes("support.google.com")) return false;
               const host = new URL(u).hostname.toLowerCase();
               const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
               return !isNoise && !uLower.includes("javascript:");
@@ -19243,8 +19205,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           });
 
           if (validCandidates.length > 0) {
-            // Pick the first valid organic candidate immediately - that's usually the official site
+            // Pick the first valid organic candidate immediately - that's the official site
             discoveredUrl = validCandidates[0];
+            console.log(`[DuckDuckGo Discovery] Successfully resolved official website URL: ${discoveredUrl}`);
             break; 
           }
           await new Promise(r => setTimeout(r, 100));
