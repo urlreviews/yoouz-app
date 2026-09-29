@@ -18874,7 +18874,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      return cachedEntry.data;
+      const isMissing = !cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'));
+      if (!isMissing) {
+        return cachedEntry.data;
+      }
     }
 
     const bunnyDb = getBunnyDb();
@@ -18911,13 +18914,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
             const isGeneric = isGenericPlaceNameServer(rowName);
-            const isMissingDetails = !row.address && !parsedData.phone && !parsedData.bannerUrl && !parsedData.ogImage && !parsedData.description;
+            const isMissingDetails = (!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'));
 
             if (isFabricatedNameDomain) {
               console.info(`[Database Cache] Purged fabricated domain: ${rowId}`);
               bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
-            } else if (isGeneric && isMissingDetails) {
-              console.info(`[Database Cache] Ignored low-quality generic cache: ${rowName}`);
+            } else if (isMissingDetails) {
+              console.info(`[Database Cache] Ignored low-quality generic cache for: ${rowName}`);
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
               const data: ResolvedBusinessData = {
@@ -19016,6 +19019,52 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           } catch(errProtocol) {}
         }
       } catch (scrapeErr) {}
+
+      // Fallback: If site was protected by CAPTCHA/bot shield or lacked contact info, enrich via search engine intelligence
+      if (!domDesc || !domPhone || !domEmail || domAddress === "Verified Location" || isGenericPlaceNameServer(domTitle)) {
+        try {
+          console.log(`[Search Intel Fallback] Querying DuckDuckGo intelligence for ${cleanDom}...`);
+          const intelResp = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(`${cleanDom} contact phone address`), {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+              "Accept": "text/html"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+          });
+          if (intelResp.ok) {
+            const intelHtml = await intelResp.text();
+            const i$ = cheerio.load(intelHtml);
+            let snippets: string[] = [];
+            i$(".result__snippet").each((_, el) => {
+              snippets.push(i$(el).text().trim());
+            });
+            const combinedText = snippets.join(" ");
+            
+            if (!domDesc && snippets.length > 0) {
+              const best = snippets.find(s => s.length > 30 && !s.includes("Cookie") && !s.includes("JavaScript")) || snippets[0];
+              if (best) domDesc = best;
+            }
+            if (!domPhone) {
+              const pMatch = combinedText.match(/(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/);
+              if (pMatch) domPhone = pMatch[0];
+            }
+            if (!domEmail) {
+              const eMatch = combinedText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              if (eMatch) domEmail = eMatch[0];
+            }
+            const firstTitle = i$(".result__title").first().text().trim();
+            if (firstTitle) {
+              const parts = firstTitle.split(/[-–—|•·]/).map(p => p.trim()).filter(Boolean);
+              const brandCandidate = parts.find(p => !p.toLowerCase().includes("services") && !p.toLowerCase().includes("cleaning") && p.length < 35) || parts[parts.length - 1];
+              if (brandCandidate && brandCandidate.length > 2) {
+                domTitle = brandCandidate;
+              }
+            }
+          }
+        } catch (eIntel) {
+          console.warn(`[Search Intel Fallback] Error for ${cleanDom}:`, eIntel);
+        }
+      }
 
       const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
@@ -19377,7 +19426,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             let pData: any = {};
             try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
             const matchedDom = row.id && row.id.includes('.') ? row.id : (cleanQDom.includes('.') ? cleanQDom : "");
-            if (matchedDom) {
+            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.')));
+            if (matchedDom && !isMissingData) {
               console.log(`[Database Cache Hit] Serving instant metadata for: "${rawQuery}" -> ${matchedDom}`);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               return res.json({

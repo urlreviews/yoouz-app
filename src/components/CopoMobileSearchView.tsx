@@ -538,10 +538,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       return;
     }
 
-    // 2. STRICT POLICY: ONLY allow opening profiles with a valid verified official domain!
+    // 2. If the tapped suggestion does not have a pre-resolved official domain yet, execute the search immediately!
     if (!cleanDom || !isValidDomainUrl(cleanDom)) {
-      console.warn("[Search Mobile] Refusing to open fake profile without domain for:", title);
-      // Optional: show local error toast
+      console.info("[Search Mobile] Suggestion tapped without pre-resolved domain. Executing search immediately for:", title);
+      setQuery(title);
+      handleSearch(title, title);
       return;
     }
 
@@ -783,15 +784,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   return (
                     <button 
                       key={idx}
+                      type="button"
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleSelectSuggestion(item);
                       }}
-                      onTouchStart={(e) => {
+                      onClick={(e) => {
                         e.preventDefault();
                         handleSelectSuggestion(item);
                       }}
-                      onClick={() => handleSelectSuggestion(item)}
                       className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group border-b border-zinc-900/80 last:border-0"
                     >
                       {hasDomain ? (
