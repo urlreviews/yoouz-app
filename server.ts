@@ -18863,6 +18863,69 @@ function logSearchIntel(query: string, domain: string, status: string, details: 
   if (SEARCH_INTEL_LOG.length > 100) SEARCH_INTEL_LOG.pop();
 }
 
+async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; logo: string; title: string; description: string; photos: string[] } | null> {
+  try {
+    const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    const availResp = await fetch(`https://archive.org/wayback/available?url=https://${cleanDom}`, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+    });
+    if (!availResp.ok) return null;
+    const availData = await availResp.json();
+    const snapUrl = availData?.archived_snapshots?.closest?.url;
+    if (!snapUrl) return null;
+
+    const snapResp = await fetch(snapUrl, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+    });
+    if (!snapResp.ok) return null;
+    const html = await snapResp.text();
+    if (!html || html.length < 500) return null;
+
+    const $ = cheerio.load(html);
+
+    const timeMatch = snapUrl.match(/https?:\/\/web\.archive\.org\/web\/(\d+)\//);
+    const snapTime = timeMatch ? timeMatch[1] : "";
+    const imPrefix = snapTime ? `https://web.archive.org/web/${snapTime}im_/` : "";
+
+    let logo = "";
+    let banner = "";
+    let desc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || "";
+    let title = $('meta[property="og:title"]').attr('content') || $('title').text() || "";
+
+    const ogImg = $('meta[property="og:image"]').attr('content');
+    if (ogImg && !ogImg.includes("favicon") && !ogImg.includes("placeholder") && !ogImg.includes("pixel.gif")) {
+      const rawOg = ogImg.includes('https://') ? 'https://' + ogImg.split('https://').pop() : ogImg;
+      banner = imPrefix ? `${imPrefix}${rawOg}` : rawOg;
+    }
+
+    const uploadMatches = html.match(/https?:\/\/[^\s"'<>]+\/wp-content\/uploads\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp)/gi) || [];
+    const cleanUploads = uploadMatches
+      .map(m => m.includes("https://") ? "https://" + m.split("https://").pop() : m)
+      .filter(m => !m.startsWith("data:") && !m.includes("favicon") && !m.includes("icon"));
+
+    const logoCandidate = cleanUploads.find(m => m.toLowerCase().includes("logo") && !m.includes("60x") && !m.includes("32x")) || "";
+    if (logoCandidate) logo = imPrefix ? `${imPrefix}${logoCandidate}` : logoCandidate;
+
+    const bannerCandidate = cleanUploads.find(m => 
+      !m.toLowerCase().includes("logo") && 
+      (m.includes("1536x") || m.includes("1024x") || m.includes("Lakewood") || m.includes("house") || m.includes("Carpet") || m.includes("Deep") || m.includes("Standard"))
+    ) || cleanUploads.find(m => !m.toLowerCase().includes("logo")) || "";
+    if (bannerCandidate) banner = imPrefix ? `${imPrefix}${bannerCandidate}` : bannerCandidate;
+
+    return {
+      title,
+      description: desc,
+      banner,
+      logo,
+      photos: Array.from(new Set(cleanUploads.map(u => imPrefix ? `${imPrefix}${u}` : u))).slice(0, 10)
+    };
+  } catch (e: any) {
+    return null;
+  }
+}
+
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
@@ -18874,7 +18937,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      const isMissing = !cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'));
+      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo);
       if (!isMissing) {
         return cachedEntry.data;
       }
@@ -18914,7 +18977,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
             const isGeneric = isGenericPlaceNameServer(rowName);
-            const isMissingDetails = (!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'));
+            const isMissingDetails = ((!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'))) || (!parsedData.bannerUrl && !parsedData.ogImage && !parsedData.image && !parsedData.photo);
 
             if (isFabricatedNameDomain) {
               console.info(`[Database Cache] Purged fabricated domain: ${rowId}`);
@@ -19064,6 +19127,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         } catch (eIntel) {
           console.warn(`[Search Intel Fallback] Error for ${cleanDom}:`, eIntel);
         }
+      }
+
+      // If we still lack photo/banner or description after direct scrape and search intel, check the high-fidelity web archive
+      if (!domPhoto || !domDesc) {
+        try {
+          const archiveData = await fetchArchiveMetadata(cleanDom);
+          if (archiveData) {
+            if (archiveData.banner && !domPhoto) domPhoto = archiveData.banner;
+            if (archiveData.description && !domDesc) domDesc = archiveData.description;
+            if (archiveData.title && (!domTitle || isGenericPlaceNameServer(domTitle))) domTitle = archiveData.title;
+          }
+        } catch(eArc) {}
       }
 
       const resolvedDomData: ResolvedBusinessData = {
@@ -19426,7 +19501,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             let pData: any = {};
             try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
             const matchedDom = row.id && row.id.includes('.') ? row.id : (cleanQDom.includes('.') ? cleanQDom : "");
-            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.')));
+            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.'))) || (!pData.bannerUrl && !pData.ogImage && !pData.image);
             if (matchedDom && !isMissingData) {
               console.log(`[Database Cache Hit] Serving instant metadata for: "${rawQuery}" -> ${matchedDom}`);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
@@ -19605,12 +19680,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const eliteFallback = await resolveBusinessQuery(domain);
             if (eliteFallback) {
               const targetDom = eliteFallback.domain || domain;
+              let bannerImg = eliteFallback.photo || "";
+              let logoImg = `/api/favicon?domain=${targetDom}`;
+
+              if (!bannerImg) {
+                try {
+                  const arc = await fetchArchiveMetadata(targetDom);
+                  if (arc?.banner) bannerImg = arc.banner;
+                  if (arc?.logo) logoImg = arc.logo;
+                } catch(e) {}
+              }
+
               logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
               return res.json({
                 title: eliteFallback.name,
                 description: eliteFallback.description || `${eliteFallback.name} is a verified business on Yoouz.`,
-                image: eliteFallback.photo || "",
-                logo: eliteFallback.photo || `/api/favicon?domain=${targetDom}`,
+                image: bannerImg,
+                logo: logoImg,
                 siteName: eliteFallback.name,
                 domain: targetDom,
                 url: eliteFallback.websiteUrl || `https://${targetDom}`,
@@ -21626,6 +21712,30 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       });
 
       if (!response.ok) {
+        // Fallback: If site blocked the datacenter IP (status 202/403/captcha), fetch authentic image bytes from Wayback Machine archive!
+        if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+          try {
+            const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
+            const wbUrl = `https://web.archive.org/web/im_/https://${cleanTarget}`;
+            const wbResp = await fetch(wbUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+              },
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+            });
+            if (wbResp.ok) {
+              const wbType = wbResp.headers.get('content-type') || 'image/jpeg';
+              res.setHeader('Content-Type', wbType);
+              res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+              const buf = Buffer.from(await wbResp.arrayBuffer());
+              return res.send(buf);
+            }
+          } catch(eWb) {}
+        }
+
         let cleanDomain = "";
         try {
           const parsed = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
