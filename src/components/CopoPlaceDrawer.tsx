@@ -110,6 +110,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [bannerError, setBannerError] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [activeBanner, setActiveBanner] = useState<string | null>(null);
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
   // to avoid the network fetch flicker.
@@ -128,6 +129,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   useEffect(() => {
     setBannerError(false);
     setPhotoIndex(0);
+    setActiveBanner(null);
     setLogoError(false);
     setFetchedBannerUrl(null);
     setIsHoveredUnfollow(false);
@@ -625,6 +627,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     getPlaceBannerUrl(place);
 
   const effectiveBanner =
+    activeBanner ||
     cleanBannerUrl ||
     cleanOgImage ||
     knownDomainBanner ||
@@ -1035,7 +1038,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               referrerPolicy="no-referrer"
               onLoad={() => {
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
-                if (currentSrc) KNOWN_LOADED_BANNERS.add(currentSrc);
+                if (currentSrc) {
+                  KNOWN_LOADED_BANNERS.add(currentSrc);
+                  const rawSrc = allPhotos[photoIndex] || allPhotos[0];
+                  if (rawSrc) setActiveBanner(rawSrc);
+                }
               }}
               onError={() => {
                 if (photoIndex + 1 < allPhotos.length) {
