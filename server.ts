@@ -19095,18 +19095,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme Google-Only Discovery Engine (20 high-speed attempts with broader query variations)
+      // Extreme Google-Only Discovery Engine (8 high-speed attempts using Firecrawl to prevent blocks)
       const variations = [
         `${cleanQ}`,
         `${cleanQ} website`,
         `${cleanQ} official`,
-        `${cleanQ} business`,
-        `${cleanQ} site`,
-        `${cleanQ} location`,
-        `${cleanQ} contact`
+        `${cleanQ} business`
       ];
 
-      for (let attempt = 0; attempt < 20; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         if (discoveredUrl) break;
         try {
           const varIdx = attempt % variations.length;
@@ -19115,35 +19112,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
           
           const qEnc = encodeURIComponent(currentQ);
-          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=25&hl=en&gl=us`;
+          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
           
-          const sRes = await fetch(googleUrl, {
-            headers: {
-              "User-Agent": userAgents[attempt % userAgents.length],
-              "Accept-Language": "en-US,en;q=0.9",
-              "Referer": "https://www.google.com/",
-              "Cache-Control": "no-cache",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-              "Cookie": "CONSENT=YES+cb.20210328-17-p0.en+FX+417; SOCS=IAAeAg"
-            },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
-          }).catch(() => null);
+          console.log(`[Google Discovery] Using Firecrawl to fetch results for: "${currentQ}" (Attempt ${attempt + 1}/8)`);
+          const scrapeData = await scrapeWithFirecrawl(googleUrl);
           
-          if (!sRes || !sRes.ok) {
-            await new Promise(r => setTimeout(r, 100 * (attempt + 1)));
+          if (!scrapeData || !scrapeData.html) {
             continue;
           }
 
-          const html = await sRes.text();
+          const html = scrapeData.html;
           if (!html || html.length < 500) continue;
           
-          // Detect robot block
-          if (html.includes("unusual traffic") || html.includes("captcha") || html.includes("Are you a robot")) {
-             console.warn(`[Google Discovery] Blocked by captcha on attempt ${attempt}`);
-             await new Promise(r => setTimeout(r, 300));
-             continue;
-          }
-          
+          // Extract URLs using robust regex
           const matches = Array.from(new Set([
             ...html.matchAll(/https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b[-a-zA-Z0-9@:%_\+.~#?&//=]*/gi),
             ...html.matchAll(/\/url\?q=(https?:\/\/[^&"'>\s]+)/gi),

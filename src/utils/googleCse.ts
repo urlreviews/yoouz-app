@@ -312,7 +312,7 @@ function broadenSearchQuery(q: string, attempt: number): string {
  * Queries Google CSE client-side and resolves with the authentic official business URL
  * Supports multiple retry attempts and query broadening for maximum reliability.
  */
-export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3): Promise<string | null> {
+export async function queryGoogleCseForUrl(query: string, maxRetries: number = 1): Promise<string | null> {
   const rawQuery = query.trim();
   if (!rawQuery || rawQuery.length < 2) return null;
 
@@ -320,9 +320,6 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
     try {
       const currentToken = ++activeQueryToken;
       let cleanQ = attempt === 0 ? rawQuery : broadenSearchQuery(rawQuery, attempt);
-      if (attempt > 0 && !cleanQ.toLowerCase().includes("website") && !cleanQ.toLowerCase().includes("official") && attempt < 3) {
-        cleanQ = `${cleanQ} official website`;
-      }
       
       if (attempt > 0) {
         console.info(`[Google CSE] Retrying search for: "${cleanQ}" (attempt ${attempt + 1}/${maxRetries + 1}, token #${currentToken})`);
@@ -469,7 +466,7 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
 
         timeoutId = setTimeout(() => {
           finishWithBestCandidate();
-        }, 6500);
+        }, 3500);
       });
 
       if (result) return result;

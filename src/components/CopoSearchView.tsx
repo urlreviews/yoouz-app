@@ -337,7 +337,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         })
         .catch(() => null);
 
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 30000));
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
 
       const winner = await Promise.race([
         Promise.any([csePromise, backendPromise]).catch(() => null),
