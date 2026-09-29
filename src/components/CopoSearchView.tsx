@@ -316,26 +316,27 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       
       const csePromise = queryGoogleCseForUrl(rawQuery)
         .then(url => {
-          if (!url) return null;
+          if (!url) throw new Error("CSE_NO_RESULT");
           const dom = extractCleanDomain(url);
-          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
-        })
-        .catch(() => null);
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
+          throw new Error("CSE_INVALID_DOMAIN");
+        });
 
       const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`)
         .then(async r => {
           if (r.status === 504 || r.status === 502) {
             console.warn("[Search] Backend timeout (504). Relying on client-side CSE.");
-            return null;
+            throw new Error("BACKEND_TIMEOUT");
           }
           return r.ok ? r.json() : null;
         })
         .then(meta => {
-          if (meta) preloadedMeta = meta;
-          const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
-          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
-        })
-        .catch(() => null);
+          if (!meta) throw new Error("BACKEND_NO_META");
+          preloadedMeta = meta;
+          const dom = meta.domain ? extractCleanDomain(meta.domain) : "";
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
+          throw new Error("BACKEND_INVALID_DOMAIN");
+        });
 
       const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
 

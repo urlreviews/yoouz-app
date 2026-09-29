@@ -38,7 +38,7 @@ import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils
 
 dotenv.config();
 
-const FIRECRAWL_BASE_URL = "https://mc-rb4zzrxvx1.bunny.run";
+const FIRECRAWL_BASE_URL = process.env.FIRECRAWL_API_URL || "http://localhost:3002";
 
 async function scrapeWithFirecrawl(url: string) {
   try {
@@ -18837,6 +18837,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
   async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
+    
+    console.log(`[API] Resolving business query: "${cleanQ}" (Engine: Extreme Google-Only Discovery Engine)`);
 
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
@@ -19273,14 +19275,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
       
-      const firecrawlUrl = process.env.FIRECRAWL_API_URL || "http://localhost:3002";
-      if (firecrawlUrl && (req.query.force_firecrawl || !rawQuery.includes('.') || req.query.scrape)) {
+      if (FIRECRAWL_BASE_URL && (req.query.force_firecrawl || !rawQuery.includes('.') || req.query.scrape)) {
         try {
-          console.log(`[Firecrawl Bridge] Processing "${rawQuery}" via: ${firecrawlUrl}`);
+          console.log(`[Firecrawl Bridge] Processing "${rawQuery}" via: ${FIRECRAWL_BASE_URL}`);
           
           // 1. Search Mode: If input is a name, find the URL
           if (!rawQuery.includes('.') || req.query.force_search) {
-            const searchRes = await fetch(`${firecrawlUrl}/v1/search`, {
+            const searchRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/search`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ query: `${rawQuery} official website`, limit: 1 })
@@ -19294,7 +19295,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           // 2. Scrape Mode: Get metadata from the URL
           if (rawQuery.startsWith('http')) {
-            const scrapeRes = await fetch(`${firecrawlUrl}/v1/scrape`, {
+            const scrapeRes = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ url: rawQuery, formats: ['markdown', 'html'] })

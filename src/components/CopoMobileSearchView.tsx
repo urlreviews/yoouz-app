@@ -340,19 +340,20 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       
       const csePromise = queryGoogleCseForUrl(trimmed)
         .then(url => {
-          if (!url) return null;
+          if (!url) throw new Error("CSE_NO_RESULT");
           const dom = extractCleanDomain(url);
-          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
-        })
-        .catch(() => null);
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
+          throw new Error("CSE_INVALID_DOMAIN");
+        });
 
       const backendPromise = fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`)
         .then(r => r.ok ? r.json() : null)
         .then(meta => {
+          if (!meta) throw new Error("BACKEND_NO_META");
           const dom = meta?.domain ? extractCleanDomain(meta.domain) : "";
-          return (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) ? dom : null;
-        })
-        .catch(() => null);
+          if (isValidDomainUrl(dom) && !dom.toLowerCase().includes('wikipedia.org')) return dom;
+          throw new Error("BACKEND_INVALID_DOMAIN");
+        });
 
       const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
 
