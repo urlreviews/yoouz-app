@@ -19109,7 +19109,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme Google-Only Discovery Engine (8 high-speed attempts using Firecrawl to prevent blocks)
+      // Extreme Google-Only Discovery Engine (4 high-speed attempts with fallbacks)
       const variations = [
         `${cleanQ}`,
         `${cleanQ} website`,
@@ -19117,7 +19117,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         `${cleanQ} business`
       ];
 
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < 4; attempt++) {
         if (discoveredUrl) break;
         try {
           const varIdx = attempt % variations.length;
@@ -19159,19 +19159,58 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (discoveredUrl) break;
             } catch (sErr) {}
 
-            console.warn(`[Google Discovery] Firecrawl search also failed, falling back to direct fetch...`);
-            // Fallback to direct fetch with random User-Agent
-            const resp = await fetch(googleUrl, {
-              headers: {
-                'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9'
-              },
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
-            });
-            if (resp.ok) {
-              const h = await resp.text();
-              scrapeData = { html: h };
+            console.warn(`[Google Discovery] Firecrawl search also failed, trying DuckDuckGo fallback...`);
+            
+            try {
+              console.log(`[Google Discovery] Trying DuckDuckGo JSON API...`);
+              const ddgApiUrl = `https://api.duckduckgo.com/?q=${qEnc}&format=json&no_html=1`;
+              const ddgApiResp = await fetch(ddgApiUrl, { signal: AbortSignal.timeout(5000) });
+              if (ddgApiResp.ok) {
+                const ddgData = await ddgApiResp.json();
+                if (ddgData.AbstractURL && ddgData.AbstractURL.startsWith('http')) {
+                  console.log(`[Google Discovery] Found URL via DuckDuckGo API: ${ddgData.AbstractURL}`);
+                  discoveredUrl = ddgData.AbstractURL;
+                  break;
+                }
+              }
+            } catch (apiErr) {}
+
+            try {
+              const ddgUrl = `https://duckduckgo.com/html/?q=${qEnc}`;
+              const ddgResp = await fetch(ddgUrl, {
+                headers: {
+                  'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                },
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+              });
+              
+              if (ddgResp.ok) {
+                const ddgHtml = await ddgResp.text();
+                if (ddgHtml.length > 500) {
+                  console.log(`[Google Discovery] Successfully fetched DuckDuckGo results`);
+                  scrapeData = { html: ddgHtml };
+                }
+              }
+            } catch (ddgErr) {
+              console.warn(`[Google Discovery] DuckDuckGo fallback failed:`, ddgErr.message);
+            }
+
+            if (!scrapeData) {
+              console.warn(`[Google Discovery] All engine fallbacks failed, trying direct Google fetch (last resort)...`);
+              // Fallback to direct fetch with random User-Agent
+              const resp = await fetch(googleUrl, {
+                headers: {
+                  'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                  'Accept-Language': 'en-US,en;q=0.9'
+                },
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+              });
+              if (resp.ok) {
+                const h = await resp.text();
+                scrapeData = { html: h };
+              }
             }
           }
           
