@@ -266,7 +266,7 @@ export function ensureCseLoaded(): Promise<boolean> {
     if (!document.querySelector('script[src*="cse.google.com"]')) {
       const script = document.createElement("script");
       script.async = true;
-      script.src = "https://cse.google.com/cse.js?cx=02c810e31e5104b39";
+      script.src = "https://cse.google.com/cse.js?cx=a3c18127c99a94ed3";
       document.head.appendChild(script);
     }
 

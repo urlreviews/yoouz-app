@@ -119,6 +119,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
@@ -130,6 +131,7 @@ export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
     setLogoError(false);
     setFetchedBannerUrl(null);
     setIsHoveredUnfollow(false);
+    setIsEnriching(false);
     if (fetchedTargetUrlsRef.current) {
       fetchedTargetUrlsRef.current.clear();
     }
@@ -520,6 +522,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       const runEnrichment = () => {
         fetchedTargetUrlsRef.current.add(targetKey);
         let isMounted = true;
+        setIsEnriching(true);
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
@@ -528,6 +531,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           .then((res) => (res.ok ? res.json() : null))
           .then((data) => {
             if (isMounted && data) {
+              setIsEnriching(false);
               const hasActualData = Boolean(
                 data.image || 
                 (data.logo && !data.logo.includes('tap/0.png')) || 
@@ -1006,7 +1010,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {hasAuthenticPhoto && !bannerError ? (
+        {isEnriching ? (
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex items-center justify-center">
+            {/* Elegant glassmorphic pulsing skeleton for zero-flash visual premium loading */}
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 animate-pulse w-full h-full" />
+            <div className="absolute inset-0 bg-black/10 backdrop-blur-md" />
+            <div className="w-10 h-10 border-t-2 border-r-2 border-white/25 rounded-full animate-spin z-10 opacity-60" />
+          </div>
+        ) : hasAuthenticPhoto && !bannerError ? (
           <div className="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center group">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
@@ -1015,7 +1026,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0 z-10"
+              className="absolute inset-0 w-full h-full object-cover p-0 z-10 transition-all duration-500 ease-out opacity-100"
               referrerPolicy="no-referrer"
               onLoad={() => {
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
@@ -1051,16 +1062,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group">
-          <CopoBrandLogo
-            domain={drawerDomain || place.brandDomain}
-            name={displayedPlaceName}
-            website={place.website}
-            logoUrl={primaryLogoUrl || place.logoUrl}
-            bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-            className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
-            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-          />
+          {isEnriching ? (
+            <div className="w-full h-full rounded-[16px] sm:rounded-[20px] bg-zinc-200 animate-pulse" />
+          ) : (
+            <CopoBrandLogo
+              domain={drawerDomain || place.brandDomain}
+              name={displayedPlaceName}
+              website={place.website}
+              logoUrl={primaryLogoUrl || place.logoUrl}
+              bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+              className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+              imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+              fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+            />
+          )}
         </div>
       </div>
 
