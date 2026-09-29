@@ -341,12 +341,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // Direct official business resolution via DuckDuckGo + Firecrawl backend search
+    // Direct official business resolution via fast DuckDuckGo backend path
     if (!isValidDomainUrl(cleanUrl)) {
-      console.info("[Search Mobile] Resolving official domain via DuckDuckGo + Firecrawl for:", trimmed);
+      console.info("[Search Mobile] Resolving official domain via fast DuckDuckGo path for:", trimmed);
       
       try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}`);
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}&resolveOnly=true`);
         if (backendResp.ok) {
           const data = await backendResp.json();
           if (data && data.domain && isValidDomainUrl(data.domain)) {
@@ -783,6 +783,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   return (
                     <button 
                       key={idx}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectSuggestion(item);
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleSelectSuggestion(item);
+                      }}
                       onClick={() => handleSelectSuggestion(item)}
                       className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group border-b border-zinc-900/80 last:border-0"
                     >

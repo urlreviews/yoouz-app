@@ -522,7 +522,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       const runEnrichment = () => {
         fetchedTargetUrlsRef.current.add(targetKey);
         let isMounted = true;
-        setIsEnriching(true);
+        
+        // Only trigger loading skeletons if we actually need to discover a banner or logo.
+        // If we already have them, we want them to show instantly without any blocking skeleton.
+        if (needsBanner || needsLogo) {
+          setIsEnriching(true);
+        }
+
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
@@ -530,58 +536,64 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         fetch(endpoint)
           .then((res) => (res.ok ? res.json() : null))
           .then((data) => {
-            if (isMounted && data) {
-              setIsEnriching(false);
-              const hasActualData = Boolean(
-                data.image || 
-                (data.logo && !data.logo.includes('tap/0.png')) || 
-                (data.address && data.address !== "Verified Location") || 
-                data.phone
-              );
+            if (isMounted) {
+              setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
               
-              if (data.image && !place.bannerUrl && !place.ogImage) {
-                setFetchedBannerUrl(data.image);
-              }
-              if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
-                onUpdatePlace({
-                  ...place,
-                  name: (data.title && isGenericName) ? data.title : place.name,
-                  description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
-                  address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
-                  city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
-                  country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
-                  phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
-                  email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
-                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
-                  openingHours: data.openingHours || place.openingHours || "",
-                  locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
-                  lat: data.lat || place.lat || 0,
-                  lng: data.lng || place.lng || 0,
-                  bannerUrl: place.bannerUrl || data.image || "",
-                  ogImage: place.ogImage || data.image || "",
-                  logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
-                  avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
-                  brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
-                  website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                  photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
-                });
-              }
+              if (data) {
+                const hasActualData = Boolean(
+                  data.image || 
+                  (data.logo && !data.logo.includes('tap/0.png')) || 
+                  (data.address && data.address !== "Verified Location") || 
+                  data.phone
+                );
+                
+                if (data.image && !place.bannerUrl && !place.ogImage) {
+                  setFetchedBannerUrl(data.image);
+                }
+                if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
+                  onUpdatePlace({
+                    ...place,
+                    name: (data.title && isGenericName) ? data.title : place.name,
+                    description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
+                    address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
+                    city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
+                    country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
+                    phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
+                    email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
+                    category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
+                    openingHours: data.openingHours || place.openingHours || "",
+                    locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
+                    lat: data.lat || place.lat || 0,
+                    lng: data.lng || place.lng || 0,
+                    bannerUrl: place.bannerUrl || data.image || "",
+                    ogImage: place.ogImage || data.image || "",
+                    logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
+                    avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
+                    brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
+                    website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
+                    photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
+                  });
+                }
 
-              // Infinite Discovery Policy: Keep retrying up to 20 times (every 3 seconds) 
-              // until discovery succeeds or a real domain is found.
-              if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 20) {
+                // Infinite Discovery Policy: Keep retrying up to 20 times (every 3 seconds) 
+                // until discovery succeeds or a real domain is found.
+                if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 20) {
+                  discoveryAttemptsRef.current++;
+                  setTimeout(runEnrichment, 3000);
+                }
+              } else if (discoveryAttemptsRef.current < 20) {
                 discoveryAttemptsRef.current++;
                 setTimeout(runEnrichment, 3000);
               }
-            } else if (isMounted && discoveryAttemptsRef.current < 20) {
-              discoveryAttemptsRef.current++;
-              setTimeout(runEnrichment, 3000);
             }
           })
           .catch(() => {
-            if (isMounted && discoveryAttemptsRef.current < 20) {
-              discoveryAttemptsRef.current++;
-              setTimeout(runEnrichment, 3000);
+            if (isMounted) {
+              setIsEnriching(false); // Ensure loader is cleared even if connection fails
+              if (discoveryAttemptsRef.current < 20) {
+                discoveryAttemptsRef.current++;
+                setTimeout(runEnrichment, 3000);
+              }
             }
           });
 

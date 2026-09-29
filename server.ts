@@ -19346,6 +19346,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
+
+      const resolveOnly = req.query.resolveOnly === 'true';
+
+      // Fast-path: If user wants resolve-only and passed a direct domain, return instantly in 0.0s
+      if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ')) {
+        const cleanDom = rawQuery.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+        console.log(`[Fast Resolve Only] Bypassing scrape for domain: ${cleanDom}`);
+        return res.json({
+          title: cleanDom.split('.')[0].toUpperCase(),
+          domain: cleanDom,
+          url: `https://${cleanDom}`,
+          city: "Online"
+        });
+      }
       
       // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path)
       const activeDb = (global as any).bunnyDb || db;
@@ -20946,12 +20960,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const matchedEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
               const kLower = k.toLowerCase();
               const vLower = v.toLowerCase();
+              
+              // Prevent tiny brand keywords (like "ing" or "at") from matching substrings of longer words (like "cleaning" or "creative")
+              if (kLower.length <= 3 || vLower.length <= 3) {
+                const kWordRegex = new RegExp(`\\b${kLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                const vWordRegex = new RegExp(`\\b${vLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                return kLower === phraseLower || vLower === phraseLower || kWordRegex.test(phraseLower) || vWordRegex.test(phraseLower);
+              }
+
               return (
                 kLower === phraseLower ||
                 vLower === phraseLower ||
                 phraseLower.includes(kLower) ||
-                phraseLower.includes(vLower) ||
-                (kLower.includes('.') && kLower.includes(phraseLower))
+                phraseLower.includes(vLower)
               );
             });
             if (matchedEntry) {

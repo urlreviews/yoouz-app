@@ -259,6 +259,22 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               <button
                 key={idx}
                 type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (onSelectSuggestion) onSelectSuggestion(item);
+                  else {
+                    setBusinessName(item.title || targetDomain || businessName);
+                    handleSubmit();
+                  }
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  if (onSelectSuggestion) onSelectSuggestion(item);
+                  else {
+                    setBusinessName(item.title || targetDomain || businessName);
+                    handleSubmit();
+                  }
+                }}
                 onClick={() => {
                   if (onSelectSuggestion) onSelectSuggestion(item);
                   else {

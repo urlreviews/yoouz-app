@@ -319,10 +319,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (!isValidDomainUrl(cleanUrl)) {
       setIsSearching(true);
-      console.info("[Search] Resolving official domain via DuckDuckGo + Firecrawl for:", rawQuery);
+      console.info("[Search] Resolving official domain via fast DuckDuckGo path for:", rawQuery);
       
       try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}`);
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`);
         if (backendResp.ok) {
           const data = await backendResp.json();
           if (data && data.domain && isValidDomainUrl(data.domain)) {
