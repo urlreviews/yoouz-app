@@ -18995,34 +18995,55 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme Google-Only Discovery Engine (8 high-speed attempts with query broadening)
-      for (let attempt = 0; attempt < 8; attempt++) {
+      // Extreme Google-Only Discovery Engine (15 high-speed attempts with query variations)
+      const variations = [
+        `${cleanQ} official website`,
+        `${cleanQ} homepage`,
+        `${cleanQ}`,
+        `${cleanQ} contact us`
+      ];
+
+      for (let attempt = 0; attempt < 15; attempt++) {
         if (discoveredUrl) break;
         try {
-          const currentQ = broadenLocal(cleanQ, attempt);
-          const qEnc = encodeURIComponent(`${currentQ} official website`);
-          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=15&hl=en&gl=us`;
+          const varIdx = attempt % variations.length;
+          const broadenAtt = Math.floor(attempt / variations.length);
+          const baseQ = variations[varIdx];
+          const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
+          
+          const qEnc = encodeURIComponent(currentQ);
+          const googleUrl = `https://www.google.com/search?q=${qEnc}&num=25&hl=en&gl=us`;
           
           const sRes = await fetch(googleUrl, {
             headers: {
               "User-Agent": userAgents[attempt % userAgents.length],
               "Accept-Language": "en-US,en;q=0.9",
               "Referer": "https://www.google.com/",
-              "Cache-Control": "no-cache"
+              "Cache-Control": "no-cache",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
             },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-          });
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+          }).catch(() => null);
           
-          if (!sRes.ok) {
-            await new Promise(r => setTimeout(r, 200 * (attempt + 1)));
+          if (!sRes || !sRes.ok) {
+            await new Promise(r => setTimeout(r, 100 * (attempt + 1)));
             continue;
           }
 
           const html = await sRes.text();
           if (!html || html.length < 500) continue;
+          
+          // Detect robot block
+          if (html.includes("unusual traffic") || html.includes("captcha") || html.includes("Are you a robot")) {
+             console.warn(`[Google Discovery] Blocked by captcha on attempt ${attempt}`);
+             await new Promise(r => setTimeout(r, 300));
+             continue;
+          }
           
           const rawMatches = html.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi) || [];
           const redirectMatches = html.match(/\/url\?q=https?:\/\/[^&"'>\s]+/gi) || [];
@@ -19033,22 +19054,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const matches = Array.from(new Set([...rawMatches, ...decodedRedirects]));
           
           const directoryDomains = [
-            "google.com", "google.co.il", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+            "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
+            "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
             "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
             "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
-            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com"
+            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org"
           ];
 
           const validCandidates = matches.filter(u => {
             try {
+              const uLower = u.toLowerCase();
+              if (uLower.includes("google.com/search") || uLower.includes("google.co.il/search") || uLower.includes("google.com/url")) return false;
               const host = new URL(u).hostname.toLowerCase();
               const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
-              return !isNoise && !u.toLowerCase().includes("schema.org") && !u.toLowerCase().includes("w3.org");
+              return !isNoise && !uLower.includes("schema.org") && !uLower.includes("w3.org") && !uLower.includes("javascript:");
             } catch(e) { return false; }
           });
 
           if (validCandidates.length > 0) {
-            const queryWords = currentQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+            const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
             validCandidates.sort((a, b) => {
               let scoreA = 0; let scoreB = 0;
               try {
@@ -19071,7 +19095,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
           await new Promise(r => setTimeout(r, 100));
         } catch (e) {
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise(r => setTimeout(r, 50));
         }
       }
     } catch (e) {
@@ -19228,11 +19252,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // If user passed a business phrase/name without a domain dot
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
-        resolvedEntity = await resolveBusinessQuery(rawQuery);
+        resolvedEntity = await resolveBusinessQuery(rawQuery).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           targetUrl = 'https://' + resolvedEntity.domain;
         } else if (resolvedEntity) {
-          const autoPlaceId = (resolvedEntity.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
           return res.json({
             title: resolvedEntity.name,
             description: `${resolvedEntity.name} is a verified business on Yoouz.`,
@@ -19251,21 +19274,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             locations: []
           });
         }
-      } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+      } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://') && targetUrl.includes('.')) {
         targetUrl = 'https://' + targetUrl;
       }
 
-      let parsedUrl: URL;
+      let parsedUrl: URL | null = null;
       try {
-        parsedUrl = new URL(targetUrl);
+        if (targetUrl && targetUrl.startsWith('http') && targetUrl.includes('.')) {
+          parsedUrl = new URL(targetUrl);
+        }
       } catch (err) {
-        // Fallback to name search rather than throwing 400
-        const ent = await resolveBusinessQuery(rawQuery);
+        console.warn("[UrlMetadata] URL parse failed for:", targetUrl);
+      }
+
+      if (!parsedUrl) {
+        // Fallback to name search rather than throwing 400 or 500
+        const ent = await resolveBusinessQuery(rawQuery).catch(() => null);
         if (ent) {
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? ent.domain : "";
-          logSearchIntel(rawQuery, realDomain, "resolved_by_search", { source: "resolveBusinessQuery" });
-          const autoPlaceId = realDomain || (ent.name || rawQuery).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '');
+          logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
           const entityLogo = ent.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           return res.json({
             title: ent.name,
@@ -19287,6 +19315,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
         return res.status(202).json({ status: 'pending', message: 'Discovery in progress' });
       }
+
       let url = parsedUrl.origin;
       const domain = parsedUrl.hostname;
       

@@ -44,10 +44,9 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   // News portals
   "themarker.com", "calcalist.co.il", "ynet.co.il", "mako.co.il", "haaretz.co.il", "globes.co.il", "maariv.co.il", "walla.co.il",
 
-  // Ad networks & Platforms
+  // Ad networks & Platforms (Strictly block ad/tracking domains, but allow website builders)
   "doubleclick.net", "googleadservices.com", "adservice.google.com", "pagead2.googlesyndication.com",
-  "wordpress.com", "wix.com", "squarespace.com", "webflow.com", "shopify.com", "github.com", "gitlab.com",
-  "medium.com", "blogger.com", "blogspot.com", "yoouz.com"
+  "yoouz.com"
 ];
 
 export function isAllowedOrganicUrl(rawHref: string): boolean {
@@ -272,7 +271,7 @@ export function ensureCseLoaded(): Promise<boolean> {
         resolve(true);
         return;
       }
-      if (Date.now() - startTime > 3000) {
+      if (Date.now() - startTime > 5000) {
         clearInterval(checkInterval);
         resolve(false);
       }
@@ -457,7 +456,7 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 3
 
         timeoutId = setTimeout(() => {
           finishWithBestCandidate();
-        }, 4500);
+        }, 6500);
       });
 
       if (result) return result;
