@@ -39,36 +39,45 @@ import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils
 dotenv.config();
 
 const FIRECRAWL_BASE_URL = process.env.FIRECRAWL_API_URL || "http://localhost:3002";
+const FIRECRAWL_PUBLIC_URL = "https://mc-rb4zzrxvx1.bunny.run";
 
 async function scrapeWithFirecrawl(url: string) {
-  try {
-    const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url,
-        formats: ['html', 'markdown'],
-        onlyMainContent: false,
-        waitFor: 1000
-      }),
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(15000) : undefined
-    });
+  const urlsToTry = [FIRECRAWL_BASE_URL, FIRECRAWL_PUBLIC_URL];
+  let lastError = "";
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      console.warn(`[Firecrawl] Error ${response.status}: ${response.statusText} ${errText.substring(0, 100)}`);
-      throw new Error(`FIRECRAWL_ERROR_${response.status}`);
+  for (const baseUrl of urlsToTry) {
+    if (!baseUrl) continue;
+    try {
+      console.log(`[Firecrawl] Attempting scrape via: ${baseUrl}`);
+      const response = await fetch(`${baseUrl}/v1/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url,
+          formats: ['html', 'markdown'],
+          onlyMainContent: false,
+          waitFor: 2000
+        }),
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(30000) : undefined // Increased to 30s
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        console.warn(`[Firecrawl] Error ${response.status} from ${baseUrl}: ${response.statusText} ${errText.substring(0, 100)}`);
+        continue; // Try next URL
+      }
+
+      const result = await response.json();
+      if (result.data || result.success) return result.data || result;
+    } catch (error) {
+      lastError = error.message;
+      console.error(`[Firecrawl] Connection to ${baseUrl} failed:`, error.message);
     }
-
-    const result = await response.json();
-    return result.data || result;
-  } catch (error) {
-    if (error.message?.includes("FIRECRAWL_ERROR")) throw error;
-    console.error("[Firecrawl] Connectivity failed for:", url, error.message);
-    throw new Error("FIRECRAWL_CONNECTIVITY_FAILED");
   }
+
+  throw new Error(`FIRECRAWL_ALL_ATTEMPTS_FAILED: ${lastError}`);
 }
 
 interface ResolvedBusinessData {
@@ -19124,7 +19133,33 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           try {
             scrapeData = await scrapeWithFirecrawl(googleUrl);
           } catch (fErr) {
-            console.warn(`[Google Discovery] Firecrawl unavailable (${fErr.message}), falling back to direct fetch...`);
+            console.warn(`[Google Discovery] Firecrawl scrape failed (${fErr.message}), trying Firecrawl search fallback...`);
+            
+            // Try Firecrawl's own search endpoint as a fallback before direct fetch
+            try {
+              const urlsToTry = [FIRECRAWL_BASE_URL, FIRECRAWL_PUBLIC_URL];
+              for (const baseUrl of urlsToTry) {
+                if (!baseUrl) continue;
+                const searchRes = await fetch(`${baseUrl}/v1/search`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ query: currentQ, limit: 3 }),
+                  signal: AbortSignal.timeout(10000)
+                }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+                if (searchRes?.success && searchRes.data?.length > 0) {
+                  const firstUrl = searchRes.data[0].url;
+                  if (firstUrl && firstUrl.startsWith('http')) {
+                    console.log(`[Google Discovery] Found URL via Firecrawl search: ${firstUrl}`);
+                    discoveredUrl = firstUrl;
+                    break;
+                  }
+                }
+              }
+              if (discoveredUrl) break;
+            } catch (sErr) {}
+
+            console.warn(`[Google Discovery] Firecrawl search also failed, falling back to direct fetch...`);
             // Fallback to direct fetch with random User-Agent
             const resp = await fetch(googleUrl, {
               headers: {
