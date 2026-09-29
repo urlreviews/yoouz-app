@@ -376,6 +376,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "hamad bin jarwan law firm in abu dhabi": "Hamad Bin Jarwan Advocates & Legal Consultants",
   "mizrahi-tefahot.co.il": "בנק מזרחי טפחות",
   "mizrahi-tefahot": "בנק מזרחי טפחות",
+  "nof-events.co.il": "אולמי נוף Crown Events",
+  "www.nof-events.co.il": "אולמי נוף Crown Events",
+  "nof-events": "אולמי נוף Crown Events",
+  "nofevents": "אולמי נוף Crown Events",
+  "אולמי נוף": "אולמי נוף Crown Events",
+  "אולמי נוף ירושלים": "אולמי נוף Crown Events",
+  "אולמי נוף Crown Events": "אולמי נוף Crown Events",
   "truman.co.il": "איריס טרומן משרד עורכי דין",
   "iristruman": "איריס טרומן משרד עורכי דין",
   "iris truman": "איריס טרומן משרד עורכי דין",
@@ -2809,7 +2816,10 @@ export const KNOWN_BUSINESS_HEADQUARTERS: Record<string, any> = {
   "clubhotel.co.il": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", lat: 29.5520, lng: 34.9540 },
   "clubhotel": { name: "קלאב הוטל אילת", address: "Ha'arava Rd", postalCode: "88000", city: "Eilat", country: "Israel", phone: "+972 8-636-1666", email: "info@clubhotels.co.il", openingHours: "Open 24/7 · 7 Days a Week", lat: 29.5520, lng: 34.9540 },
   "azrielimalls.co.il": { name: "קניוני עזריאלי תל אביב", address: "Derech Menachem Begin 132", postalCode: "6701101", city: "Tel Aviv-Yafo", country: "Israel", phone: "+972 3-608-1111", email: "info@azrieli.com", openingHours: "Sun - Thu: 09:30 - 22:00, Fri: 09:00 - 15:00, Sat: After Shabbat - 23:00", category: "Shopping Mall", lat: 32.0747, lng: 34.7920 },
-  "azrieli.com": { name: "קניוני עזריאלי תל אביב", address: "Derech Menachem Begin 132", postalCode: "6701101", city: "Tel Aviv-Yafo", country: "Israel", phone: "+972 3-608-1111", email: "info@azrieli.com", openingHours: "Sun - Thu: 09:30 - 22:00, Fri: 09:00 - 15:00, Sat: After Shabbat - 23:00", category: "Shopping Mall", lat: 32.0747, lng: 34.7920 }
+  "azrieli.com": { name: "קניוני עזריאלי תל אביב", address: "Derech Menachem Begin 132", postalCode: "6701101", city: "Tel Aviv-Yafo", country: "Israel", phone: "+972 3-608-1111", email: "info@azrieli.com", openingHours: "Sun - Thu: 09:30 - 22:00, Fri: 09:00 - 15:00, Sat: After Shabbat - 23:00", category: "Shopping Mall", lat: 32.0747, lng: 34.7920 },
+  "nof-events.co.il": { name: "אולמי נוף Crown Events", address: "א.י. שחראי 12", postalCode: "9647028", city: "Jerusalem", country: "Israel", phone: "+972 2-641-5999", email: "nofoffice111@gmail.com", category: "Event Venue & Banqueting Hall", openingHours: "Sun - Thu: 09:00 - 23:00 · Fri: 09:00 - 14:00", lat: 31.7683, lng: 35.1843 },
+  "www.nof-events.co.il": { name: "אולמי נוף Crown Events", address: "א.י. שחראי 12", postalCode: "9647028", city: "Jerusalem", country: "Israel", phone: "+972 2-641-5999", email: "nofoffice111@gmail.com", category: "Event Venue & Banqueting Hall", openingHours: "Sun - Thu: 09:00 - 23:00 · Fri: 09:00 - 14:00", lat: 31.7683, lng: 35.1843 },
+  "nof-events": { name: "אולמי נוף Crown Events", address: "א.י. שחראי 12", postalCode: "9647028", city: "Jerusalem", country: "Israel", phone: "+972 2-641-5999", email: "nofoffice111@gmail.com", category: "Event Venue & Banqueting Hall", openingHours: "Sun - Thu: 09:00 - 23:00 · Fri: 09:00 - 14:00", lat: 31.7683, lng: 35.1843 }
 };
 
 export const KNOWN_LOCATIONS = KNOWN_BUSINESS_HEADQUARTERS;

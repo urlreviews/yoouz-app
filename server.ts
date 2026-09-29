@@ -18685,23 +18685,121 @@ Return JSON:
         });
       } catch(e){}
 
-      // 10. Multi-Language Address and City parsing from block-formatted DOM lines
+      // 10. Multi-Language Address and City parsing from block-formatted DOM lines & body text
       if (!address || !city) {
         const domLines: string[] = [];
-        contactElements.each((_: any, el: any) => {
-          const textWithBreaks = $(el).html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6])>/gi, "\n") || "";
-          const cleanEl = cheerio.load(textWithBreaks);
-          cleanEl("script, style, noscript, svg").remove();
-          cleanEl("body").text().split(/\n+/).forEach((l: string) => {
-            const t = l.trim();
-            if (t.length > 2 && t.length < 100) domLines.push(t);
-          });
+        const cleanBodyHtml = $("body").html()?.replace(/<br\s*[\/]?>/gi, "\n").replace(/<\/(p|div|li|tr|h[1-6]|section|footer|header|span|b|strong|address)>/gi, "\n") || "";
+        const cleanEl = cheerio.load(cleanBodyHtml);
+        cleanEl("script, style, noscript, svg").remove();
+        cleanEl("body").text().split(/\n+/).forEach((l: string) => {
+          const t = l.trim().replace(/\s+/g, " ");
+          if (t.length > 3 && t.length < 160) domLines.push(t);
         });
+
+        const knownCitiesHebrew: Record<string, string> = {
+          "ירושלים": "Jerusalem",
+          "תל אביב": "Tel Aviv",
+          "תל-אביב": "Tel Aviv",
+          "תל אביב-יפו": "Tel Aviv",
+          "תל אביב יפו": "Tel Aviv",
+          "חיפה": "Haifa",
+          "ראשון לציון": "Rishon LeZion",
+          "ראשון-לציון": "Rishon LeZion",
+          "פתח תקווה": "Petah Tikva",
+          "פתח-תקווה": "Petah Tikva",
+          "אשדוד": "Ashdod",
+          "נתניה": "Netanya",
+          "באר שבע": "Beersheba",
+          "באר-שבע": "Beersheba",
+          "בני ברק": "Bnei Brak",
+          "בני-ברק": "Bnei Brak",
+          "חולון": "Holon",
+          "רמת גן": "Ramat Gan",
+          "רמת-גן": "Ramat Gan",
+          "אשקלון": "Ashkelon",
+          "רחובות": "Rehovot",
+          "בת ים": "Bat Yam",
+          "בת-ים": "Bat Yam",
+          "הרצליה": "Herzliya",
+          "כפר סבא": "Kfar Saba",
+          "כפר-סבא": "Kfar Saba",
+          "חדרה": "Hadera",
+          "מודיעין": "Modi'in",
+          "מודיעין-מכבים-רעות": "Modi'in",
+          "רעננה": "Ra'anana",
+          "לוד": "Lod",
+          "רמלה": "Ramla",
+          "אילת": "Eilat",
+          "טבריה": "Tiberias",
+          "עכו": "Acre",
+          "עפולה": "Afula",
+          "נס ציונה": "Ness Ziona",
+          "גבעתיים": "Givatayim",
+          "קריית אונו": "Kiryat Ono",
+          "הוד השרון": "Hod HaSharon"
+        };
 
         for (let i = 0; i < domLines.length; i++) {
           const line = domLines[i];
+          const lowerLine = line.toLowerCase();
+          
+          // Reject phone-only, email-only, tax, copyright, or cookie lines
+          if (lowerLine.includes("copyright") || lowerLine.includes("all rights reserved") || lowerLine.includes("כל הזכויות שמורות") || lowerLine.includes("cookie") || lowerLine.includes("privacy policy")) {
+            continue;
+          }
+
+          // Case A: Explicit address indicator (e.g. "כתובת: א.י. שחראי 12, ירושלים", "Address: 1535 Broadway", "Location: ...")
+          const labelMatch = line.match(/(?:כתובת|מיקום|כתובתנו|סניף ראשי|סניף|הגעה|אולם|אולם אירועים|אולמי|Address|Location|Adresse|Dirección|Indirizzo)\s*[:.]?\s*([^\n\r]+)/i);
+          if (labelMatch) {
+            const candidate = labelMatch[1].trim();
+            if (candidate.length > 4 && candidate.length < 100 && !candidate.includes("@") && !candidate.startsWith("http")) {
+              if (!address) address = candidate;
+              // Check for city inside the candidate
+              for (const [hebCity, engCity] of Object.entries(knownCitiesHebrew)) {
+                if (candidate.includes(hebCity)) {
+                  if (!city) city = engCity;
+                  if (!country) country = "Israel";
+                  break;
+                }
+              }
+              if (address && city) break;
+            }
+          }
+
+          // Case B: Comma-separated or tokenized address line (e.g. "אולמי נוף, א.י. שחראי 12, ירושלים, 9647028" or "Battelsesteenweg 282, 2800 Mechelen")
+          if (line.includes(",") || /\d+/.test(line)) {
+            const parts = line.split(/[,–—]+/).map(p => p.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+              // Find part with street and building number (e.g. "א.י. שחראי 12" or "1535 Broadway")
+              const streetPart = parts.find(p => /[\p{L}\.']+\s+\d+[\p{L}]?|\d+\s+[\p{L}\.']+/u.test(p) && !p.includes("@") && !p.toLowerCase().includes("tel") && !p.toLowerCase().includes("phone") && !p.toLowerCase().includes("טלפון"));
+              const cityPart = parts.find(p => {
+                const pClean = p.replace(/\d+/g, "").trim();
+                return Object.keys(knownCitiesHebrew).some(hc => p.includes(hc)) || /^(Jerusalem|Tel Aviv|Haifa|Eilat|Brussels|Antwerp|Gent|Leuven|Paris|London|New York|Phoenix|Las Vegas|Madrid|Amsterdam)$/i.test(pClean);
+              });
+
+              if (streetPart && cityPart) {
+                if (!address) {
+                  // Build clean address with street and city (and postal code if present)
+                  const postalPart = parts.find(p => /^\d{5,7}$/.test(p.trim()));
+                  address = postalPart ? `${streetPart}, ${cityPart} ${postalPart}` : `${streetPart}, ${cityPart}`;
+                }
+                if (!city) {
+                  const matchedHeb = Object.keys(knownCitiesHebrew).find(hc => cityPart.includes(hc));
+                  if (matchedHeb) {
+                    city = knownCitiesHebrew[matchedHeb];
+                    if (!country) country = "Israel";
+                  } else {
+                    city = cityPart.replace(/\d+/g, "").trim();
+                  }
+                }
+                break;
+              }
+            }
+          }
+
+          // Case C: Standard street pattern followed by postal/city on next line
           const streetPattern = /^([\p{L}][\p{L}\p{N}\s\.\-']+\s+\d+[\p{L}]?|\d{1,5}\s+[\p{L}][\p{L}\p{N}\s\.\-']+)$/u;
-          const postalCityPattern = /^(?:[\p{L}]{2}-?)?(\d{4,5})\s+([\p{L}\s\-]+)$/u;
+          const postalCityPattern = /^(?:[\p{L}]{2}-?)?(\d{4,7})\s+([\p{L}\s\-]+)$/u;
 
           if (streetPattern.test(line) && !line.toLowerCase().includes("telefoon") && !line.toLowerCase().includes("telephone") && !line.toLowerCase().includes("fax") && !line.toLowerCase().includes("openingsuren") && !line.toLowerCase().includes("btw") && !line.toLowerCase().includes("email")) {
             const nextLine = domLines[i + 1] || "";
@@ -21092,7 +21190,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               : (!isBadBanner(existingDoc.bannerUrl) ? existingDoc.bannerUrl : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""));
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
-            const mergedAddress = isCorruptAddress(rawExistingAddr) ? effectiveAddress : rawExistingAddr;
+            const mergedAddress = isCorruptAddress(rawExistingAddr) || !rawExistingAddr || (effectiveAddress && effectiveAddress.length > rawExistingAddr.length) 
+              ? (effectiveAddress || rawExistingAddr) 
+              : rawExistingAddr;
 
             const rawExistingCity = existingDoc.city || (existingPlaceRs.rows[0] as any).city || "";
             const mergedCity = (!rawExistingCity || rawExistingCity === "Online" || rawExistingCity === "Worldwide")

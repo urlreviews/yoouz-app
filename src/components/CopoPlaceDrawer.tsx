@@ -209,8 +209,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
 
   const displayAddress = React.useMemo(() => {
-    const placeKey = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
-    const known = KNOWN_LOCATIONS[placeKey] || KNOWN_LOCATIONS[placeKey.replace(/\.(com|be|nl|fr|de|es|it|org|net)$/i, '')];
+    const cleanPlaceDomain = (place.brandDomain || place.id || place.name || place.website || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
+    const known = KNOWN_LOCATIONS[cleanPlaceDomain] 
+      || KNOWN_LOCATIONS[cleanPlaceDomain.replace(/\.(com|co\.il|il|ae|co\.uk|org\.il|net\.il|be|nl|fr|de|es|it|org|net|io|me)$/i, '')]
+      || KNOWN_LOCATIONS[cleanPlaceDomain.replace(/[\-_]/g, '')];
 
     const reviewWithAddr = rawPlaceVideos.find(v => v.placeAddress && v.placeAddress.trim() !== "" && v.placeAddress !== "Verified Location" && !v.placeAddress.startsWith("http"));
     let rawAddr = (!isAddressUrl && place.address && place.address.trim() !== "" && place.address.trim() !== "Verified Location") 
