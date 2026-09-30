@@ -1649,20 +1649,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {rawPlaceVideos.length === 0 ? (
-                  <div className="flex flex-col items-center gap-4 py-4">
-                    <div className="text-center text-xs text-zinc-400 font-medium">
+                  <div className="py-3 text-center">
+                    <p className="text-xs text-zinc-400 font-medium">
                       {t("place.noReviewsYetShort", "No video reviews yet.")}
-                    </div>
-                    <button
-                      onClick={() => {
-                        triggerHaptic("medium");
-                        onRecordForPlace(place);
-                      }}
-                      className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xs py-3.5 rounded-xl border border-zinc-700 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-                    >
-                      <Video className="w-4 h-4 text-white stroke-[2.5]" />
-                      <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
-                    </button>
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">

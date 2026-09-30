@@ -3649,45 +3649,54 @@ export function App() {
       return null;
     }
     const cleanSearchDomain = extractCleanDomain(searchId);
-    let found = places.find(
-      (p) => {
-        if (cleanSearchDomain) {
-          const pDomain = extractCleanDomain(p.website || p.brandDomain || p.id || p.name);
-          if (pDomain) return pDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
-        }
-        const searchIdLow = searchId.toLowerCase().trim();
-        const pIdLow = (p.id || '').toLowerCase().trim();
-        const pDomLow = (p.brandDomain || '').toLowerCase().trim();
-        const pWebDomLow = extractCleanDomain(p.website || '').toLowerCase().trim();
-        const pNameLow = (p.name || '').toLowerCase().trim();
+    const searchIdLow = searchId.toLowerCase().trim();
 
-        return (
-          pIdLow === searchIdLow ||
-          pDomLow === searchIdLow ||
-          (pWebDomLow && pWebDomLow === searchIdLow) ||
-          (pNameLow && pNameLow === searchIdLow)
-        );
-      }
-    );
+    // PHASE 1: Try finding by Exact ID or Domain Match (Highest confidence)
+    let found = places.find((p) => {
+      const pIdLow = (p.id || '').toLowerCase().trim();
+      const pDomLow = (p.brandDomain || '').toLowerCase().trim();
+      const pWebDomLow = extractCleanDomain(p.website || '').toLowerCase().trim();
+      
+      return (
+        pIdLow === searchIdLow ||
+        pDomLow === searchIdLow ||
+        (pWebDomLow && pWebDomLow === searchIdLow) ||
+        (cleanSearchDomain && pDomLow === cleanSearchDomain) ||
+        (cleanSearchDomain && pWebDomLow === cleanSearchDomain)
+      );
+    });
+
+    // PHASE 2: Try loose finding only if no direct match was found
+    if (!found) {
+      found = places.find((p) => {
+        const pNameLow = (p.name || '').toLowerCase().trim();
+        return (pNameLow && pNameLow === searchIdLow);
+      });
+    }
+
     if (!found) {
       const matchingVideo = videos.find(
         (v) => {
-          if (cleanSearchDomain) {
-            const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
-            if (vDomain) return vDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
-          }
-          return v.placeId === searchId || v.id === searchId || (v.placeName && v.placeName.toLowerCase() === searchId.toLowerCase());
+          const vIdLow = (v.placeId || "").toLowerCase().trim();
+          const vWebDomLow = extractCleanDomain(v.placeWebsite || "").toLowerCase().trim();
+
+          return (
+            (vIdLow && vIdLow === searchIdLow) ||
+            (vWebDomLow && vWebDomLow === searchIdLow) ||
+            (cleanSearchDomain && isValidDomainUrl(cleanSearchDomain) && vWebDomLow === cleanSearchDomain)
+          );
         }
       );
       if (matchingVideo) {
         found = synthesizePlaceFromReview(matchingVideo, places);
       } else {
         const domain = extractCleanDomain(searchId);
+        const isRealDomain = isValidDomainUrl(domain);
         found = {
           id: searchId,
-          name: domain || searchId,
+          name: isRealDomain ? formatBusinessName(domain) : searchId,
           brandDomain: domain || undefined,
-          category: "Establishment",
+          category: isRealDomain ? "Verified Business" : "Local Business",
           categoryType: "all",
           address: "",
           city: "",
@@ -3699,20 +3708,22 @@ export function App() {
           openingHours: "",
           isOpen: undefined,
           phone: "",
-          website: domain ? `https://${domain}` : "",
-          priceRange: "$",
+          website: isRealDomain ? `https://${domain}` : "",
+          priceRange: "N/A",
           plusCode: "",
-          description: getEffectivePlaceDescription({ name: domain || searchId, domain: domain, website: domain ? `https://${domain}` : "" }),
-          popularKeywords: [{ tag: "Verified", count: 1 }],
-          amenities: ["Wheelchair accessible entrance"],
+          description: "",
+          popularKeywords: [],
+          amenities: [],
           topDishes: [],
           lat: 0,
           lng: 0,
-          bannerUrl: "",
-          ogImage: "",
-          avatarUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
-          logoUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
-          isSavedToProfile: true
+          bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          isSavedToProfile: true,
+          isSkeleton: true,
+          isSynthetic: true
         } as Place;
       }
     }
