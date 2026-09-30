@@ -19644,8 +19644,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const html = await resp.text();
           if (!html || html.length < 500) continue;
           
-          // Extract URLs from uddg parameters
-          const matches: string[] = [];
+          // Extract and score candidates to prioritize official business sites over portals/directories
+          const candidates: { url: string; score: number }[] = [];
           const regex = /uddg=([^&"'>\s]+)/gi;
           let match;
           while ((match = regex.exec(html)) !== null) {
@@ -19653,32 +19653,51 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             try {
               u = decodeURIComponent(u);
               if (u.startsWith('http')) {
-                matches.push(u);
+                const uLower = u.toLowerCase();
+                const host = new URL(u).hostname.toLowerCase();
+                
+                // 1. Identify Portal/Directory/News domains that should be deprioritized
+                const portalDomains = [
+                  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
+                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+                  "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
+                  "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
+                  "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
+                  "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
+                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il"
+                ];
+
+                const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));
+                if (uLower.includes("javascript:")) continue;
+
+                let score = 100 - (candidates.length * 5); // Initial score based on search rank
+                if (isPortal) score -= 85; // Heavy penalty for news/portals/directories
+                
+                // 2. Penalize deep paths (Official sites are almost always root or very shallow)
+                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
+                if (pathParts.length > 0) {
+                  score -= (pathParts.length * 15);
+                } else {
+                  score += 25; // Root domain bonus
+                }
+
+                // 3. Bonus for domain body matching query keywords (strong official signal)
+                const domainBody = host.split('.')[0];
+                const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                for (const word of queryWords) {
+                  if (domainBody.includes(word)) score += 30;
+                }
+
+                candidates.push({ url: u, score });
               }
             } catch (err) {}
           }
-          
-          const directoryDomains = [
-            "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
-            "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
-            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
-            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net"
-          ];
 
-          const validCandidates = matches.filter(u => {
-            try {
-              const uLower = u.toLowerCase();
-              const host = new URL(u).hostname.toLowerCase();
-              const isNoise = directoryDomains.some(d => host === d || host.endsWith("." + d));
-              return !isNoise && !uLower.includes("javascript:");
-            } catch(e) { return false; }
-          });
-
-          if (validCandidates.length > 0) {
-            // Pick the first valid organic candidate immediately - that's the official site
-            discoveredUrl = validCandidates[0];
-            console.log(`[DuckDuckGo Discovery] Successfully resolved official website URL: ${discoveredUrl}`);
+          if (candidates.length > 0) {
+            // Sort by score descending
+            candidates.sort((a, b) => b.score - a.score);
+            discoveredUrl = candidates[0].url;
+            console.log(`[DuckDuckGo Discovery] Best Candidate (Score ${candidates[0].score}): ${discoveredUrl}`);
             break; 
           }
           await new Promise(r => setTimeout(r, 100));
