@@ -214,6 +214,14 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "bluechillicars.com": "Blue Chilli Cars",
+  "www.bluechillicars.com": "Blue Chilli Cars",
+  "bluechillicars": "Blue Chilli Cars",
+  "blue chilli cars": "Blue Chilli Cars",
+  "blue chilli car contracts": "Blue Chilli Cars",
+  "blue chilli car lease deals": "Blue Chilli Cars",
+  "blue chilli car leasing": "Blue Chilli Cars",
+  "bluechillicarleasing.co.uk": "Blue Chilli Cars",
   "pbsupercars.com": "PB Supercars",
   "www.pbsupercars.com": "PB Supercars",
   "pbsupercars": "PB Supercars",

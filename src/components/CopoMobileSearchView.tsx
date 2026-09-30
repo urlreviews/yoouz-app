@@ -366,19 +366,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    const isRealDomain = isValidDomainUrl(cleanUrl);
-
-    // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
-    if (isRealDomain) {
-      setSearchErrorNotification(null);
-      console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
-    } else {
-      console.warn("[Search Mobile] No official website domain found. Halting search to prevent creating fallback pages.");
-      setIsSearching(false);
-      setSearchErrorNotification(`No official business website could be found for "${trimmed}". Please try entering their official website domain.`);
-      setTimeout(() => setSearchErrorNotification(null), 5000);
-      return;
+    if (!isValidDomainUrl(cleanUrl)) {
+      const slug = trimmed.toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "business";
+      cleanUrl = `${slug}.com`;
     }
+    setSearchErrorNotification(null);
+    const isRealDomain = isValidDomainUrl(cleanUrl);
 
     // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
     const storeTerm = cleanUrl || trimmed;

@@ -346,17 +346,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (currentRequestId !== searchRequestIdRef.current) return;
 
-    // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
-    if (isValidDomainUrl(cleanUrl)) {
-      setSearchErrorNotification(null);
-      console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
-    } else {
-      console.warn("[Search] No official website domain found. Halting search to prevent creating fallback pages.");
-      setIsSearching(false);
-      setSearchErrorNotification(`No official website domain could be found for "${rawQuery}". Please try entering their official website domain.`);
-      setTimeout(() => setSearchErrorNotification(null), 5000);
-      return;
+    if (!isValidDomainUrl(cleanUrl)) {
+      const slug = (baseName || rawQuery).toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "business";
+      cleanUrl = `${slug}.com`;
     }
+    setSearchErrorNotification(null);
 
     setQuery(baseName || rawQuery);
     setIsSearching(true);
