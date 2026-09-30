@@ -327,7 +327,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       
       try {
         const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`, {
-          signal: AbortSignal.timeout(7000)
+          signal: AbortSignal.timeout(12000)
         });
         if (backendResp.ok) {
           const data = await backendResp.json();

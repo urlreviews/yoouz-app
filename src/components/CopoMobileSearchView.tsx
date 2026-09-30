@@ -352,7 +352,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       
       try {
         const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}&resolveOnly=true`, {
-          signal: AbortSignal.timeout(7000)
+          signal: AbortSignal.timeout(12000)
         });
         if (backendResp.ok) {
           const data = await backendResp.json();
