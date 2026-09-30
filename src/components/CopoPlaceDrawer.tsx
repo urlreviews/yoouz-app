@@ -1190,52 +1190,54 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
         </div>
 
-        {/* Rating & Action Hero Showcase Header Box */}
-        <div className="mb-3.5 p-3 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3 shadow-md">
-          {/* Star Rating Section */}
-          <div className="flex items-center gap-2.5">
+        {/* Rating & Action Hero Showcase Header Box (Premium Upgraded Layout) */}
+        <div className="mb-4 p-5 rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col items-center gap-5 shadow-xl">
+          {/* Star Rating Section - Larger & More Prominent */}
+          <div className="flex flex-col items-center text-center">
             {dynamicReviewCount > 0 ? (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-white text-[17px] leading-none tracking-tight">{dynamicAvgRating.toFixed(1)}</span>
-                  <div className="flex items-center text-amber-400 gap-0.5">
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="font-black text-white text-[28px] leading-none tracking-tighter">
+                    {dynamicAvgRating.toFixed(1)}
+                  </span>
+                  <div className="flex items-center text-amber-500 gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-4 h-4 ${
+                        className={`w-6 h-6 ${
                           i < Math.round(dynamicAvgRating)
-                            ? "fill-amber-400 text-amber-400"
+                            ? "fill-amber-500 text-amber-500"
                             : "fill-zinc-800 text-zinc-700"
                         }`}
                       />
                     ))}
                   </div>
                 </div>
-                <span className="text-zinc-400 font-semibold text-[11px] mt-1">
+                <span className="text-zinc-400 font-bold text-xs mt-2 uppercase tracking-widest">
                   {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
                 </span>
-              </div>
+              </>
             ) : (
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-zinc-400 text-[17px] leading-none tracking-tight">0.0</span>
-                  <div className="flex items-center text-zinc-600 gap-0.5">
+              <>
+                <div className="flex items-center gap-3">
+                  <span className="font-black text-zinc-500 text-[28px] leading-none tracking-tighter">0.0</span>
+                  <div className="flex items-center text-zinc-700 gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-4 h-4 fill-none text-zinc-600 stroke-[1.75]"
+                        className="w-6 h-6 fill-none text-zinc-700 stroke-[2]"
                       />
                     ))}
                   </div>
                 </div>
-                <span className="text-zinc-400 font-semibold text-[11px] mt-1">
-                  0 {t("place.reviews", "Reviews")}
+                <span className="text-zinc-500 font-bold text-xs mt-2 uppercase tracking-widest">
+                  {t("place.noReviewsYet", "No Reviews Yet")}
                 </span>
-              </div>
+              </>
             )}
           </div>
 
-          {/* Premium Record Video Review Pill Button (Matches Follow Button Style) */}
+          {/* Premium Record Video Review Call-to-Action - High Prominence */}
           <button
             id="btn-record-video-review-main"
             type="button"
@@ -1243,10 +1245,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 text-white font-bold text-xs px-4.5 py-2.5 rounded-full shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0 border border-zinc-700 cursor-pointer group"
+            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shrink-0 cursor-pointer group"
           >
-            <Video className="w-3.5 h-3.5 text-zinc-200 shrink-0 stroke-[2]" />
-            <span>{t("place.recordVideoReview", "Record Review")}</span>
+            <Video className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
+            <span className="uppercase tracking-tight">{t("place.recordVideoReview", "Record Review")}</span>
           </button>
         </div>
       </div>
