@@ -3679,13 +3679,11 @@ export function App() {
         (v) => {
           const vIdLow = (v.placeId || "").toLowerCase().trim();
           const vWebDomLow = extractCleanDomain(v.placeWebsite || "").toLowerCase().trim();
-          const vNameLow = (v.placeName || "").toLowerCase().trim();
 
           return (
-            vIdLow === searchIdLow ||
+            (vIdLow && vIdLow === searchIdLow) ||
             (vWebDomLow && vWebDomLow === searchIdLow) ||
-            (vNameLow && vNameLow === searchIdLow) ||
-            (cleanSearchDomain && vWebDomLow === cleanSearchDomain)
+            (cleanSearchDomain && isValidDomainUrl(cleanSearchDomain) && vWebDomLow === cleanSearchDomain)
           );
         }
       );

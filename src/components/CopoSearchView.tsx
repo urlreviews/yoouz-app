@@ -357,26 +357,49 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
-    // 2. Non-blocking Background Domain Resolution
-    // Optimization: We proceed with an optimistic match INSTANTLY for EVERY query.
-    // This fulfills the "Guarantee Instant" requirement.
+    // 2. Fast Resolution: If not already an exact domain or pre-warmed entity,
+    // resolve directly so that ALL information (Official Domain, Name, Logo, HD Banner, Phone, Address, Description)
+    // comes TOGETHER in ONE unified, authentic, glitch-free arrival!
     let discoveredMeta = locationDetails?.preloadedData || prewarmed || preloadedMeta;
-    
+
+    if (!isValidDomainUrl(cleanUrl) && !discoveredMeta?.domain) {
+      try {
+        setIsSearching(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+        const resp = await fetch(`/api/url-metadata?q=${encodeURIComponent(cleanRawQuery)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok && currentRequestId === searchRequestIdRef.current) {
+          const data = await resp.json();
+          if (data && data.domain && isValidDomainUrl(data.domain)) {
+            cleanUrl = data.domain;
+            discoveredMeta = data;
+          }
+        }
+      } catch (e) {
+        console.warn("[Search Fast Resolve]:", e);
+      }
+    }
+
+    if (currentRequestId !== searchRequestIdRef.current) return;
+
     setQuery(baseName || rawQuery);
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // Always reset searching state here to ensure the button becomes clickable again instantly
+    // Reset searching state once resolution completes
     setIsSearching(false);
 
     const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
 
-    // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
-    // NO FAKE LOGOS: Only use if authoritative or pre-fetched.
+    // Instant place object - strictly scoped to resolved domain
     const instantLogo: string = (isRealDomain && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "") 
       || (discoveredMeta?.logo && !discoveredMeta.logo.includes('brandfetch') && !discoveredMeta.logo.startsWith('data:;') ? discoveredMeta.logo : "")
-      || "";
+      || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "");
     
-    // NO FAKE BANNERS: If no real banner, leave it empty for the shimmering skeleton to handle.
     const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
       || (discoveredMeta?.image && !discoveredMeta.image.includes('unsplash.com') ? discoveredMeta.image : "") 
       || "";
@@ -384,7 +407,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const instantName = preferredName
       || locationDetails?.rawBusinessName
       || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-      || (discoveredMeta?.title || discoveredMeta?.siteName)
+      || (discoveredMeta?.title || discoveredMeta?.name || discoveredMeta?.siteName)
       || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
       || baseName
       || rawQuery;
@@ -413,6 +436,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       openingHours: discoveredMeta?.openingHours || "Available 24/7",
       isOpen: true,
       phone: discoveredMeta?.phone || "",
+      email: discoveredMeta?.email || "",
       website: (discoveredMeta?.url && isValidDomainUrl(discoveredMeta.url) && !discoveredMeta.url.toLowerCase().includes('wikipedia.org')) ? discoveredMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
       priceRange: "N/A",
       plusCode: "",
@@ -422,14 +446,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       topDishes: [],
       brandDomain: isRealDomain ? cleanUrl : (discoveredMeta?.domain || ""),
       isSynthetic: !isRealDomain && !discoveredMeta,
-      isSkeleton: !isRealDomain && (!discoveredMeta || !discoveredMeta.image)
+      isSkeleton: false
     };
 
     if (currentRequestId !== searchRequestIdRef.current) return;
 
     let currentPlace: Place = instantPlace;
     
-    // TRULY INSTANT: Set and open immediately regardless of "Real" status
+    // Open immediately with all information together
     setSearchedPlace(currentPlace);
     if (onAddPlace) {
       onAddPlace(currentPlace);

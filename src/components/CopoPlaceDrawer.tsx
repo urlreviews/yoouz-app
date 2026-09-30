@@ -117,7 +117,14 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
   const [isEnriching, setIsEnriching] = useState(false);
-  const isSkeleton = place.isSkeleton || (isEnriching && !place.bannerUrl && !place.logoUrl && !place.website);
+  const hasBasicData = Boolean(
+    (place.website && place.website.includes('.')) || 
+    place.bannerUrl || 
+    (place.description && place.description.length > 20) || 
+    (place.address && place.address !== "Verified Location") || 
+    place.phone
+  );
+  const isSkeleton = !hasBasicData && Boolean(place.isSkeleton || (isEnriching && !place.bannerUrl && !place.logoUrl && !place.website));
 
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
@@ -586,7 +593,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
                     brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                     website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                    photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
+                    photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos,
+                    isSkeleton: false
                   });
                 }
 

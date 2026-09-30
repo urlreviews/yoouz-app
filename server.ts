@@ -13,7 +13,7 @@ async function fetchBase64(url: string): Promise<string> {
 import express from "express";
 import opentype from "opentype.js";
 import crypto from "crypto";
-import { execSync } from "child_process";
+import { execSync, execFile } from "child_process";
 import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
 import path from "path";
@@ -18006,7 +18006,8 @@ Return JSON:
     // Reject CSS dimensions, px, em, rem, font declarations, variables, URLs, HTML tags
     if (/(?:px|em|rem|font|rgba|var\(|;|{|}|--|width|height|http|www\.|\.com|\.be|\.nl|@)/i.test(s)) return false;
     // Reject floating point numbers with repeated decimals (e.g. 19.599999999999998)
-    if (/\d+\.\d{3,}/.test(s)) return false;
+    // but permit standard 3-digit dot notation phone numbers (e.g. 504.586.0004)
+    if (/\d+\.\d{5,}/.test(s)) return false;
     
     const digits = s.replace(/\D/g, "");
     // ITU E.164 phone numbers have between 7 and 15 digits
@@ -19247,7 +19248,7 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-  async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
+  async function resolveBusinessQuery(query: string, skipGemini = false, forceRefresh = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
     
@@ -19255,10 +19256,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 12 * 60 * 60 * 1000) {
-      // INSTANT CACHE: Return immediately if we have ANY valid data for this query.
-      // This fulfills the "Technically Instant" requirement for known businesses.
-      const hasCoreData = !!(cachedEntry.data.domain && cachedEntry.data.name);
+    if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 12 * 60 * 60 * 1000) {
+      // INSTANT CACHE: Return immediately if we have a real domain with a dot.
+      const hasCoreData = !!(cachedEntry.data.domain && cachedEntry.data.domain.includes('.') && cachedEntry.data.name);
       if (hasCoreData) {
         console.log(`[Cache Hit] Serving instant result for: "${cleanQ}"`);
         return cachedEntry.data;
@@ -19583,15 +19583,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
       ];
 
-      // Extreme DuckDuckGo-Only Discovery Engine (4 high-speed attempts with realistic headers)
+      // High-speed Dual Discovery Engine (DuckDuckGo Lite + DuckDuckGo HTML)
       const variations = [
         `${cleanQ}`,
-        `${cleanQ} website`,
-        `${cleanQ} official`,
+        `${cleanQ} official website`,
         `${cleanQ} business`
       ];
 
-      for (let attempt = 0; attempt < 4; attempt++) {
+      for (let attempt = 0; attempt < 3; attempt++) {
         if (discoveredUrl) break;
         try {
           const varIdx = attempt % variations.length;
@@ -19599,39 +19598,44 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const baseQ = variations[varIdx];
           const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
           
-          const qEnc = encodeURIComponent(currentQ);
-          const ddgUrl = `https://html.duckduckgo.com/html/?q=${qEnc}`;
-          
-          console.log(`[DuckDuckGo Discovery] Fetching search results for: "${currentQ}" (Attempt ${attempt + 1}/4)`);
-          
-          const resp = await fetch(ddgUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.5',
-              'DNT': '1',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1',
-              'Sec-Fetch-Dest': 'document',
-              'Sec-Fetch-Mode': 'navigate',
-              'Sec-Fetch-Site': 'none',
-              'Sec-Fetch-User': '?1'
-            },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
-          });
+          console.log(`[Discovery Engine] Searching for: "${currentQ}" (Attempt ${attempt + 1}/3)`);
 
-          if (!resp.ok) {
-            console.warn(`[DuckDuckGo Discovery] HTTP Error ${resp.status}: ${resp.statusText}`);
-            continue;
+          let html = "";
+          // 1. DuckDuckGo Lite via curl (Bypasses bot challenge, returns clean instant results)
+          try {
+            html = await new Promise<string>((resolve) => {
+              execFile(
+                "curl",
+                ["-s", "-L", "-m", "4", "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "-d", `q=${encodeURIComponent(currentQ).replace(/%20/g, "+")}`, "https://lite.duckduckgo.com/lite/"],
+                { maxBuffer: 10 * 1024 * 1024 },
+                (err, stdout) => {
+                  resolve(err ? "" : (stdout || ""));
+                }
+              );
+            });
+          } catch (eLite) {}
+
+          // 2. Fallback to DuckDuckGo HTML if Lite didn't return content
+          if (!html || html.length < 500) {
+            try {
+              html = await new Promise<string>((resolve) => {
+                execFile(
+                  "curl",
+                  ["-s", "-L", "-m", "4", "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", `https://html.duckduckgo.com/html/?q=${encodeURIComponent(currentQ)}`],
+                  { maxBuffer: 10 * 1024 * 1024 },
+                  (err, stdout) => {
+                    resolve(err ? "" : (stdout || ""));
+                  }
+                );
+              });
+            } catch (eHtml) {}
           }
 
-          const html = await resp.text();
           if (!html || html.length < 500) continue;
 
           const $ = cheerio.load(html);
           
           // Identify Knowledge Panel / Instant Answer profile link
-          // In DuckDuckGo HTML, this information is often at the top in a "zci" (Zero Click Info) box
           let profileUrl = "";
           const zciLinks = $('.zci--about a[href^="http"], .zci-info a[href^="http"], .zci--web a[href^="http"]');
           zciLinks.each((_, el) => {
@@ -19641,15 +19645,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
              }
           });
           
-          // Extract and score candidates to prioritize official business sites over portals/directories
           const candidates: { url: string; score: number }[] = [];
 
-          // Process each result block individually to capture title/snippet for scoring
-          $('.result').each((idx, el) => {
-            const resultA = $(el).find('.result__a');
-            const title = resultA.text();
-            const snippet = $(el).find('.result__snippet').text();
-            let link = resultA.attr('href');
+          // Process each result (supports both Lite 'a.result-link' and HTML '.result')
+          $('a.result-link, .result__a').each((idx, el) => {
+            const title = $(el).text().trim();
+            const parentRow = $(el).closest('tr').next('tr');
+            const snippet = parentRow.find('.result-snippet').text() || $(el).closest('.result').find('.result__snippet').text() || '';
+            let link = $(el).attr('href');
             
             if (!link) return;
             
@@ -19662,9 +19665,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (u.startsWith('http')) {
                 const uLower = u.toLowerCase();
                 const urlObj = new URL(u);
-                const host = urlObj.hostname.toLowerCase();
+                const rawHost = urlObj.hostname.toLowerCase();
+                const cleanHost = rawHost.replace(/^www\./, '');
                 
-                // Identify Portal/Directory/News/Venue domains that should be deprioritized
+                // Identify Portal/Directory/Social domains that should be deprioritized
                 const portalDomains = [
                   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
                   "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com", "reddit.com", "quora.com",
@@ -19678,38 +19682,55 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   "wheree.com", "nicelocal.com", "yellowplace.com", "zoomlocal.com", "cylex.com", "cylex-international.com", "hotfrog.com", "brownbook.net", "yalwa.com", "bizhwy.com", "citysearch.com", "local.com", "insiderpages.com", "merchantcircle.com", "dexknows.com", "superpages.com", "yellowbook.com", "angi.com", "thumbtack.com", "houzz.com", "homeadvisor.com"
                 ];
 
-                const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));
+                const isPortal = portalDomains.some(d => cleanHost === d || cleanHost.endsWith("." + d) || cleanHost.includes("shironet"));
                 if (uLower.includes("javascript:")) return;
 
                 let score = 100 - (idx * 5); // Initial score based on search rank
-                if (isPortal) score -= 90; // Heavy penalty for news/portals/directories
+                if (isPortal) score -= 600; // Heavy penalty for news/portals/directories
                 
-                // Profile Match Bonus: If this URL matches the one found in the "Knowledge Panel" or "Official Info" area
-                if (profileUrl && (u === profileUrl || host === new URL(profileUrl).hostname.toLowerCase())) {
-                   score += 600;
-                   console.log(`[DuckDuckGo Discovery] Found Knowledge Panel Profile Match: ${u}`);
+                // Knowledge Panel Match
+                if (profileUrl && (u === profileUrl || cleanHost === new URL(profileUrl).hostname.replace(/^www\./, ''))) {
+                   score += 800;
                 }
 
-                // Official Signal Bonus: If title or snippet contains "Official Website", "Official Site", or "Official Page"
+                // Official Signal Bonus: If title or snippet contains "Official Website", "Official Site", etc.
                 const officialSignals = ["official website", "official site", "official page", "home page", "homepage"];
                 const combinedText = (title + " " + snippet).toLowerCase();
                 if (officialSignals.some(sig => combinedText.includes(sig)) && !isPortal) {
                    score += 300;
                 }
                 
-                // Penalize deep paths (Official sites are almost always root or very shallow)
+                // Penalize deep paths (Official sites are almost always root or shallow)
                 const pathParts = urlObj.pathname.split('/').filter(Boolean);
-                if (pathParts.length > 0) {
-                  score -= (pathParts.length * 15);
-                } else {
-                  score += 45; // Root domain bonus
+                if (pathParts.length > 1) {
+                  score -= (pathParts.length * 20);
+                } else if (pathParts.length === 0) {
+                  score += 60; // Root domain bonus
                 }
 
-                // Bonus for domain body matching query keywords (strong official signal)
-                const domainBody = host.split('.')[0];
+                // Strong Domain Matching Bonus
+                const domainBody = cleanHost.split('.')[0].toLowerCase();
+                const queryCleanCompact = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const hostCleanCompact = cleanHost.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+                if (queryCleanCompact.length > 2) {
+                  if (hostCleanCompact.startsWith(queryCleanCompact) || queryCleanCompact.startsWith(domainBody)) {
+                    score += 1500; // Exact/prefix domain name match
+                  } else if (domainBody.includes(queryCleanCompact) || queryCleanCompact.includes(domainBody)) {
+                    score += 1000;
+                  }
+                }
+
+                // Title match bonus
+                if (title.toLowerCase().includes(cleanQ.toLowerCase())) {
+                  score += 500;
+                }
+
+                // Keyword overlap bonus
                 const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length > 2);
                 for (const word of queryWords) {
-                  if (domainBody.includes(word)) score += 40;
+                  if (domainBody.includes(word)) score += 80;
+                  if (title.toLowerCase().includes(word)) score += 40;
                 }
 
                 candidates.push({ url: u, score });
@@ -19718,19 +19739,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           });
 
           if (candidates.length > 0) {
-            // Sort by score descending
             candidates.sort((a, b) => b.score - a.score);
             discoveredUrl = candidates[0].url;
-            console.log(`[DuckDuckGo Discovery] Best Candidate (Score ${candidates[0].score}): ${discoveredUrl}`);
+            console.log(`[Discovery Engine] Best Candidate (Score ${candidates[0].score}): ${discoveredUrl}`);
             break; 
           }
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise(r => setTimeout(r, 60));
         } catch (e) {
           await new Promise(r => setTimeout(r, 50));
         }
       }
     } catch (e) {
-      console.error("[Google Discovery Critical Error]:", e.message);
+      console.error("[Discovery Engine Critical Error]:", e.message);
     }
 
     if (discoveredUrl) {
@@ -19738,8 +19758,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
         let scTitle = formatBusinessName(cleanQ, discoveredDom);
-        let scDesc = `${scTitle} is a verified business on Yoouz.`;
+        let scDesc = "";
         let scImage = "";
+        let scLogo = "";
         let scAddress = "";
         let scCity = "Online";
         let scCountry = "";
@@ -19751,44 +19772,156 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         let scLng = 0;
 
         try {
-          console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
-          const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
+          console.log(`[Discovery Scrape] Fetching website content: ${discoveredUrl}`);
+          let scHtml = "";
+          try {
+            scHtml = await new Promise<string>((resolve) => {
+              execFile(
+                "curl",
+                ["-s", "-L", "-m", "5", "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", discoveredUrl],
+                { maxBuffer: 10 * 1024 * 1024 },
+                (err, stdout) => {
+                  resolve(err ? "" : (stdout || ""));
+                }
+              );
+            });
+          } catch(e) {}
+
+          if (!scHtml || scHtml.length < 500) {
+            try {
+              const pageResp = await fetch(discoveredUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+                },
+                redirect: 'follow',
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
+              });
+              if (pageResp.ok) {
+                scHtml = await pageResp.text();
+              }
+            } catch(e) {}
+          }
+
+          if (!scHtml || scHtml.length < 500) {
+            const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
+            scHtml = scrapeData?.html || "";
+          }
           
-          if (scrapeData && scrapeData.html) {
-            const scHtml = scrapeData.html;
+          if (scHtml && scHtml.length > 500) {
             const sc$ = cheerio.load(scHtml);
             
-            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeData.metadata?.title;
+            // 1. Title Extraction
+            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text();
             if (metaT && metaT.trim().length > 1) {
-              scTitle = formatBusinessName(metaT.trim(), discoveredDom);
-            }
-            
-            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
-            if (metaDesc && metaDesc.trim().length > 10) {
-              scDesc = metaDesc.trim();
-            }
-            
-            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-            if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com')) {
-              try {
-                scImage = new URL(metaImg, discoveredUrl).toString();
-              } catch (e) {
-                scImage = metaImg;
+              let t = metaT.trim();
+              // Clean out common title suffixes like " | Sugar Mill Events" or " - Official Website"
+              t = t.replace(/\s*\|\s*.*$/i, '').replace(/\s*[-–—]\s*(home|official|website|welcome).*$/i, '').trim();
+              if (t.length > 1 && !isGenericPlaceNameServer(t)) {
+                scTitle = formatBusinessName(t, discoveredDom);
               }
             }
             
+            // 2. Description Extraction
+            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content');
+            if (metaDesc && metaDesc.trim().length > 15) {
+              scDesc = metaDesc.trim();
+            } else {
+              // Extract from article, section.content, main, or meaningful paragraphs
+              const pCandidates: string[] = [];
+              sc$('article p, section[class*="content"] p, main p, div[class*="about"] p, .entry-content p, p').each((_, pEl) => {
+                const text = sc$(pEl).text().trim().replace(/\s+/g, ' ');
+                if (text.length > 50 && !text.includes('cookie') && !text.includes('javascript') && !text.includes('browser') && !text.includes('rights reserved')) {
+                  pCandidates.push(text);
+                }
+              });
+              if (pCandidates.length > 0) {
+                scDesc = pCandidates[0];
+              }
+            }
+            
+            // 3. Banner Image & Logo Extraction
+            const ogImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content');
+            if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
+              try {
+                const fullOg = new URL(ogImg, discoveredUrl).toString();
+                if (ogImg.toLowerCase().includes('logo') || ogImg.toLowerCase().includes('icon')) {
+                  scLogo = fullOg;
+                } else {
+                  scImage = fullOg;
+                }
+              } catch(e) {}
+            }
+
+            // Look for hero / header background images if no real banner found yet
+            if (!scImage) {
+              sc$('[style*="background-image"], [style*="background:"]').each((_, bEl) => {
+                if (scImage) return;
+                const styleAttr = sc$(bEl).attr('style') || "";
+                const bgMatch = styleAttr.match(/url\s*\(\s*['"]?([^'")]+)['"]?\s*\)/i);
+                if (bgMatch && bgMatch[1]) {
+                  const rawBg = bgMatch[1].trim();
+                  if (!rawBg.startsWith('data:') && !rawBg.includes('arrow') && !rawBg.includes('icon') && !rawBg.includes('logo') && !rawBg.includes('fade')) {
+                    try {
+                      scImage = new URL(rawBg, discoveredUrl).toString();
+                    } catch(e) {}
+                  }
+                }
+              });
+            }
+
+            // Look for high-resolution images in banner / hero / header containers
+            if (!scImage) {
+              sc$('header img, [class*="banner"] img, [class*="hero"] img, [class*="slider"] img, [class*="carousel"] img, img[src*="header"], img[src*="banner"], img[src*="hero"]').each((_, imgEl) => {
+                if (scImage) return;
+                const src = sc$(imgEl).attr('src') || sc$(imgEl).attr('data-src') || "";
+                if (src && !src.startsWith('data:') && !src.includes('logo') && !src.includes('icon') && !src.includes('arrow')) {
+                  try {
+                    scImage = new URL(src, discoveredUrl).toString();
+                  } catch(e) {}
+                }
+              });
+            }
+
+            // Extract real logo if not yet found
+            if (!scLogo) {
+              const logoEl = sc$('link[rel="apple-touch-icon"], link[rel="icon"][sizes*="180"], link[rel="icon"][sizes*="192"], img[class*="logo"], img[alt*="logo"], img[src*="logo"]').first();
+              const logoHref = logoEl.attr('href') || logoEl.attr('src') || logoEl.attr('content');
+              if (logoHref && !logoHref.startsWith('data:') && !logoHref.includes('google.com')) {
+                try {
+                  scLogo = new URL(logoHref, discoveredUrl).toString();
+                } catch(e) {}
+              }
+            }
+            if (!scLogo) {
+              scLogo = `/api/favicon?domain=${discoveredDom}`;
+            }
+
+            // 4. Contact & Location Extraction
             const locData = await extractWebsiteLocationAndContact(sc$, scHtml, discoveredUrl, discoveredDom);
-            if (locData.address) scAddress = locData.address;
-            if (locData.city) scCity = locData.city;
-            if (locData.country) scCountry = locData.country;
-            if (locData.phone) scPhone = locData.phone;
-            if (locData.email) scEmail = locData.email;
+            if (locData.address) scAddress = locData.address.replace(/\u00a0/g, ' ').trim();
+            if (locData.city) scCity = locData.city.replace(/\u00a0/g, ' ').trim();
+            if (locData.country) scCountry = locData.country.replace(/\u00a0/g, ' ').trim();
+            if (locData.phone) scPhone = locData.phone.replace(/\u00a0/g, ' ').trim();
+            if (locData.email) scEmail = locData.email.trim();
             if (locData.category && locData.category !== "Verified Business") scCategory = locData.category;
             if (locData.openingHours) scOpeningHours = locData.openingHours;
             if (locData.lat) scLat = locData.lat;
             if (locData.lng) scLng = locData.lng;
+
+            // Extra Event Venue category detection
+            const combinedHtmlText = (scTitle + " " + scDesc + " " + scHtml.slice(0, 5000)).toLowerCase();
+            if (combinedHtmlText.includes('venue') || combinedHtmlText.includes('events') || combinedHtmlText.includes('conventions') || combinedHtmlText.includes('hospitality')) {
+              scCategory = "Event Venue & Hospitality";
+            }
           }
-        } catch (scErr) {}
+        } catch (scErr) {
+          console.error("[Discovery Scrape Error]:", scErr);
+        }
+
+        if (!scDesc) {
+          scDesc = `${scTitle || formatBusinessName(cleanQ)} is a verified business on Yoouz.`;
+        }
 
         const finalResult = {
           domain: discoveredDom,
@@ -19802,6 +19935,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           email: scEmail,
           openingHours: scOpeningHours,
           photo: scImage,
+          logo: scLogo || `/api/favicon?domain=${discoveredDom}`,
           description: scDesc,
           lat: scLat,
           lng: scLng
@@ -19960,10 +20094,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // 1. If user passed a business phrase/name without a domain dot, resolve directly via Fast Discovery Engine
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
-        resolvedEntity = await resolveBusinessQuery(rawQuery).catch(() => null);
+        resolvedEntity = await resolveBusinessQuery(rawQuery, false, forceRefresh).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
-          const entityLogo = resolvedEntity.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
+          const entityLogo = resolvedEntity.logo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           return res.json({
             title: resolvedEntity.name,
@@ -20016,12 +20150,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!parsedUrl) {
         // Fallback to name search rather than throwing 400 or 500
-        const ent = await resolveBusinessQuery(rawQuery).catch(() => null);
+        const ent = await resolveBusinessQuery(rawQuery, false, forceRefresh).catch(() => null);
         if (ent) {
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? ent.domain : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-          const entityLogo = ent.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
+          const entityLogo = ent.logo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz.`,
