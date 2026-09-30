@@ -1197,14 +1197,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {dynamicReviewCount > 0 ? (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-white text-3xl sm:text-4xl leading-none tracking-tighter">
+                  <span className="font-black text-white text-xs uppercase tracking-wider leading-none">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
                   <div className="flex items-center text-amber-500 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                        className={`w-3.5 h-3.5 ${
                           i < Math.round(dynamicAvgRating)
                             ? "fill-amber-500 text-amber-500"
                             : "fill-zinc-800 text-zinc-700"
@@ -1221,12 +1221,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-zinc-500 text-xl sm:text-2xl leading-none tracking-tighter">0.0</span>
+                  <span className="font-black text-zinc-500 text-xs uppercase tracking-wider leading-none">0.0</span>
                   <div className="flex items-center text-zinc-700 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 sm:w-6 h-6 fill-none text-zinc-700 stroke-[2.5]"
+                        className="w-3.5 h-3.5 fill-none text-zinc-700 stroke-[2.5]"
                       />
                     ))}
                   </div>
@@ -1250,7 +1250,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-4.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
           >
             <Video className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
-            <span className="uppercase tracking-widest">{t("place.recordVideoReview", "Record Video Review")}</span>
+            <span className="uppercase tracking-widest">{t("place.recordReview", "Record Review")}</span>
           </button>
         </div>
       </div>
@@ -1476,7 +1476,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.phone", "Phone Number")}</span>
                         {hasGenuinePhone ? (
                           <span className="text-xs font-bold text-white block truncate">
-                            {formatPhoneNumber(effectivePhone, drawerDomain || place.brandDomain || place.website || place.country || place.city || place.address || place.formattedAddress)}
+                            {formatPhoneNumber(effectivePhone, drawerDomain || place.brandDomain || place.website || place.country || place.city || place.address)}
                           </span>
                         ) : (
                           <span className="text-xs font-medium text-zinc-500 block">{t("place.phoneNotProvided", "Not provided")}</span>
@@ -1689,7 +1689,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xs py-3.5 rounded-xl border border-zinc-700 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
                     >
                       <Video className="w-4 h-4 text-white stroke-[2.5]" />
-                      <span className="uppercase tracking-wider">{t("place.recordVideoReview", "Record Video Review")}</span>
+                      <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
                     </button>
                   </div>
                 ) : (
@@ -1930,9 +1930,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <Video className="w-8 h-8 text-zinc-500" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYet", "No Video Reviews Yet")}</h3>
+                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYet", "No Reviews Yet")}</h3>
                     <p className="text-xs text-zinc-400 max-w-[200px] mx-auto">
-                      {t("place.beTheFirst", "Be the first to share your experience with a video review.")}
+                      {t("place.beTheFirst", "Be the first to share your experience with a review.")}
                     </p>
                   </div>
                   <button
@@ -1943,7 +1943,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     className="w-full max-w-[240px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Video className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
-                    <span className="uppercase tracking-wider">{t("place.recordVideoReview", "Record Video Review")}</span>
+                    <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
                   </button>
                 </div>
               ) : (
