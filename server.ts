@@ -18645,36 +18645,10 @@ Return JSON:
           if (email) return;
           const raw = $(el).attr("href")?.replace(/^mailto:\s*/i, "").split("?")[0].trim() || "";
           const l = raw.toLowerCase();
-          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("yourname@") && !l.includes("email@") && !l.includes("4samet")) {
+          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("yourname@") && !l.includes("email@")) {
             email = raw;
           }
         });
-      }
-
-      if (!email && $) {
-        const fullText = $("body").text() || "";
-        const emailMatches = fullText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g) || [];
-        for (const rawEm of emailMatches) {
-          const l = rawEm.toLowerCase();
-          if (
-            !l.includes("example.com") &&
-            !l.includes("sentry.io") &&
-            !l.includes("wixpress.com") &&
-            !l.includes("domain.com") &&
-            !l.includes("yourname@") &&
-            !l.includes("email@") &&
-            !l.includes("user@") &&
-            !l.includes("schema.org") &&
-            !l.includes(".png") &&
-            !l.includes(".jpg") &&
-            !l.includes(".webp") &&
-            !l.includes(".svg") &&
-            !l.includes("4samet")
-          ) {
-            email = rawEm.trim();
-            break;
-          }
-        }
       }
 
       // 9. Structured JSON-LD extraction
@@ -19669,95 +19643,55 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           const html = await resp.text();
           if (!html || html.length < 500) continue;
-
-          const $ = cheerio.load(html);
-          
-          // Identify Knowledge Panel / Instant Answer profile link
-          // In DuckDuckGo HTML, this information is often at the top in a "zci" (Zero Click Info) box
-          let profileUrl = "";
-          const zciLinks = $('.zci--about a[href^="http"], .zci-info a[href^="http"], .zci--web a[href^="http"]');
-          zciLinks.each((_, el) => {
-             const href = $(el).attr('href') || "";
-             if (href && !href.includes('duckduckgo.com') && !profileUrl) {
-                profileUrl = href;
-             }
-          });
           
           // Extract and score candidates to prioritize official business sites over portals/directories
           const candidates: { url: string; score: number }[] = [];
-
-          // Process each result block individually to capture title/snippet for scoring
-          $('.result').each((idx, el) => {
-            const resultA = $(el).find('.result__a');
-            const title = resultA.text();
-            const snippet = $(el).find('.result__snippet').text();
-            let link = resultA.attr('href');
-            
-            if (!link) return;
-            
+          const regex = /uddg=([^&"'>\s]+)/gi;
+          let match;
+          while ((match = regex.exec(html)) !== null) {
+            let u = match[1];
             try {
-              let u = link;
-              if (u.includes('uddg=')) {
-                u = decodeURIComponent(u.split('uddg=')[1].split('&')[0]);
-              }
-              
+              u = decodeURIComponent(u);
               if (u.startsWith('http')) {
                 const uLower = u.toLowerCase();
-                const urlObj = new URL(u);
-                const host = urlObj.hostname.toLowerCase();
+                const host = new URL(u).hostname.toLowerCase();
                 
-                // Identify Portal/Directory/News/Venue domains that should be deprioritized
+                // 1. Identify Portal/Directory/News domains that should be deprioritized
                 const portalDomains = [
                   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
-                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com", "reddit.com", "quora.com",
+                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
                   "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
                   "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
                   "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
                   "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
-                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
-                  "partyslate.com", "theknot.com", "weddingwire.com", "eventective.com", "peerspace.com", "tagvenue.com", "venuerific.com", "venuehero.co", "weddinghero.ca", "herecomestheguide.com", "zola.com", "caratsandcake.com", "weddingpro.com", "bridestory.com", "hitched.co.uk",
-                  "grubhub.com", "doordash.com", "ubereats.com", "postmates.com", "seamless.com", "delivery.com", "chownow.com", "toasttab.com", "opentable.com", "resy.com", "menupages.com",
-                  "wheree.com", "nicelocal.com", "yellowplace.com", "zoomlocal.com", "cylex.com", "cylex-international.com", "hotfrog.com", "brownbook.net", "yalwa.com", "bizhwy.com", "citysearch.com", "local.com", "insiderpages.com", "merchantcircle.com", "dexknows.com", "superpages.com", "yellowbook.com", "angi.com", "thumbtack.com", "houzz.com", "homeadvisor.com"
+                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il"
                 ];
 
                 const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));
-                if (uLower.includes("javascript:")) return;
+                if (uLower.includes("javascript:")) continue;
 
-                let score = 100 - (idx * 5); // Initial score based on search rank
-                if (isPortal) score -= 90; // Heavy penalty for news/portals/directories
+                let score = 100 - (candidates.length * 5); // Initial score based on search rank
+                if (isPortal) score -= 85; // Heavy penalty for news/portals/directories
                 
-                // Profile Match Bonus: If this URL matches the one found in the "Knowledge Panel" or "Official Info" area
-                if (profileUrl && (u === profileUrl || host === new URL(profileUrl).hostname.toLowerCase())) {
-                   score += 600;
-                   console.log(`[DuckDuckGo Discovery] Found Knowledge Panel Profile Match: ${u}`);
-                }
-
-                // Official Signal Bonus: If title or snippet contains "Official Website", "Official Site", or "Official Page"
-                const officialSignals = ["official website", "official site", "official page", "home page", "homepage"];
-                const combinedText = (title + " " + snippet).toLowerCase();
-                if (officialSignals.some(sig => combinedText.includes(sig)) && !isPortal) {
-                   score += 300;
-                }
-                
-                // Penalize deep paths (Official sites are almost always root or very shallow)
-                const pathParts = urlObj.pathname.split('/').filter(Boolean);
+                // 2. Penalize deep paths (Official sites are almost always root or very shallow)
+                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
                 if (pathParts.length > 0) {
                   score -= (pathParts.length * 15);
                 } else {
-                  score += 45; // Root domain bonus
+                  score += 25; // Root domain bonus
                 }
 
-                // Bonus for domain body matching query keywords (strong official signal)
+                // 3. Bonus for domain body matching query keywords (strong official signal)
                 const domainBody = host.split('.')[0];
                 const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length > 2);
                 for (const word of queryWords) {
-                  if (domainBody.includes(word)) score += 40;
+                  if (domainBody.includes(word)) score += 30;
                 }
 
                 candidates.push({ url: u, score });
               }
             } catch (err) {}
-          });
+          }
 
           if (candidates.length > 0) {
             // Sort by score descending
@@ -19788,7 +19722,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         let scPhone = "";
         let scEmail = "";
         let scCategory = detectedCategory;
-        let scOpeningHours = "";
+        let scOpeningHours = "Available 24/7";
         let scLat = 0;
         let scLng = 0;
 
@@ -19858,31 +19792,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       logSearchIntel(cleanQ, "", "discovery_failed", { error: "No official website found after extreme discovery attempts" });
     }
 
-    // Always synthesize valid business data when direct scrape or discovery search finishes
-    const synthDomain = cleanQ.includes('.') && !cleanQ.includes(' ')
-      ? cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
-      : (cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '') || "business") + '.com';
-    const synthName = formatBusinessName(cleanQ, synthDomain);
-    const fallbackResult: ResolvedBusinessData = {
-      domain: synthDomain,
-      websiteUrl: `https://${synthDomain}`,
-      name: synthName,
-      category: detectedCategory || "Verified Business",
-      address: "",
-      city: "Online",
-      country: "",
-      phone: "",
-      email: "",
-      openingHours: "",
-      photo: "",
-      logo: `/api/favicon?domain=${synthDomain}`,
-      description: `${synthName} is a verified business on Yoouz.`,
-      lat: 0,
-      lng: 0
-    };
-    BUSINESS_QUERY_CACHE.set(cacheKey, { data: fallbackResult, timestamp: Date.now() });
-    await persistToDb(fallbackResult);
-    return fallbackResult;
+    return null; // STRICT POLICY: No official domain = No profile details.
   }
 
   async function resolveDomainForBusinessQuery(query: string): Promise<string> {
@@ -19928,25 +19838,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.setHeader("Expires", "0");
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
-      if (!rawQuery) {
-        return res.json({
-          title: "Verified Business",
-          description: "Verified business on Yoouz.",
-          image: "https://yoouz.com/og-banner.png",
-          logo: "/favicon.svg",
-          siteName: "Yoouz",
-          domain: "",
-          url: "",
-          address: "",
-          city: "Online",
-          country: "",
-          phone: "",
-          email: "",
-          category: "Verified Business",
-          openingHours: "Available 24/7",
-          locations: []
-        });
-      }
+      if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
 
       const resolveOnly = req.query.resolveOnly === 'true';
       const forceRefresh = req.query.refresh === 'true' || req.query.nocache === 'true';
@@ -20077,35 +19969,32 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       if (!parsedUrl) {
-        // Fallback to name search or synthesized payload rather than throwing 400 or 500
+        // Fallback to name search rather than throwing 400 or 500
         const ent = await resolveBusinessQuery(rawQuery).catch(() => null);
-        const synthTitle = ent?.name || formatBusinessName(rawQuery);
-        const realDomain = (ent?.domain && ent.domain.includes('.')) 
-          ? ent.domain 
-          : (rawQuery.includes('.') && !rawQuery.includes(' ') 
-            ? rawQuery.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] 
-            : (rawQuery.toLowerCase().replace(/[^a-z0-9]/g, '') || 'business') + '.com');
-        const entityLogo = ent?.logo || ent?.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
-        const entityBanner = ent?.photo || "https://yoouz.com/og-banner.png";
-
-        logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-        return res.json({
-          title: synthTitle,
-          description: ent?.description || `${synthTitle} is a verified business on Yoouz.`,
-          image: entityBanner,
-          logo: entityLogo,
-          siteName: synthTitle,
-          domain: realDomain,
-          url: ent?.websiteUrl || `https://${realDomain}`,
-          address: ent?.address || "",
-          city: ent?.city || "Online",
-          country: ent?.country || "",
-          phone: ent?.phone || "",
-          email: ent?.email || "",
-          category: ent?.category || "Verified Business",
-          openingHours: ent?.openingHours || "",
-          locations: ent?.locations || []
-        });
+        if (ent) {
+          const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
+          const realDomain = hasRealDomain ? ent.domain : "";
+          logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
+          const entityLogo = ent.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
+          return res.json({
+            title: ent.name,
+            description: ent.description || `${ent.name} is a verified business on Yoouz.`,
+            image: ent.photo || "",
+            logo: entityLogo,
+            siteName: ent.name,
+            domain: realDomain,
+            url: ent.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
+            address: ent.address || "",
+            city: ent.city || "",
+            country: ent.country || "",
+            phone: ent.phone || "",
+            email: ent.email || "",
+            category: ent.category || "Verified Business",
+            openingHours: ent.openingHours || "",
+            locations: []
+          });
+        }
+        return res.status(400).json({ error: "No official business domain found" });
       }
 
       let url = parsedUrl.origin;
@@ -21427,31 +21316,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       persistToDb(resultPayload as any).catch(e => console.error("[Background Persist Error]:", e));
 
       res.json(resultPayload);
-    } catch (e: any) {
-      logSearchIntel(String(req.query.url || req.query.query || req.query.q || ""), "", "critical_error", { error: String(e?.message || e) });
-      console.error('SERVER ERROR in /api/url-metadata:', e);
-      const reqQuery = String(req.query.url || req.query.query || req.query.q || 'Business').trim();
-      const synthTitle = formatBusinessName(reqQuery || 'Verified Business');
-      const cleanDom = reqQuery.includes('.') && !reqQuery.includes(' ')
-        ? reqQuery.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
-        : "business.com";
-      return res.json({
-        title: synthTitle,
-        description: `${synthTitle} is a verified business on Yoouz.`,
-        image: "https://yoouz.com/og-banner.png",
-        logo: `/api/favicon?domain=${cleanDom}`,
-        siteName: synthTitle,
-        domain: cleanDom,
-        url: `https://${cleanDom}`,
-        address: "",
-        city: "Online",
-        country: "",
-        phone: "",
-        email: "",
-        category: "Verified Business",
-        openingHours: "",
-        locations: []
-      });
+    } catch (e) {
+      logSearchIntel(String(req.query.url || ""), "", "critical_error", { error: String(e.message) });
+      console.error('SERVER ERROR:', e);
+      res.status(500).json({ error: e.message });
     }
   });
 

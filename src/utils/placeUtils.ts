@@ -17,15 +17,6 @@ export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
   let clean = input.trim().toLowerCase();
   
-  // 1. Remove internal spaces if it looks like a domain to fix "dentist .com" typos
-  if (clean.includes(" .") || clean.includes(". ")) {
-    clean = clean.replace(/\s+\./g, ".").replace(/\.\s+/g, ".");
-  }
-  // Also remove spaces around hyphens in domain-like strings
-  if (clean.includes(" -") || clean.includes("- ")) {
-    clean = clean.replace(/\s+\-/g, "-").replace(/\-\s+/g, "-");
-  }
-
   // Try standard URL hostname parsing if valid protocol or leading slashes
   try {
     if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("//")) {
@@ -89,10 +80,6 @@ export function extractCleanDomain(input?: string | null): string {
   return clean;
 }
 
-export const BANNED_PSEUDO_TLDS = new Set([
-  "jersey", "orleans", "chicago", "angeles", "york", "building", "lofts", "mansion", "schools", "office", "center", "hall", "square", "park"
-]);
-
 /**
  * Strict validator for whether an input is a valid domain/URL search.
  * Rejects single letters (e.g. "k", "n"), words without dots, or invalid URLs.
@@ -105,9 +92,7 @@ export function isValidDomainUrl(input?: string | null): boolean {
   if (!clean.includes(".")) return false;
   const parts = clean.split(".");
   if (parts.length < 2) return false;
-  const tld = parts[parts.length - 1].toLowerCase();
-  // Reject fake pseudo-TLDs synthesized from city names
-  if (BANNED_PSEUDO_TLDS.has(tld)) return false;
+  const tld = parts[parts.length - 1];
   // TLD must be at least 2 characters and letters only
   if (!/^[a-z]{2,}$/i.test(tld)) return false;
   // Valid domain characters: alphanumeric and hyphens, not starting or ending with hyphen
@@ -156,7 +141,6 @@ export function getCleanDomainUrl(item?: string | { brandDomain?: string; websit
  */
 export function getPlaceSlug(placeSource: string | { placeWebsite?: string, placeName?: string, name?: string, website?: string, brandDomain?: string, id?: string, placeId?: string } | null | undefined): string {
   const domain = getDisplayUrlAsDomain(placeSource);
-  if (!domain || !isValidDomainUrl(domain)) return "";
   return domain.toLowerCase().replace(/^www\./, "").replace(/[^a-z0-9\._-]/g, "").trim();
 }
 
@@ -168,24 +152,27 @@ export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: str
   if (typeof placeSource === "string") {
     if (isRevId(placeSource)) return "";
     const clean = extractCleanDomain(placeSource);
-    if (clean && isValidDomainUrl(clean) && !isRevId(clean)) return clean;
+    if (clean && clean.includes(".") && !isRevId(clean)) return clean;
+    if (clean && !isRevId(clean)) return clean;
     return "";
   }
 
   let urlSource = "";
-  if (placeSource.brandDomain && isValidDomainUrl(placeSource.brandDomain)) urlSource = placeSource.brandDomain;
-  else if (placeSource.placeWebsite && isValidDomainUrl(placeSource.placeWebsite)) urlSource = placeSource.placeWebsite;
-  else if (placeSource.website && isValidDomainUrl(placeSource.website)) urlSource = placeSource.website;
-  else if (placeSource.placeId && !isRevId(placeSource.placeId) && isValidDomainUrl(placeSource.placeId)) urlSource = placeSource.placeId;
-  else if (placeSource.id && !isRevId(placeSource.id) && isValidDomainUrl(placeSource.id)) urlSource = placeSource.id;
+  if (placeSource.brandDomain && placeSource.brandDomain.includes('.')) urlSource = placeSource.brandDomain;
+  else if (placeSource.placeWebsite && placeSource.placeWebsite.includes('.')) urlSource = placeSource.placeWebsite;
+  else if (placeSource.website && placeSource.website.includes('.')) urlSource = placeSource.website;
+  else if (placeSource.placeId && !isRevId(placeSource.placeId) && placeSource.placeId.includes('.')) urlSource = placeSource.placeId;
+  else if (placeSource.id && !isRevId(placeSource.id) && placeSource.id.includes('.')) urlSource = placeSource.id;
+  else if (placeSource.name && !isRevId(placeSource.name)) urlSource = placeSource.name;
+  else if (placeSource.placeName && !isRevId(placeSource.placeName)) urlSource = placeSource.placeName;
 
   if (!urlSource || isRevId(urlSource) || urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
     return "";
   }
 
-  const domain = extractCleanDomain(urlSource);
-  if (!domain || !isValidDomainUrl(domain) || isRevId(domain)) {
-    return "";
+  let domain = extractCleanDomain(urlSource);
+  if (!domain || isRevId(domain)) {
+    return (placeSource.name || placeSource.placeName || "").trim();
   }
 
   return domain;
@@ -227,10 +214,6 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
-  "theenglishmanor.com": "The English Manor",
-  "www.theenglishmanor.com": "The English Manor",
-  "theenglishmanor": "The English Manor",
-  "englishmanor": "The English Manor",
   "theviewnyc.com": "The View Restaurant & Lounge",
   "www.theviewnyc.com": "The View Restaurant & Lounge",
   "theviewnyc": "The View Restaurant & Lounge",

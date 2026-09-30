@@ -279,8 +279,6 @@ export interface Place {
   logoUrl?: string;
   ogImage?: string;
   brandDomain?: string;
-  isSynthetic?: boolean;
-  isSkeleton?: boolean;
   isClaimed?: boolean;
   isVerified?: boolean;
   ownerId?: string;

@@ -116,13 +116,11 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   // to avoid the network fetch flicker.
   useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
-  const [isEnriching, setIsEnriching] = useState(false);
-  const isSkeleton = place.isSkeleton || (isEnriching && !place.bannerUrl && !place.logoUrl && !place.website);
-
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
@@ -1031,7 +1029,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {hasAuthenticPhoto && !bannerError && !isSkeleton ? (
+        {hasAuthenticPhoto && !bannerError ? (
           <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
@@ -1062,29 +1060,51 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
         ) : (
-          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div 
+            className="absolute inset-0 w-full h-full border-b border-zinc-800/80 flex items-center justify-center overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 55%, ${brandGrad.to} 100%)`
+            }}
+          >
+            {/* Ambient Animated Radial Flare */}
+            <div 
+              className="absolute inset-0 opacity-80 pointer-events-none animate-pulse duration-[4000ms]" 
+              style={{
+                background: `radial-gradient(ellipse at 75% 30%, ${brandGrad.glow || 'rgba(99,102,241,0.45)'} 0%, transparent 60%)`
+              }}
+            />
+            
+            {/* Geometric Mesh Texture Overlay */}
+            <div 
+              className="absolute inset-0 opacity-15 pointer-events-none"
+              style={{
+                backgroundImage: `radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)`,
+                backgroundSize: `20px 20px`
+              }}
+            />
+
+            {/* Subtle Translucent Brand Initials Watermark in Background */}
+            <div className="absolute right-6 -bottom-4 select-none pointer-events-none opacity-15 font-black text-7xl sm:text-9xl tracking-tighter text-white uppercase italic">
+              {(drawerDomain || place.brandDomain || displayedPlaceName || "Yoouz").replace(/^www\./, "").slice(0, 3)}
+            </div>
+
+            {/* Bottom edge shadow gradient for seamless contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-black/20 pointer-events-none" />
           </div>
         )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group">
-          {isSkeleton && !place.logoUrl ? (
-            <div className="w-full h-full rounded-[16px] sm:rounded-[20px] bg-zinc-100 overflow-hidden">
-               <div className="w-full h-full bg-gradient-to-r from-transparent via-zinc-200 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-            </div>
-          ) : (
-            <CopoBrandLogo
-              domain={drawerDomain || place.brandDomain}
-              name={displayedPlaceName}
-              website={place.website}
-              logoUrl={primaryLogoUrl || place.logoUrl}
-              bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-              className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-              imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
-              fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-            />
-          )}
+          <CopoBrandLogo
+            domain={drawerDomain || place.brandDomain}
+            name={displayedPlaceName}
+            website={place.website}
+            logoUrl={primaryLogoUrl || place.logoUrl}
+            bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+            className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+          />
         </div>
       </div>
 
@@ -1093,13 +1113,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">
-            {isSkeleton && (!displayedPlaceName || isGenericPlaceName(displayedPlaceName)) ? (
-              <div className="h-8 w-48 bg-zinc-800 rounded-md animate-pulse mb-2 overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-              </div>
-            ) : (
-              (() => {
-                const fullName = (displayedPlaceName || "").trim();
+            {(() => {
+              const fullName = (displayedPlaceName || "").trim();
               const words = fullName.split(/\s+/);
               if (words.length <= 1) {
                 return (
@@ -1122,11 +1137,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </span>
                 </h2>
               );
-            })()
-          )}
+            })()}
 
-          {/* Official Website / Domain Link under Business Name */}
-            {displayWebsiteClean && !isSkeleton && (
+            {/* Official Website / Domain Link under Business Name */}
+            {displayWebsiteClean && (
               <a
                 href={effectiveWebsite || `https://${displayWebsiteClean}`}
                 target="_blank"
@@ -1180,11 +1194,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div className="mb-2 p-3.5 sm:p-4.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col items-center gap-3 shadow-xl backdrop-blur-sm">
           {/* Star Rating Row - Consistently aligned on one line */}
           <div className="flex items-center justify-center gap-4 w-full">
-            {isSkeleton && dynamicReviewCount === 0 ? (
-               <div className="h-6 w-32 bg-zinc-800 rounded-md animate-pulse overflow-hidden relative">
-                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-               </div>
-            ) : dynamicReviewCount > 0 ? (
+            {dynamicReviewCount > 0 ? (
               <>
                 <div className="flex items-center gap-2.5">
                   <span className="font-black text-white text-2xl leading-none tracking-tight">
@@ -1444,19 +1454,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </h3>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed font-normal">
-                  {isSkeleton ? (
-                    <div className="space-y-1.5 pt-1">
-                       <div className="h-2.5 w-full bg-zinc-800 rounded overflow-hidden">
-                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                       </div>
-                       <div className="h-2.5 w-full bg-zinc-800 rounded overflow-hidden">
-                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                       </div>
-                       <div className="h-2.5 w-4/5 bg-zinc-800 rounded overflow-hidden">
-                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                       </div>
-                    </div>
-                  ) : getEffectivePlaceDescription(place)}
+                  {getEffectivePlaceDescription(place)}
                 </p>
               </div>
 
@@ -1476,11 +1474,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                       <div className="min-w-0">
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.phone", "Phone Number")}</span>
-                        {isSkeleton ? (
-                           <div className="h-3 w-24 bg-zinc-800 rounded mt-1 overflow-hidden">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                           </div>
-                        ) : hasGenuinePhone ? (
+                        {hasGenuinePhone ? (
                           <span className="text-xs font-bold text-white block truncate">
                             {formatPhoneNumber(effectivePhone, drawerDomain || place.brandDomain || place.website || place.country || place.city || place.address)}
                           </span>
@@ -1489,7 +1483,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         )}
                       </div>
                     </div>
-                    {hasGenuinePhone && !place.isSynthetic && (
+                    {hasGenuinePhone && (
                       <a
                         href={`tel:${effectivePhone}`}
                         className="w-16 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 text-white font-bold text-xs transition-colors shrink-0 text-center"
@@ -1507,11 +1501,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                       <div className="min-w-0">
                         <span className="text-[10px] font-bold uppercase text-zinc-400 block">{t("place.website", "Official Website")}</span>
-                        {place.isSynthetic ? (
-                           <div className="h-3 w-32 bg-zinc-800 rounded mt-1 overflow-hidden">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                           </div>
-                        ) : effectiveWebsite ? (
+                        {effectiveWebsite ? (
                           <span className="text-xs font-bold text-white block truncate">
                             {displayWebsiteClean}
                           </span>
@@ -1520,7 +1510,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         )}
                       </div>
                     </div>
-                    {effectiveWebsite && !place.isSynthetic && (
+                    {effectiveWebsite && (
                       <a
                         href={effectiveWebsite}
                         target="_blank"
@@ -1589,7 +1579,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {t("place.locationAndMap", "Location & Directions")}
                     </h3>
                   </div>
-                  {hasPhysicalLocation && !place.isSynthetic && (
+                  {hasPhysicalLocation && (
                     <button
                       onClick={handleOpenDirections}
                       className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer"
@@ -1602,16 +1592,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                 {/* Address Display */}
                 <div className="text-xs text-zinc-300 font-medium leading-relaxed bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80">
-                  {place.isSynthetic ? (
-                    <div className="space-y-2">
-                       <div className="h-3 w-full bg-zinc-800 rounded overflow-hidden">
-                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                       </div>
-                       <div className="h-3 w-2/3 bg-zinc-800 rounded overflow-hidden">
-                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                       </div>
-                    </div>
-                  ) : currentDisplayAddress || displayAddress ? (
+                  {currentDisplayAddress || displayAddress ? (
                     <p className="text-white font-semibold">{currentDisplayAddress || displayAddress}</p>
                   ) : (
                     <p className="text-zinc-500">{t("place.locationNotProvided", "Location not provided")}</p>
@@ -1619,7 +1600,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {/* Interactive Multi-Branch Location Selector */}
-                {availableLocations.length > 1 && !place.isSynthetic && (
+                {availableLocations.length > 1 && (
                   <div className="space-y-2 pt-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
                       {t("place.selectBranchLocation", "Select Branch Location")} ({availableLocations.length})
@@ -1652,7 +1633,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
 
                 {/* Google Maps Embedded Map */}
-                {hasPhysicalLocation && !place.isSynthetic && (
+                {hasPhysicalLocation && (
                   <div
                     className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
                     onClick={handleOpenDirections}

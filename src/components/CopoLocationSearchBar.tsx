@@ -263,17 +263,12 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   e.preventDefault();
                 }}
                 onClick={(e) => {
-                  // Use preventDefault to stop form submission if we have a custom handler
-                  // but ensure the click event is fully processed
-                  e.stopPropagation();
-                  if (onSelectSuggestion) {
-                    onSelectSuggestion(item);
-                  } else {
+                  e.preventDefault();
+                  if (onSelectSuggestion) onSelectSuggestion(item);
+                  else {
                     setBusinessName(item.title || targetDomain || businessName);
-                    // Trigger search after a tiny delay to ensure state is updated
-                    setTimeout(() => handleSubmit(), 10);
+                    handleSubmit();
                   }
-                  setShowSuggestions(false);
                 }}
                 className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
               >
