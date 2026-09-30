@@ -1071,25 +1071,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="min-w-0 flex-1">
             {(() => {
               const fullName = (displayedPlaceName || "").trim();
-              const words = fullName.split(/\s+/);
-              if (words.length <= 1) {
-                return (
-                  <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
-                    <span className="inline-flex items-center whitespace-nowrap shrink-0" dir="auto">
-                      <bdi dir="auto">{fullName}</bdi>
-                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 ml-1.5 -mt-0.5 shrink-0" />
-                    </span>
-                  </h2>
-                );
-              }
-              const allExceptLast = words.slice(0, -1).join(" ");
-              const lastWord = words[words.length - 1];
               return (
                 <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
-                  <bdi dir="auto">{allExceptLast}</bdi>{" "}
-                  <span className="inline-flex items-center whitespace-nowrap shrink-0">
-                    <bdi dir="auto">{lastWord}</bdi>
-                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 ml-1.5 -mt-0.5 shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 flex-wrap" dir="auto">
+                    <span className="text-white" dir="auto">{fullName}</span>
+                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
                   </span>
                 </h2>
               );

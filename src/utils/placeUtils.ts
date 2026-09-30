@@ -214,6 +214,12 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "alfaleasing.co.il": "אלפא ליסינג",
+  "www.alfaleasing.co.il": "אלפא ליסינג",
+  "alfaleasing": "אלפא ליסינג",
+  "alfa leasing": "אלפא ליסינג",
+  "אלפא ליסינג": "אלפא ליסינג",
+  "אלפא": "אלפא ליסינג",
   "ofran.co.il": "אופרן השכרת רכב",
   "www.ofran.co.il": "אופרן השכרת רכב",
   "ofran": "אופרן השכרת רכב",
