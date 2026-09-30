@@ -533,7 +533,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         
         // Only trigger loading skeletons if we actually need to discover a banner or logo.
         // If we already have them, we want them to show instantly without any blocking skeleton.
-        if (needsBanner || needsLogo) {
+        if (discoveryAttemptsRef.current === 0 && (needsBanner || needsLogo)) {
           setIsEnriching(true);
         }
 

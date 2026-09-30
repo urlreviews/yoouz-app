@@ -827,6 +827,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (!name) return "";
   let trimmed = name.trim();
 
+  // 00. Typo Corrections for high-fidelity brand names
+  if (trimmed.toLowerCase().includes("lakenouse")) {
+    trimmed = trimmed.replace(/lakenouse/gi, "Lakehouse");
+  }
+
   // Guard against known agency/CMS/boilerplate titles leaking into business names
   const lowerTrimmedCheck = trimmed.toLowerCase();
   if (cleanDom && (

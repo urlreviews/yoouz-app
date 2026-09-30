@@ -19255,9 +19255,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo);
-      if (!isMissing) {
+    if (cachedEntry && Date.now() - cachedEntry.timestamp < 12 * 60 * 60 * 1000) {
+      // INSTANT CACHE: Return immediately if we have ANY valid data for this query.
+      // This fulfills the "Technically Instant" requirement for known businesses.
+      const hasCoreData = !!(cachedEntry.data.domain && cachedEntry.data.name);
+      if (hasCoreData) {
+        console.log(`[Cache Hit] Serving instant result for: "${cleanQ}"`);
         return cachedEntry.data;
       }
     }
@@ -21393,6 +21396,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         title: string;
         domain: string;
         logoUrl: string;
+        bannerUrl?: string;
+        phone?: string;
+        description?: string;
         category?: string;
         address?: string;
         source: string;
@@ -21404,6 +21410,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         title: string;
         domain?: string;
         logoUrl?: string;
+        bannerUrl?: string;
+        phone?: string;
+        description?: string;
         category?: string;
         address?: string;
         source: string;
@@ -21423,44 +21432,53 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         const logo = item.logoUrl || (hasValidDomain ? `/api/favicon?domain=${dom}` : "");
 
-        suggestions.push({
-          id: item.id || (hasValidDomain ? dom : undefined),
-          title: item.title,
-          domain: hasValidDomain ? dom : "",
-          logoUrl: logo,
-          category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
-          address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
-          source: item.source
-        });
-      };
-
-      // 1. Search local DB places (Instant Database Index)
-      const activeDb = (global as any).bunnyDb || db;
-      if (activeDb) {
-        try {
-          const dbRes = await activeDb.execute({
-            sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website FROM places 
-                  WHERE name LIKE ? OR id LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
-            args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
+          suggestions.push({
+            id: item.id || (hasValidDomain ? dom : undefined),
+            title: item.title,
+            domain: hasValidDomain ? dom : "",
+            logoUrl: logo,
+            bannerUrl: item.bannerUrl || "",
+            phone: item.phone || "",
+            description: item.description || "",
+            category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
+            address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
+            source: item.source
           });
-          if (dbRes && dbRes.rows) {
-            for (const row of dbRes.rows as any[]) {
-              const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
-              const hasDot = bDom.includes(".");
-              const title = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
-              addSuggestion({
-                id: row.id,
-                title,
-                domain: hasDot ? bDom : "",
-                logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${bDom}` : ""),
-                category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
-                address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
-                source: "database"
-              });
+        };
+
+        // 1. Search local DB places (Instant Database Index)
+        const activeDb = (global as any).bunnyDb || db;
+        if (activeDb) {
+          try {
+            const dbRes = await activeDb.execute({
+              sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website, data FROM places 
+                    WHERE name LIKE ? OR id LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
+              args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
+            });
+            if (dbRes && dbRes.rows) {
+              for (const row of dbRes.rows as any[]) {
+                const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+                const hasDot = bDom.includes(".");
+                const title = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+                let pData: any = {};
+                try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
+                
+                addSuggestion({
+                  id: row.id,
+                  title,
+                  domain: hasDot ? bDom : "",
+                  logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${bDom}` : ""),
+                  bannerUrl: pData.bannerUrl || pData.ogImage || pData.image || "",
+                  phone: pData.phone || "",
+                  description: pData.description || "",
+                  category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
+                  address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
+                  source: "database"
+                });
+              }
             }
-          }
-        } catch (dbErr) {}
-      }
+          } catch (dbErr) {}
+        }
 
       // 2. Search Curated Brand Knowledge Graph & Official Names Dictionary
       for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {

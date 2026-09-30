@@ -40,6 +40,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [isEnriching, setIsEnriching] = useState(false);
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
   const searchRequestIdRef = useRef(0);
+  const prewarmedMetaRef = useRef<Record<string, any>>({});
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
@@ -124,11 +125,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             fetch(`/api/url-metadata?${prefetchQuery}`)
               .then(r => r.ok ? r.json() : null)
               .then(data => {
-                if (data && (data.image || data.logo)) {
-                  // Pre-warm browser image cache
-                  if (data.image) new Image().src = getProxiedImageUrl(data.image);
-                  if (data.logo) new Image().src = getProxiedImageUrl(data.logo);
-                  console.info("[Search Predictive] Pre-warmed images for:", topSuggest.title);
+                if (data) {
+                  // Store in local pre-warm cache for the "Together" experience
+                  const cacheKey = (topSuggest.domain || topSuggest.title || "").toLowerCase().trim();
+                  prewarmedMetaRef.current[cacheKey] = data;
+                  
+                  if (data.image || data.logo) {
+                    // Pre-warm browser image cache
+                    if (data.image) new Image().src = getProxiedImageUrl(data.image);
+                    if (data.logo) new Image().src = getProxiedImageUrl(data.logo);
+                    console.info("[Search Predictive] Pre-warmed full metadata for:", topSuggest.title);
+                  }
                 }
               })
               .catch(() => {});
@@ -202,7 +209,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     handleSearch(undefined, targetQuery, item.title, {
       country: item.country,
       city: item.city,
-      rawBusinessName: item.title
+      rawBusinessName: item.title,
+      preloadedData: {
+        logo: item.logoUrl,
+        image: item.bannerUrl,
+        phone: item.phone,
+        description: item.description,
+        category: item.category,
+        address: item.address
+      }
     });
   };
 
@@ -210,7 +225,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     e?: React.FormEvent,
     overrideQuery?: string,
     preferredName?: string,
-    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string }
+    locationDetails?: { country?: string; state?: string; city?: string; rawBusinessName?: string; preloadedData?: any }
   ) => {
     if (e) e.preventDefault();
     const rawQuery = (overrideQuery || query).trim();
@@ -237,6 +252,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const cleanUrlFromBase = extractCleanDomain(baseName);
     let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");
 
+    // 0. Check Pre-warm Cache for the "Together" experience
+    const prewarmKey = (cleanUrl || baseName || rawQuery).toLowerCase().trim();
+    const prewarmed = prewarmedMetaRef.current[prewarmKey] || prewarmedMetaRef.current[baseName.toLowerCase()] || prewarmedMetaRef.current[rawQuery.toLowerCase()];
+    
     // 1. Only accept a local match if:
     // a) cleanUrl is an exact domain (e.g. apple.com) that matches p.brandDomain or p.website, OR
     // b) The place is a verified official brand in KNOWN_OFFICIAL_NAMES, OR
@@ -327,6 +346,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             title: matchInSuggest.title,
             domain: cleanUrl,
             logo: matchInSuggest.logoUrl,
+            image: matchInSuggest.bannerUrl,
+            phone: matchInSuggest.phone,
+            description: matchInSuggest.description,
             category: matchInSuggest.category,
             address: matchInSuggest.address
           };
@@ -338,7 +360,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     // 2. Non-blocking Background Domain Resolution
     // Optimization: We proceed with an optimistic match INSTANTLY for EVERY query.
     // This fulfills the "Guarantee Instant" requirement.
-    let discoveredMeta = preloadedMeta;
+    let discoveredMeta = locationDetails?.preloadedData || prewarmed || preloadedMeta;
     
     setQuery(baseName || rawQuery);
     const isRealDomain = isValidDomainUrl(cleanUrl);
@@ -400,7 +422,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       topDishes: [],
       brandDomain: isRealDomain ? cleanUrl : (discoveredMeta?.domain || ""),
       isSynthetic: !isRealDomain && !discoveredMeta,
-      isSkeleton: !isRealDomain && !discoveredMeta
+      isSkeleton: !isRealDomain && (!discoveredMeta || !discoveredMeta.image)
     };
 
     if (currentRequestId !== searchRequestIdRef.current) return;
@@ -495,7 +517,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 email: instantPlace.email || data.email || "",
                 website: (data.url && isValidDomainUrl(data.url) && !data.url.toLowerCase().includes('wikipedia.org')) ? data.url : (discoveredDom ? `https://${discoveredDom}` : instantPlace.website),
                 openingHours: data.openingHours || instantPlace.openingHours,
-                brandDomain: discoveredDom || instantPlace.brandDomain
+                brandDomain: discoveredDom || instantPlace.brandDomain,
+                isSkeleton: false // Enrichment complete, stop shimmering
               };
 
               setSearchedPlace(updatedPlace);
