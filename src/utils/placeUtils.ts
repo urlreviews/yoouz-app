@@ -17,6 +17,15 @@ export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
   let clean = input.trim().toLowerCase();
   
+  // 1. Remove internal spaces if it looks like a domain to fix "dentist .com" typos
+  if (clean.includes(" .") || clean.includes(". ")) {
+    clean = clean.replace(/\s+\./g, ".").replace(/\.\s+/g, ".");
+  }
+  // Also remove spaces around hyphens in domain-like strings
+  if (clean.includes(" -") || clean.includes("- ")) {
+    clean = clean.replace(/\s+\-/g, "-").replace(/\-\s+/g, "-");
+  }
+
   // Try standard URL hostname parsing if valid protocol or leading slashes
   try {
     if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("//")) {

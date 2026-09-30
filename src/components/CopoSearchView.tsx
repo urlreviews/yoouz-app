@@ -204,15 +204,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       .replace(/brussles/gi, "brussels")
       .replace(/restuarant/gi, "restaurant")
       .replace(/airlin\s/gi, "airline ")
+      .replace(/\s+\./g, ".")
+      .replace(/\.\s+/g, ".")
       .trim();
 
     setShowDropdown(false);
     
-    // Instantly clear searched place and suggestions to purge previous search artifacts!
-    setSearchedPlace(null);
+    // Instantly set a "Searching" state but don't clear the previous result yet 
+    // unless it's a DIFFERENT query to avoid flickering.
+    if (searchedPlace && !rawQuery.toLowerCase().includes(searchedPlace.id.toLowerCase())) {
+       // setSearchedPlace(null); // Keep previous place visible until we have the new one to avoid "nothing happens"
+    }
     setSuggestions([]);
 
     const currentRequestId = ++searchRequestIdRef.current;
+    setIsSearching(true); // Always show activity initially
 
     const baseName = (locationDetails?.rawBusinessName || preferredName || cleanRawQuery).trim();
     const cleanUrlFromRaw = extractCleanDomain(rawQuery);
@@ -325,10 +331,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     setQuery(baseName || rawQuery);
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // CRITICAL: If no real domain yet, we don't open the drawer with a "fake" ID.
-    // Instead, we show the searching state and wait for the background discovery (which is now faster).
+    // Optimized: If it's a domain, we already have enough to show something.
+    // If not, we set searching to true.
     if (!isRealDomain && !discoveredMeta) {
       setIsSearching(true);
+    } else {
+      setIsSearching(false); // Enable button again if we have an instant result
     }
 
     const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
