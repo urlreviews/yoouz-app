@@ -591,7 +591,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "www.clubhotels-israel.com": "https://www.clubhotel.co.il/images/header-eilat.jpg",
   "clubhotels.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
   "clubhotel.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "clubhotel": "https://www.clubhotel.co.il/images/header-eilat.jpg"
+  "clubhotel": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "kokorocleaning.net": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.kokorocleaning.net": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "kokorocleaning": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();
