@@ -214,6 +214,18 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "blue-sky.co.il": "בלו סקאי השכרת רכב",
+  "www.blue-sky.co.il": "בלו סקאי השכרת רכב",
+  "blue-sky": "בלו סקאי השכרת רכב",
+  "blue sky": "בלו סקאי השכרת רכב",
+  "בלו סקאי": "בלו סקאי השכרת רכב",
+  "בלו סקאי השכרת רכב": "בלו סקאי השכרת רכב",
+  "best-car.co.il": "בסט קאר השכרת רכב",
+  "www.best-car.co.il": "בסט קאר השכרת רכב",
+  "best-car": "בסט קאר השכרת רכב",
+  "best car": "בסט קאר השכרת רכב",
+  "באסט קאר": "בסט קאר השכרת רכב",
+  "בסט קאר": "בסט קאר השכרת רכב",
   "alfaleasing.co.il": "אלפא ליסינג",
   "www.alfaleasing.co.il": "אלפא ליסינג",
   "alfaleasing": "אלפא ליסינג",
