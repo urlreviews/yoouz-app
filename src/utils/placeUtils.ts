@@ -214,6 +214,13 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "ofran.co.il": "אופרן השכרת רכב",
+  "www.ofran.co.il": "אופרן השכרת רכב",
+  "ofran": "אופרן השכרת רכב",
+  "אופרן": "אופרן השכרת רכב",
+  "אופרן השכרת רכב": "אופרן השכרת רכב",
+  "אופרן השכרת רכב בחול": "אופרן השכרת רכב",
+  "אופרן השכ": "אופרן השכרת רכב",
   "valko.be": "Valko Rent A Car",
   "www.valko.be": "Valko Rent A Car",
   "valko": "Valko Rent A Car",

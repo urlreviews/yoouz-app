@@ -19624,7 +19624,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.5'
+              'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7,*;q=0.5'
             },
             signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
           });
@@ -19666,13 +19666,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const hostParts = cleanHost.split('.');
                 const domainNameOnly = hostParts[0];
 
-                // Check for embedded business domains inside aggregators (e.g. milonic.com/bluechillicars.com, trustpilot.com/review/domain.co.uk)
-                const embeddedMatch = u.match(/(?:websites\.milonic\.com\/|trustpilot\.com\/review\/|sur\.ly\/i\/)([a-z0-9\.\-]+\.[a-z]{2,})/i);
-                if (embeddedMatch && embeddedMatch[1] && !portalDomains.some(pd => embeddedMatch[1].includes(pd))) {
-                  const embeddedDom = embeddedMatch[1].toLowerCase().replace(/^www\./, '');
-                  candidates.push({ url: `https://${embeddedDom}/`, score: 180 });
-                }
-
                 // 1. Identify Portal/Directory/News/Aggregator domains that should be heavily deprioritized
                 const portalDomains = [
                   "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
@@ -19683,6 +19676,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
                   "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk"
                 ];
+
+                // Check for embedded business domains inside aggregators (e.g. milonic.com/bluechillicars.com, trustpilot.com/review/domain.co.uk)
+                const embeddedMatch = u.match(/(?:websites\.milonic\.com\/|trustpilot\.com\/review\/|sur\.ly\/i\/)([a-z0-9\.\-]+\.[a-z]{2,})/i);
+                if (embeddedMatch && embeddedMatch[1] && !portalDomains.some(pd => embeddedMatch[1].includes(pd))) {
+                  const embeddedDom = embeddedMatch[1].toLowerCase().replace(/^www\./, '');
+                  candidates.push({ url: `https://${embeddedDom}/`, score: 180 });
+                }
 
                 const isPortal = portalDomains.some(d => host.includes(d));
 
