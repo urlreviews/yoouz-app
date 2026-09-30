@@ -1197,14 +1197,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {dynamicReviewCount > 0 ? (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-white text-xs uppercase tracking-wider leading-none">
+                  <span className="font-black text-white text-2xl leading-none tracking-tight">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
                   <div className="flex items-center text-amber-500 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3.5 h-3.5 ${
+                        className={`w-6 h-6 ${
                           i < Math.round(dynamicAvgRating)
                             ? "fill-amber-500 text-amber-500"
                             : "fill-zinc-800 text-zinc-700"
@@ -1221,12 +1221,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-zinc-500 text-xs uppercase tracking-wider leading-none">0.0</span>
+                  <span className="font-black text-zinc-500 text-2xl leading-none tracking-tight">0.0</span>
                   <div className="flex items-center text-zinc-700 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-3.5 h-3.5 fill-none text-zinc-700 stroke-[2.5]"
+                        className="w-6 h-6 fill-none text-zinc-700 stroke-[2.5]"
                       />
                     ))}
                   </div>
@@ -1247,7 +1247,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-4.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
+            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-3.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
           >
             <Video className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
             <span className="uppercase tracking-widest">{t("place.recordReview", "Record Review")}</span>
@@ -1940,7 +1940,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       triggerHaptic("medium");
                       onRecordForPlace(place);
                     }}
-                    className="w-full max-w-[240px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full max-w-[240px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-3.5 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Video className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
                     <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
