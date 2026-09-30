@@ -19643,55 +19643,94 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           const html = await resp.text();
           if (!html || html.length < 500) continue;
+
+          const $ = cheerio.load(html);
+          
+          // Identify Knowledge Panel / Instant Answer profile link
+          // In DuckDuckGo HTML, this information is often at the top in a "zci" (Zero Click Info) box
+          let profileUrl = "";
+          const zciLinks = $('.zci--about a[href^="http"], .zci-info a[href^="http"], .zci--web a[href^="http"]');
+          zciLinks.each((_, el) => {
+             const href = $(el).attr('href') || "";
+             if (href && !href.includes('duckduckgo.com') && !profileUrl) {
+                profileUrl = href;
+             }
+          });
           
           // Extract and score candidates to prioritize official business sites over portals/directories
           const candidates: { url: string; score: number }[] = [];
-          const regex = /uddg=([^&"'>\s]+)/gi;
-          let match;
-          while ((match = regex.exec(html)) !== null) {
-            let u = match[1];
+
+          // Process each result block individually to capture title/snippet for scoring
+          $('.result').each((idx, el) => {
+            const resultA = $(el).find('.result__a');
+            const title = resultA.text();
+            const snippet = $(el).find('.result__snippet').text();
+            let link = resultA.attr('href');
+            
+            if (!link) return;
+            
             try {
-              u = decodeURIComponent(u);
+              let u = link;
+              if (u.includes('uddg=')) {
+                u = decodeURIComponent(u.split('uddg=')[1].split('&')[0]);
+              }
+              
               if (u.startsWith('http')) {
                 const uLower = u.toLowerCase();
-                const host = new URL(u).hostname.toLowerCase();
+                const urlObj = new URL(u);
+                const host = urlObj.hostname.toLowerCase();
                 
-                // 1. Identify Portal/Directory/News domains that should be deprioritized
+                // Identify Portal/Directory/News/Venue domains that should be deprioritized
                 const portalDomains = [
                   "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
-                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com", "reddit.com", "quora.com",
                   "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
                   "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
                   "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
                   "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
-                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il"
+                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
+                  "partyslate.com", "theknot.com", "weddingwire.com", "eventective.com", "peerspace.com", "tagvenue.com", "venuerific.com", "venuehero.co", "weddinghero.ca", "herecomestheguide.com", "zola.com", "caratsandcake.com", "weddingpro.com", "bridestory.com", "hitched.co.uk",
+                  "grubhub.com", "doordash.com", "ubereats.com", "postmates.com", "seamless.com", "delivery.com", "chownow.com", "toasttab.com", "opentable.com", "resy.com", "menupages.com"
                 ];
 
                 const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));
-                if (uLower.includes("javascript:")) continue;
+                if (uLower.includes("javascript:")) return;
 
-                let score = 100 - (candidates.length * 5); // Initial score based on search rank
-                if (isPortal) score -= 85; // Heavy penalty for news/portals/directories
+                let score = 100 - (idx * 5); // Initial score based on search rank
+                if (isPortal) score -= 90; // Heavy penalty for news/portals/directories
                 
-                // 2. Penalize deep paths (Official sites are almost always root or very shallow)
-                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
+                // Profile Match Bonus: If this URL matches the one found in the "Knowledge Panel" or "Official Info" area
+                if (profileUrl && (u === profileUrl || host === new URL(profileUrl).hostname.toLowerCase())) {
+                   score += 600;
+                   console.log(`[DuckDuckGo Discovery] Found Knowledge Panel Profile Match: ${u}`);
+                }
+
+                // Official Signal Bonus: If title or snippet contains "Official Website", "Official Site", or "Official Page"
+                const officialSignals = ["official website", "official site", "official page", "home page", "homepage"];
+                const combinedText = (title + " " + snippet).toLowerCase();
+                if (officialSignals.some(sig => combinedText.includes(sig)) && !isPortal) {
+                   score += 300;
+                }
+                
+                // Penalize deep paths (Official sites are almost always root or very shallow)
+                const pathParts = urlObj.pathname.split('/').filter(Boolean);
                 if (pathParts.length > 0) {
                   score -= (pathParts.length * 15);
                 } else {
-                  score += 25; // Root domain bonus
+                  score += 45; // Root domain bonus
                 }
 
-                // 3. Bonus for domain body matching query keywords (strong official signal)
+                // Bonus for domain body matching query keywords (strong official signal)
                 const domainBody = host.split('.')[0];
                 const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length > 2);
                 for (const word of queryWords) {
-                  if (domainBody.includes(word)) score += 30;
+                  if (domainBody.includes(word)) score += 40;
                 }
 
                 candidates.push({ url: u, score });
               }
             } catch (err) {}
-          }
+          });
 
           if (candidates.length > 0) {
             // Sort by score descending
