@@ -19690,7 +19690,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
                   "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
                   "partyslate.com", "theknot.com", "weddingwire.com", "eventective.com", "peerspace.com", "tagvenue.com", "venuerific.com", "venuehero.co", "weddinghero.ca", "herecomestheguide.com", "zola.com", "caratsandcake.com", "weddingpro.com", "bridestory.com", "hitched.co.uk",
-                  "grubhub.com", "doordash.com", "ubereats.com", "postmates.com", "seamless.com", "delivery.com", "chownow.com", "toasttab.com", "opentable.com", "resy.com", "menupages.com"
+                  "grubhub.com", "doordash.com", "ubereats.com", "postmates.com", "seamless.com", "delivery.com", "chownow.com", "toasttab.com", "opentable.com", "resy.com", "menupages.com",
+                  "wheree.com", "nicelocal.com", "yellowplace.com", "zoomlocal.com", "cylex.com", "cylex-international.com", "hotfrog.com", "brownbook.net", "yalwa.com", "bizhwy.com", "citysearch.com", "local.com", "insiderpages.com", "merchantcircle.com", "dexknows.com", "superpages.com", "yellowbook.com", "angi.com", "thumbtack.com", "houzz.com", "homeadvisor.com"
                 ];
 
                 const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));

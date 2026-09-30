@@ -324,20 +324,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
 
     // 2. Non-blocking Background Domain Resolution
-    // Instead of awaiting resolution, we proceed with an optimistic match ONLY IF we have a real domain.
-    // Otherwise, we wait for enrichment to avoid "fake" URLs and data.
+    // Optimization: We proceed with an optimistic match INSTANTLY for EVERY query.
+    // This fulfills the "Guarantee Instant" requirement.
     let discoveredMeta = preloadedMeta;
     
     setQuery(baseName || rawQuery);
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // Optimized: If it's a domain, we already have enough to show something.
-    // If not, we set searching to true.
-    if (!isRealDomain && !discoveredMeta) {
-      setIsSearching(true);
-    } else {
-      setIsSearching(false); // Enable button again if we have an instant result
-    }
+    // Always reset searching state here to ensure the button becomes clickable again instantly
+    setIsSearching(false);
 
     const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
 
@@ -397,21 +392,18 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     let currentPlace: Place = instantPlace;
     
-    // Only set and open if we have something "Real" (Domain or Preloaded Meta)
-    if (isRealDomain || discoveredMeta) {
-      setSearchedPlace(currentPlace);
-      if (onAddPlace) {
-        onAddPlace(currentPlace);
-      }
-      if (onOpenPlace) {
-        onOpenPlace(currentPlace.id);
-      }
-      setIsSearching(false);
+    // TRULY INSTANT: Set and open immediately regardless of "Real" status
+    setSearchedPlace(currentPlace);
+    if (onAddPlace) {
+      onAddPlace(currentPlace);
+    }
+    if (onOpenPlace) {
+      onOpenPlace(currentPlace.id);
     }
 
     try {
       // 3. Background Enrichment & Domain Discovery
-      // This is where the "Thinking" happens without blocking the user if we already opened!
+      // This is where the "Thinking" happens without blocking the user!
       setIsEnriching(true);
       
       const performEnrichment = async () => {
