@@ -19654,41 +19654,60 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               u = decodeURIComponent(u);
               if (u.startsWith('http')) {
                 const uLower = u.toLowerCase();
-                const host = new URL(u).hostname.toLowerCase();
+                let host = "";
+                try {
+                  host = new URL(u).hostname.toLowerCase();
+                } catch {
+                  continue;
+                }
                 
-                // 1. Identify Portal/Directory/News domains that should be deprioritized
+                // Exclude pure IP addresses and localhost
+                if (!host || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) || host === "localhost") {
+                  continue;
+                }
+
+                // Exclude bad schemes
+                if (uLower.includes("javascript:") || uLower.includes("mailto:") || uLower.includes("tel:")) continue;
+
+                const cleanHost = host.replace(/^www\./, "");
+                const hostParts = cleanHost.split('.');
+                const domainNameOnly = hostParts[0];
+
+                // 1. Identify Portal/Directory/News/Aggregator domains that should be heavily deprioritized
                 const portalDomains = [
-                  "google.com", "google.co.il", "google.co.uk", "google.ca", "google.de", "google.fr", "google.it", "google.es", "google.nl", "google.be", "google.ch", "google.at", "google.pl", "google.co.jp", "google.co.in", "google.ae",
-                  "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+                  "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
                   "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
                   "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
                   "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
                   "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
-                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il"
+                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
+                  "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk"
                 ];
 
-                const isPortal = portalDomains.some(d => host === d || host.endsWith("." + d) || host.includes("shironet"));
-                if (uLower.includes("javascript:")) continue;
+                const isPortal = portalDomains.some(d => host.includes(d));
 
                 let score = 100 - (candidates.length * 5); // Initial score based on search rank
-                if (isPortal) score -= 85; // Heavy penalty for news/portals/directories
+                if (isPortal) score -= 120; // Heavy penalty for news/portals/directories/social
                 
-                // 2. Penalize deep paths (Official sites are almost always root or very shallow)
-                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
-                if (pathParts.length > 0) {
-                  score -= (pathParts.length * 15);
-                } else {
-                  score += 25; // Root domain bonus
-                }
-
-                // 3. Bonus for domain body matching query keywords (strong official signal)
-                const domainBody = host.split('.')[0];
-                const queryWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                // 2. Bonus for domain name matching query keywords (strong official website signal)
+                const queryWords = cleanQ.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length >= 3 && !['car', 'auto', 'the', 'and', 'inc', 'llc', 'ltd', 'service', 'services', 'leasing', 'lease'].includes(w));
                 for (const word of queryWords) {
-                  if (domainBody.includes(word)) score += 30;
+                  if (cleanHost.includes(word) || domainNameOnly.includes(word)) {
+                    score += 80;
+                  }
                 }
 
-                candidates.push({ url: u, score });
+                // 3. Minor penalty for deep sub-paths (Official sites are root or shallow)
+                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
+                if (pathParts.length > 2) {
+                  score -= (pathParts.length * 10);
+                } else if (pathParts.length === 0) {
+                  score += 20; // Root domain bonus
+                }
+
+                // Use the root domain URL if this candidate is an official site with deep internal links
+                const rootCandidateUrl = `https://${cleanHost}/`;
+                candidates.push({ url: (pathParts.length > 1 && !isPortal) ? rootCandidateUrl : u, score });
               }
             } catch (err) {}
           }
