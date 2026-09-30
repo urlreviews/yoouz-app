@@ -376,7 +376,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       bannerUrl: instantBanner,
       ogImage: instantBanner,
       photos: instantBanner ? [instantBanner] : [],
-      openingHours: discoveredMeta?.openingHours || "Available 24/7",
+      openingHours: discoveredMeta?.openingHours || "",
       isOpen: true,
       phone: discoveredMeta?.phone || "",
       website: (discoveredMeta?.url && isValidDomainUrl(discoveredMeta.url) && !discoveredMeta.url.toLowerCase().includes('wikipedia.org')) ? discoveredMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),

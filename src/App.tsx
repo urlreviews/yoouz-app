@@ -253,7 +253,6 @@ export function App() {
   const previousVideoIndexRef = useRef<number>(0);
   const savedHomeVideoIndexRef = useRef<number>(0);
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(null);
-  const verifiedPlacesCacheRef = useRef<Map<string, Place>>(new Map());
   const [embedTargetId, setEmbedTargetId] = useState<string | null>(() => {
     try {
       const pathname = window.location.pathname;
@@ -635,65 +634,15 @@ export function App() {
         if (placeParam) {
           const cleanPlaceId = decodeURIComponent(placeParam);
           
-          // STRICT POLICY: Profiles MUST have an official domain to exist.
-          // Never open a placeholder profile for a non-domain slug. Discover real domain or redirect home.
+          // STRICT POLICY: Do not allow opening profiles for unverified slug IDs that aren't in the database.
+          // Profiles MUST have an official domain to exist unless they are already registered in the system.
           const isRealDom = isValidDomainUrl(cleanPlaceId);
+          const inLocalDb = (places || []).some((p: Place) => p.id === cleanPlaceId);
           
-          if (!isRealDom) {
-            console.warn("[App] Non-domain slug requested, discovering official domain:", cleanPlaceId);
-            fetch(`/api/url-metadata?q=${encodeURIComponent(cleanPlaceId)}`)
-              .then(r => r.ok ? r.json() : null)
-              .then(data => {
-                if (data?.domain && isValidDomainUrl(data.domain)) {
-                  const realDom = extractCleanDomain(data.domain).toLowerCase();
-                  const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
-                  const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
-
-                  const realPlace: Place = {
-                    id: realDom,
-                    name: data.siteName || data.title || KNOWN_OFFICIAL_NAMES[realDom] || formatBusinessName(realDom),
-                    category: (data.category && !data.category.toLowerCase().includes("verified")) ? data.category : "Verified Business",
-                    categoryType: "all",
-                    address: (data.address && !data.address.startsWith("http")) ? data.address : "",
-                    city: data.city || "Online",
-                    country: data.country || "",
-                    lat: data.lat || 0,
-                    lng: data.lng || 0,
-                    rating: 5,
-                    totalReviews: 1,
-                    ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                    avatarUrl: isValidLogo ? data.logo : `/api/favicon?domain=${realDom}`,
-                    logoUrl: isValidLogo ? data.logo : `/api/favicon?domain=${realDom}`,
-                    bannerUrl: isValidBanner ? data.image : "",
-                    ogImage: isValidBanner ? data.image : "",
-                    photos: isValidBanner ? [data.image] : [],
-                    openingHours: data.openingHours || "Available 24/7",
-                    isOpen: true,
-                    phone: data.phone || "",
-                    email: data.email || "",
-                    website: data.url || `https://${realDom}`,
-                    priceRange: "N/A",
-                    plusCode: "",
-                    description: data.description || "",
-                    popularKeywords: [],
-                    amenities: [],
-                    topDishes: [],
-                    brandDomain: realDom,
-                    locations: data.locations || []
-                  };
-
-                  handleUpdatePlace(realPlace);
-                  window.history.replaceState(null, "", `/place/${realDom}`);
-                  setSelectedPlaceIdForDrawer(realDom);
-                } else {
-                  window.history.replaceState(null, "", "/");
-                  setSelectedPlaceIdForDrawer(null);
-                }
-              })
-              .catch(() => {
-                window.history.replaceState(null, "", "/");
-                setSelectedPlaceIdForDrawer(null);
-              });
+          if (!isRealDom && !inLocalDb) {
+            console.warn("[App] Blocking navigation to unverified placeholder profile:", cleanPlaceId);
+            window.history.replaceState(null, "", "/");
+            setSelectedPlaceIdForDrawer(null);
             return;
           }
 
@@ -1455,11 +1404,8 @@ export function App() {
       if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
-        const validSlug = (slug && isValidDomainUrl(slug)) ? slug : (isValidDomainUrl(selectedPlaceIdForDrawer) ? extractCleanDomain(selectedPlaceIdForDrawer) : null);
-        if (validSlug) {
-          path = `/place/${validSlug}`;
-          title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(validSlug)} - Business Profile | Yoouz`;
-        }
+        path = `/place/${slug}`;
+        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
       } else if (selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()
@@ -3724,10 +3670,6 @@ export function App() {
       }
     );
     if (!found) {
-      found = verifiedPlacesCacheRef.current.get(searchId.toLowerCase()) || 
-        (cleanSearchDomain ? verifiedPlacesCacheRef.current.get(cleanSearchDomain.toLowerCase()) : undefined);
-    }
-    if (!found) {
       const matchingVideo = videos.find(
         (v) => {
           if (cleanSearchDomain) {
@@ -3740,9 +3682,41 @@ export function App() {
       if (matchingVideo) {
         found = synthesizePlaceFromReview(matchingVideo, places);
       } else {
-        // STRICT POLICY: Yoouz places MUST have an authentic official domain from database or verified metadata.
-        // Never synthesize fake non-existent place profiles with empty banners or fake banker logos.
-        return null;
+        const domain = extractCleanDomain(searchId);
+        const isRealDomain = isValidDomainUrl(domain);
+        found = {
+          id: searchId,
+          name: isRealDomain ? formatBusinessName(domain) : searchId,
+          brandDomain: domain || undefined,
+          category: isRealDomain ? "Verified Business" : "Local Business",
+          categoryType: "all",
+          address: "",
+          city: "",
+          country: "",
+          rating: 5.0,
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          photos: [],
+          openingHours: "",
+          isOpen: undefined,
+          phone: "",
+          website: isRealDomain ? `https://${domain}` : "",
+          priceRange: "N/A",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          lat: 0,
+          lng: 0,
+          bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          isSavedToProfile: true,
+          isSkeleton: true,
+          isSynthetic: true
+        } as Place;
       }
     }
 
@@ -3874,7 +3848,7 @@ export function App() {
                   bannerUrl: metaData.image || fetchedPlace?.bannerUrl || "",
                   ogImage: metaData.image || fetchedPlace?.ogImage || "",
                   photos: metaData.image ? [metaData.image] : (fetchedPlace?.photos || []),
-                  openingHours: metaData.openingHours || fetchedPlace?.openingHours || (metaData.hours || "Available 24/7"),
+                  openingHours: metaData.openingHours || fetchedPlace?.openingHours || metaData.hours || "",
                   isOpen: true,
                   phone: metaData.phone || fetchedPlace?.phone || "",
                   email: metaData.email || fetchedPlace?.email || "",
@@ -4380,76 +4354,9 @@ export function App() {
       previousSectionRef.current = activeSection;
     }
 
-    // STRICT POLICY: Yoouz places MUST be authentic domains. Never open a fake URL profile!
-    let targetPlaceDomain = "";
-    if (isValidDomainUrl(placeId)) {
-      targetPlaceDomain = extractCleanDomain(placeId).toLowerCase();
-    } else {
-      const existingPlace = (places || []).find((p: Place) => 
-        p.id === placeId || 
-        (p.name && p.name.toLowerCase().trim() === cleanP) ||
-        (p.brandDomain && extractCleanDomain(p.brandDomain) === cleanP)
-      );
-      const existingDom = existingPlace ? getCleanDomainUrl(existingPlace) : "";
-      if (existingDom && isValidDomainUrl(existingDom)) {
-        targetPlaceDomain = existingDom;
-      }
-    }
-
-    if (!targetPlaceDomain) {
-      console.warn("[App] Non-domain slug requested for drawer, discovering official domain:", placeId);
-      fetch(`/api/url-metadata?q=${encodeURIComponent(placeId)}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data?.domain && isValidDomainUrl(data.domain)) {
-            const realDom = extractCleanDomain(data.domain).toLowerCase();
-            const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
-            const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
-
-            const realPlace: Place = {
-              id: realDom,
-              name: data.siteName || data.title || KNOWN_OFFICIAL_NAMES[realDom] || formatBusinessName(realDom),
-              category: (data.category && !data.category.toLowerCase().includes("verified")) ? data.category : "Verified Business",
-              categoryType: "all",
-              address: (data.address && !data.address.startsWith("http")) ? data.address : "",
-              city: data.city || "Online",
-              country: data.country || "",
-              lat: data.lat || 0,
-              lng: data.lng || 0,
-              rating: 5,
-              totalReviews: 1,
-              ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-              avatarUrl: isValidLogo ? data.logo : `/api/favicon?domain=${realDom}`,
-              logoUrl: isValidLogo ? data.logo : `/api/favicon?domain=${realDom}`,
-              bannerUrl: isValidBanner ? data.image : "",
-              ogImage: isValidBanner ? data.image : "",
-              photos: isValidBanner ? [data.image] : [],
-              openingHours: data.openingHours || "Available 24/7",
-              isOpen: true,
-              phone: data.phone || "",
-              email: data.email || "",
-              website: data.url || `https://${realDom}`,
-              priceRange: "N/A",
-              plusCode: "",
-              description: data.description || "",
-              popularKeywords: [],
-              amenities: [],
-              topDishes: [],
-              brandDomain: realDom,
-              locations: data.locations || []
-            };
-
-            handleUpdatePlace(realPlace);
-            handleOpenPlaceDrawer(realDom);
-          }
-        })
-        .catch(() => {});
-      return;
-    }
-
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
-    setSelectedPlaceIdForDrawer(targetPlaceDomain);
+    setSelectedPlaceIdForDrawer(placeId);
     
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
     if (isDesktop) {
@@ -5955,11 +5862,6 @@ export function App() {
   // Handle Updating Business Information (Claim, Edit, Add Phone/Website/Hours)
   const handleUpdatePlace = (updatedPlace: Place, skipServerSync = false) => {
     if (!updatedPlace || !updatedPlace.id) return;
-    const dom = extractCleanDomain(updatedPlace.brandDomain || updatedPlace.website || updatedPlace.id);
-    if (!isValidDomainUrl(dom) && updatedPlace.id !== 'yoouz.com') {
-      console.warn("[App] Rejected saving place without authentic domain:", updatedPlace.id);
-      return;
-    }
     const updatedSlug = getPlaceSlug(updatedPlace.id);
     const updatedDomain = extractCleanDomain(updatedPlace.brandDomain || updatedPlace.website || updatedPlace.id);
     const updatedName = (updatedPlace.name || "").toLowerCase().trim();

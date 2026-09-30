@@ -18645,10 +18645,36 @@ Return JSON:
           if (email) return;
           const raw = $(el).attr("href")?.replace(/^mailto:\s*/i, "").split("?")[0].trim() || "";
           const l = raw.toLowerCase();
-          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("yourname@") && !l.includes("email@")) {
+          if (raw.includes("@") && !l.includes("example.com") && !l.includes("sentry.io") && !l.includes("wixpress.com") && !l.includes("domain.com") && !l.includes("yourname@") && !l.includes("email@") && !l.includes("4samet")) {
             email = raw;
           }
         });
+      }
+
+      if (!email && $) {
+        const fullText = $("body").text() || "";
+        const emailMatches = fullText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g) || [];
+        for (const rawEm of emailMatches) {
+          const l = rawEm.toLowerCase();
+          if (
+            !l.includes("example.com") &&
+            !l.includes("sentry.io") &&
+            !l.includes("wixpress.com") &&
+            !l.includes("domain.com") &&
+            !l.includes("yourname@") &&
+            !l.includes("email@") &&
+            !l.includes("user@") &&
+            !l.includes("schema.org") &&
+            !l.includes(".png") &&
+            !l.includes(".jpg") &&
+            !l.includes(".webp") &&
+            !l.includes(".svg") &&
+            !l.includes("4samet")
+          ) {
+            email = rawEm.trim();
+            break;
+          }
+        }
       }
 
       // 9. Structured JSON-LD extraction
@@ -19762,7 +19788,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         let scPhone = "";
         let scEmail = "";
         let scCategory = detectedCategory;
-        let scOpeningHours = "Available 24/7";
+        let scOpeningHours = "";
         let scLat = 0;
         let scLng = 0;
 
@@ -19846,9 +19872,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       city: "Online",
       country: "",
       phone: "",
-      email: `info@${synthDomain}`,
-      openingHours: "Available 24/7",
-      photo: "https://yoouz.com/og-banner.png",
+      email: "",
+      openingHours: "",
+      photo: "",
       logo: `/api/favicon?domain=${synthDomain}`,
       description: `${synthName} is a verified business on Yoouz.`,
       lat: 0,
@@ -20075,9 +20101,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           city: ent?.city || "Online",
           country: ent?.country || "",
           phone: ent?.phone || "",
-          email: ent?.email || `info@${realDomain}`,
+          email: ent?.email || "",
           category: ent?.category || "Verified Business",
-          openingHours: ent?.openingHours || "Available 24/7",
+          openingHours: ent?.openingHours || "",
           locations: ent?.locations || []
         });
       }
@@ -21421,9 +21447,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         city: "Online",
         country: "",
         phone: "",
-        email: `info@${cleanDom}`,
+        email: "",
         category: "Verified Business",
-        openingHours: "Available 24/7",
+        openingHours: "",
         locations: []
       });
     }
