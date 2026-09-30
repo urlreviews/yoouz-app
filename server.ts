@@ -19985,6 +19985,41 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
+
+    // Helper to strictly identify logos/icons/buttons to prevent assigning them as hero banners
+    const isLogoOrIconUrl = (urlStr: string): boolean => {
+      if (!urlStr || typeof urlStr !== 'string') return true;
+      const l = urlStr.toLowerCase();
+      return (
+        l.includes('logo') ||
+        l.includes('icon') ||
+        l.includes('favicon') ||
+        l.includes('avatar') ||
+        l.includes('badge') ||
+        l.includes('button') ||
+        l.includes('app-store') ||
+        l.includes('play-store') ||
+        l.includes('google-play') ||
+        l.includes('payment') ||
+        l.includes('visa') ||
+        l.includes('mastercard') ||
+        l.includes('star.png') ||
+        l.includes('spinner') ||
+        l.includes('blank.gif') ||
+        l.includes('pixel.gif') ||
+        l.endsWith('.svg') ||
+        l.includes('.ico') ||
+        l.includes('300x46') ||
+        l.includes('100x100') ||
+        l.includes('150x150') ||
+        l.includes('78x100') ||
+        l.includes('16x16') ||
+        l.includes('32x32') ||
+        l.includes('60x60') ||
+        l.includes('tap/0.png')
+      );
+    };
+
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
       if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
@@ -20328,40 +20363,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
               if (!logo) logo = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
-              // Helper to strictly identify logos/icons/buttons to prevent assigning them as hero banners
-              const isLogoOrIconUrl = (urlStr: string): boolean => {
-                if (!urlStr || typeof urlStr !== 'string') return true;
-                const l = urlStr.toLowerCase();
-                return (
-                  l.includes('logo') ||
-                  l.includes('icon') ||
-                  l.includes('favicon') ||
-                  l.includes('avatar') ||
-                  l.includes('badge') ||
-                  l.includes('button') ||
-                  l.includes('app-store') ||
-                  l.includes('play-store') ||
-                  l.includes('google-play') ||
-                  l.includes('payment') ||
-                  l.includes('visa') ||
-                  l.includes('mastercard') ||
-                  l.includes('star.png') ||
-                  l.includes('spinner') ||
-                  l.includes('blank.gif') ||
-                  l.includes('pixel.gif') ||
-                  l.endsWith('.svg') ||
-                  l.includes('.ico') ||
-                  l.includes('300x46') ||
-                  l.includes('100x100') ||
-                  l.includes('150x150') ||
-                  l.includes('78x100') ||
-                  l.includes('16x16') ||
-                  l.includes('32x32') ||
-                  l.includes('60x60') ||
-                  l.includes('tap/0.png')
-                );
-              };
-
               // Better Banner Image Extraction
               const ogImg = getMetaContent('image');
               if (ogImg && !isLogoOrIconUrl(ogImg) && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
@@ -20701,6 +20702,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage)) {
                 image = rawMetaImage;
+                console.log('[DEBUG BANNER Step 1 ogImg]:', image);
               }
 
               if (!image) {
@@ -20717,16 +20719,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   candidates.push({ src, weight });
                 });
 
-                $('[data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((i, el) => {
-                  let bgUrl = $(el).attr('data-bg') || $(el).attr('data-bg-image') || '';
-                  if (!bgUrl) {
+                $('[data-bgset], [data-srcset], [data-src], [data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((i, el) => {
+                  let raw = $(el).attr('data-bgset') || $(el).attr('data-srcset') || $(el).attr('data-src') || $(el).attr('data-bg') || $(el).attr('data-bg-image') || '';
+                  if (!raw) {
                     const style = $(el).attr('style') || '';
                     const bgMatch = style.match(/background(?:-image)?\s*:\s*url\s*\(\s*['"]?([^'")]+)['"]?\s*\)/);
-                    if (bgMatch) bgUrl = bgMatch[1];
+                    if (bgMatch) raw = bgMatch[1];
                   }
-                  if (bgUrl && !isLogoOrIconUrl(bgUrl) && !bgUrl.startsWith('data:')) {
-                    candidates.push({ src: bgUrl, weight: 350 });
-                  }
+                  if (!raw) return;
+
+                  const urls = raw.split(',').map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
+                  urls.forEach((u: string) => {
+                    if (isLogoOrIconUrl(u) || u.startsWith('data:')) return;
+                    let weight = 350;
+                    const lower = u.toLowerCase();
+                    if (lower.includes('banner') || lower.includes('hero') || lower.includes('slide') || lower.includes('cover') || lower.includes('untitled-design') || lower.includes('files') || lower.includes('campaign') || lower.includes('lookbook')) weight += 250;
+                    candidates.push({ src: u, weight });
+                  });
                 });
 
                 $('img').each((i, el) => {
@@ -20811,8 +20820,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   cleaned = cleaned.replace(wpThumbRegex, '$2');
                 }
 
-                if (cleaned.includes('/cdn.shopify.com/')) {
-                  const shopifyRegex = /_({?)(?:pico|icon|thumb|small|compact|medium|large|grande|1024x1024|2048x2048|\d+x\d+)(}?)(?=\.[a-zA-Z0-9]+$|\?)/;
+                if (cleaned.includes('/cdn.shopify.com/') || cleaned.includes('/cdn/shop/')) {
+                  const shopifyRegex = /_({?)(?:pico|icon|thumb|small|compact|medium|large|grande|1024x1024|2048x2048|\d+x\d+|\d+x)(}?)(?=\.[a-zA-Z0-9]+$|\?)/i;
                   cleaned = cleaned.replace(shopifyRegex, '');
                 }
 
@@ -21435,6 +21444,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const isBadBanner = (b?: string) => {
               if (!b) return true;
+              if (isLogoOrIconUrl(b)) return true;
               try {
                 const decoded = decodeURIComponent(b);
                 return decoded.includes("${") || decoded.includes("unsplash.com") || decoded.includes("placeholder") || decoded.includes("glas1.png") || decoded.includes("dummy.png");
