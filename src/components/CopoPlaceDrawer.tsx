@@ -580,26 +580,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
                   });
                 }
-
-                // Infinite Discovery Policy: Keep retrying up to 20 times (every 3 seconds) 
-                // until discovery succeeds or a real domain is found.
-                if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 20) {
-                  discoveryAttemptsRef.current++;
-                  setTimeout(runEnrichment, 3000);
-                }
-              } else if (discoveryAttemptsRef.current < 20) {
-                discoveryAttemptsRef.current++;
-                setTimeout(runEnrichment, 3000);
               }
             }
           })
           .catch(() => {
             if (isMounted) {
               setIsEnriching(false); // Ensure loader is cleared even if connection fails
-              if (discoveryAttemptsRef.current < 20) {
-                discoveryAttemptsRef.current++;
-                setTimeout(runEnrichment, 3000);
-              }
             }
           });
 

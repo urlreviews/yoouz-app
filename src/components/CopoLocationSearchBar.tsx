@@ -294,11 +294,15 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                       <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                     )}
                   </div>
-                  {hasDomain && (
+                  {item.address ? (
+                    <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium" dir="auto">
+                      {item.address}
+                    </div>
+                  ) : hasDomain ? (
                     <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
                       {targetDomain.toLowerCase()}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </button>
             );

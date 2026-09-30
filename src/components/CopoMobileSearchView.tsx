@@ -105,7 +105,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
         if (resp.ok) {
           const data = await resp.json();
-          setLiveSuggestions(data.suggestions || []);
+          const suggestions = data.suggestions || [];
+          setLiveSuggestions(suggestions);
+
+          // Predictive Pre-loading: Silently resolve the top suggestion's domain in the background
+          const topSuggest = suggestions[0];
+          if (topSuggest && !topSuggest.domain && topSuggest.title && topSuggest.source !== "database") {
+            fetch(`/api/url-metadata?q=${encodeURIComponent(topSuggest.title)}&resolveOnly=true`).catch(() => {});
+          }
         }
       } catch (err) {}
     }, 120);
@@ -341,35 +348,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // Direct official business resolution via fast DuckDuckGo backend path
-    if (!isValidDomainUrl(cleanUrl)) {
-      console.info("[Search Mobile] Resolving official domain via fast DuckDuckGo path for:", trimmed);
-      
-      try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}&resolveOnly=true`);
-        if (backendResp.ok) {
-          const data = await backendResp.json();
-          if (data && data.domain && isValidDomainUrl(data.domain)) {
-            cleanUrl = data.domain;
-            console.info("[Search Mobile] Backend search successfully resolved domain:", cleanUrl);
-          }
-        }
-      } catch (bErr) {
-        console.warn("[Search Mobile] Backend search error:", bErr);
-      }
-    }
-
+    // 2. Non-blocking Background Domain Resolution
+    // We proceed optimistically with whatever we have.
+    // This ensures an "Instant" (0.0s) response.
     const isRealDomain = isValidDomainUrl(cleanUrl);
-
-    // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
-    if (isRealDomain) {
-      console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
-    } else {
-      console.warn("[Search Mobile] No official website domain found. Halting search to prevent creating fallback pages.");
-      setIsSearching(false);
-      alert(`No official business website could be found for "${trimmed}". Please try searching with a more specific query or with the official website domain.`);
-      return;
-    }
 
     // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
     const storeTerm = cleanUrl || trimmed;
@@ -387,8 +369,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
+      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
       const optimisticPlace: Place = {
-        id: isRealDomain ? cleanUrl.toLowerCase() : (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business"),
+        id: isRealDomain ? cleanUrl.toLowerCase() : domain,
         name: instantName,
         category: "Verified Business",
         categoryType: "all",
@@ -398,14 +381,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         lat: 0,
         lng: 0,
         rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        totalReviews: 0,
+        ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
         avatarUrl: instantLogo,
         logoUrl: instantLogo,
         bannerUrl: "",
         ogImage: "",
         photos: [],
-        openingHours: "Available 24/7",
+        openingHours: "",
         isOpen: true,
         phone: "",
         website: isRealDomain ? `https://${cleanUrl}` : "",
@@ -417,7 +400,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         topDishes: [],
         brandDomain: isRealDomain ? cleanUrl : ""
       };
+      
       onAddPlace(optimisticPlace);
+      
+      // Open the drawer IMMEDIATELY for instant feedback
+      if (onOpenPlace) {
+        onOpenPlace(optimisticPlace.id);
+      }
 
       // Immediately enrich with authentic address, phone, email, category in the background
       const searchEndpoint = isRealDomain 
@@ -576,7 +565,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       bannerUrl: knownHead?.bannerUrl || "",
       ogImage: knownHead?.bannerUrl || "",
       photos: knownHead?.photos || [],
-      openingHours: knownHead?.openingHours || "Available 24/7",
+      openingHours: knownHead?.openingHours || "",
       isOpen: true,
       phone: knownHead?.phone || "",
       email: knownHead?.email || "",
