@@ -542,12 +542,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
 
         fetch(endpoint)
-          .then((res) => (res.ok ? res.json() : null))
+          .then((res) => {
+            if (res.status === 400) {
+              // Stop retrying on 400 (Bad Request / No domain found)
+              setIsEnriching(false);
+              return null;
+            }
+            return res.ok ? res.json() : null;
+          })
           .then((data) => {
             if (isMounted) {
-              setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
-              
               if (data) {
+                setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
+                
                 const hasActualData = Boolean(
                   data.image || 
                   (data.logo && !data.logo.includes('tap/0.png')) || 
@@ -583,24 +590,25 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   });
                 }
 
-                // Infinite Discovery Policy: Keep retrying up to 20 times (every 3 seconds) 
-                // until discovery succeeds or a real domain is found.
-                if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 20) {
+                // Discovery Policy: Reduce retries and increase delay to avoid hammering
+                if ((!hasActualData || isSlugDomain) && discoveryAttemptsRef.current < 5) {
                   discoveryAttemptsRef.current++;
-                  setTimeout(runEnrichment, 3000);
+                  setTimeout(runEnrichment, 5000);
                 }
-              } else if (discoveryAttemptsRef.current < 20) {
+              } else if (discoveryAttemptsRef.current < 3) {
                 discoveryAttemptsRef.current++;
-                setTimeout(runEnrichment, 3000);
+                setTimeout(runEnrichment, 5000);
+              } else {
+                setIsEnriching(false);
               }
             }
           })
           .catch(() => {
             if (isMounted) {
               setIsEnriching(false); // Ensure loader is cleared even if connection fails
-              if (discoveryAttemptsRef.current < 20) {
+              if (discoveryAttemptsRef.current < 3) {
                 discoveryAttemptsRef.current++;
-                setTimeout(runEnrichment, 3000);
+                setTimeout(runEnrichment, 5000);
               }
             }
           });

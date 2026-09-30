@@ -3649,34 +3649,44 @@ export function App() {
       return null;
     }
     const cleanSearchDomain = extractCleanDomain(searchId);
-    let found = places.find(
-      (p) => {
-        if (cleanSearchDomain) {
-          const pDomain = extractCleanDomain(p.website || p.brandDomain || p.id || p.name);
-          if (pDomain) return pDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
-        }
-        const searchIdLow = searchId.toLowerCase().trim();
-        const pIdLow = (p.id || '').toLowerCase().trim();
-        const pDomLow = (p.brandDomain || '').toLowerCase().trim();
-        const pWebDomLow = extractCleanDomain(p.website || '').toLowerCase().trim();
-        const pNameLow = (p.name || '').toLowerCase().trim();
+    const searchIdLow = searchId.toLowerCase().trim();
 
-        return (
-          pIdLow === searchIdLow ||
-          pDomLow === searchIdLow ||
-          (pWebDomLow && pWebDomLow === searchIdLow) ||
-          (pNameLow && pNameLow === searchIdLow)
-        );
-      }
-    );
+    // PHASE 1: Try finding by Exact ID or Domain Match (Highest confidence)
+    let found = places.find((p) => {
+      const pIdLow = (p.id || '').toLowerCase().trim();
+      const pDomLow = (p.brandDomain || '').toLowerCase().trim();
+      const pWebDomLow = extractCleanDomain(p.website || '').toLowerCase().trim();
+      
+      return (
+        pIdLow === searchIdLow ||
+        pDomLow === searchIdLow ||
+        (pWebDomLow && pWebDomLow === searchIdLow) ||
+        (cleanSearchDomain && pDomLow === cleanSearchDomain) ||
+        (cleanSearchDomain && pWebDomLow === cleanSearchDomain)
+      );
+    });
+
+    // PHASE 2: Try loose finding only if no direct match was found
+    if (!found) {
+      found = places.find((p) => {
+        const pNameLow = (p.name || '').toLowerCase().trim();
+        return (pNameLow && pNameLow === searchIdLow);
+      });
+    }
+
     if (!found) {
       const matchingVideo = videos.find(
         (v) => {
-          if (cleanSearchDomain) {
-            const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
-            if (vDomain) return vDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
-          }
-          return v.placeId === searchId || v.id === searchId || (v.placeName && v.placeName.toLowerCase() === searchId.toLowerCase());
+          const vIdLow = (v.placeId || "").toLowerCase().trim();
+          const vWebDomLow = extractCleanDomain(v.placeWebsite || "").toLowerCase().trim();
+          const vNameLow = (v.placeName || "").toLowerCase().trim();
+
+          return (
+            vIdLow === searchIdLow ||
+            (vWebDomLow && vWebDomLow === searchIdLow) ||
+            (vNameLow && vNameLow === searchIdLow) ||
+            (cleanSearchDomain && vWebDomLow === cleanSearchDomain)
+          );
         }
       );
       if (matchingVideo) {

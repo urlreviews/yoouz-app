@@ -225,13 +225,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       .replace(/\.\s+/g, ".")
       .trim();
 
-    setShowDropdown(false);
-    
-    // Instantly set a "Searching" state but don't clear the previous result yet 
-    // unless it's a DIFFERENT query to avoid flickering.
-    if (searchedPlace && !rawQuery.toLowerCase().includes(searchedPlace.id.toLowerCase())) {
-       // setSearchedPlace(null); // Keep previous place visible until we have the new one to avoid "nothing happens"
-    }
+    // Instantly set a "Searching" state and clear the previous result to avoid "jumping" or showing stale data.
+    setSearchedPlace(null);
     setSuggestions([]);
 
     const currentRequestId = ++searchRequestIdRef.current;
