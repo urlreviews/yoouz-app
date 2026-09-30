@@ -810,21 +810,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors" dir="auto">
-                          {words.length > 1 ? (
-                            <span>
-                              <bdi dir="auto">{allExceptLast}</bdi>{" "}
-                              <span className="inline-flex items-center whitespace-nowrap shrink-0">
-                                <bdi dir="auto">{lastWord}</bdi>
-                                <CheckCircle className="w-4 h-4 fill-white text-zinc-950 ml-1 shrink-0 -mt-0.5" />
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center whitespace-nowrap shrink-0">
-                              <bdi dir="auto">{title}</bdi>
-                              <CheckCircle className="w-4 h-4 fill-white text-zinc-950 ml-1 shrink-0 -mt-0.5" />
-                            </span>
-                          )}
+                        <div className="flex items-center gap-1.5 overflow-hidden" dir="auto">
+                          <span className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors">
+                            {title}
+                          </span>
+                          <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                         </div>
                         {hasDomain ? (
                           <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
@@ -884,7 +874,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           getItemLogoUrl={getItemLogoUrl}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors" dir="auto">
                             {title}
                           </div>
                           {cleanUrl ? (
@@ -925,7 +915,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           getItemLogoUrl={getItemLogoUrl}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors" dir="auto">
                             {title}
                           </div>
                           {cleanUrl ? (

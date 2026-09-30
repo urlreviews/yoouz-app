@@ -624,39 +624,23 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
               <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                 <div className="min-w-0 w-full flex-1">
-                  <h2 
-                    onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                    className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors leading-snug break-words tracking-tight"
-                  >
-                    {(() => {
-                      const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
-                      const name = (dom && KNOWN_OFFICIAL_NAMES[dom])
-                        || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
-                        || formatBusinessName(searchedPlace.name, dom)
-                        || "";
-                      const fullName = name.trim();
-                      const words = fullName.split(/\s+/);
-                      if (words.length <= 1) {
-                        return (
-                          <span className="inline-flex items-center whitespace-nowrap shrink-0" dir="auto">
-                            <bdi dir="auto">{fullName}</bdi>
-                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
-                          </span>
-                        );
-                      }
-                      const allExceptLast = words.slice(0, -1).join(" ");
-                      const lastWord = words[words.length - 1];
-                      return (
-                        <span dir="auto">
-                          <bdi dir="auto">{allExceptLast}</bdi>{" "}
-                          <span className="inline-flex items-center whitespace-nowrap shrink-0">
-                            <bdi dir="auto">{lastWord}</bdi>
-                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0 ml-1.5 -mt-0.5" />
-                          </span>
+                    <h2 
+                      onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                      className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors leading-snug break-words tracking-tight"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden" dir="auto">
+                        <span className="text-white">
+                          {(() => {
+                            const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
+                            return (dom && KNOWN_OFFICIAL_NAMES[dom])
+                              || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
+                              || formatBusinessName(searchedPlace.name, dom)
+                              || searchedPlace.name;
+                          })()}
                         </span>
-                      );
-                    })()}
-                  </h2>
+                        <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0" />
+                      </div>
+                    </h2>
 
                   {/* Official Website / Domain Link under Business Name */}
                   {(() => {

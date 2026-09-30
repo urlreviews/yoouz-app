@@ -286,8 +286,13 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate" dir="auto">
-                    <bdi dir="auto">{item.title}</bdi>
+                  <div className="flex items-center gap-1.5 overflow-hidden" dir="auto">
+                    <span className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
+                      {item.title}
+                    </span>
+                    {item.source === "database" && (
+                      <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                    )}
                   </div>
                   {hasDomain && (
                     <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
