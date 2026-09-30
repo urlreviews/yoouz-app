@@ -19307,10 +19307,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               console.info(`[Database Cache] Ignored low-quality generic cache for: ${rowName}`);
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
+                const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || formatBusinessName(rowName, rowId, cleanQ) || rowName;
                 const result: ResolvedBusinessData = {
                   domain: rowId,
                   websiteUrl: parsedData.website || `https://${rowId}`,
-                  name: rowName,
+                  name: formattedName,
                   category: (row.category as string) || parsedData.category || "Verified Business",
                   address: (row.address as string) || parsedData.address || "",
                   city: (row.city as string) || parsedData.city || "Online",
@@ -19462,10 +19463,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             const firstTitle = i$(".result__title").first().text().trim();
             if (firstTitle) {
-              const parts = firstTitle.split(/[-–—|•·]/).map(p => p.trim()).filter(Boolean);
-              const brandCandidate = parts.find(p => !p.toLowerCase().includes("services") && !p.toLowerCase().includes("cleaning") && p.length < 35) || parts[parts.length - 1];
-              if (brandCandidate && brandCandidate.length > 2) {
-                domTitle = brandCandidate;
+              const formattedTitle = formatBusinessName(firstTitle, cleanDom, cleanQ);
+              if (formattedTitle && formattedTitle.length > 1) {
+                domTitle = formattedTitle;
               }
             }
           }
@@ -19490,7 +19490,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
         websiteUrl: `https://${cleanDom}`,
-        name: domTitle,
+        name: (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || formatBusinessName(domTitle, cleanDom, cleanQ) || domTitle || cleanQ,
         category: domCategory,
         address: domAddress,
         city: domCity,
@@ -19782,24 +19782,88 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const scHtml = scrapeData.html;
             const sc$ = cheerio.load(scHtml);
             
+            let extractedLogo = "";
+            let extractedBanner = "";
+
             const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeData.metadata?.title;
             if (metaT && metaT.trim().length > 1) {
-              scTitle = formatBusinessName(metaT.trim(), discoveredDom);
+              const formattedScTitle = formatBusinessName(metaT.trim(), discoveredDom, cleanQ);
+              const cleanQWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+              const formattedLower = formattedScTitle.toLowerCase();
+              const isGenericSentence = formattedScTitle.length > 25 && /\b(בגדים|נעליים|לנשים|גברים|השכרת|מכירת|שירות|חנות|אונליין|במבחר|מגוון|איכותי)\b/i.test(formattedLower);
+              const matchesCleanQ = cleanQWords.some(w => formattedLower.includes(w));
+              
+              if (!isGenericSentence || matchesCleanQ) {
+                scTitle = formattedScTitle;
+              } else {
+                scTitle = formatBusinessName(cleanQ, discoveredDom) || cleanQ;
+              }
             }
             
             const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
             if (metaDesc && metaDesc.trim().length > 10) {
               scDesc = metaDesc.trim();
             }
-            
-            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-            if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com')) {
-              try {
-                scImage = new URL(metaImg, discoveredUrl).toString();
-              } catch (e) {
-                scImage = metaImg;
+
+            function makeAbsolute(src: string): string {
+              if (!src) return "";
+              let s = src.trim();
+              if (s.startsWith("data:")) return "";
+              if (s.startsWith("//")) return "https:" + s;
+              if (s.startsWith("/")) {
+                try {
+                  const u = new URL(discoveredUrl);
+                  return `${u.protocol}//${u.host}${s}`;
+                } catch {
+                  return `https://${discoveredDom}${s}`;
+                }
+              }
+              if (!s.startsWith("http://") && !s.startsWith("https://")) {
+                return `https://${discoveredDom}/${s.replace(/^\/+/, '')}`;
+              }
+              return s;
+            }
+
+            sc$('header img, .site-header img, .logo img, a.logo img, img.logo, img[src*="logo" i], img[alt*="logo" i], img[alt*="' + (discoveredDom.split('.')[0] || 'brand') + '" i]').each((_: any, el: any) => {
+              if (extractedLogo) return;
+              const src = sc$(el).attr('src') || sc$(el).attr('data-src');
+              if (src) {
+                const abs = makeAbsolute(src);
+                if (abs && !abs.includes('placeholder') && !abs.includes('svg+xml')) {
+                  extractedLogo = abs;
+                }
+              }
+            });
+
+            if (!extractedLogo) {
+              const iconHref = sc$('link[rel*="apple-touch-icon"]').attr('href') || sc$('link[rel*="icon"]').attr('href');
+              if (iconHref) {
+                extractedLogo = makeAbsolute(iconHref);
               }
             }
+            if (!extractedLogo) {
+              extractedLogo = `/api/favicon?domain=${encodeURIComponent(discoveredDom)}`;
+            }
+
+            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
+            if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com') && metaImg !== 'none') {
+              extractedBanner = makeAbsolute(metaImg);
+            }
+
+            if (!extractedBanner) {
+              sc$('main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/uploads/"]').each((_: any, el: any) => {
+                if (extractedBanner) return;
+                const src = sc$(el).attr('src') || sc$(el).attr('data-src');
+                if (src) {
+                  const abs = makeAbsolute(src);
+                  if (abs && abs !== extractedLogo && !abs.includes('icon') && !abs.includes('140x.png')) {
+                    extractedBanner = abs;
+                  }
+                }
+              });
+            }
+
+            scImage = extractedBanner || scImage;
             
             const locData = await extractWebsiteLocationAndContact(sc$, scHtml, discoveredUrl, discoveredDom);
             if (locData.address) scAddress = locData.address;
@@ -19953,12 +20017,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (matchedDom && !isMissingData && isExactMatch) {
               console.log(`[Database Cache Hit] Serving instant metadata for: "${rawQuery}" -> ${matchedDom}`);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
+              const resolvedTitle = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom]) || formatBusinessName(row.name || pData.name, matchedDom, rawQuery) || row.name || pData.name;
               return res.json({
-                title: row.name || pData.name,
-                description: pData.description || `${row.name} is a verified business on Yoouz.`,
+                title: resolvedTitle,
+                description: pData.description || `${resolvedTitle} is a verified business on Yoouz.`,
                 image: pData.bannerUrl || pData.ogImage || pData.image || "",
                 logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`,
-                siteName: row.name || pData.name,
+                siteName: resolvedTitle,
                 domain: matchedDom,
                 url: pData.website || `https://${matchedDom}`,
                 address: row.address || pData.address || "",
@@ -19989,12 +20054,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const realDomain = resolvedEntity.domain;
           const entityLogo = resolvedEntity.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
+          const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
           return res.json({
-            title: resolvedEntity.name,
-            description: resolvedEntity.description || `${resolvedEntity.name} is a verified business on Yoouz.`,
+            title: entityTitle,
+            description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
             image: resolvedEntity.photo || "",
             logo: entityLogo,
-            siteName: resolvedEntity.name,
+            siteName: entityTitle,
             domain: realDomain,
             url: resolvedEntity.websiteUrl || `https://${realDomain}`,
             address: resolvedEntity.address || "",
@@ -20139,13 +20205,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 } catch(e) {}
               }
 
+              const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || formatBusinessName(eliteFallback.name, targetDom, rawQuery) || eliteFallback.name;
               logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
               return res.json({
-                title: eliteFallback.name,
-                description: eliteFallback.description || `${eliteFallback.name} is a verified business on Yoouz.`,
+                title: fallbackTitle,
+                description: eliteFallback.description || `${fallbackTitle} is a verified business on Yoouz.`,
                 image: bannerImg,
                 logo: logoImg,
-                siteName: eliteFallback.name,
+                siteName: fallbackTitle,
                 domain: targetDom,
                 url: eliteFallback.websiteUrl || `https://${targetDom}`,
                 address: eliteFallback.address || "",
@@ -20173,24 +20240,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                               $('link[rel="alternate"][hreflang="x-default"]').attr('href');
                 if (enAlt) {
                   try {
-                    const enUrl = new URL(enAlt, finalUrl).toString();
-                    if (enUrl !== finalUrl) {
-                      const altResp = await fetch(enUrl, {
-                        headers: {
-                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                          'Accept-Language': 'en-US,en;q=0.9',
-                          'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US; hl=en'
-                        },
-                        redirect: 'follow',
-                        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
-                      });
-                      if (altResp.ok) {
-                        const altHtml = await altResp.text();
-                        if (altHtml && altHtml.length > 500) {
-                          html = altHtml;
-                          $ = cheerio.load(html);
-                          finalUrl = altResp.url || enUrl;
+                    const enUrlObj = new URL(enAlt, finalUrl);
+                    const isRootPath = enUrlObj.pathname === '/' || enUrlObj.pathname === '/en' || enUrlObj.pathname === '/en/' || enUrlObj.pathname === new URL(finalUrl).pathname;
+                    if (isRootPath && !enUrlObj.pathname.includes('/contact') && !enUrlObj.pathname.includes('/about') && !enUrlObj.pathname.includes('/pages/')) {
+                      const enUrl = enUrlObj.toString();
+                      if (enUrl !== finalUrl) {
+                        const altResp = await fetch(enUrl, {
+                          headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US; language=en; country=US; locale=en_US; hl=en'
+                          },
+                          redirect: 'follow',
+                          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
+                        });
+                        if (altResp.ok) {
+                          const altHtml = await altResp.text();
+                          if (altHtml && altHtml.length > 500) {
+                            html = altHtml;
+                            $ = cheerio.load(html);
+                            finalUrl = altResp.url || enUrl;
+                          }
                         }
                       }
                     }
@@ -25228,7 +25299,7 @@ function splitCompoundWords(str: string): string {
   s = parts.join(" ").replace(/\s+/g, " ").trim();
   return s;
 }
-function formatBusinessName(name?: string | null, domain?: string | null): string {
+function formatBusinessName(name?: string | null, domain?: string | null, queryContextParam?: string | null): string {
   const cleanDom = domain ? cleanDomainName(domain) : "";
   const domRoot = cleanDom ? cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] : "";
 

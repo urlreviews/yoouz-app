@@ -214,6 +214,15 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "miniallenby.co.il": "מיני אלנבי",
+  "www.miniallenby.co.il": "מיני אלנבי",
+  "miniallenby": "מיני אלנבי",
+  "mini allenby": "מיני אלנבי",
+  "מיני אלנבי": "מיני אלנבי",
+  "etraderweb.com": "Etrader",
+  "www.etraderweb.com": "Etrader",
+  "etrader": "Etrader",
+  "איטריידר": "Etrader",
   "blue-sky.co.il": "בלו סקאי השכרת רכב",
   "www.blue-sky.co.il": "בלו סקאי השכרת רכב",
   "blue-sky": "בלו סקאי השכרת רכב",
@@ -932,7 +941,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
   // If already a clean capitalized multi-word human title (e.g. "Empire Hotel Rooftop Pool", "מלון פרא רמת הגולן"), preserve in full directly!
-  if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 80 && !trimmed.includes('|') && !trimmed.includes(':')) {
+  if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 80 && !trimmed.includes('|') && !trimmed.includes(':') && !trimmed.includes(' - ') && !trimmed.includes(' – ') && !trimmed.includes(' — ')) {
     if (queryContext) {
       const cleanQ = queryContext.trim();
       if (cleanQ.length >= 3 && !cleanQ.includes('.') && !isGenericPlaceName(cleanQ)) {
@@ -994,16 +1003,29 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       bestCandidate = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 45 && !isGenericPlaceName(p));
     }
 
-    // If domRoot is not inside title (e.g. domain is garagejv.be, title part is "Garage Vermeersch J."), select the first non-generic candidate part
+    // Score each part in rawParts to pick the true concise brand name over marketing slogans/descriptions
     if (!bestCandidate) {
-      const nonGenericParts = rawParts.filter(p => !isGenericPlaceName(p));
-      if (nonGenericParts.length > 0) {
-        const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 50);
-        if (validCandidates.length > 0) {
-          bestCandidate = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law|auto's van|aanhangwagens in)/i.test(p)) || validCandidates[0];
-        } else {
-          bestCandidate = nonGenericParts[0];
-        }
+      const isSlogan = (s: string) => {
+        const lower = s.toLowerCase();
+        return (
+          s.length > 26 ||
+          /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|welcome to|the best|top rated|personal injury|attorneys at law|car rental|rent a car)\b/i.test(lower)
+        );
+      };
+
+      const ranked = rawParts
+        .filter(p => !isGenericPlaceName(p))
+        .map(p => {
+          let score = 50;
+          if (domRoot && p.toLowerCase().includes(domRoot.toLowerCase())) score += 100;
+          if (isSlogan(p)) score -= 80;
+          if (p.length >= 2 && p.length <= 25) score += 30; // Bonus for concise brand names
+          return { part: p, score };
+        });
+
+      if (ranked.length > 0) {
+        ranked.sort((a, b) => b.score - a.score);
+        bestCandidate = ranked[0].part;
       }
     }
 
