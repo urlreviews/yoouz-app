@@ -311,187 +311,186 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       }
     }
 
-    if (!isValidDomainUrl(cleanUrl)) {
-      setIsSearching(true);
-      console.info("[Search] Resolving official domain via fast DuckDuckGo path for:", rawQuery);
-      
-      try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`);
-        if (backendResp.ok) {
-          const data = await backendResp.json();
-          if (data && data.domain && isValidDomainUrl(data.domain)) {
-            cleanUrl = data.domain;
-            preloadedMeta = data;
-            console.info("[Search] Backend search successfully resolved domain:", cleanUrl);
-          }
-        }
-      } catch (bErr) {
-        console.warn("[Search] Backend search error:", bErr);
-      }
-
-      if (currentRequestId !== searchRequestIdRef.current) return;
-    }
-
-    if (currentRequestId !== searchRequestIdRef.current) return;
-
-    // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
-    if (isValidDomainUrl(cleanUrl)) {
-      console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
-    } else {
-      console.warn("[Search] No official website domain found. Halting search to prevent creating fallback pages.");
-      setIsSearching(false);
-      alert(`No official business website could be found for "${rawQuery}". Please try searching with a more specific query or with the official website domain.`);
-      return;
-    }
-
+    // 2. Non-blocking Background Domain Resolution
+    // Instead of awaiting resolution, we proceed with an optimistic match.
+    // This makes the search feel "Instant" (0ms wait time).
+    let discoveredMeta = preloadedMeta;
+    
     setQuery(baseName || rawQuery);
     setIsSearching(true);
 
+    const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
+    const isRealDomain = isValidDomainUrl(cleanUrl);
+
+    const isMetaMatchingCurrent = Boolean(
+      discoveredMeta && (
+        (isRealDomain && discoveredMeta.domain && extractCleanDomain(discoveredMeta.domain) === cleanUrl) ||
+        (discoveredMeta.title && baseName && discoveredMeta.title.toLowerCase().trim() === baseName.toLowerCase().trim())
+      )
+    );
+
+    // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
+    const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
+      || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
+      || (discoveredMeta?.logo && !discoveredMeta.logo.includes('brandfetch') && !discoveredMeta.logo.startsWith('data:;') ? discoveredMeta.logo : "");
+    const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
+      || (discoveredMeta?.image && !discoveredMeta.image.includes('unsplash.com') ? discoveredMeta.image : "") 
+      || "";
+    const instantName = preferredName
+      || locationDetails?.rawBusinessName
+      || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
+      || (discoveredMeta?.title || discoveredMeta?.siteName)
+      || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
+      || baseName
+      || rawQuery;
+
+    const instantCity = locationDetails?.city || (discoveredMeta ? discoveredMeta.city : "") || (isRealDomain ? "Online" : "");
+    const instantCountry = locationDetails?.country || (discoveredMeta ? discoveredMeta.country : "") || "";
+
+    const instantPlace: Place = {
+      id: isRealDomain ? cleanUrl : domain,
+      name: instantName,
+      category: (discoveredMeta?.category && !discoveredMeta.category.toLowerCase().includes("verified")) ? discoveredMeta.category : (isRealDomain ? "Verified Business" : "Local Business"),
+      categoryType: "all",
+      address: discoveredMeta?.address || (instantCity ? `${instantCity}${instantCountry ? ', ' + instantCountry : ''}` : ""),
+      city: instantCity,
+      country: instantCountry,
+      lat: discoveredMeta?.lat || 0,
+      lng: discoveredMeta?.lng || 0,
+      rating: 5,
+      totalReviews: 0,
+      ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      avatarUrl: instantLogo,
+      logoUrl: instantLogo,
+      bannerUrl: instantBanner,
+      ogImage: instantBanner,
+      photos: instantBanner ? [instantBanner] : [],
+      openingHours: discoveredMeta?.openingHours || "Available 24/7",
+      isOpen: true,
+      phone: discoveredMeta?.phone || "",
+      website: (discoveredMeta?.url && isValidDomainUrl(discoveredMeta.url) && !discoveredMeta.url.toLowerCase().includes('wikipedia.org')) ? discoveredMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
+      priceRange: "N/A",
+      plusCode: "",
+      description: discoveredMeta?.description || "",
+      popularKeywords: [],
+      amenities: [],
+      topDishes: [],
+      brandDomain: isRealDomain ? cleanUrl : (discoveredMeta?.domain || "")
+    };
+
+    if (currentRequestId !== searchRequestIdRef.current) return;
+
+    let currentPlace: Place = instantPlace;
+    setSearchedPlace(currentPlace);
+    if (onAddPlace) {
+      onAddPlace(currentPlace);
+    }
+    if (onOpenPlace) {
+      onOpenPlace(currentPlace.id);
+    }
+
     try {
-      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
-      const isRealDomain = isValidDomainUrl(cleanUrl);
+      // This is where the "Thinking" happens without blocking the user!
+      setIsEnriching(true);
+      
+      const performEnrichment = async () => {
+        try {
+          let finalDomain = cleanUrl;
+          let finalMeta = preloadedMeta;
 
-      const isMetaMatchingCurrent = Boolean(
-        preloadedMeta && (
-          (isRealDomain && preloadedMeta.domain && extractCleanDomain(preloadedMeta.domain) === cleanUrl) ||
-          (preloadedMeta.title && baseName && preloadedMeta.title.toLowerCase().trim() === baseName.toLowerCase().trim())
-        )
-      );
+          // If no domain yet, try to discover it in the background
+          if (!finalDomain) {
+            try {
+              const resolveResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`);
+              if (resolveResp.ok && currentRequestId === searchRequestIdRef.current) {
+                const resolveData = await resolveResp.json();
+                if (resolveData?.domain && isValidDomainUrl(resolveData.domain)) {
+                  finalDomain = resolveData.domain;
+                  finalMeta = resolveData;
+                  console.info("[Search Background] Discovered domain:", finalDomain);
+                }
+              }
+            } catch (e) {}
+          }
 
-      // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
-      const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
-        || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
-        || (isMetaMatchingCurrent && preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
-      const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
-        || (isMetaMatchingCurrent && preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || "";
-      const instantName = preferredName
-        || locationDetails?.rawBusinessName
-        || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-        || (isMetaMatchingCurrent && (preloadedMeta?.title || preloadedMeta?.siteName))
-        || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
-        || baseName
-        || rawQuery;
+          const queryParam = finalDomain ? `url=${encodeURIComponent(finalDomain)}` : `q=${encodeURIComponent(rawQuery)}`;
+          const resp = await fetch(`/api/url-metadata?${queryParam}`);
+          
+          if (currentRequestId !== searchRequestIdRef.current) return;
+          
+          if (resp.ok) {
+            const data = await resp.json();
+            if (currentRequestId !== searchRequestIdRef.current) return;
+            
+            if (data.title || data.domain) {
+              const isValidLogo = (l?: string | null): boolean => {
+                if (!l || typeof l !== "string") return false;
+                if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
+                return true;
+              };
 
-      const instantCity = locationDetails?.city || (isMetaMatchingCurrent ? preloadedMeta?.city : "") || (isRealDomain ? "Online" : "");
-      const instantCountry = locationDetails?.country || (isMetaMatchingCurrent ? preloadedMeta?.country : "") || "";
+              const discoveredDom = (data.domain && isValidDomainUrl(data.domain) && !data.domain.includes('wikipedia.org')) ? data.domain : (finalDomain || "");
+              const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom) : null;
+              const fetchedLogo = isValidLogo(data.logo) 
+                ? data.logo 
+                : (domainCleanLogo || (discoveredDom ? `/api/favicon?domain=${discoveredDom}` : "") || instantLogo);
 
-      const instantPlace: Place = {
-        id: isRealDomain ? cleanUrl : domain,
-        name: instantName,
-        category: (preloadedMeta?.category && !preloadedMeta.category.toLowerCase().includes("verified")) ? preloadedMeta.category : "Website",
-        categoryType: "all",
-        address: preloadedMeta?.address || (instantCity ? `${instantCity}${instantCountry ? ', ' + instantCountry : ''}` : ""),
-        city: instantCity,
-        country: instantCountry,
-        lat: preloadedMeta?.lat || 0,
-        lng: preloadedMeta?.lng || 0,
-        rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: instantLogo,
-        logoUrl: instantLogo,
-        bannerUrl: instantBanner,
-        ogImage: instantBanner,
-        photos: instantBanner ? [instantBanner] : [],
-        openingHours: preloadedMeta?.openingHours || "Available 24/7",
-        isOpen: true,
-        phone: preloadedMeta?.phone || "",
-        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org')) ? preloadedMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
-        priceRange: "N/A",
-        plusCode: "",
-        description: preloadedMeta?.description || "",
-        popularKeywords: [],
-        amenities: [],
-        topDishes: [],
-        brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || "")
+              const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
+                ? data.image 
+                : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
+              
+              const targetName = preferredName
+                || locationDetails?.rawBusinessName
+                || (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
+                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+                || data.title 
+                || data.siteName 
+                || instantName;
+
+              const updatedPlace: Place = {
+                ...instantPlace,
+                id: discoveredDom || instantPlace.id,
+                name: targetName || instantPlace.name,
+                category: (data.category && !data.category.toLowerCase().includes("verified")) ? data.category : instantPlace.category,
+                address: data.address || instantPlace.address,
+                city: data.city || instantPlace.city,
+                country: data.country || instantPlace.country,
+                lat: data.lat || instantPlace.lat,
+                lng: data.lng || instantPlace.lng,
+                logoUrl: fetchedLogo || instantLogo,
+                avatarUrl: fetchedLogo || instantLogo,
+                bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
+                ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
+                photos: fetchedBanner ? [fetchedBanner] : (instantBanner ? [instantBanner] : []),
+                description: instantPlace.description || data.description || "",
+                phone: instantPlace.phone || data.phone || "",
+                email: instantPlace.email || data.email || "",
+                website: (data.url && isValidDomainUrl(data.url) && !data.url.toLowerCase().includes('wikipedia.org')) ? data.url : (discoveredDom ? `https://${discoveredDom}` : instantPlace.website),
+                openingHours: data.openingHours || instantPlace.openingHours,
+                brandDomain: discoveredDom || instantPlace.brandDomain
+              };
+
+              setSearchedPlace(updatedPlace);
+              if (onAddPlace) {
+                onAddPlace(updatedPlace);
+              }
+              
+              // If domain changed, re-open with new ID to ensure routes match
+              if (discoveredDom && discoveredDom !== instantPlace.id && onOpenPlace) {
+                onOpenPlace(discoveredDom);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[Search Background] Enrichment error:", err);
+        } finally {
+          if (currentRequestId === searchRequestIdRef.current) {
+            setIsEnriching(false);
+          }
+        }
       };
 
-      if (currentRequestId !== searchRequestIdRef.current) return;
-
-      let currentPlace: Place = instantPlace;
-      setSearchedPlace(currentPlace);
-      if (onAddPlace) {
-        onAddPlace(currentPlace);
-      }
-      if (onOpenPlace) {
-        onOpenPlace(currentPlace.id);
-      }
-      
-      // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
-      setIsEnriching(true);
-      try {
-         const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
-         const resp = await fetch(`/api/url-metadata?${queryParam}`);
-         if (currentRequestId !== searchRequestIdRef.current) return;
-         if (resp.ok) {
-           const data = await resp.json();
-           if (currentRequestId !== searchRequestIdRef.current) return;
-           if (data.title || data.domain) {
-             const isValidLogo = (l?: string | null): boolean => {
-               if (!l || typeof l !== "string") return false;
-               if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
-               return true;
-             };
-
-             const discoveredDom = (data.domain && isValidDomainUrl(data.domain) && !data.domain.includes('wikipedia.org')) ? data.domain : (isRealDomain ? cleanUrl : "");
-             const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom) : null;
-             const fetchedLogo = isValidLogo(data.logo) 
-               ? data.logo 
-               : (domainCleanLogo || (discoveredDom ? `/api/favicon?domain=${discoveredDom}` : "") || instantLogo);
-
-             const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
-               ? data.image 
-               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
-             
-             const targetName = preferredName
-               || locationDetails?.rawBusinessName
-               || (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
-               || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
-               || (!isGenericPlaceName(currentPlace.name) ? currentPlace.name : "")
-               || formatBusinessName(data.siteName || data.title, data.domain || discoveredDom)
-               || formatBusinessName(discoveredDom)
-               || instantName;
-
-             const updatedPlace: Place = {
-               ...currentPlace,
-               id: discoveredDom || currentPlace.id,
-               brandDomain: discoveredDom || "",
-               website: (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org')) 
-                 ? data.url 
-                 : (discoveredDom ? `https://${discoveredDom}` : ""),
-               name: targetName || currentPlace.name,
-               logoUrl: fetchedLogo || instantLogo,
-               avatarUrl: fetchedLogo || instantLogo,
-               bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
-               ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
-               photos: fetchedBanner ? [fetchedBanner] : (instantBanner ? [instantBanner] : []),
-               description: currentPlace.description || data.description || "",
-               category: (currentPlace.category && currentPlace.category !== "Website" && currentPlace.category !== "General") ? currentPlace.category : (data.category || currentPlace.category || "Website"),
-               address: (data.address && (!currentPlace.address || currentPlace.address === "Verified Location" || currentPlace.address.startsWith("http"))) ? data.address : (currentPlace.address || data.address || ""),
-               city: locationDetails?.city || ((currentPlace.city && currentPlace.city !== "Online" && currentPlace.city !== "Worldwide") ? currentPlace.city : (data.city || currentPlace.city || "")),
-               country: locationDetails?.country || currentPlace.country || data.country || "",
-               phone: currentPlace.phone || data.phone || "",
-               email: currentPlace.email || data.email || "",
-               openingHours: data.openingHours || currentPlace.openingHours || (data.hours || currentPlace.hours || "Available 24/7"),
-               hours: data.openingHours || currentPlace.openingHours || (data.hours || currentPlace.hours || "Available 24/7"),
-               locations: (data.locations && data.locations.length > 0) ? data.locations : (currentPlace.locations || [])
-             };
-             currentPlace = updatedPlace; if (currentRequestId !== searchRequestIdRef.current) return;
-             setSearchedPlace(updatedPlace);
-             if (onAddPlace) {
-               onAddPlace(updatedPlace);
-             }
-             if (discoveredDom && onOpenPlace) {
-               onOpenPlace(discoveredDom);
-             }
-           }
-         }
-      } catch (err) {
-         console.warn("Metadata fetch error:", err);
-      } finally {
-         if (currentRequestId === searchRequestIdRef.current) setIsEnriching(false);
-      }
+      performEnrichment();
     } catch (err) {
       console.error(err);
     } finally {
