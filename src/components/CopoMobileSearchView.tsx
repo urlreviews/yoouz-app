@@ -105,7 +105,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
         if (resp.ok) {
           const data = await resp.json();
-          setLiveSuggestions(data.suggestions || []);
+          const suggestions = data.suggestions || [];
+          setLiveSuggestions(suggestions);
+
+          // Predictive Pre-loading: Silently resolve the top suggestion's domain in the background
+          const topSuggest = suggestions[0];
+          if (topSuggest && !topSuggest.domain && topSuggest.title && topSuggest.source !== "database") {
+            fetch(`/api/url-metadata?q=${encodeURIComponent(topSuggest.title)}&resolveOnly=true`).catch(() => {});
+          }
         }
       } catch (err) {}
     }, 120);
@@ -362,6 +369,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
+      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
       const optimisticPlace: Place = {
         id: isRealDomain ? cleanUrl.toLowerCase() : domain,
         name: instantName,

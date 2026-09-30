@@ -1060,36 +1060,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
         ) : (
-          <div 
-            className="absolute inset-0 w-full h-full border-b border-zinc-800/80 flex items-center justify-center overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 55%, ${brandGrad.to} 100%)`
-            }}
-          >
-            {/* Ambient Animated Radial Flare */}
-            <div 
-              className="absolute inset-0 opacity-80 pointer-events-none animate-pulse duration-[4000ms]" 
-              style={{
-                background: `radial-gradient(ellipse at 75% 30%, ${brandGrad.glow || 'rgba(99,102,241,0.45)'} 0%, transparent 60%)`
-              }}
-            />
-            
-            {/* Geometric Mesh Texture Overlay */}
-            <div 
-              className="absolute inset-0 opacity-15 pointer-events-none"
-              style={{
-                backgroundImage: `radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)`,
-                backgroundSize: `20px 20px`
-              }}
-            />
-
-            {/* Subtle Translucent Brand Initials Watermark in Background */}
-            <div className="absolute right-6 -bottom-4 select-none pointer-events-none opacity-15 font-black text-7xl sm:text-9xl tracking-tighter text-white uppercase italic">
-              {(drawerDomain || place.brandDomain || displayedPlaceName || "Yoouz").replace(/^www\./, "").slice(0, 3)}
-            </div>
-
-            {/* Bottom edge shadow gradient for seamless contrast */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 overflow-hidden">
+            <div className="w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
           </div>
         )}
 

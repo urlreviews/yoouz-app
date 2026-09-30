@@ -110,6 +110,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             }
           }
           setSuggestions(merged.slice(0, 8));
+
+          // Predictive Pre-loading: Silently resolve the top suggestion's domain in the background
+          const topSuggest = merged[0];
+          if (topSuggest && !topSuggest.domain && topSuggest.title && topSuggest.source !== "database") {
+            fetch(`/api/url-metadata?q=${encodeURIComponent(topSuggest.title)}&resolveOnly=true`).catch(() => {});
+          }
         }
       } catch (err) {
       } finally {
@@ -312,30 +318,31 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
 
     // 2. Non-blocking Background Domain Resolution
-    // Instead of awaiting resolution, we proceed with an optimistic match.
-    // This makes the search feel "Instant" (0ms wait time).
+    // Instead of awaiting resolution, we proceed with an optimistic match ONLY IF we have a real domain.
+    // Otherwise, we wait for enrichment to avoid "fake" URLs and data.
     let discoveredMeta = preloadedMeta;
     
     setQuery(baseName || rawQuery);
-    setIsSearching(true);
-
-    const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    const isMetaMatchingCurrent = Boolean(
-      discoveredMeta && (
-        (isRealDomain && discoveredMeta.domain && extractCleanDomain(discoveredMeta.domain) === cleanUrl) ||
-        (discoveredMeta.title && baseName && discoveredMeta.title.toLowerCase().trim() === baseName.toLowerCase().trim())
-      )
-    );
+    // CRITICAL: If no real domain yet, we don't open the drawer with a "fake" ID.
+    // Instead, we show the searching state and wait for the background discovery (which is now faster).
+    if (!isRealDomain && !discoveredMeta) {
+      setIsSearching(true);
+    }
+
+    const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
 
     // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
     const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
       || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
       || (discoveredMeta?.logo && !discoveredMeta.logo.includes('brandfetch') && !discoveredMeta.logo.startsWith('data:;') ? discoveredMeta.logo : "");
+    
+    // NO FAKE BANNERS: If no real banner, leave it empty for the shimmering skeleton to handle.
     const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
       || (discoveredMeta?.image && !discoveredMeta.image.includes('unsplash.com') ? discoveredMeta.image : "") 
       || "";
+
     const instantName = preferredName
       || locationDetails?.rawBusinessName
       || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
@@ -381,16 +388,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (currentRequestId !== searchRequestIdRef.current) return;
 
     let currentPlace: Place = instantPlace;
-    setSearchedPlace(currentPlace);
-    if (onAddPlace) {
-      onAddPlace(currentPlace);
-    }
-    if (onOpenPlace) {
-      onOpenPlace(currentPlace.id);
+    
+    // Only set and open if we have something "Real" (Domain or Preloaded Meta)
+    if (isRealDomain || discoveredMeta) {
+      setSearchedPlace(currentPlace);
+      if (onAddPlace) {
+        onAddPlace(currentPlace);
+      }
+      if (onOpenPlace) {
+        onOpenPlace(currentPlace.id);
+      }
+      setIsSearching(false);
     }
 
     try {
-      // This is where the "Thinking" happens without blocking the user!
+      // 3. Background Enrichment & Domain Discovery
+      // This is where the "Thinking" happens without blocking the user if we already opened!
       setIsEnriching(true);
       
       const performEnrichment = async () => {
