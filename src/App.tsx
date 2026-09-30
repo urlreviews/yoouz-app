@@ -5861,21 +5861,39 @@ export function App() {
     if (!updatedPlace || !updatedPlace.id) return;
     const updatedSlug = getPlaceSlug(updatedPlace.id);
     const updatedDomain = extractCleanDomain(updatedPlace.brandDomain || updatedPlace.website || updatedPlace.id);
+    const updatedName = (updatedPlace.name || "").toLowerCase().trim();
 
     setPlaces((prev) => {
       let matched = false;
       const nextList = prev.map((p) => {
         const pSlug = getPlaceSlug(p.id);
         const pDomain = extractCleanDomain(p.brandDomain || p.website || p.id);
+        const pName = (p.name || "").toLowerCase().trim();
+
         const isMatch = p.id === updatedPlace.id || 
                         (updatedSlug && pSlug === updatedSlug) || 
                         (updatedDomain && pDomain === updatedDomain);
+        
         if (isMatch) {
           matched = true;
+          
+          // Safety: If the names are significantly different, it might be a different business 
+          // that the search engine incorrectly mapped to the same domain. 
+          // In this case, we MUST NOT keep the old banner/logo if the new one is missing, 
+          // because it causes "ghost" images from previous businesses.
+          const isNameDrasticallyDifferent = updatedName && pName && 
+            !updatedName.includes(pName) && !pName.includes(updatedName) &&
+            updatedName.length > 3 && pName.length > 3;
+
           return {
             ...p,
             ...updatedPlace,
-            id: updatedPlace.id || p.id
+            id: updatedPlace.id || p.id,
+            // If the name changed significantly, reset images to prevent ghosting
+            bannerUrl: isNameDrasticallyDifferent ? (updatedPlace.bannerUrl || "") : (updatedPlace.bannerUrl || p.bannerUrl),
+            ogImage: isNameDrasticallyDifferent ? (updatedPlace.ogImage || "") : (updatedPlace.ogImage || p.ogImage),
+            logoUrl: isNameDrasticallyDifferent ? (updatedPlace.logoUrl || "") : (updatedPlace.logoUrl || p.logoUrl),
+            avatarUrl: isNameDrasticallyDifferent ? (updatedPlace.avatarUrl || "") : (updatedPlace.avatarUrl || p.avatarUrl)
           };
         }
         return p;
@@ -6499,6 +6517,7 @@ export function App() {
             key={searchResetKey}
             places={places}
             videos={videos}
+            onAddPlace={handleUpdatePlace}
             onSelectVideo={(id) => {
               setIsSearchModalOpen(false);
               handleSelectVideoById(id);
@@ -6857,30 +6876,7 @@ export function App() {
                     setIsCreateModalOpen(true);
                   }
                 }}
-                onAddPlace={(newPlace) => {
-                  if (!newPlace) return;
-                  const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
-                  const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
-                  
-                  // Mirror to BunnyDB database immediately
-                  fetch(`/api/nosql/places/${cleanPlace.id}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ data: cleanPlace, merge: true })
-                  }).catch(() => {});
-
-                  // Persist to BunnyDB immediately so it's "already saved" as per user request
-
-
-                  setPlaces((prev) => {
-                    const map = new Map<string, Place>();
-                    map.set(cleanPlace.id, cleanPlace);
-                    prev.forEach((p) => {
-                      if (!map.has(p.id)) map.set(p.id, p);
-                    });
-                    return Array.from(map.values());
-                  });
-                }}
+                onAddPlace={handleUpdatePlace}
               />
             )}
             {activeSection === "record_review" && (
@@ -6902,30 +6898,7 @@ export function App() {
                     setIsCreateModalOpen(true);
                   }
                 }}
-                onAddPlace={(newPlace) => {
-                  if (!newPlace) return;
-                  const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
-                  const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
-
-                  // Mirror to BunnyDB database immediately
-                  fetch(`/api/nosql/places/${cleanPlace.id}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ data: cleanPlace, merge: true })
-                  }).catch(() => {});
-
-                  // Persist to BunnyDB immediately so it's "already saved" as per user request
-
-
-                  setPlaces((prev) => {
-                    const map = new Map<string, Place>();
-                    map.set(cleanPlace.id, cleanPlace);
-                    prev.forEach((p) => {
-                      if (!map.has(p.id)) map.set(p.id, p);
-                    });
-                    return Array.from(map.values());
-                  });
-                }}
+                onAddPlace={handleUpdatePlace}
               />
             )}
 

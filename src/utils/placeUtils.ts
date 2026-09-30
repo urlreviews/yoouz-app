@@ -480,6 +480,8 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "ידיעות אחרונות": "ידיעות אחרונות",
   "ידעות אחרונות": "ידיעות אחרונות",
   "yedioth": "ידיעות אחרונות",
+  "נועה הבית": "נועה הבית לאירועים",
+  "נועה הבית לאירועים": "נועה הבית לאירועים",
   "yust.com": "Yust Liege Hotel",
   "davidchantraine.be": "David Chantraine Eupen",
   "autowerkplaatsbrugge.be": "Auto Werkplaats Brugge",

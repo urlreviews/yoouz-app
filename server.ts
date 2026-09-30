@@ -19268,18 +19268,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (bunnyDb) {
       try {
         const cleanQDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-        const isDomainQuery = cleanQDom.includes('.');
-        // Strict Search: ONLY match exact domain or exact full business name (never loose partial LIKE matches that cross-contaminate searches)
-        const dbResult = await bunnyDb.execute({
-          sql: isDomainQuery 
-            ? `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
-               WHERE LOWER(id) = ? OR LOWER(id) = ? 
-               LIMIT 1`
-            : `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
-               WHERE LOWER(name) = ? 
-               LIMIT 1`,
-          args: isDomainQuery ? [cleanQDom, `www.${cleanQDom}`] : [cleanQ.toLowerCase()]
-        });
+        // ONLY allow database lookup by exact domain/ID. 
+        // Name-based lookup in the "Global Brain" is dangerous as it leads to cross-contamination 
+        // if a business name is generic or if a record was previously corrupted with a wrong name.
+        if (cleanQDom.includes('.') && !cleanQ.includes(' ')) {
+          const dbResult = await bunnyDb.execute({
+            sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
+                  WHERE LOWER(id) = ? OR LOWER(id) = ? 
+                  LIMIT 1`,
+            args: [cleanQDom, `www.${cleanQDom}`]
+          });
         
         if (dbResult.rows && dbResult.rows.length > 0) {
           const row = dbResult.rows[0];
@@ -19309,29 +19307,30 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               console.info(`[Database Cache] Ignored low-quality generic cache for: ${rowName}`);
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
-              const data: ResolvedBusinessData = {
-                domain: rowId,
-                websiteUrl: (parsedData.website || parsedData.url || parsedData.websiteUrl || `https://${rowId}`),
-                name: rowName,
-                category: (row.category as string) || parsedData.category || "Verified Business",
-                address: (row.address as string) || parsedData.address || "",
-                city: (row.city as string) || parsedData.city || "Online",
-                country: (row.country as string) || parsedData.country || "",
-                phone: (parsedData.phone || "") as string,
-                email: (parsedData.email || "") as string,
-                openingHours: (parsedData.openingHours || "Available 24/7") as string,
-                photo: (row.logoUrl as string) || parsedData.logo || parsedData.image || parsedData.ogImage || "",
-                description: (parsedData.description || "") as string,
-                lat: Number(row.latitude) || 0,
-                lng: Number(row.longitude) || 0
-              };
-              BUSINESS_QUERY_CACHE.set(cacheKey, { data, timestamp: Date.now() });
-              return data;
+                const result: ResolvedBusinessData = {
+                  domain: rowId,
+                  websiteUrl: parsedData.website || `https://${rowId}`,
+                  name: rowName,
+                  category: (row.category as string) || parsedData.category || "Verified Business",
+                  address: (row.address as string) || parsedData.address || "",
+                  city: (row.city as string) || parsedData.city || "Online",
+                  country: (row.country as string) || parsedData.country || "",
+                  phone: (parsedData.phone || "") as string,
+                  email: (parsedData.email || "") as string,
+                  openingHours: (parsedData.openingHours || "Available 24/7") as string,
+                  photo: (row.logoUrl as string) || parsedData.logo || parsedData.image || parsedData.ogImage || "",
+                  description: (parsedData.description || "") as string,
+                  lat: Number(row.latitude) || 0,
+                  lng: Number(row.longitude) || 0
+                };
+                BUSINESS_QUERY_CACHE.set(cacheKey, { data: result, timestamp: Date.now() });
+                return result;
+              }
             }
           }
         }
       } catch (dbErr) {
-        console.warn("[Global Brain Cache Error]:", dbErr);
+        console.warn("[UrlMetadata Global Brain Error]:", dbErr);
       }
     }
 
@@ -21161,9 +21160,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } catch(e) {}
 
             const cleanDomainExact = cleanDomain.toLowerCase();
+            
+            // Protection: If the existing name is already a high-quality name, don't let it be overwritten by a generic title
+            const existingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
+            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 3;
+
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
-              || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId);
+              || (isExistingNameGood ? existingName : formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId));
 
             // Detect and discard corrupt/scraped garbled text in address (e.g. "st Bestellen Contact...", "st un établissement...", "st Wortelkanaalbehandeling...")
             const isCorruptAddress = (addr: string) => {
