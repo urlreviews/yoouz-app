@@ -108,18 +108,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           const data = await resp.json();
           const list = data.suggestions || [];
           setLiveSuggestions(list);
-
-          // Background Pre-fetch: Warm cache for each suggestion so selecting ANY option opens instantly with all data
-          for (const item of list.slice(0, 5)) {
-            const dom = item.domain;
-            const title = item.title;
-            const prefetchUrl = dom 
-              ? `/api/url-metadata?url=${encodeURIComponent(`https://${dom}`)}&resolveOnly=true`
-              : (title ? `/api/url-metadata?q=${encodeURIComponent(title)}&resolveOnly=true` : null);
-            if (prefetchUrl) {
-              fetch(prefetchUrl).catch(() => {});
-            }
-          }
         }
       } catch (err) {}
     }, 120);
@@ -363,7 +351,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       console.info("[Search Mobile] Resolving official domain via fast DuckDuckGo path for:", trimmed);
       
       try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}&resolveOnly=true`);
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(trimmed)}&resolveOnly=true`, {
+          signal: AbortSignal.timeout(7000)
+        });
         if (backendResp.ok) {
           const data = await backendResp.json();
           if (data && data.domain && isValidDomainUrl(data.domain)) {
@@ -619,7 +609,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
       : `/api/url-metadata?q=${encodeURIComponent(title)}`;
 
-    fetch(enrichEndpoint)
+    fetch(enrichEndpoint, { signal: AbortSignal.timeout(8000) })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && onAddPlace) {

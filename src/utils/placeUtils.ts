@@ -214,6 +214,11 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "pbsupercars.com": "PB Supercars",
+  "www.pbsupercars.com": "PB Supercars",
+  "pbsupercars": "PB Supercars",
+  "pb supercar hire": "PB Supercars",
+  "pb supercar": "PB Supercars",
   "swych.co.uk": "Swych Vehicle Leasing",
   "www.swych.co.uk": "Swych Vehicle Leasing",
   "swych": "Swych Vehicle Leasing",

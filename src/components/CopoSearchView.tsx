@@ -111,18 +111,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             }
           }
           setSuggestions(merged.slice(0, 8));
-
-          // Background Pre-fetch: Warm cache for each suggestion so selecting ANY option opens instantly with all data
-          for (const item of merged.slice(0, 5)) {
-            const dom = item.domain;
-            const title = item.title;
-            const prefetchUrl = dom 
-              ? `/api/url-metadata?url=${encodeURIComponent(`https://${dom}`)}&resolveOnly=true`
-              : (title ? `/api/url-metadata?q=${encodeURIComponent(title)}&resolveOnly=true` : null);
-            if (prefetchUrl) {
-              fetch(prefetchUrl).catch(() => {});
-            }
-          }
         }
       } catch (err) {
       } finally {
@@ -338,7 +326,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       console.info("[Search] Resolving official domain via fast DuckDuckGo path for:", rawQuery);
       
       try {
-        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`);
+        const backendResp = await fetch(`/api/url-metadata?q=${encodeURIComponent(rawQuery)}&resolveOnly=true`, {
+          signal: AbortSignal.timeout(7000)
+        });
         if (backendResp.ok) {
           const data = await backendResp.json();
           if (data && data.domain && isValidDomainUrl(data.domain)) {
@@ -446,7 +436,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       setIsEnriching(true);
       try {
          const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
-         const resp = await fetch(`/api/url-metadata?${queryParam}`);
+         const resp = await fetch(`/api/url-metadata?${queryParam}`, {
+           signal: AbortSignal.timeout(8000)
+         });
          if (currentRequestId !== searchRequestIdRef.current) return;
          if (resp.ok) {
            const data = await resp.json();

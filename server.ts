@@ -19857,7 +19857,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.setHeader("Expires", "0");
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
-      if (!rawQuery) return res.status(400).json({ error: 'Missing url parameter' });
+      if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
 
       const resolveOnly = req.query.resolveOnly === 'true';
       const forceRefresh = req.query.refresh === 'true' || req.query.nocache === 'true';
