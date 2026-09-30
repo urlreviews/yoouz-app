@@ -58,9 +58,9 @@ async function scrapeWithFirecrawl(url: string) {
           url,
           formats: ['html', 'markdown'],
           onlyMainContent: false,
-          waitFor: 1000
+          waitFor: 0 // NO DELAY: We need speed for the "Instant" experience.
         }),
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
       });
 
       if (!response.ok) {
@@ -19356,77 +19356,58 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let domLng = loc?.lng || 0;
 
       try {
-        const protocols = [`https://${cleanDom}`, `http://${cleanDom}`, `https://www.${cleanDom}`];
-        for (const targetUrl of protocols) {
-          try {
-            console.log(`[Firecrawl] Scraping official domain candidate: ${targetUrl}`);
-            const scrapeData = await scrapeWithFirecrawl(targetUrl).catch(() => null);
-            
-            if (scrapeData && scrapeData.html) {
-              const dHtml = scrapeData.html;
-              const d$ = cheerio.load(dHtml);
-              
-              const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeData.metadata?.title;
-              if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
-                domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
-              }
-              
-              const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
-              if (ogDesc && ogDesc.trim().length > 10) {
-                domDesc = ogDesc.trim();
-              } else if (!domDesc) {
-                const firstP = d$('main p, article p, .about p, #about p, p').first().text().trim();
-                if (firstP && firstP.length > 20 && firstP.length < 350) {
-                  domDesc = firstP;
-                }
-              }
-              
-              const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
-                try {
-                  domPhoto = new URL(ogImg, targetUrl).toString();
-                } catch(e) {
-                  domPhoto = ogImg;
-                }
-              }
+        console.log(`[Discovery] Resolving domain via Parallel High-Speed Engine: ${cleanDom}`);
+        
+        // 1. Parallel Enrichment: Fire Scrape and Search Intelligence at the SAME TIME
+        // This is the "Technically Instant" technology.
+        const [scrapeResult, intelResult] = await Promise.all([
+           // Attempt 1: Direct scrape (highest fidelity)
+           scrapeWithFirecrawl(`https://${cleanDom}`).catch(() => null),
+           // Attempt 2: Search Intelligence (fastest metadata)
+           fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(`${cleanDom} contact phone address official`), {
+             headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" },
+             signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+           }).then(r => r.ok ? r.text() : null).catch(() => null)
+        ]);
 
-              // Extract high-resolution Logo from img tags inside webpage HTML (never favicons)
-              let scrapedLogo = "";
-              d$('img').each((_, el) => {
-                const src = d$(el).attr('src') || d$(el).attr('data-src') || d$(el).attr('data-lazy-src') || d$(el).attr('data-original') || '';
-                const alt = d$(el).attr('alt') || '';
-                if (!src || src.startsWith('data:') || src.toLowerCase().includes('favicon') || src.toLowerCase().includes('.ico')) return;
-                
-                const lowerSrc = src.toLowerCase();
-                const lowerAlt = alt.toLowerCase();
-                
-                if (lowerSrc.includes('logo') || lowerAlt.includes('logo') || lowerSrc.includes('brand') || lowerAlt.includes('brand')) {
-                  if (!scrapedLogo && !lowerSrc.includes('60x') && !lowerSrc.includes('32x') && !lowerSrc.includes('16x')) {
-                    try {
-                      scrapedLogo = new URL(src, targetUrl).toString();
-                    } catch (e) {
-                      scrapedLogo = src;
-                    }
-                  }
-                }
-              });
-              if (scrapedLogo) domLogo = scrapedLogo;
-              
-              const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, targetUrl, cleanDom);
-              if (scrapedLoc.address && (!domAddress || domAddress === "Verified Location")) domAddress = scrapedLoc.address;
-              if (scrapedLoc.city && (!domCity || domCity === "Online")) domCity = scrapedLoc.city;
-              if (scrapedLoc.country && !domCountry) domCountry = scrapedLoc.country;
-              if (scrapedLoc.phone && !domPhone) domPhone = scrapedLoc.phone;
-              if (scrapedLoc.email && !domEmail) domEmail = scrapedLoc.email;
-              if (scrapedLoc.category && (!domCategory || domCategory === "Website")) domCategory = scrapedLoc.category;
-              if (scrapedLoc.openingHours && (!domOpeningHours || domOpeningHours === "Available 24/7")) domOpeningHours = scrapedLoc.openingHours;
-              if (scrapedLoc.lat && !domLat) domLat = scrapedLoc.lat;
-              if (scrapedLoc.lng && !domLng) domLng = scrapedLoc.lng;
-              break;
-            }
-          } catch(errProtocol) {}
+        if (scrapeResult && scrapeResult.html) {
+           const dHtml = scrapeResult.html;
+           const d$ = cheerio.load(dHtml);
+           
+           const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeResult.metadata?.title;
+           if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
+             domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
+           }
+           
+           const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content') || scrapeResult.metadata?.description;
+           if (ogDesc && ogDesc.trim().length > 10) {
+             domDesc = ogDesc.trim();
+           }
+
+           const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeResult.metadata?.ogImage;
+           if (ogImg && !ogImg.includes('placeholder')) domPhoto = ogImg;
+
+           const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, `https://${cleanDom}`, cleanDom);
+           if (scrapedLoc.address) domAddress = scrapedLoc.address;
+           if (scrapedLoc.phone) domPhone = scrapedLoc.phone;
+           if (scrapedLoc.email) domEmail = scrapedLoc.email;
         }
-      } catch (scrapeErr) {}
+
+        if (intelResult && (!domDesc || !domPhone || !domAddress)) {
+           const i$ = cheerio.load(intelResult);
+           let snippets: string[] = [];
+           i$(".result__snippet").each((_, el) => { snippets.push(i$(el).text().trim()); });
+           const combinedText = snippets.join(" ");
+           
+           if (!domDesc) domDesc = snippets.find(s => s.length > 30) || "";
+           if (!domPhone) {
+             const pMatch = combinedText.match(/(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/);
+             if (pMatch) domPhone = pMatch[0];
+           }
+        }
+      } catch (scrapeErr) {
+         console.error("[Parallel Discovery Error]:", scrapeErr.message);
+      }
 
       // Fallback: If site was protected by CAPTCHA/bot shield or lacked contact info, enrich via search engine intelligence
       if (!domDesc || !domPhone || !domEmail || domAddress === "Verified Location" || isGenericPlaceNameServer(domTitle)) {

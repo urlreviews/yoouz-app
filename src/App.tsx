@@ -3683,11 +3683,12 @@ export function App() {
         found = synthesizePlaceFromReview(matchingVideo, places);
       } else {
         const domain = extractCleanDomain(searchId);
+        const isRealDomain = isValidDomainUrl(domain);
         found = {
           id: searchId,
-          name: domain || searchId,
+          name: isRealDomain ? formatBusinessName(domain) : searchId,
           brandDomain: domain || undefined,
-          category: "Establishment",
+          category: isRealDomain ? "Verified Business" : "Local Business",
           categoryType: "all",
           address: "",
           city: "",
@@ -3699,20 +3700,22 @@ export function App() {
           openingHours: "",
           isOpen: undefined,
           phone: "",
-          website: domain ? `https://${domain}` : "",
-          priceRange: "$",
+          website: isRealDomain ? `https://${domain}` : "",
+          priceRange: "N/A",
           plusCode: "",
-          description: getEffectivePlaceDescription({ name: domain || searchId, domain: domain, website: domain ? `https://${domain}` : "" }),
-          popularKeywords: [{ tag: "Verified", count: 1 }],
-          amenities: ["Wheelchair accessible entrance"],
+          description: "",
+          popularKeywords: [],
+          amenities: [],
           topDishes: [],
           lat: 0,
           lng: 0,
-          bannerUrl: "",
-          ogImage: "",
-          avatarUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
-          logoUrl: domain ? getCleanLogoUrl(null, domain) || "" : "",
-          isSavedToProfile: true
+          bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+          avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+          isSavedToProfile: true,
+          isSkeleton: true,
+          isSynthetic: true
         } as Place;
       }
     }

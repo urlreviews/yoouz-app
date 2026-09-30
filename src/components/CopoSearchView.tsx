@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getDomainBrandGradient, getProxiedImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -111,17 +111,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           }
           setSuggestions(merged.slice(0, 8));
 
-          // Predictive Pre-loading: Silently resolve the top suggestion's domain in the background
+          // Aggressive Predictive Pre-loading: 
+          // If the top suggestion is high-confidence, trigger a full background enrichment 
+          // before the user even clicks. This makes the final Search feel "Technically Instant".
           const topSuggest = merged[0];
-          if (topSuggest && !topSuggest.domain && topSuggest.title && topSuggest.source !== "database") {
-            fetch(`/api/url-metadata?q=${encodeURIComponent(topSuggest.title)}&resolveOnly=true`).catch(() => {});
+          if (topSuggest && topSuggest.source !== "database") {
+            const prefetchQuery = (topSuggest.domain && isValidDomainUrl(topSuggest.domain)) 
+              ? `url=${encodeURIComponent(topSuggest.domain)}` 
+              : `q=${encodeURIComponent(topSuggest.title)}`;
+            
+            // Trigger pre-warming and pre-fetch images
+            fetch(`/api/url-metadata?${prefetchQuery}`)
+              .then(r => r.ok ? r.json() : null)
+              .then(data => {
+                if (data && (data.image || data.logo)) {
+                  // Pre-warm browser image cache
+                  if (data.image) new Image().src = getProxiedImageUrl(data.image);
+                  if (data.logo) new Image().src = getProxiedImageUrl(data.logo);
+                  console.info("[Search Predictive] Pre-warmed images for:", topSuggest.title);
+                }
+              })
+              .catch(() => {});
           }
         }
       } catch (err) {
       } finally {
         setIsLoadingSuggest(false);
       }
-    }, 120);
+    }, 80); // Reduced delay for even faster feedback
 
     return () => clearTimeout(timer);
   }, [query, places]);
@@ -221,7 +238,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     setIsSearching(true); // Always show activity initially
 
     const baseName = (locationDetails?.rawBusinessName || preferredName || cleanRawQuery).trim();
-    const cleanUrlFromRaw = extractCleanDomain(rawQuery);
+    const cleanUrlFromRaw = extractCleanDomain(cleanRawQuery);
     const cleanUrlFromBase = extractCleanDomain(baseName);
     let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");
 
@@ -337,9 +354,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
 
     // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
-    const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
-      || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
-      || (discoveredMeta?.logo && !discoveredMeta.logo.includes('brandfetch') && !discoveredMeta.logo.startsWith('data:;') ? discoveredMeta.logo : "");
+    // NO FAKE LOGOS: Only use if authoritative or pre-fetched.
+    const instantLogo: string = (isRealDomain && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "") 
+      || (discoveredMeta?.logo && !discoveredMeta.logo.includes('brandfetch') && !discoveredMeta.logo.startsWith('data:;') ? discoveredMeta.logo : "")
+      || "";
     
     // NO FAKE BANNERS: If no real banner, leave it empty for the shimmering skeleton to handle.
     const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
@@ -385,7 +403,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       popularKeywords: [],
       amenities: [],
       topDishes: [],
-      brandDomain: isRealDomain ? cleanUrl : (discoveredMeta?.domain || "")
+      brandDomain: isRealDomain ? cleanUrl : (discoveredMeta?.domain || ""),
+      isSynthetic: !isRealDomain && !discoveredMeta,
+      isSkeleton: !isRealDomain && !discoveredMeta
     };
 
     if (currentRequestId !== searchRequestIdRef.current) return;
