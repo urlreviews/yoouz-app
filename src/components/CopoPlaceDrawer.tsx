@@ -1109,9 +1109,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className="px-6 pt-12 pb-3 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80">
+      <div className="px-6 pt-9 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80">
         {/* Title & Follow Action Bar */}
-        <div className="flex items-start justify-between gap-3 w-full mb-1.5">
+        <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">
             {(() => {
               const fullName = (displayedPlaceName || "").trim();
@@ -1145,7 +1145,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 href={effectiveWebsite || `https://${displayWebsiteClean}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 mb-0.5 transition-colors cursor-pointer group"
+                className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 transition-colors cursor-pointer group"
               >
                 <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
                 <span className="truncate">{displayWebsiteClean}</span>
@@ -1191,20 +1191,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
 
         {/* Rating & Action Hero Showcase Header Box (Premium Tighter Layout) */}
-        <div className="mb-2 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col items-center gap-4 shadow-xl backdrop-blur-sm">
+        <div className="mb-2 p-3.5 sm:p-4.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col items-center gap-3 shadow-xl backdrop-blur-sm">
           {/* Star Rating Row - Consistently aligned on one line */}
-          <div className="flex items-center justify-center gap-3 w-full">
+          <div className="flex items-center justify-center gap-4 w-full">
             {dynamicReviewCount > 0 ? (
               <>
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-white text-2xl leading-none tracking-tighter">
+                <div className="flex items-center gap-2.5">
+                  <span className="font-black text-white text-3xl sm:text-4xl leading-none tracking-tighter">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
                   <div className="flex items-center text-amber-500 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-5 h-5 ${
+                        className={`w-6 h-6 sm:w-7 sm:h-7 ${
                           i < Math.round(dynamicAvgRating)
                             ? "fill-amber-500 text-amber-500"
                             : "fill-zinc-800 text-zinc-700"
@@ -1213,26 +1213,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     ))}
                   </div>
                 </div>
-                <div className="h-4 w-px bg-zinc-800 mx-1" />
-                <span className="text-zinc-400 font-bold text-[10px] uppercase tracking-wider whitespace-nowrap">
+                <div className="h-6 w-px bg-zinc-800 mx-1" />
+                <span className="text-zinc-400 font-bold text-xs uppercase tracking-wider whitespace-nowrap">
                   {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
                 </span>
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-zinc-500 text-2xl leading-none tracking-tighter">0.0</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="font-black text-zinc-500 text-xl sm:text-2xl leading-none tracking-tighter">0.0</span>
                   <div className="flex items-center text-zinc-700 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 fill-none text-zinc-700 stroke-[2]"
+                        className="w-5 h-5 sm:w-6 h-6 fill-none text-zinc-700 stroke-[2.5]"
                       />
                     ))}
                   </div>
                 </div>
-                <div className="h-4 w-px bg-zinc-800 mx-1" />
-                <span className="text-zinc-500 font-bold text-[10px] uppercase tracking-wider">
+                <div className="h-6 w-px bg-zinc-800 mx-1" />
+                <span className="text-zinc-500 font-bold text-xs uppercase tracking-wider">
                   {t("place.noReviews", "No Reviews")}
                 </span>
               </>
@@ -1247,10 +1247,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-xs py-3.5 rounded-xl shadow-[0_4px_20px_rgba(255,255,255,0.05)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer group"
+            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-4.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
           >
-            <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
-            <span className="uppercase tracking-wide">{t("place.recordVideoReview", "Record Review")}</span>
+            <Video className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
+            <span className="uppercase tracking-widest">{t("place.recordVideoReview", "Record Video Review")}</span>
           </button>
         </div>
       </div>
@@ -1677,8 +1677,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {rawPlaceVideos.length === 0 ? (
-                  <div className="text-center py-3 text-xs text-zinc-400 font-medium">
-                    {t("place.noReviewsYetShort", "No video reviews yet.")}
+                  <div className="flex flex-col items-center gap-4 py-4">
+                    <div className="text-center text-xs text-zinc-400 font-medium">
+                      {t("place.noReviewsYetShort", "No video reviews yet.")}
+                    </div>
+                    <button
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        onRecordForPlace(place);
+                      }}
+                      className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-black text-xs py-3.5 rounded-xl border border-zinc-700 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Video className="w-4 h-4 text-white stroke-[2.5]" />
+                      <span className="uppercase tracking-wider">{t("place.recordVideoReview", "Record Video Review")}</span>
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1913,8 +1925,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* 3-Column Video Reviews Grid */}
               {placeVideos.length === 0 ? (
-                <div className="bg-zinc-900 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-200 text-xs">
-                  {t("place.noReviewsMatchFilter", "No video reviews match this filter.")}
+                <div className="flex flex-col items-center gap-6 py-12 px-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/80 text-center">
+                  <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+                    <Video className="w-8 h-8 text-zinc-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYet", "No Video Reviews Yet")}</h3>
+                    <p className="text-xs text-zinc-400 max-w-[200px] mx-auto">
+                      {t("place.beTheFirst", "Be the first to share your experience with a video review.")}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      onRecordForPlace(place);
+                    }}
+                    className="w-full max-w-[240px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Video className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
+                    <span className="uppercase tracking-wider">{t("place.recordVideoReview", "Record Video Review")}</span>
+                  </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-1.5 pt-1">
