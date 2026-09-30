@@ -80,7 +80,7 @@ interface CopoPlaceDrawerProps {
   onClaimBusiness?: (place: Place) => void;
 }
 
-export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = ({
+const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   place,
   allVideos,
   onClose,
@@ -2790,5 +2790,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       )}
     </>
   );
-}; // End of CopoPlaceDrawer
+}; // End of CopoPlaceDrawerComponent
+
+/**
+ * Enhanced Profile Drawer with Identity Lock.
+ * Using a unique 'key' based on the place ID forces React to perform a Hard Reset
+ * of the entire component (images, state, errors) whenever a new business is opened.
+ * This guarantees zero memory leakage from previous businesses.
+ */
+export const CopoPlaceDrawer: React.FC<CopoPlaceDrawerProps> = (props) => {
+  const resetKey = props.place?.id || "empty";
+  return <CopoPlaceDrawerComponent key={resetKey} {...props} />;
+};
 

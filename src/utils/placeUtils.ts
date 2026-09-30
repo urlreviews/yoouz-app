@@ -842,6 +842,12 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (trimmed.startsWith("rev") && (/^rev\d+/i.test(trimmed) || /^rev[0-9a-f]{8,}/i.test(trimmed) || trimmed.includes("rev17895"))) {
     return "Yoouz";
   }
+
+  // 0. If it looks like a multi-word human name (Hebrew/English), preserve EXACT order!
+  // This prevents flipping "נועה הבית לאירועים" -> "לאירועים נועה הבית"
+  if (trimmed.includes(" ") && trimmed.length < 60 && !trimmed.includes("|") && !trimmed.includes("- ")) {
+    return trimmed;
+  }
   
   // Quick lookup of trimmed normalized key
   const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");

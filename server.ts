@@ -170,7 +170,8 @@ async function persistToDb(data: ResolvedBusinessData) {
               longitude = EXCLUDED.longitude,
               logoUrl = EXCLUDED.logoUrl,
               data = EXCLUDED.data,
-              updatedAt = CURRENT_TIMESTAMP`,
+              updatedAt = CURRENT_TIMESTAMP
+            WHERE LOWER(places.id) = LOWER(EXCLUDED.id)`,
       args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
     });
   } catch(e) {
@@ -21255,7 +21256,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       longitude = ?,
                       data = ?,
                       updatedAt = CURRENT_TIMESTAMP
-                    WHERE id = ?`,
+                    WHERE LOWER(id) = LOWER(?)`,
               args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
             }).catch(e => console.error("[Scraper DB Update Error]:", e));
             image = mergedBanner || image;
@@ -25206,6 +25207,12 @@ function formatBusinessName(name?: string | null, domain?: string | null): strin
     return "Yoouz";
   }
   
+  // 0. If it looks like a multi-word human name (Hebrew/English), preserve EXACT order!
+  // This prevents flipping "נועה הבית לאירועים" -> "לאירועים נועה הבית"
+  if (trimmed.includes(" ") && trimmed.length < 60 && !trimmed.includes("|") && !trimmed.includes("- ")) {
+    return trimmed;
+  }
+
   const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");
   if (KNOWN_OFFICIAL_NAMES[normalizedKey]) {
     return KNOWN_OFFICIAL_NAMES[normalizedKey];
