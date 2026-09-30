@@ -116,13 +116,13 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   // to avoid the network fetch flicker.
   useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
+  const [isEnriching, setIsEnriching] = useState(false);
   const isSkeleton = place.isSkeleton || (isEnriching && !place.bannerUrl && !place.logoUrl && !place.website);
 
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
-  const [isEnriching, setIsEnriching] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());

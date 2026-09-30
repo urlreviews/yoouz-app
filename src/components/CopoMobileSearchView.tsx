@@ -80,6 +80,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [location, setLocation] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [showLocationBar, setShowLocationBar] = useState(false);
   const [isFocusedLocation, setIsFocusedLocation] = useState(false);
   const businessInputRef = useRef<HTMLInputElement>(null);
@@ -296,6 +297,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       .trim();
 
     setIsSearching(true);
+    setSearchError(null);
     const trimmed = cleanRaw;
     const baseName = (preferredName || locationDetails?.rawBusinessName || trimmed).trim();
     // Resolve matching place clean domain if available
@@ -348,30 +350,25 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // 2. Non-blocking Background Domain Resolution
-    // We proceed optimistically with whatever we have.
-    // This ensures an "Instant" (0.0s) response.
-    const isRealDomain = isValidDomainUrl(cleanUrl);
-
-    // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
-    const storeTerm = cleanUrl || trimmed;
-    if (storeTerm) {
-      const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-      setRecentSearches(newRecent);
-      try {
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-      } catch {}
+    // Authoritative check: If place already matches in database with a real domain, open immediately
+    if (matchedPlace && isValidDomainUrl(getCleanDomainUrl(matchedPlace))) {
+      setIsSearching(false);
+      if (onOpenPlace) onOpenPlace(matchedPlace.id);
+      return;
     }
 
-    // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
-    if (!matchedPlace && onAddPlace) {
-      const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
-      const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
+    const isRealDomain = isValidDomainUrl(cleanUrl);
+
+    // If query is an authentic domain, register and open directly
+    if (isRealDomain) {
+      const cleanDom = cleanUrl.toLowerCase();
+      const instantLogo = getCleanLogoUrl(null, cleanDom) || `/api/favicon?domain=${cleanDom}`;
+      const instantName = preferredName || locationDetails?.rawBusinessName || KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(cleanDom);
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
-      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
-      const optimisticPlace: Place = {
-        id: isRealDomain ? cleanUrl.toLowerCase() : domain,
+
+      const directPlace: Place = {
+        id: cleanDom,
         name: instantName,
         category: "Verified Business",
         categoryType: "all",
@@ -391,60 +388,126 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
-        website: isRealDomain ? `https://${cleanUrl}` : "",
+        website: `https://${cleanDom}`,
         priceRange: "N/A",
         plusCode: "",
         description: "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: isRealDomain ? cleanUrl : ""
+        brandDomain: cleanDom
       };
-      
-      onAddPlace(optimisticPlace);
-      
-      // Open the drawer IMMEDIATELY for instant feedback
-      if (onOpenPlace) {
-        onOpenPlace(optimisticPlace.id);
-      }
 
-      // Immediately enrich with authentic address, phone, email, category in the background
-      const searchEndpoint = isRealDomain 
-        ? `/api/url-metadata?url=${encodeURIComponent(cleanUrl)}`
-        : `/api/url-metadata?q=${encodeURIComponent(trimmed)}`;
+      if (onAddPlace) onAddPlace(directPlace);
+      if (onOpenPlace) onOpenPlace(directPlace.id);
 
-      fetch(searchEndpoint)
+      const newRecent = [cleanDom, ...recentSearches.filter(s => s && s !== cleanDom)].slice(0, 10);
+      setRecentSearches(newRecent);
+      try { localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent)); } catch {}
+
+      // Enrich in background
+      fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-          if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
+          if (data && onAddPlace) {
             const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             onAddPlace({
-              ...optimisticPlace,
-              name: preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
-              category: data.category || optimisticPlace.category,
-              address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
-              city: locationDetails?.city || data.city || optimisticPlace.city,
-              country: locationDetails?.country || data.country || optimisticPlace.country,
-              phone: data.phone || optimisticPlace.phone,
-              email: data.email || optimisticPlace.email,
-              openingHours: data.openingHours || optimisticPlace.openingHours || "",
-              locations: (data.locations && data.locations.length > 0) ? data.locations : (optimisticPlace.locations || []),
-              bannerUrl: isValidBanner ? data.image : optimisticPlace.bannerUrl,
-              ogImage: isValidBanner ? data.image : optimisticPlace.ogImage,
-              logoUrl: isValidLogo ? data.logo : optimisticPlace.logoUrl,
-              avatarUrl: isValidLogo ? data.logo : optimisticPlace.avatarUrl,
-              website: data.url || optimisticPlace.website || (data.domain ? `https://${data.domain}` : ""),
-              brandDomain: data.domain || optimisticPlace.brandDomain || (data.url ? extractCleanDomain(data.url) : ""),
-              description: data.description || optimisticPlace.description
+              ...directPlace,
+              name: data.siteName || data.title || directPlace.name,
+              category: data.category || directPlace.category,
+              address: (data.address && !data.address.startsWith("http")) ? data.address : directPlace.address,
+              city: locationDetails?.city || data.city || directPlace.city,
+              country: locationDetails?.country || data.country || directPlace.country,
+              phone: data.phone || directPlace.phone,
+              email: data.email || directPlace.email,
+              openingHours: data.openingHours || directPlace.openingHours,
+              locations: data.locations || [],
+              bannerUrl: isValidBanner ? data.image : directPlace.bannerUrl,
+              ogImage: isValidBanner ? data.image : directPlace.ogImage,
+              logoUrl: isValidLogo ? data.logo : directPlace.logoUrl,
+              avatarUrl: isValidLogo ? data.logo : directPlace.avatarUrl,
+              website: data.url || directPlace.website,
+              description: data.description || directPlace.description
             });
           }
         })
         .catch(() => {});
+
+      setIsSearching(false);
+      return;
     }
 
+    // STRICT POLICY: Query is NOT a direct domain. Discover the real official business domain FIRST!
+    // NEVER synthesize fake URLs or open placeholder profiles.
+    try {
+      const searchEndpoint = `/api/url-metadata?q=${encodeURIComponent(trimmed)}`;
+      const res = await fetch(searchEndpoint);
+      if (res.ok) {
+        const data = await res.json();
+        const discoveredDom = data?.domain && isValidDomainUrl(data.domain) ? extractCleanDomain(data.domain).toLowerCase() : null;
+        if (discoveredDom && isValidDomainUrl(discoveredDom)) {
+          const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
+          const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
+
+          const realPlace: Place = {
+            id: discoveredDom,
+            name: preferredName || locationDetails?.rawBusinessName || KNOWN_OFFICIAL_NAMES[discoveredDom] || data.siteName || data.title || formatBusinessName(discoveredDom),
+            category: (data.category && !data.category.toLowerCase().includes("verified")) ? data.category : "Verified Business",
+            categoryType: "all",
+            address: (data.address && !data.address.startsWith("http")) ? data.address : (locationDetails?.city || ""),
+            city: locationDetails?.city || data.city || "",
+            country: locationDetails?.country || data.country || "",
+            lat: data.lat || 0,
+            lng: data.lng || 0,
+            rating: 5,
+            totalReviews: 0,
+            ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+            avatarUrl: isValidLogo ? data.logo : `/api/favicon?domain=${discoveredDom}`,
+            logoUrl: isValidLogo ? data.logo : `/api/favicon?domain=${discoveredDom}`,
+            bannerUrl: isValidBanner ? data.image : "",
+            ogImage: isValidBanner ? data.image : "",
+            photos: isValidBanner ? [data.image] : [],
+            openingHours: data.openingHours || "Available 24/7",
+            isOpen: true,
+            phone: data.phone || "",
+            email: data.email || "",
+            website: data.url || `https://${discoveredDom}`,
+            priceRange: "N/A",
+            plusCode: "",
+            description: data.description || "",
+            popularKeywords: [],
+            amenities: [],
+            topDishes: [],
+            brandDomain: discoveredDom,
+            locations: data.locations || []
+          };
+
+          if (onAddPlace) {
+            onAddPlace(realPlace);
+          }
+          if (onOpenPlace) {
+            onOpenPlace(realPlace.id);
+          }
+
+          const newRecent = [discoveredDom, ...recentSearches.filter(s => s && s !== discoveredDom)].slice(0, 10);
+          setRecentSearches(newRecent);
+          try {
+            localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
+          } catch {}
+
+          setIsSearching(false);
+          handleClose();
+          return;
+        }
+      }
+    } catch (searchErr) {
+      console.error("[Search Mobile] Domain discovery error:", searchErr);
+    }
+
+    // STRICT RULE: If NO official domain was found, NEVER create a fake URL profile!
     setIsSearching(false);
-    setSubmittedQuery(trimmed);
+    setSearchError(`No official business website found for "${trimmed}". Please enter the business's official website domain.`);
   };
 
   const executeSearch = (
@@ -461,34 +524,17 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const loc = (locationDetails?.city || location).trim();
     const finalQ = loc ? `${rawBiz} ${loc}` : rawBiz;
 
-    // Strict Rule: ONLY open the place profile drawer if location was explicitly provided by the user!
-    if (loc) {
-      // 0ms Check 1: Authoritative matching place in local places list
-      const matchedPlace = findMatchingPlace(rawBiz, preferredName || rawBiz);
-      if (matchedPlace) {
-        onOpenPlace(matchedPlace.id);
-        return;
-      }
-
-      // 0ms Check 2: Check pre-fetched suggestions in memory strictly
-      const topMatch = mergedSuggestions.find(s => {
-        const sTitle = (s.title || s.name || "").toLowerCase().trim();
-        const sDom = (s.domain || "").toLowerCase().trim();
-        const qLower = rawBiz.toLowerCase().trim();
-        if (!qLower) return false;
-        const domMatches = sDom && (sDom === qLower || sDom.startsWith(qLower) || sDom.split('.')[0] === qLower);
-        const titleMatches = sTitle && (sTitle === qLower || sTitle.startsWith(qLower));
-        return domMatches || titleMatches;
-      });
-
-      if (topMatch) {
-        handleSelectSuggestion(topMatch);
-        return;
-      }
+    // Check if matching place in local places list with a valid domain
+    const matchedPlace = findMatchingPlace(rawBiz, preferredName || rawBiz);
+    const matchedDom = matchedPlace ? getCleanDomainUrl(matchedPlace) : "";
+    if (matchedPlace && isValidDomainUrl(matchedDom)) {
+      onOpenPlace(matchedDom);
+      handleClose();
+      return;
     }
 
-    // Direct transition to background search results view
-    setSubmittedQuery(finalQ);
+    // Execute handleSearch which verifies official domain
+    handleSearch(finalQ, preferredName || rawBiz, locationDetails);
   };
 
   const handleSelectSuggestion = async (item: any) => {
@@ -512,10 +558,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       }
     }
 
-    // 1. Check if place already matches in places list
+    // 1. Check if place already matches in places list with an authoritative domain
     const existing = findMatchingPlace(cleanDom || title, title);
-    if (existing) {
-      const storeTerm = getCleanDomainUrl(existing) || cleanDom || title;
+    const existingDom = existing ? getCleanDomainUrl(existing) : "";
+    if (existing && isValidDomainUrl(existingDom)) {
+      const storeTerm = existingDom;
       if (storeTerm) {
         const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
         setRecentSearches(newRecent);
@@ -523,7 +570,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
         } catch {}
       }
-      onOpenPlace(existing.id);
+      onOpenPlace(existingDom);
+      handleClose();
       return;
     }
 
@@ -695,9 +743,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
               onChange={(e) => {
                 const val = e.target.value;
                 setQuery(val);
+                if (searchError) setSearchError(null);
                 if (submittedQuery) setSubmittedQuery("");
               }}
               onFocus={() => {
+                if (searchError) setSearchError(null);
                 if (submittedQuery) setSubmittedQuery("");
               }}
               onKeyDown={(e) => {
@@ -738,6 +788,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       </div>
       
       <div className="flex-1 overflow-y-auto w-full relative pb-24">
+        {searchError && (
+          <div className="m-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs flex items-start gap-3 shadow-xl animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <span className="font-bold text-white block text-sm">Official Business Not Found</span>
+              <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{searchError}</p>
+            </div>
+          </div>
+        )}
+
         {submittedQuery ? (
           <CopoSearchView
             key={submittedQuery}
