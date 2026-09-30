@@ -367,8 +367,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
 
     if (!isValidDomainUrl(cleanUrl)) {
-      const slug = trimmed.toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "business";
-      cleanUrl = `${slug}.com`;
+      console.warn("[Search Mobile] No official website domain found. Halting search to prevent creating fake profiles.");
+      setIsSearching(false);
+      setSearchErrorNotification(`No official website could be found for "${trimmed}". Please check the name or enter their official domain.`);
+      setTimeout(() => setSearchErrorNotification(null), 5000);
+      return;
     }
     setSearchErrorNotification(null);
     const isRealDomain = isValidDomainUrl(cleanUrl);

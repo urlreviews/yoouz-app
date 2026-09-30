@@ -214,6 +214,12 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "valko.be": "Valko Rent A Car",
+  "www.valko.be": "Valko Rent A Car",
+  "valko": "Valko Rent A Car",
+  "valko rent a car": "Valko Rent A Car",
+  "valko rent a car antwerpen": "Valko Rent A Car",
+  "valko rent a car antwerp": "Valko Rent A Car",
   "bluechillicars.com": "Blue Chilli Cars",
   "www.bluechillicars.com": "Blue Chilli Cars",
   "bluechillicars": "Blue Chilli Cars",

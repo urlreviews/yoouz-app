@@ -19247,7 +19247,7 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-  async function resolveBusinessQuery(query: string, skipGemini = false): Promise<ResolvedBusinessData | null> {
+  async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
     
@@ -19623,15 +19623,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const resp = await fetch(ddgUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.5',
-              'DNT': '1',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1',
-              'Sec-Fetch-Dest': 'document',
-              'Sec-Fetch-Mode': 'navigate',
-              'Sec-Fetch-Site': 'none',
-              'Sec-Fetch-User': '?1'
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5'
             },
             signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
           });
@@ -19752,6 +19745,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         let scLat = 0;
         let scLng = 0;
 
+        // If resolveOnly requested (e.g. search bar instant discovery), return in 0.2s without deep scraping
+        if (resolveOnly) {
+          const fastResult: ResolvedBusinessData = {
+            domain: discoveredDom,
+            websiteUrl: discoveredUrl,
+            name: scTitle || formatBusinessName(cleanQ, discoveredDom),
+            category: scCategory || detectedCategory,
+            address: "",
+            city: "Online",
+            country: "",
+            phone: "",
+            email: "",
+            openingHours: "Available 24/7",
+            photo: "",
+            description: scDesc,
+            lat: 0,
+            lng: 0
+          };
+          BUSINESS_QUERY_CACHE.set(cacheKey, { data: fastResult, timestamp: Date.now() });
+          return fastResult;
+        }
+
         try {
           console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
           const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
@@ -19815,29 +19830,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     if (!discoveredUrl) {
-      logSearchIntel(cleanQ, "", "synthesized_fallback");
-      const cleanSlug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const synthesizedDom = `${cleanSlug}.com`;
-      const synthesizedName = formatBusinessName(cleanQ);
-      const fallbackResult: ResolvedBusinessData = {
-        domain: synthesizedDom,
-        websiteUrl: `https://${synthesizedDom}`,
-        name: synthesizedName,
-        category: detectedCategory || "Verified Business",
-        address: "",
-        city: "Online",
-        country: "",
-        phone: "",
-        email: "",
-        openingHours: "Available 24/7",
-        photo: "",
-        logo: `/api/favicon?domain=${synthesizedDom}`,
-        description: `${synthesizedName} is a verified business on Yoouz.`,
-        lat: 0,
-        lng: 0
-      };
-      BUSINESS_QUERY_CACHE.set(cacheKey, { data: fallbackResult, timestamp: Date.now() });
-      return fallbackResult;
+      logSearchIntel(cleanQ, "", "discovery_failed", { error: "No official website found after discovery attempts" });
+      return null;
     }
 
     return null;
@@ -19962,7 +19956,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // 1. If user passed a business phrase/name without a domain dot, resolve directly via Fast Discovery Engine
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
-        resolvedEntity = await resolveBusinessQuery(rawQuery).catch(() => null);
+        resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
           const entityLogo = resolvedEntity.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
@@ -20018,7 +20012,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!parsedUrl) {
         // Fallback to name search rather than throwing 400 or 500
-        const ent = await resolveBusinessQuery(rawQuery).catch(() => null);
+        const ent = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
         if (ent) {
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? ent.domain : "";

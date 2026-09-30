@@ -347,8 +347,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (currentRequestId !== searchRequestIdRef.current) return;
 
     if (!isValidDomainUrl(cleanUrl)) {
-      const slug = (baseName || rawQuery).toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || "business";
-      cleanUrl = `${slug}.com`;
+      console.warn("[Search] No official website domain found. Halting search to prevent creating fake profiles.");
+      setIsSearching(false);
+      setSearchErrorNotification(`No official website could be found for "${rawQuery}". Please check the name or enter their official domain.`);
+      setTimeout(() => setSearchErrorNotification(null), 5000);
+      return;
     }
     setSearchErrorNotification(null);
 
