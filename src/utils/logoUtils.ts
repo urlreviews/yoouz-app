@@ -5,6 +5,14 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
 
+  // Unwrap Wayback Machine proxy wrappers to load original direct site asset
+  if (clean.includes("archive.org/web/")) {
+    const match = clean.match(/https?:\/\/web\.archive\.org\/web\/\d+(?:im_)?\/(https?:\/\/.+)/i);
+    if (match && match[1]) {
+      clean = match[1];
+    }
+  }
+
   while (clean.includes("/api/proxy-image?url=")) {
     const parts = clean.split("/api/proxy-image?url=");
     clean = decodeURIComponent(parts[parts.length - 1]);

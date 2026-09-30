@@ -599,11 +599,29 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
 
-  // Helper to check for broken/placeholder/stale banners
+  // Helper to check for broken/placeholder/stale banners or logos misclassified as banners
   const isBadBanner = (url?: string | null) => {
     if (!url) return true;
     const u = url.toLowerCase();
-    return u.includes('yoouz.com/og-banner.png') || u.includes('placeholder') || u.includes('mock') || u.includes('unsplash.com') || u.includes('1789810172562');
+    return (
+      u.includes('yoouz.com/og-banner.png') ||
+      u.includes('placeholder') ||
+      u.includes('mock') ||
+      u.includes('unsplash.com') ||
+      u.includes('1789810172562') ||
+      u.includes('logo') ||
+      u.includes('icon') ||
+      u.includes('favicon') ||
+      u.includes('avatar') ||
+      u.includes('badge') ||
+      u.includes('button') ||
+      u.includes('app-store') ||
+      u.includes('play-store') ||
+      u.includes('payment') ||
+      u.includes('tap/0.png') ||
+      u.endsWith('.ico') ||
+      u.endsWith('.svg')
+    );
   };
 
   const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");

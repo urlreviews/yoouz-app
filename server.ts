@@ -19213,12 +19213,27 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
 
       // BANNER Score calculation
       let bannerScore = 0;
-      if (lower.includes('hero') || lower.includes('banner') || lower.includes('header') || lower.includes('cover') || lower.includes('background') || lower.includes('widescreen')) bannerScore += 100;
-      if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('1200x') || lower.includes('1920x') || lower.includes('2560x')) bannerScore += 80;
-      if (lower.includes('house') || lower.includes('cleaning') || lower.includes('cleaner') || lower.includes('room') || lower.includes('office') || lower.includes('lobby') || lower.includes('carpet')) bannerScore += 40;
-      if (lower.includes('logo') || lower.includes('icon') || lower.includes('favicon')) bannerScore -= 120;
-      if (lower.includes('150x') || lower.includes('300x')) bannerScore -= 85;
-      if (lower.includes('/wp-content/uploads/')) bannerScore += 15;
+      if (
+        lower.includes('logo') || 
+        lower.includes('icon') || 
+        lower.includes('favicon') || 
+        lower.includes('avatar') || 
+        lower.includes('badge') || 
+        lower.includes('button') ||
+        lower.endsWith('.ico') ||
+        lower.endsWith('.svg') ||
+        lower.includes('300x46') ||
+        lower.includes('100x100') ||
+        lower.includes('150x150') ||
+        lower.includes('78x100')
+      ) {
+        bannerScore = -9999; // Disqualify logos/icons from banner slot
+      } else {
+        if (lower.includes('hero') || lower.includes('banner') || lower.includes('header') || lower.includes('cover') || lower.includes('background') || lower.includes('widescreen') || lower.includes('summer') || lower.includes('outlet') || lower.includes('sale') || lower.includes('featured')) bannerScore += 200;
+        if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('1200x') || lower.includes('1920x') || lower.includes('2560x')) bannerScore += 80;
+        if (lower.includes('/wp-content/uploads/') || lower.includes('/cdn/shop/') || lower.includes('wixstatic.com') || lower.includes('squarespace-cdn.com') || lower.includes('website-files.com')) bannerScore += 100;
+        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp')) bannerScore += 50;
+      }
 
       if (bannerScore > highestBannerScore) {
         highestBannerScore = bannerScore;
@@ -19227,10 +19242,10 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
     });
 
     if (bestLogo && highestLogoScore > 0) {
-      logo = imPrefix ? `${imPrefix}${bestLogo}` : bestLogo;
+      logo = bestLogo;
     }
-    if (bestBanner && highestBannerScore > -20) {
-      banner = imPrefix ? `${imPrefix}${bestBanner}` : bestBanner;
+    if (bestBanner && highestBannerScore > 0) {
+      banner = bestBanner;
     }
 
     return {
@@ -19238,7 +19253,7 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
       description: desc,
       banner,
       logo,
-      photos: Array.from(new Set(cleanUrls.map(u => imPrefix ? `${imPrefix}${u}` : u))).slice(0, 10)
+      photos: Array.from(new Set(cleanUrls)).slice(0, 10)
     };
   } catch (e: any) {
     return null;
@@ -20010,7 +20025,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             let pData: any = {};
             try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
             const matchedDom = row.id && row.id.includes('.') ? row.id : (cleanQDom.includes('.') ? cleanQDom : "");
-            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.'))) || (!pData.bannerUrl && !pData.ogImage && !pData.image);
+            const cachedBanner = pData.bannerUrl || pData.ogImage || pData.image || "";
+            const isBadCachedBanner = !cachedBanner || 
+              cachedBanner.toLowerCase().includes('logo') || 
+              cachedBanner.toLowerCase().includes('icon') || 
+              cachedBanner.toLowerCase().includes('placeholder') || 
+              cachedBanner.toLowerCase().includes('tap/0.png') || 
+              cachedBanner.toLowerCase().includes('1789810172562');
+
+            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.'))) || isBadCachedBanner;
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
@@ -20305,9 +20328,43 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
               if (!logo) logo = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
+              // Helper to strictly identify logos/icons/buttons to prevent assigning them as hero banners
+              const isLogoOrIconUrl = (urlStr: string): boolean => {
+                if (!urlStr || typeof urlStr !== 'string') return true;
+                const l = urlStr.toLowerCase();
+                return (
+                  l.includes('logo') ||
+                  l.includes('icon') ||
+                  l.includes('favicon') ||
+                  l.includes('avatar') ||
+                  l.includes('badge') ||
+                  l.includes('button') ||
+                  l.includes('app-store') ||
+                  l.includes('play-store') ||
+                  l.includes('google-play') ||
+                  l.includes('payment') ||
+                  l.includes('visa') ||
+                  l.includes('mastercard') ||
+                  l.includes('star.png') ||
+                  l.includes('spinner') ||
+                  l.includes('blank.gif') ||
+                  l.includes('pixel.gif') ||
+                  l.endsWith('.svg') ||
+                  l.includes('.ico') ||
+                  l.includes('300x46') ||
+                  l.includes('100x100') ||
+                  l.includes('150x150') ||
+                  l.includes('78x100') ||
+                  l.includes('16x16') ||
+                  l.includes('32x32') ||
+                  l.includes('60x60') ||
+                  l.includes('tap/0.png')
+                );
+              };
+
               // Better Banner Image Extraction
               const ogImg = getMetaContent('image');
-              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
+              if (ogImg && !isLogoOrIconUrl(ogImg) && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
                 try {
                   image = new URL(ogImg, finalUrl).toString();
                 } catch (e) {
@@ -20642,7 +20699,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                                    $(`meta[itemprop="image"]`).attr('content') ||
                                    '';
 
-              if (rawMetaImage && !rawMetaImage.toLowerCase().endsWith('.svg') && !rawMetaImage.toLowerCase().includes('logo') && !rawMetaImage.toLowerCase().includes('icon')) {
+              if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage)) {
                 image = rawMetaImage;
               }
 
@@ -20650,13 +20707,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const candidates: { src: string; weight: number }[] = [];
 
                 scriptImages.forEach(src => {
+                  if (isLogoOrIconUrl(src)) return;
                   let weight = 100;
                   const lower = src.toLowerCase();
                   if (lower.includes('attorney') || lower.includes('team') || lower.includes('group') || lower.includes('headshot')) weight += 500;
-                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm') || lower.includes('work') || lower.includes('service')) weight += 300;
+                  if (lower.includes('office') || lower.includes('banner') || lower.includes('hero') || lower.includes('bg') || lower.includes('background') || lower.includes('firm') || lower.includes('work') || lower.includes('service') || lower.includes('summer') || lower.includes('outlet') || lower.includes('sale') || lower.includes('collection')) weight += 300;
                   if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp')) weight += 150;
                   if (lower.endsWith('.png')) weight += 50;
-                  if (lower.endsWith('.svg')) weight -= 200; 
                   candidates.push({ src, weight });
                 });
 
@@ -20667,30 +20724,65 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     const bgMatch = style.match(/background(?:-image)?\s*:\s*url\s*\(\s*['"]?([^'")]+)['"]?\s*\)/);
                     if (bgMatch) bgUrl = bgMatch[1];
                   }
-                  if (bgUrl && !bgUrl.includes('logo') && !bgUrl.includes('icon') && !bgUrl.startsWith('data:')) {
-                    candidates.push({ src: bgUrl, weight: 300 });
+                  if (bgUrl && !isLogoOrIconUrl(bgUrl) && !bgUrl.startsWith('data:')) {
+                    candidates.push({ src: bgUrl, weight: 350 });
                   }
                 });
 
                 $('img').each((i, el) => {
                   const src = getCleanImgSrc($(el));
-                  if (!src) return;
+                  if (!src || isLogoOrIconUrl(src)) return;
                   
                   const lowerSrc = src.toLowerCase();
-                  if (lowerSrc.includes('logo') || lowerSrc.includes('icon') || lowerSrc.includes('avatar') || lowerSrc.includes('spinner') || lowerSrc.endsWith('.svg')) return;
+                  const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '');
+                  const parentLower = parentClasses.toLowerCase();
 
                   const width = parseInt($(el).attr('width') || '0', 10);
                   const height = parseInt($(el).attr('height') || '0', 10);
-                  const area = (width || 201) * (height || 201);
+                  const area = (width || 300) * (height || 300);
                   
                   let weight = area > 500000 ? 400 : 200;
-                  if (lowerSrc.includes('attorney') || lowerSrc.includes('team') || lowerSrc.includes('group') || lowerSrc.includes('firm') || lowerSrc.includes('hero')) weight += 100;
+
+                  // High-fidelity CMS container scoring (Shopify, WordPress, Wix, Squarespace, Webflow, Custom)
+                  if (
+                    parentLower.includes('hero') || 
+                    parentLower.includes('banner') || 
+                    parentLower.includes('slider') || 
+                    parentLower.includes('slideshow') || 
+                    parentLower.includes('cover') || 
+                    parentLower.includes('featured') ||
+                    parentLower.includes('elementor-widget-container') ||
+                    parentLower.includes('wp-block-cover') ||
+                    parentLower.includes('section-background') ||
+                    parentLower.includes('page-banner')
+                  ) {
+                    weight += 500;
+                  }
+
+                  if (
+                    lowerSrc.includes('summer') || 
+                    lowerSrc.includes('banner') || 
+                    lowerSrc.includes('hero') || 
+                    lowerSrc.includes('cover') || 
+                    lowerSrc.includes('featured') || 
+                    lowerSrc.includes('outlet') || 
+                    lowerSrc.includes('sale') || 
+                    lowerSrc.includes('campaign') || 
+                    lowerSrc.includes('lookbook') || 
+                    lowerSrc.includes('collection') ||
+                    lowerSrc.includes('main') ||
+                    lowerSrc.includes('desktop') ||
+                    lowerSrc.includes('showcase')
+                  ) {
+                    weight += 300;
+                  }
+
                   candidates.push({ src, weight });
                 });
 
                 const preloadImg = $('link[rel="preload"][as="image"]').first().attr('href');
-                if (preloadImg && !preloadImg.toLowerCase().endsWith('.svg') && !preloadImg.toLowerCase().includes('logo') && !preloadImg.toLowerCase().includes('icon')) {
-                  candidates.push({ src: preloadImg, weight: 150 });
+                if (preloadImg && !isLogoOrIconUrl(preloadImg)) {
+                  candidates.push({ src: preloadImg, weight: 450 });
                 }
 
                 if (candidates.length > 0) {
