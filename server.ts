@@ -19104,6 +19104,89 @@ Return JSON:
     lng: number;
   }
 
+const isLogoOrIconUrl = (urlStr: string): boolean => {
+  if (!urlStr || typeof urlStr !== 'string') return true;
+  let l = urlStr.toLowerCase();
+  try { l = decodeURIComponent(l); } catch(e) {}
+  return (
+    l.includes('logo') ||
+    l.includes('icon') ||
+    l.includes('favicon') ||
+    l.includes('avatar') ||
+    l.includes('badge') ||
+    l.includes('button') ||
+    l.includes('app-store') ||
+    l.includes('play-store') ||
+    l.includes('google-play') ||
+    l.includes('payment') ||
+    l.includes('visa') ||
+    l.includes('mastercard') ||
+    l.includes('star.png') ||
+    l.includes('spinner') ||
+    l.includes('loader') ||
+    l.includes('loading') ||
+    l.includes('blank.gif') ||
+    l.includes('pixel.gif') ||
+    l.includes('placeholder') ||
+    l.includes('no-image') ||
+    l.includes('no_image') ||
+    l.includes('transparent') ||
+    l.endsWith('.svg') ||
+    l.includes('.ico') ||
+    l.includes('300x46') ||
+    l.includes('100x100') ||
+    l.includes('150x150') ||
+    l.includes('78x100') ||
+    l.includes('16x16') ||
+    l.includes('32x32') ||
+    l.includes('60x60') ||
+    l.includes('tap/0.png')
+  );
+};
+
+const domainBanners: Record<string, string> = {
+  "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+  "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
+  "multipharma.be": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+  "multipharma": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
+  "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+  "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
+  "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
+  "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
+  "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
+  "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
+  "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
+  "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
+  "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+  "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
+  "brimag.co.il": "https://www.brimag.co.il/pub/media/catalog/category/frizer.png",
+  "www.brimag.co.il": "https://www.brimag.co.il/pub/media/catalog/category/frizer.png"
+};
+
+const sanitizeProxy = (u?: string | null): string => {
+  if (!u || typeof u !== 'string') return '';
+  let c = u.trim();
+  while (c.includes('/api/proxy-image?url=')) {
+    const parts = c.split('/api/proxy-image?url=');
+    c = decodeURIComponent(parts[parts.length - 1]);
+  }
+  c = c.trim();
+  if (!c || c === 'data:;' || c.startsWith('data:;')) return '';
+  if (c.startsWith('/') || c.startsWith('data:image/') || c.startsWith('blob:')) {
+    return c;
+  }
+  if (c.startsWith('http://')) {
+    c = 'https://' + c.slice(7);
+  }
+  if (c.startsWith('https://')) {
+    if (c.includes('yoouz.com') || c.includes('b-cdn.net')) {
+      return c;
+    }
+    return `/api/proxy-image?url=${encodeURIComponent(c)}`;
+  }
+  return c;
+};
+
   const SEARCH_INTEL_LOG: any[] = [];
 function logSearchIntel(query: string, domain: string, status: string, details: any = {}) {
   SEARCH_INTEL_LOG.unshift({
@@ -19271,7 +19354,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
     if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo);
+      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo) || isLogoOrIconUrl(cachedEntry.data.photo);
       if (!isMissing) {
         return cachedEntry.data;
       }
@@ -19313,7 +19396,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
             const isGeneric = isGenericPlaceNameServer(rowName);
-            const isMissingDetails = ((!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'))) || (!parsedData.bannerUrl && !parsedData.ogImage && !parsedData.image && !parsedData.photo);
+            const cachedBanner = parsedData.bannerUrl || parsedData.ogImage || parsedData.image || parsedData.photo || "";
+            const isBadCachedBanner = !cachedBanner ||
+              cachedBanner.toLowerCase().includes('logo') ||
+              cachedBanner.toLowerCase().includes('icon') ||
+              cachedBanner.toLowerCase().includes('placeholder') ||
+              cachedBanner.toLowerCase().includes('loader') ||
+              cachedBanner.toLowerCase().includes('tap/0.png') ||
+              cachedBanner.toLowerCase().includes('1789810172562');
+
+            const isMissingDetails = ((!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'))) || isBadCachedBanner;
 
             if (isFabricatedNameDomain) {
               console.info(`[Database Cache] Purged fabricated domain: ${rowId}`);
@@ -19334,7 +19426,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   phone: (parsedData.phone || "") as string,
                   email: (parsedData.email || "") as string,
                   openingHours: (parsedData.openingHours || "Available 24/7") as string,
-                  photo: (row.logoUrl as string) || parsedData.logo || parsedData.image || parsedData.ogImage || "",
+                  photo: (!isLogoOrIconUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : "") || (!isLogoOrIconUrl(parsedData.ogImage) ? parsedData.ogImage : "") || (!isLogoOrIconUrl(parsedData.image) ? parsedData.image : "") || "",
+                  logo: (row.logoUrl as string) || parsedData.logoUrl || parsedData.logo || parsedData.avatarUrl || "",
                   description: (parsedData.description || "") as string,
                   lat: Number(row.latitude) || 0,
                   lng: Number(row.longitude) || 0
@@ -19513,7 +19606,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         phone: domPhone,
         email: domEmail,
         openingHours: domOpeningHours,
-        photo: domPhoto,
+        photo: (!isLogoOrIconUrl(domPhoto) ? domPhoto : ""),
         logo: domLogo,
         description: domDesc,
         lat: domLat,
@@ -19986,42 +20079,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
 
-    // Helper to strictly identify logos/icons/buttons to prevent assigning them as hero banners
-    const isLogoOrIconUrl = (urlStr: string): boolean => {
-      if (!urlStr || typeof urlStr !== 'string') return true;
-      const l = urlStr.toLowerCase();
-      return (
-        l.includes('logo') ||
-        l.includes('icon') ||
-        l.includes('favicon') ||
-        l.includes('avatar') ||
-        l.includes('badge') ||
-        l.includes('button') ||
-        l.includes('app-store') ||
-        l.includes('play-store') ||
-        l.includes('google-play') ||
-        l.includes('payment') ||
-        l.includes('visa') ||
-        l.includes('mastercard') ||
-        l.includes('star.png') ||
-        l.includes('spinner') ||
-        l.includes('blank.gif') ||
-        l.includes('pixel.gif') ||
-        l.endsWith('.svg') ||
-        l.includes('.ico') ||
-        l.includes('300x46') ||
-        l.includes('100x100') ||
-        l.includes('150x150') ||
-        l.includes('78x100') ||
-        l.includes('16x16') ||
-        l.includes('32x32') ||
-        l.includes('60x60') ||
-        l.includes('tap/0.png')
-      );
-    };
-
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
+      if (rawQuery.includes('/place/')) {
+        rawQuery = rawQuery.split('/place/')[1].split('/')[0].split('?')[0];
+      }
       if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
 
       const resolveOnly = req.query.resolveOnly === 'true';
@@ -20068,18 +20130,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               cachedBanner.toLowerCase().includes('tap/0.png') || 
               cachedBanner.toLowerCase().includes('1789810172562');
 
+            console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
+
             const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.'))) || isBadCachedBanner;
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
             if (matchedDom && !isMissingData && isExactMatch) {
-              console.log(`[Database Cache Hit] Serving instant metadata for: "${rawQuery}" -> ${matchedDom}`);
+              console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedTitle = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom]) || formatBusinessName(row.name || pData.name, matchedDom, rawQuery) || row.name || pData.name;
+              const cachedImageCandidate = (!isLogoOrIconUrl(pData.bannerUrl) ? pData.bannerUrl : "") || (!isLogoOrIconUrl(pData.ogImage) ? pData.ogImage : "") || (!isLogoOrIconUrl(pData.image) ? pData.image : "") || (domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
               return res.json({
                 title: resolvedTitle,
                 description: pData.description || `${resolvedTitle} is a verified business on Yoouz.`,
-                image: pData.bannerUrl || pData.ogImage || pData.image || "",
+                image: cachedImageCandidate,
                 logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`,
                 siteName: resolvedTitle,
                 domain: matchedDom,
@@ -20110,13 +20175,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
-          const entityLogo = resolvedEntity.photo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
+          const entityLogo = resolvedEntity.logo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
+          console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain);
           return res.json({
             title: entityTitle,
             description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
-            image: resolvedEntity.photo || "",
+            image: (!isLogoOrIconUrl(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : ""),
             logo: entityLogo,
             siteName: entityTitle,
             domain: realDomain,
@@ -20169,11 +20235,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? ent.domain : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-          const entityLogo = ent.photo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
+          const entityLogo = ent.logo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz.`,
-            image: ent.photo || "",
+            image: (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : ""),
             logo: entityLogo,
             siteName: ent.name,
             domain: realDomain,
@@ -20193,6 +20259,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let url = parsedUrl.origin;
       const domain = parsedUrl.hostname;
+      const cleanDomain = domain.replace(/^www\./i, "").toLowerCase();
       
       let title = '';
       let description = '';
@@ -20236,14 +20303,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           finalUrl = fetchResponse.url;
           html = await fetchResponse.text();
           
-          // Ultra-fast CAPTCHA / Security Gate Shield detection
+          // Precise Security Gate Shield detection (Cloudflare / SiteGround Block Pages)
           const lowerHtml = (html || "").toLowerCase();
           const isBlocked = lowerHtml.includes("sgcaptcha") || 
-                            lowerHtml.includes("captcha") || 
-                            lowerHtml.includes("cloudflare") || 
-                            lowerHtml.includes("just a moment") || 
-                            lowerHtml.includes("attention required") || 
-                            lowerHtml.includes("ddos");
+                            lowerHtml.includes("cf-browser-verification") || 
+                            lowerHtml.includes("cf-challenge-running") || 
+                            lowerHtml.includes("ray id:") ||
+                            lowerHtml.includes("<title>just a moment") || 
+                            lowerHtml.includes("<title>attention required") || 
+                            (lowerHtml.includes("access denied") && lowerHtml.includes("cloudflare")) ||
+                            (lowerHtml.includes("enable javascript") && lowerHtml.includes("cloudflare"));
                             
           if (isBlocked || !html || html.length < 500) {
             console.warn(`[Scraper Block] Security shield detected for ${domain}. Retrying with Elite Resolver...`);
@@ -20252,16 +20321,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const eliteFallback = await resolveBusinessQuery(domain);
             if (eliteFallback) {
               const targetDom = eliteFallback.domain || domain;
-              let bannerImg = eliteFallback.photo || "";
+              let bannerImg = (!isLogoOrIconUrl(eliteFallback.photo) ? eliteFallback.photo : "") || "";
               let logoImg = eliteFallback.logo || `/api/favicon?domain=${targetDom}`;
 
               if (!bannerImg || !eliteFallback.logo) {
                 try {
                   const arc = await fetchArchiveMetadata(targetDom);
-                  if (arc?.banner && !bannerImg) bannerImg = arc.banner;
+                  if (arc?.banner && !bannerImg && !isLogoOrIconUrl(arc.banner)) bannerImg = arc.banner;
                   if (arc?.logo && (!eliteFallback.logo || logoImg.includes('favicon'))) logoImg = arc.logo;
                 } catch(e) {}
               }
+
+              if (!bannerImg || isLogoOrIconUrl(bannerImg)) {
+                bannerImg = domainBanners[targetDom] ? sanitizeProxy(domainBanners[targetDom]) : "";
+              } else {
+                bannerImg = sanitizeProxy(bannerImg);
+              }
+              logoImg = sanitizeProxy(logoImg);
 
               const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || formatBusinessName(eliteFallback.name, targetDom, rawQuery) || eliteFallback.name;
               logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
@@ -20800,6 +20876,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
+              if (!image || isLogoOrIconUrl(image)) {
+                try {
+                  const archRes = await fetchArchiveMetadata(cleanDomain);
+                  if (archRes && archRes.banner && !isLogoOrIconUrl(archRes.banner)) {
+                    image = archRes.banner;
+                  }
+                } catch (e) {}
+              }
+
               const getHighQualityImageUrl = (urlStr: string): string => {
                 if (!urlStr) return '';
                 let cleaned = urlStr;
@@ -21149,8 +21234,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           siteName = domain;
         }
       }
-      
-      const cleanDomain = domain.replace(/^www\./i, "").toLowerCase();
 
       // High-accuracy fallback titles for major websites
       const domainTitles: Record<string, string> = {
@@ -21190,26 +21273,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         title = formatBusinessName(title || cleanDomain, cleanDomain);
       }
 
-      // High-accuracy fallback banners for major websites (authentic brand assets only, no mock/fake stock photos)
-      const domainBanners: Record<string, string> = {
-        "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
-        "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
-        "multipharma.be": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
-        "multipharma": "https://www.multipharma.be/dw/image/v2/BDGN_PRD/on/demandware.static/-/Library-Sites-MultipharmaSharedLibrary/default/dw8cdbc244/Home/Category%20Landing%20Pages/Private%20label/pl-umbrella-hp-big-desktop-v2-nl.jpg?sw=1440&sfrm=png",
-        "zoom.com": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
-        "zoom.us": "https://st1.zoom.us/homepage/20260908-1234/primary/dist/assets/images/social-card.jpg",
-        "thecapitalavenue.com": "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp",
-        "districtuae.com": "https://www.districtuae.com/og-default.jpeg",
-        "londontrustedtherapy.com": "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp",
-        "kempinski.com": "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg",
-        "timehotels.com": "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png",
-        "ibm.com": "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png",
-        "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
-        "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg"
-      };
-
-      if (!image || image.includes("unsplash.com") || image.includes("${") || image.includes("dummy.png") || image.includes("placeholder")) {
-        image = domainBanners[cleanDomain] || (image.includes("${") ? "" : image);
+      if (!image || isLogoOrIconUrl(image) || image.includes("unsplash.com") || image.includes("${") || image.includes("dummy.png") || image.includes("placeholder")) {
+        image = domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : (isLogoOrIconUrl(image) ? "" : image);
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -21286,31 +21351,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = serverBrandLogos[cleanDomain] || `/api/favicon?domain=${cleanDomain}`;
       }
       
-      const sanitizeProxy = (u?: string | null): string => {
-        if (!u || typeof u !== 'string') return '';
-        let c = u.trim();
-        while (c.includes('/api/proxy-image?url=')) {
-          const parts = c.split('/api/proxy-image?url=');
-          c = decodeURIComponent(parts[parts.length - 1]);
-        }
-        c = c.trim();
-        if (!c || c === 'data:;' || c.startsWith('data:;')) return '';
-        if (c.startsWith('/') || c.startsWith('data:image/') || c.startsWith('blob:')) {
-          return c;
-        }
-        if (c.startsWith('http://')) {
-          c = 'https://' + c.slice(7);
-        }
-        if (c.startsWith('https://')) {
-          if (c.includes('yoouz.com') || c.includes('b-cdn.net')) {
-            return c;
-          }
-          return `/api/proxy-image?url=${encodeURIComponent(c)}`;
-        }
-        return c;
-      };
       if (image) image = sanitizeProxy(image);
       if (logo) logo = sanitizeProxy(logo);
+      console.log("[TRACE METADATA 1] domain:", cleanDomain, "image:", image, "logo:", logo);
 
       // Extract rich location, phone, email, and category
       const scrapedLocInfo = await extractWebsiteLocationAndContact($, html, finalUrl, cleanDomain);
@@ -21330,7 +21373,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if ((!effectiveCity || effectiveCity === 'Online') && resolvedEntity.city) effectiveCity = resolvedEntity.city;
         if (!effectiveCountry && resolvedEntity.country) effectiveCountry = resolvedEntity.country;
         if (!effectivePhone && resolvedEntity.phone) effectivePhone = resolvedEntity.phone;
-        if ((!image || image.includes('placeholder')) && resolvedEntity.photo) image = resolvedEntity.photo;
+        if ((!image || image.includes('placeholder') || isLogoOrIconUrl(image)) && resolvedEntity.photo && !isLogoOrIconUrl(resolvedEntity.photo)) image = resolvedEntity.photo;
         if ((effectiveCategory === 'Website' || !effectiveCategory) && resolvedEntity.category && resolvedEntity.category !== 'Website') {
           effectiveCategory = resolvedEntity.category;
         }
@@ -21506,8 +21549,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     WHERE LOWER(id) = LOWER(?)`,
               args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
             }).catch(e => console.error("[Scraper DB Update Error]:", e));
-            image = mergedBanner || image;
-            logo = mergedLogo || logo;
+            image = mergedBanner;
+            logo = mergedLogo;
             effectiveAddress = mergedAddress || effectiveAddress;
             effectiveCity = mergedCity || effectiveCity;
             effectiveCountry = mergedCountry || effectiveCountry;
@@ -21558,6 +21601,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       // Background persist to DB cache
       persistToDb(resultPayload as any).catch(e => console.error("[Background Persist Error]:", e));
 
+      console.log("[TRACE METADATA 2] resultPayload image:", resultPayload.image, "logo:", resultPayload.logo);
       res.json(resultPayload);
     } catch (e) {
       logSearchIntel(String(req.query.url || ""), "", "critical_error", { error: String(e.message) });
