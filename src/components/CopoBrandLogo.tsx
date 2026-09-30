@@ -194,10 +194,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   return (
     <div className={containerClasses}>
-      {/* 1. Universal Premium Minimalist Business Emblem Fallback (Elegant Subtle Shimmer Placeholder) */}
+      {/* 1. Universal Premium Minimalist Business Emblem Fallback (Elegant Neutral Shimmer Placeholder) */}
       {(!imgLoaded || hasError || !shouldAttemptImage) && (
-        <div className={`absolute inset-0 w-full h-full bg-zinc-100 rounded-xl animate-pulse overflow-hidden ${imageClassName}`}>
-          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
+        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 border border-zinc-800 rounded-xl ${imageClassName} animate-pulse`}>
+          <div className="w-5 h-5 rounded-md bg-zinc-800" />
         </div>
       )}
 
