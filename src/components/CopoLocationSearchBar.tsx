@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, Loader2 } from "lucide-react";
+import { Search, X, Loader2, CheckCircle } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, isValidDomainUrl } from "../utils/placeUtils";
