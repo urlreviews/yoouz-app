@@ -214,6 +214,12 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "saksautoleasing.com": "Saks Auto Lease",
+  "www.saksautoleasing.com": "Saks Auto Lease",
+  "saksautoleasing": "Saks Auto Lease",
+  "saks auto leasing": "Saks Auto Lease",
+  "saks auto lease": "Saks Auto Lease",
+  "saks auto": "Saks Auto Lease",
   "kokorocleaning.net": "Kokoro Cleaning Service",
   "www.kokorocleaning.net": "Kokoro Cleaning Service",
   "kokorocleaning": "Kokoro Cleaning Service",

@@ -39,6 +39,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [searchedPlace, setSearchedPlace] = useState<Place | null>(null);
+  const [searchErrorNotification, setSearchErrorNotification] = useState<string | null>(null);
   const searchRequestIdRef = useRef(0);
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -292,20 +293,29 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     let preloadedMeta: any = null;
 
-    // Fast Path: Check if suggestions already resolved an exact clean domain or exact matching place while typing
+    // Fast Path: Check if suggestions already resolved an exact clean domain or matching place while typing
     if (!isValidDomainUrl(cleanUrl) && suggestions && suggestions.length > 0) {
-      const qLower = baseName.toLowerCase().trim();
+      const qLower = (baseName || rawQuery).toLowerCase().trim();
       const matchInSuggest = suggestions.find(s => {
         const sDom = s.domain ? extractCleanDomain(s.domain) : "";
         const sTitle = (s.title || "").toLowerCase().trim();
         if (!sDom && !sTitle) return false;
         const domMatches = isValidDomainUrl(sDom) && (
           sDom === qLower || 
-          sDom.split('.')[0] === qLower
+          sDom.startsWith(qLower) ||
+          qLower.startsWith(sDom) ||
+          sDom.split('.')[0] === qLower ||
+          sDom.split('.')[0].startsWith(qLower)
         );
-        const titleMatches = sTitle && sTitle === qLower;
+        const titleMatches = sTitle && (
+          sTitle === qLower ||
+          sTitle.startsWith(qLower) ||
+          qLower.startsWith(sTitle) ||
+          sTitle.includes(qLower)
+        );
         return domMatches || (isValidDomainUrl(sDom) && titleMatches);
-      });
+      }) || (suggestions[0]?.domain ? suggestions[0] : null);
+
       if (matchInSuggest) {
         if (matchInSuggest.domain && isValidDomainUrl(extractCleanDomain(matchInSuggest.domain))) {
           cleanUrl = extractCleanDomain(matchInSuggest.domain);
@@ -348,11 +358,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
     if (isValidDomainUrl(cleanUrl)) {
+      setSearchErrorNotification(null);
       console.info(`[Search] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
       console.warn("[Search] No official website domain found. Halting search to prevent creating fallback pages.");
       setIsSearching(false);
-      alert(`No official business website could be found for "${rawQuery}". Please try searching with a more specific query or with the official website domain.`);
+      setSearchErrorNotification(`No official website domain could be found for "${rawQuery}". Please try entering their official website domain.`);
+      setTimeout(() => setSearchErrorNotification(null), 5000);
       return;
     }
 
@@ -578,7 +590,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 }}
               />
 
-              {/* Searching card removed for premium clean UI */}
+              {searchErrorNotification && (
+                <div className="mt-3 p-3 bg-red-950/70 border border-red-500/30 rounded-xl text-red-200 text-xs sm:text-sm text-center animate-in fade-in slide-in-from-top-2">
+                  {searchErrorNotification}
+                </div>
+              )}
             </div>
           )}
         </div>

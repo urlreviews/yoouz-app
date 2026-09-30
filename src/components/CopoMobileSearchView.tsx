@@ -80,6 +80,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   const [location, setLocation] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [searchErrorNotification, setSearchErrorNotification] = useState<string | null>(null);
   const [showLocationBar, setShowLocationBar] = useState(false);
   const [isFocusedLocation, setIsFocusedLocation] = useState(false);
   const businessInputRef = useRef<HTMLInputElement>(null);
@@ -339,15 +340,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           sDom === qLower || 
           sDom.startsWith(qLower) || 
           qLower.startsWith(sDom) || 
-          sDom.split('.')[0] === qLower
+          sDom.split('.')[0] === qLower ||
+          sDom.split('.')[0].startsWith(qLower)
         );
         const titleMatches = sTitle && (
           sTitle === qLower || 
           sTitle.startsWith(qLower) || 
-          qLower.startsWith(sTitle)
+          qLower.startsWith(sTitle) ||
+          sTitle.includes(qLower)
         );
         return domMatches || (isValidDomainUrl(sDom) && titleMatches);
-      });
+      }) || (liveSuggestions[0]?.domain ? liveSuggestions[0] : null);
+
       if (matchInSuggest?.domain) {
         cleanUrl = extractCleanDomain(matchInSuggest.domain);
         console.info("[Search Mobile] Resolved instantly from pre-fetched suggestions:", cleanUrl);
@@ -376,11 +380,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     // STRICT REQUIREMENT: Real official domains only. No fake/dummy pages are created if search fails!
     if (isRealDomain) {
+      setSearchErrorNotification(null);
       console.info(`[Search Mobile] Success! Official URL Discovered: ${cleanUrl}. Proceeding to deep scrape...`);
     } else {
       console.warn("[Search Mobile] No official website domain found. Halting search to prevent creating fallback pages.");
       setIsSearching(false);
-      alert(`No official business website could be found for "${trimmed}". Please try searching with a more specific query or with the official website domain.`);
+      setSearchErrorNotification(`No official business website could be found for "${trimmed}". Please try entering their official website domain.`);
+      setTimeout(() => setSearchErrorNotification(null), 5000);
       return;
     }
 
@@ -759,6 +765,14 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {submittedQuery ? "Back" : "Cancel"}
           </button>
         </div>
+
+        {searchErrorNotification && (
+          <div className="px-4 pb-2">
+            <div className="p-2.5 bg-red-950/70 border border-red-500/30 rounded-xl text-red-200 text-xs text-center animate-in fade-in slide-in-from-top-1">
+              {searchErrorNotification}
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto w-full relative pb-24">
