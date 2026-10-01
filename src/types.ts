@@ -230,6 +230,7 @@ export interface HotelInfo {
 export interface Place {
   id: string;
   name: string;
+  selectedName?: string;
   category: string;
   categoryType: MapFilterCategory;
   address: string;

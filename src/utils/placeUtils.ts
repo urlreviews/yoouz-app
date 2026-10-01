@@ -29,8 +29,8 @@ export function extractCleanDomain(input?: string | null): string {
 
   // Remove any remaining protocol
   clean = clean.replace(/^https?:\/\//i, "");
-  // Remove leading slashes
-  clean = clean.replace(/^\/+/, "");
+  // Remove leading slashes and leading dots
+  clean = clean.replace(/^[\/\.\s]+/, "");
   // Remove www. or www- or www/ or www2. or www3.
   clean = clean.replace(/^www\d*[\.\-\/]/i, "");
   // Remove query, hash, and subpath
@@ -38,7 +38,7 @@ export function extractCleanDomain(input?: string | null): string {
   // Remove trailing colon and port
   clean = clean.split(":")[0];
   // Remove any trailing slashes or dots
-  clean = clean.replace(/[\/\.]+$/, "").trim();
+  clean = clean.replace(/[\/\.\s]+$/, "").trim();
   
   // If slug like "fiverr-com", "digitalpark-ae", "mastercard-com", "legal500-com"
   if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
@@ -223,7 +223,18 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "dover st. market": "Dover Street Market",
   "doverstreetmarket.com": "Dover Street Market",
   "www.doverstreetmarket.com": "Dover Street Market",
+  "london.doverstreetmarket.com": "Dover Street Market",
+  "newyork.doverstreetmarket.com": "Dover Street Market",
+  "ginza.doverstreetmarket.com": "Dover Street Market",
+  "losangeles.doverstreetmarket.com": "Dover Street Market",
+  "paris.doverstreetmarket.com": "Dover Street Market",
+  "singapore.doverstreetmarket.com": "Dover Street Market",
   "doverstreetmarket": "Dover Street Market",
+  "sutas": "Sütaş",
+  "sutas.com": "Sütaş",
+  "sutas.com.tr": "Sütaş",
+  "www.sutas.com.tr": "Sütaş",
+  "sütaş": "Sütaş",
   "pop-boutique.com": "Pop Boutique",
   "www.pop-boutique.com": "Pop Boutique",
   "pop-boutique": "Pop Boutique",

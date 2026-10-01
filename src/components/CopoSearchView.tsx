@@ -163,9 +163,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const cleanKey = (item.id || item.domain || item.title || "").toLowerCase().trim();
       if (cleanKey && item.title) {
         sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, item.title);
+        localStorage.setItem(`yoouz_clicked_name_${cleanKey}`, item.title);
         const dom = extractCleanDomain(cleanKey);
         if (dom) {
           sessionStorage.setItem(`yoouz_clicked_name_${dom}`, item.title);
+          localStorage.setItem(`yoouz_clicked_name_${dom}`, item.title);
         }
       }
     } catch (e) {}
@@ -434,8 +436,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || "")
-      };
+        brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || ""),
+        selectedName: preferredName || locationDetails?.rawBusinessName || instantName
+      } as Place;
 
       if (currentRequestId !== searchRequestIdRef.current) return;
 
@@ -476,7 +479,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.image 
                : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
              
-             const targetName = preferredName
+             const targetName = (currentPlace as any).selectedName
+               || preferredName
                || locationDetails?.rawBusinessName
                || (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
@@ -489,6 +493,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ...currentPlace,
                id: discoveredDom || currentPlace.id,
                brandDomain: discoveredDom || "",
+               selectedName: (currentPlace as any).selectedName || preferredName || locationDetails?.rawBusinessName || targetName,
                website: (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org')) 
                  ? data.url 
                  : (discoveredDom ? `https://${discoveredDom}` : ""),

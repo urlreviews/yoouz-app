@@ -418,8 +418,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         popularKeywords: [],
         amenities: [],
         topDishes: [],
-        brandDomain: isRealDomain ? cleanUrl : ""
-      };
+        brandDomain: isRealDomain ? cleanUrl : "",
+        selectedName: preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || instantName
+      } as Place;
       onAddPlace(optimisticPlace);
 
       // Immediately enrich with authentic address, phone, email, category in the background
@@ -433,9 +434,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
             const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
+            const officialName = (optimisticPlace as any).selectedName || preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]);
             onAddPlace({
               ...optimisticPlace,
-              name: preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]) || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              name: officialName || formatBusinessName(data.siteName || data.title, data.domain || cleanUrl) || optimisticPlace.name,
+              selectedName: officialName || optimisticPlace.name,
               category: data.category || optimisticPlace.category,
               address: (data.address && !data.address.startsWith("http")) ? data.address : optimisticPlace.address,
               city: locationDetails?.city || data.city || optimisticPlace.city,
@@ -518,8 +521,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       const cleanKey = (item.id || cleanDom || title || "").toLowerCase().trim();
       if (cleanKey && title && !title.includes(".com")) {
         sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, title);
+        localStorage.setItem(`yoouz_clicked_name_${cleanKey}`, title);
         if (cleanDom) {
           sessionStorage.setItem(`yoouz_clicked_name_${cleanDom.toLowerCase().trim()}`, title);
+          localStorage.setItem(`yoouz_clicked_name_${cleanDom.toLowerCase().trim()}`, title);
         }
       }
     } catch (e) {}

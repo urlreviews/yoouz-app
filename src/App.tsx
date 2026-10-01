@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -3801,7 +3801,7 @@ export function App() {
     fetch(`/api/nosql/places/${encodeURIComponent(cleanId)}`)
       .then(res => res.ok ? res.json() : null)
       .then(fetchedPlace => {
-        if (fetchedPlace && fetchedPlace.id && fetchedPlace.bannerUrl && fetchedPlace.address && fetchedPlace.phone) {
+        if (fetchedPlace && fetchedPlace.id && (fetchedPlace.bannerUrl || fetchedPlace.logoUrl || (fetchedPlace.name && !isGenericPlaceName(fetchedPlace.name)))) {
           const isYoouz = fetchedPlace.id === 'yoouz.com' || (fetchedPlace.name && fetchedPlace.name.toLowerCase() === 'yoouz') || fetchedPlace.brandDomain === 'yoouz.com' || (fetchedPlace.website && fetchedPlace.website.includes('yoouz.com'));
           if (isYoouz) {
             fetchedPlace.address = '';
@@ -3829,10 +3829,13 @@ export function App() {
                   if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
                   return true;
                 };
-                const fetchedLogo = isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || '');
+                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') ? fetchedPlace.logoUrl : null;
+                const fetchedLogo = existingValidLogo || (isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
+                const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]);
+                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || cleanId));
                 const enriched: Place = {
                   id: (metaData.domain || cleanId).toLowerCase(),
-                  name: (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]) || formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || (fetchedPlace?.name || cleanId),
+                  name: preservedName,
                   category: (metaData.category && metaData.category !== "Website") ? metaData.category : (fetchedPlace?.category || "Website"),
                   categoryType: "all",
                   address: metaData.address || fetchedPlace?.address || "",
@@ -3845,9 +3848,9 @@ export function App() {
                   ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
                   avatarUrl: fetchedLogo,
                   logoUrl: fetchedLogo,
-                  bannerUrl: metaData.image || fetchedPlace?.bannerUrl || "",
-                  ogImage: metaData.image || fetchedPlace?.ogImage || "",
-                  photos: metaData.image ? [metaData.image] : (fetchedPlace?.photos || []),
+                  bannerUrl: fetchedPlace?.bannerUrl || metaData.image || "",
+                  ogImage: fetchedPlace?.ogImage || metaData.image || "",
+                  photos: fetchedPlace?.photos && fetchedPlace.photos.length > 0 ? fetchedPlace.photos : (metaData.image ? [metaData.image] : []),
                   openingHours: metaData.openingHours || fetchedPlace?.openingHours || metaData.hours || "",
                   isOpen: true,
                   phone: metaData.phone || fetchedPlace?.phone || "",

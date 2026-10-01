@@ -405,7 +405,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     };
 
     const getRawName = () => {
-      // 0. Selected / Clicked / Searched name from suggestion list (Absolute highest priority override)
+      // 0. Selected / Clicked / Searched name from suggestion list or place record
+      if ((place as any)?.selectedName && !isGenericPlaceName((place as any).selectedName)) {
+        return unescapeStr((place as any).selectedName);
+      }
+      if ((place as any)?.officialName && !isGenericPlaceName((place as any).officialName)) {
+        return unescapeStr((place as any).officialName);
+      }
+
+      // Check session and local storage
       try {
         const keysToCheck = [
           place?.id,
@@ -415,19 +423,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         ].filter(Boolean);
         
         for (const k of keysToCheck) {
-          const cached = sessionStorage.getItem(`yoouz_clicked_name_${String(k).toLowerCase().trim()}`);
-          if (cached && cached.trim().length > 1 && !cached.toLowerCase().includes(".com")) {
-            return unescapeStr(cached.trim());
+          const keyStr = String(k).toLowerCase().trim();
+          const cachedSession = sessionStorage.getItem(`yoouz_clicked_name_${keyStr}`);
+          if (cachedSession && cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com")) {
+            return unescapeStr(cachedSession.trim());
+          }
+          const cachedLocal = localStorage.getItem(`yoouz_clicked_name_${keyStr}`);
+          if (cachedLocal && cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com")) {
+            return unescapeStr(cachedLocal.trim());
           }
         }
       } catch (e) {}
 
-      // 1. Highest Priority: Exact user search query or suggestion place name if provided and non-generic
-      if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
-        return unescapeStr(place.name.trim());
-      }
-
-      // 2. Verified KNOWN_OFFICIAL_NAMES dictionary
+      // 1. Verified KNOWN_OFFICIAL_NAMES dictionary (Highest priority canonical dictionary)
       if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
         return KNOWN_OFFICIAL_NAMES[drawerDomain];
       }
@@ -437,6 +445,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       }
       if (place?.brandDomain && KNOWN_OFFICIAL_NAMES[place.brandDomain]) {
         return KNOWN_OFFICIAL_NAMES[place.brandDomain];
+      }
+
+      // 2. Exact non-generic place name
+      if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
+        const pLower = place.name.toLowerCase().trim();
+        if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
+        return unescapeStr(place.name.trim());
       }
 
       // 3. Official scraped place name on the Place record
@@ -450,7 +465,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return unescapeStr(formatBusinessName(place?.id) || place?.name || "");
     };
 
-    return toTitleCase(getRawName());
+    const raw = getRawName();
+    const cleanRawLower = raw.toLowerCase().trim();
+    if (KNOWN_OFFICIAL_NAMES[cleanRawLower]) return KNOWN_OFFICIAL_NAMES[cleanRawLower];
+    if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) return KNOWN_OFFICIAL_NAMES[drawerDomain];
+    return toTitleCase(raw);
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
@@ -561,7 +580,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsPhone = !hasGenuinePhone;
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    if (isGenericDesc || isGenericName || needsBanner || needsLogo || needsLocation || needsPhone || needsHours || isSlugDomain) {
+    // If core media (logo & banner) already exists and name is non-generic, do NOT re-enrich on refresh
+    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl));
+    if (hasCoreMedia && !isGenericName && !isGenericDesc) {
+      return;
+    }
+
+    if (isGenericDesc || isGenericName || needsBanner || needsLogo || isSlugDomain) {
       const runEnrichment = () => {
         fetchedTargetUrlsRef.current.add(targetKey);
         let isMounted = true;
@@ -596,7 +621,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
                   onUpdatePlace({
                     ...place,
-                    name: (data.title && isGenericName) ? data.title : place.name,
+                    name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
                     description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
                     address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
                     city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
@@ -748,16 +773,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   const activeBannerUrl = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
-  const criticalImagesLoaded = useCriticalImagesLoaded([activeBannerUrl, primaryLogoUrl], 1000);
+  const criticalImagesLoaded = useCriticalImagesLoaded([activeBannerUrl, primaryLogoUrl], 600);
 
   // Synchronous Co-Landing Gate: Both Banner and Logo transition to screen TOGETHER in 1 exact millisecond
   const isHeaderReady = React.useMemo(() => {
     if (!hasAuthenticPhoto) return true;
     const proxiedBanner = getProxiedImageUrl(activeBannerUrl);
     if (proxiedBanner && KNOWN_LOADED_BANNERS.has(proxiedBanner)) return true;
-    if (bannerLoaded && logoLoaded) return true;
+    if (bannerLoaded && (logoLoaded || !primaryLogoUrl)) return true;
     return criticalImagesLoaded;
-  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, criticalImagesLoaded]);
+  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, primaryLogoUrl, criticalImagesLoaded]);
 
   // Genuine check filters
   const placeKeyForKnown = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
@@ -1079,7 +1104,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && isHeaderReady) ? "opacity-100" : "opacity-0"}`}>
+          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${isHeaderReady ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1130,6 +1155,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
             imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
             fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+            onLoad={() => setLogoLoaded(true)}
           />
         </div>
         {!isHeaderReady && (
@@ -1150,7 +1176,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               const lastWord = words.pop() || '';
               const firstPart = words.join(' ');
               return (
-                <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
+                <h2 className="text-xl sm:text-2xl md:text-[26px] font-extrabold text-white tracking-tight leading-snug break-normal" dir="auto">
                   <span className="text-white" dir="auto">
                     {firstPart ? firstPart + " " : ""}
                     <span className="whitespace-nowrap inline-block align-baseline">

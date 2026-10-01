@@ -13,6 +13,7 @@ interface CopoBrandLogoProps {
   fallbackTextClassName?: string;
   loading?: "eager" | "lazy";
   fetchPriority?: "high" | "low" | "auto";
+  onLoad?: () => void;
 }
 
 // Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
@@ -29,7 +30,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
   fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-sm",
   loading = "lazy",
-  fetchPriority = "auto"
+  fetchPriority = "auto",
+  onLoad
 }) => {
   const [hasError, setHasError] = useState(false);
   const [triedFaviconFallback, setTriedFaviconFallback] = useState(false);
@@ -70,6 +72,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
       return LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+    }
+    if (cleanDomain) {
+      try {
+        const storedLogo = localStorage.getItem(`yoouz_locked_logo_${cleanDomain}`);
+        if (storedLogo && storedLogo.length > 5 && !storedLogo.includes("brandfetch.io")) {
+          LOCKED_DOMAIN_LOGOS.set(cleanDomain, storedLogo);
+          return storedLogo;
+        }
+      } catch (e) {}
     }
 
     // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
@@ -231,11 +242,17 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
               const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
-              if (cleanDomain && !LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-                LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+              if (cleanDomain) {
+                if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+                  LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+                }
+                try {
+                  localStorage.setItem(`yoouz_locked_logo_${cleanDomain}`, currentSrc);
+                } catch (e) {}
               }
             }
             setImgLoaded(true);
+            onLoad?.();
           }}
           onError={() => {
             if (!triedFaviconFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {

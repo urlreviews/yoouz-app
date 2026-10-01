@@ -526,6 +526,82 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <path d="M42 32 C34 32 28 38 28 48 C28 62 36 78 44 88 C46 90 50 90 52 86 C55 80 58 72 60 66 C62 72 65 80 68 86 C70 90 74 90 76 88 C84 78 92 62 92 48 C92 38 86 32 78 32 C72 32 66 36 60 42 C54 36 48 32 42 32 Z" fill="#38bdf8"/>
       <path d="M44 42 C38 42 34 46 34 52 C34 62 40 74 46 82 C47 83 49 83 50 80 C52 74 54 66 56 60 C52 52 48 44 44 42 Z" fill="#e0f2fe" opacity="0.9"/>
       <text x="60" y="106" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">DTC DENTAL</text>
+    </svg>`),
+  "doverstreetmarket.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#09090b"/>
+      <path d="M60 22 L26 48 L32 48 L32 94 L88 94 L88 48 L94 48 Z" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M60 30 L38 48 L44 48 L44 88 L76 88 L76 48 L82 48 Z" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="60" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">DOVER</text>
+      <text x="60" y="71" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">STREET</text>
+      <text x="60" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">MARKET</text>
+    </svg>`),
+  "www.doverstreetmarket.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#09090b"/>
+      <path d="M60 22 L26 48 L32 48 L32 94 L88 94 L88 48 L94 48 Z" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M60 30 L38 48 L44 48 L44 88 L76 88 L76 48 L82 48 Z" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="60" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">DOVER</text>
+      <text x="60" y="71" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">STREET</text>
+      <text x="60" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">MARKET</text>
+    </svg>`),
+  "london.doverstreetmarket.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#09090b"/>
+      <path d="M60 22 L26 48 L32 48 L32 94 L88 94 L88 48 L94 48 Z" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M60 30 L38 48 L44 48 L44 88 L76 88 L76 48 L82 48 Z" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="60" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">DOVER</text>
+      <text x="60" y="71" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">STREET</text>
+      <text x="60" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">MARKET</text>
+    </svg>`),
+  "doverstreetmarket": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#09090b"/>
+      <path d="M60 22 L26 48 L32 48 L32 94 L88 94 L88 48 L94 48 Z" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M60 30 L38 48 L44 48 L44 88 L76 88 L76 48 L82 48 Z" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="60" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="10" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">DOVER</text>
+      <text x="60" y="71" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">STREET</text>
+      <text x="60" y="82" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">MARKET</text>
+    </svg>`),
+  "sutas.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#059669"/>
+      <circle cx="60" cy="60" r="46" fill="#ffffff"/>
+      <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
+      <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
+      <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
+    </svg>`),
+  "www.sutas.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#059669"/>
+      <circle cx="60" cy="60" r="46" fill="#ffffff"/>
+      <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
+      <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
+      <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
+    </svg>`),
+  "sutas.com.tr": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#059669"/>
+      <circle cx="60" cy="60" r="46" fill="#ffffff"/>
+      <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
+      <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
+      <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
+    </svg>`),
+  "www.sutas.com.tr": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#059669"/>
+      <circle cx="60" cy="60" r="46" fill="#ffffff"/>
+      <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
+      <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
+      <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
+    </svg>`),
+  "sutas": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+      <rect width="120" height="120" rx="24" fill="#059669"/>
+      <circle cx="60" cy="60" r="46" fill="#ffffff"/>
+      <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
+      <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
+      <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
     </svg>`)
 };
 
@@ -534,6 +610,15 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+  "doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "london.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "doverstreetmarket": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "sutas.com": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.sutas.com": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "sutas.com.tr": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.sutas.com.tr": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "sutas": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "pop-boutique.com": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.pop-boutique.com": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "pop-boutique": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
