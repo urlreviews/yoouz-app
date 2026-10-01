@@ -216,10 +216,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   return (
     <div className={containerClasses}>
-      {/* 1. Official Vector Brand Monogram Fallback (Strictly replaces favicons with elegant, high-contrast brand initials) */}
+      {/* 1. Official Vector Brand Monogram Fallback (Clean, elegant, non-black initial state) */}
       {(!shouldAttemptImage || !imgLoaded) && (
-        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-950 border border-zinc-800/80 rounded-xl ${imageClassName} shadow-inner`}>
-          <span className={`text-white font-black tracking-tight select-none ${fallbackTextClassName}`}>
+        <div className="absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-50 border border-zinc-200/80 rounded-xl shadow-inner">
+          <span className="text-zinc-900 font-black text-2xl sm:text-3xl tracking-tight select-none">
             {initials}
           </span>
         </div>
