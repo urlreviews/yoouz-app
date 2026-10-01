@@ -17,6 +17,7 @@ interface CopoBrandLogoProps {
 
 // Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
 const KNOWN_LOADED_LOGOS = new Set<string>();
+const LOCKED_DOMAIN_LOGOS = new Map<string, string>();
 
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   domain,
@@ -66,8 +67,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const effectiveSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
 
-    // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
     const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+    if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+      return LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+    }
+
+    // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
     if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
       return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
     }
@@ -116,6 +121,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
 
   const lastSrcRef = React.useRef<string | null>(null);
+  const lastDomainRef = React.useRef<string | null>(null);
 
   // Reset error & fallback state ONLY when the effective image source actually changes
   useEffect(() => {
@@ -123,14 +129,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       setHasError(false);
       setTriedFaviconFallback(false);
       
+      const cleanDom = (resolvedDomain || "").toLowerCase().trim();
+      const lastDom = (lastDomainRef.current || "").toLowerCase().trim();
+      const domainChanged = cleanDom !== lastDom;
+      
       // If we already have this logo in our global "known loaded" set, don't blink to placeholder
       if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
         setImgLoaded(true);
+      } else if (!domainChanged && imgLoaded) {
+        // Silent update: if we are on the same domain/business, do NOT reset imgLoaded to false!
+        // Keep the previous image visible while the new high-quality source loads in the background!
       } else {
         setImgLoaded(false);
       }
       
       lastSrcRef.current = currentSrc;
+      lastDomainRef.current = resolvedDomain;
     }
   }, [currentSrc, resolvedDomain, logoUrl, name]);
 
@@ -214,7 +228,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }`}
           referrerPolicy="no-referrer"
           onLoad={() => {
-            if (currentSrc) KNOWN_LOADED_LOGOS.add(currentSrc);
+            if (currentSrc) {
+              KNOWN_LOADED_LOGOS.add(currentSrc);
+              const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+              if (cleanDomain && !LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+                LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+              }
+            }
             setImgLoaded(true);
           }}
           onError={() => {

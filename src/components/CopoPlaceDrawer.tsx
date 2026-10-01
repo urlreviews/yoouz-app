@@ -114,7 +114,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
   // to avoid the network fetch flicker.
-  useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
+  const criticalImagesLoaded = useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
 
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
@@ -1067,7 +1067,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group">
+          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1075,7 +1075,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0 z-10 transition-all duration-500 ease-out opacity-100"
+              className="absolute inset-0 w-full h-full object-cover p-0 z-10"
               referrerPolicy="no-referrer"
               onLoad={() => {
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
@@ -1096,8 +1096,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {/* Subtle overlay */}
             <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden">
+        ) : null}
+
+        {(!criticalImagesLoaded || bannerError || !hasAuthenticPhoto) && (
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
             {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-black/20 pointer-events-none" />
