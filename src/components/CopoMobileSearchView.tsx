@@ -388,7 +388,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (!matchedPlace && onAddPlace) {
       const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
       const instantBanner = isRealDomain 
-        ? (KNOWN_BRAND_BANNERS[cleanUrl] || `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanUrl}`)
+        ? (KNOWN_BRAND_BANNERS[cleanUrl] || `/api/brand-banner/${cleanUrl}`)
         : "";
       const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const instantCity = locationDetails?.city || "";

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isValidDomainUrl } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -200,6 +200,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }
 
   const shouldAttemptImage = Boolean(currentSrc && !hasError);
+  const isWhiteLogo = currentSrc ? isWhiteOrInvertedLogo(currentSrc) : false;
 
   return (
     <div className={containerClasses}>
@@ -214,37 +215,39 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
       {/* 2. Primary Official Brand Logo Layer (Crisp authentic vector/raster logo from business) */}
       {shouldAttemptImage && (
-        <img
-          src={currentSrc!}
-          alt={name || "Brand Logo"}
-          loading={loading}
-          fetchPriority={fetchPriority}
-          decoding="async"
-          className={`${imageClassName} relative z-10 transition-opacity duration-150 ${
-            imgLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          referrerPolicy="no-referrer"
-          onLoad={() => {
-            if (currentSrc) {
-              KNOWN_LOADED_LOGOS.add(currentSrc);
-              const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
-              if (cleanDomain && !isFaviconUrl(currentSrc)) {
-                if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-                  LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+        <div className={`absolute inset-0 w-full h-full rounded-xl transition-colors duration-300 ${isWhiteLogo ? "bg-zinc-950" : "bg-transparent"}`}>
+          <img
+            src={currentSrc!}
+            alt={name || "Brand Logo"}
+            loading={loading}
+            fetchPriority={fetchPriority}
+            decoding="async"
+            className={`${imageClassName} relative z-10 transition-opacity duration-150 ${
+              imgLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            referrerPolicy="no-referrer"
+            onLoad={() => {
+              if (currentSrc) {
+                KNOWN_LOADED_LOGOS.add(currentSrc);
+                const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+                if (cleanDomain && !isFaviconUrl(currentSrc)) {
+                  if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+                    LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+                  }
+                  try {
+                    localStorage.setItem(`yoouz_locked_logo_${cleanDomain}`, currentSrc);
+                  } catch (e) {}
                 }
-                try {
-                  localStorage.setItem(`yoouz_locked_logo_${cleanDomain}`, currentSrc);
-                } catch (e) {}
               }
-            }
-            setImgLoaded(true);
-            onLoad?.();
-          }}
-          onError={() => {
-            setHasError(true);
-            setImgLoaded(false);
-          }}
-        />
+              setImgLoaded(true);
+              onLoad?.();
+            }}
+            onError={() => {
+              setHasError(true);
+              setImgLoaded(false);
+            }}
+          />
+        </div>
       )}
     </div>
   );

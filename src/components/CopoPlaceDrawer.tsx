@@ -675,7 +675,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Helper to check for broken/placeholder/stale banners or logos misclassified as banners
   const isBadBanner = (url?: string | null) => {
-    if (!url) return true;
+    if (!url || typeof url !== 'string') return true;
     const u = url.toLowerCase();
     return (
       u.includes('yoouz.com/og-banner.png') ||
@@ -690,6 +690,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('play-store') ||
       u.includes('payment') ||
       u.includes('tap/0.png') ||
+      u.includes('transparent') ||
+      u.includes('blank.gif') ||
+      u.includes('pixel.gif') ||
+      u.includes('glass1.png') ||
+      u.includes('dummy.png') ||
+      u.includes('blocked') ||
+      u.includes('unable_to_access') ||
+      u.includes('sorry_you_have_been_blocked') ||
+      u.includes('challenge') ||
+      u.includes('access_denied') ||
+      u.includes('${') ||
       u.endsWith('.ico')
     );
   };
@@ -705,7 +716,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     getPlaceBannerUrl(place);
 
   const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
-    ? (KNOWN_BRAND_BANNERS[drawerDomain] || `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${drawerDomain}`)
+    ? (KNOWN_BRAND_BANNERS[drawerDomain] || `/api/brand-banner/${drawerDomain}`)
     : "";
 
   const effectiveBanner =
@@ -717,7 +728,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanReviewBanner ||
     domainFallbackBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
-    "";
+    `/api/brand-banner/${drawerDomain || place.name || 'business'}`;
 
   // Check if photos are authentic place photos
   const allPhotos = React.useMemo(() => {

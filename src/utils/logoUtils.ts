@@ -62,6 +62,9 @@ export const CLEANTON_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encode
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "gett.com": "https://logo.clearbit.com/gett.com",
+  "www.gett.com": "https://logo.clearbit.com/gett.com",
+  "gett": "https://logo.clearbit.com/gett.com",
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
   "yoouz": YOOUZ_LOGO_DATA_URI,
@@ -71,6 +74,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "cleanton.co.il": CLEANTON_LOGO_DATA_URI,
   "www.cleanton.co.il": CLEANTON_LOGO_DATA_URI,
   "cleanton": CLEANTON_LOGO_DATA_URI,
+  "damagedsociety.co.uk": "https://damagedsociety.co.uk/cdn/shop/files/DMG_SCY-spacing_bb3310a1-65fa-4111-b4c5-15d6b30706a5.png?v=1630062009&width=1200",
+  "www.damagedsociety.co.uk": "https://damagedsociety.co.uk/cdn/shop/files/DMG_SCY-spacing_bb3310a1-65fa-4111-b4c5-15d6b30706a5.png?v=1630062009&width=1200",
+  "damagedsociety": "https://damagedsociety.co.uk/cdn/shop/files/DMG_SCY-spacing_bb3310a1-65fa-4111-b4c5-15d6b30706a5.png?v=1630062009&width=1200",
   "pop-boutique.com": "https://pop-boutique.com/wp-content/uploads/2019/08/poplogo.png",
   "www.pop-boutique.com": "https://pop-boutique.com/wp-content/uploads/2019/08/poplogo.png",
   "pop-boutique": "https://pop-boutique.com/wp-content/uploads/2019/08/poplogo.png",
@@ -721,7 +727,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "blue-sky": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "best-car.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.best-car.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "best-car": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200"
+  "best-car": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "www.gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "gett": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();
@@ -827,16 +836,16 @@ export interface DeterministicBrandTheme {
 }
 
 export const BRAND_COLOR_PALETTES = [
-  "#2563eb", // royal blue
-  "#7c3aed", // violet
-  "#059669", // emerald
-  "#d97706", // amber
-  "#dc2626", // red
-  "#0891b2", // cyan
-  "#4f46e5", // indigo
-  "#c026d3", // fuchsia
-  "#0284c7", // sky
-  "#db2777", // pink
+  "#18181b", // zinc-900
+  "#0f172a", // slate-900
+  "#1e1b4b", // indigo-950
+  "#312e81", // indigo-900
+  "#4c1d95", // violet-950
+  "#581c87", // purple-950
+  "#701a75", // fuchsia-950
+  "#831843", // pink-950
+  "#7c2d12", // orange-950
+  "#14532d", // green-950
 ];
 
 export function getDeterministicBrandTheme(nameOrDomain?: string | null, domainStr?: string | null): DeterministicBrandTheme {
@@ -970,7 +979,9 @@ export function isFaviconUrl(url?: string | null): boolean {
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse") ||
-    l.includes("/api/favicon")
+    l.includes("/api/favicon") ||
+    l.includes("favicon-32x32") ||
+    l.includes("favicon-16x16")
   );
 }
 

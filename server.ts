@@ -193,6 +193,19 @@ function isCorruptedBusinessNameServer(name?: string | null): boolean {
   return false;
 }
 
+function escapeXml(unsafe: string): string {
+  return (unsafe || "").replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
 function isGenericPlaceNameServer(name?: string | null): boolean {
   if (!name) return true;
   if (isCorruptedBusinessNameServer(name)) return true;
@@ -19147,6 +19160,77 @@ const isLogoOrIconUrl = (urlStr: string): boolean => {
   );
 };
 
+function isBadBanner(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return true;
+  if (isLogoOrIconUrl(url)) return true;
+  try {
+    const u = url.toLowerCase().trim();
+    const decoded = decodeURIComponent(u);
+    return (
+      decoded.includes("${") || 
+      decoded.includes("%24%7b") ||
+      decoded.includes("unsplash.com") || 
+      decoded.includes("placeholder") || 
+      decoded.includes("glas1.png") || 
+      decoded.includes("dummy.png") ||
+      decoded.includes("no-image") ||
+      decoded.includes("no_image") ||
+      decoded.includes("tap/0.png") ||
+      decoded.includes("transparent") ||
+      decoded.includes("blank.gif") ||
+      decoded.includes("pixel.gif") ||
+      decoded.includes("mock") ||
+      decoded.includes("yoouz.com/og-banner.png") ||
+      decoded.includes("1789810172562") ||
+      decoded.includes("favicon") ||
+      decoded.includes("avatar") ||
+      decoded.includes("badge") ||
+      decoded.includes("button") ||
+      decoded.includes("app-store") ||
+      decoded.includes("play-store") ||
+      decoded.includes("payment") ||
+      decoded.includes("blocked") ||
+      decoded.includes("sorry_you_have_been_blocked") ||
+      decoded.includes("unable_to_access") ||
+      decoded.includes("challenge") ||
+      decoded.includes("403") ||
+      decoded.includes("access_denied") ||
+      decoded.endsWith(".ico")
+    );
+  } catch (e) {
+    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked");
+  }
+}
+
+function generateBrandBannerSvg(nameOrDomain?: string | null): string {
+  const raw = (nameOrDomain || "Business").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
+  const clean = raw.split('/')[0].split('.')[0].trim();
+  const name = formatBusinessName(nameOrDomain || "Business");
+  
+  // A premium, dark-themed branded banner with subtle patterns
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+    <defs>
+      <linearGradient id="bannerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#18181b"/>
+        <stop offset="100%" stop-color="#09090b"/>
+      </linearGradient>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+      </pattern>
+    </defs>
+    <rect width="1200" height="400" fill="url(#bannerGrad)"/>
+    <rect width="1200" height="400" fill="url(#grid)"/>
+    
+    <!-- Subtle architectural shapes -->
+    <path d="M 0 400 L 400 0 L 1200 400 Z" fill="rgba(255,255,255,0.02)"/>
+    <path d="M 800 400 L 1200 0 L 1200 400 Z" fill="rgba(255,255,255,0.01)"/>
+    
+    <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="120px" opacity="0.07" letter-spacing="-2px">${escapeXml(name.toUpperCase())}</text>
+    
+    <rect x="550" y="360" width="100" height="4" rx="2" fill="#3f3f46" opacity="0.5"/>
+  </svg>`;
+}
+
 function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const l = url.toLowerCase().trim();
@@ -20298,6 +20382,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let effectivePhone = "";
       let effectiveEmail = "";
       let effectiveCategory = "";
+      let scrapedPhotosList: string[] = [];
       
       try {
         let fetchResponse: any = null;
@@ -20325,15 +20410,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           finalUrl = fetchResponse.url;
           html = await fetchResponse.text();
           
-          // Precise Security Gate Shield detection (Cloudflare / SiteGround Block Pages)
+          // Precise Security Gate Shield detection (Cloudflare, Akamai, Incapsula, DataDome Block Pages)
           const lowerHtml = (html || "").toLowerCase();
-          const isBlocked = lowerHtml.includes("sgcaptcha") || 
+          const isBlocked = (fetchResponse && (fetchResponse.status === 403 || fetchResponse.status === 429 || fetchResponse.status === 503)) ||
+                            lowerHtml.includes("sgcaptcha") || 
                             lowerHtml.includes("cf-browser-verification") || 
                             lowerHtml.includes("cf-challenge-running") || 
                             lowerHtml.includes("ray id:") ||
                             lowerHtml.includes("<title>just a moment") || 
                             lowerHtml.includes("<title>attention required") || 
-                            (lowerHtml.includes("access denied") && lowerHtml.includes("cloudflare")) ||
+                            lowerHtml.includes("you have been blocked") ||
+                            lowerHtml.includes("sorry, you have been blocked") ||
+                            lowerHtml.includes("unable to access") ||
+                            lowerHtml.includes("access was denied") ||
+                            lowerHtml.includes("access denied") ||
+                            lowerHtml.includes("challenge-platform") ||
+                            lowerHtml.includes("blocked by cloudflare") ||
+                            lowerHtml.includes("incapsula") ||
+                            lowerHtml.includes("datadome") ||
+                            lowerHtml.includes("perimeterx") ||
+                            lowerHtml.includes("turnstile") ||
                             (lowerHtml.includes("enable javascript") && lowerHtml.includes("cloudflare"));
                             
           if (isBlocked || !html || html.length < 500) {
@@ -20343,23 +20439,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const eliteFallback = await resolveBusinessQuery(domain);
             if (eliteFallback) {
               const targetDom = eliteFallback.domain || domain;
-              let bannerImg = (!isLogoOrIconUrl(eliteFallback.photo) ? eliteFallback.photo : "") || "";
+              let bannerImg = (!isBadBanner(eliteFallback.photo) ? eliteFallback.photo : "") || "";
               let logoImg = (eliteFallback.logo && !isFaviconUrl(eliteFallback.logo)) ? eliteFallback.logo : "";
 
               if (!bannerImg || !eliteFallback.logo) {
                 try {
                   const arc = await fetchArchiveMetadata(targetDom);
-                  if (arc?.banner && !bannerImg && !isLogoOrIconUrl(arc.banner)) bannerImg = arc.banner;
+                  if (arc?.banner && !bannerImg && !isBadBanner(arc.banner)) bannerImg = arc.banner;
                   if (arc?.logo && !isFaviconUrl(arc.logo)) logoImg = arc.logo;
                 } catch(e) {}
               }
 
-              if (!bannerImg || isLogoOrIconUrl(bannerImg)) {
-                bannerImg = domainBanners[targetDom] ? sanitizeProxy(domainBanners[targetDom]) : "";
+              if (!bannerImg || isBadBanner(bannerImg)) {
+                bannerImg = domainBanners[targetDom] ? sanitizeProxy(domainBanners[targetDom]) : (KNOWN_BRAND_BANNERS[targetDom] ? sanitizeProxy(KNOWN_BRAND_BANNERS[targetDom]) : `/api/brand-banner/${targetDom}`);
               } else {
                 bannerImg = sanitizeProxy(bannerImg);
               }
-              logoImg = sanitizeProxy(logoImg);
+              if (!logoImg || isFaviconUrl(logoImg)) {
+                logoImg = KNOWN_BRAND_LOGOS[targetDom] ? sanitizeProxy(KNOWN_BRAND_LOGOS[targetDom]) : `/api/favicon?domain=${targetDom}`;
+              } else {
+                logoImg = sanitizeProxy(logoImg);
+              }
 
               const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || formatBusinessName(eliteFallback.name, targetDom, rawQuery) || eliteFallback.name;
               logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
@@ -20378,7 +20478,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 email: eliteFallback.email || "",
                 category: eliteFallback.category || "Verified Business",
                 openingHours: eliteFallback.openingHours || "Available 24/7",
-                locations: []
+                locations: [],
+                name: fallbackTitle,
+                websiteUrl: eliteFallback.websiteUrl || `https://${targetDom}`,
+                photos: [bannerImg]
               });
             }
           }
@@ -20447,7 +20550,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 'link[rel="apple-touch-icon"]',
                 'link[rel="icon"][sizes="512x512"]',
                 'link[rel="icon"][sizes="192x192"]',
-                'link[rel="icon"][sizes="180x180"]'
+                'link[rel="icon"][sizes="180x180"]',
+                'header img[class*="logo" i]',
+                'nav img[class*="logo" i]',
+                '.logo img',
+                '#logo img',
+                'a[class*="logo" i] img',
+                'a[id*="logo" i] img',
+                'img[src*="logo" i]'
               ];
               
               for (const sel of logoSelectors) {
@@ -20789,7 +20899,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 description = jsonLdDesc;
               }
 
-              // 5. EXTRACT BANNER IMAGE
+              // 5. EXTRACT BANNER IMAGE & PAGE PHOTOS
               const rawMetaImage = getMetaContent('image') || 
                                    getMetaContent('image:url') || 
                                    getMetaContent('image:secure_url') || 
@@ -20797,10 +20907,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                                    $(`meta[itemprop="image"]`).attr('content') ||
                                    '';
 
+              scrapedPhotosList = [];
+
               if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage)) {
-                image = rawMetaImage;
+                try {
+                  image = new URL(rawMetaImage, finalUrl).toString();
+                } catch (e) {
+                  image = rawMetaImage;
+                }
+                if (image) scrapedPhotosList.push(image);
                 console.log('[DEBUG BANNER Step 1 ogImg]:', image);
               }
+
+              // Collect additional og:image and twitter:image variants
+              $('meta[property="og:image"], meta[name="og:image"], meta[property="twitter:image"], meta[name="twitter:image"], meta[itemprop="image"]').each((i, el) => {
+                const content = $(el).attr('content');
+                if (content && !isLogoOrIconUrl(content)) {
+                  try {
+                    const abs = new URL(content, finalUrl).toString();
+                    scrapedPhotosList.push(abs);
+                  } catch (e) {}
+                }
+              });
 
               if (!image) {
                 const candidates: { src: string; weight: number }[] = [];
@@ -20893,7 +21021,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
                 if (candidates.length > 0) {
                   candidates.sort((a, b) => b.weight - a.weight);
-                  image = candidates[0].src;
+                  try {
+                    image = new URL(candidates[0].src, finalUrl).toString();
+                  } catch (e) {
+                    image = candidates[0].src;
+                  }
+                  candidates.slice(0, 5).forEach(c => {
+                    try {
+                      scrapedPhotosList.push(new URL(c.src, finalUrl).toString());
+                    } catch(e) {}
+                  });
                 }
               }
 
@@ -20912,7 +21049,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
                   image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
                 } else if (domain && domain.includes('.')) {
-                  image = `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${domain}`;
+                  image = `/api/brand-banner/${domain}`;
                 }
               }
 
@@ -21286,10 +21423,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         title = formatBusinessName(title || cleanDomain, cleanDomain);
       }
 
-      if (!image || isLogoOrIconUrl(image) || image.includes("unsplash.com") || image.includes("${") || image.includes("dummy.png") || image.includes("placeholder")) {
+      if (!image || isBadBanner(image)) {
         image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
                 (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") || 
-                (cleanDomain && cleanDomain.includes('.') ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanDomain}` : "");
+                `/api/brand-banner/${cleanDomain || title || 'business'}`;
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -21496,19 +21633,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 ? existingDoc.logoUrl
                 : (logo || (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : logo));
 
-            const isBadBanner = (b?: string) => {
-              if (!b) return true;
-              if (isLogoOrIconUrl(b)) return true;
-              try {
-                const decoded = decodeURIComponent(b);
-                return decoded.includes("${") || decoded.includes("unsplash.com") || decoded.includes("placeholder") || decoded.includes("glas1.png") || decoded.includes("dummy.png");
-              } catch (e) {
-                return b.includes("${") || b.includes("%24%7B");
-              }
-            };
-            const mergedBanner = !isBadBanner(image)
+            const isBadBannerInternal = (b?: string) => isBadBanner(b);
+            const mergedBanner = !isBadBannerInternal(image)
               ? image
-              : (!isBadBanner(existingDoc.bannerUrl) ? existingDoc.bannerUrl : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""));
+              : (!isBadBannerInternal(existingDoc.bannerUrl) ? existingDoc.bannerUrl : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : `/api/brand-banner/${cleanDomain}`));
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
             const mergedAddress = isCorruptAddress(rawExistingAddr) || !rawExistingAddr || (effectiveAddress && effectiveAddress.length > rawExistingAddr.length) 
@@ -21632,7 +21760,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         openingHours: locInfo.openingHours || "",
         locations: locInfo.locations || [],
         name: title,
-        websiteUrl: finalUrl
+        websiteUrl: finalUrl,
+        photos: Array.from(new Set([image, ...(typeof scrapedPhotosList !== 'undefined' ? scrapedPhotosList : [])])).map(p => sanitizeProxy(p)).filter(p => p && !isBadBanner(p))
       };
 
       // Background persist to DB cache
@@ -22297,6 +22426,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
   };
 
   // Proxy for Google Favicon CDN to bypass mobile tracking blockers (e.g. iOS Safari) and prevent 404 errors
+  app.get('/api/monogram/:id', (req, res) => {
+    const id = req.params.id || "Business";
+    const svg = generateBrandMonogramSvg(id);
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(svg);
+  });
+
+  app.get('/api/brand-banner/:id', (req, res) => {
+    const id = req.params.id || "Business";
+    const svg = generateBrandBannerSvg(id);
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(svg);
+  });
+
   app.get("/api/favicon", async (req, res) => {
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
@@ -25073,7 +25218,6 @@ function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): str
   
   if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
     const letters = "L500";
-    const isGold = true;
     const textColor = "#eab308";
     const fontSize = Math.round(size * 0.28);
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
@@ -25089,13 +25233,26 @@ function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): str
     </svg>`;
   }
 
-  // Universal premium wireframe globe fallback for all other unbranded businesses
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none">
-    <rect width="24" height="24" rx="6" fill="#18181b"/>
-    <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.15)" stroke-width="0.8"/>
-    <circle cx="12" cy="12" r="6.5" stroke="#a1a1aa" stroke-width="1.2"/>
-    <path d="M6 10h12M6 14h12" stroke="#a1a1aa" stroke-width="1.2"/>
-    <path d="M11.5 5.5a11 11 0 0 0 0 13m1-13a11 11 0 0 1 0 13" stroke="#a1a1aa" stroke-width="1.2"/>
+  // Premium Letter Monogram Fallback
+  const firstLetter = clean.charAt(0).toUpperCase() || "B";
+  const colors = [
+    { bg: "#18181b", text: "#ffffff", stroke: "#27272a" },
+    { bg: "#111827", text: "#60a5fa", stroke: "#1e293b" },
+    { bg: "#1e1b4b", text: "#818cf8", stroke: "#312e81" },
+    { bg: "#312e81", text: "#a5b4fc", stroke: "#3730a3" },
+    { bg: "#4c1d95", text: "#c4b5fd", stroke: "#5b21b6" },
+  ];
+  
+  // Deterministic color based on name
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) hash = clean.charCodeAt(i) + ((hash << 5) - hash);
+  const color = colors[Math.abs(hash) % colors.length];
+  const fontSize = Math.round(size * 0.45);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="${color.bg}"/>
+    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="${color.stroke}" stroke-width="2" opacity="0.5"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${color.text}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px">${escapeXml(firstLetter)}</text>
   </svg>`;
 }
 
@@ -27005,9 +27162,18 @@ function injectOpenGraphTags(html: string, meta: any) {
   try {
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
-      await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%'").catch(() => {});
+      await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%' OR name LIKE '%blocked%' OR name LIKE '%unable to access%' OR bannerUrl LIKE '%blocked%' OR bannerUrl LIKE '%challenge%'").catch(() => {});
     }
   } catch(e) {}
+
+  const purgeBlockedPlaceRecords = async (): Promise<void> => {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        await bunnyDb.execute("DELETE FROM places WHERE LOWER(name) LIKE '%blocked%' OR LOWER(name) LIKE '%unable to access%' OR LOWER(bannerUrl) LIKE '%blocked%' OR LOWER(bannerUrl) LIKE '%challenge%'");
+      } catch(e) {}
+    }
+  };
   await syncAndMigrateBusinessPlaces().catch(() => {});
   await ensureWelcomeNotificationsForAllUsers().catch(() => {});
 
@@ -27028,6 +27194,9 @@ function injectOpenGraphTags(html: string, meta: any) {
       console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
     }
   }).catch((e) => console.warn("User profile reconciliation startup notice:", e?.message));
+
+  // Purge any legacy anti-bot blocked place records from database
+  purgeBlockedPlaceRecords().catch(() => {});
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://localhost:${PORT}`);

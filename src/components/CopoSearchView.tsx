@@ -395,7 +395,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || (isRealDomain ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanUrl}` : "");
+        || (isRealDomain ? `/api/brand-banner/${cleanUrl}` : "");
       const instantName = preferredName
         || locationDetails?.rawBusinessName
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
@@ -476,7 +476,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
              const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
                ? data.image 
-               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : (discoveredDom ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${discoveredDom}` : ""));
+               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : (discoveredDom ? `/api/brand-banner/${discoveredDom}` : ""));
              
              const targetName = (currentPlace as any).selectedName
                || preferredName
