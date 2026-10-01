@@ -1126,11 +1126,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="min-w-0 flex-1">
             {(() => {
               const fullName = (displayedPlaceName || "").trim();
+              const words = fullName.split(' ');
+              const lastWord = words.pop() || '';
+              const firstPart = words.join(' ');
               return (
                 <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
-                  <span className="inline-flex items-center gap-1.5 flex-wrap" dir="auto">
-                    <span className="text-white" dir="auto">{fullName}</span>
-                    <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
+                  <span className="text-white" dir="auto">
+                    {firstPart ? firstPart + " " : ""}
+                    <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-middle">
+                      {lastWord}
+                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
+                    </span>
                   </span>
                 </h2>
               );
