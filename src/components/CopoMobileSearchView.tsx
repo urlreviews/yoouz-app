@@ -621,7 +621,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       ? `/api/url-metadata?url=${encodeURIComponent(cleanDom)}`
       : `/api/url-metadata?q=${encodeURIComponent(title)}`;
 
-    fetch(enrichEndpoint, { signal: AbortSignal.timeout(15000) })
+    fetch(enrichEndpoint, { signal: AbortSignal.timeout(8000) })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && onAddPlace) {

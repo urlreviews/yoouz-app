@@ -1130,7 +1130,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {hasAuthenticPhoto && !bannerError && !((allPhotos[photoIndex] || allPhotos[0] || "").includes("/api/brand-banner")) ? (
+        {hasAuthenticPhoto && !bannerError ? (
           <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${isHeaderReady ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
@@ -1161,25 +1161,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {/* Subtle overlay */}
             <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950 flex items-center justify-center overflow-hidden z-10">
-            {/* Ambient backlight glow */}
-            <div className="absolute w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-            
-            {/* Centered Large White Squircle Brand Identity Logo */}
-            <div className="relative z-10 flex items-center justify-center select-none">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] bg-white border-[3px] border-white/40 shadow-2xl p-3 sm:p-4 flex items-center justify-center ring-1 ring-black/10 transition-transform duration-300">
-                <CopoBrandLogo
-                  domain={drawerDomain || place.brandDomain}
-                  name={displayedPlaceName}
-                  website={place.website}
-                  logoUrl={primaryLogoUrl || place.logoUrl}
-                  className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                  imageClassName="w-full h-full object-contain"
-                  fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-                />
-              </div>
-            </div>
+        ) : null}
+
+        {(!isHeaderReady || bannerError || !hasAuthenticPhoto) && (
+          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
+            {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-black/20 pointer-events-none" />
           </div>
         )}
 
