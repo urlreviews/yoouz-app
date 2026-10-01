@@ -1164,11 +1164,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         ) : (
           <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950 flex items-center justify-center overflow-hidden z-10">
             {/* Ambient backlight glow */}
-            <div className="absolute w-56 h-56 rounded-full bg-white/5 blur-3xl pointer-events-none" />
+            <div className="absolute w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
             
-            {/* Centered Brand Identity Logo inside the banner area */}
-            <div className="relative z-10 flex flex-col items-center justify-center p-4 text-center select-none">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-zinc-900/90 border border-white/10 shadow-2xl p-2.5 flex items-center justify-center backdrop-blur-xl">
+            {/* Centered Large White Squircle Brand Identity Logo */}
+            <div className="relative z-10 flex items-center justify-center select-none">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] bg-white border-[3px] border-white/40 shadow-2xl p-3 sm:p-4 flex items-center justify-center ring-1 ring-black/10 transition-transform duration-300">
                 <CopoBrandLogo
                   domain={drawerDomain || place.brandDomain}
                   name={displayedPlaceName}
@@ -1176,12 +1176,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   logoUrl={primaryLogoUrl || place.logoUrl}
                   className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
                   imageClassName="w-full h-full object-contain"
-                  fallbackTextClassName="font-black text-2xl sm:text-3xl text-white"
+                  fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
                 />
               </div>
-              <span className="mt-2 text-xs font-bold uppercase tracking-wider text-zinc-300">
-                {displayedPlaceName}
-              </span>
             </div>
           </div>
         )}
