@@ -19774,7 +19774,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const hostParts = cleanHost.split('.');
                 const domainNameOnly = hostParts[0];
 
-                // 1. Identify Portal/Directory/News/Aggregator domains that should be heavily deprioritized
+                // 1. Identify Portal/Directory/News/Aggregator domains that should be heavily deprioritized or excluded
                 const portalDomains = [
                   "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
                   "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
@@ -19782,7 +19782,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
                   "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
                   "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
-                  "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk"
+                  "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk", "wheree.com", "wheree.", "directory", "portal", "yellowpages", "yelp"
                 ];
 
                 // Check for embedded business domains inside aggregators (e.g. milonic.com/bluechillicars.com, trustpilot.com/review/domain.co.uk)
@@ -19794,8 +19794,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
                 const isPortal = portalDomains.some(d => host.includes(d));
 
+                if (isPortal) {
+                  // Strictly skip/exclude all directories, social portals, and fake directory URLs!
+                  continue;
+                }
+
                 let score = 100 - (candidates.length * 5); // Initial score based on search rank
-                if (isPortal) score -= 120; // Heavy penalty for news/portals/directories/social
                 
                 // 2. Bonus for domain name matching query keywords (strong official website signal across all languages)
                 const queryWords = cleanQ.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length >= 2 && !['car', 'auto', 'the', 'and', 'inc', 'llc', 'ltd', 'service', 'services', 'leasing', 'lease', 'השכרת', 'רכב', 'בעמ'].includes(w));
