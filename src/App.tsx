@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -3925,6 +3925,19 @@ export function App() {
   const isPlaceView = Boolean(selectedPlaceIdForDrawer && drawerPlace);
   const isCreatorView = Boolean(selectedAuthorForDrawer);
 
+  const displayedDrawerPlaceName = useMemo(() => {
+    if (!drawerPlace) return undefined;
+    if ((drawerPlace as any).selectedName) return (drawerPlace as any).selectedName;
+    const dom = (drawerPlace.brandDomain || drawerPlace.id || "").toLowerCase().replace(/^www\./, "");
+    if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
+    if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com")) {
+      const pLower = drawerPlace.name.toLowerCase().trim();
+      if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
+      return toTitleCase(drawerPlace.name);
+    }
+    return formatBusinessName(drawerPlace.name || drawerPlace.id, dom) || toTitleCase(drawerPlace.name || drawerPlace.id);
+  }, [drawerPlace]);
+
   const currentFeedContextKey = useMemo(() => {
     if (isPlaceView) return `place_${drawerPlace?.id || selectedPlaceIdForDrawer}`;
     if (isCreatorView) return `creator_${selectedAuthorForDrawer?.name || selectedAuthorForDrawer?.name}`;
@@ -6863,7 +6876,7 @@ export function App() {
                   : undefined
               }
               isEmbed={Boolean(embedTargetId)}
-              feedContextTitle={embedTargetId ? embedTargetId : (fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView && drawerPlace ? drawerPlace.name : undefined))}
+              feedContextTitle={embedTargetId ? embedTargetId : (fullscreenFeedContext?.title || (isCreatorView && selectedAuthorForDrawer ? selectedAuthorForDrawer.name : isPlaceView ? displayedDrawerPlaceName : undefined))}
               onGoHome={handleGoHome}
               onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
               onRecordView={handleRecordVideoView}

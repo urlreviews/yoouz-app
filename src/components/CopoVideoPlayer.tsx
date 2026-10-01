@@ -1376,7 +1376,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             {feedContextTitle ? (
               <>
                 No Video Reviews for{" "}
-                <span className="whitespace-nowrap inline-block">{toTitleCase(feedContextTitle)}</span>
+                <span className="whitespace-nowrap inline-block">{formatBusinessName(feedContextTitle) || toTitleCase(feedContextTitle)}</span>
               </>
             ) : (
               "No Video Reviews Yet"
@@ -1386,7 +1386,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             {feedContextTitle ? (
               <>
                 Be the first creator to record an authentic 60-second video review for{" "}
-                <span className="whitespace-nowrap inline-block">{toTitleCase(feedContextTitle)}</span>!
+                <span className="whitespace-nowrap inline-block">{formatBusinessName(feedContextTitle) || toTitleCase(feedContextTitle)}</span>!
               </>
             ) : (
               "Record the first authentic 60-second video review for any business or place!"
