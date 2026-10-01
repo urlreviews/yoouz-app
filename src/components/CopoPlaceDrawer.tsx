@@ -1067,7 +1067,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${criticalImagesLoaded ? "opacity-100" : "opacity-0"}`}>
+          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && criticalImagesLoaded) ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1098,7 +1098,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {(!criticalImagesLoaded || bannerError || !hasAuthenticPhoto) && (
+        {(!criticalImagesLoaded || isEnriching || bannerError || !hasAuthenticPhoto) && (
           <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
             {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />
