@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
 import { isValidDomainUrl } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -34,7 +34,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   onLoad
 }) => {
   const [hasError, setHasError] = useState(false);
-  const [triedFaviconFallback, setTriedFaviconFallback] = useState(false);
 
   // Extract clean domain from any source
   const resolvedDomain = useMemo(() => {
@@ -58,25 +57,18 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }, [resolvedDomain, name]);
 
-  const googleFaviconUrl = useMemo(() => {
-    if (isYoouz) return null;
-    if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
-      return `/api/favicon?domain=${resolvedDomain}`;
-    }
-    return null;
-  }, [resolvedDomain, isYoouz]);
-
   const effectiveSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
 
     const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-      return LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+      if (!isFaviconUrl(locked)) return locked;
     }
     if (cleanDomain) {
       try {
         const storedLogo = localStorage.getItem(`yoouz_locked_logo_${cleanDomain}`);
-        if (storedLogo && storedLogo.length > 5 && !storedLogo.includes("brandfetch.io")) {
+        if (storedLogo && storedLogo.length > 5 && !storedLogo.includes("brandfetch.io") && !isFaviconUrl(storedLogo)) {
           LOCKED_DOMAIN_LOGOS.set(cleanDomain, storedLogo);
           return storedLogo;
         }
@@ -95,9 +87,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanName]);
     }
 
-    // 1. Explicit clean Logo URL from place record or metadata
+    // 1. Explicit clean Logo URL from place record or metadata (STRICTLY reject any favicons or .ico files)
     if (
       logoUrl &&
+      !isFaviconUrl(logoUrl) &&
       !logoUrl.includes("brandfetch.io") &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
@@ -110,23 +103,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return getProxiedImageUrl(logoUrl);
     }
 
-    // 2. High-resolution authentic favicon endpoint
-    if (googleFaviconUrl) {
-      return googleFaviconUrl;
-    }
-
+    // Absolutely NO favicon endpoint fallback
     return null;
-  }, [isYoouz, resolvedDomain, logoUrl, name, googleFaviconUrl]);
+  }, [isYoouz, resolvedDomain, logoUrl, name]);
 
   const currentSrc = useMemo(() => {
     if (isYoouz) return "/favicon.svg";
-    if (triedFaviconFallback && googleFaviconUrl) {
-      return googleFaviconUrl;
-    }
-    const base = effectiveSrc || googleFaviconUrl;
-    if (!base) return null;
-    return getProxiedImageUrl(base);
-  }, [isYoouz, triedFaviconFallback, googleFaviconUrl, effectiveSrc]);
+    if (!effectiveSrc || isFaviconUrl(effectiveSrc)) return null;
+    return getProxiedImageUrl(effectiveSrc);
+  }, [isYoouz, effectiveSrc]);
 
   const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
   const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
@@ -138,18 +123,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   useEffect(() => {
     if (currentSrc !== lastSrcRef.current) {
       setHasError(false);
-      setTriedFaviconFallback(false);
       
       const cleanDom = (resolvedDomain || "").toLowerCase().trim();
       const lastDom = (lastDomainRef.current || "").toLowerCase().trim();
       const domainChanged = cleanDom !== lastDom;
       
-      // If we already have this logo in our global "known loaded" set, don't blink to placeholder
       if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
         setImgLoaded(true);
       } else if (!domainChanged && imgLoaded) {
-        // Silent update: if we are on the same domain/business, do NOT reset imgLoaded to false!
-        // Keep the previous image visible while the new high-quality source loads in the background!
+        // Keep previous image visible while new source loads
       } else {
         setImgLoaded(false);
       }
@@ -165,20 +147,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
   }, [currentSrc]);
 
-  const initialLetter = useMemo(() => {
-    const candidate = name || resolvedDomain || "B";
-    const clean = candidate.replace(/^(https?:\/\/)?(www\.)?/, "").trim();
-    return (clean.charAt(0) || "B").toUpperCase();
-  }, [name, resolvedDomain]);
+  // Synchronously notify parent when image or initials are ready
+  useEffect(() => {
+    if ((imgLoaded || !currentSrc) && onLoad) {
+      onLoad();
+    }
+  }, [imgLoaded, currentSrc]);
 
   const initials = useMemo(() => {
-    if (!name) return initialLetter;
-    const words = name.trim().split(/\s+/).filter(w => !w.toLowerCase().includes("cleaning") && !w.toLowerCase().includes("services") && !w.toLowerCase().includes("inc") && !w.toLowerCase().includes("llc"));
+    const candidate = name || resolvedDomain || "B";
+    const clean = candidate.replace(/^(?:https?:\/\/)?(?:www\.)?/, "").trim();
+    const words = clean.split(/[\s.\-_]+/).filter(Boolean);
     if (words.length >= 2) {
       return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
     }
-    return (name.trim().charAt(0) || "B").toUpperCase();
-  }, [name, initialLetter]);
+    return (clean.charAt(0) || "B").toUpperCase();
+  }, [name, resolvedDomain]);
 
   const hasPosition =
     className.includes("absolute") ||
@@ -193,7 +177,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     className
   ].filter(Boolean).join(" ");
 
-  // Dedicated Yoouz emblem (rendered only after all hooks are declared)
+  // Dedicated Yoouz emblem
   if (isYoouz) {
     return (
       <div className={className} id="copo-brand-logo-yoouz">
@@ -215,34 +199,36 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }
 
-  const shouldAttemptImage = !!currentSrc;
+  const shouldAttemptImage = Boolean(currentSrc && !hasError);
 
   return (
     <div className={containerClasses}>
-      {/* 1. Universal Premium Minimalist Business Emblem Fallback (Elegant Neutral Shimmer Placeholder) */}
-      {(!imgLoaded || hasError || !shouldAttemptImage) && (
-        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-900 border border-zinc-800 rounded-xl ${imageClassName} animate-pulse`}>
-          <div className="w-5 h-5 rounded-md bg-zinc-800" />
+      {/* 1. Official Vector Brand Monogram Fallback (Strictly replaces favicons with elegant, high-contrast brand initials) */}
+      {(!shouldAttemptImage || !imgLoaded) && (
+        <div className={`absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-950 border border-zinc-800/80 rounded-xl ${imageClassName} shadow-inner`}>
+          <span className={`text-white font-black tracking-tight select-none ${fallbackTextClassName}`}>
+            {initials}
+          </span>
         </div>
       )}
 
-      {/* 2. Primary Brand Logo / Favicon Layer (Crisp, authentic, completely unobstructed on clean canvas) */}
+      {/* 2. Primary Official Brand Logo Layer (Crisp authentic vector/raster logo from business) */}
       {shouldAttemptImage && (
         <img
-          src={currentSrc}
+          src={currentSrc!}
           alt={name || "Brand Logo"}
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
           className={`${imageClassName} relative z-10 transition-opacity duration-150 ${
-            (imgLoaded && !hasError) ? "opacity-100" : "opacity-0"
+            imgLoaded ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
           onLoad={() => {
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
               const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
-              if (cleanDomain) {
+              if (cleanDomain && !isFaviconUrl(currentSrc)) {
                 if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
                   LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
                 }
@@ -255,12 +241,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             onLoad?.();
           }}
           onError={() => {
-            if (!triedFaviconFallback && googleFaviconUrl && currentSrc !== googleFaviconUrl) {
-              setTriedFaviconFallback(true);
-              setImgLoaded(false);
-            } else {
-              setHasError(true);
-            }
+            setHasError(true);
+            setImgLoaded(false);
           }}
         />
       )}

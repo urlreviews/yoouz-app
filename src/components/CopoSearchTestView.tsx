@@ -68,7 +68,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
           id: p.id,
           title: p.name || dom,
           domain: hasDot ? dom : "",
-          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          logoUrl: (p.logoUrl && !p.logoUrl.includes('favicon')) ? p.logoUrl : "",
           category: p.category || "Verified Business",
           address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
           source: "database"
@@ -148,9 +148,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
 
     // 0ms INSTANT Display when domain is already known
     if (cleanDom) {
-      const instantAvatar = item.logoUrl && !item.logoUrl.includes('domain=.com')
+      const instantAvatar = item.logoUrl && !item.logoUrl.includes('favicon')
         ? item.logoUrl 
-        : `/api/favicon?domain=${cleanDom}`;
+        : "";
 
       const instantPlace: Place = {
         id: cleanDom,
@@ -200,9 +200,9 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
         const data = await resp.json();
         const resolvedDomain = data.domain || cleanDom;
         const resolvedName = (resolvedDomain && KNOWN_OFFICIAL_NAMES[resolvedDomain]) || data.title || formatBusinessName(data.siteName || data.title, resolvedDomain) || item.title;
-        const resolvedAvatar = (data.logo && !data.logo.includes('domain=.com')) 
+        const resolvedAvatar = (data.logo && !data.logo.includes('favicon')) 
           ? data.logo 
-          : (resolvedDomain ? `/api/favicon?domain=${resolvedDomain}` : "");
+          : "";
 
         const finalPlace: Place = {
           id: resolvedDomain || placeId,

@@ -4,7 +4,7 @@ import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
-import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, isFaviconUrl } from "../utils/logoUtils";
 import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
@@ -387,6 +387,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
       const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
+      const instantBanner = isRealDomain 
+        ? (KNOWN_BRAND_BANNERS[cleanUrl] || `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanUrl}`)
+        : "";
       const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
@@ -405,9 +408,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
         avatarUrl: instantLogo,
         logoUrl: instantLogo,
-        bannerUrl: "",
-        ogImage: "",
-        photos: [],
+        bannerUrl: instantBanner,
+        ogImage: instantBanner,
+        photos: instantBanner ? [instantBanner] : [],
         openingHours: "Available 24/7",
         isOpen: true,
         phone: "",
@@ -432,7 +435,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           if (data && (data.title || data.address || data.phone || data.category || data.image || data.logo)) {
-            const isValidLogo = data.logo && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
+            const isValidLogo = data.logo && !isFaviconUrl(data.logo) && !data.logo.includes("tap/0.png") && !data.logo.includes("icons/tap") && !data.logo.startsWith("data:;");
             const isValidBanner = data.image && !data.image.includes("unsplash.com") && !data.image.includes("placeholder");
             const officialName = (optimisticPlace as any).selectedName || preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain]);
             onAddPlace({
@@ -566,7 +569,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
 
     const placeId = cleanDom.toLowerCase();
     const knownHead = KNOWN_LOCATIONS[cleanDom] || KNOWN_LOCATIONS[cleanDom.split('.')[0]];
-    const instantLogo = item.logoUrl || (knownHead?.bannerUrl ? knownHead.bannerUrl : null) || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || (cleanDom ? `/api/favicon?domain=${cleanDom}` : "");
+    const instantLogo = (item.logoUrl && !isFaviconUrl(item.logoUrl) ? item.logoUrl : null) || (cleanDom ? getCleanLogoUrl(null, cleanDom) : "") || "";
     const instantName = knownHead?.name || (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : query);
 
     const storeTerm = cleanDom || title;
@@ -679,7 +682,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           id: p.id,
           title: p.name || dom,
           domain: hasDot ? dom : "",
-          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          logoUrl: (p.logoUrl && !isFaviconUrl(p.logoUrl)) ? p.logoUrl : "",
           category: (p.category && p.category !== "Verified Business") ? p.category : "",
           address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
           source: "database"

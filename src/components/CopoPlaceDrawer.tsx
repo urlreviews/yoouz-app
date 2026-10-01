@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -138,6 +138,21 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
       fetchedTargetUrlsRef.current.clear();
     }
   }, [place?.id, place?.brandDomain, place?.website, place?.name]);
+
+  // Synchronously reset banner error state when fresh banner arrives from background enrichment or place updates
+  useEffect(() => {
+    if (fetchedBannerUrl && !isBadBanner(fetchedBannerUrl)) {
+      setBannerError(false);
+      setBannerLoaded(false);
+      setPhotoIndex(0);
+    }
+  }, [fetchedBannerUrl]);
+
+  useEffect(() => {
+    if (place?.bannerUrl && !isBadBanner(place.bannerUrl)) {
+      setBannerError(false);
+    }
+  }, [place?.bannerUrl]);
 
   // Tab switching with scroll to top
   const handleTabClick = (tab: "overview" | "reviews" | "about") => {
@@ -571,6 +586,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
+      !isFaviconUrl(place.logoUrl) &&
       !place.logoUrl.startsWith("data:;") &&
       !place.logoUrl.includes("760X310") &&
       !place.logoUrl.includes("fallback")
@@ -608,17 +624,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
               
               if (data) {
-                const hasActualData = Boolean(
-                  data.image || 
-                  (data.logo && !data.logo.includes('tap/0.png')) || 
-                  (data.address && data.address !== "Verified Location") || 
-                  data.phone
-                );
+                const resolvedBanner = (data.image && !data.image.includes("unsplash.com")) ? data.image : (place.bannerUrl || domainFallbackBanner || "");
+                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo)) ? data.logo : (hasValidLogo ? place.logoUrl : "");
                 
-                if (data.image && !place.bannerUrl && !place.ogImage) {
+                if (data.image) {
                   setFetchedBannerUrl(data.image);
                 }
-                if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
+                if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo && !isFaviconUrl(data.logo)) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
                   onUpdatePlace({
                     ...place,
                     name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
@@ -633,13 +645,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
                     lat: data.lat || place.lat || 0,
                     lng: data.lng || place.lng || 0,
-                    bannerUrl: place.bannerUrl || data.image || "",
-                    ogImage: place.ogImage || data.image || "",
-                    logoUrl: hasValidLogo ? place.logoUrl : (data.logo || place.logoUrl || ""),
-                    avatarUrl: hasValidLogo ? place.avatarUrl : (data.logo || place.avatarUrl || ""),
+                    bannerUrl: resolvedBanner,
+                    ogImage: resolvedBanner,
+                    logoUrl: resolvedLogo,
+                    avatarUrl: resolvedLogo,
                     brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                     website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                    photos: data.image ? Array.from(new Set([...(place.photos || []), data.image])) : place.photos
+                    photos: resolvedBanner ? Array.from(new Set([...(place.photos || []), resolvedBanner])) : place.photos
                   });
                 }
               }
@@ -669,10 +681,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('yoouz.com/og-banner.png') ||
       u.includes('placeholder') ||
       u.includes('mock') ||
-      u.includes('unsplash.com') ||
       u.includes('1789810172562') ||
-      u.includes('logo') ||
-      u.includes('icon') ||
       u.includes('favicon') ||
       u.includes('avatar') ||
       u.includes('badge') ||
@@ -681,8 +690,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('play-store') ||
       u.includes('payment') ||
       u.includes('tap/0.png') ||
-      u.endsWith('.ico') ||
-      u.endsWith('.svg')
+      u.endsWith('.ico')
     );
   };
 
@@ -696,13 +704,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
     getPlaceBannerUrl(place);
 
+  const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
+    ? (KNOWN_BRAND_BANNERS[drawerDomain] || `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${drawerDomain}`)
+    : "";
+
   const effectiveBanner =
-    activeBanner ||
+    cleanFetchedBanner ||
     cleanBannerUrl ||
+    activeBanner ||
     cleanOgImage ||
     knownDomainBanner ||
     cleanReviewBanner ||
-    cleanFetchedBanner ||
+    domainFallbackBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
     "";
 
@@ -716,6 +729,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         knownDomainBanner,
         cleanReviewBanner,
         cleanFetchedBanner,
+        domainFallbackBanner,
         ...(place.photos || []).filter(p => !isBadBanner(p)),
         (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
       ])
@@ -723,14 +737,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       if (!p || p.startsWith("blob:")) return false;
       if (p.startsWith("data:image/")) return true;
       if (isBadBanner(p)) return false;
-      if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER) return true;
+      if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER || p === domainFallbackBanner) return true;
       const lower = p.toLowerCase();
       if (lower.includes("favicon") || lower.includes(".ico")) {
         return false;
       }
       return true;
     });
-  }, [effectiveBanner, cleanBannerUrl, cleanOgImage, knownDomainBanner, cleanReviewBanner, cleanFetchedBanner, place.photos, isYoouzPlace]);
+  }, [effectiveBanner, cleanBannerUrl, cleanOgImage, knownDomainBanner, cleanReviewBanner, cleanFetchedBanner, domainFallbackBanner, place.photos, isYoouzPlace]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 
@@ -740,10 +754,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    // Priority 1: Canonical place record logo (ignoring wide header banners and tap icons)
+    // Priority 1: Canonical place record logo (ignoring wide header banners, favicons, and tap icons)
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
     if (
       canonicalPlaceLogo && 
+      !isFaviconUrl(canonicalPlaceLogo) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 
       !canonicalPlaceLogo.includes("LogoHeader") && 
@@ -757,6 +772,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     // Priority 2: Video review logo
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
+      !isFaviconUrl(v.placeLogoUrl) &&
       !v.placeLogoUrl.startsWith("data:;") && 
       v.placeLogoUrl.trim() !== "" && 
       !v.placeLogoUrl.includes("LogoHeader") && 
@@ -1136,7 +1152,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {(!isHeaderReady && !bannerError && hasAuthenticPhoto) && (
+        {(!isHeaderReady || bannerError || !hasAuthenticPhoto) && (
           <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
             {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />

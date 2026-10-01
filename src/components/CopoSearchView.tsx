@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -80,7 +80,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           id: p.id,
           title: KNOWN_OFFICIAL_NAMES[p.id?.toLowerCase()] || KNOWN_OFFICIAL_NAMES[dom?.toLowerCase()] || p.name || dom,
           domain: hasDot ? dom : "",
-          logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
+          logoUrl: (p.logoUrl && !isFaviconUrl(p.logoUrl)) ? p.logoUrl : "",
           category: (p.category && !p.category.toLowerCase().includes("verified") && !p.category.toLowerCase().includes("google")) ? p.category : "",
           address: p.address ? `${p.address}${p.city ? ', ' + p.city : ''}` : (p.city || ""),
           source: "database"
@@ -392,11 +392,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
       // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
       const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
-        || (isRealDomain ? `/api/favicon?domain=${cleanUrl}` : "")
-        || (isMetaMatchingCurrent && preloadedMeta?.logo && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
+        || (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || "";
+        || (isRealDomain ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanUrl}` : "");
       const instantName = preferredName
         || locationDetails?.rawBusinessName
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
@@ -471,13 +470,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
              const discoveredDom = (data.domain && isValidDomainUrl(data.domain) && !data.domain.includes('wikipedia.org')) ? data.domain : (isRealDomain ? cleanUrl : "");
              const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom) : null;
-             const fetchedLogo = isValidLogo(data.logo) 
+             const fetchedLogo = (isValidLogo(data.logo) && !isFaviconUrl(data.logo))
                ? data.logo 
-               : (domainCleanLogo || (discoveredDom ? `/api/favicon?domain=${discoveredDom}` : "") || instantLogo);
+               : (domainCleanLogo || (instantLogo && !isFaviconUrl(instantLogo) ? instantLogo : ""));
 
              const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
                ? data.image 
-               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
+               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : (discoveredDom ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${discoveredDom}` : ""));
              
              const targetName = (currentPlace as any).selectedName
                || preferredName

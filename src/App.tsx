@@ -44,7 +44,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName } from "./utils/placeUtils";
-import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
@@ -3536,7 +3536,7 @@ export function App() {
           if (reviewBanner && (reviewBanner.includes("yoouz.com/og-banner.png") || reviewBanner.includes("1789810172562"))) {
             reviewBanner = isYoouz ? YOOUZ_CDN_BANNER : "";
           }
-          const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && !v.placeLogoUrl.includes("gstatic.com") && !v.placeLogoUrl.includes("faviconV2") ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
+          const reviewLogo = v.placeLogoUrl && !v.placeLogoUrl.startsWith("data:;") && !isFaviconUrl(v.placeLogoUrl) ? v.placeLogoUrl : (knownLogo || existing.logoUrl);
           const reviewWebsite = v.placeWebsite || (reviewDomain && reviewDomain.includes(".") ? `https://${reviewDomain}` : "");
           const currentWebsite = existing.website && existing.website.trim() !== "" && !existing.website.includes("maps.google.com") ? existing.website : "";
           const effectiveWeb = currentWebsite || reviewWebsite || (existing.brandDomain && existing.brandDomain.includes(".") ? `https://${existing.brandDomain}` : "");
@@ -3554,7 +3554,7 @@ export function App() {
           }
 
           const effectiveBanner = existingBanner || existingOg || reviewBanner || knownBanner || (isYoouz ? YOOUZ_CDN_BANNER : "") || "";
-          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !existing.logoUrl.includes("gstatic.com") && !existing.logoUrl.includes("faviconV2")) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !existing.avatarUrl.includes("gstatic.com") && !existing.avatarUrl.includes("faviconV2")) ? existing.avatarUrl : (knownLogo || reviewLogo || (isYoouz ? "/favicon.svg" : "")));
+          const effectiveLogo = (existing.logoUrl && !existing.logoUrl.startsWith("data:;") && !existing.logoUrl.includes("760X310") && !isFaviconUrl(existing.logoUrl)) ? existing.logoUrl : ((existing.avatarUrl && !existing.avatarUrl.startsWith("data:;") && !isFaviconUrl(existing.avatarUrl)) ? existing.avatarUrl : (knownLogo || reviewLogo || (isYoouz ? "/favicon.svg" : "")));
           const effectiveDescription = getEffectivePlaceDescription({
             ...existing,
             description: v.placeDescription || existing.description,
@@ -3801,7 +3801,16 @@ export function App() {
     fetch(`/api/nosql/places/${encodeURIComponent(cleanId)}`)
       .then(res => res.ok ? res.json() : null)
       .then(fetchedPlace => {
-        if (fetchedPlace && fetchedPlace.id && (fetchedPlace.bannerUrl || fetchedPlace.logoUrl || (fetchedPlace.name && !isGenericPlaceName(fetchedPlace.name)))) {
+        const hasCoreMedia = Boolean(
+          fetchedPlace &&
+          fetchedPlace.id &&
+          fetchedPlace.bannerUrl &&
+          !fetchedPlace.bannerUrl.includes('placeholder') &&
+          fetchedPlace.logoUrl &&
+          !isFaviconUrl(fetchedPlace.logoUrl)
+        );
+
+        if (fetchedPlace && fetchedPlace.id) {
           const isYoouz = fetchedPlace.id === 'yoouz.com' || (fetchedPlace.name && fetchedPlace.name.toLowerCase() === 'yoouz') || fetchedPlace.brandDomain === 'yoouz.com' || (fetchedPlace.website && fetchedPlace.website.includes('yoouz.com'));
           if (isYoouz) {
             fetchedPlace.address = '';
@@ -3817,7 +3826,9 @@ export function App() {
             }
             return [fetchedPlace, ...prev];
           });
-        } else {
+        }
+
+        if (!hasCoreMedia) {
           // If not in database or missing rich banner/contact data, enrich immediately from /api/url-metadata BEFORE review recording
           const targetUrl = (fetchedPlace && fetchedPlace.website) || cleanId;
           fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
@@ -3826,13 +3837,14 @@ export function App() {
               if (metaData && (metaData.title || metaData.domain)) {
                 const isValidLogo = (l?: string | null): boolean => {
                   if (!l || typeof l !== "string") return false;
-                  if (l.startsWith("data:;") || l.includes("brandfetch.io")) return false;
+                  if (l.startsWith("data:;") || l.includes("brandfetch.io") || isFaviconUrl(l)) return false;
                   return true;
                 };
-                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') ? fetchedPlace.logoUrl : null;
+                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
                 const fetchedLogo = existingValidLogo || (isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
                 const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]);
                 const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || cleanId));
+                const effectiveBannerCandidate = fetchedPlace?.bannerUrl || metaData.image || (cleanId && cleanId.includes('.') ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanId}` : "");
                 const enriched: Place = {
                   id: (metaData.domain || cleanId).toLowerCase(),
                   name: preservedName,
@@ -3848,9 +3860,9 @@ export function App() {
                   ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
                   avatarUrl: fetchedLogo,
                   logoUrl: fetchedLogo,
-                  bannerUrl: fetchedPlace?.bannerUrl || metaData.image || "",
-                  ogImage: fetchedPlace?.ogImage || metaData.image || "",
-                  photos: fetchedPlace?.photos && fetchedPlace.photos.length > 0 ? fetchedPlace.photos : (metaData.image ? [metaData.image] : []),
+                  bannerUrl: effectiveBannerCandidate,
+                  ogImage: effectiveBannerCandidate,
+                  photos: fetchedPlace?.photos && fetchedPlace.photos.length > 0 ? fetchedPlace.photos : (effectiveBannerCandidate ? [effectiveBannerCandidate] : []),
                   openingHours: metaData.openingHours || fetchedPlace?.openingHours || metaData.hours || "",
                   isOpen: true,
                   phone: metaData.phone || fetchedPlace?.phone || "",
@@ -3873,6 +3885,15 @@ export function App() {
                   }
                   return [enriched, ...prev];
                 });
+
+                // Persist enriched place so it sticks across refresh
+                try {
+                  fetch(`/api/nosql/places/${encodeURIComponent(canonicalId)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: enriched, merge: true })
+                  }).catch(() => {});
+                } catch(e) {}
 
                 if (canonicalId && canonicalId !== cleanId && canonicalId.includes('.')) {
                   setSelectedPlaceIdForDrawer(canonicalId);
@@ -5887,19 +5908,26 @@ export function App() {
           // that the search engine incorrectly mapped to the same domain. 
           // In this case, we MUST NOT keep the old banner/logo if the new one is missing, 
           // because it causes "ghost" images from previous businesses.
-          const isNameDrasticallyDifferent = updatedName && pName && 
-            !updatedName.includes(pName) && !pName.includes(updatedName) &&
-            updatedName.length > 3 && pName.length > 3;
+          const cleanNorm = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const normUpdated = cleanNorm(updatedName);
+          const normP = cleanNorm(pName);
+          const isNameDrasticallyDifferent = normUpdated && normP && 
+            !normUpdated.includes(normP) && !normP.includes(normUpdated) &&
+            normUpdated.length > 3 && normP.length > 3;
+
+          const finalBanner = isNameDrasticallyDifferent ? (updatedPlace.bannerUrl || "") : (updatedPlace.bannerUrl || p.bannerUrl || "");
+          const finalLogo = isNameDrasticallyDifferent 
+            ? ((updatedPlace.logoUrl && !isFaviconUrl(updatedPlace.logoUrl)) ? updatedPlace.logoUrl : "")
+            : ((updatedPlace.logoUrl && !isFaviconUrl(updatedPlace.logoUrl)) ? updatedPlace.logoUrl : ((p.logoUrl && !isFaviconUrl(p.logoUrl)) ? p.logoUrl : ""));
 
           return {
             ...p,
             ...updatedPlace,
             id: updatedPlace.id || p.id,
-            // If the name changed significantly, reset images to prevent ghosting
-            bannerUrl: isNameDrasticallyDifferent ? (updatedPlace.bannerUrl || "") : (updatedPlace.bannerUrl || p.bannerUrl),
-            ogImage: isNameDrasticallyDifferent ? (updatedPlace.ogImage || "") : (updatedPlace.ogImage || p.ogImage),
-            logoUrl: isNameDrasticallyDifferent ? (updatedPlace.logoUrl || "") : (updatedPlace.logoUrl || p.logoUrl),
-            avatarUrl: isNameDrasticallyDifferent ? (updatedPlace.avatarUrl || "") : (updatedPlace.avatarUrl || p.avatarUrl)
+            bannerUrl: finalBanner,
+            ogImage: finalBanner,
+            logoUrl: finalLogo,
+            avatarUrl: finalLogo
           };
         }
         return p;

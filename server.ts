@@ -10851,7 +10851,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }).catch(() => {});
 
       // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
-      const legal500Logo = `/api/favicon?domain=legal500.com`;
+      const legal500Logo = "";
       const legal500Banner = "";
       const legal500Doc = {
         id: "legal500.com",
@@ -10894,7 +10894,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }).catch(() => {});
 
       // 3. Ensure Digital Park place exists with canonical ID 'digitalpark.ae'
-      const digitalParkLogo = `/api/favicon?domain=digitalpark.ae`;
+      const digitalParkLogo = "";
       const digitalParkBanner = "";
       const digitalParkDoc = {
         id: "digitalpark.ae",
@@ -19147,6 +19147,21 @@ const isLogoOrIconUrl = (urlStr: string): boolean => {
   );
 };
 
+function isFaviconUrl(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const l = url.toLowerCase().trim();
+  return (
+    l.includes("favicon") ||
+    l.endsWith(".ico") ||
+    l.includes(".ico?") ||
+    l.includes(".ico#") ||
+    l.includes("google.com/s2/favicons") ||
+    l.includes("gstatic.com/favicon") ||
+    l.includes("icon.horse") ||
+    l.includes("/api/favicon")
+  );
+}
+
 const domainBanners: Record<string, string> = {
   "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
   "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
@@ -20147,7 +20162,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedTitle = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom]) || formatBusinessName(row.name || pData.name, matchedDom, rawQuery) || row.name || pData.name;
               const cachedImageCandidate = (!isLogoOrIconUrl(pData.bannerUrl) ? pData.bannerUrl : "") || (!isLogoOrIconUrl(pData.ogImage) ? pData.ogImage : "") || (!isLogoOrIconUrl(pData.image) ? pData.image : "") || (domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "") || (KNOWN_BRAND_BANNERS[matchedDom] ? sanitizeProxy(KNOWN_BRAND_BANNERS[matchedDom]) : "");
-              const cachedLogoCandidate = (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) || (row.logoUrl && !row.logoUrl.includes('favicon') ? row.logoUrl : null) || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`;
+              const cachedLogoCandidate = (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) || (row.logoUrl && !isFaviconUrl(row.logoUrl) ? row.logoUrl : null) || (!isFaviconUrl(pData.logoUrl) ? pData.logoUrl : null) || (!isFaviconUrl(pData.avatarUrl) ? pData.avatarUrl : null) || "";
               return res.json({
                 title: resolvedTitle,
                 description: pData.description || `${resolvedTitle} is a verified business on Yoouz.`,
@@ -20182,7 +20197,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
-          const entityLogo = resolvedEntity.logo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
+          const entityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo)) ? resolvedEntity.logo : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain);
@@ -20242,7 +20257,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? ent.domain : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-          const entityLogo = ent.logo || (hasRealDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
+          const entityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz.`,
@@ -20329,13 +20344,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (eliteFallback) {
               const targetDom = eliteFallback.domain || domain;
               let bannerImg = (!isLogoOrIconUrl(eliteFallback.photo) ? eliteFallback.photo : "") || "";
-              let logoImg = eliteFallback.logo || `/api/favicon?domain=${targetDom}`;
+              let logoImg = (eliteFallback.logo && !isFaviconUrl(eliteFallback.logo)) ? eliteFallback.logo : "";
 
               if (!bannerImg || !eliteFallback.logo) {
                 try {
                   const arc = await fetchArchiveMetadata(targetDom);
                   if (arc?.banner && !bannerImg && !isLogoOrIconUrl(arc.banner)) bannerImg = arc.banner;
-                  if (arc?.logo && (!eliteFallback.logo || logoImg.includes('favicon'))) logoImg = arc.logo;
+                  if (arc?.logo && !isFaviconUrl(arc.logo)) logoImg = arc.logo;
                 } catch(e) {}
               }
 
@@ -20424,27 +20439,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               description = getMetaContent('description') || $('meta[name="description"]').attr('content') || '';
               siteName = getMetaContent('site_name') || '';
 
-              // Better Logo Extraction
+              // Better Logo Extraction (Strictly official brand logos - NEVER favicons)
               const logoSelectors = [
+                'meta[property="og:logo"]',
+                'meta[name="og:logo"]',
                 'link[rel="apple-touch-icon-precomposed"]',
                 'link[rel="apple-touch-icon"]',
+                'link[rel="icon"][sizes="512x512"]',
                 'link[rel="icon"][sizes="192x192"]',
-                'link[rel="icon"][sizes="180x180"]',
-                'link[rel="shortcut icon"]',
-                'link[rel="icon"]',
-                'meta[property="og:logo"]'
+                'link[rel="icon"][sizes="180x180"]'
               ];
               
               for (const sel of logoSelectors) {
                 const href = $(sel).attr('href') || $(sel).attr('content');
-                if (href && !href.includes('google.com') && !href.startsWith('data:')) {
+                if (href && !href.includes('google.com') && !href.startsWith('data:') && !isFaviconUrl(href)) {
                   try {
                     logo = new URL(href, finalUrl).toString();
                     break;
                   } catch (e) {}
                 }
               }
-              if (!logo) logo = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
               // Better Banner Image Extraction
               const ogImg = getMetaContent('image');
@@ -20892,6 +20906,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 } catch (e) {}
               }
 
+              if (!image || isLogoOrIconUrl(image)) {
+                if (cleanDomain && domainBanners[cleanDomain]) {
+                  image = sanitizeProxy(domainBanners[cleanDomain]);
+                } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
+                  image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
+                } else if (domain && domain.includes('.')) {
+                  image = `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${domain}`;
+                }
+              }
+
               const getHighQualityImageUrl = (urlStr: string): string => {
                 if (!urlStr) return '';
                 let cleaned = urlStr;
@@ -21000,8 +21024,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 if (isCandidateWhiteOrInverted(src)) return false;
 
                 const s = src.toLowerCase();
-                // Reject .ico files as primary logos (they are 16x16 / 32x32 low-res browser favicons)
-                if (s.endsWith('.ico') || s.includes('.ico?') || s.includes('.ico#')) return false;
+                // Reject all favicons, .ico, and favicon CDN URLs
+                if (isFaviconUrl(src)) return false;
 
                 // Reject obvious badges, partner icons, app store buttons, UI icons
                 const badKeywords = [
@@ -21036,23 +21060,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
                 "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
                 "nevadalegalservices": "https://nevadalegalservices.org/wp-content/uploads/2021/04/cropped-cropped-NLSIconSquare-192x192.png",
-                "lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
-                "www.lernerandrowe.com": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
                 "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
                 "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
-                "vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
-                "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
-                "hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
-                "www.hertz.com": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
-                "hertz": "https://www.hertz.com/content/dam/hertz/global/resources/favicon.svg",
                 "zoom.com": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
                 "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
                 "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
-                "facebook.com": "https://facebook.com/favicon.ico",
-                "reddit.com": "https://www.redditstatic.com/shreddit/assets/favicon/192x192.png",
-                "spotify.com": "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
-                "uber.com": "https://d3i4yxtzktqr9n.cloudfront.net/uber-sites/f452c7aefd72a0f60067b0ba861e144d.ico",
               };
 
               const normalizedDomain = domain.replace(/^www\./i, "").toLowerCase();
@@ -21151,26 +21164,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
-              // Priority 7: Standard Favicons declared in head (fallback only if no crisp logo found)
-              if (!logo) {
-                const standardFavicon = $('link[rel="icon"]').first().attr('href') || 
-                                       $('link[rel="shortcut icon"]').first().attr('href') ||
-                                       $('link[rel="fluid-icon"]').first().attr('href');
-                if (standardFavicon && !standardFavicon.toLowerCase().endsWith('.ico')) {
-                  logo = standardFavicon;
-                }
-              }
-
               if (logo) {
                 if (!logo.startsWith('http')) {
                   try {
                     logo = new URL(logo, finalUrl).toString();
                   } catch (e) {}
                 }
-                logo = getHighQualityImageUrl(logo);
+                if (isFaviconUrl(logo)) {
+                  logo = '';
+                } else {
+                  logo = getHighQualityImageUrl(logo);
+                }
               } else {
-                // Google High-Resolution favicon service fallback (256px resolution)
-                logo = `/api/favicon?domain=${domain}`;
+                logo = '';
               }
 
               const lowerTitle = title.toLowerCase();
@@ -21281,7 +21287,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       if (!image || isLogoOrIconUrl(image) || image.includes("unsplash.com") || image.includes("${") || image.includes("dummy.png") || image.includes("placeholder")) {
-        image = domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : (isLogoOrIconUrl(image) ? "" : image);
+        image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
+                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") || 
+                (cleanDomain && cleanDomain.includes('.') ? `https://image.thum.io/get/width/1200/crop/675/maxAge/168/https://${cleanDomain}` : "");
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -21345,17 +21353,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
         "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
         "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
-        "facebook.com": "https://facebook.com/favicon.ico",
-        "reddit.com": "https://www.redditstatic.com/shreddit/assets/favicon/192x192.png",
-        "spotify.com": "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
-        "uber.com": "https://d3i4yxtzktqr9n.cloudfront.net/uber-sites/f452c7aefd72a0f60067b0ba861e144d.ico",
       };
 
-      // Prioritize known brand logos, otherwise resolve crisp logo or Google Social Favicon V2 fallback
+      // Prioritize known brand logos, otherwise verify authentic logo without favicon fallback
       if (serverBrandLogos[cleanDomain]) {
         logo = serverBrandLogos[cleanDomain];
-      } else if (!logo || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
-        logo = serverBrandLogos[cleanDomain] || `/api/favicon?domain=${cleanDomain}`;
+      } else if (!logo || isFaviconUrl(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
+        logo = serverBrandLogos[cleanDomain] || "";
       }
       
       if (image) image = sanitizeProxy(image);
@@ -21546,6 +21550,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               sql: `UPDATE places SET 
                       name = ?,
                       logoUrl = ?,
+                      bannerUrl = ?,
+                      brandDomain = ?,
+                      website = ?,
                       address = COALESCE(NULLIF(?, ''), places.address),
                       city = COALESCE(NULLIF(?, ''), places.city),
                       country = COALESCE(NULLIF(?, ''), places.country),
@@ -21554,8 +21561,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       data = ?,
                       updatedAt = CURRENT_TIMESTAMP
                     WHERE LOWER(id) = LOWER(?)`,
-              args: [formattedExistingName, mergedLogo, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
+              args: [formattedExistingName, mergedLogo, mergedBanner, cleanDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
             }).catch(e => console.error("[Scraper DB Update Error]:", e));
+
+            try {
+              const currentPlaces = readPlacesIndex();
+              const idx = currentPlaces.findIndex(p => p.id === autoPlaceId);
+              if (idx >= 0) {
+                currentPlaces[idx] = { ...currentPlaces[idx], ...mergedDoc, id: autoPlaceId };
+              } else {
+                currentPlaces.unshift({ id: autoPlaceId, ...mergedDoc });
+              }
+              writePlacesIndex(currentPlaces);
+            } catch (pErr) {}
+
             image = mergedBanner;
             logo = mergedLogo;
             effectiveAddress = mergedAddress || effectiveAddress;
@@ -21569,10 +21588,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;
             await bunnyDb.execute({
-              sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, jsonStr]
+              sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+              args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, image, cleanDomain, finalUrl, jsonStr]
             }).catch(e => console.error("[Scraper DB Insert Error]:", e));
+
+            try {
+              const currentPlaces = readPlacesIndex();
+              const idx = currentPlaces.findIndex(p => p.id === autoPlaceId);
+              if (idx >= 0) {
+                currentPlaces[idx] = { ...currentPlaces[idx], ...autoPlaceDoc, id: autoPlaceId };
+              } else {
+                currentPlaces.unshift({ id: autoPlaceId, ...autoPlaceDoc });
+              }
+              writePlacesIndex(currentPlaces);
+            } catch (pErr) {}
           }
         }
       } catch (bErr) {}
@@ -25164,6 +25194,22 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
     }
   } catch (e) {}
 
+  // 2.5 In-Memory places index fallback for fast local sync
+  try {
+    const memList = typeof readPlacesIndex === 'function' ? readPlacesIndex() : [];
+    const inMem = memList.find((p: any) => p && (p.id === raw || p.id === domain || p.brandDomain === domain || (p.website && cleanDomainName(p.website) === domain)));
+    if (inMem) {
+      if (!place.bannerUrl && inMem.bannerUrl) place.bannerUrl = inMem.bannerUrl;
+      if (!place.ogImage && inMem.ogImage) place.ogImage = inMem.ogImage;
+      if (!place.logoUrl && inMem.logoUrl && !isFaviconUrl(inMem.logoUrl)) place.logoUrl = inMem.logoUrl;
+      if (!place.avatarUrl && inMem.avatarUrl && !isFaviconUrl(inMem.avatarUrl)) place.avatarUrl = inMem.avatarUrl;
+      if ((!place.photos || place.photos.length === 0) && inMem.photos) place.photos = inMem.photos;
+      if (!place.description && inMem.description) place.description = inMem.description;
+      if (!place.address && inMem.address) place.address = inMem.address;
+      if (!place.phone && inMem.phone) place.phone = inMem.phone;
+    }
+  } catch (mErr) {}
+
   // 3. Drizzle SQL / BunnyDB tables
   try {
     const activeDb = typeof getDb === 'function' ? getDb() : null;
@@ -25259,17 +25305,13 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
-  // 3. Parallel Network Fetch from Top Favicon / Icon CDNs
+  // 3. Parallel Network Fetch from authentic brand asset sources only (STRICTLY NO favicon CDNs)
   if (!logoBuf) {
     const candidateUrls: string[] = [];
-    if (directUrl && directUrl.startsWith("http")) {
+    if (directUrl && directUrl.startsWith("http") && !isFaviconUrl(directUrl)) {
       candidateUrls.push(directUrl);
     }
     if (domain && domain.includes(".")) {
-      candidateUrls.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256`);
-      candidateUrls.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
-      candidateUrls.push(`https://icon.horse/icon/${domain}`);
-      candidateUrls.push(`https://api.faviconkit.com/${domain}/256`);
       candidateUrls.push(`https://logo.clearbit.com/${domain}`);
       candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
     }
@@ -25291,7 +25333,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
           const buf = Buffer.from(ab);
           if (buf.length > 80) {
             const meta = await sharp(buf).metadata().catch(() => null);
-            if (meta && meta.width && meta.height) {
+            if (meta && meta.width && meta.height && meta.width >= 64 && meta.height >= 64) {
               return buf;
             }
           }
@@ -25311,7 +25353,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     }
   }
 
-  // 4. Live Scrape fallback for HTML website icons & og:image
+  // 4. Live Scrape fallback for HTML website high-res brand icons & og:image
   if (!logoBuf && domain && domain.includes(".")) {
     try {
       const controller = new AbortController();
@@ -25326,10 +25368,10 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
       clearTimeout(timeout);
       if (siteResp.ok) {
         const html = await siteResp.text();
-        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/i);
+        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed)["'][^>]+href=["']([^"']+)["']/i);
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         const iconHref = appleIconMatch ? appleIconMatch[1] : (ogImageMatch ? ogImageMatch[1] : null);
-        if (iconHref) {
+        if (iconHref && !isFaviconUrl(iconHref)) {
           let fullIconUrl = iconHref;
           if (iconHref.startsWith("//")) {
             fullIconUrl = `https:${iconHref}`;
@@ -25346,7 +25388,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
             const buf = Buffer.from(ab);
             if (buf.length > 80) {
               const meta = await sharp(buf).metadata().catch(() => null);
-              if (meta && meta.width && meta.height) {
+              if (meta && meta.width && meta.height && meta.width >= 64 && meta.height >= 64) {
                 logoBuf = buf;
               }
             }

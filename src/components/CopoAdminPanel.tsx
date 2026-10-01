@@ -7390,18 +7390,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               showToast("Fetching website logo...");
                               const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
                               const data = await res.json();
-                              if (data && data.logo) {
+                              if (data && data.logo && !data.logo.includes('favicon')) {
                                 setEditPlaceModal({ ...editPlaceModal, logoUrl: data.logo, avatarUrl: data.logo });
                                 showToast("Logo fetched successfully!");
                               } else {
-                                const fav = `/api/favicon?domain=${dom}`;
-                                setEditPlaceModal({ ...editPlaceModal, logoUrl: fav, avatarUrl: fav });
-                                showToast("Using high-res domain favicon!");
+                                showToast("No official logo found on domain.");
                               }
                             } catch {
-                              const fav = `/api/favicon?domain=${dom}`;
-                              setEditPlaceModal({ ...editPlaceModal, logoUrl: fav, avatarUrl: fav });
-                              showToast("Applied domain favicon");
+                              showToast("Failed to fetch domain metadata");
                             }
                           }}
                           className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 cursor-pointer"

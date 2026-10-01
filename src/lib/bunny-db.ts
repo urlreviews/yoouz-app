@@ -194,6 +194,9 @@ export async function initBunnyDbSchema() {
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN bookmarksCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN sharesCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN commentsCount INTEGER DEFAULT 0"); } catch (e) {}
+    try { await client.execute("ALTER TABLE places ADD COLUMN bannerUrl TEXT"); } catch (e) {}
+    try { await client.execute("ALTER TABLE places ADD COLUMN brandDomain TEXT"); } catch (e) {}
+    try { await client.execute("ALTER TABLE places ADD COLUMN website TEXT"); } catch (e) {}
     try { 
       await client.execute("UPDATE videoReviews SET authorName = 'Steven Akan' WHERE authorName = 'Verified Customer' OR authorName IS NULL OR authorName = ''"); 
     } catch (e) {}

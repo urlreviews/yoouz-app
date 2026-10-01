@@ -388,7 +388,7 @@
     "name": "Proximus",
     "category": "Website",
     "categoryType": "all",
-    "address": "",
+    "address": "3 months for free",
     "city": "Online",
     "country": "Belgium",
     "lat": 40.7128,
@@ -411,14 +411,19 @@
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
+    "phone": "+32 80 05 58 00",
     "email": "",
     "website": "https://proximus.be",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
     "description": "Proximus offers you the best quality network and wide mobile coverage within Belgium. You’ll also benefit from a top-quality 24/7 service!",
-    "popularKeywords": [],
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "proximus.be",
@@ -479,7 +484,8 @@
         "recordedAt": "Just now",
         "bunnyVideoId": "rev-1790344780190-1jqsf"
       }
-    ]
+    ],
+    "isSavedToProfile": true
   },
   {
     "id": "brusselsdental.com",

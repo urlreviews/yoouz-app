@@ -50,7 +50,7 @@ export function getDomainLogoUrl(domain: string): string {
   if (KNOWN_BRAND_LOGOS[clean]) {
     return KNOWN_BRAND_LOGOS[clean];
   }
-  return `/api/favicon?domain=${clean}`;
+  return '';
 }
 
 /**
