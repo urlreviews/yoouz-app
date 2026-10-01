@@ -112,11 +112,8 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [photoIndex, setPhotoIndex] = useState(0);
   const [activeBanner, setActiveBanner] = useState<string | null>(null);
   const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   
-  // Instantly load the banner and logo into memory BEFORE rendering the UI
-  // to avoid the network fetch flicker.
-  const criticalImagesLoaded = useCriticalImagesLoaded([place.bannerUrl, place.logoUrl], 1500);
-
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
@@ -132,6 +129,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setPhotoIndex(0);
     setActiveBanner(null);
     setBannerLoaded(false);
+    setLogoLoaded(false);
     setLogoError(false);
     setFetchedBannerUrl(null);
     setIsHoveredUnfollow(false);
@@ -749,6 +747,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, drawerDomain, rawPlaceVideos]);
 
+  const activeBannerUrl = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
+  const criticalImagesLoaded = useCriticalImagesLoaded([activeBannerUrl, primaryLogoUrl], 1000);
+
+  // Synchronous Co-Landing Gate: Both Banner and Logo transition to screen TOGETHER in 1 exact millisecond
+  const isHeaderReady = React.useMemo(() => {
+    if (!hasAuthenticPhoto) return true;
+    const proxiedBanner = getProxiedImageUrl(activeBannerUrl);
+    if (proxiedBanner && KNOWN_LOADED_BANNERS.has(proxiedBanner)) return true;
+    if (bannerLoaded && logoLoaded) return true;
+    return criticalImagesLoaded;
+  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, criticalImagesLoaded]);
+
   // Genuine check filters
   const placeKeyForKnown = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
   const knownLoc = KNOWN_LOCATIONS[placeKeyForKnown] || KNOWN_LOCATIONS[placeKeyForKnown.replace(/\.(com|be|nl|fr|de|es|it|org|net)$/i, '')];
@@ -1069,7 +1079,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && (bannerLoaded || KNOWN_LOADED_BANNERS.has(getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])))) ? "opacity-100" : "opacity-0"}`}>
+          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && isHeaderReady) ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1101,7 +1111,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {(!bannerLoaded && !KNOWN_LOADED_BANNERS.has(getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])) && !bannerError && hasAuthenticPhoto) && (
+        {(!isHeaderReady && !bannerError && hasAuthenticPhoto) && (
           <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
             {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />
@@ -1110,7 +1120,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group">
+        <div className={`absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group transition-all duration-300 ${isHeaderReady ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
           <CopoBrandLogo
             domain={drawerDomain || place.brandDomain}
             name={displayedPlaceName}
@@ -1122,6 +1132,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
           />
         </div>
+        {!isHeaderReady && (
+          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-zinc-900 shadow-2xl flex items-center justify-center z-15 p-2 sm:p-2.5 ring-1 ring-white/10 overflow-hidden animate-pulse">
+            <div className="w-full h-full bg-zinc-800 rounded-[16px] sm:rounded-[20px]" />
+          </div>
+        )}
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
