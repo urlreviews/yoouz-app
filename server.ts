@@ -35,6 +35,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
 import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils.ts";
+import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 
 dotenv.config();
 
@@ -122,11 +123,13 @@ async function persistToDb(data: ResolvedBusinessData) {
   const bunnyDb = getBunnyDb();
   if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
   try {
-    const autoPlaceId = data.domain;
-    const logoUrl = data.logo || `/api/favicon?domain=${data.domain}`;
+    const autoPlaceId = data.domain.toLowerCase().replace(/^www\./, "").trim();
+    const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || data.name || autoPlaceId;
+    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] || data.logo || `/api/favicon?domain=${autoPlaceId}`;
+    const bannerUrl = data.photo || KNOWN_BRAND_BANNERS[autoPlaceId] || "";
     const autoPlaceDoc = {
       id: autoPlaceId,
-      name: data.name,
+      name: resolvedName,
       category: data.category,
       categoryType: "all",
       address: data.address,
@@ -139,14 +142,14 @@ async function persistToDb(data: ResolvedBusinessData) {
       ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
       avatarUrl: logoUrl,
       logoUrl: logoUrl,
-      bannerUrl: data.photo || "",
-      ogImage: data.photo || "",
-      photos: data.photo ? [data.photo] : [],
+      bannerUrl: bannerUrl,
+      ogImage: bannerUrl,
+      photos: bannerUrl ? [bannerUrl] : [],
       openingHours: data.openingHours || "",
       isOpen: true,
       phone: data.phone,
       email: data.email,
-      website: data.websiteUrl || `https://${data.domain}`,
+      website: data.websiteUrl || `https://${autoPlaceId}`,
       priceRange: "N/A",
       plusCode: "",
       locations: [],
@@ -154,7 +157,7 @@ async function persistToDb(data: ResolvedBusinessData) {
       popularKeywords: [],
       amenities: [],
       topDishes: [],
-      brandDomain: data.domain
+      brandDomain: autoPlaceId
     };
     
     await bunnyDb.execute({
@@ -172,7 +175,7 @@ async function persistToDb(data: ResolvedBusinessData) {
               data = EXCLUDED.data,
               updatedAt = CURRENT_TIMESTAMP
             WHERE LOWER(places.id) = LOWER(EXCLUDED.id)`,
-      args: [autoPlaceId, data.name, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
+      args: [autoPlaceId, resolvedName, data.address, data.category, data.city, data.country, data.lat, data.lng, logoUrl, JSON.stringify(autoPlaceDoc)]
     });
   } catch(e) {
     console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
@@ -20136,20 +20139,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
 
-            const isMissingData = (!pData.phone && !pData.email && (!pData.description || pData.description.includes('is a verified business on Yoouz.'))) || isBadCachedBanner;
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
-            if (matchedDom && !isMissingData && isExactMatch) {
+            if (matchedDom && isExactMatch) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedTitle = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom]) || formatBusinessName(row.name || pData.name, matchedDom, rawQuery) || row.name || pData.name;
-              const cachedImageCandidate = (!isLogoOrIconUrl(pData.bannerUrl) ? pData.bannerUrl : "") || (!isLogoOrIconUrl(pData.ogImage) ? pData.ogImage : "") || (!isLogoOrIconUrl(pData.image) ? pData.image : "") || (domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
+              const cachedImageCandidate = (!isLogoOrIconUrl(pData.bannerUrl) ? pData.bannerUrl : "") || (!isLogoOrIconUrl(pData.ogImage) ? pData.ogImage : "") || (!isLogoOrIconUrl(pData.image) ? pData.image : "") || (domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "") || (KNOWN_BRAND_BANNERS[matchedDom] ? sanitizeProxy(KNOWN_BRAND_BANNERS[matchedDom]) : "");
+              const cachedLogoCandidate = (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) || (row.logoUrl && !row.logoUrl.includes('favicon') ? row.logoUrl : null) || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`;
               return res.json({
                 title: resolvedTitle,
                 description: pData.description || `${resolvedTitle} is a verified business on Yoouz.`,
                 image: cachedImageCandidate,
-                logo: row.logoUrl || pData.logoUrl || pData.avatarUrl || `/api/favicon?domain=${matchedDom}`,
+                logo: cachedLogoCandidate,
                 siteName: resolvedTitle,
                 domain: matchedDom,
                 url: pData.website || `https://${matchedDom}`,
