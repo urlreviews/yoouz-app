@@ -624,13 +624,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
               
               if (data) {
-                const resolvedBanner = (data.image && !data.image.includes("unsplash.com")) ? data.image : (place.bannerUrl || domainFallbackBanner || "");
+                const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("unsplash.com") && !url.includes("/api/brand-banner"));
+                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : "");
                 const resolvedLogo = (data.logo && !isFaviconUrl(data.logo)) ? data.logo : (hasValidLogo ? place.logoUrl : "");
                 
-                if (data.image) {
+                if (isRealPhoto(data.image)) {
                   setFetchedBannerUrl(data.image);
                 }
-                if (onUpdatePlace && (data.image || (data.logo && !hasValidLogo && !isFaviconUrl(data.logo)) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
+                if (onUpdatePlace && (isRealPhoto(data.image) || (data.logo && !hasValidLogo && !isFaviconUrl(data.logo)) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
                   onUpdatePlace({
                     ...place,
                     name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
@@ -645,13 +646,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
                     lat: data.lat || place.lat || 0,
                     lng: data.lng || place.lng || 0,
-                    bannerUrl: resolvedBanner,
-                    ogImage: resolvedBanner,
+                    bannerUrl: resolvedBanner || place.bannerUrl || "",
+                    ogImage: resolvedBanner || place.ogImage || "",
                     logoUrl: resolvedLogo,
                     avatarUrl: resolvedLogo,
                     brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                     website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                    photos: resolvedBanner ? Array.from(new Set([...(place.photos || []), resolvedBanner])) : place.photos
+                    photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
                   });
                 }
               }
@@ -724,38 +725,36 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanBannerUrl ||
     activeBanner ||
     cleanOgImage ||
-    knownDomainBanner ||
     cleanReviewBanner ||
-    domainFallbackBanner ||
+    knownDomainBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
-    `/api/brand-banner/${drawerDomain || place.name || 'business'}`;
+    "";
 
   // Check if photos are authentic place photos
   const allPhotos = React.useMemo(() => {
-    return Array.from(
-      new Set([
-        effectiveBanner,
-        cleanBannerUrl,
-        cleanOgImage,
-        knownDomainBanner,
-        cleanReviewBanner,
-        cleanFetchedBanner,
-        domainFallbackBanner,
-        ...(place.photos || []).filter(p => !isBadBanner(p)),
-        (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
-      ])
-    ).filter((p): p is string => {
-      if (!p || p.startsWith("blob:")) return false;
-      if (p.startsWith("data:image/")) return true;
-      if (isBadBanner(p)) return false;
-      if (p === effectiveBanner || p === cleanBannerUrl || p === cleanOgImage || p === YOOUZ_CDN_BANNER || p === domainFallbackBanner) return true;
-      const lower = p.toLowerCase();
-      if (lower.includes("favicon") || lower.includes(".ico")) {
-        return false;
-      }
+    const isAuthentic = (url?: string | null): boolean => {
+      if (!url || typeof url !== "string") return false;
+      if (url.startsWith("blob:")) return false;
+      if (url.includes("/api/brand-banner")) return false;
+      if (isBadBanner(url)) return false;
+      const lower = url.toLowerCase();
+      if (lower.includes("favicon") || lower.endsWith(".ico")) return false;
       return true;
-    });
-  }, [effectiveBanner, cleanBannerUrl, cleanOgImage, knownDomainBanner, cleanReviewBanner, cleanFetchedBanner, domainFallbackBanner, place.photos, isYoouzPlace]);
+    };
+
+    const photoCandidates = [
+      cleanFetchedBanner,
+      cleanBannerUrl,
+      cleanOgImage,
+      activeBanner,
+      cleanReviewBanner,
+      ...(place.photos || []).filter(isAuthentic),
+      knownDomainBanner,
+      (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
+    ].filter(isAuthentic);
+
+    return Array.from(new Set(photoCandidates));
+  }, [cleanFetchedBanner, cleanBannerUrl, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 

@@ -19203,31 +19203,16 @@ function isBadBanner(url?: string | null): boolean {
 }
 
 function generateBrandBannerSvg(nameOrDomain?: string | null): string {
-  const raw = (nameOrDomain || "Business").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
-  const clean = raw.split('/')[0].split('.')[0].trim();
-  const name = formatBusinessName(nameOrDomain || "Business");
-  
-  // A premium, dark-themed branded banner with subtle patterns
+  // A clean, dark luxury gradient with zero text watermark or mock branding
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
     <defs>
       <linearGradient id="bannerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#18181b"/>
+        <stop offset="0%" stop-color="#141416"/>
+        <stop offset="50%" stop-color="#0f0f11"/>
         <stop offset="100%" stop-color="#09090b"/>
       </linearGradient>
-      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
-      </pattern>
     </defs>
     <rect width="1200" height="400" fill="url(#bannerGrad)"/>
-    <rect width="1200" height="400" fill="url(#grid)"/>
-    
-    <!-- Subtle architectural shapes -->
-    <path d="M 0 400 L 400 0 L 1200 400 Z" fill="rgba(255,255,255,0.02)"/>
-    <path d="M 800 400 L 1200 0 L 1200 400 Z" fill="rgba(255,255,255,0.01)"/>
-    
-    <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="120px" opacity="0.07" letter-spacing="-2px">${escapeXml(name.toUpperCase())}</text>
-    
-    <rect x="550" y="360" width="100" height="4" rx="2" fill="#3f3f46" opacity="0.5"/>
   </svg>`;
 }
 

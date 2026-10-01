@@ -455,7 +455,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       try {
          const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
          const resp = await fetch(`/api/url-metadata?${queryParam}`, {
-           signal: AbortSignal.timeout(8000)
+           signal: AbortSignal.timeout(15000)
          });
          if (currentRequestId !== searchRequestIdRef.current) return;
          if (resp.ok) {
