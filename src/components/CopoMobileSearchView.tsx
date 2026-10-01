@@ -367,13 +367,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     }
 
     if (!isValidDomainUrl(cleanUrl)) {
-      const cleanSlug = (trimmed || "business")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9_\-\.]/g, '');
-      cleanUrl = cleanSlug.includes('.') ? cleanSlug : `${cleanSlug || 'business'}.co.il`;
-      console.info("[Search Mobile] Synthesized clean fallback domain for seamless profile creation:", cleanUrl);
+      setSearchErrorNotification(t("search.invalidUrl", "Please select a business from the list or search with a valid website domain."));
+      setIsSearching(false);
+      return;
     }
     setSearchErrorNotification(null);
     const isRealDomain = isValidDomainUrl(cleanUrl);

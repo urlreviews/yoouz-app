@@ -111,6 +111,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [bannerError, setBannerError] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [activeBanner, setActiveBanner] = useState<string | null>(null);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
   
   // Instantly load the banner and logo into memory BEFORE rendering the UI
   // to avoid the network fetch flicker.
@@ -130,6 +131,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setBannerError(false);
     setPhotoIndex(0);
     setActiveBanner(null);
+    setBannerLoaded(false);
     setLogoError(false);
     setFetchedBannerUrl(null);
     setIsHoveredUnfollow(false);
@@ -1067,7 +1069,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && criticalImagesLoaded) ? "opacity-100" : "opacity-0"}`}>
+          <div className={`absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-300 ${(!isEnriching && (bannerLoaded || KNOWN_LOADED_BANNERS.has(getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])))) ? "opacity-100" : "opacity-0"}`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1078,6 +1080,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               className="absolute inset-0 w-full h-full object-cover p-0 z-10"
               referrerPolicy="no-referrer"
               onLoad={() => {
+                setBannerLoaded(true);
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
                 if (currentSrc) {
                   KNOWN_LOADED_BANNERS.add(currentSrc);
@@ -1098,7 +1101,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {(!criticalImagesLoaded || isEnriching || bannerError || !hasAuthenticPhoto) && (
+        {(!bannerLoaded && !KNOWN_LOADED_BANNERS.has(getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])) && !bannerError && hasAuthenticPhoto) && (
           <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
             {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-1000" />
@@ -1128,16 +1131,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="min-w-0 flex-1">
             {(() => {
               const fullName = (displayedPlaceName || "").trim();
-              const words = fullName.split(' ');
+              const words = fullName.split(/\s+/);
               const lastWord = words.pop() || '';
               const firstPart = words.join(' ');
               return (
                 <h2 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug break-words" dir="auto">
                   <span className="text-white" dir="auto">
                     {firstPart ? firstPart + " " : ""}
-                    <span className="whitespace-nowrap inline-flex items-center gap-1.5 align-middle">
+                    <span className="whitespace-nowrap inline-block align-baseline">
                       {lastWord}
-                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle" />
+                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle ml-1.5" />
                     </span>
                   </span>
                 </h2>
@@ -1684,7 +1687,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {rawPlaceVideos.length === 0 ? (
                   <div className="py-4 text-center">
                     <p className="text-xs text-zinc-400 font-medium">
-                      {t("place.noReviewsYetShort", "No video reviews yet.")}
+                      {t("place.noReviewsYetShort", `No video reviews yet for ${displayedPlaceName}.`)}
                     </p>
                   </div>
                 ) : (

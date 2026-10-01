@@ -368,13 +368,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (currentRequestId !== searchRequestIdRef.current) return;
 
     if (!isValidDomainUrl(cleanUrl)) {
-      const cleanSlug = (rawQuery || baseName || "business")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9_\-\.]/g, '');
-      cleanUrl = cleanSlug.includes('.') ? cleanSlug : `${cleanSlug || 'business'}.co.il`;
-      console.info("[Search] Synthesized clean fallback domain for seamless profile creation:", cleanUrl);
+      setSearchErrorNotification(t("search.invalidUrl", "Please select a business from the dropdown list or search with a valid website domain."));
+      setIsSearching(false);
+      return;
     }
     setSearchErrorNotification(null);
 
@@ -382,7 +378,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     setIsSearching(true);
 
     try {
-      const domain = cleanUrl || (baseName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-\.\u0590-\u05FF]/g, '') || "business");
+      const domain = cleanUrl;
       const isRealDomain = isValidDomainUrl(cleanUrl);
 
       const isMetaMatchingCurrent = Boolean(

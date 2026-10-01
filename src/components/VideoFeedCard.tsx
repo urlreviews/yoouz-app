@@ -873,10 +873,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   />
                   <div className="min-w-0 flex-1 py-0.5">
                     <span className="leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
-                      <span className="inline-flex items-center gap-1 flex-wrap" dir="auto">
-                        <span className="text-white" dir="auto">{(cardName || "").trim()}</span>
-                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
-                      </span>
+                      {(() => {
+                        const fullName = (cardName || "").trim();
+                        const words = fullName.split(/\s+/);
+                        const lastWord = words.pop() || '';
+                        const firstPart = words.join(' ');
+                        return (
+                          <span className="text-white" dir="auto">
+                            {firstPart ? firstPart + " " : ""}
+                            <span className="whitespace-nowrap inline-block align-baseline">
+                              {lastWord}
+                              <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0 inline-block align-middle ml-1" />
+                            </span>
+                          </span>
+                        );
+                      })()}
                     </span>
                     {!isEmbed && (
                       <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">

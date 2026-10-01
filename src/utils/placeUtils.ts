@@ -214,6 +214,16 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "american express": "American Express",
+  "americanexpress": "American Express",
+  "americanexpress.com": "American Express",
+  "www.americanexpress.com": "American Express",
+  "dover street market": "Dover Street Market",
+  "doverstmarket": "Dover Street Market",
+  "dover st. market": "Dover Street Market",
+  "doverstreetmarket.com": "Dover Street Market",
+  "www.doverstreetmarket.com": "Dover Street Market",
+  "doverstreetmarket": "Dover Street Market",
   "shilatbio.com": "שילת ביו קוסמטיקס",
   "www.shilatbio.com": "שילת ביו קוסמטיקס",
   "shilatbio": "שילת ביו קוסמטיקס",
@@ -868,19 +878,19 @@ export function toTitleCase(str: string): string {
   if (!str) return "";
   return str.split(/(\s+)/).map(word => {
     if (/^\s+$/.test(word)) return word;
-    if (/^[a-zA-Z]+$/.test(word)) {
-      const upperWord = word.toUpperCase();
+    
+    const match = word.match(/^([a-zA-Z\u00C0-\u017F\u0590-\u05FF]+)([.\-,]*)$/);
+    if (match) {
+      const alpha = match[1];
+      const punc = match[2];
+      const upperWord = alpha.toUpperCase();
       if (["LLC", "INC", "PC", "USA", "UK", "BMW", "IBM", "SEO", "CMS", "AEO", "PWA"].includes(upperWord)) {
-        return upperWord;
+        return upperWord + punc;
       }
-      const isCamelOrWeird = word !== word.toLowerCase() && word !== word.toUpperCase();
-      const isAllUpper = word === word.toUpperCase() && word.length > 1;
-      const isAllLower = word === word.toLowerCase();
-      if (isAllUpper || isAllLower || isCamelOrWeird) {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      }
+      return alpha.charAt(0).toUpperCase() + alpha.slice(1).toLowerCase() + punc;
     }
-    if (word.includes("-") && /^[a-zA-Z\-]+$/.test(word)) {
+    
+    if (word.includes("-") && /^[a-zA-Z\u00C0-\u017F\u0590-\u05FF\-]+$/.test(word)) {
       return word.split("-").map(p => toTitleCase(p)).join("-");
     }
     return word;
