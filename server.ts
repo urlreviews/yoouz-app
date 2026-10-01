@@ -19234,6 +19234,9 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
 function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const l = url.toLowerCase().trim();
+  if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
+    return false;
+  }
   return (
     l.includes("favicon") ||
     l.endsWith(".ico") ||
@@ -19244,6 +19247,51 @@ function isFaviconUrl(url?: string | null): boolean {
     l.includes("icon.horse") ||
     l.includes("/api/favicon")
   );
+}
+
+async function fetchWikiMetadata(domainOrName: string): Promise<{ banner: string; logo: string; title: string; description: string; photos: string[] } | null> {
+  try {
+    const rawClean = domainOrName.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    const namePart = rawClean.split('.')[0];
+    
+    const candidateTitles = [
+      KNOWN_OFFICIAL_NAMES[rawClean],
+      KNOWN_OFFICIAL_NAMES[namePart],
+      formatBusinessName(namePart),
+      namePart,
+      domainOrName
+    ].filter(Boolean) as string[];
+
+    for (const title of candidateTitles) {
+      const cleanTitle = title.replace(/\s+/g, '_');
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTitle)}`;
+      try {
+        const resp = await fetch(url, {
+          headers: { "User-Agent": "Yoouz/1.0 (info@yoouz.com)" },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.type === 'standard' && (data.originalimage?.source || data.thumbnail?.source || data.extract)) {
+            const banner = data.originalimage?.source || data.thumbnail?.source || "";
+            const logo = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${rawClean}&size=256`;
+            const description = data.extract || data.description || "";
+            const resolvedTitle = data.title || formatBusinessName(title);
+            return {
+              banner,
+              logo,
+              title: resolvedTitle,
+              description,
+              photos: banner ? [banner] : []
+            };
+          }
+        }
+      } catch(e) {}
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
 }
 
 const domainBanners: Record<string, string> = {
@@ -20433,57 +20481,60 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                             (lowerHtml.includes("enable javascript") && lowerHtml.includes("cloudflare"));
                             
           if (isBlocked || !html || html.length < 500) {
-            console.warn(`[Scraper Block] Security shield detected for ${domain}. Retrying with Elite Resolver...`);
-            // Wait 100ms and retry with the Elite resolver to bypass basic blocks
-            await new Promise(r => setTimeout(r, 100));
+            console.warn(`[Scraper Block] Security shield detected for ${domain}. Retrying with Elite Resolver & Wikipedia API...`);
+            
+            // 1. Try high-accuracy Wikipedia REST API for authentic commercial store photos & verified description
+            const wiki = await fetchWikiMetadata(cleanDomain).catch(() => null);
+
             const eliteFallback = await resolveBusinessQuery(domain);
-            if (eliteFallback) {
-              const targetDom = eliteFallback.domain || domain;
-              let bannerImg = (!isBadBanner(eliteFallback.photo) ? eliteFallback.photo : "") || "";
-              let logoImg = (eliteFallback.logo && !isFaviconUrl(eliteFallback.logo)) ? eliteFallback.logo : "";
+            const targetDom = eliteFallback?.domain || cleanDomain || domain;
+            
+            let bannerImg = (!isBadBanner(wiki?.banner) ? wiki?.banner : "") || 
+                            (!isBadBanner(eliteFallback?.photo) ? eliteFallback?.photo : "") || "";
+            let logoImg = (wiki?.logo && !isFaviconUrl(wiki?.logo)) ? wiki?.logo : 
+                          ((eliteFallback?.logo && !isFaviconUrl(eliteFallback.logo)) ? eliteFallback.logo : "");
 
-              if (!bannerImg || !eliteFallback.logo) {
-                try {
-                  const arc = await fetchArchiveMetadata(targetDom);
-                  if (arc?.banner && !bannerImg && !isBadBanner(arc.banner)) bannerImg = arc.banner;
-                  if (arc?.logo && !isFaviconUrl(arc.logo)) logoImg = arc.logo;
-                } catch(e) {}
-              }
-
-              if (!bannerImg || isBadBanner(bannerImg)) {
-                bannerImg = domainBanners[targetDom] ? sanitizeProxy(domainBanners[targetDom]) : (KNOWN_BRAND_BANNERS[targetDom] ? sanitizeProxy(KNOWN_BRAND_BANNERS[targetDom]) : `/api/brand-banner/${targetDom}`);
-              } else {
-                bannerImg = sanitizeProxy(bannerImg);
-              }
-              if (!logoImg || isFaviconUrl(logoImg)) {
-                logoImg = KNOWN_BRAND_LOGOS[targetDom] ? sanitizeProxy(KNOWN_BRAND_LOGOS[targetDom]) : `/api/favicon?domain=${targetDom}`;
-              } else {
-                logoImg = sanitizeProxy(logoImg);
-              }
-
-              const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || formatBusinessName(eliteFallback.name, targetDom, rawQuery) || eliteFallback.name;
-              logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
-              return res.json({
-                title: fallbackTitle,
-                description: eliteFallback.description || `${fallbackTitle} is a verified business on Yoouz.`,
-                image: bannerImg,
-                logo: logoImg,
-                siteName: fallbackTitle,
-                domain: targetDom,
-                url: eliteFallback.websiteUrl || `https://${targetDom}`,
-                address: eliteFallback.address || "",
-                city: eliteFallback.city || "Online",
-                country: eliteFallback.country || "",
-                phone: eliteFallback.phone || "",
-                email: eliteFallback.email || "",
-                category: eliteFallback.category || "Verified Business",
-                openingHours: eliteFallback.openingHours || "Available 24/7",
-                locations: [],
-                name: fallbackTitle,
-                websiteUrl: eliteFallback.websiteUrl || `https://${targetDom}`,
-                photos: [bannerImg]
-              });
+            if (!bannerImg) {
+              try {
+                const arc = await fetchArchiveMetadata(targetDom);
+                if (arc?.banner && !isBadBanner(arc.banner)) bannerImg = arc.banner;
+                if (arc?.logo && !isFaviconUrl(arc.logo)) logoImg = arc.logo;
+              } catch(e) {}
             }
+
+            if (!logoImg || isFaviconUrl(logoImg)) {
+              logoImg = KNOWN_BRAND_LOGOS[targetDom] || `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${targetDom}&size=256`;
+            }
+
+            if (bannerImg) bannerImg = sanitizeProxy(bannerImg);
+            if (logoImg) logoImg = sanitizeProxy(logoImg);
+
+            const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || 
+                                  wiki?.title || 
+                                  (eliteFallback ? formatBusinessName(eliteFallback.name, targetDom, rawQuery) : formatBusinessName(targetDom));
+            const fallbackDesc = wiki?.description || eliteFallback?.description || `${fallbackTitle} is a verified business on Yoouz.`;
+
+            logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
+            return res.json({
+              title: fallbackTitle,
+              description: fallbackDesc,
+              image: bannerImg || "",
+              logo: logoImg || "",
+              siteName: fallbackTitle,
+              domain: targetDom,
+              url: (eliteFallback && eliteFallback.websiteUrl) || `https://${targetDom}`,
+              address: (eliteFallback && eliteFallback.address) || "",
+              city: (eliteFallback && eliteFallback.city) || "Online",
+              country: (eliteFallback && eliteFallback.country) || "",
+              phone: (eliteFallback && eliteFallback.phone) || "",
+              email: (eliteFallback && eliteFallback.email) || "",
+              category: (eliteFallback && eliteFallback.category) || "Verified Business",
+              openingHours: (eliteFallback && eliteFallback.openingHours) || "Available 24/7",
+              locations: [],
+              name: fallbackTitle,
+              websiteUrl: (eliteFallback && eliteFallback.websiteUrl) || `https://${targetDom}`,
+              photos: bannerImg ? [bannerImg] : []
+            });
           }
           
           if (html && html.length < 5000000) {

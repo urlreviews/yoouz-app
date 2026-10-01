@@ -971,6 +971,10 @@ export function getDomainBrandGradient(domainOrName?: string | null): {
 export function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const l = url.toLowerCase().trim();
+  // High-resolution (128px-256px) Google brand icons are high quality authentic logos
+  if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
+    return false;
+  }
   return (
     l.includes("favicon") ||
     l.endsWith(".ico") ||
