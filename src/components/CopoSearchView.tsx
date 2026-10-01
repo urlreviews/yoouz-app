@@ -159,6 +159,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const handleSelectSuggestion = (item: any) => {
     setShowDropdown(false);
     
+    try {
+      const cleanKey = (item.id || item.domain || item.title || "").toLowerCase().trim();
+      if (cleanKey && item.title) {
+        sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, item.title);
+        const dom = extractCleanDomain(cleanKey);
+        if (dom) {
+          sessionStorage.setItem(`yoouz_clicked_name_${dom}`, item.title);
+        }
+      }
+    } catch (e) {}
+    
     // 1. Check if it matches a complete local database place first for INSTANT 0ms resolution
     const match = places.find(p => {
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
@@ -213,6 +224,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const cleanUrlFromRaw = extractCleanDomain(rawQuery);
     const cleanUrlFromBase = extractCleanDomain(baseName);
     let cleanUrl = isValidDomainUrl(cleanUrlFromRaw) ? cleanUrlFromRaw : (isValidDomainUrl(cleanUrlFromBase) ? cleanUrlFromBase : "");
+
+    try {
+      const cleanKey = cleanUrl ? cleanUrl.toLowerCase().trim() : rawQuery.toLowerCase().trim();
+      if (cleanKey && baseName && !baseName.includes(".com")) {
+        sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, baseName);
+        if (cleanUrl) {
+          sessionStorage.setItem(`yoouz_clicked_name_${cleanUrl.toLowerCase().trim()}`, baseName);
+        }
+      }
+    } catch (e) {}
 
     // 1. Only accept a local match if:
     // a) cleanUrl is an exact domain (e.g. apple.com) that matches p.brandDomain or p.website, OR

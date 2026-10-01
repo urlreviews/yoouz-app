@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -404,32 +404,53 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         .replace(/&rdquo;/gi, '"');
     };
 
-    // 1. Highest Priority: Exact user search query or suggestion place name if provided and non-generic
-    if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
-      return unescapeStr(place.name.trim());
-    }
+    const getRawName = () => {
+      // 0. Selected / Clicked / Searched name from suggestion list (Absolute highest priority override)
+      try {
+        const keysToCheck = [
+          place?.id,
+          drawerDomain,
+          place?.brandDomain,
+          place?.website ? extractCleanDomain(place.website) : null
+        ].filter(Boolean);
+        
+        for (const k of keysToCheck) {
+          const cached = sessionStorage.getItem(`yoouz_clicked_name_${String(k).toLowerCase().trim()}`);
+          if (cached && cached.trim().length > 1 && !cached.toLowerCase().includes(".com")) {
+            return unescapeStr(cached.trim());
+          }
+        }
+      } catch (e) {}
 
-    // 2. Verified KNOWN_OFFICIAL_NAMES dictionary
-    if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
-      return KNOWN_OFFICIAL_NAMES[drawerDomain];
-    }
-    const cleanId = extractCleanDomain(place?.id || "");
-    if (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) {
-      return KNOWN_OFFICIAL_NAMES[cleanId];
-    }
-    if (place?.brandDomain && KNOWN_OFFICIAL_NAMES[place.brandDomain]) {
-      return KNOWN_OFFICIAL_NAMES[place.brandDomain];
-    }
-
-    // 3. Official scraped place name on the Place record
-    if (place?.name && !isGenericPlaceName(place.name)) {
-      const formatted = formatBusinessName(place.name);
-      if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
-        return unescapeStr(formatted);
+      // 1. Highest Priority: Exact user search query or suggestion place name if provided and non-generic
+      if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
+        return unescapeStr(place.name.trim());
       }
-    }
 
-    return unescapeStr(formatBusinessName(place?.id) || place?.name || "");
+      // 2. Verified KNOWN_OFFICIAL_NAMES dictionary
+      if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
+        return KNOWN_OFFICIAL_NAMES[drawerDomain];
+      }
+      const cleanId = extractCleanDomain(place?.id || "");
+      if (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) {
+        return KNOWN_OFFICIAL_NAMES[cleanId];
+      }
+      if (place?.brandDomain && KNOWN_OFFICIAL_NAMES[place.brandDomain]) {
+        return KNOWN_OFFICIAL_NAMES[place.brandDomain];
+      }
+
+      // 3. Official scraped place name on the Place record
+      if (place?.name && !isGenericPlaceName(place.name)) {
+        const formatted = formatBusinessName(place.name);
+        if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
+          return unescapeStr(formatted);
+        }
+      }
+
+      return unescapeStr(formatBusinessName(place?.id) || place?.name || "");
+    };
+
+    return toTitleCase(getRawName());
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {

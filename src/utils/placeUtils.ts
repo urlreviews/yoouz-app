@@ -864,6 +864,29 @@ export function isGenericPlaceName(name?: string | null): boolean {
   return false;
 }
 
+export function toTitleCase(str: string): string {
+  if (!str) return "";
+  return str.split(/(\s+)/).map(word => {
+    if (/^\s+$/.test(word)) return word;
+    if (/^[a-zA-Z]+$/.test(word)) {
+      const upperWord = word.toUpperCase();
+      if (["LLC", "INC", "PC", "USA", "UK", "BMW", "IBM", "SEO", "CMS", "AEO", "PWA"].includes(upperWord)) {
+        return upperWord;
+      }
+      const isCamelOrWeird = word !== word.toLowerCase() && word !== word.toUpperCase();
+      const isAllUpper = word === word.toUpperCase() && word.length > 1;
+      const isAllLower = word === word.toLowerCase();
+      if (isAllUpper || isAllLower || isCamelOrWeird) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+    }
+    if (word.includes("-") && /^[a-zA-Z\-]+$/.test(word)) {
+      return word.split("-").map(p => toTitleCase(p)).join("-");
+    }
+    return word;
+  }).join("");
+}
+
 export function formatBusinessName(name?: string | null, domain?: string | null, queryContextParam?: string | null): string {
   let rawDomain = domain || "";
   let queryContext = queryContextParam || "";
@@ -1184,9 +1207,9 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
 
   const result = words.join(' ');
   if (result.length > 0 && !result.includes(" ")) {
-    return result.charAt(0).toUpperCase() + result.slice(1);
+    return toTitleCase(result.charAt(0).toUpperCase() + result.slice(1));
   }
-  return result || trimmed;
+  return toTitleCase(result || trimmed);
 }
 
 /**

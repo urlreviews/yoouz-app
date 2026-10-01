@@ -518,6 +518,16 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const title = item.title || item.name || cleanDom || query;
     const loc = location.trim();
 
+    try {
+      const cleanKey = (item.id || cleanDom || title || "").toLowerCase().trim();
+      if (cleanKey && title && !title.includes(".com")) {
+        sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, title);
+        if (cleanDom) {
+          sessionStorage.setItem(`yoouz_clicked_name_${cleanDom.toLowerCase().trim()}`, title);
+        }
+      }
+    } catch (e) {}
+
     if (!cleanDom && title) {
       const tLower = title.toLowerCase().trim();
       for (const [domKey, nameVal] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
