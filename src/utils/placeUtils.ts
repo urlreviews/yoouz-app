@@ -898,7 +898,19 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     return formatBusinessName(cleanDom);
   }
   if (!name) return "";
-  let trimmed = name.trim();
+  let trimmed = name
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&ndash;/gi, "-")
+    .replace(/&mdash;/gi, "-")
+    .replace(/&rsquo;/gi, "'")
+    .replace(/&ldquo;/gi, '"')
+    .replace(/&rdquo;/gi, '"')
+    .trim();
 
   // Guard against known agency/CMS/boilerplate titles leaking into business names
   const lowerTrimmedCheck = trimmed.toLowerCase();

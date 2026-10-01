@@ -388,9 +388,25 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Clean, official human-readable business name for the Place Page and Drawer
   const displayedPlaceName = React.useMemo(() => {
+    const unescapeStr = (str: string) => {
+      if (!str) return "";
+      return str
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&apos;/gi, "'")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&ndash;/gi, "-")
+        .replace(/&mdash;/gi, "-")
+        .replace(/&rsquo;/gi, "'")
+        .replace(/&ldquo;/gi, '"')
+        .replace(/&rdquo;/gi, '"');
+    };
+
     // 1. Highest Priority: Exact user search query or suggestion place name if provided and non-generic
     if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com")) {
-      return place.name.trim();
+      return unescapeStr(place.name.trim());
     }
 
     // 2. Verified KNOWN_OFFICIAL_NAMES dictionary
@@ -409,11 +425,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (place?.name && !isGenericPlaceName(place.name)) {
       const formatted = formatBusinessName(place.name);
       if (formatted && !formatted.includes(".com") && formatted.trim() !== "") {
-        return formatted;
+        return unescapeStr(formatted);
       }
     }
 
-    return formatBusinessName(place?.id) || place?.name || "";
+    return unescapeStr(formatBusinessName(place?.id) || place?.name || "");
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
