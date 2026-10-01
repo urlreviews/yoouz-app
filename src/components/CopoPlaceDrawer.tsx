@@ -1083,7 +1083,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className="px-6 pt-9 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80">
+      <div className="px-6 pt-12 sm:pt-16 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80">
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">

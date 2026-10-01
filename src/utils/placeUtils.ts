@@ -214,6 +214,19 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "shilatbio.com": "שילת ביו קוסמטיקס",
+  "www.shilatbio.com": "שילת ביו קוסמטיקס",
+  "shilatbio": "שילת ביו קוסמטיקס",
+  "shilat bio": "שילת ביו קוסמטיקס",
+  "שילת ביו": "שילת ביו קוסמטיקס",
+  "שילת ביו קוסמטיקס": "שילת ביו קוסמטיקס",
+  "שילת ביו קוסמטיק": "שילת ביו קוסמטיקס",
+  "שילת קוסמטיקס": "שילת ביו קוסמטיקס",
+  "שילת ביו קוסמיטיקס": "שילת ביו קוסמטיקס",
+  "שילת ביו קו": "שילת ביו קוסמטיקס",
+  "שילת ביו קוס": "שילת ביו קוסמטיקס",
+  "שילת ביו קוסמ": "שילת ביו קוסמטיקס",
+  "שילת ביו קוסמט": "שילת ביו קוסמטיקס",
   "miniallenby.co.il": "מיני אלנבי",
   "www.miniallenby.co.il": "מיני אלנבי",
   "miniallenby": "מיני אלנבי",

@@ -78,7 +78,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         const hasDot = dom.includes('.');
         return {
           id: p.id,
-          title: p.name || dom,
+          title: KNOWN_OFFICIAL_NAMES[p.id?.toLowerCase()] || KNOWN_OFFICIAL_NAMES[dom?.toLowerCase()] || p.name || dom,
           domain: hasDot ? dom : "",
           logoUrl: p.logoUrl || (hasDot ? `/api/favicon?domain=${dom}` : ""),
           category: (p.category && !p.category.toLowerCase().includes("verified") && !p.category.toLowerCase().includes("google")) ? p.category : "",
