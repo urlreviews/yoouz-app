@@ -1171,7 +1171,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
-        <div className={`absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group transition-all duration-300 ${isHeaderReady ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group transition-all duration-300">
           <CopoBrandLogo
             domain={drawerDomain || place.brandDomain}
             name={displayedPlaceName}
@@ -1184,11 +1184,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             onLoad={() => setLogoLoaded(true)}
           />
         </div>
-        {!isHeaderReady && (
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-zinc-900 shadow-2xl flex items-center justify-center z-15 p-2 sm:p-2.5 ring-1 ring-white/10 overflow-hidden animate-pulse">
-            <div className="w-full h-full bg-zinc-800 rounded-[16px] sm:rounded-[20px]" />
-          </div>
-        )}
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}

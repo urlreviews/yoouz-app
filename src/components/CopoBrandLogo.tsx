@@ -18,6 +18,7 @@ interface CopoBrandLogoProps {
 
 // Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
 const KNOWN_LOADED_LOGOS = new Set<string>();
+const LOCKED_DOMAIN_LOGOS = new Map<string, string>();
 
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   domain,
@@ -60,6 +61,19 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (isYoouz) return "/favicon.svg";
 
     const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+    if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+      if (!isFaviconUrl(locked)) return locked;
+    }
+    if (cleanDomain) {
+      try {
+        const storedLogo = localStorage.getItem(`yoouz_locked_logo_${cleanDomain}`);
+        if (storedLogo && storedLogo.length > 5 && !storedLogo.includes("brandfetch.io") && !isFaviconUrl(storedLogo)) {
+          LOCKED_DOMAIN_LOGOS.set(cleanDomain, storedLogo);
+          return storedLogo;
+        }
+      } catch (e) {}
+    }
 
     // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
     if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
@@ -73,7 +87,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanName]);
     }
 
-    // 1. Explicit clean Logo URL from place record or metadata
+    // 1. Explicit clean Logo URL from place record or metadata (STRICTLY reject any favicons or .ico files)
     if (
       logoUrl &&
       !isFaviconUrl(logoUrl) &&
@@ -89,9 +103,17 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return getProxiedImageUrl(logoUrl);
     }
 
-    // 2. High-resolution Google Social Brand Icon (256px) fallback by domain
-    if (cleanDomain && cleanDomain.includes(".")) {
-      return getProxiedImageUrl(`https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${cleanDomain}&size=256`);
+    // 2. High-resolution Google brand icon (256px) or Clearbit instant fallback so logo is NEVER blank
+    if (cleanDomain) {
+      const rootDomain = cleanDomain.replace(/\.(com|co|org|net|store|digital|agency)\.[a-z]{2,}$/i, '.com').replace(/\.[a-z]{2,}$/i, '.com');
+      const brandSlug = cleanDomain.split('.')[0];
+      if (rootDomain && KNOWN_BRAND_LOGOS[rootDomain]) {
+        return getProxiedImageUrl(KNOWN_BRAND_LOGOS[rootDomain]);
+      }
+      if (brandSlug && KNOWN_BRAND_LOGOS[brandSlug]) {
+        return getProxiedImageUrl(KNOWN_BRAND_LOGOS[brandSlug]);
+      }
+      return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${cleanDomain}&size=256`;
     }
 
     return null;
@@ -219,6 +241,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             onLoad={() => {
               if (currentSrc) {
                 KNOWN_LOADED_LOGOS.add(currentSrc);
+                const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+                if (cleanDomain && !isFaviconUrl(currentSrc)) {
+                  if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+                    LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+                  }
+                  try {
+                    localStorage.setItem(`yoouz_locked_logo_${cleanDomain}`, currentSrc);
+                  } catch (e) {}
+                }
               }
               setImgLoaded(true);
               onLoad?.();
