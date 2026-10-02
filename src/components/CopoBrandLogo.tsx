@@ -82,11 +82,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(logoUrl);
     }
 
-    // 3. High-res Google Favicon / DuckDuckGo (proxied)
+    // 3. High-res Google Favicon / domain logo proxy
     if (cleanDomain && cleanDomain.includes(".")) {
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
-      candidates.push(`https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`);
-      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
     // Filter duplicates
