@@ -252,7 +252,15 @@ export function App() {
     const previousSectionRef = useRef<NavSection | null>(null);
   const previousVideoIndexRef = useRef<number>(0);
   const savedHomeVideoIndexRef = useRef<number>(0);
-  const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(null);
+  const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(() => {
+    try {
+      const pathname = window.location.pathname;
+      if (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+        return "sample";
+      }
+    } catch (e) {}
+    return null;
+  });
   const [embedTargetId, setEmbedTargetId] = useState<string | null>(() => {
     try {
       const pathname = window.location.pathname;
@@ -3670,53 +3678,90 @@ export function App() {
       }
     );
     if (!found) {
-      const matchingVideo = videos.find(
-        (v) => {
-          if (cleanSearchDomain) {
-            const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
-            if (vDomain) return vDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
-          }
-          return v.placeId === searchId || v.id === searchId || (v.placeName && v.placeName.toLowerCase() === searchId.toLowerCase());
-        }
-      );
-      if (matchingVideo) {
-        found = synthesizePlaceFromReview(matchingVideo, places);
-      } else {
-        const domain = extractCleanDomain(searchId);
-        const isRealDomain = isValidDomainUrl(domain);
+      if (searchId === "sample" || searchId === "sample/") {
         found = {
-          id: searchId,
-          name: isRealDomain ? formatBusinessName(domain) : searchId,
-          brandDomain: domain || undefined,
-          category: isRealDomain ? "Verified Business" : "Local Business",
-          categoryType: "all",
-          address: "",
-          city: "",
-          country: "",
-          rating: 5.0,
-          totalReviews: 0,
-          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-          photos: [],
-          openingHours: "",
-          isOpen: undefined,
-          phone: "",
-          website: isRealDomain ? `https://${domain}` : "",
-          priceRange: "N/A",
+          id: "sample",
+          name: "Colony Clothing (Sample)",
+          brandDomain: "colonyclothing.net",
+          category: "Luxury Fashion & Lifestyle",
+          categoryType: "shopping",
+          address: "73 Circular Road, #01-01, Singapore 049427",
+          city: "Singapore",
+          country: "Singapore",
+          rating: 4.9,
+          totalReviews: 8,
+          ratingDistribution: { stars5: 7, stars4: 1, stars3: 0, stars2: 0, stars1: 0 },
+          photos: [
+            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80"
+          ],
+          openingHours: "Mon-Sat: 11:00 AM - 8:00 PM, Sun: Closed",
+          isOpen: true,
+          phone: "+65 6222 2556",
+          website: "https://colonyclothing.net",
+          priceRange: "$$$$",
+          description: "Colony Clothing is a premier luxury menswear destination combining bespoke British tailoring with contemporary Japanese minimalism. Verified sample profile showcasing streamlined layout, unified contact card, and uncluttered action buttons.",
+          bannerUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+          logoUrl: "https://colonyclothing.net/favicon.ico",
+          lat: 1.2862,
+          lng: 103.8492,
+          avatarUrl: "https://colonyclothing.net/favicon.ico",
           plusCode: "",
-          description: "",
-          popularKeywords: [],
-          amenities: [],
+          popularKeywords: ["menswear", "tailoring", "bespoke", "japan"],
+          amenities: ["Wheelchair accessible", "Private Fitting", "Bespoke Tailoring"],
           topDishes: [],
-          lat: 0,
-          lng: 0,
-          bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
-          ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
-          avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
-          logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
-          isSavedToProfile: true,
-          isSkeleton: true,
+          isClaimed: false,
+          isSavedToProfile: false,
           isSynthetic: true
-        } as Place;
+        } as unknown as Place;
+      } else {
+        const matchingVideo = videos.find(
+          (v) => {
+            if (cleanSearchDomain) {
+              const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
+              if (vDomain) return vDomain.toLowerCase() === cleanSearchDomain.toLowerCase();
+            }
+            return v.placeId === searchId || v.id === searchId || (v.placeName && v.placeName.toLowerCase() === searchId.toLowerCase());
+          }
+        );
+        if (matchingVideo) {
+          found = synthesizePlaceFromReview(matchingVideo, places);
+        } else {
+          const domain = extractCleanDomain(searchId);
+          const isRealDomain = isValidDomainUrl(domain);
+          found = {
+            id: searchId,
+            name: isRealDomain ? formatBusinessName(domain) : searchId,
+            brandDomain: domain || undefined,
+            category: isRealDomain ? "Verified Business" : "Local Business",
+            categoryType: "all",
+            address: "",
+            city: "",
+            country: "",
+            rating: 5.0,
+            totalReviews: 0,
+            ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+            photos: [],
+            openingHours: "",
+            isOpen: undefined,
+            phone: "",
+            website: isRealDomain ? `https://${domain}` : "",
+            priceRange: "N/A",
+            plusCode: "",
+            description: "",
+            popularKeywords: [],
+            amenities: [],
+            topDishes: [],
+            lat: 0,
+            lng: 0,
+            bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+            ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
+            avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+            logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+            isSavedToProfile: true,
+            isSkeleton: true,
+            isSynthetic: true
+          } as Place;
+        }
       }
     }
 

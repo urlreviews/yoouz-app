@@ -1480,27 +1480,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <span className="font-bold text-[11px] text-white">{t("place.chat", "Chat")}</span>
               </button>
             )}
-
-            {onOpenReport && (
-              <button
-                id="btn-report-business-row"
-                onClick={() => {
-                  triggerHaptic("medium");
-                  onOpenReport({
-                    type: "place",
-                    placeName: displayedPlaceName,
-                    placeId: place.id
-                  });
-                }}
-                className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-                title={t("place.reportBusiness", "Report / Flag Business")}
-              >
-                <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:border-red-500/50 group-hover:bg-red-500/10 transition-colors">
-                  <Flag className="w-4 h-4 text-white group-hover:text-red-400 transition-colors" />
-                </div>
-                <span className="font-bold text-[11px] text-white group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
-              </button>
-            )}
           </div>
           
           {/* CTA Row - Only rendered when business has upgraded or owner is viewing */}
@@ -2222,40 +2201,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-
-              {effectiveWebsite && (
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-xs font-bold text-zinc-200">{t("place.onlinePresence", "Online Presence")}</h4>
-                  </div>
-                  <a
-                    href={effectiveWebsite}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 bg-zinc-900/80 hover:bg-zinc-900 rounded-2xl border border-zinc-800 transition-colors group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-1 overflow-hidden">
-                        <CopoBrandLogo
-                          domain={drawerDomain || place.brandDomain}
-                          name={displayedPlaceName}
-                          website={effectiveWebsite}
-                          logoUrl={primaryLogoUrl || place.logoUrl}
-                          bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-                          className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden bg-transparent"
-                          imageClassName="w-full h-full object-contain rounded-lg"
-                          fallbackTextClassName="font-black text-xs text-zinc-950"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{t("place.visitOfficialWebsite", "Visit Official Website")}</p>
-                        <p className="text-xs text-zinc-400 truncate max-w-[200px] sm:max-w-xs">{displayWebsiteClean || effectiveWebsite}</p>
-                      </div>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
-                  </a>
                 </div>
               )}
 
