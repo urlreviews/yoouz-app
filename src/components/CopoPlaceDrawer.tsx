@@ -1205,7 +1205,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         {hasAuthenticLogo ? (
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
+          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
             <CopoBrandLogo
               domain={drawerDomain || place.brandDomain}
               name={displayedPlaceName}
