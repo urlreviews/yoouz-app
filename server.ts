@@ -20603,7 +20603,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               ];
               
               for (const sel of logoSelectors) {
-                const href = $(sel).attr('href') || $(sel).attr('content');
+                const href = $(sel).attr('src') || $(sel).attr('data-src') || $(sel).attr('href') || $(sel).attr('content');
                 if (href && !href.includes('google.com') && !href.startsWith('data:') && !isFaviconUrl(href)) {
                   try {
                     logo = new URL(href, finalUrl).toString();

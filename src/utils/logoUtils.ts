@@ -783,14 +783,7 @@ export function prewarmBannerImage(url?: string | null): void {
   };
 }
 
-// Auto-prewarm all known brand banners in memory on app startup
-if (typeof window !== "undefined") {
-  setTimeout(() => {
-    Object.values(KNOWN_BRAND_BANNERS).forEach(u => {
-      if (u) prewarmBannerImage(u);
-    });
-  }, 100);
-}
+// Auto-prewarm active banners as needed
 
 /**
  * Checks if a logo URL is broken or invalid.
