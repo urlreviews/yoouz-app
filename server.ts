@@ -3417,7 +3417,7 @@ function isQuotaError(err: any): boolean {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const isProd = process.env.NODE_ENV === "production";
 
   // Global Cross-Origin Resource Sharing (CORS) Middleware
@@ -19301,6 +19301,12 @@ const domainBanners: Record<string, string> = {
 const sanitizeProxy = (u?: string | null): string => {
   if (!u || typeof u !== 'string') return '';
   let c = u.trim();
+  if (c.includes('h:180/') || c.includes('qt=q:') || c.includes('ll:1') || c.includes('undefined') || c.includes('null')) {
+    return '';
+  }
+  if (c.startsWith('//')) {
+    c = 'https:' + c;
+  }
   while (c.includes('/api/proxy-image?url=')) {
     const parts = c.split('/api/proxy-image?url=');
     c = decodeURIComponent(parts[parts.length - 1]);
@@ -19319,7 +19325,7 @@ const sanitizeProxy = (u?: string | null): string => {
     }
     return `/api/proxy-image?url=${encodeURIComponent(c)}`;
   }
-  return c;
+  return '';
 };
 
   const SEARCH_INTEL_LOG: any[] = [];
@@ -19741,8 +19747,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         phone: domPhone,
         email: domEmail,
         openingHours: domOpeningHours,
-        photo: (!isLogoOrIconUrl(domPhoto) ? domPhoto : ""),
-        logo: domLogo,
+        photo: (!isLogoOrIconUrl(domPhoto) ? sanitizeProxy(domPhoto) : ""),
+        logo: sanitizeProxy(domLogo),
         description: domDesc,
         lat: domLat,
         lng: domLng
@@ -22481,7 +22487,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
     if (!cleanDomain) {
-      return renderFallbackSvg(res);
+      return res.status(404).send("Domain missing");
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -22540,7 +22546,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       } catch (e) {}
     }
 
-    return renderFallbackSvg(res, cleanDomain);
+    // Cascade to DuckDuckGo if Google Favicon didn't yield a custom icon
+    if (cleanDomain.includes(".")) {
+      return res.redirect(302, `https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
+    }
+
+    return res.status(404).send("Favicon not found");
   });
 
   // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
@@ -22548,7 +22559,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     try {
       const rawUrl = req.query.url;
       if (!rawUrl || typeof rawUrl !== 'string') {
-        return renderFallbackSvg(res, "Y");
+        return res.status(404).send("Image missing");
       }
 
       // Recursively unwrap if nested or URL encoded
@@ -22563,7 +22574,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       targetUrl = targetUrl.trim();
       if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
-        return renderFallbackSvg(res, "Y");
+        return res.status(404).send("Invalid target URL");
       }
 
       if (targetUrl.startsWith('http://')) {
@@ -22598,9 +22609,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let contentType = (response.headers.get('content-type') || '').toLowerCase();
       
-      // Strict Image Validation: If upstream server returned HTML (Wix 202 challenge, error page, or website html), DO NOT return text/html!
+      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return 404
       if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
-        // Fallback: If site blocked IP or returned HTML challenge, fetch authentic image bytes from Wayback Machine archive!
+        // Fallback: Fetch authentic image bytes from Wayback Machine archive
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
           try {
             const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
@@ -22624,32 +22635,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           } catch(eWb) {}
         }
 
-        let cleanDomain = "";
-        try {
-          const parsed = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
-          cleanDomain = parsed.hostname.replace(/^www\./, "");
-        } catch (e) {
-          cleanDomain = targetUrl.replace(/^(https?:\/\/)?(www\.)?/, "").split('/')[0];
-        }
-
-        const isBanner = targetUrl.toLowerCase().includes('banner') || 
-                         targetUrl.toLowerCase().includes('header') || 
-                         targetUrl.toLowerCase().includes('hero') || 
-                         targetUrl.toLowerCase().includes('cover') || 
-                         targetUrl.toLowerCase().includes('og-image') ||
-                         targetUrl.toLowerCase().includes('uploads') ||
-                         targetUrl.toLowerCase().includes('mv2');
-
-        if (isBanner) {
-          const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="50%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></linearGradient></defs><rect width="1200" height="600" fill="url(#bg)"/></svg>`;
-          res.setHeader('Content-Type', 'image/svg+xml');
-          res.setHeader('Cache-Control', 'public, max-age=86400');
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-          return res.status(200).send(bannerSvg);
-        }
-
-        return renderFallbackSvg(res, cleanDomain || "Y");
+        // Return clean 404 so browser image element onError triggers and cascades to candidate
+        res.setHeader('Cache-Control', 'no-cache');
+        return res.status(404).send("Image Proxy: Asset not found or blocked");
       }
 
       // Infer explicit image MIME type if generic or missing
@@ -27220,8 +27208,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
-  await syncAndMigrateBusinessPlaces().catch(() => {});
-  await ensureWelcomeNotificationsForAllUsers().catch(() => {});
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
+  });
+
+  // Background initialization tasks
+  syncAndMigrateBusinessPlaces().catch(() => {});
+  ensureWelcomeNotificationsForAllUsers().catch(() => {});
 
   try {
     const bunnyDb = getBunnyDb();
@@ -27243,10 +27236,6 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   // Purge any legacy anti-bot blocked place records from database
   purgeBlockedPlaceRecords().catch(() => {});
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Yoouz server running on http://localhost:${PORT}`);
-  });
 }
 
 startServer().catch(err => {

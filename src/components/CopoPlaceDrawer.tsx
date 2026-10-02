@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -687,6 +687,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   // Helper to check for broken/placeholder/stale banners or logos misclassified as banners
   const isBadBanner = (url?: string | null) => {
     if (!url || typeof url !== 'string') return true;
+    if (!isValidImageUrl(url)) return true;
     const u = url.toLowerCase();
     return (
       u.includes('yoouz.com/og-banner.png') ||
@@ -712,6 +713,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('challenge') ||
       u.includes('access_denied') ||
       u.includes('${') ||
+      u.includes('h:180') ||
+      u.includes('qt=q:') ||
       u.endsWith('.ico')
     );
   };
@@ -829,6 +832,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   const activeBannerUrl = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
+  const brandGrad = React.useMemo(
+    () => getDomainBrandGradient(drawerDomain || place.brandDomain || place.name),
+    [drawerDomain, place.brandDomain, place.name]
+  );
   const criticalImagesLoaded = useCriticalImagesLoaded([activeBannerUrl, primaryLogoUrl], 600);
 
   // Synchronous Co-Landing Gate: Both Banner and Logo transition to screen TOGETHER in 1 exact millisecond
@@ -1159,8 +1166,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
+        {/* Ambient Brand Gradient Backdrop (always active as underlying luxury canvas) */}
+        <div 
+          style={{ background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 50%, ${brandGrad.to} 100%)` }}
+          className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center z-0"
+        >
+          <div style={{ background: `radial-gradient(circle at 50% 30%, ${brandGrad.glow}, transparent 70%)` }} className="absolute inset-0 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-black/30 to-black/20 pointer-events-none" />
+        </div>
+
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden flex items-center justify-center group transition-opacity duration-200">
+          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center group transition-opacity duration-300 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
@@ -1168,7 +1184,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0 z-10"
+              className={`absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 ${
+                bannerLoaded ? "opacity-100" : "opacity-0"
+              }`}
               referrerPolicy="no-referrer"
               onLoad={() => {
                 setBannerLoaded(true);
@@ -1191,14 +1209,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
           </div>
         ) : null}
-
-        {(!bannerLoaded || bannerError || !hasAuthenticPhoto) && (
-          <div className="absolute inset-0 w-full h-full bg-zinc-900 border-b border-zinc-800/80 flex items-center justify-center overflow-hidden z-0">
-            {/* Clean neutral skeleton shimmer header while authentic media is loaded */}
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-850 to-zinc-900 animate-pulse duration-700" />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-black/20 pointer-events-none" />
-          </div>
-        )}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group transition-all duration-300">

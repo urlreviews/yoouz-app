@@ -82,16 +82,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(logoUrl);
     }
 
-    // 3. Google High-Res 256px Brand Icon
+    // 3. High-res Google Favicon / DuckDuckGo / Clearbit (both proxied and direct)
     if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
       candidates.push(`https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`);
-      candidates.push(`https://logo.clearbit.com/${cleanDomain}`);
       candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
+      candidates.push(`https://logo.clearbit.com/${cleanDomain}`);
     }
 
-    // Filter duplicates & proxy non-data URLs
-    const unique = Array.from(new Set(candidates.filter(Boolean)));
-    return unique.map((u) => getProxiedImageUrl(u));
+    // Filter duplicates
+    return Array.from(new Set(candidates.filter(Boolean)));
   }, [isYoouz, cleanDomain, logoUrl]);
 
   // Current src candidate

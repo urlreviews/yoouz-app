@@ -1,9 +1,33 @@
 import { Place } from "../types";
 
+export function isValidImageUrl(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  let clean = url.trim();
+  if (!clean || clean === "data:;" || clean.startsWith("data:;")) return false;
+  if (clean.startsWith("blob:") || clean.startsWith("data:image")) return true;
+  if (clean.startsWith("//")) clean = "https:" + clean;
+  if (!clean.startsWith("http://") && !clean.startsWith("https://") && !clean.startsWith("/")) return false;
+  if (clean.includes("h:180/") || clean.includes("qt=q:") || clean.includes("ll:1") || clean.includes("undefined") || clean.includes("null")) return false;
+  return true;
+}
+
 export function getProxiedImageUrl(url: string | null | undefined): string {
   if (!url || typeof url !== "string") return "";
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
+
+  if (clean.startsWith("//")) {
+    clean = "https:" + clean;
+  }
+
+  // Reject malformed protocols (e.g. h:180/qt=q:100/ll:1) to prevent ERR_UNKNOWN_URL_SCHEME
+  if (!clean.startsWith("http://") && !clean.startsWith("https://") && !clean.startsWith("/") && !clean.startsWith("data:") && !clean.startsWith("blob:")) {
+    return "";
+  }
+
+  if (clean.includes("h:180/") || clean.includes("qt=q:") || clean.includes("ll:1")) {
+    return "";
+  }
 
   // Unwrap Wayback Machine proxy wrappers to load original direct site asset
   if (clean.includes("archive.org/web/")) {
@@ -36,7 +60,7 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
   }
 
-  return clean;
+  return "";
 }
 
 export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
