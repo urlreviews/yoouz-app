@@ -691,6 +691,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const u = url.toLowerCase();
     return (
       u.includes('yoouz.com/og-banner.png') ||
+      u.includes('unsplash.com') ||
+      u.includes('injury-lawyer.jpg') ||
       u.includes('placeholder') ||
       u.includes('mock') ||
       u.includes('1789810172562') ||

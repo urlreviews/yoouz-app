@@ -1156,48 +1156,8 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 }
 
 export function getCategoryThematicBanner(category?: string | null, name?: string | null): string {
-  const cat = (category || "").toLowerCase();
-  const n = (name || "").toLowerCase();
-
-  // Legal Services (e.g. Lamont Law, Armstrong Legal)
-  if (cat.includes("legal") || cat.includes("law") || cat.includes("attorney") || cat.includes("court") || n.includes("legal") || n.includes("law")) {
-    return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Dentist / Dental / Medical / Healthcare
-  if (cat.includes("dentist") || cat.includes("dental") || cat.includes("medical") || cat.includes("health") || cat.includes("pharmacy") || cat.includes("clinic") || cat.includes("hospital") || n.includes("dental") || n.includes("dentist") || n.includes("medical")) {
-    return "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Spa / Wellness / Beauty / Salon
-  if (cat.includes("spa") || cat.includes("wellness") || cat.includes("beauty") || cat.includes("massage") || cat.includes("salon")) {
-    return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Barbershop / Barber
-  if (cat.includes("barber") || cat.includes("coiffeur") || n.includes("barber") || n.includes("kapper")) {
-    return "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Restaurant / Cafe / Coffee / Bakery / Kitchen
-  if (cat.includes("restaurant") || cat.includes("cafe") || cat.includes("coffee") || cat.includes("food") || cat.includes("bakery") || cat.includes("dining")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Hotel / Hospitality
-  if (cat.includes("hotel") || cat.includes("hospitality") || cat.includes("motel") || cat.includes("resort") || cat.includes("suites")) {
-    return "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Auto / Automotive / Rental / Car
-  if (cat.includes("auto") || cat.includes("car") || cat.includes("garage") || cat.includes("vehicle") || cat.includes("rental") || n.includes("car") || n.includes("rental")) {
-    return "https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Mall / Shopping / Retail / Fashion
-  if (cat.includes("mall") || cat.includes("shopping") || cat.includes("retail") || cat.includes("fashion") || cat.includes("boutique")) {
-    return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop";
-  }
-  // Technology / Software / Digital / Cyber
-  if (cat.includes("tech") || cat.includes("software") || cat.includes("digital") || cat.includes("agency") || cat.includes("media") || cat.includes("cyber")) {
-    return "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1200&auto=format&fit=crop";
-  }
-
-  // Default elegant, abstract dark obsidian liquid flow
-  return "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop";
+  const identifier = name || category || "Business";
+  return `/api/brand-banner/${encodeURIComponent(identifier)}`;
 }
 
 /**

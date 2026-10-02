@@ -3893,7 +3893,13 @@ export function App() {
                 const fetchedLogo = existingValidLogo || (isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
                 const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]);
                 const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || cleanId));
-                const effectiveBannerCandidate = fetchedPlace?.bannerUrl || metaData.image || "";
+                const cleanBanner = (url?: string | null): string => {
+                  if (!url || typeof url !== "string") return "";
+                  const u = url.toLowerCase();
+                  if (u.includes("unsplash.com") || u.includes("placeholder") || u.includes("injury-lawyer.jpg")) return "";
+                  return url;
+                };
+                const effectiveBannerCandidate = cleanBanner(fetchedPlace?.bannerUrl) || cleanBanner(metaData.image) || "";
                 const enriched: Place = {
                   id: (metaData.domain || cleanId).toLowerCase(),
                   name: preservedName,
