@@ -20860,18 +20860,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const logoSelectors = [
                 'meta[property="og:logo"]',
                 'meta[name="og:logo"]',
-                'link[rel="apple-touch-icon-precomposed"]',
-                'link[rel="apple-touch-icon"]',
-                'link[rel="icon"][sizes="512x512"]',
-                'link[rel="icon"][sizes="192x192"]',
-                'link[rel="icon"][sizes="180x180"]',
+                'meta[itemprop="logo"]',
                 'header img[class*="logo" i]',
                 'nav img[class*="logo" i]',
+                '.site-logo img',
+                '.custom-logo',
+                '.navbar-brand img',
+                '.header-logo img',
+                '.brand-logo img',
                 '.logo img',
                 '#logo img',
                 'a[class*="logo" i] img',
                 'a[id*="logo" i] img',
-                'img[src*="logo" i]'
+                'img[src*="logo" i]',
+                'img[alt*="logo" i]'
               ];
               
               for (const sel of logoSelectors) {
@@ -21542,7 +21544,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
               // Priority 1: JSON-LD direct logo schemas (official vector/raster logo declared by business)
-              if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo)) {
+              if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo) && !isFaviconUrl(jsonLdLogo)) {
                 logo = jsonLdLogo;
               }
 
@@ -21570,7 +21572,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   'img[class*="navbar-logo" i]',
                   'img[class*="header-logo" i]',
                   'img[class*="brand-logo" i]',
-                  'img[class*="logo" i]'
+                  'img[class*="logo" i]',
+                  'img[src*="logo" i]',
+                  'img[alt*="logo" i]'
                 ];
 
                 for (const sel of domLogoSelectors) {
@@ -21578,54 +21582,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   $(sel).each((i, el) => {
                     if (logo) return;
                     const src = getCleanImgSrc($(el));
-                    if (src && isValidCandidateLogo(src)) {
+                    if (src && isValidCandidateLogo(src) && !isFaviconUrl(src)) {
                       logo = src;
                     }
                   });
                 }
               }
 
-              // Priority 3: High-Resolution Apple Touch Icons (authentic brand icon 180x180)
+              // Priority 3: Meta logo tags
               if (!logo) {
-                const appleTouch = $('link[rel="apple-touch-icon"]').attr('href') || 
-                                   $('link[rel="apple-touch-icon-precomposed"]').attr('href');
-                if (appleTouch && isValidCandidateLogo(appleTouch)) {
-                  logo = appleTouch;
-                }
-              }
-
-              // Priority 4: Large Multi-resolution Favicons (e.g. 192x192, 180x180, 512x512, SVG)
-              if (!logo) {
-                const largeIcons = $('link[rel="icon"][sizes], link[rel="shortcut icon"][sizes], link[rel="icon"][type="image/svg+xml"]');
-                let bestSize = 0;
-                largeIcons.each((i, el) => {
-                  const sizesAttr = $(el).attr('sizes');
-                  const href = $(el).attr('href');
-                  if (href && isValidCandidateLogo(href)) {
-                    if (sizesAttr) {
-                      const width = parseInt(sizesAttr.split('x')[0], 10);
-                      if (width > bestSize) {
-                        bestSize = width;
-                        logo = href;
-                      }
-                    } else if ($(el).attr('type') === 'image/svg+xml' && !logo) {
-                      logo = href;
-                    }
-                  }
-                });
-              }
-
-              // Priority 5: Meta logo tags
-              if (!logo) {
-                const metaLogo = getMetaContent('logo');
-                if (metaLogo && isValidCandidateLogo(metaLogo)) {
+                const metaLogo = getMetaContent('logo') || $('meta[itemprop="logo"]').attr('content');
+                if (metaLogo && isValidCandidateLogo(metaLogo) && !isFaviconUrl(metaLogo)) {
                   logo = metaLogo;
                 }
               }
 
-              // Priority 6: Script / JS bundle discovered logos (fallback only)
+              // Priority 4: Script / JS bundle discovered brand logos (only if explicit logo file)
               if (!logo && scriptLogos.length > 0) {
-                const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && (l.toLowerCase().includes('no-background') || l.toLowerCase().includes('logo'))) || scriptLogos.find(l => isValidCandidateLogo(l));
+                const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && !isFaviconUrl(l) && (l.toLowerCase().includes('logo') || l.toLowerCase().includes('brand')));
                 if (bestLogo) {
                   logo = bestLogo;
                 }
@@ -21638,12 +21612,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   } catch (e) {}
                 }
                 if (isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) {
-                  logo = `/api/favicon?domain=${cleanDomain}`;
+                  logo = '';
                 } else {
                   logo = getHighQualityImageUrl(logo);
                 }
               } else {
-                logo = `/api/favicon?domain=${cleanDomain}`;
+                logo = '';
               }
 
               const lowerTitle = title.toLowerCase();
@@ -22198,7 +22172,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 id: row.id,
                 title,
                 domain: hasDot ? bDom : "",
-                logoUrl: row.logoUrl || (hasDot ? `/api/favicon?domain=${bDom}` : ""),
+                logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
                 category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
                 address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
                 source: "database"
@@ -22218,7 +22192,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           addSuggestion({
             title: officialName,
             domain: validDomain,
-            logoUrl: validDomain ? `/api/favicon?domain=${validDomain}` : "",
+            logoUrl: validDomain && KNOWN_BRAND_LOGOS[validDomain] ? KNOWN_BRAND_LOGOS[validDomain] : "",
             category: "",
             source: "brand_index"
           });
@@ -22300,7 +22274,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           addSuggestion({
             title: displayTitle,
             domain: targetDom,
-            logoUrl: targetDom ? `/api/favicon?domain=${targetDom}` : "",
+            logoUrl: targetDom && KNOWN_BRAND_LOGOS[targetDom] ? KNOWN_BRAND_LOGOS[targetDom] : "",
             category: knownLoc?.category || "",
             address: knownLoc?.city ? `${knownLoc.address ? knownLoc.address + ', ' : ''}${knownLoc.city}` : "",
             source: targetDom ? "brand_index" : "autocomplete"
@@ -22315,7 +22289,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           addSuggestion({
             title: formatBusinessName(cleanQDom) || cleanQDom,
             domain: cleanQDom,
-            logoUrl: `/api/favicon?domain=${cleanQDom}`,
+            logoUrl: cleanQDom && KNOWN_BRAND_LOGOS[cleanQDom] ? KNOWN_BRAND_LOGOS[cleanQDom] : "",
             category: "Direct Domain Search",
             source: "direct"
           });

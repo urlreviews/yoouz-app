@@ -81,14 +81,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isFaviconUrl(logoUrl)
+      !isFaviconUrl(logoUrl) &&
+      !logoUrl.includes("/api/favicon")
     ) {
       candidates.push(logoUrl);
-    }
-
-    // 3. High-res Google Favicon / domain logo proxy
-    if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
 
     // Filter duplicates and any generic placeholders

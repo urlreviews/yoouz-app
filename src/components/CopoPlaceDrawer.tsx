@@ -826,10 +826,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain) || matchingVidWithLogo.placeLogoUrl;
     }
 
-    if (cleanD && cleanD.includes(".")) {
-      return `/api/favicon?domain=${encodeURIComponent(cleanD)}`;
-    }
-
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
     return null;
   }, [place, drawerDomain, rawPlaceVideos]);
