@@ -24206,6 +24206,34 @@ app.get('/api/debug-metadata', async (req, res) => {
   }
 });
 
+app.get('/api/favicon', async (req, res) => {
+  const domain = String(req.query.domain || "");
+  if (!domain) return res.redirect('/favicon.png');
+  try {
+    const response = await fetch(`https://${domain}/favicon.ico`, { signal: AbortSignal.timeout(2000) });
+    if (response.ok) {
+      const buffer = await response.arrayBuffer();
+      res.set('Content-Type', 'image/x-icon');
+      return res.send(Buffer.from(buffer));
+    }
+  } catch (e) {}
+  res.redirect('/favicon.png');
+});
+
+app.get('/api/proxy-image', async (req, res) => {
+  const url = String(req.query.url || "");
+  if (!url) return res.status(400).send("URL required");
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error("Failed to fetch");
+    const buffer = await response.arrayBuffer();
+    res.set('Content-Type', response.headers.get('Content-Type') || 'image/jpeg');
+    return res.send(Buffer.from(buffer));
+  } catch (e) {
+    return res.status(500).send("Failed to proxy image");
+  }
+});
+
 app.get('/api/og-preview-v2', async (req, res) => {
   let placeName = String(req.query.placeName || "Awesome Coffee Shop");
   let authorName = String(req.query.author || "Alex Johnson");
