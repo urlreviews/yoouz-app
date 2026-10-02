@@ -1,9 +1,46 @@
 import { Place } from "../types";
 
+export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  let clean = url.trim().toLowerCase();
+  try { clean = decodeURIComponent(clean); } catch(e) {}
+
+  return (
+    clean === "" ||
+    clean === "data:;" ||
+    clean.startsWith("data:;") ||
+    clean.includes("logo-default") ||
+    clean.includes("default-logo") ||
+    clean.includes("default_logo") ||
+    clean.includes("pwa-app") ||
+    clean.includes("wsimg.com") ||
+    clean.includes("clearbit.com") ||
+    clean.includes("brandfetch.io") ||
+    clean.includes("wixstatic.com/media/cb6ad0") ||
+    clean.includes("cb6ad0") ||
+    clean.includes("s.w.org") ||
+    clean.includes("wordpress.org") ||
+    clean.includes("default-favicon") ||
+    clean.includes("placeholder-logo") ||
+    clean.includes("logo-placeholder") ||
+    clean.includes("placeholder") ||
+    clean.includes("mock") ||
+    clean.includes("og-banner.png") ||
+    clean.includes("tap/0.png") ||
+    clean.includes("icons/tap") ||
+    clean.includes("dummy") ||
+    clean.includes("no-logo") ||
+    clean.includes("blank-logo") ||
+    clean.includes("generic-logo") ||
+    clean.includes("sample-logo")
+  );
+}
+
 export function isValidImageUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return false;
+  if (isGenericOrPlaceholderLogo(clean)) return false;
   if (clean.startsWith("blob:") || clean.startsWith("data:image")) return true;
   if (clean.startsWith("//")) clean = "https:" + clean;
   if (!clean.startsWith("http://") && !clean.startsWith("https://") && !clean.startsWith("/")) return false;
@@ -15,6 +52,7 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   if (!url || typeof url !== "string") return "";
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
+  if (isGenericOrPlaceholderLogo(clean)) return "";
 
   if (clean.includes("og-banner.png") || clean.includes("1789810172562") || clean.includes("clearbit.com") || clean.includes("placeholder") || clean.includes("mock")) {
     return "";
@@ -75,6 +113,13 @@ export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="51
 
 export const YOOUZ_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(YOOUZ_LOGO_SVG)}`;
 
+export const GETT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="20" fill="#000000"/>
+  <text x="50" y="63" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="32" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">Gett</text>
+</svg>`;
+
+export const GETT_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(GETT_LOGO_SVG)}`;
+
 const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <rect width="100" height="100" rx="22" fill="#0f172a"/>
   <circle cx="50" cy="50" r="38" fill="none" stroke="#eab308" stroke-width="2"/>
@@ -90,9 +135,9 @@ export const CLEANTON_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encode
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "gett.com": "https://logo.clearbit.com/gett.com",
-  "www.gett.com": "https://logo.clearbit.com/gett.com",
-  "gett": "https://logo.clearbit.com/gett.com",
+  "gett.com": GETT_LOGO_DATA_URI,
+  "www.gett.com": GETT_LOGO_DATA_URI,
+  "gett": GETT_LOGO_DATA_URI,
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
   "yoouz": YOOUZ_LOGO_DATA_URI,

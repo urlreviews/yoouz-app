@@ -39,17 +39,18 @@ import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts
 
 dotenv.config();
 
-const FIRECRAWL_BASE_URL = process.env.FIRECRAWL_API_URL || "http://localhost:3002";
+const FIRECRAWL_BASE_URL = process.env.FIRECRAWL_API_URL || "";
 const FIRECRAWL_PUBLIC_URL = "https://mc-rb4zzrxvx1.bunny.run";
 
 async function scrapeWithFirecrawl(url: string) {
-  const urlsToTry = [FIRECRAWL_BASE_URL, FIRECRAWL_PUBLIC_URL];
+  const configuredFirecrawl = process.env.FIRECRAWL_API_URL;
+  const urlsToTry = [configuredFirecrawl, FIRECRAWL_PUBLIC_URL, "http://localhost:3002"].filter(Boolean) as string[];
   let lastError = "";
 
   for (const baseUrl of urlsToTry) {
-    if (!baseUrl) continue;
     try {
       console.log(`[Firecrawl] Attempting scrape via: ${baseUrl}`);
+      const timeoutMs = baseUrl.includes("localhost") ? 800 : 2500;
       const response = await fetch(`${baseUrl}/v1/scrape`, {
         method: 'POST',
         headers: {
@@ -61,20 +62,20 @@ async function scrapeWithFirecrawl(url: string) {
           onlyMainContent: false,
           waitFor: 1000
         }),
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
       });
 
       if (!response.ok) {
         const errText = await response.text().catch(() => "");
         console.warn(`[Firecrawl] Error ${response.status} from ${baseUrl}: ${response.statusText} ${errText.substring(0, 100)}`);
-        continue; // Try next URL
+        continue;
       }
 
       const result = await response.json();
       if (result.data || result.success) return result.data || result;
-    } catch (error) {
+    } catch (error: any) {
       lastError = error.message;
-      console.error(`[Firecrawl] Connection to ${baseUrl} failed:`, error.message);
+      console.warn(`[Firecrawl] Connection to ${baseUrl} failed:`, error.message);
     }
   }
 
@@ -93,11 +94,153 @@ async function scrapeWithFirecrawl(url: string) {
       const html = await directResp.text();
       return { html, metadata: {} };
     }
-  } catch (dErr) {
+  } catch (dErr: any) {
     console.warn(`[Firecrawl Direct Fallback Error]:`, dErr.message);
   }
 
   throw new Error(`FIRECRAWL_ALL_ATTEMPTS_FAILED: ${lastError}`);
+}
+
+function isGenericOrPlaceholderLogo(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  let clean = url.trim().toLowerCase();
+  try { clean = decodeURIComponent(clean); } catch(e) {}
+
+  return (
+    clean === "" ||
+    clean === "data:;" ||
+    clean.startsWith("data:;") ||
+    clean.includes("logo-default") ||
+    clean.includes("default-logo") ||
+    clean.includes("default_logo") ||
+    clean.includes("pwa-app") ||
+    clean.includes("wsimg.com") ||
+    clean.includes("clearbit.com") ||
+    clean.includes("brandfetch.io") ||
+    clean.includes("wixstatic.com/media/cb6ad0") ||
+    clean.includes("cb6ad0") ||
+    clean.includes("s.w.org") ||
+    clean.includes("wordpress.org") ||
+    clean.includes("default-favicon") ||
+    clean.includes("placeholder-logo") ||
+    clean.includes("logo-placeholder") ||
+    clean.includes("placeholder") ||
+    clean.includes("mock") ||
+    clean.includes("og-banner.png") ||
+    clean.includes("tap/0.png") ||
+    clean.includes("icons/tap") ||
+    clean.includes("dummy") ||
+    clean.includes("no-logo") ||
+    clean.includes("blank-logo") ||
+    clean.includes("generic-logo") ||
+    clean.includes("sample-logo")
+  );
+}
+
+function isFaviconUrl(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const l = url.toLowerCase().trim();
+  if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
+    return false;
+  }
+  return (
+    l.includes("favicon") ||
+    l.endsWith(".ico") ||
+    l.includes(".ico?") ||
+    l.includes(".ico#") ||
+    l.includes("google.com/s2/favicons") ||
+    l.includes("gstatic.com/favicon") ||
+    l.includes("icon.horse") ||
+    l.includes("/api/favicon")
+  );
+}
+
+function isLogoOrIconUrl(urlStr: string): boolean {
+  if (!urlStr || typeof urlStr !== 'string') return true;
+  let l = urlStr.toLowerCase();
+  try { l = decodeURIComponent(l); } catch(e) {}
+  return (
+    l.includes('logo') ||
+    l.includes('icon') ||
+    l.includes('favicon') ||
+    l.includes('avatar') ||
+    l.includes('badge') ||
+    l.includes('button') ||
+    l.includes('app-store') ||
+    l.includes('play-store') ||
+    l.includes('google-play') ||
+    l.includes('payment') ||
+    l.includes('visa') ||
+    l.includes('mastercard') ||
+    l.includes('star.png') ||
+    l.includes('spinner') ||
+    l.includes('loader') ||
+    l.includes('loading') ||
+    l.includes('blank.gif') ||
+    l.includes('pixel.gif') ||
+    l.includes('placeholder') ||
+    l.includes('no-image') ||
+    l.includes('no_image') ||
+    l.includes('transparent') ||
+    l.endsWith('.svg') ||
+    l.includes('.ico') ||
+    l.includes('300x46') ||
+    l.includes('100x100') ||
+    l.includes('150x150') ||
+    l.includes('78x100') ||
+    l.includes('16x16') ||
+    l.includes('32x32') ||
+    l.includes('60x60') ||
+    l.includes('tap/0.png')
+  );
+}
+
+function isBadBanner(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return true;
+  if (isLogoOrIconUrl(url)) return true;
+  try {
+    const u = url.toLowerCase().trim();
+    const decoded = decodeURIComponent(u);
+    return (
+      decoded.includes("${") || 
+      decoded.includes("%24%7b") ||
+      decoded.includes("unsplash.com") || 
+      decoded.includes("placeholder") || 
+      decoded.includes("glas1.png") || 
+      decoded.includes("dummy.png") ||
+      decoded.includes("no-image") ||
+      decoded.includes("no_image") ||
+      decoded.includes("tap/0.png") ||
+      decoded.includes("transparent") ||
+      decoded.includes("blank.gif") ||
+      decoded.includes("pixel.gif") ||
+      decoded.includes("mock") ||
+      decoded.includes("og-banner.png") ||
+      decoded.includes("yoouz.com/og-banner") ||
+      decoded.includes("logo-default") ||
+      decoded.includes("default-logo") ||
+      decoded.includes("pwa-app") ||
+      decoded.includes("wsimg.com") ||
+      decoded.includes("cb6ad0") ||
+      decoded.includes("1789810172562") ||
+      decoded.includes("favicon") ||
+      decoded.includes("avatar") ||
+      decoded.includes("badge") ||
+      decoded.includes("button") ||
+      decoded.includes("app-store") ||
+      decoded.includes("play-store") ||
+      decoded.includes("payment") ||
+      decoded.includes("blocked") ||
+      decoded.includes("sorry_you_have_been_blocked") ||
+      decoded.includes("unable_to_access") ||
+      decoded.includes("challenge") ||
+      decoded.includes("403") ||
+      decoded.includes("access_denied") ||
+      decoded.endsWith(".ico")
+    );
+  } catch (e) {
+    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked") || url.includes("og-banner");
+  }
 }
 
 interface ResolvedBusinessData {
@@ -125,8 +268,8 @@ async function persistToDb(data: ResolvedBusinessData) {
   try {
     const autoPlaceId = data.domain.toLowerCase().replace(/^www\./, "").trim();
     const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || data.name || autoPlaceId;
-    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] || data.logo || `/api/favicon?domain=${autoPlaceId}`;
-    const bannerUrl = data.photo || KNOWN_BRAND_BANNERS[autoPlaceId] || "";
+    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] || (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) ? data.logo : "");
+    const bannerUrl = (data.photo && !isBadBanner(data.photo)) ? data.photo : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) ? KNOWN_BRAND_BANNERS[autoPlaceId] : "");
     const autoPlaceDoc = {
       id: autoPlaceId,
       name: resolvedName,
@@ -19120,88 +19263,6 @@ Return JSON:
     lng: number;
   }
 
-const isLogoOrIconUrl = (urlStr: string): boolean => {
-  if (!urlStr || typeof urlStr !== 'string') return true;
-  let l = urlStr.toLowerCase();
-  try { l = decodeURIComponent(l); } catch(e) {}
-  return (
-    l.includes('logo') ||
-    l.includes('icon') ||
-    l.includes('favicon') ||
-    l.includes('avatar') ||
-    l.includes('badge') ||
-    l.includes('button') ||
-    l.includes('app-store') ||
-    l.includes('play-store') ||
-    l.includes('google-play') ||
-    l.includes('payment') ||
-    l.includes('visa') ||
-    l.includes('mastercard') ||
-    l.includes('star.png') ||
-    l.includes('spinner') ||
-    l.includes('loader') ||
-    l.includes('loading') ||
-    l.includes('blank.gif') ||
-    l.includes('pixel.gif') ||
-    l.includes('placeholder') ||
-    l.includes('no-image') ||
-    l.includes('no_image') ||
-    l.includes('transparent') ||
-    l.endsWith('.svg') ||
-    l.includes('.ico') ||
-    l.includes('300x46') ||
-    l.includes('100x100') ||
-    l.includes('150x150') ||
-    l.includes('78x100') ||
-    l.includes('16x16') ||
-    l.includes('32x32') ||
-    l.includes('60x60') ||
-    l.includes('tap/0.png')
-  );
-};
-
-function isBadBanner(url?: string | null): boolean {
-  if (!url || typeof url !== 'string') return true;
-  if (isLogoOrIconUrl(url)) return true;
-  try {
-    const u = url.toLowerCase().trim();
-    const decoded = decodeURIComponent(u);
-    return (
-      decoded.includes("${") || 
-      decoded.includes("%24%7b") ||
-      decoded.includes("unsplash.com") || 
-      decoded.includes("placeholder") || 
-      decoded.includes("glas1.png") || 
-      decoded.includes("dummy.png") ||
-      decoded.includes("no-image") ||
-      decoded.includes("no_image") ||
-      decoded.includes("tap/0.png") ||
-      decoded.includes("transparent") ||
-      decoded.includes("blank.gif") ||
-      decoded.includes("pixel.gif") ||
-      decoded.includes("mock") ||
-      decoded.includes("yoouz.com/og-banner.png") ||
-      decoded.includes("1789810172562") ||
-      decoded.includes("favicon") ||
-      decoded.includes("avatar") ||
-      decoded.includes("badge") ||
-      decoded.includes("button") ||
-      decoded.includes("app-store") ||
-      decoded.includes("play-store") ||
-      decoded.includes("payment") ||
-      decoded.includes("blocked") ||
-      decoded.includes("sorry_you_have_been_blocked") ||
-      decoded.includes("unable_to_access") ||
-      decoded.includes("challenge") ||
-      decoded.includes("403") ||
-      decoded.includes("access_denied") ||
-      decoded.endsWith(".ico")
-    );
-  } catch (e) {
-    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked");
-  }
-}
-
 function generateBrandBannerSvg(nameOrDomain?: string | null): string {
   // A clean, dark luxury gradient with zero text watermark or mock branding
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
@@ -21197,14 +21258,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               const isValidCandidateLogo = (src: string): boolean => {
                 if (!src || typeof src !== 'string') return false;
+                if (isGenericOrPlaceholderLogo(src)) return false;
+                if (isFaviconUrl(src)) return false;
                 if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png')) return false;
                 if (src.includes('brandfetch.io') || src.includes('clearbit.com')) return false;
                 if (src.includes('wikimedia.org') || src.includes('wikipedia.org')) return false;
                 if (isCandidateWhiteOrInverted(src)) return false;
 
                 const s = src.toLowerCase();
-                // Reject all favicons, .ico, and favicon CDN URLs
-                if (isFaviconUrl(src)) return false;
 
                 // Reject obvious badges, partner icons, app store buttons, UI icons
                 const badKeywords = [
@@ -21213,7 +21274,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   'award', 'badge', 'banner', 'hero', 'slider', 'carousel',
                   'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading',
                   'logoheader', '1024x170', '1024x', '1200x', '1920x',
-                  'tap/0.png', 'icons/tap', 'tap/', '/tap', '0.png'
+                  'tap/0.png', 'icons/tap', 'tap/', '/tap', '0.png',
+                  'logo-default', 'default-logo', 'default_logo', 'pwa-app', 'wsimg.com'
                 ];
                 for (const kw of badKeywords) {
                   if (s.includes(kw) && !domain.toLowerCase().includes(kw)) {
@@ -21224,6 +21286,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               };
 
               const knownBrandLogosMap: Record<string, string> = {
+                "gett.com": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
+                "www.gett.com": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
+                "gett": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
                 "yoouz.com": "https://yoouz.com/favicon.svg",
                 "www.yoouz.com": "https://yoouz.com/favicon.svg",
                 "yoouz": "https://yoouz.com/favicon.svg",
@@ -21349,7 +21414,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     logo = new URL(logo, finalUrl).toString();
                   } catch (e) {}
                 }
-                if (isFaviconUrl(logo)) {
+                if (isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) {
                   logo = '';
                 } else {
                   logo = getHighQualityImageUrl(logo);
@@ -21534,15 +21599,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
       };
 
-      // Prioritize known brand logos, otherwise verify authentic logo without favicon fallback
+      // Prioritize known brand logos, otherwise verify authentic logo without favicon or placeholder fallback
       if (serverBrandLogos[cleanDomain]) {
         logo = serverBrandLogos[cleanDomain];
-      } else if (!logo || isFaviconUrl(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
+      } else if (!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
         logo = serverBrandLogos[cleanDomain] || "";
       }
       
-      if (image) image = sanitizeProxy(image);
-      if (logo) logo = sanitizeProxy(logo);
+      if (image && isBadBanner(image)) {
+        image = "";
+      } else if (image) {
+        image = sanitizeProxy(image);
+      }
+
+      if (logo && (isGenericOrPlaceholderLogo(logo) || isFaviconUrl(logo))) {
+        logo = "";
+      } else if (logo) {
+        logo = sanitizeProxy(logo);
+      }
       console.log("[TRACE METADATA 1] domain:", cleanDomain, "image:", image, "logo:", logo);
 
       // Extract rich location, phone, email, and category
@@ -21602,11 +21676,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             rating: 5,
             totalReviews: 1,
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: logo,
-            logoUrl: logo,
-            bannerUrl: image,
-            ogImage: image,
-            photos: image ? [image] : [],
+            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !isFaviconUrl(logo)) ? logo : "",
+            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !isFaviconUrl(logo)) ? logo : "",
+            bannerUrl: (image && !isBadBanner(image)) ? image : "",
+            ogImage: (image && !isBadBanner(image)) ? image : "",
+            photos: (image && !isBadBanner(image)) ? [image] : [],
             openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
@@ -22535,8 +22609,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (response.ok) {
           const contentType = response.headers.get("content-type") || "image/png";
           const arrayBuffer = await response.arrayBuffer();
-          // If image is non-empty and not Google's default 726/730-byte generic globe
-          if (arrayBuffer && arrayBuffer.byteLength > 100 && arrayBuffer.byteLength !== 726 && arrayBuffer.byteLength !== 730) {
+          // If image is non-empty and not Google's default 726/730-byte generic globe or GoDaddy's default 2183-byte icon
+          if (arrayBuffer && arrayBuffer.byteLength > 100 && arrayBuffer.byteLength !== 726 && arrayBuffer.byteLength !== 730 && arrayBuffer.byteLength !== 2183) {
             res.setHeader("Content-Type", contentType);
             res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22544,11 +22618,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
       } catch (e) {}
-    }
-
-    // Cascade to DuckDuckGo if Google Favicon didn't yield a custom icon
-    if (cleanDomain.includes(".")) {
-      return res.redirect(302, `https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
     return res.status(404).send("Favicon not found");
@@ -27205,6 +27274,23 @@ function injectOpenGraphTags(html: string, meta: any) {
     if (bunnyDb) {
       try {
         await bunnyDb.execute("DELETE FROM places WHERE LOWER(name) LIKE '%blocked%' OR LOWER(name) LIKE '%unable to access%' OR LOWER(bannerUrl) LIKE '%blocked%' OR LOWER(bannerUrl) LIKE '%challenge%'");
+        const badPatterns = [
+          '%logo-default%',
+          '%wsimg.com/isteam/ip/static/pwa-app%',
+          '%og-banner.png%',
+          '%clearbit.com%',
+          '%cb6ad0%'
+        ];
+        for (const pat of badPatterns) {
+          await bunnyDb.execute({
+            sql: "UPDATE places SET logoUrl = '' WHERE logoUrl LIKE ?",
+            args: [pat]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE places SET bannerUrl = '' WHERE bannerUrl LIKE ?",
+            args: [pat]
+          }).catch(() => {});
+        }
       } catch(e) {}
     }
   };

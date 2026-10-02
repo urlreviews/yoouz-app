@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -62,22 +62,26 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     // 0. Locked verified domain logo from previous successful load
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-      candidates.push(LOCKED_DOMAIN_LOGOS.get(cleanDomain)!);
+      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+      if (!isGenericOrPlaceholderLogo(locked)) {
+        candidates.push(locked);
+      }
     }
 
     // 1. Direct match in KNOWN_BRAND_LOGOS
     if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-      candidates.push(KNOWN_BRAND_LOGOS[cleanDomain]);
+      const known = KNOWN_BRAND_LOGOS[cleanDomain];
+      if (!isGenericOrPlaceholderLogo(known)) {
+        candidates.push(known);
+      }
     }
 
-    // 2. Explicit custom logo URL from place data/metadata
+    // 2. Explicit custom logo URL from place data/metadata (Strictly reject fake or default builder icons)
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
-      logoUrl !== "data:;" &&
-      !logoUrl.startsWith("data:;") &&
-      !logoUrl.includes("tap/0.png") &&
-      !logoUrl.includes("icons/tap")
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isFaviconUrl(logoUrl)
     ) {
       candidates.push(logoUrl);
     }
@@ -87,8 +91,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
 
-    // Filter duplicates
-    return Array.from(new Set(candidates.filter(Boolean)));
+    // Filter duplicates and any generic placeholders
+    return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u))));
   }, [isYoouz, cleanDomain, logoUrl]);
 
   // Current src candidate
