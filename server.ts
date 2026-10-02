@@ -22596,8 +22596,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       });
 
-      if (!response.ok) {
-        // Fallback: If site blocked the datacenter IP (status 202/403/captcha), fetch authentic image bytes from Wayback Machine archive!
+      let contentType = (response.headers.get('content-type') || '').toLowerCase();
+      
+      // Strict Image Validation: If upstream server returned HTML (Wix 202 challenge, error page, or website html), DO NOT return text/html!
+      if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
+        // Fallback: If site blocked IP or returned HTML challenge, fetch authentic image bytes from Wayback Machine archive!
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
           try {
             const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
@@ -22609,9 +22612,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               },
               signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
             });
-            if (wbResp.ok) {
-              const wbType = wbResp.headers.get('content-type') || 'image/jpeg';
-              res.setHeader('Content-Type', wbType);
+            const wbType = (wbResp.headers.get('content-type') || '').toLowerCase();
+            if (wbResp.ok && !wbType.includes('text/html') && (wbType.includes('image') || wbType.includes('octet-stream'))) {
+              res.setHeader('Content-Type', wbType.includes('image') ? wbType : 'image/jpeg');
               res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
               res.setHeader('Access-Control-Allow-Origin', '*');
               res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -22634,7 +22637,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                          targetUrl.toLowerCase().includes('hero') || 
                          targetUrl.toLowerCase().includes('cover') || 
                          targetUrl.toLowerCase().includes('og-image') ||
-                         targetUrl.toLowerCase().includes('uploads');
+                         targetUrl.toLowerCase().includes('uploads') ||
+                         targetUrl.toLowerCase().includes('mv2');
 
         if (isBanner) {
           const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="50%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></linearGradient></defs><rect width="1200" height="600" fill="url(#bg)"/></svg>`;
@@ -22648,7 +22652,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         return renderFallbackSvg(res, cleanDomain || "Y");
       }
 
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      // Infer explicit image MIME type if generic or missing
+      if (!contentType.startsWith('image/')) {
+        if (targetUrl.endsWith('.png')) contentType = 'image/png';
+        else if (targetUrl.endsWith('.webp')) contentType = 'image/webp';
+        else if (targetUrl.endsWith('.svg')) contentType = 'image/svg+xml';
+        else if (targetUrl.endsWith('.gif')) contentType = 'image/gif';
+        else contentType = 'image/jpeg';
+      }
+
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
       res.setHeader('Access-Control-Allow-Origin', '*');

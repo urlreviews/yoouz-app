@@ -786,15 +786,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    if (cachedMedia?.logoUrl && !isFaviconUrl(cachedMedia.logoUrl)) {
+    if (cachedMedia?.logoUrl && (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))) {
       return cachedMedia.logoUrl;
     }
 
-    // Priority 1: Canonical place record logo (ignoring wide header banners, favicons, and tap icons)
+    // Priority 1: Canonical place record logo
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
     if (
       canonicalPlaceLogo && 
-      !isFaviconUrl(canonicalPlaceLogo) &&
+      (!isFaviconUrl(canonicalPlaceLogo) || canonicalPlaceLogo.includes("size=256") || canonicalPlaceLogo.includes("sz=256")) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 
       !canonicalPlaceLogo.includes("LogoHeader") && 
@@ -802,13 +802,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !canonicalPlaceLogo.includes("tap/0.png") &&
       !canonicalPlaceLogo.includes("icons/tap")
     ) {
-      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain);
+      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain) || canonicalPlaceLogo;
     }
 
     // Priority 2: Video review logo
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
-      !isFaviconUrl(v.placeLogoUrl) &&
+      (!isFaviconUrl(v.placeLogoUrl) || v.placeLogoUrl.includes("size=256") || v.placeLogoUrl.includes("sz=256")) &&
       !v.placeLogoUrl.startsWith("data:;") && 
       v.placeLogoUrl.trim() !== "" && 
       !v.placeLogoUrl.includes("LogoHeader") && 
@@ -817,7 +817,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !v.placeLogoUrl.includes("icons/tap")
     ));
     if (matchingVidWithLogo?.placeLogoUrl) {
-      return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain);
+      return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain) || matchingVidWithLogo.placeLogoUrl;
+    }
+
+    if (cleanD && cleanD.includes(".")) {
+      return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanD}&size=256`;
     }
 
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);

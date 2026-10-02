@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isWhiteOrInvertedLogo } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
 import { isValidDomainUrl } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -16,7 +16,7 @@ interface CopoBrandLogoProps {
   onLoad?: () => void;
 }
 
-// Global in-memory cache to prevent re-fetching and eliminate flicker during view transitions
+// Global in-memory cache to lock verified brand logos across browser transitions
 const KNOWN_LOADED_LOGOS = new Set<string>();
 const LOCKED_DOMAIN_LOGOS = new Map<string, string>();
 
@@ -25,240 +25,137 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   name,
   website,
   logoUrl,
-  bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl overflow-hidden flex items-center justify-center p-2 z-30 ring-1 ring-white/10",
-  imageClassName = "w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]",
-  fallbackTextClassName = "font-black text-2xl sm:text-3xl text-white drop-shadow-sm",
-  loading = "lazy",
-  fetchPriority = "auto",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 z-30 ring-1 ring-black/10",
+  imageClassName = "w-full h-full object-contain rounded-xl",
+  loading = "eager",
+  fetchPriority = "high",
   onLoad
 }) => {
-  const [hasError, setHasError] = useState(false);
+  const [candidateIdx, setCandidateIdx] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Extract clean domain from any source
+  // Clean domain extraction
   const resolvedDomain = useMemo(() => {
     if (domain && isValidDomainUrl(domain)) return extractDomain(domain);
     if (website && isValidDomainUrl(website)) return extractDomain(website);
-    if (logoUrl && !logoUrl.includes("brandfetch.io") && !logoUrl.startsWith("/api/") && isValidDomainUrl(logoUrl)) return extractDomain(logoUrl);
+    if (logoUrl && isValidDomainUrl(logoUrl) && !logoUrl.includes("brandfetch")) return extractDomain(logoUrl);
     if (name && isValidDomainUrl(name)) return extractDomain(name);
     return null;
   }, [domain, website, logoUrl, name]);
 
-  // Check if target is Yoouz
+  const cleanDomain = useMemo(() => {
+    return (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+  }, [resolvedDomain]);
+
+  // Is Yoouz
   const isYoouz = useMemo(() => {
-    const cleanD = (resolvedDomain || "").toLowerCase().trim();
-    const cleanN = (typeof name === "string" ? name : "").toLowerCase().trim();
-    return (
-      cleanD === "yoouz.com" ||
-      cleanD === "www.yoouz.com" ||
-      cleanD === "yoouz" ||
-      cleanN === "yoouz" ||
-      cleanN === "yoouz.com"
-    );
-  }, [resolvedDomain, name]);
+    const cd = cleanDomain;
+    const cn = (name || "").toLowerCase().trim();
+    return cd === "yoouz.com" || cd === "yoouz" || cn === "yoouz" || cn === "yoouz.com";
+  }, [cleanDomain, name]);
 
-  const effectiveSrc = useMemo(() => {
-    if (isYoouz) return "/favicon.svg";
+  // Build candidate fallback array for authentic brand logos (NO fake text monograms)
+  const candidateUrls = useMemo(() => {
+    if (isYoouz) return ["/favicon.svg"];
 
-    const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
+    const candidates: string[] = [];
+
+    // 0. Locked verified domain logo from previous successful load
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
-      if (!isFaviconUrl(locked)) return locked;
-    }
-    if (cleanDomain) {
-      try {
-        const storedLogo = localStorage.getItem(`yoouz_locked_logo_${cleanDomain}`);
-        if (storedLogo && storedLogo.length > 5 && !storedLogo.includes("brandfetch.io") && !isFaviconUrl(storedLogo)) {
-          LOCKED_DOMAIN_LOGOS.set(cleanDomain, storedLogo);
-          return storedLogo;
-        }
-      } catch (e) {}
+      candidates.push(LOCKED_DOMAIN_LOGOS.get(cleanDomain)!);
     }
 
-    // 0. Known high quality vector/authentic logo by domain ALWAYS takes top priority
+    // 1. Direct match in KNOWN_BRAND_LOGOS
     if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
-    }
-    if (resolvedDomain && KNOWN_BRAND_LOGOS[resolvedDomain]) {
-      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[resolvedDomain]);
-    }
-    const cleanName = (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (cleanName && KNOWN_BRAND_LOGOS[cleanName]) {
-      return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanName]);
+      candidates.push(KNOWN_BRAND_LOGOS[cleanDomain]);
     }
 
-    // 1. Explicit clean Logo URL from place record or metadata (STRICTLY reject any favicons or .ico files)
+    // 2. Explicit custom logo URL from place data/metadata
     if (
       logoUrl &&
-      !isFaviconUrl(logoUrl) &&
-      !logoUrl.includes("brandfetch.io") &&
+      logoUrl.trim() !== "" &&
       logoUrl !== "data:;" &&
       !logoUrl.startsWith("data:;") &&
-      !logoUrl.includes("LogoHeader") &&
-      !logoUrl.includes("1024x170") &&
       !logoUrl.includes("tap/0.png") &&
-      !logoUrl.includes("icons/tap") &&
-      (logoUrl.startsWith("/") || logoUrl.startsWith("http://") || logoUrl.startsWith("https://") || logoUrl.startsWith("data:image"))
+      !logoUrl.includes("icons/tap")
     ) {
-      return getProxiedImageUrl(logoUrl);
+      candidates.push(logoUrl);
     }
 
-    // 2. High-resolution Google brand icon (256px) or Clearbit instant fallback so logo is NEVER blank
-    if (cleanDomain) {
-      const rootDomain = cleanDomain.replace(/\.(com|co|org|net|store|digital|agency)\.[a-z]{2,}$/i, '.com').replace(/\.[a-z]{2,}$/i, '.com');
-      const brandSlug = cleanDomain.split('.')[0];
-      if (rootDomain && KNOWN_BRAND_LOGOS[rootDomain]) {
-        return getProxiedImageUrl(KNOWN_BRAND_LOGOS[rootDomain]);
-      }
-      if (brandSlug && KNOWN_BRAND_LOGOS[brandSlug]) {
-        return getProxiedImageUrl(KNOWN_BRAND_LOGOS[brandSlug]);
-      }
-      return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${cleanDomain}&size=256`;
+    // 3. Google High-Res 256px Brand Icon
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`);
+      candidates.push(`https://logo.clearbit.com/${cleanDomain}`);
+      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
-    return null;
-  }, [isYoouz, resolvedDomain, logoUrl, name]);
+    // Filter duplicates & proxy non-data URLs
+    const unique = Array.from(new Set(candidates.filter(Boolean)));
+    return unique.map((u) => getProxiedImageUrl(u));
+  }, [isYoouz, cleanDomain, logoUrl]);
 
-  const currentSrc = useMemo(() => {
-    if (isYoouz) return "/favicon.svg";
-    if (!effectiveSrc || isFaviconUrl(effectiveSrc)) return null;
-    return getProxiedImageUrl(effectiveSrc);
-  }, [isYoouz, effectiveSrc]);
+  // Current src candidate
+  const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
 
-  const isKnownLoaded = currentSrc ? KNOWN_LOADED_LOGOS.has(currentSrc) : false;
-  const [imgLoaded, setImgLoaded] = useState<boolean>(isKnownLoaded);
-
-  const lastSrcRef = React.useRef<string | null>(null);
-  const lastDomainRef = React.useRef<string | null>(null);
-
-  // Reset error & fallback state ONLY when the effective image source actually changes
+  // Reset index when domain/logoUrl changes
   useEffect(() => {
-    if (currentSrc !== lastSrcRef.current) {
-      setHasError(false);
-      
-      const cleanDom = (resolvedDomain || "").toLowerCase().trim();
-      const lastDom = (lastDomainRef.current || "").toLowerCase().trim();
-      const domainChanged = cleanDom !== lastDom;
-      
-      if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
-        setImgLoaded(true);
-      } else if (!domainChanged && imgLoaded) {
-        // Keep previous image visible while new source loads
-      } else {
-        setImgLoaded(false);
-      }
-      
-      lastSrcRef.current = currentSrc;
-      lastDomainRef.current = resolvedDomain;
-    }
-  }, [currentSrc, resolvedDomain, logoUrl, name]);
-
-  useEffect(() => {
+    setCandidateIdx(0);
     if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
       setImgLoaded(true);
+    } else {
+      setImgLoaded(false);
     }
-  }, [currentSrc]);
-
-  // Synchronously notify parent when image or initials are ready
-  useEffect(() => {
-    if ((imgLoaded || !currentSrc) && onLoad) {
-      onLoad();
-    }
-  }, [imgLoaded, currentSrc]);
-
-  const initials = useMemo(() => {
-    const candidate = name || resolvedDomain || "B";
-    const clean = candidate.replace(/^(?:https?:\/\/)?(?:www\.)?/, "").trim();
-    const words = clean.split(/[\s.\-_]+/).filter(Boolean);
-    if (words.length >= 2) {
-      return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-    }
-    return (clean.charAt(0) || "B").toUpperCase();
-  }, [name, resolvedDomain]);
-
-  const hasPosition =
-    className.includes("absolute") ||
-    className.includes("relative") ||
-    className.includes("fixed") ||
-    className.includes("sticky");
-  const hasOverflow = className.includes("overflow-");
-
-  const containerClasses = [
-    !hasPosition ? "relative" : "",
-    !hasOverflow ? "overflow-hidden" : "",
-    className
-  ].filter(Boolean).join(" ");
+  }, [cleanDomain, logoUrl]);
 
   // Dedicated Yoouz emblem
   if (isYoouz) {
     return (
       <div className={className} id="copo-brand-logo-yoouz">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={imageClassName}
-          aria-label="Yoouz"
-        >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={imageClassName}>
           <rect width="24" height="24" rx="6" fill="#09090b" />
           <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
-          <path
-            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            fill="#ffffff"
-          />
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
         </svg>
       </div>
     );
   }
 
-  const shouldAttemptImage = Boolean(currentSrc && !hasError);
-  const isWhiteLogo = currentSrc ? isWhiteOrInvertedLogo(currentSrc) : false;
-
   return (
-    <div className={containerClasses}>
-      {/* 1. Official Vector Brand Monogram Fallback (Clean, elegant, non-black initial state) */}
-      {(!shouldAttemptImage || !imgLoaded) && (
-        <div className="absolute inset-0 w-full h-full flex items-center justify-center select-none bg-zinc-50 border border-zinc-200/80 rounded-xl shadow-inner">
-          <span className="text-zinc-900 font-black text-2xl sm:text-3xl tracking-tight select-none">
-            {initials}
-          </span>
-        </div>
-      )}
-
-      {/* 2. Primary Official Brand Logo Layer (Crisp authentic vector/raster logo from business) */}
-      {shouldAttemptImage && (
-        <div className={`absolute inset-0 w-full h-full rounded-xl transition-colors duration-300 ${isWhiteLogo ? "bg-zinc-950" : "bg-transparent"}`}>
-          <img
-            src={currentSrc!}
-            alt={name || "Brand Logo"}
-            loading={loading}
-            fetchPriority={fetchPriority}
-            decoding="async"
-            className={`${imageClassName} relative z-10 transition-opacity duration-150 ${
-              imgLoaded ? "opacity-100" : "opacity-0"
-            }`}
-            referrerPolicy="no-referrer"
-            onLoad={() => {
-              if (currentSrc) {
-                KNOWN_LOADED_LOGOS.add(currentSrc);
-                const cleanDomain = (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
-                if (cleanDomain && !isFaviconUrl(currentSrc)) {
-                  if (!LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-                    LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
-                  }
-                  try {
-                    localStorage.setItem(`yoouz_locked_logo_${cleanDomain}`, currentSrc);
-                  } catch (e) {}
-                }
+    <div className={`relative overflow-hidden bg-white ${className}`}>
+      {currentSrc ? (
+        <img
+          key={currentSrc}
+          src={currentSrc}
+          alt={name || cleanDomain || "Business Logo"}
+          loading={loading}
+          fetchPriority={fetchPriority}
+          decoding="async"
+          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-150 ${
+            imgLoaded ? "opacity-100" : "opacity-90"
+          }`}
+          referrerPolicy="no-referrer"
+          onLoad={() => {
+            if (currentSrc) {
+              KNOWN_LOADED_LOGOS.add(currentSrc);
+              if (cleanDomain && !LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+                LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
-              setImgLoaded(true);
-              onLoad?.();
-            }}
-            onError={() => {
-              setHasError(true);
-              setImgLoaded(false);
-            }}
-          />
+            }
+            setImgLoaded(true);
+            onLoad?.();
+          }}
+          onError={() => {
+            // Cascade to next candidate image URL in the chain if this candidate fails
+            if (candidateIdx + 1 < candidateUrls.length) {
+              setCandidateIdx((prev) => prev + 1);
+            }
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-white">
+          <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4" />
+          </svg>
         </div>
       )}
     </div>
