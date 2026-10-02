@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -657,38 +657,50 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               );
             })()}
 
-            <div className="p-6 sm:p-8 pt-16 sm:pt-20 relative">
-              {/* Overlapping High-Res Brand Logo Badge with High-Contrast Canvas */}
-              <CopoBrandLogo
-                domain={searchedPlace.brandDomain}
-                name={formatBusinessName(searchedPlace.name)}
-                website={searchedPlace.website}
-                logoUrl={searchedPlace.logoUrl}
-                bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
-                className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-900 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/20"
-                imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]"
-                fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-zinc-950"
-              />
+            {(() => {
+              const cleanD = (searchedPlace.brandDomain || "").replace(/^www\./, "").toLowerCase().trim();
+              const hasAuthenticLogo = Boolean(
+                cleanD === "yoouz.com" || cleanD === "yoouz" || (searchedPlace.name && searchedPlace.name.toLowerCase() === "yoouz") ||
+                (cleanD && KNOWN_BRAND_LOGOS[cleanD]) ||
+                (searchedPlace.logoUrl && !isFaviconUrl(searchedPlace.logoUrl) && !isGenericOrPlaceholderLogo(searchedPlace.logoUrl))
+              );
 
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                <div className="min-w-0 w-full flex-1">
-                    <h2 
-                      onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                      className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors leading-snug break-words tracking-tight"
-                    >
-                      <div className="flex items-center gap-2 overflow-hidden" dir="auto">
-                        <span className="text-white">
-                          {(() => {
-                            const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
-                            return (dom && KNOWN_OFFICIAL_NAMES[dom])
-                              || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
-                              || formatBusinessName(searchedPlace.name, dom)
-                              || searchedPlace.name;
-                          })()}
-                        </span>
-                        <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0" />
-                      </div>
-                    </h2>
+              return (
+                <div className={`p-6 sm:p-8 relative ${hasAuthenticLogo ? "pt-16 sm:pt-20" : "pt-5 sm:pt-6"}`}>
+                  {/* Overlapping High-Res Brand Logo Badge with High-Contrast Canvas */}
+                  {hasAuthenticLogo ? (
+                    <CopoBrandLogo
+                      domain={searchedPlace.brandDomain}
+                      name={formatBusinessName(searchedPlace.name)}
+                      website={searchedPlace.website}
+                      logoUrl={searchedPlace.logoUrl}
+                      bannerUrl={searchedPlace.bannerUrl || searchedPlace.ogImage}
+                      className="absolute -top-10 sm:-top-12 left-6 sm:left-8 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-zinc-900 bg-white shadow-2xl overflow-hidden flex items-center justify-center p-2 sm:p-2.5 z-30 ring-1 ring-white/20"
+                      imageClassName="w-full h-full object-contain rounded-xl [image-rendering:-webkit-optimize-contrast]"
+                      fallbackTextClassName="font-extrabold text-2xl sm:text-3xl text-zinc-950"
+                    />
+                  ) : null}
+
+                  <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                    <div className="min-w-0 w-full flex-1">
+                        <h2 
+                          onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
+                          className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-1.5 cursor-pointer hover:text-zinc-200 transition-colors leading-snug break-words tracking-tight"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden" dir="auto">
+                            <span className="text-white">
+                              {(() => {
+                                const dom = searchedPlace.brandDomain || extractCleanDomain(searchedPlace.website || searchedPlace.id);
+                                return (dom && KNOWN_OFFICIAL_NAMES[dom])
+                                  || (searchedPlace.website && KNOWN_OFFICIAL_NAMES[extractCleanDomain(searchedPlace.website)])
+                                  || formatBusinessName(searchedPlace.name, dom)
+                                  || searchedPlace.name;
+                              })()}
+                            </span>
+                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-zinc-950 shrink-0" />
+                          </div>
+                        </h2>
+
 
                   {/* Official Website / Domain Link under Business Name */}
                   {(() => {
@@ -805,7 +817,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          );
+        })()}
+      </div>
 
           {placeVideos.length > 0 && (
             <div className="w-full">

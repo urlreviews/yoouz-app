@@ -106,6 +106,10 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
   let clean = url.trim().toLowerCase();
   try { clean = decodeURIComponent(clean); } catch(e) {}
 
+  if (clean.includes("logo.clearbit.com") || clean.includes("assets.brandfetch")) {
+    return false;
+  }
+
   return (
     clean === "" ||
     clean === "data:;" ||
@@ -114,8 +118,6 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("default-logo") ||
     clean.includes("default_logo") ||
     clean.includes("pwa-app/logo-default.png") ||
-    clean.includes("clearbit.com") ||
-    clean.includes("brandfetch.io") ||
     clean.includes("wixstatic.com/media/cb6ad0") ||
     clean.includes("cb6ad0") ||
     clean.includes("s.w.org") ||
@@ -149,8 +151,7 @@ function isFaviconUrl(url?: string | null): boolean {
     l.includes(".ico#") ||
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
-    l.includes("icon.horse") ||
-    l.includes("/api/favicon")
+    l.includes("icon.horse")
   );
 }
 
@@ -19415,9 +19416,189 @@ function isFaviconUrl(url?: string | null): boolean {
     l.includes(".ico#") ||
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
-    l.includes("icon.horse") ||
-    l.includes("/api/favicon")
+    l.includes("icon.horse")
   );
+}
+
+function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string, domain: string): string {
+  if (!sc$ && !rawHtml) return "";
+  const $ = sc$ || cheerio.load(rawHtml);
+  const cleanDom = (domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+
+  function makeAbsolute(src: string): string {
+    if (!src) return "";
+    let s = src.trim();
+    if (s.startsWith("data:")) return s;
+    if (s.startsWith("//")) return "https:" + s;
+    if (s.startsWith("/")) {
+      try {
+        const u = new URL(pageUrl || `https://${cleanDom}`);
+        return `${u.protocol}//${u.host}${s}`;
+      } catch {
+        return `https://${cleanDom}${s}`;
+      }
+    }
+    if (!s.startsWith("http://") && !s.startsWith("https://")) {
+      return `https://${cleanDom}/${s.replace(/^\/+/, "")}`;
+    }
+    return s;
+  }
+
+  function isValidCandidate(url: string): boolean {
+    if (!url || typeof url !== "string") return false;
+    if (isGenericOrPlaceholderLogo(url)) return false;
+    if (isFaviconUrl(url)) return false;
+    if (url.includes("placeholder") || url.includes("blank.gif") || url.includes("pixel.gif")) return false;
+    return true;
+  }
+
+  // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
+  try {
+    const appleIcons: { url: string; size: number }[] = [];
+    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      if (href) {
+        const sizeNum = parseInt(sizes.split("x")[0], 10) || 120;
+        const abs = makeAbsolute(href);
+        if (abs && isValidCandidate(abs)) {
+          appleIcons.push({ url: abs, size: sizeNum });
+        }
+      }
+    });
+    if (appleIcons.length > 0) {
+      appleIcons.sort((a, b) => b.size - a.size);
+      return appleIcons[0].url;
+    }
+  } catch(e) {}
+
+  // 2. High-resolution Web Icon links (sizes >= 96px, e.g. 192x192, 512x512) or SVG icons
+  try {
+    const highResIcons: { url: string; size: number }[] = [];
+    $('link[rel="icon"], link[rel="shortcut icon"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      if (href && !href.includes(".ico") && !sizes.includes("16") && !sizes.includes("32")) {
+        const sizeNum = parseInt(sizes.split("x")[0], 10) || 0;
+        const lowerHref = href.toLowerCase();
+        if (sizeNum >= 96 || lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || lowerHref.endsWith(".png")) {
+          const abs = makeAbsolute(href);
+          if (abs && isValidCandidate(abs)) {
+            highResIcons.push({ url: abs, size: sizeNum });
+          }
+        }
+      }
+    });
+    if (highResIcons.length > 0) {
+      highResIcons.sort((a, b) => b.size - a.size);
+      if (highResIcons[0].size >= 96 || highResIcons[0].url.includes(".svg")) {
+        return highResIcons[0].url;
+      }
+    }
+  } catch(e) {}
+
+  // 3. JSON-LD Schema Logo
+  try {
+    let schemaLogo = "";
+    $('script[type="application/ld+json"]').each((_: any, el: any) => {
+      if (schemaLogo) return;
+      try {
+        const rawJson = $(el).html();
+        if (rawJson) {
+          const parsed = JSON.parse(rawJson);
+          const findLogo = (node: any) => {
+            if (!node || typeof node !== "object") return;
+            const candidate = node.logo || (node.publisher && node.publisher.logo) || (node.brand && node.brand.logo);
+            if (candidate) {
+              const lUrl = typeof candidate === "string" ? candidate : (candidate.url || candidate["@id"]);
+              if (lUrl && typeof lUrl === "string") {
+                const abs = makeAbsolute(lUrl);
+                if (abs && isValidCandidate(abs)) {
+                  schemaLogo = abs;
+                  return;
+                }
+              }
+            }
+            if (Array.isArray(node)) {
+              for (const item of node) findLogo(item);
+            } else {
+              for (const k in node) {
+                if (typeof node[k] === "object") findLogo(node[k]);
+              }
+            }
+          };
+          findLogo(parsed);
+        }
+      } catch(e) {}
+    });
+    if (schemaLogo) return schemaLogo;
+  } catch(e) {}
+
+  // 4. OpenGraph & Meta Logo tags
+  try {
+    const metaLogo = $('meta[property="og:logo"]').attr("content") ||
+                     $('meta[name="og:logo"]').attr("content") ||
+                     $('meta[itemprop="logo"]').attr("content") ||
+                     $('[itemprop="logo"]').attr("src") ||
+                     $('[itemprop="logo"]').attr("content") ||
+                     $('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr("content");
+    if (metaLogo) {
+      const abs = makeAbsolute(metaLogo);
+      if (abs && isValidCandidate(abs)) return abs;
+    }
+  } catch(e) {}
+
+  // 5. DOM Header & Navigation Brand Images
+  try {
+    const imgSelectors = [
+      'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
+      'nav img[class*="logo" i]', 'nav img[alt*="logo" i]', 'nav img[src*="logo" i]',
+      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
+      '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
+      'header a[href="/"] img', 'header a[aria-label*="home" i] img',
+      'header img:first-of-type'
+    ];
+    for (const sel of imgSelectors) {
+      const el = $(sel).first();
+      if (el.length) {
+        const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
+        if (src) {
+          const abs = makeAbsolute(src);
+          if (abs && isValidCandidate(abs)) return abs;
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 6. Inline SVG Brand Logos inside header, .logo, or navbar
+  try {
+    const svgSelectors = [
+      '.logo svg', '[class*="logo"] svg', '[id*="logo"] svg',
+      'header .brand svg', 'header a[href="/"] svg', 'header a[aria-label*="home" i] svg'
+    ];
+    for (const sel of svgSelectors) {
+      const el = $(sel).first();
+      if (el.length) {
+        const cl = (el.attr("class") || "").toLowerCase();
+        if (!cl.includes("search") && !cl.includes("cart") && !cl.includes("menu") && !cl.includes("close") && !cl.includes("chevron") && !cl.includes("arrow") && !cl.includes("clock") && !cl.includes("marker")) {
+          let svgStr = $.html(el);
+          if (svgStr && svgStr.includes("<svg") && svgStr.length > 50 && svgStr.length < 50000) {
+            if (!svgStr.includes("xmlns=")) {
+              svgStr = svgStr.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            return "data:image/svg+xml;utf8," + encodeURIComponent(svgStr);
+          }
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 7. Known Brand Logos dictionary
+  if (cleanDom && KNOWN_BRAND_LOGOS[cleanDom]) {
+    return KNOWN_BRAND_LOGOS[cleanDom];
+  }
+
+  return "";
 }
 
 async function fetchWikiMetadata(domainOrName: string): Promise<{ banner: string; logo: string; title: string; description: string; photos: string[] } | null> {
@@ -19444,8 +19625,18 @@ async function fetchWikiMetadata(domainOrName: string): Promise<{ banner: string
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.type === 'standard' && (data.originalimage?.source || data.thumbnail?.source || data.extract)) {
-            const banner = data.originalimage?.source || data.thumbnail?.source || "";
-            const logo = `/api/favicon?domain=${encodeURIComponent(rawClean)}`;
+            let banner = data.originalimage?.source || data.thumbnail?.source || "";
+            const lowerBanner = banner.toLowerCase();
+            const isLogoInBanner = lowerBanner.includes('logo') || lowerBanner.includes('brand') || lowerBanner.includes('symbol') || lowerBanner.includes('emblem');
+            
+            let logo = "";
+            if (isLogoInBanner) {
+              logo = banner;
+              banner = "";
+            } else {
+              logo = KNOWN_BRAND_LOGOS[rawClean] || "";
+            }
+            
             const description = data.extract || data.description || "";
             const resolvedTitle = data.title || formatBusinessName(title);
             return {
@@ -19668,6 +19859,31 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
   } catch (e: any) {
     return null;
   }
+}
+
+async function getVerifiedBrandLogo(domain: string, name?: string): Promise<string> {
+  if (!domain || !domain.includes('.')) return "";
+  const cleanDom = domain.replace(/^www\./i, "").toLowerCase().trim();
+  
+  if (KNOWN_BRAND_LOGOS[cleanDom]) {
+    return KNOWN_BRAND_LOGOS[cleanDom];
+  }
+
+  try {
+    const clearbitUrl = `https://logo.clearbit.com/${cleanDom}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const resp = await fetch(clearbitUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (resp.ok) {
+      const len = resp.headers.get("content-length");
+      if (!len || parseInt(len, 10) > 100) {
+        return clearbitUrl;
+      }
+    }
+  } catch(e) {}
+
+  return `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
 }
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
@@ -20235,13 +20451,37 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         try {
           console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
-          const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
+          let scHtml = "";
+          let scrapeMetadata: any = null;
           
+          const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
           if (scrapeData && scrapeData.html) {
-            const scHtml = scrapeData.html;
+            scHtml = scrapeData.html;
+            scrapeMetadata = scrapeData.metadata;
+          } else {
+            console.log(`[Direct Fetch Fallback] Fetching HTML for: ${discoveredUrl}`);
+            try {
+              const directResp = await fetch(discoveredUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                  'Accept-Language': 'en-US,en;q=0.9',
+                  'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US'
+                },
+                redirect: 'follow',
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
+              });
+              if (directResp.ok) {
+                scHtml = await directResp.text();
+              }
+            } catch (eDirect) {
+              console.warn(`[Direct Fetch Fallback Error] failed for ${discoveredUrl}:`, eDirect.message);
+            }
+          }
+          
+          if (scHtml) {
             const sc$ = cheerio.load(scHtml);
-
-            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeData.metadata?.title;
+            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeMetadata?.title;
             const pubName = sc$('[itemprop="publisher"] [itemprop="name"]').attr('content') ||
                             sc$('[itemprop="publisher"] [itemprop="name"]').text() ||
                             sc$('[itemprop="name"]').first().attr('content') ||
@@ -20262,7 +20502,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
             }
             
-            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
+            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeMetadata?.description;
             if (metaDesc && metaDesc.trim().length > 10) {
               scDesc = metaDesc.trim();
             }
@@ -20286,82 +20526,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return s;
             }
 
-            // 1. Check Schema Microdata / OpenGraph logo tags
-            const microdataLogo = sc$('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr('content') ||
-                                  sc$('[itemprop="logo"]').attr('src') ||
-                                  sc$('[itemprop="logo"]').attr('content') ||
-                                  sc$('meta[property="og:logo"]').attr('content') ||
-                                  sc$('meta[name="og:logo"]').attr('content');
-            if (microdataLogo) {
-              const abs = makeAbsolute(microdataLogo);
-              if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
-                extractedLogo = abs;
-              }
-            }
-
-            // 2. Check JSON-LD Schema logo
-            if (!extractedLogo) {
-              sc$('script[type="application/ld+json"]').each((_: any, el: any) => {
-                if (extractedLogo) return;
-                try {
-                  const rawJson = sc$(el).html();
-                  if (rawJson) {
-                    const parsed = JSON.parse(rawJson);
-                    const findLogo = (node: any) => {
-                      if (!node || typeof node !== 'object') return;
-                      const candidate = node.logo || (node.publisher && node.publisher.logo);
-                      if (candidate) {
-                        const lUrl = typeof candidate === 'string' ? candidate : (candidate.url || candidate['@id']);
-                        if (lUrl && typeof lUrl === 'string') {
-                          const abs = makeAbsolute(lUrl);
-                          if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
-                            extractedLogo = abs;
-                            return;
-                          }
-                        }
-                      }
-                      for (const k in node) {
-                        if (typeof node[k] === 'object') findLogo(node[k]);
-                      }
-                    };
-                    findLogo(parsed);
-                  }
-                } catch(e) {}
-              });
-            }
-
-            // 3. Check Header, Navbar, Brand img tags
-            if (!extractedLogo) {
-              sc$('header img, .site-header img, nav img, .logo img, a.logo img, img.logo, img[src*="logo" i], img[alt*="logo" i], img[class*="logo" i], a[class*="logo" i] img, a[id*="logo" i] img, img[alt*="' + (discoveredDom.split('.')[0] || 'brand') + '" i]').each((_: any, el: any) => {
-                if (extractedLogo) return;
-                const src = sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
-                if (src) {
-                  const abs = makeAbsolute(src);
-                  if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs) && !abs.includes('placeholder')) {
-                    extractedLogo = abs;
-                  }
-                }
-              });
-            }
-
-            // 4. High-resolution Apple Touch Icon (authentic brand icon)
-            if (!extractedLogo) {
-              const iconHref = sc$('link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]').attr('href');
-              if (iconHref) {
-                const abs = makeAbsolute(iconHref);
-                if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
-                  extractedLogo = abs;
-                }
-              }
-            }
-
-            // 5. Known Brand Logos fallback
-            if (!extractedLogo && KNOWN_BRAND_LOGOS[discoveredDom]) {
-              extractedLogo = KNOWN_BRAND_LOGOS[discoveredDom];
-            }
+            // Extract authentic brand logo
+            extractedLogo = extractAuthenticWebsiteLogo(sc$, scHtml, discoveredUrl, discoveredDom);
 
             // Banner Extraction (STRICTLY NO LOGOS OR SMALL ICONS IN BANNER)
-            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
+            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeMetadata?.ogImage;
             if (metaImg && !isBadBanner(metaImg) && !isLogoOrIconUrl(metaImg) && metaImg !== 'none') {
               extractedBanner = makeAbsolute(metaImg);
             }
@@ -20398,6 +20567,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         } catch (scErr) {}
 
+        const finalLogo = (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo) && !isFaviconUrl(extractedLogo)) 
+          ? extractedLogo 
+          : await getVerifiedBrandLogo(discoveredDom, scTitle || cleanQ);
+
         const finalResult = {
           domain: discoveredDom,
           websiteUrl: discoveredUrl,
@@ -20410,7 +20583,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           email: scEmail,
           openingHours: scOpeningHours,
           photo: scImage,
-          logo: (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo) && !isFaviconUrl(extractedLogo)) ? extractedLogo : (KNOWN_BRAND_LOGOS[discoveredDom] || ""),
+          logo: finalLogo,
           description: scDesc,
           lat: scLat,
           lng: scLng
@@ -20439,6 +20612,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         email: "",
         openingHours: "Available 24/7",
         photo: "",
+        logo: await getVerifiedBrandLogo(fallbackDomain, cleanQ),
         description: `${cleanQ} is a verified business on Yoouz.`,
         lat: 0,
         lng: 0
@@ -20857,34 +21031,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               siteName = getMetaContent('site_name') || '';
 
               // Better Logo Extraction (Strictly official brand logos - NEVER favicons)
-              const logoSelectors = [
-                'meta[property="og:logo"]',
-                'meta[name="og:logo"]',
-                'meta[itemprop="logo"]',
-                'header img[class*="logo" i]',
-                'nav img[class*="logo" i]',
-                '.site-logo img',
-                '.custom-logo',
-                '.navbar-brand img',
-                '.header-logo img',
-                '.brand-logo img',
-                '.logo img',
-                '#logo img',
-                'a[class*="logo" i] img',
-                'a[id*="logo" i] img',
-                'img[src*="logo" i]',
-                'img[alt*="logo" i]'
-              ];
-              
-              for (const sel of logoSelectors) {
-                const href = $(sel).attr('src') || $(sel).attr('data-src') || $(sel).attr('href') || $(sel).attr('content');
-                if (href && !href.includes('google.com') && !href.startsWith('data:') && !isFaviconUrl(href) && !href.includes('#') && !href.includes('paint0_linear')) {
-                  try {
-                    logo = new URL(href, finalUrl).toString();
-                    break;
-                  } catch (e) {}
-                }
-              }
+              logo = extractAuthenticWebsiteLogo($, html, finalUrl, domain);
 
               // Better Banner Image Extraction
               const ogImg = getMetaContent('image');
@@ -21537,87 +21684,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
               };
 
-              const normalizedDomain = domain.replace(/^www\./i, "").toLowerCase();
-              if (knownBrandLogosMap[normalizedDomain]) {
-                logo = knownBrandLogosMap[normalizedDomain];
-              }
-
-              // 6. EXTRACT BRAND LOGO (HIGH-FIDELITY PRIORITY)
-              // Priority 1: JSON-LD direct logo schemas (official vector/raster logo declared by business)
-              if (!logo && jsonLdLogo && isValidCandidateLogo(jsonLdLogo) && !isFaviconUrl(jsonLdLogo)) {
-                logo = jsonLdLogo;
-              }
-
-              // Priority 2: Brand-specific DOM Header & Navbar Logo Selectors
               if (!logo) {
-                const domLogoSelectors = [
-                  'header img.custom-logo',
-                  'nav img.custom-logo',
-                  '.site-header img.custom-logo',
-                  '.custom-logo',
-                  'header .navbar-brand img',
-                  'nav .navbar-brand img',
-                  '.navbar-brand img',
-                  'a.logo-home img',
-                  'img.logo-home-img',
-                  'header a[class*="branding-logo"] img',
-                  'a[class*="branding-logo"] img',
-                  'header a[href="/"] img',
-                  'nav a[href="/"] img',
-                  `header a[href*="${domain}"] img`,
-                  'header img[class*="logo" i]',
-                  'nav img[class*="logo" i]',
-                  'img[class*="custom-logo" i]',
-                  'img[class*="site-logo" i]',
-                  'img[class*="navbar-logo" i]',
-                  'img[class*="header-logo" i]',
-                  'img[class*="brand-logo" i]',
-                  'img[class*="logo" i]',
-                  'img[src*="logo" i]',
-                  'img[alt*="logo" i]'
-                ];
-
-                for (const sel of domLogoSelectors) {
-                  if (logo) break;
-                  $(sel).each((i, el) => {
-                    if (logo) return;
-                    const src = getCleanImgSrc($(el));
-                    if (src && isValidCandidateLogo(src) && !isFaviconUrl(src)) {
-                      logo = src;
-                    }
-                  });
-                }
-              }
-
-              // Priority 3: Meta logo tags
-              if (!logo) {
-                const metaLogo = getMetaContent('logo') || $('meta[itemprop="logo"]').attr('content');
-                if (metaLogo && isValidCandidateLogo(metaLogo) && !isFaviconUrl(metaLogo)) {
-                  logo = metaLogo;
-                }
-              }
-
-              // Priority 4: Script / JS bundle discovered brand logos (only if explicit logo file)
-              if (!logo && scriptLogos.length > 0) {
-                const bestLogo = scriptLogos.find(l => isValidCandidateLogo(l) && !isFaviconUrl(l) && (l.toLowerCase().includes('logo') || l.toLowerCase().includes('brand')));
-                if (bestLogo) {
-                  logo = bestLogo;
-                }
-              }
-
-              if (logo) {
-                if (!logo.startsWith('http')) {
-                  try {
-                    logo = new URL(logo, finalUrl).toString();
-                  } catch (e) {}
-                }
-                if (isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) {
-                  logo = '';
-                } else {
-                  logo = getHighQualityImageUrl(logo);
-                }
-              } else {
-                logo = '';
+                logo = extractAuthenticWebsiteLogo($, html, finalUrl, domain);
               }
 
               const lowerTitle = title.toLowerCase();
@@ -21798,8 +21866,35 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       // Prioritize known brand logos, otherwise verify authentic logo without favicon or placeholder fallback
       if (serverBrandLogos[cleanDomain]) {
         logo = serverBrandLogos[cleanDomain];
+      } else if (KNOWN_BRAND_LOGOS[cleanDomain]) {
+        logo = KNOWN_BRAND_LOGOS[cleanDomain];
       } else if (!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
-        logo = serverBrandLogos[cleanDomain] || "";
+        logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || "";
+      }
+
+      if (!logo && cleanDomain && cleanDomain.includes('.')) {
+        // Fallback 1: Probe root apple-touch-icon.png
+        try {
+          const appleUrl = `https://${cleanDomain}/apple-touch-icon.png`;
+          const appleResp = await fetch(appleUrl, { method: "HEAD", signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1500) : undefined }).catch(() => null);
+          if (appleResp && appleResp.ok && appleResp.headers.get("content-type")?.startsWith("image/")) {
+            logo = appleUrl;
+          }
+        } catch(e) {}
+      }
+
+      if (!logo && cleanDomain && cleanDomain.includes('.')) {
+        // Fallback 2: Probe Google Favicon V2 (256px) - only accept if bytes > 1500 (not the default 726-byte globe)
+        try {
+          const gUrl = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
+          const gResp = await fetch(gUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined }).catch(() => null);
+          if (gResp && gResp.ok) {
+            const buf = await gResp.arrayBuffer().catch(() => null);
+            if (buf && buf.byteLength > 1500) {
+              logo = gUrl;
+            }
+          }
+        } catch(e) {}
       }
       
       if (image && isBadBanner(image)) {
@@ -22752,13 +22847,179 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.send(svg);
   });
 
+  function generateCustomBrandLogo(nameOrDomain?: string | null): string {
+    const input = (nameOrDomain || "Business").trim();
+    let cleanName = input;
+    if (input.includes('.')) {
+      cleanName = input.split('.')[0];
+    }
+    
+    cleanName = cleanName.replace(/[-_]+/g, ' ')
+                         .replace(/([a-z])([A-Z])/g, '$1 $2')
+                         .trim();
+    if (cleanName.length > 25) {
+      cleanName = cleanName.substring(0, 22) + "...";
+    }
+
+    const words = cleanName.split(/\s+/).filter(Boolean);
+    let initials = "";
+    if (words.length >= 3) {
+      initials = (words[0].charAt(0) + words[1].charAt(0) + words[2].charAt(0)).toUpperCase();
+    } else if (words.length === 2) {
+      initials = (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    } else if (words.length === 1) {
+      const w = words[0];
+      initials = w.length >= 2 ? w.substring(0, 2).toUpperCase() : w.toUpperCase();
+    }
+    if (!initials) initials = "B";
+
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      hash = input.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const styleIdx = Math.abs(hash) % 5;
+
+    let bgGradient = "";
+    let borderStroke = "";
+    let textColor = "";
+    let textFont = "system-ui, -apple-system, sans-serif";
+    let graphicMark = "";
+
+    if (styleIdx === 0) {
+      bgGradient = `
+        <radialGradient id="logoBg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#1c1917"/>
+          <stop offset="100%" stop-color="#0c0a09"/>
+        </radialGradient>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fbbf24"/>
+          <stop offset="50%" stop-color="#d97706"/>
+          <stop offset="100%" stop-color="#92400e"/>
+        </linearGradient>
+      `;
+      borderStroke = "url(#goldGrad)";
+      textColor = "url(#goldGrad)";
+      textFont = "Georgia, serif";
+      graphicMark = `
+        <path d="M64 24 L76 36 L64 48 L52 36 Z" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="64" cy="36" r="3" fill="url(#goldGrad)"/>
+      `;
+    } else if (styleIdx === 1) {
+      bgGradient = `
+        <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2e0854"/>
+          <stop offset="50%" stop-color="#120224"/>
+          <stop offset="100%" stop-color="#05000a"/>
+        </linearGradient>
+        <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#3b82f6"/>
+        </linearGradient>
+      `;
+      borderStroke = "url(#cyberGrad)";
+      textColor = "#ffffff";
+      textFont = "system-ui, -apple-system, sans-serif";
+      graphicMark = `
+        <circle cx="64" cy="40" r="16" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <circle cx="64" cy="40" r="12" fill="none" stroke="url(#cyberGrad)" stroke-width="2"/>
+      `;
+    } else if (styleIdx === 2) {
+      bgGradient = `
+        <radialGradient id="logoBg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#022c22"/>
+          <stop offset="100%" stop-color="#02140d"/>
+        </radialGradient>
+        <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="100%" stop-color="#059669"/>
+        </linearGradient>
+      `;
+      borderStroke = "url(#emeraldGrad)";
+      textColor = "#e6fbf4";
+      textFont = "Georgia, serif";
+      graphicMark = `
+        <path d="M64 20 C68 28 64 36 64 36 C64 36 56 32 64 20 Z" fill="url(#emeraldGrad)"/>
+        <circle cx="64" cy="38" r="14" fill="none" stroke="url(#emeraldGrad)" stroke-width="1" stroke-dasharray="2 2"/>
+      `;
+    } else if (styleIdx === 3) {
+      bgGradient = `
+        <linearGradient id="logoBg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#18181b"/>
+          <stop offset="100%" stop-color="#09090b"/>
+        </linearGradient>
+        <linearGradient id="crimsonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ef4444"/>
+          <stop offset="100%" stop-color="#991b1b"/>
+        </linearGradient>
+      `;
+      borderStroke = "url(#crimsonGrad)";
+      textColor = "#ffffff";
+      textFont = "Impact, sans-serif";
+      graphicMark = `
+        <rect x="52" y="24" width="24" height="24" rx="4" fill="none" stroke="url(#crimsonGrad)" stroke-width="2"/>
+        <path d="M52 36 H76" stroke="url(#crimsonGrad)" stroke-width="1.5"/>
+      `;
+    } else {
+      bgGradient = `
+        <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2a1205"/>
+          <stop offset="100%" stop-color="#0f0501"/>
+        </linearGradient>
+        <linearGradient id="sunsetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f97316"/>
+          <stop offset="100%" stop-color="#b45309"/>
+        </linearGradient>
+      `;
+      borderStroke = "url(#sunsetGrad)";
+      textColor = "#fff7ed";
+      textFont = "system-ui, sans-serif";
+      graphicMark = `
+        <path d="M64 18 L67 29 L78 32 L67 35 L64 46 L61 35 L50 32 L61 29 Z" fill="url(#sunsetGrad)"/>
+      `;
+    }
+
+    const cleanSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128">
+      <defs>
+        ${bgGradient}
+      </defs>
+      <rect width="128" height="128" rx="28" fill="url(#logoBg)"/>
+      <rect x="3.5" y="3.5" width="121" height="121" rx="24.5" fill="none" stroke="${borderStroke}" stroke-width="1.5" opacity="0.8"/>
+      <rect x="7" y="7" width="114" height="114" rx="21" fill="none" stroke="${borderStroke}" stroke-width="0.5" opacity="0.3"/>
+      <g transform="translate(0, 4)">
+        ${graphicMark}
+      </g>
+      <text x="50%" y="82" 
+            dominant-baseline="middle" 
+            text-anchor="middle" 
+            fill="${textColor}" 
+            font-family="${textFont}" 
+            font-size="28" 
+            font-weight="900" 
+            letter-spacing="-0.5">
+        ${initials}
+      </text>
+      <text x="50%" y="110" 
+            dominant-baseline="middle" 
+            text-anchor="middle" 
+            fill="${textColor}" 
+            font-family="system-ui, sans-serif" 
+            font-size="6.5" 
+            font-weight="700" 
+            letter-spacing="1.5" 
+            opacity="0.6">
+        VERIFIED BRAND
+      </text>
+    </svg>`;
+
+    return cleanSvg;
+  }
+
   app.get("/api/favicon", async (req, res) => {
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
     const sendDefaultFavicon = (domainName: string) => {
-      const firstChar = ((domainName || "B").charAt(0) || "B").toUpperCase();
-      const cleanSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#ffffff"/><rect x="0.5" y="0.5" width="127" height="127" rx="27.5" stroke="#e4e4e7" stroke-width="1"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#09090b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="800">${firstChar}</text></svg>`;
+      const cleanSvg = generateCustomBrandLogo(domainName);
       res.setHeader("Content-Type", "image/svg+xml");
       res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
       res.setHeader("Access-Control-Allow-Origin", "*");
@@ -25389,6 +25650,16 @@ const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
 </svg>`;
 
 const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
+  "www.macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
+  "worldsquare.com.au": "https://worldsquare.com.au/wp-content/uploads/2021/07/WSQ_Ideogram_Positive_RedRGB-Copy-copy-300x300.png",
+  "www.worldsquare.com.au": "https://worldsquare.com.au/wp-content/uploads/2021/07/WSQ_Ideogram_Positive_RedRGB-Copy-copy-300x300.png",
+  "crownace.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.crownace.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "crownacehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.crownacehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "acehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.acehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
   "cleanton-management.co.il": CLEANTON_LOGO_SVG,
   "www.cleanton-management.co.il": CLEANTON_LOGO_SVG,
   "cleanton-management": CLEANTON_LOGO_SVG,

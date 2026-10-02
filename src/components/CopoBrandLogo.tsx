@@ -81,10 +81,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isFaviconUrl(logoUrl) &&
-      !logoUrl.includes("/api/favicon")
+      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon"))
     ) {
       candidates.push(logoUrl);
+    }
+
+    // 3. Fallback to our premium, gorgeous customized server-rendered brand logo instead of a blank box or raw text
+    if (candidates.length === 0 && cleanDomain && cleanDomain.trim() !== "") {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
 
     // Filter duplicates and any generic placeholders
@@ -155,14 +159,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             setCandidateIdx((prev) => prev + 1);
           }}
         />
-      ) : (
-        /* Official Brand Wordmark Typography Fallback - Clean, bold, authentic wordmark tile */
-        <div className="w-full h-full flex flex-col items-center justify-center bg-white p-2 text-center select-none">
-          <span className="font-extrabold text-zinc-950 tracking-tight text-[11px] sm:text-xs uppercase leading-snug line-clamp-2 px-1">
-            {formatBusinessName(shortTitle)}
-          </span>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };

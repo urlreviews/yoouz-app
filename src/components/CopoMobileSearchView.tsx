@@ -4,7 +4,7 @@ import { Place, VideoReview } from "../types";
 import { CopoSearchView } from "./CopoSearchView";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
 import { useLanguage } from "../i18n/LanguageContext";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, isFaviconUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, isPlaceReviewMatch, formatBusinessName, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
@@ -823,21 +823,38 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       }}
                       className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group border-b border-zinc-900/80 last:border-0"
                     >
-                      {hasDomain ? (
-                        <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-zinc-200/80 flex items-center justify-center shrink-0 p-1 overflow-hidden">
-                          <CopoBrandLogo 
-                            domain={targetDomain}
-                            name={title}
-                            logoUrl={itemLogo}
-                            className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
-                            imageClassName="w-full h-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                          <Search className="w-4.5 h-4.5 text-zinc-400" />
-                        </div>
-                      )}
+                      {(() => {
+                        const cleanD = (targetDomain || "").replace(/^www\./, "").toLowerCase().trim();
+                        const hasAuthenticLogo = Boolean(
+                          cleanD === "yoouz.com" || cleanD === "yoouz" || (title && title.toLowerCase() === "yoouz") ||
+                          (cleanD && KNOWN_BRAND_LOGOS[cleanD]) ||
+                          (itemLogo && !isFaviconUrl(itemLogo) && !isGenericOrPlaceholderLogo(itemLogo))
+                        );
+
+                        if (hasDomain && hasAuthenticLogo) {
+                          return (
+                            <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-zinc-200/80 flex items-center justify-center shrink-0 p-1 overflow-hidden">
+                              <CopoBrandLogo 
+                                domain={targetDomain}
+                                name={title}
+                                logoUrl={itemLogo}
+                                className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
+                                imageClassName="w-full h-full object-contain"
+                              />
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-zinc-800 bg-zinc-900 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                            {hasDomain ? (
+                              <Globe className="w-4.5 h-4.5 text-zinc-400" />
+                            ) : (
+                              <Search className="w-4.5 h-4.5 text-zinc-400" />
+                            )}
+                          </div>
+                        );
+                      })()}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 overflow-hidden" dir="auto">
                           <span className="text-white text-[16px] font-bold tracking-tight truncate leading-snug group-hover:text-amber-300 transition-colors">

@@ -5,6 +5,10 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
   let clean = url.trim().toLowerCase();
   try { clean = decodeURIComponent(clean); } catch(e) {}
 
+  if (clean.includes("logo.clearbit.com") || clean.includes("assets.brandfetch")) {
+    return false;
+  }
+
   return (
     clean === "" ||
     clean === "data:;" ||
@@ -14,8 +18,6 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("default_logo") ||
     clean.includes("pwa-app") ||
     clean.includes("wsimg.com") ||
-    clean.includes("clearbit.com") ||
-    clean.includes("brandfetch.io") ||
     clean.includes("wixstatic.com/media/cb6ad0") ||
     clean.includes("cb6ad0") ||
     clean.includes("s.w.org") ||
@@ -433,6 +435,16 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb/699e1239b47daf53a6847818_MF%20Webclip%20brand%20256.png",
   "vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
   "www.vanlawfirm.com": "https://vanlawfirm.com/wp-content/themes/vanlawfirm-rebuild/assets/favicon/apple-touch-icon.png",
+  "macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
+  "www.macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
+  "worldsquare.com.au": "https://worldsquare.com.au/wp-content/uploads/2021/07/WSQ_Ideogram_Positive_RedRGB-Copy-copy-300x300.png",
+  "www.worldsquare.com.au": "https://worldsquare.com.au/wp-content/uploads/2021/07/WSQ_Ideogram_Positive_RedRGB-Copy-copy-300x300.png",
+  "crownace.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.crownace.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "crownacehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.crownacehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "acehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
+  "www.acehardware.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Ace_Hardware_Logo.svg/500px-Ace_Hardware_Logo.svg.png",
   "districtuae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#0284c7"/>
@@ -1050,7 +1062,6 @@ export function isFaviconUrl(url?: string | null): boolean {
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse") ||
-    l.includes("/api/favicon") ||
     l.includes("favicon-32x32") ||
     l.includes("favicon-16x16")
   );
