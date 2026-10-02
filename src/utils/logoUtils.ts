@@ -16,11 +16,15 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   let clean = url.trim();
   if (!clean || clean === "data:;" || clean.startsWith("data:;")) return "";
 
+  if (clean.includes("og-banner.png") || clean.includes("1789810172562") || clean.includes("clearbit.com") || clean.includes("placeholder") || clean.includes("mock")) {
+    return "";
+  }
+
   if (clean.startsWith("//")) {
     clean = "https:" + clean;
   }
 
-  // Reject malformed protocols (e.g. h:180/qt=q:100/ll:1) to prevent ERR_UNKNOWN_URL_SCHEME
+  // Reject malformed protocols
   if (!clean.startsWith("http://") && !clean.startsWith("https://") && !clean.startsWith("/") && !clean.startsWith("data:") && !clean.startsWith("blob:")) {
     return "";
   }

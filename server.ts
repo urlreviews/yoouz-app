@@ -21173,7 +21173,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               };
 
               if (!image && (domain.includes('yoouz.com') || domain === 'yoouz')) {
-                image = 'https://yoouz.com/og-banner.png?v=8';
+                image = 'https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg';
               }
 
               if (image) {
@@ -25852,7 +25852,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
     const safeUrl = escapeHtml(meta.url);
-    const rawImage = meta.imageUrl || "https://yoouz.com/og-banner.png?v=8";
+    const rawImage = meta.imageUrl || "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
     const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl } from "../utils/logoUtils";
-import { isValidDomainUrl } from "../utils/placeUtils";
+import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -54,7 +54,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return cd === "yoouz.com" || cd === "yoouz" || cn === "yoouz" || cn === "yoouz.com";
   }, [cleanDomain, name]);
 
-  // Build candidate fallback array for authentic brand logos (NO fake text monograms)
+  // Build candidate fallback array for authentic brand logos
   const candidateUrls = useMemo(() => {
     if (isYoouz) return ["/favicon.svg"];
 
@@ -82,12 +82,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(logoUrl);
     }
 
-    // 3. High-res Google Favicon / DuckDuckGo / Clearbit (both proxied and direct)
+    // 3. High-res Google Favicon / DuckDuckGo (proxied)
     if (cleanDomain && cleanDomain.includes(".")) {
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
       candidates.push(`https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`);
       candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
-      candidates.push(`https://logo.clearbit.com/${cleanDomain}`);
     }
 
     // Filter duplicates
@@ -95,7 +94,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   }, [isYoouz, cleanDomain, logoUrl]);
 
   // Current src candidate
-  const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
+  const currentSrc = candidateUrls[candidateIdx] || null;
 
   // Reset index when domain/logoUrl changes
   useEffect(() => {
@@ -120,13 +119,17 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     );
   }
 
+  // Display Name / Domain Title for wordmark fallback
+  const displayName = (name || cleanDomain || "Business").trim();
+  const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
+
   return (
     <div className={`relative overflow-hidden bg-white ${className}`}>
-      {currentSrc ? (
+      {currentSrc && candidateIdx < candidateUrls.length ? (
         <img
           key={currentSrc}
           src={currentSrc}
-          alt={name || cleanDomain || "Business Logo"}
+          alt={displayName}
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
@@ -146,16 +149,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
           onError={() => {
             // Cascade to next candidate image URL in the chain if this candidate fails
-            if (candidateIdx + 1 < candidateUrls.length) {
-              setCandidateIdx((prev) => prev + 1);
-            }
+            setCandidateIdx((prev) => prev + 1);
           }}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-white">
-          <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4" />
-          </svg>
+        /* Official Brand Wordmark Typography Fallback - Clean, bold, authentic wordmark tile */
+        <div className="w-full h-full flex flex-col items-center justify-center bg-white p-2 text-center select-none">
+          <span className="font-extrabold text-zinc-950 tracking-tight text-[11px] sm:text-xs uppercase leading-snug line-clamp-2 px-1">
+            {formatBusinessName(shortTitle)}
+          </span>
         </div>
       )}
     </div>

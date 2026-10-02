@@ -758,11 +758,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const allPhotos = React.useMemo(() => {
     const isAuthentic = (url?: string | null): boolean => {
       if (!url || typeof url !== "string") return false;
-      if (url.startsWith("blob:")) return false;
-      if (url.includes("/api/brand-banner")) return false;
-      if (isBadBanner(url)) return false;
-      const lower = url.toLowerCase();
-      if (lower.includes("favicon") || lower.endsWith(".ico")) return false;
+      const clean = url.trim();
+      if (!clean || clean.startsWith("blob:") || clean === "data:;" || clean.startsWith("data:;")) return false;
+      if (clean.includes("/api/brand-banner") || clean.includes("/og-banner.png") || clean.includes("1789810172562")) return false;
+      if (isBadBanner(clean)) return false;
+      const lower = clean.toLowerCase();
+      if (lower.includes("favicon") || lower.endsWith(".ico") || lower.includes("placeholder") || lower.includes("mock")) return false;
+      if (lower.includes("shareimg.jpg") || lower.includes("hero desktop.jpg") || lower.includes("injury-lawyer.jpg")) return false;
+      if (!lower.startsWith("http://") && !lower.startsWith("https://") && !lower.startsWith("/") && !lower.startsWith("data:")) return false;
       return true;
     };
 
