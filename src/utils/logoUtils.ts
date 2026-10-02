@@ -1083,16 +1083,7 @@ export function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 12
   if ((nameOrDomain || "").toLowerCase().includes("yoouz")) {
     return YOOUZ_LOGO_DATA_URI;
   }
-
-  const clean = (nameOrDomain || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
-  const letter = (clean.charAt(0) || "B").toUpperCase();
-  const fontSize = Math.round(size * 0.52);
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.2)}" fill="#18181b"/>
-    <text x="50%" y="54%" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="${fontSize}" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${letter}</text>
-  </svg>`;
-
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="none"></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 

@@ -23052,15 +23052,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
   });
 
   function generateCustomBrandLogo(nameOrDomain?: string | null): string {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128" fill="none">
-      <rect width="128" height="128" rx="28" fill="#09090b"/>
-      <rect x="3.5" y="3.5" width="121" height="121" rx="24.5" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5"/>
-      <g transform="translate(32, 30)" stroke="#52525b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="8" y="12" width="48" height="52" rx="6"/>
-        <path d="M8 32h48"/>
-        <path d="M24 64V48h16v16"/>
-      </g>
-    </svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1" fill="none"></svg>`;
   }
 
   app.get("/api/favicon", async (req, res) => {
@@ -25825,15 +25817,7 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
 };
 
 function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="none">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#09090b"/>
-    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="3"/>
-    <g transform="translate(${Math.round(size * 0.25)}, ${Math.round(size * 0.235)}) scale(${size / 128})" stroke="#52525b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="8" y="12" width="48" height="52" rx="6"/>
-      <path d="M8 32h48"/>
-      <path d="M24 64V48h16v16"/>
-    </g>
-  </svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="none"></svg>`;
 }
 
 // Multi-Source Business Place Resolver (In-Memory, BunnyDB, BunnyDB, Drizzle SQL)

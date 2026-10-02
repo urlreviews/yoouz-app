@@ -156,7 +156,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-zinc-500">
+        <div className="w-full h-full flex items-center justify-center bg-white text-zinc-400">
           <Building2 className="w-8 h-8 opacity-75" />
         </div>
       )}

@@ -795,13 +795,28 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, drawerDomain, rawPlaceVideos]);
 
   const hasAuthenticLogo = React.useMemo(() => {
-    if (!drawerDomain && !place.brandDomain && !place.logoUrl) return false;
     const cleanD = (drawerDomain || place.brandDomain || "").replace(/^www\./, "").toLowerCase().trim();
     if (cleanD === "yoouz.com" || cleanD === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return true;
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return true;
-    if (primaryLogoUrl && (!isFaviconUrl(primaryLogoUrl) || primaryLogoUrl.includes("/api/favicon")) && !isGenericOrPlaceholderLogo(primaryLogoUrl)) return true;
-    if (place.logoUrl && (!isFaviconUrl(place.logoUrl) || place.logoUrl.includes("/api/favicon")) && !isGenericOrPlaceholderLogo(place.logoUrl)) return true;
-    if (cleanD && cleanD.includes('.')) return true;
+    
+    // Check if primaryLogoUrl is present, not a favicon, and not a generic/fallback URL
+    if (primaryLogoUrl && 
+        !isFaviconUrl(primaryLogoUrl) && 
+        !primaryLogoUrl.includes("/api/favicon") && 
+        !primaryLogoUrl.includes("/api/monogram") && 
+        !isGenericOrPlaceholderLogo(primaryLogoUrl)) {
+      return true;
+    }
+    
+    // Check if place.logoUrl is present, not a favicon, and not a generic/fallback URL
+    if (place.logoUrl && 
+        !isFaviconUrl(place.logoUrl) && 
+        !place.logoUrl.includes("/api/favicon") && 
+        !place.logoUrl.includes("/api/monogram") && 
+        !isGenericOrPlaceholderLogo(place.logoUrl)) {
+      return true;
+    }
+
     return false;
   }, [place, drawerDomain, primaryLogoUrl]);
 
@@ -1190,7 +1205,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         {hasAuthenticLogo ? (
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-900 bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/20 overflow-hidden group transition-all duration-300">
+          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white shadow-2xl flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
             <CopoBrandLogo
               domain={drawerDomain || place.brandDomain}
               name={displayedPlaceName}
