@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { Building2 } from "lucide-react";
 import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
@@ -86,11 +87,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(logoUrl);
     }
 
-    // 3. Fallback to our premium, gorgeous customized server-rendered brand logo instead of a blank box or raw text
-    if (candidates.length === 0 && cleanDomain && cleanDomain.trim() !== "") {
-      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
-    }
-
     // Filter duplicates and any generic placeholders
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u))));
   }, [isYoouz, cleanDomain, logoUrl]);
@@ -126,7 +122,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
 
   return (
-    <div className={`relative overflow-hidden bg-white ${className}`}>
+    <div className={`relative overflow-hidden bg-zinc-950 ${className}`}>
       {currentSrc && candidateIdx < candidateUrls.length ? (
         <img
           key={currentSrc}
@@ -159,7 +155,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             setCandidateIdx((prev) => prev + 1);
           }}
         />
-      ) : null}
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-zinc-950 text-zinc-500">
+          <Building2 className="w-8 h-8 opacity-75" />
+        </div>
+      )}
     </div>
   );
 };

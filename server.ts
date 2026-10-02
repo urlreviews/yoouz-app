@@ -23052,170 +23052,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
   });
 
   function generateCustomBrandLogo(nameOrDomain?: string | null): string {
-    const input = (nameOrDomain || "Business").trim();
-    let cleanName = input;
-    if (input.includes('.')) {
-      cleanName = input.split('.')[0];
-    }
-    
-    cleanName = cleanName.replace(/[-_]+/g, ' ')
-                         .replace(/([a-z])([A-Z])/g, '$1 $2')
-                         .trim();
-    if (cleanName.length > 25) {
-      cleanName = cleanName.substring(0, 22) + "...";
-    }
-
-    const words = cleanName.split(/\s+/).filter(Boolean);
-    let initials = "";
-    if (words.length >= 3) {
-      initials = (words[0].charAt(0) + words[1].charAt(0) + words[2].charAt(0)).toUpperCase();
-    } else if (words.length === 2) {
-      initials = (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-    } else if (words.length === 1) {
-      const w = words[0];
-      initials = w.length >= 2 ? w.substring(0, 2).toUpperCase() : w.toUpperCase();
-    }
-    if (!initials) initials = "B";
-
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      hash = input.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const styleIdx = Math.abs(hash) % 5;
-
-    let bgGradient = "";
-    let borderStroke = "";
-    let textColor = "";
-    let textFont = "system-ui, -apple-system, sans-serif";
-    let graphicMark = "";
-
-    if (styleIdx === 0) {
-      bgGradient = `
-        <radialGradient id="logoBg" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#1c1917"/>
-          <stop offset="100%" stop-color="#0c0a09"/>
-        </radialGradient>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#fbbf24"/>
-          <stop offset="50%" stop-color="#d97706"/>
-          <stop offset="100%" stop-color="#92400e"/>
-        </linearGradient>
-      `;
-      borderStroke = "url(#goldGrad)";
-      textColor = "url(#goldGrad)";
-      textFont = "Georgia, serif";
-      graphicMark = `
-        <path d="M64 24 L76 36 L64 48 L52 36 Z" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linejoin="round"/>
-        <circle cx="64" cy="36" r="3" fill="url(#goldGrad)"/>
-      `;
-    } else if (styleIdx === 1) {
-      bgGradient = `
-        <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2e0854"/>
-          <stop offset="50%" stop-color="#120224"/>
-          <stop offset="100%" stop-color="#05000a"/>
-        </linearGradient>
-        <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#a855f7"/>
-          <stop offset="100%" stop-color="#3b82f6"/>
-        </linearGradient>
-      `;
-      borderStroke = "url(#cyberGrad)";
-      textColor = "#ffffff";
-      textFont = "system-ui, -apple-system, sans-serif";
-      graphicMark = `
-        <circle cx="64" cy="40" r="16" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <circle cx="64" cy="40" r="12" fill="none" stroke="url(#cyberGrad)" stroke-width="2"/>
-      `;
-    } else if (styleIdx === 2) {
-      bgGradient = `
-        <radialGradient id="logoBg" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#022c22"/>
-          <stop offset="100%" stop-color="#02140d"/>
-        </radialGradient>
-        <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#34d399"/>
-          <stop offset="100%" stop-color="#059669"/>
-        </linearGradient>
-      `;
-      borderStroke = "url(#emeraldGrad)";
-      textColor = "#e6fbf4";
-      textFont = "Georgia, serif";
-      graphicMark = `
-        <path d="M64 20 C68 28 64 36 64 36 C64 36 56 32 64 20 Z" fill="url(#emeraldGrad)"/>
-        <circle cx="64" cy="38" r="14" fill="none" stroke="url(#emeraldGrad)" stroke-width="1" stroke-dasharray="2 2"/>
-      `;
-    } else if (styleIdx === 3) {
-      bgGradient = `
-        <linearGradient id="logoBg" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#18181b"/>
-          <stop offset="100%" stop-color="#09090b"/>
-        </linearGradient>
-        <linearGradient id="crimsonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ef4444"/>
-          <stop offset="100%" stop-color="#991b1b"/>
-        </linearGradient>
-      `;
-      borderStroke = "url(#crimsonGrad)";
-      textColor = "#ffffff";
-      textFont = "Impact, sans-serif";
-      graphicMark = `
-        <rect x="52" y="24" width="24" height="24" rx="4" fill="none" stroke="url(#crimsonGrad)" stroke-width="2"/>
-        <path d="M52 36 H76" stroke="url(#crimsonGrad)" stroke-width="1.5"/>
-      `;
-    } else {
-      bgGradient = `
-        <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#2a1205"/>
-          <stop offset="100%" stop-color="#0f0501"/>
-        </linearGradient>
-        <linearGradient id="sunsetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#f97316"/>
-          <stop offset="100%" stop-color="#b45309"/>
-        </linearGradient>
-      `;
-      borderStroke = "url(#sunsetGrad)";
-      textColor = "#fff7ed";
-      textFont = "system-ui, sans-serif";
-      graphicMark = `
-        <path d="M64 18 L67 29 L78 32 L67 35 L64 46 L61 35 L50 32 L61 29 Z" fill="url(#sunsetGrad)"/>
-      `;
-    }
-
-    const cleanSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128">
-      <defs>
-        ${bgGradient}
-      </defs>
-      <rect width="128" height="128" rx="28" fill="url(#logoBg)"/>
-      <rect x="3.5" y="3.5" width="121" height="121" rx="24.5" fill="none" stroke="${borderStroke}" stroke-width="1.5" opacity="0.8"/>
-      <rect x="7" y="7" width="114" height="114" rx="21" fill="none" stroke="${borderStroke}" stroke-width="0.5" opacity="0.3"/>
-      <g transform="translate(0, 4)">
-        ${graphicMark}
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128" fill="none">
+      <rect width="128" height="128" rx="28" fill="#09090b"/>
+      <rect x="3.5" y="3.5" width="121" height="121" rx="24.5" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5"/>
+      <g transform="translate(32, 30)" stroke="#52525b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="8" y="12" width="48" height="52" rx="6"/>
+        <path d="M8 32h48"/>
+        <path d="M24 64V48h16v16"/>
       </g>
-      <text x="50%" y="82" 
-            dominant-baseline="middle" 
-            text-anchor="middle" 
-            fill="${textColor}" 
-            font-family="${textFont}" 
-            font-size="28" 
-            font-weight="900" 
-            letter-spacing="-0.5">
-        ${initials}
-      </text>
-      <text x="50%" y="110" 
-            dominant-baseline="middle" 
-            text-anchor="middle" 
-            fill="${textColor}" 
-            font-family="system-ui, sans-serif" 
-            font-size="6.5" 
-            font-weight="700" 
-            letter-spacing="1.5" 
-            opacity="0.6">
-        VERIFIED BRAND
-      </text>
     </svg>`;
-
-    return cleanSvg;
   }
 
   app.get("/api/favicon", async (req, res) => {
@@ -25980,46 +25825,14 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
 };
 
 function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): string {
-  const raw = (nameOrDomain || "Business").replace(/^https?:\/\//i, "").replace(/^www\./i, "").trim();
-  const clean = raw.replace(/\.(com|org|net|io|co|ai|be|ae|uk|co\.uk)$/i, "").trim();
-  
-  if (clean.toLowerCase().startsWith("l500") || clean.toLowerCase() === "legal500" || clean.toLowerCase() === "legal 500") {
-    const letters = "L500";
-    const textColor = "#eab308";
-    const fontSize = Math.round(size * 0.28);
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-      <defs>
-        <linearGradient id="monoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#18181b"/>
-          <stop offset="100%" stop-color="#09090b"/>
-        </linearGradient>
-      </defs>
-      <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="url(#monoGrad)"/>
-      <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="#27272a" stroke-width="3"/>
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px" letter-spacing="-0.5px">${escapeXml(letters)}</text>
-    </svg>`;
-  }
-
-  // Premium Letter Monogram Fallback
-  const firstLetter = clean.charAt(0).toUpperCase() || "B";
-  const colors = [
-    { bg: "#18181b", text: "#ffffff", stroke: "#27272a" },
-    { bg: "#111827", text: "#60a5fa", stroke: "#1e293b" },
-    { bg: "#1e1b4b", text: "#818cf8", stroke: "#312e81" },
-    { bg: "#312e81", text: "#a5b4fc", stroke: "#3730a3" },
-    { bg: "#4c1d95", text: "#c4b5fd", stroke: "#5b21b6" },
-  ];
-  
-  // Deterministic color based on name
-  let hash = 0;
-  for (let i = 0; i < clean.length; i++) hash = clean.charCodeAt(i) + ((hash << 5) - hash);
-  const color = colors[Math.abs(hash) % colors.length];
-  const fontSize = Math.round(size * 0.45);
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="${color.bg}"/>
-    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="${color.stroke}" stroke-width="2" opacity="0.5"/>
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="${color.text}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="${fontSize}px">${escapeXml(firstLetter)}</text>
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="none">
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.22)}" fill="#09090b"/>
+    <rect x="${Math.round(size * 0.04)}" y="${Math.round(size * 0.04)}" width="${Math.round(size * 0.92)}" height="${Math.round(size * 0.92)}" rx="${Math.round(size * 0.18)}" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="3"/>
+    <g transform="translate(${Math.round(size * 0.25)}, ${Math.round(size * 0.235)}) scale(${size / 128})" stroke="#52525b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="12" width="48" height="52" rx="6"/>
+      <path d="M8 32h48"/>
+      <path d="M24 64V48h16v16"/>
+    </g>
   </svg>`;
 }
 
