@@ -252,6 +252,10 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("shutterstock_") ||
       decoded.includes("istockphoto") ||
       decoded.includes("injury-lawyer") ||
+      decoded.includes("featured_image") ||
+      decoded.includes("featured-image") ||
+      decoded.includes("thrive-visual-editor") ||
+      decoded.includes("editor/css/images") ||
       decoded.endsWith(".ico")
     );
   } catch (e) {

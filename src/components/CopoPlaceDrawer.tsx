@@ -728,6 +728,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('legal-banner') ||
       u.includes('shutterstock_') ||
       u.includes('istockphoto') ||
+      u.includes('featured_image') ||
+      u.includes('featured-image') ||
+      u.includes('thrive-visual-editor') ||
+      u.includes('editor/css/images') ||
       u.endsWith('.ico')
     );
   };
@@ -764,8 +768,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     activeBanner ||
     cleanReviewBanner ||
     knownDomainBanner ||
-    (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
-    `/api/brand-banner/${encodeURIComponent(drawerDomain || place.brandDomain || place.id || place.name || "Business")}`;
+    (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
 
   // Check if photos are authentic place photos
   const allPhotos = React.useMemo(() => {

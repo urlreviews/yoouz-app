@@ -169,7 +169,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             const data = await resp.json();
             if (data.title || data.domain) {
               const fetchedLogo = data.logo || getCleanLogoUrl(null, data.domain) || "";
-              const fetchedBanner = data.image || `/api/brand-banner/${encodeURIComponent(data.domain || cleanDom)}`;
+              const fetchedBanner = data.image || "";
               const newPlace: Place = {
                 id: (data.domain || cleanDom).toLowerCase(),
                 name: formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || formatBusinessName(cleanDom) || cleanDom,
@@ -388,8 +388,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (!matchedPlace && onAddPlace) {
       const instantLogo = isRealDomain ? (getCleanLogoUrl(null, cleanUrl) || "") : "";
       const instantBanner = isRealDomain 
-        ? (KNOWN_BRAND_BANNERS[cleanUrl] || `/api/brand-banner/${encodeURIComponent(cleanUrl)}`)
-        : `/api/brand-banner/${encodeURIComponent(trimmed)}`;
+        ? (KNOWN_BRAND_BANNERS[cleanUrl] || "")
+        : "";
       const instantName = preferredName || locationDetails?.rawBusinessName || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl) || trimmed;
       const instantCity = locationDetails?.city || "";
       const instantCountry = locationDetails?.country || "";
@@ -594,8 +594,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
       avatarUrl: instantLogo,
       logoUrl: instantLogo,
-      bannerUrl: knownHead?.bannerUrl || (cleanDom ? `/api/brand-banner/${encodeURIComponent(cleanDom)}` : `/api/brand-banner/${encodeURIComponent(placeId)}`),
-      ogImage: knownHead?.bannerUrl || (cleanDom ? `/api/brand-banner/${encodeURIComponent(cleanDom)}` : `/api/brand-banner/${encodeURIComponent(placeId)}`),
+      bannerUrl: knownHead?.bannerUrl || "",
+      ogImage: knownHead?.bannerUrl || "",
       photos: knownHead?.photos || [],
       openingHours: knownHead?.openingHours || "Available 24/7",
       isOpen: true,

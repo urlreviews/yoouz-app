@@ -743,10 +743,6 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "cleanton": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "bclaw.au": "/api/brand-banner/Belperio%20Connell%20Lawyers",
-  "www.bclaw.au": "/api/brand-banner/Belperio%20Connell%20Lawyers",
-  "donlanlawyers.com.au": "/api/brand-banner/Donlan%20Lawyers",
-  "www.donlanlawyers.com.au": "/api/brand-banner/Donlan%20Lawyers",
   "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
@@ -1182,8 +1178,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 }
 
 export function getCategoryThematicBanner(category?: string | null, name?: string | null): string {
-  const identifier = name || category || "Business";
-  return `/api/brand-banner/${encodeURIComponent(identifier)}`;
+  return "";
 }
 
 /**
