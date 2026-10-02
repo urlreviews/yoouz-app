@@ -22782,15 +22782,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
-    const getFallbackFavicon = (domainName: string) => {
-      const firstChar = (domainName.charAt(0) || "Y").toUpperCase();
-      return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#18181b"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#f4f4f5" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700">${firstChar}</text></svg>`;
-    };
-
     if (!cleanDomain) {
-      res.setHeader("Content-Type", "image/svg+xml");
-      res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.status(200).send(getFallbackFavicon("Y"));
+      return res.status(404).send("Favicon domain missing");
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -22849,19 +22842,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       } catch (e) {}
     }
 
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Cache-Control", "public, max-age=86400");
-    return res.status(200).send(getFallbackFavicon(cleanDomain));
+    return res.status(404).send("Favicon not found");
   });
 
   // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
   app.get("/api/proxy-image", async (req: any, res: any) => {
     const sendFallbackImage = () => {
-      const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#18181b"/><circle cx="64" cy="50" r="22" fill="#3f3f46"/><path d="M28 108c0-20 16-36 36-36s36 16 36 36" fill="#3f3f46"/></svg>`;
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
       res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.status(200).send(fallbackSvg);
+      return res.status(404).send("Image unavailable");
     };
 
     try {
@@ -22917,7 +22905,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let contentType = (response.headers.get('content-type') || '').toLowerCase();
       
-      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return fallback image
+      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return 404
       if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
         // Fallback: Fetch authentic image bytes from Wayback Machine archive
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
@@ -22964,10 +22952,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.send(Buffer.from(arrayBuffer));
     } catch (err: any) {
       console.warn("Proxy image fallback:", err.message);
-      const fallbackSvg = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#18181b"/><text x="64" y="78" text-anchor="middle" font-family="system-ui, sans-serif" font-size="52" font-weight="700" fill="#ffffff">Y</text></svg>`;
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      return res.send(fallbackSvg);
+      return sendFallbackImage();
     }
   });
 
