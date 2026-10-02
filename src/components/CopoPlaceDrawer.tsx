@@ -1995,9 +1995,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <Video className="w-8 h-8 text-zinc-500" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYet", "No Reviews Yet")}</h3>
-                    <p className="text-xs text-zinc-400 max-w-[200px] mx-auto">
-                      {t("place.beTheFirst", "Be the first to share your experience with a review.")}
+                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYetFor", `No video reviews yet for ${displayedPlaceName}`)}</h3>
+                    <p className="text-xs text-zinc-400 max-w-[260px] mx-auto leading-relaxed">
+                      {t("place.beTheFirstForBusiness", `Be the first to share your experience with a 60-second video review for ${displayedPlaceName}.`)}
                     </p>
                   </div>
                   <button
