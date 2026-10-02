@@ -122,7 +122,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
 
   return (
-    <div className={`relative overflow-hidden bg-zinc-950 ${className}`}>
+    <div className={`relative overflow-hidden bg-transparent ${className}`}>
       {currentSrc && candidateIdx < candidateUrls.length ? (
         <img
           key={currentSrc}
