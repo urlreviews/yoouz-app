@@ -47,7 +47,7 @@ import {
   Flag
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -683,58 +683,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
-
-  // Helper to check for broken/placeholder/stale banners or logos misclassified as banners
-  const isBadBanner = (url?: string | null) => {
-    if (!url || typeof url !== 'string') return true;
-    if (!isValidImageUrl(url)) return true;
-    const u = url.toLowerCase();
-    return (
-      u.includes('yoouz.com/og-banner.png') ||
-      u.includes('unsplash.com') ||
-      u.includes('injury-lawyer.jpg') ||
-      u.includes('injury-lawyer') ||
-      u.includes('placeholder') ||
-      u.includes('mock') ||
-      u.includes('1789810172562') ||
-      u.includes('favicon') ||
-      u.includes('avatar') ||
-      u.includes('badge') ||
-      u.includes('button') ||
-      u.includes('app-store') ||
-      u.includes('play-store') ||
-      u.includes('payment') ||
-      u.includes('tap/0.png') ||
-      u.includes('transparent') ||
-      u.includes('blank.gif') ||
-      u.includes('pixel.gif') ||
-      u.includes('glass1.png') ||
-      u.includes('dummy.png') ||
-      u.includes('blocked') ||
-      u.includes('unable_to_access') ||
-      u.includes('sorry_you_have_been_blocked') ||
-      u.includes('challenge') ||
-      u.includes('access_denied') ||
-      u.includes('${') ||
-      u.includes('h:180') ||
-      u.includes('qt=q:') ||
-      u.includes('justice-lady') ||
-      u.includes('lady-justice') ||
-      u.includes('scales-of-justice') ||
-      u.includes('gavel') ||
-      u.includes('court-bg') ||
-      u.includes('lawyer-banner') ||
-      u.includes('attorney-banner') ||
-      u.includes('legal-banner') ||
-      u.includes('shutterstock_') ||
-      u.includes('istockphoto') ||
-      u.includes('featured_image') ||
-      u.includes('featured-image') ||
-      u.includes('thrive-visual-editor') ||
-      u.includes('editor/css/images') ||
-      u.endsWith('.ico')
-    );
-  };
 
   const cachedMedia = React.useMemo(() => {
     try {

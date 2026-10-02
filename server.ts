@@ -241,17 +241,23 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
-      decoded.includes("justice-lady") ||
-      decoded.includes("lady-justice") ||
-      decoded.includes("scales-of-justice") ||
+      decoded.includes("justice") ||
       decoded.includes("gavel") ||
-      decoded.includes("court-bg") ||
-      decoded.includes("lawyer-banner") ||
-      decoded.includes("attorney-banner") ||
-      decoded.includes("legal-banner") ||
+      decoded.includes("court") ||
+      decoded.includes("lawyer") ||
+      decoded.includes("attorney") ||
+      decoded.includes("legal") ||
+      decoded.includes("scale") ||
+      decoded.includes("blindfold") ||
+      decoded.includes("judge") ||
+      decoded.includes("malpractice") ||
+      decoded.includes("injury") ||
+      decoded.includes("accident") ||
+      decoded.includes("advocat") ||
+      decoded.includes("law-firm") ||
+      decoded.includes("lawfirm") ||
       decoded.includes("shutterstock_") ||
       decoded.includes("istockphoto") ||
-      decoded.includes("injury-lawyer") ||
       decoded.includes("featured_image") ||
       decoded.includes("featured-image") ||
       decoded.includes("thrive-visual-editor") ||
@@ -22095,31 +22101,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || "";
       }
 
-      if (!logo && cleanDomain && cleanDomain.includes('.')) {
-        // Fallback 1: Probe root apple-touch-icon.png
-        try {
-          const appleUrl = `https://${cleanDomain}/apple-touch-icon.png`;
-          const appleResp = await fetch(appleUrl, { method: "HEAD", signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1500) : undefined }).catch(() => null);
-          if (appleResp && appleResp.ok && appleResp.headers.get("content-type")?.startsWith("image/")) {
-            logo = appleUrl;
-          }
-        } catch(e) {}
-      }
-
-      if (!logo && cleanDomain && cleanDomain.includes('.')) {
-        // Fallback 2: Probe Google Favicon V2 (256px) - only accept if bytes > 1500 (not the default 726-byte globe)
-        try {
-          const gUrl = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
-          const gResp = await fetch(gUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined }).catch(() => null);
-          if (gResp && gResp.ok) {
-            const buf = await gResp.arrayBuffer().catch(() => null);
-            if (buf && buf.byteLength > 1500) {
-              logo = gUrl;
-            }
-          }
-        } catch(e) {}
-      }
-      
       if (image && isBadBanner(image)) {
         image = "";
       } else if (image) {
@@ -23244,7 +23225,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const sendDefaultFavicon = (domainName: string) => {
       const cleanSvg = generateCustomBrandLogo(domainName);
       res.setHeader("Content-Type", "image/svg+xml");
-      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
       res.setHeader("Access-Control-Allow-Origin", "*");
       return res.status(200).send(cleanSvg);
     };
@@ -23283,48 +23264,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_FAVICON_LOGOS[cleanDomain])}`);
     }
 
-    // Try Google Favicon V2 (256px) first if cleanDomain has a dot
-    if (cleanDomain.includes(".")) {
-      try {
-        const url = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=256`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-        const response = await fetch(url, {
-          headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const contentType = response.headers.get("content-type") || "image/png";
-          const arrayBuffer = await response.arrayBuffer();
-          // If image is non-empty and not Google's default 726/730-byte generic globe or GoDaddy's default 2183-byte icon
-          if (arrayBuffer && arrayBuffer.byteLength > 100 && arrayBuffer.byteLength !== 726 && arrayBuffer.byteLength !== 730 && arrayBuffer.byteLength !== 2183) {
-            res.setHeader("Content-Type", contentType);
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            return res.status(200).send(Buffer.from(arrayBuffer));
-          }
-        }
-      } catch (e) {}
-
-      // Secondary check: DuckDuckGo favicon service
-      try {
-        const ddgUrl = `https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`;
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 2000);
-        const ddgResp = await fetch(ddgUrl, { signal: ctrl.signal });
-        clearTimeout(tid);
-        if (ddgResp.ok) {
-          const ddgBuf = await ddgResp.arrayBuffer();
-          if (ddgBuf && ddgBuf.byteLength > 200 && ddgBuf.byteLength !== 1478) {
-            res.setHeader("Content-Type", "image/x-icon");
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            return res.status(200).send(Buffer.from(ddgBuf));
-          }
-        }
-      } catch (e) {}
+    if (KNOWN_BRAND_LOGOS[cleanDomain]) {
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
     }
 
     return sendDefaultFavicon(cleanDomain);

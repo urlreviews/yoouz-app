@@ -50,6 +50,62 @@ export function isValidImageUrl(url?: string | null): boolean {
   return true;
 }
 
+export function isBadBanner(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return true;
+  if (!isValidImageUrl(url)) return true;
+  const u = url.toLowerCase();
+  return (
+    u.includes('yoouz.com/og-banner.png') ||
+    u.includes('unsplash.com') ||
+    u.includes('placeholder') ||
+    u.includes('mock') ||
+    u.includes('1789810172562') ||
+    u.includes('favicon') ||
+    u.includes('avatar') ||
+    u.includes('badge') ||
+    u.includes('button') ||
+    u.includes('app-store') ||
+    u.includes('play-store') ||
+    u.includes('payment') ||
+    u.includes('tap/0.png') ||
+    u.includes('transparent') ||
+    u.includes('blank.gif') ||
+    u.includes('pixel.gif') ||
+    u.includes('glass1.png') ||
+    u.includes('dummy.png') ||
+    u.includes('blocked') ||
+    u.includes('unable_to_access') ||
+    u.includes('sorry_you_have_been_blocked') ||
+    u.includes('challenge') ||
+    u.includes('access_denied') ||
+    u.includes('${') ||
+    u.includes('h:180') ||
+    u.includes('qt=q:') ||
+    u.includes('justice') ||
+    u.includes('gavel') ||
+    u.includes('court') ||
+    u.includes('lawyer') ||
+    u.includes('attorney') ||
+    u.includes('legal') ||
+    u.includes('scale') ||
+    u.includes('blindfold') ||
+    u.includes('judge') ||
+    u.includes('malpractice') ||
+    u.includes('injury') ||
+    u.includes('accident') ||
+    u.includes('advocat') ||
+    u.includes('law-firm') ||
+    u.includes('lawfirm') ||
+    u.includes('shutterstock_') ||
+    u.includes('istockphoto') ||
+    u.includes('featured_image') ||
+    u.includes('featured-image') ||
+    u.includes('thrive-visual-editor') ||
+    u.includes('editor/css/images') ||
+    u.endsWith('.ico')
+  );
+}
+
 export function getProxiedImageUrl(url: string | null | undefined): string {
   if (!url || typeof url !== "string") return "";
   let clean = url.trim();
@@ -1187,10 +1243,10 @@ export function getCategoryThematicBanner(category?: string | null, name?: strin
 export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
   if (!place) return "";
   
-  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("placeholder")) {
+  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl)) {
     return getProxiedImageUrl(place.bannerUrl);
   }
-  if (place.ogImage && place.ogImage.trim() !== "" && !place.ogImage.includes("placeholder")) {
+  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
     return getProxiedImageUrl(place.ogImage);
   }
 
