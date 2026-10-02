@@ -4,9 +4,10 @@ import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage,
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
-// Helper to record deleted video IDs in localStorage to avoid re-rendering stale caches
+// Helper to record deleted video IDs in localStorage and aggressively purge from all caches
 function recordClientDeletedId(id: string) {
   if (!id) return;
+  const strId = String(id);
   try {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     let deletedIds: string[] = [];
@@ -15,34 +16,29 @@ function recordClientDeletedId(id: string) {
       if (Array.isArray(parsed)) deletedIds = parsed;
     } catch (e) {}
 
-    const strId = String(id);
     if (!deletedIds.includes(strId)) {
       deletedIds.push(strId);
       localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedIds));
     }
 
-    // Immediately remove from cached feed and local reviews
-    try {
-      const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          const filtered = parsed.filter((v: any) => v && v.id !== strId);
-          localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(filtered));
-        }
+    // Aggressively scan all localStorage keys for cached video data and purge the ID
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes("videos") || key.includes("cached") || key.includes("copo"))) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const filtered = parsed.filter((v: any) => v && (v.id !== strId && v.videoId !== strId));
+              if (filtered.length !== parsed.length) {
+                localStorage.setItem(key, JSON.stringify(filtered));
+              }
+            }
+          }
+        } catch (e) {}
       }
-    } catch (e) {}
-
-    try {
-      const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
-      if (localPubStr) {
-        const parsedLp = JSON.parse(localPubStr);
-        if (Array.isArray(parsedLp)) {
-          const filteredLp = parsedLp.filter((v: any) => v && v.id !== strId);
-          localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(filteredLp));
-        }
-      }
-    } catch (e) {}
+    }
   } catch (e) {}
 }
 
