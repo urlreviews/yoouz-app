@@ -22765,8 +22765,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
+    const getFallbackFavicon = (domainName: string) => {
+      const firstChar = (domainName.charAt(0) || "Y").toUpperCase();
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#18181b"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#f4f4f5" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700">${firstChar}</text></svg>`;
+    };
+
     if (!cleanDomain) {
-      return res.status(404).send("Domain missing");
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.status(200).send(getFallbackFavicon("Y"));
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -22825,15 +22832,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       } catch (e) {}
     }
 
-    return res.status(404).send("Favicon not found");
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.status(200).send(getFallbackFavicon(cleanDomain));
   });
 
   // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
   app.get("/api/proxy-image", async (req: any, res: any) => {
+    const sendFallbackImage = () => {
+      const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#18181b"/><circle cx="64" cy="50" r="22" fill="#3f3f46"/><path d="M28 108c0-20 16-36 36-36s36 16 36 36" fill="#3f3f46"/></svg>`;
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.status(200).send(fallbackSvg);
+    };
+
     try {
       const rawUrl = req.query.url;
       if (!rawUrl || typeof rawUrl !== 'string') {
-        return res.status(404).send("Image missing");
+        return sendFallbackImage();
       }
 
       // Recursively unwrap if nested or URL encoded
@@ -22848,7 +22865,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       targetUrl = targetUrl.trim();
       if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
-        return res.status(404).send("Invalid target URL");
+        return sendFallbackImage();
       }
 
       if (targetUrl.startsWith('http://')) {
@@ -22883,7 +22900,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let contentType = (response.headers.get('content-type') || '').toLowerCase();
       
-      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return 404
+      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return fallback image
       if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
         // Fallback: Fetch authentic image bytes from Wayback Machine archive
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
@@ -22909,9 +22926,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           } catch(eWb) {}
         }
 
-        // Return clean 404 so browser image element onError triggers and cascades to candidate
-        res.setHeader('Cache-Control', 'no-cache');
-        return res.status(404).send("Image Proxy: Asset not found or blocked");
+        return sendFallbackImage();
       }
 
       // Infer explicit image MIME type if generic or missing
@@ -24202,44 +24217,6 @@ app.get('/api/debug-metadata', async (req, res) => {
     `);
   } catch (err: any) {
     res.status(500).send(err.message);
-  }
-});
-
-app.get('/api/favicon', async (req, res) => {
-  const domain = String(req.query.domain || "");
-  if (!domain) return res.redirect('/favicon.png');
-  
-  // Try common favicon locations
-  const paths = [`/favicon.ico`, `/favicon.png`];
-  
-  for (const path of paths) {
-    try {
-      const response = await fetch(`https://${domain}${path}`, { signal: AbortSignal.timeout(2000) });
-      if (response.ok) {
-        const buffer = await response.arrayBuffer();
-        const contentType = response.headers.get('Content-Type') || 'image/x-icon';
-        res.set('Content-Type', contentType);
-        return res.send(Buffer.from(buffer));
-      }
-    } catch (e) {
-      // Try next
-    }
-  }
-  
-  res.redirect('/favicon.png');
-});
-
-app.get('/api/proxy-image', async (req, res) => {
-  const url = String(req.query.url || "");
-  if (!url) return res.status(400).send("URL required");
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!response.ok) throw new Error("Failed to fetch");
-    const buffer = await response.arrayBuffer();
-    res.set('Content-Type', response.headers.get('Content-Type') || 'image/jpeg');
-    return res.send(Buffer.from(buffer));
-  } catch (e) {
-    return res.status(500).send("Failed to proxy image");
   }
 });
 
@@ -26914,8 +26891,8 @@ function injectOpenGraphTags(html: string, meta: any) {
   });
 
   Object.assign(KNOWN_PLACE_METADATA, {
-    "garageas.be": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
-    "garageas": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.garageas.be%2Flogo.png", bannerUrl: "" },
+    "garageas.be": { logoUrl: "/api/favicon?domain=garageas.be", bannerUrl: "" },
+    "garageas": { logoUrl: "/api/favicon?domain=garageas.be", bannerUrl: "" },
     "chaimkevip.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" },
     "chaimkevip": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Flogo-vip.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fchaimkevip.com%2Fwp-content%2Fuploads%2F2023%2F05%2Fbus-coastal.jpg" },
     "cleanton-management.co.il": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
