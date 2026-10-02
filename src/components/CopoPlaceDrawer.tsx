@@ -827,7 +827,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
 
     if (cleanD && cleanD.includes(".")) {
-      return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanD}&size=256`;
+      return `/api/favicon?domain=${encodeURIComponent(cleanD)}`;
     }
 
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);

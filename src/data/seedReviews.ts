@@ -203,7 +203,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     placeCity: "Phoenix, AZ",
     placeRating: 5,
     placeWebsite: "https://lernerandrowe.com/",
-    placeLogoUrl: "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://lernerandrowe.com&size=256",
+    placeLogoUrl: "/api/favicon?domain=lernerandrowe.com",
     placeBannerUrl: "/api/proxy-image?url=" + encodeURIComponent("https://lernerandrowe.com/wp-content/uploads/2022/07/injury-lawyer.jpg"),
     placeDescription: "Injured? Call 844-977-1900 to reach an injury attorney at Lerner and Rowe Injury Attorneys today. We represent clients nationwide with FREE consultations.",
     author: {

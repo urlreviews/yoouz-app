@@ -19445,7 +19445,7 @@ async function fetchWikiMetadata(domainOrName: string): Promise<{ banner: string
           const data = await resp.json();
           if (data && data.type === 'standard' && (data.originalimage?.source || data.thumbnail?.source || data.extract)) {
             const banner = data.originalimage?.source || data.thumbnail?.source || "";
-            const logo = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${rawClean}&size=256`;
+            const logo = `/api/favicon?domain=${encodeURIComponent(rawClean)}`;
             const description = data.extract || data.description || "";
             const resolvedTitle = data.title || formatBusinessName(title);
             return {
@@ -20766,7 +20766,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
 
             if (!logoImg || isFaviconUrl(logoImg)) {
-              logoImg = KNOWN_BRAND_LOGOS[targetDom] || `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${targetDom}&size=256`;
+              logoImg = KNOWN_BRAND_LOGOS[targetDom] || `/api/favicon?domain=${encodeURIComponent(targetDom)}`;
             }
 
             if (bannerImg) bannerImg = sanitizeProxy(bannerImg);
