@@ -976,14 +976,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     [places]
   );
 
+  const onLoadMoreRef = useRef(onLoadMore);
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore;
+  }, [onLoadMore]);
+
   // Pre-fetch upcoming videos for fast transitions (TikTok/Shorts sliding window)
   useEffect(() => {
     prefetchUpcomingVideos(videos, currentIndex);
 
-    if (videos.length > 0 && currentIndex >= videos.length - 3) {
-      onLoadMore?.();
+    if (videos.length >= 10 && currentIndex >= videos.length - 3 && !isLoading) {
+      onLoadMoreRef.current?.();
     }
-  }, [currentIndex, videos, onLoadMore]);
+  }, [currentIndex, videos.length, isLoading]);
 
   // Ultra-responsive IntersectionObserver index detection (matches app.copo.st active claim threshold)
   useEffect(() => {

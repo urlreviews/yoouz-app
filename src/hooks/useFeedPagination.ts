@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
@@ -21,24 +21,30 @@ function recordClientDeletedId(id: string) {
       localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedIds));
     }
 
-    // Aggressively scan all localStorage keys for cached video data and purge the ID
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.includes("videos") || key.includes("cached") || key.includes("copo"))) {
-        try {
-          const raw = localStorage.getItem(key);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              const filtered = parsed.filter((v: any) => v && (v.id !== strId && v.videoId !== strId));
-              if (filtered.length !== parsed.length) {
-                localStorage.setItem(key, JSON.stringify(filtered));
-              }
+    // Aggressively scan relevant localStorage keys for cached video data and purge the ID
+    const targetKeys = [
+      YOOUZ_VIDEOS_CACHE_KEY,
+      "yoouz_local_created_reviews",
+      "copo_videos",
+      "yoouz_cached_videos_v28",
+      "yoouz_cached_videos_v27",
+      "yoouz_cached_videos_v26",
+      "yoouz_cached_videos_v25"
+    ];
+    targetKeys.forEach((key) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const filtered = parsed.filter((v: any) => v && (v.id !== strId && v.videoId !== strId));
+            if (filtered.length !== parsed.length) {
+              localStorage.setItem(key, JSON.stringify(filtered));
             }
           }
-        } catch (e) {}
-      }
-    }
+        }
+      } catch (e) {}
+    });
   } catch (e) {}
 }
 
@@ -267,8 +273,9 @@ export function useFeedPagination() {
     return seeds;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
+  const loadDataRef = useRef<((pageNum: number, isBackground?: boolean) => Promise<void>) | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -790,6 +797,8 @@ export function useFeedPagination() {
     window.addEventListener("copo-user-restored", handleUserRestoredEvent);
     window.addEventListener("copo-users-purged", handleUsersPurgedEvent);
 
+    loadDataRef.current = loadData;
+
     // Initial load
     loadData(1, false);
 
@@ -848,12 +857,12 @@ export function useFeedPagination() {
     };
   }, []);
 
-  const loadMore = async () => {
-    if (isLoading || !hasMore) return;
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore || !loadDataRef.current) return;
     const nextPage = page + 1;
     setPage(nextPage);
-    await loadData(nextPage);
-  };
+    await loadDataRef.current(nextPage, false);
+  }, [isLoading, hasMore, page]);
 
   return { videos, setVideos, isLoading, loadMore, hasMore };
 }
