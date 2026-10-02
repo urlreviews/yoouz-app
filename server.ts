@@ -21325,6 +21325,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     weight += 300;
                   }
 
+                  if (
+                    lowerSrc.includes('final') ||
+                    lowerSrc.includes('candyshop') ||
+                    lowerSrc.includes('graphic') ||
+                    lowerSrc.includes('art') ||
+                    lowerSrc.includes('transparent')
+                  ) {
+                    weight -= 600;
+                  }
+
                   candidates.push({ src, weight });
                 });
 

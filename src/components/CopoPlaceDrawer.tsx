@@ -1169,27 +1169,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Ambient Brand Gradient Backdrop (always active as underlying luxury canvas) */}
-        <div 
-          style={{ background: `linear-gradient(135deg, ${brandGrad.from} 0%, ${brandGrad.via} 50%, ${brandGrad.to} 100%)` }}
-          className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center z-0"
-        >
-          <div style={{ background: `radial-gradient(circle at 50% 30%, ${brandGrad.glow}, transparent 70%)` }} className="absolute inset-0 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-black/30 to-black/20 pointer-events-none" />
+        {/* Sleek Dark Obsidian Mode Banner Canvas - Uniform, zero color bleeding */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError ? (
-          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center group transition-opacity duration-300 z-10">
+          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
+              key={allPhotos[photoIndex] || allPhotos[0]}
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
               alt={displayedPlaceName}
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className={`absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 ${
-                bannerLoaded ? "opacity-100" : "opacity-0"
-              }`}
+              className="absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 opacity-100"
               referrerPolicy="no-referrer"
               onLoad={() => {
                 setBannerLoaded(true);
@@ -1208,8 +1203,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 }
               }}
             />
-            {/* Subtle overlay */}
-            <div className="absolute inset-0 bg-black/10 z-20 pointer-events-none" />
+            {/* Subtle dark gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
           </div>
         ) : null}
 
