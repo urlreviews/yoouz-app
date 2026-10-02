@@ -884,6 +884,7 @@ export function App() {
       try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
       const delSet = new Set(deletedIds.map(String));
 
+      // Clean out any deleted reviews from local created reviews store
       const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
       if (localPubStr) {
         const list = JSON.parse(localPubStr);
@@ -892,15 +893,6 @@ export function App() {
           if (nonDeleted.length !== list.length) {
             localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(nonDeleted));
           }
-          nonDeleted.forEach((rev: any) => {
-            if (rev && rev.id) {
-              fetch("/api/videos/save-review", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(rev)
-              }).catch(() => {});
-            }
-          });
         }
       }
     } catch (e) {}
@@ -912,6 +904,9 @@ export function App() {
       const targetId = e?.detail?.videoId;
       if (!targetId) return;
       const strId = String(targetId);
+
+      // Instantly remove from videos feed state
+      setVideos(prev => prev.filter(v => String(v.id) !== strId));
 
       // Instantly update places state reviews
       setPlaces(prev => prev.map(p => {

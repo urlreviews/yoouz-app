@@ -228,11 +228,13 @@ export function useFeedPagination() {
 
       let localPublished: any[] = [];
       try {
+        const now = Date.now();
         const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
         if (localPubStr) {
           const parsedLp = JSON.parse(localPubStr);
           if (Array.isArray(parsedLp)) {
-            const cleanedLp = parsedLp.filter((v: any) => !isPurgedItem(v));
+            // Only keep items that are not purged and were created in the last 60 seconds
+            const cleanedLp = parsedLp.filter((v: any) => !isPurgedItem(v) && (now - (v.createdAtMs || 0) < 60000));
             localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleanedLp));
             localPublished = cleanedLp.map(normalizeReview);
           }
@@ -367,20 +369,35 @@ export function useFeedPagination() {
                 }
               });
 
-              // Keep only real, non-purged local pending uploads currently recording on this client
+              // Keep only real, non-purged local pending uploads created in the last 60s currently in flight
+              const now = Date.now();
               let localSavedReviews: any[] = [];
               try {
                 const ls = localStorage.getItem("yoouz_local_created_reviews");
                 if (ls) {
                   const parsed = JSON.parse(ls);
                   if (Array.isArray(parsed)) {
-                    localSavedReviews = parsed.filter((r: any) => r && r.id && !allDeletedSet.has(String(r.id)));
+                    // Only keep in-flight items created in the last 60s
+                    localSavedReviews = parsed.filter((r: any) => {
+                      if (!r || !r.id || allDeletedSet.has(String(r.id)) || isPurgedItem(r)) return false;
+                      const isRecent = (now - (r.createdAtMs || 0) < 60000);
+                      return isRecent;
+                    });
+                    // Persist cleaned list back so old deleted local recordings are purged from phone storage
+                    localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(localSavedReviews));
                   }
                 }
               } catch (e) {}
 
+              const isRecentInFlight = (v: any) => {
+                if (!v || !v.id || allDeletedSet.has(String(v.id)) || isPurgedItem(v)) return false;
+                const isLocal = Boolean((v as any).isLocalUpload) || Boolean((v as any).isUploading);
+                const isRecent = (now - (v.createdAtMs || 0) < 60000);
+                return isLocal && isRecent;
+              };
+
               const pendingCandidateList = [
-                ...prev.filter((v) => v && (Boolean((v as any).isLocalUpload) && !allDeletedSet.has(String(v.id)))),
+                ...prev.filter(isRecentInFlight),
                 ...localSavedReviews
               ];
 
@@ -391,9 +408,9 @@ export function useFeedPagination() {
                   v.id &&
                   !isPurgedItem(v) &&
                   !allDeletedSet.has(String(v.id)) &&
-                  !valid.some((sv) => sv.id === v.id)
+                  !valid.some((sv) => String(sv.id) === String(v.id))
                 ) {
-                  pendingLocalVideosMap.set(v.id, normalizeReview(v));
+                  pendingLocalVideosMap.set(String(v.id), normalizeReview(v));
                 }
               });
               const pendingLocalVideos = Array.from(pendingLocalVideosMap.values());
