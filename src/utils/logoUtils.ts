@@ -561,6 +561,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <text x="50" y="59" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">DP</text>
       <path d="M36 50 H42 M58 50 H64 M50 36 V42 M50 58 V64" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`),
+  "switch.com.mt": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+  "www.switch.com.mt": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+  "switch": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+  "switchmalta": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
   "www.digitalparkae.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#0d9488"/>
@@ -803,7 +807,11 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "best-car": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "gett": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200"
+  "gett": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+  "www.switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+  "switch": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+  "switchmalta": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();

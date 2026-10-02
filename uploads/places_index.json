@@ -1,5 +1,109 @@
 [
   {
+    "id": "switch.com.mt",
+    "name": "Switch - Digital & Brand Agency",
+    "category": "Marketing & Creative Agency",
+    "categoryType": "all",
+    "address": "Birkirkara, CBD3010, Malta",
+    "city": "Birkirkara",
+    "country": "Malta",
+    "lat": 35.8972,
+    "lng": 14.4608,
+    "rating": 4.9,
+    "totalReviews": 48,
+    "ratingDistribution": {
+      "stars5": 45,
+      "stars4": 3,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+    "logoUrl": "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+    "bannerUrl": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+    "ogImage": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+    "photos": [
+      "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp"
+    ],
+    "openingHours": "Mon - Fri: 08:30 - 17:30 · Sat & Sun: Closed",
+    "isOpen": true,
+    "phone": "+356 21316770",
+    "email": "espresso@switch.com.mt",
+    "website": "https://switch.com.mt/",
+    "priceRange": "$$$",
+    "plusCode": "",
+    "locations": [],
+    "description": "Since 2004, Switch has been helping B2B brands grow as a boutique B2B marketing, design, and brand agency based in Malta.",
+    "popularKeywords": [
+      {
+        "tag": "Brand Strategy",
+        "count": 1
+      },
+      {
+        "tag": "B2B Marketing",
+        "count": 1
+      }
+    ],
+    "amenities": [
+      "B2B Marketing",
+      "Brand Strategy",
+      "Content & Social",
+      "Web Design",
+      "Creative Production"
+    ],
+    "topDishes": [],
+    "brandDomain": "switch.com.mt"
+  },
+  {
+    "id": "newhitech.net",
+    "name": "new hitech service center",
+    "category": "Shopping Mall",
+    "categoryType": "all",
+    "address": "Online",
+    "city": "New York",
+    "country": "",
+    "lat": -129.94270855,
+    "lng": 46.423669000000004,
+    "rating": 5,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fnewhitech.net%2Fcdn%2Fshop%2Ffiles%2FHTE.png%3Fv%3D1707244843%26width%3D1200",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fnewhitech.net%2Fcdn%2Fshop%2Ffiles%2FHTE.png%3Fv%3D1707244843%26width%3D1200",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fnewhitech.net%2Fcdn%2Fshop%2Ffiles%2FHTE.png%3Fheight%3D628%26pad_color%3Dffffff%26v%3D1707244843%26width%3D1200",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fnewhitech.net%2Fcdn%2Fshop%2Ffiles%2FHTE.png%3Fheight%3D628%26pad_color%3Dffffff%26v%3D1707244843%26width%3D1200",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fnewhitech.net%2Fcdn%2Fshop%2Ffiles%2FHTE.png%3Fheight%3D628%26pad_color%3Dffffff%26v%3D1707244843%26width%3D1200",
+      "/api/brand-banner/newhitech.net"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (212) 219-3794",
+    "email": "",
+    "website": "https://newhitech.net/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Welcome to our Legendary Electronics Repair Shop in LES, Manhattan! We're your go-to for audio, video, and electronics services. From vintage amps to modern laptops, we fix it all. Our prop expertise also shines for photo/video projects. Serving neighbors, regular folks, and industry pros with pride!",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "newhitech.net",
+    "selectedName": "new hitech service center",
+    "hours": "Available 24/7",
+    "domain": "newhitech.net",
+    "reviewCount": 0,
+    "reviews": [],
+    "latitude": 0,
+    "longitude": 0,
+    "videoReviewCount": 0
+  },
+  {
     "id": "safedrivelondon.co.uk",
     "name": "Safedrivelondon",
     "category": "Website",

@@ -185,12 +185,14 @@ function isLogoOrIconUrl(urlStr: string): boolean {
     l.endsWith('.svg') ||
     l.includes('.ico') ||
     l.includes('300x46') ||
+    l.includes('196x46') ||
     l.includes('100x100') ||
     l.includes('150x150') ||
     l.includes('78x100') ||
     l.includes('16x16') ||
     l.includes('32x32') ||
     l.includes('60x60') ||
+    /\b\d{2,4}x[1-6]\d\b/.test(l) ||
     l.includes('tap/0.png')
   );
 }
@@ -221,6 +223,8 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("default-logo") ||
       decoded.includes("pwa-app") ||
       decoded.includes("wsimg.com") ||
+      decoded.includes("clearbit.com") ||
+      decoded.includes("brandfetch.io") ||
       decoded.includes("cb6ad0") ||
       decoded.includes("1789810172562") ||
       decoded.includes("favicon") ||
@@ -236,10 +240,11 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
-      decoded.endsWith(".ico")
+      decoded.endsWith(".ico") ||
+      /\b\d{2,4}x[1-6]\d\b/.test(decoded)
     );
   } catch (e) {
-    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked") || url.includes("og-banner");
+    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit");
   }
 }
 
@@ -1878,9 +1883,15 @@ function resolveBrandLogo(name: string, website?: string, category?: string): { 
   if (website) {
     try {
       const parsed = new URL(website);
+      const cleanHost = parsed.hostname.replace(/^www\./, "").toLowerCase();
+      if (KNOWN_BRAND_LOGOS[cleanHost]) {
+        return {
+          logoUrl: KNOWN_BRAND_LOGOS[cleanHost],
+          brandDomain: cleanHost
+        };
+      }
       return {
-        logoUrl: `https://logo.clearbit.com/${parsed.hostname}`,
-        brandDomain: parsed.hostname
+        brandDomain: cleanHost
       };
     } catch {
       // ignore
@@ -9593,7 +9604,123 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     });
   });
 
-  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; rating?: number; totalReviews?: number; priceRange?: string; description?: string; bannerUrl?: string; photos?: string[]; amenities?: string[]; locations?: any[] }> = {
+  const KNOWN_ENTITY_LOCATIONS: Record<string, { name: string; address: string; postalCode?: string; city: string; country: string; phone?: string; email?: string; category?: string; openingHours?: string; lat: number; lng: number; rating?: number; totalReviews?: number; priceRange?: string; description?: string; logoUrl?: string; bannerUrl?: string; photos?: string[]; amenities?: string[]; locations?: any[] }> = {
+    "switch.com.mt": {
+      name: "Switch - Digital & Brand Agency",
+      address: "Birkirkara, CBD3010, Malta",
+      postalCode: "CBD3010",
+      city: "Birkirkara",
+      country: "Malta",
+      phone: "+356 21316770",
+      email: "espresso@switch.com.mt",
+      category: "Marketing & Creative Agency",
+      openingHours: "Mon - Fri: 08:30 - 17:30 · Sat & Sun: Closed",
+      rating: 4.9,
+      totalReviews: 48,
+      priceRange: "$$$",
+      description: "Since 2004, Switch has been helping B2B brands grow as a boutique B2B marketing, design, and brand agency based in Malta.",
+      logoUrl: "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+      bannerUrl: "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+      photos: ["https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp"],
+      amenities: ["B2B Marketing", "Brand Strategy", "Content & Social", "Web Design", "Creative Production"],
+      lat: 35.8972,
+      lng: 14.4608
+    },
+    "www.switch.com.mt": {
+      name: "Switch - Digital & Brand Agency",
+      address: "Birkirkara, CBD3010, Malta",
+      postalCode: "CBD3010",
+      city: "Birkirkara",
+      country: "Malta",
+      phone: "+356 21316770",
+      email: "espresso@switch.com.mt",
+      category: "Marketing & Creative Agency",
+      openingHours: "Mon - Fri: 08:30 - 17:30 · Sat & Sun: Closed",
+      rating: 4.9,
+      totalReviews: 48,
+      priceRange: "$$$",
+      description: "Since 2004, Switch has been helping B2B brands grow as a boutique B2B marketing, design, and brand agency based in Malta.",
+      logoUrl: "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+      bannerUrl: "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+      photos: ["https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp"],
+      amenities: ["B2B Marketing", "Brand Strategy", "Content & Social", "Web Design", "Creative Production"],
+      lat: 35.8972,
+      lng: 14.4608
+    },
+    "switch": {
+      name: "Switch - Digital & Brand Agency",
+      address: "Birkirkara, CBD3010, Malta",
+      postalCode: "CBD3010",
+      city: "Birkirkara",
+      country: "Malta",
+      phone: "+356 21316770",
+      email: "espresso@switch.com.mt",
+      category: "Marketing & Creative Agency",
+      openingHours: "Mon - Fri: 08:30 - 17:30 · Sat & Sun: Closed",
+      logoUrl: "https://switch.com.mt/wp-content/uploads/2020/09/Switch25-196x46-1.png",
+      bannerUrl: "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+      lat: 35.8972,
+      lng: 14.4608
+    },
+    "gett.com": {
+      name: "Gett",
+      address: "172 Drury Lane",
+      postalCode: "WC2B 5QR",
+      city: "London",
+      country: "United Kingdom",
+      phone: "+44 20 7397 4300",
+      email: "contact.uk@gett.com",
+      category: "Auto & Car Rental",
+      openingHours: "Available 24/7",
+      rating: 4.8,
+      totalReviews: 240,
+      priceRange: "$$",
+      description: "Gett is a leading global ground transportation management and on-demand mobility platform.",
+      logoUrl: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
+      bannerUrl: "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      photos: ["https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200"],
+      lat: 51.5152,
+      lng: -0.1226
+    },
+    "www.gett.com": {
+      name: "Gett",
+      address: "172 Drury Lane",
+      postalCode: "WC2B 5QR",
+      city: "London",
+      country: "United Kingdom",
+      phone: "+44 20 7397 4300",
+      email: "contact.uk@gett.com",
+      category: "Auto & Car Rental",
+      openingHours: "Available 24/7",
+      rating: 4.8,
+      totalReviews: 240,
+      priceRange: "$$",
+      description: "Gett is a leading global ground transportation management and on-demand mobility platform.",
+      logoUrl: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
+      bannerUrl: "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      photos: ["https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200"],
+      lat: 51.5152,
+      lng: -0.1226
+    },
+    "gett": {
+      name: "Gett",
+      address: "172 Drury Lane",
+      postalCode: "WC2B 5QR",
+      city: "London",
+      country: "United Kingdom",
+      phone: "+44 20 7397 4300",
+      email: "contact.uk@gett.com",
+      category: "Auto & Car Rental",
+      openingHours: "Available 24/7",
+      rating: 4.8,
+      totalReviews: 240,
+      priceRange: "$$",
+      description: "Gett is a leading global ground transportation management and on-demand mobility platform.",
+      logoUrl: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2263%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.5%22%3EGett%3C%2Ftext%3E%3C%2Fsvg%3E",
+      bannerUrl: "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      lat: 51.5152,
+      lng: -0.1226
+    },
     "theviewnyc.com": { 
       name: "The View Restaurant & Lounge", 
       address: "1535 Broadway", 
@@ -18498,7 +18625,8 @@ Return JSON:
     // 2. Strict TLD Domain Mapping for Country (Prevents accidental country collisions)
     const domLower = (cleanDomain || "").toLowerCase().trim();
     if (!country) {
-      if (domLower.endsWith(".be")) country = "Belgium";
+      if (domLower.endsWith(".mt") || domLower.endsWith(".com.mt")) country = "Malta";
+      else if (domLower.endsWith(".be")) country = "Belgium";
       else if (domLower.endsWith(".nl")) country = "Netherlands";
       else if (domLower.endsWith(".fr")) country = "France";
       else if (domLower.endsWith(".de")) country = "Germany";
@@ -19031,18 +19159,20 @@ Return JSON:
         else if (cleanDomain.endsWith(".ae") || /\bUnited Arab Emirates\b|\bUAE\b/i.test(combinedText) || city === "Dubai" || city === "Abu Dhabi") country = "United Arab Emirates";
         else if (cleanDomain.endsWith(".au") || cleanDomain.endsWith(".com.au") || /\bAustralia\b/i.test(combinedText) || city === "Sydney" || city === "Melbourne") country = "Australia";
         else if (cleanDomain.endsWith(".nz") || cleanDomain.endsWith(".co.nz") || /\bNew Zealand\b/i.test(combinedText) || city === "Auckland") country = "New Zealand";
+        else if (cleanDomain.endsWith(".mt") || cleanDomain.endsWith(".com.mt") || /\bMalta\b/i.test(combinedText) || city === "Birkirkara" || city === "Valletta") country = "Malta";
         else if (cleanDomain.endsWith(".us") || cleanDomain.endsWith(".ca") || /\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
       }
 
       // 12. Industry Category classification
       if (!category) {
         const lower = combinedText.toLowerCase();
-        if (/optiek|optician|opticien|glasses|brillen|eyewear|lenzen|contactlenzen|oogmeting|oogarts|optometrist/i.test(lower)) category = "Optician & Eyewear";
+        if (/marketing|digital\s*agency|advertising|branding|creative\s*agency|web\s*design|seo\s*agency|media\s*agency|brand\s*agency/i.test(lower)) category = "Marketing & Creative Agency";
+        else if (/optiek|optician|opticien|glasses|brillen|eyewear|lenzen|contactlenzen|oogmeting|oogarts|optometrist/i.test(lower)) category = "Optician & Eyewear";
         else if (/apotheek|pharmacie|pharmacy|apotheke|farmacia|drugstore/i.test(lower)) category = "Pharmacy & Healthcare";
         else if (/dentist|dental|teeth|mendozza|cavity|implant|orthodont|tandarts|zahnarzt/i.test(lower)) category = "Dentist & Dental Clinic";
         else if (/injury|accident|lawyer|attorney|law\s*firm|legal|advocaat|avocat/i.test(lower)) category = "Legal Services";
         else if (/plumb|heating|plomberie|drain|chauffage|sanitair/i.test(lower)) category = "Plumbing & HVAC";
-        else if (/massage|spa|wellness|facial|therap/i.test(lower)) category = "Spa & Wellness";
+        else if (/\b(massage|wellness|facial|psychotherapy|physiotherapy|massage\s*therapy)\b/i.test(lower) || /\bspa\b/i.test(lower)) category = "Spa & Wellness";
         else if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen|brasserie/i.test(lower)) category = "Restaurant & Cafe";
         else if (/hotel|resort|suites/i.test(lower)) category = "Hotel & Hospitality";
         else if (/car\s*rental|rental\s*car|auto\s*rental/i.test(lower)) category = "Auto & Car Rental";
@@ -19547,16 +19677,19 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
 
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-  async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false): Promise<ResolvedBusinessData | null> {
+  async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false, forceRefresh = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
     
     console.log(`[API] Resolving business query: "${cleanQ}" (Engine: Extreme Google-Only Discovery Engine)`);
 
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (forceRefresh) {
+      BUSINESS_QUERY_CACHE.delete(cacheKey);
+    }
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo) || isLogoOrIconUrl(cachedEntry.data.photo);
+    if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
+      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo) || (!cachedEntry.data.logo) || isLogoOrIconUrl(cachedEntry.data.photo);
       if (!isMissing) {
         return cachedEntry.data;
       }
@@ -19840,6 +19973,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
         if (validDom) {
           const loc = KNOWN_ENTITY_LOCATIONS[validDom] || KNOWN_ENTITY_LOCATIONS[validDom.split('.')[0]];
+          const brandLogo = (loc as any)?.logoUrl || KNOWN_BRAND_LOGOS[validDom] || KNOWN_BRAND_LOGOS[validDom.split('.')[0]] || "";
+          const brandBanner = (loc as any)?.bannerUrl || (loc as any)?.photo || KNOWN_BRAND_BANNERS[validDom] || KNOWN_BRAND_BANNERS[validDom.split('.')[0]] || "";
           return {
             domain: validDom,
             websiteUrl: `https://${validDom}`,
@@ -19851,8 +19986,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             phone: loc?.phone || "",
             email: loc?.email || "",
             openingHours: loc?.openingHours || "",
-            photo: "",
-            description: "",
+            photo: (!isLogoOrIconUrl(brandBanner) && !isBadBanner(brandBanner)) ? brandBanner : "",
+            logo: (brandLogo && !isGenericOrPlaceholderLogo(brandLogo) && !isFaviconUrl(brandLogo)) ? brandLogo : "",
+            description: loc?.description || `${officialName} is a verified business on Yoouz.`,
             lat: loc?.lat || 0,
             lng: loc?.lng || 0
           };
@@ -19873,7 +20009,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (/mall|shopping|center|plaza|קניון|מרכז מסחרי/i.test(l)) return "Shopping Mall";
       if (/supermarket|grocery|market|סופרמרקט|מרכול/i.test(l)) return "Supermarket & Grocery";
       if (/pharmacy|drugstore|apotheek|בית מרקחת/i.test(l)) return "Pharmacy & Healthcare";
-      if (/spa|massage|wellness|facial|therapy|ספא|עיסוי/i.test(l)) return "Spa & Wellness";
+      if (/marketing|branding|creative\s*agency|advertising|digital\s*agency|media\s*agency/i.test(l)) return "Marketing & Creative Agency";
+      if (/\b(spa|massage|wellness|facial|psychotherapy|physiotherapy|massage\s*therapy)\b/i.test(l) || /ספא|עיסוי/i.test(l)) return "Spa & Wellness";
       if (/car|auto|rental|voiture|השכרת רכב|מוסך/i.test(l)) return "Auto & Car Rental";
       if (/optician|opticien|eyewear|glasses|אופטיקה|משקפיים/i.test(l)) return "Optician & Eyewear";
       if (/tech|software|digital|agency|media|app/i.test(l)) return "Technology & Digital";
@@ -20088,6 +20225,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           return fastResult;
         }
 
+        let extractedLogo = "";
+        let extractedBanner = "";
+
         try {
           console.log(`[Firecrawl] Scraping discovered URL: ${discoveredUrl}`);
           const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
@@ -20095,12 +20235,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (scrapeData && scrapeData.html) {
             const scHtml = scrapeData.html;
             const sc$ = cheerio.load(scHtml);
-            
-            let extractedLogo = "";
-            let extractedBanner = "";
 
             const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeData.metadata?.title;
-            if (metaT && metaT.trim().length > 1) {
+            const pubName = sc$('[itemprop="publisher"] [itemprop="name"]').attr('content') ||
+                            sc$('[itemprop="publisher"] [itemprop="name"]').text() ||
+                            sc$('[itemprop="name"]').first().attr('content') ||
+                            sc$('[itemprop="name"]').first().text();
+            if (pubName && pubName.trim().length > 1 && !isGenericPlaceNameServer(pubName.trim())) {
+              scTitle = formatBusinessName(pubName.trim(), discoveredDom, cleanQ);
+            } else if (metaT && metaT.trim().length > 1) {
               const formattedScTitle = formatBusinessName(metaT.trim(), discoveredDom, cleanQ);
               const cleanQWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
               const formattedLower = formattedScTitle.toLowerCase();
@@ -20138,43 +20281,101 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return s;
             }
 
-            sc$('header img, .site-header img, .logo img, a.logo img, img.logo, img[src*="logo" i], img[alt*="logo" i], img[alt*="' + (discoveredDom.split('.')[0] || 'brand') + '" i]').each((_: any, el: any) => {
-              if (extractedLogo) return;
-              const src = sc$(el).attr('src') || sc$(el).attr('data-src');
-              if (src) {
-                const abs = makeAbsolute(src);
-                if (abs && !abs.includes('placeholder') && !abs.includes('svg+xml')) {
+            // 1. Check Schema Microdata / OpenGraph logo tags
+            const microdataLogo = sc$('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr('content') ||
+                                  sc$('[itemprop="logo"]').attr('src') ||
+                                  sc$('[itemprop="logo"]').attr('content') ||
+                                  sc$('meta[property="og:logo"]').attr('content') ||
+                                  sc$('meta[name="og:logo"]').attr('content');
+            if (microdataLogo) {
+              const abs = makeAbsolute(microdataLogo);
+              if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
+                extractedLogo = abs;
+              }
+            }
+
+            // 2. Check JSON-LD Schema logo
+            if (!extractedLogo) {
+              sc$('script[type="application/ld+json"]').each((_: any, el: any) => {
+                if (extractedLogo) return;
+                try {
+                  const rawJson = sc$(el).html();
+                  if (rawJson) {
+                    const parsed = JSON.parse(rawJson);
+                    const findLogo = (node: any) => {
+                      if (!node || typeof node !== 'object') return;
+                      const candidate = node.logo || (node.publisher && node.publisher.logo);
+                      if (candidate) {
+                        const lUrl = typeof candidate === 'string' ? candidate : (candidate.url || candidate['@id']);
+                        if (lUrl && typeof lUrl === 'string') {
+                          const abs = makeAbsolute(lUrl);
+                          if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
+                            extractedLogo = abs;
+                            return;
+                          }
+                        }
+                      }
+                      for (const k in node) {
+                        if (typeof node[k] === 'object') findLogo(node[k]);
+                      }
+                    };
+                    findLogo(parsed);
+                  }
+                } catch(e) {}
+              });
+            }
+
+            // 3. Check Header, Navbar, Brand img tags
+            if (!extractedLogo) {
+              sc$('header img, .site-header img, nav img, .logo img, a.logo img, img.logo, img[src*="logo" i], img[alt*="logo" i], img[class*="logo" i], a[class*="logo" i] img, a[id*="logo" i] img, img[alt*="' + (discoveredDom.split('.')[0] || 'brand') + '" i]').each((_: any, el: any) => {
+                if (extractedLogo) return;
+                const src = sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
+                if (src) {
+                  const abs = makeAbsolute(src);
+                  if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs) && !abs.includes('placeholder')) {
+                    extractedLogo = abs;
+                  }
+                }
+              });
+            }
+
+            // 4. High-resolution Apple Touch Icon (authentic brand icon)
+            if (!extractedLogo) {
+              const iconHref = sc$('link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]').attr('href');
+              if (iconHref) {
+                const abs = makeAbsolute(iconHref);
+                if (abs && !isGenericOrPlaceholderLogo(abs) && !isFaviconUrl(abs)) {
                   extractedLogo = abs;
                 }
               }
-            });
-
-            if (!extractedLogo) {
-              const iconHref = sc$('link[rel*="apple-touch-icon"]').attr('href') || sc$('link[rel*="icon"]').attr('href');
-              if (iconHref) {
-                extractedLogo = makeAbsolute(iconHref);
-              }
-            }
-            if (!extractedLogo) {
-              extractedLogo = `/api/favicon?domain=${encodeURIComponent(discoveredDom)}`;
             }
 
+            // 5. Known Brand Logos fallback
+            if (!extractedLogo && KNOWN_BRAND_LOGOS[discoveredDom]) {
+              extractedLogo = KNOWN_BRAND_LOGOS[discoveredDom];
+            }
+
+            // Banner Extraction (STRICTLY NO LOGOS OR SMALL ICONS IN BANNER)
             const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-            if (metaImg && !metaImg.includes('placeholder') && !metaImg.includes('unsplash.com') && metaImg !== 'none') {
+            if (metaImg && !isBadBanner(metaImg) && !isLogoOrIconUrl(metaImg) && metaImg !== 'none') {
               extractedBanner = makeAbsolute(metaImg);
             }
 
             if (!extractedBanner) {
-              sc$('main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/uploads/"]').each((_: any, el: any) => {
+              sc$('main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/uploads/"], article img').each((_: any, el: any) => {
                 if (extractedBanner) return;
-                const src = sc$(el).attr('src') || sc$(el).attr('data-src');
+                const src = sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
                 if (src) {
                   const abs = makeAbsolute(src);
-                  if (abs && abs !== extractedLogo && !abs.includes('icon') && !abs.includes('140x.png')) {
+                  if (abs && abs !== extractedLogo && !isBadBanner(abs) && !isLogoOrIconUrl(abs)) {
                     extractedBanner = abs;
                   }
                 }
               });
+            }
+
+            if (!extractedBanner && KNOWN_BRAND_BANNERS[discoveredDom]) {
+              extractedBanner = KNOWN_BRAND_BANNERS[discoveredDom];
             }
 
             scImage = extractedBanner || scImage;
@@ -20195,7 +20396,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const finalResult = {
           domain: discoveredDom,
           websiteUrl: discoveredUrl,
-          name: scTitle || formatBusinessName(cleanQ),
+          name: (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom]) || scTitle || formatBusinessName(cleanQ, discoveredDom),
           category: scCategory || detectedCategory,
           address: scAddress,
           city: scCity || "Online",
@@ -20204,6 +20405,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           email: scEmail,
           openingHours: scOpeningHours,
           photo: scImage,
+          logo: (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo) && !isFaviconUrl(extractedLogo)) ? extractedLogo : (KNOWN_BRAND_LOGOS[discoveredDom] || ""),
           description: scDesc,
           lat: scLat,
           lng: scLng
@@ -20362,7 +20564,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 email: pData.email || "",
                 category: row.category || pData.category || "Verified Business",
                 openingHours: pData.openingHours || "",
-                locations: pData.locations || []
+                locations: pData.locations || [],
+                photos: cachedImageCandidate ? [cachedImageCandidate] : []
               });
             }
           }
@@ -20378,17 +20581,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // 1. If user passed a business phrase/name without a domain dot, resolve directly via Fast Discovery Engine
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
-        resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
+        resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
-          const entityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo)) ? resolvedEntity.logo : "";
+          const entityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !isGenericOrPlaceholderLogo(resolvedEntity.logo)) ? resolvedEntity.logo : (KNOWN_BRAND_LOGOS[realDomain] || "");
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain);
           return res.json({
             title: entityTitle,
             description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
-            image: (!isLogoOrIconUrl(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : ""),
+            image: (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : ""),
             logo: entityLogo,
             siteName: entityTitle,
             domain: realDomain,
@@ -20400,7 +20603,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             email: resolvedEntity.email || "",
             category: resolvedEntity.category || "Verified Business",
             openingHours: resolvedEntity.openingHours || "Available 24/7",
-            locations: []
+            locations: [],
+            photos: (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) && resolvedEntity.photo) 
+              ? [resolvedEntity.photo] 
+              : (KNOWN_BRAND_BANNERS[realDomain] ? [KNOWN_BRAND_BANNERS[realDomain]] : [])
           });
         } else if (resolvedEntity) {
           return res.json({
@@ -25572,8 +25778,9 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
       candidateUrls.push(directUrl);
     }
     if (domain && domain.includes(".")) {
-      candidateUrls.push(`https://logo.clearbit.com/${domain}`);
-      candidateUrls.push(`https://unavatar.io/${domain}?fallback=false`);
+      if (KNOWN_BRAND_LOGOS[domain]) {
+        candidateUrls.push(KNOWN_BRAND_LOGOS[domain]);
+      }
     }
 
     const fetchPromises = candidateUrls.map(async (u) => {
