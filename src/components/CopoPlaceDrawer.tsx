@@ -625,9 +625,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("unsplash.com") && !url.includes("/api/brand-banner"));
-                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : "");
-                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo)) ? data.logo : (hasValidLogo ? place.logoUrl : "");
+                const resolvedBanner = isRealPhoto(place.bannerUrl) ? place.bannerUrl : (isRealPhoto(data.image) ? data.image : (place.bannerUrl || ""));
+                const resolvedLogo = (hasValidLogo && place.logoUrl) ? place.logoUrl : ((data.logo && !isFaviconUrl(data.logo)) ? data.logo : (place.logoUrl || ""));
                 
+                try {
+                  const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
+                  if (cacheKey) {
+                    localStorage.setItem(`yoouz_place_media_${cacheKey}`, JSON.stringify({
+                      bannerUrl: resolvedBanner,
+                      logoUrl: resolvedLogo
+                    }));
+                  }
+                } catch(e) {}
+
                 if (isRealPhoto(data.image)) {
                   setFetchedBannerUrl(data.image);
                 }
@@ -648,8 +658,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     lng: data.lng || place.lng || 0,
                     bannerUrl: resolvedBanner || place.bannerUrl || "",
                     ogImage: resolvedBanner || place.ogImage || "",
-                    logoUrl: resolvedLogo,
-                    avatarUrl: resolvedLogo,
+                    logoUrl: resolvedLogo || place.logoUrl || "",
+                    avatarUrl: resolvedLogo || place.avatarUrl || "",
                     brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
                     website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
                     photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
@@ -706,8 +716,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     );
   };
 
-  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
-  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
+  const cachedMedia = React.useMemo(() => {
+    try {
+      const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
+      if (!cacheKey) return null;
+      const raw = localStorage.getItem(`yoouz_place_media_${cacheKey}`);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return null;
+  }, [drawerDomain, place.brandDomain, place.id]);
+
+  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (cachedMedia?.bannerUrl || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
+  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (cachedMedia?.bannerUrl || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
   const cleanReviewBanner = !isBadBanner(reviewBannerUrl) ? reviewBannerUrl : "";
   const cleanFetchedBanner = !isBadBanner(fetchedBannerUrl) ? fetchedBannerUrl : "";
 
@@ -725,6 +745,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanBannerUrl ||
     activeBanner ||
     cleanOgImage ||
+    cachedMedia?.bannerUrl ||
     cleanReviewBanner ||
     knownDomainBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
@@ -745,6 +766,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const photoCandidates = [
       cleanFetchedBanner,
       cleanBannerUrl,
+      cachedMedia?.bannerUrl,
       cleanOgImage,
       activeBanner,
       cleanReviewBanner,
@@ -754,7 +776,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace]);
+  }, [cleanFetchedBanner, cleanBannerUrl, cachedMedia?.bannerUrl, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 
@@ -763,6 +785,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanD = (drawerDomain || "").replace(/^www\./, "").toLowerCase().trim();
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
+
+    if (cachedMedia?.logoUrl && !isFaviconUrl(cachedMedia.logoUrl)) {
+      return cachedMedia.logoUrl;
+    }
 
     // Priority 1: Canonical place record logo (ignoring wide header banners, favicons, and tap icons)
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;

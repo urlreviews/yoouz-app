@@ -21660,19 +21660,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return false;
             };
 
-            const isFaviconOrPlaceholder = (u?: string) => !u || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2");
+            const isFaviconOrPlaceholder = (u?: string) => !u || typeof u !== 'string' || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2") || u.includes("/api/brand-banner");
             const hasBetterLogo = logo && !isFaviconOrPlaceholder(logo);
 
-            const mergedLogo = (hasBetterLogo && isFaviconOrPlaceholder(existingDoc.logoUrl))
-              ? logo
-              : (!isFaviconOrPlaceholder(existingDoc.logoUrl))
-                ? existingDoc.logoUrl
-                : (logo || (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : logo));
+            const mergedLogo = (!isFaviconOrPlaceholder(existingDoc.logoUrl))
+              ? existingDoc.logoUrl
+              : (hasBetterLogo ? logo : (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (logo || "")));
 
-            const isBadBannerInternal = (b?: string) => isBadBanner(b);
-            const mergedBanner = !isBadBannerInternal(image)
-              ? image
-              : (!isBadBannerInternal(existingDoc.bannerUrl) ? existingDoc.bannerUrl : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : `/api/brand-banner/${cleanDomain}`));
+            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && b.includes('/api/brand-banner'));
+            const mergedBanner = (!isBadBannerInternal(existingDoc.bannerUrl))
+              ? existingDoc.bannerUrl
+              : (!isBadBannerInternal(image) ? image : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""));
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
             const mergedAddress = isCorruptAddress(rawExistingAddr) || !rawExistingAddr || (effectiveAddress && effectiveAddress.length > rawExistingAddr.length) 
