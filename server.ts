@@ -146,6 +146,10 @@ function isFaviconUrl(url?: string | null): boolean {
   }
   return (
     l.includes("favicon") ||
+    l.includes("16x16") ||
+    l.includes("32x32") ||
+    l.includes("48x48") ||
+    l.includes("64x64") ||
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||
@@ -237,6 +241,17 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
+      decoded.includes("justice-lady") ||
+      decoded.includes("lady-justice") ||
+      decoded.includes("scales-of-justice") ||
+      decoded.includes("gavel") ||
+      decoded.includes("court-bg") ||
+      decoded.includes("lawyer-banner") ||
+      decoded.includes("attorney-banner") ||
+      decoded.includes("legal-banner") ||
+      decoded.includes("shutterstock_") ||
+      decoded.includes("istockphoto") ||
+      decoded.includes("injury-lawyer") ||
       decoded.endsWith(".ico")
     );
   } catch (e) {
@@ -19611,6 +19626,10 @@ function isFaviconUrl(url?: string | null): boolean {
   }
   return (
     l.includes("favicon") ||
+    l.includes("16x16") ||
+    l.includes("32x32") ||
+    l.includes("48x48") ||
+    l.includes("64x64") ||
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||

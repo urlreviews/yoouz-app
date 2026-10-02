@@ -135,8 +135,28 @@ const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
 
 export const CLEANTON_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(CLEANTON_LOGO_SVG)}`;
 
+const BCLAW_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#09090b"/>
+  <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="#fbbf24" stroke-width="1.5" opacity="0.8"/>
+  <text x="50" y="55" font-family="Georgia, serif" font-weight="bold" font-size="28" fill="#fbbf24" text-anchor="middle">BC</text>
+  <text x="50" y="75" font-family="-apple-system, sans-serif" font-weight="600" font-size="8" fill="#ffffff" text-anchor="middle" letter-spacing="1">LAWYERS</text>
+</svg>`;
+export const BCLAW_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(BCLAW_LOGO_SVG)}`;
+
+const DONLAN_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#0c0a09"/>
+  <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="#e7e5e4" stroke-width="1" opacity="0.6"/>
+  <text x="50" y="55" font-family="Georgia, serif" font-weight="bold" font-size="28" fill="#ffffff" text-anchor="middle">DL</text>
+  <text x="50" y="75" font-family="-apple-system, sans-serif" font-weight="600" font-size="8" fill="#a8a29e" text-anchor="middle" letter-spacing="1">ADELAIDE</text>
+</svg>`;
+export const DONLAN_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DONLAN_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "bclaw.au": BCLAW_LOGO_DATA_URI,
+  "www.bclaw.au": BCLAW_LOGO_DATA_URI,
+  "donlanlawyers.com.au": DONLAN_LOGO_DATA_URI,
+  "www.donlanlawyers.com.au": DONLAN_LOGO_DATA_URI,
   "gett.com": GETT_LOGO_DATA_URI,
   "www.gett.com": GETT_LOGO_DATA_URI,
   "gett": GETT_LOGO_DATA_URI,
@@ -723,6 +743,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "cleanton": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "bclaw.au": "/api/brand-banner/Belperio%20Connell%20Lawyers",
+  "www.bclaw.au": "/api/brand-banner/Belperio%20Connell%20Lawyers",
+  "donlanlawyers.com.au": "/api/brand-banner/Donlan%20Lawyers",
+  "www.donlanlawyers.com.au": "/api/brand-banner/Donlan%20Lawyers",
   "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
@@ -1056,14 +1080,16 @@ export function isFaviconUrl(url?: string | null): boolean {
   }
   return (
     l.includes("favicon") ||
+    l.includes("16x16") ||
+    l.includes("32x32") ||
+    l.includes("48x48") ||
+    l.includes("64x64") ||
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
-    l.includes("icon.horse") ||
-    l.includes("favicon-32x32") ||
-    l.includes("favicon-16x16")
+    l.includes("icon.horse")
   );
 }
 

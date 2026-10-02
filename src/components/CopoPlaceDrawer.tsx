@@ -693,6 +693,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('yoouz.com/og-banner.png') ||
       u.includes('unsplash.com') ||
       u.includes('injury-lawyer.jpg') ||
+      u.includes('injury-lawyer') ||
       u.includes('placeholder') ||
       u.includes('mock') ||
       u.includes('1789810172562') ||
@@ -717,6 +718,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       u.includes('${') ||
       u.includes('h:180') ||
       u.includes('qt=q:') ||
+      u.includes('justice-lady') ||
+      u.includes('lady-justice') ||
+      u.includes('scales-of-justice') ||
+      u.includes('gavel') ||
+      u.includes('court-bg') ||
+      u.includes('lawyer-banner') ||
+      u.includes('attorney-banner') ||
+      u.includes('legal-banner') ||
+      u.includes('shutterstock_') ||
+      u.includes('istockphoto') ||
       u.endsWith('.ico')
     );
   };
@@ -746,11 +757,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     : "";
 
   const effectiveBanner =
-    cleanFetchedBanner ||
     cleanBannerUrl ||
-    activeBanner ||
     cleanOgImage ||
     cachedMedia?.bannerUrl ||
+    cleanFetchedBanner ||
+    activeBanner ||
     cleanReviewBanner ||
     knownDomainBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
