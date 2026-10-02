@@ -3893,7 +3893,7 @@ export function App() {
                 const fetchedLogo = existingValidLogo || (isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
                 const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]);
                 const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || cleanId));
-                const effectiveBannerCandidate = fetchedPlace?.bannerUrl || metaData.image || (cleanId && cleanId.includes('.') ? `/api/brand-banner/${cleanId}` : "");
+                const effectiveBannerCandidate = fetchedPlace?.bannerUrl || metaData.image || "";
                 const enriched: Place = {
                   id: (metaData.domain || cleanId).toLowerCase(),
                   name: preservedName,

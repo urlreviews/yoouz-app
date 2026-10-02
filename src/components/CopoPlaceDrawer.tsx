@@ -740,7 +740,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     getPlaceBannerUrl(place);
 
   const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
-    ? (KNOWN_BRAND_BANNERS[drawerDomain] || `/api/brand-banner/${drawerDomain}`)
+    ? (KNOWN_BRAND_BANNERS[drawerDomain] || "")
     : "";
 
   const effectiveBanner =

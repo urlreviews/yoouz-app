@@ -113,8 +113,7 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("logo-default") ||
     clean.includes("default-logo") ||
     clean.includes("default_logo") ||
-    clean.includes("pwa-app") ||
-    clean.includes("wsimg.com") ||
+    clean.includes("pwa-app/logo-default.png") ||
     clean.includes("clearbit.com") ||
     clean.includes("brandfetch.io") ||
     clean.includes("wixstatic.com/media/cb6ad0") ||
@@ -191,7 +190,6 @@ function isLogoOrIconUrl(urlStr: string): boolean {
     l.includes('16x16') ||
     l.includes('32x32') ||
     l.includes('60x60') ||
-    /\b\d{2,4}x[1-6]\d\b/.test(l) ||
     l.includes('tap/0.png')
   );
 }
@@ -205,6 +203,9 @@ function isBadBanner(url?: string | null): boolean {
     return (
       decoded.includes("${") || 
       decoded.includes("%24%7b") ||
+      decoded.includes("#") ||
+      decoded.includes("paint0_linear") ||
+      decoded.includes("credit-card") ||
       decoded.includes("unsplash.com") || 
       decoded.includes("placeholder") || 
       decoded.includes("glas1.png") || 
@@ -218,10 +219,6 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("mock") ||
       decoded.includes("og-banner.png") ||
       decoded.includes("yoouz.com/og-banner") ||
-      decoded.includes("logo-default") ||
-      decoded.includes("default-logo") ||
-      decoded.includes("pwa-app") ||
-      decoded.includes("wsimg.com") ||
       decoded.includes("clearbit.com") ||
       decoded.includes("brandfetch.io") ||
       decoded.includes("cb6ad0") ||
@@ -239,11 +236,10 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
-      decoded.endsWith(".ico") ||
-      /\b\d{2,4}x[1-6]\d\b/.test(decoded)
+      decoded.endsWith(".ico")
     );
   } catch (e) {
-    return url.includes("${") || url.includes("%24%7B") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit");
+    return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit");
   }
 }
 
@@ -19688,7 +19684,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
     if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
-      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || (!cachedEntry.data.photo) || (!cachedEntry.data.logo) || isLogoOrIconUrl(cachedEntry.data.photo);
+      const p = cachedEntry.data.photo || "";
+      const l = cachedEntry.data.logo || "";
+      const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear") || p.includes("/api/brand-banner");
+      const isBadLogo = !l || isFaviconUrl(l) || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram");
+      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || isBadPhoto || isBadLogo;
       if (!isMissing) {
         return cachedEntry.data;
       }
@@ -19749,6 +19749,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
                 const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || formatBusinessName(rowName, rowId, cleanQ) || rowName;
+                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner');
+                const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isFaviconUrl(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
+
+                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : ""));
+                const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : ""));
+
                 const result: ResolvedBusinessData = {
                   domain: rowId,
                   websiteUrl: parsedData.website || `https://${rowId}`,
@@ -19760,8 +19766,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   phone: (parsedData.phone || "") as string,
                   email: (parsedData.email || "") as string,
                   openingHours: (parsedData.openingHours || "Available 24/7") as string,
-                  photo: (!isLogoOrIconUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : "") || (!isLogoOrIconUrl(parsedData.ogImage) ? parsedData.ogImage : "") || (!isLogoOrIconUrl(parsedData.image) ? parsedData.image : "") || "",
-                  logo: (row.logoUrl as string) || parsedData.logoUrl || parsedData.logo || parsedData.avatarUrl || "",
+                  photo: cleanPhoto,
+                  logo: cleanLogo,
                   description: (parsedData.description || "") as string,
                   lat: Number(row.latitude) || 0,
                   lng: Number(row.longitude) || 0
@@ -19825,7 +19831,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
               
               const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com')) {
+              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.includes('#') && !ogImg.includes('paint0_linear') && !isBadBanner(ogImg)) {
                 try {
                   domPhoto = new URL(ogImg, targetUrl).toString();
                 } catch(e) {
@@ -19838,7 +19844,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               d$('img').each((_, el) => {
                 const src = d$(el).attr('src') || d$(el).attr('data-src') || d$(el).attr('data-lazy-src') || d$(el).attr('data-original') || '';
                 const alt = d$(el).attr('alt') || '';
-                if (!src || src.startsWith('data:') || src.toLowerCase().includes('favicon') || src.toLowerCase().includes('.ico')) return;
+                if (!src || src.startsWith('data:') || src.includes('#') || src.includes('paint0_linear') || src.toLowerCase().includes('favicon') || src.toLowerCase().includes('.ico')) return;
                 
                 const lowerSrc = src.toLowerCase();
                 const lowerAlt = alt.toLowerCase();
@@ -20542,7 +20548,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
-            if (matchedDom && isExactMatch) {
+            if (matchedDom && isExactMatch && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear')) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedTitle = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom]) || formatBusinessName(row.name || pData.name, matchedDom, rawQuery) || row.name || pData.name;
@@ -20870,7 +20876,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               
               for (const sel of logoSelectors) {
                 const href = $(sel).attr('src') || $(sel).attr('data-src') || $(sel).attr('href') || $(sel).attr('content');
-                if (href && !href.includes('google.com') && !href.startsWith('data:') && !isFaviconUrl(href)) {
+                if (href && !href.includes('google.com') && !href.startsWith('data:') && !isFaviconUrl(href) && !href.includes('#') && !href.includes('paint0_linear')) {
                   try {
                     logo = new URL(href, finalUrl).toString();
                     break;
@@ -21217,7 +21223,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               scrapedPhotosList = [];
 
-              if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage)) {
+              if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage) && !isBadBanner(rawMetaImage) && !rawMetaImage.includes('#') && !rawMetaImage.includes('paint0_linear')) {
                 try {
                   image = new URL(rawMetaImage, finalUrl).toString();
                 } catch (e) {
@@ -21230,7 +21236,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               // Collect additional og:image and twitter:image variants
               $('meta[property="og:image"], meta[name="og:image"], meta[property="twitter:image"], meta[name="twitter:image"], meta[itemprop="image"]').each((i, el) => {
                 const content = $(el).attr('content');
-                if (content && !isLogoOrIconUrl(content)) {
+                if (content && !isLogoOrIconUrl(content) && !isBadBanner(content) && !content.includes('#') && !content.includes('paint0_linear')) {
                   try {
                     const abs = new URL(content, finalUrl).toString();
                     scrapedPhotosList.push(abs);
@@ -21327,14 +21333,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   candidates.push({ src: preloadImg, weight: 450 });
                 }
 
-                if (candidates.length > 0) {
-                  candidates.sort((a, b) => b.weight - a.weight);
+                const validCandidates = candidates.filter(c => c.src && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
+                if (validCandidates.length > 0) {
+                  validCandidates.sort((a, b) => b.weight - a.weight);
                   try {
-                    image = new URL(candidates[0].src, finalUrl).toString();
+                    image = new URL(validCandidates[0].src, finalUrl).toString();
                   } catch (e) {
-                    image = candidates[0].src;
+                    image = validCandidates[0].src;
                   }
-                  candidates.slice(0, 5).forEach(c => {
+                  validCandidates.slice(0, 5).forEach(c => {
                     try {
                       scrapedPhotosList.push(new URL(c.src, finalUrl).toString());
                     } catch(e) {}
@@ -21342,22 +21349,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
-              if (!image || isLogoOrIconUrl(image)) {
+              if (!image || isLogoOrIconUrl(image) || isBadBanner(image) || image.includes('#') || image.includes('paint0_linear')) {
                 try {
                   const archRes = await fetchArchiveMetadata(cleanDomain);
-                  if (archRes && archRes.banner && !isLogoOrIconUrl(archRes.banner)) {
+                  if (archRes && archRes.banner && !isLogoOrIconUrl(archRes.banner) && !isBadBanner(archRes.banner) && !archRes.banner.includes('#')) {
                     image = archRes.banner;
                   }
                 } catch (e) {}
               }
 
-              if (!image || isLogoOrIconUrl(image)) {
+              if (!image || isLogoOrIconUrl(image) || isBadBanner(image) || image.includes('#') || image.includes('paint0_linear')) {
                 if (cleanDomain && domainBanners[cleanDomain]) {
                   image = sanitizeProxy(domainBanners[cleanDomain]);
                 } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
                   image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
-                } else if (domain && domain.includes('.')) {
-                  image = `/api/brand-banner/${domain}`;
+                } else {
+                  image = "";
                 }
               }
 
@@ -21463,6 +21470,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               const isValidCandidateLogo = (src: string): boolean => {
                 if (!src || typeof src !== 'string') return false;
+                if (src.includes('#') || src.includes('paint0_linear') || src.includes('credit-card')) return false;
                 if (isGenericOrPlaceholderLogo(src)) return false;
                 if (isFaviconUrl(src)) return false;
                 if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png')) return false;
@@ -21480,7 +21488,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   'arrow', 'close', 'search', 'cart', 'menu', 'spinner', 'loading',
                   'logoheader', '1024x170', '1024x', '1200x', '1920x',
                   'tap/0.png', 'icons/tap', 'tap/', '/tap', '0.png',
-                  'logo-default', 'default-logo', 'default_logo', 'pwa-app', 'wsimg.com'
+                  'logo-default', 'default-logo', 'default_logo', 'pwa-app/logo-default.png'
                 ];
                 for (const kw of badKeywords) {
                   if (s.includes(kw) && !domain.toLowerCase().includes(kw)) {
@@ -21620,12 +21628,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   } catch (e) {}
                 }
                 if (isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) {
-                  logo = '';
+                  logo = `/api/favicon?domain=${cleanDomain}`;
                 } else {
                   logo = getHighQualityImageUrl(logo);
                 }
               } else {
-                logo = '';
+                logo = `/api/favicon?domain=${cleanDomain}`;
               }
 
               const lowerTitle = title.toLowerCase();
@@ -21737,8 +21745,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!image || isBadBanner(image)) {
         image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
-                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") || 
-                `/api/brand-banner/${cleanDomain || title || 'business'}`;
+                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "");
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -21945,14 +21952,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return false;
             };
 
-            const isFaviconOrPlaceholder = (u?: string) => !u || typeof u !== 'string' || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2") || u.includes("/api/brand-banner");
+            const isFaviconOrPlaceholder = (u?: string) => !u || typeof u !== 'string' || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2") || u.includes("/api/brand-banner") || u.includes("#") || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = logo && !isFaviconOrPlaceholder(logo);
 
             const mergedLogo = (!isFaviconOrPlaceholder(existingDoc.logoUrl))
               ? existingDoc.logoUrl
-              : (hasBetterLogo ? logo : (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (logo || "")));
+              : (hasBetterLogo ? logo : (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (hasBetterLogo ? logo : "")));
 
-            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && b.includes('/api/brand-banner'));
+            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const mergedBanner = (!isBadBannerInternal(existingDoc.bannerUrl))
               ? existingDoc.bannerUrl
               : (!isBadBannerInternal(image) ? image : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""));
