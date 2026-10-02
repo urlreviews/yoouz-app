@@ -19390,16 +19390,216 @@ Return JSON:
   }
 
 function generateBrandBannerSvg(nameOrDomain?: string | null): string {
-  // A clean, dark luxury gradient with zero text watermark or mock branding
+  const input = (nameOrDomain || "Business").trim();
+  let cleanName = input;
+  if (input.includes('.')) {
+    cleanName = input.split('.')[0];
+  }
+  
+  cleanName = cleanName.replace(/[-_]+/g, ' ')
+                       .replace(/([a-z])([A-Z])/g, '$1 $2')
+                       .trim();
+  if (cleanName.length > 40) {
+    cleanName = cleanName.substring(0, 37) + "...";
+  }
+
+  // Proper title casing
+  cleanName = cleanName.split(/\s+/).map(word => {
+    if (!word) return "";
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }).join(" ");
+
+  if (!cleanName) cleanName = "Verified Business";
+
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = input.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const styleIdx = Math.abs(hash) % 5;
+
+  let bgGradient = "";
+  let artwork = "";
+  let textColor = "#ffffff";
+  let textFont = "system-ui, -apple-system, sans-serif";
+  let subtitleColor = "rgba(255, 255, 255, 0.4)";
+
+  if (styleIdx === 0) {
+    // Style 0: Luxury Gold (Deep Obsidian & Warm Amber)
+    bgGradient = `
+      <radialGradient id="bannerBg" cx="50%" cy="50%" r="70%">
+        <stop offset="0%" stop-color="#1c1917"/>
+        <stop offset="100%" stop-color="#090504"/>
+      </radialGradient>
+      <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fbbf24"/>
+        <stop offset="50%" stop-color="#d97706"/>
+        <stop offset="100%" stop-color="#92400e"/>
+      </linearGradient>
+    `;
+    artwork = `
+      <!-- Abstract Luxury Golden Lines and Circles -->
+      <g stroke="url(#goldGrad)" stroke-width="1" fill="none" opacity="0.3">
+        <circle cx="600" cy="200" r="180" stroke-dasharray="5 5"/>
+        <circle cx="600" cy="200" r="140"/>
+        <circle cx="600" cy="200" r="260" stroke-dasharray="2 10"/>
+        <circle cx="600" cy="200" r="320"/>
+        <line x1="0" y1="200" x2="1200" y2="200" opacity="0.5"/>
+        <line x1="600" y1="0" x2="600" y2="400" opacity="0.5"/>
+        <path d="M 450,200 L 600,50 L 750,200 L 600,350 Z" stroke-width="1.5"/>
+      </g>
+      <!-- Soft Ambient Glow points -->
+      <circle cx="600" cy="200" r="150" fill="#fbbf24" opacity="0.03" filter="blur(40px)"/>
+    `;
+    textColor = "url(#goldGrad)";
+    textFont = "Georgia, serif";
+    subtitleColor = "#fbbf24";
+  } else if (styleIdx === 1) {
+    // Style 1: Cyber Violet (Neon Purple & Cyan Gradient)
+    bgGradient = `
+      <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#120224"/>
+        <stop offset="50%" stop-color="#0b0116"/>
+        <stop offset="100%" stop-color="#030006"/>
+      </linearGradient>
+      <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#a855f7"/>
+        <stop offset="100%" stop-color="#3b82f6"/>
+      </linearGradient>
+    `;
+    artwork = `
+      <!-- Futuristic Technical Mesh -->
+      <g stroke="url(#cyberGrad)" stroke-width="0.8" fill="none" opacity="0.25">
+        <path d="M-100,100 C 300,300 900,100 1300,300" stroke-width="1.5"/>
+        <path d="M-100,150 C 300,350 900,150 1300,350" stroke-width="1"/>
+        <path d="M-100,50 C 300,250 900,50 1300,250" stroke-dasharray="4 4"/>
+        <line x1="150" y1="0" x2="150" y2="400" stroke-dasharray="2 4"/>
+        <line x1="1050" y1="0" x2="1050" y2="400" stroke-dasharray="2 4"/>
+        <circle cx="150" cy="200" r="4" fill="#a855f7"/>
+        <circle cx="1050" cy="200" r="4" fill="#3b82f6"/>
+      </g>
+      <!-- Tech hexagon element in background center -->
+      <polygon points="600,110 680,155 680,245 600,290 520,245 520,155" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" opacity="0.2" stroke-dasharray="5 3"/>
+    `;
+    textColor = "#ffffff";
+    textFont = "system-ui, -apple-system, sans-serif";
+    subtitleColor = "#a855f7";
+  } else if (styleIdx === 2) {
+    // Style 2: Emerald Green (Rich Forest & Emerald)
+    bgGradient = `
+      <radialGradient id="bannerBg" cx="50%" cy="50%" r="75%">
+        <stop offset="0%" stop-color="#022c22"/>
+        <stop offset="100%" stop-color="#010f0b"/>
+      </radialGradient>
+      <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#34d399"/>
+        <stop offset="100%" stop-color="#059669"/>
+      </linearGradient>
+    `;
+    artwork = `
+      <!-- Elegant curved biological or wave patterns -->
+      <g stroke="url(#emeraldGrad)" stroke-width="1" fill="none" opacity="0.25">
+        <path d="M 0,400 C 300,300 400,100 600,200 C 800,300 900,100 1200,0" stroke-width="1.5"/>
+        <path d="M 0,380 C 300,280 400,80 600,180 C 800,280 900,80 1200,-20" stroke-dasharray="2 2"/>
+        <path d="M 0,420 C 300,320 400,120 600,220 C 800,320 900,120 1200,20"/>
+        <circle cx="600" cy="200" r="160" stroke-width="0.5" stroke-dasharray="4 6"/>
+      </g>
+      <circle cx="600" cy="200" r="120" fill="#34d399" opacity="0.02" filter="blur(30px)"/>
+    `;
+    textColor = "#e6fbf4";
+    textFont = "Georgia, serif";
+    subtitleColor = "#34d399";
+  } else if (styleIdx === 3) {
+    // Style 3: Crimson Impact (Obsidian & Vivid Ruby Red)
+    bgGradient = `
+      <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#140202"/>
+        <stop offset="50%" stop-color="#0b0101"/>
+        <stop offset="100%" stop-color="#1b0303"/>
+      </linearGradient>
+      <linearGradient id="crimsonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ef4444"/>
+        <stop offset="100%" stop-color="#7f1d1d"/>
+      </linearGradient>
+    `;
+    artwork = `
+      <!-- Bold abstract stripes and lines -->
+      <g stroke="url(#crimsonGrad)" stroke-width="1.5" fill="none" opacity="0.3">
+        <line x1="0" y1="50" x2="1200" y2="350" stroke-width="2"/>
+        <line x1="0" y1="350" x2="1200" y2="50" stroke-width="0.5" stroke-dasharray="6 6"/>
+        <rect x="500" y="100" width="200" height="200" rx="10" stroke-dasharray="10 5" stroke-width="1"/>
+        <rect x="530" y="130" width="140" height="140" rx="6" stroke-width="1"/>
+      </g>
+      <!-- Subtle red glow -->
+      <circle cx="600" cy="200" r="130" fill="#ef4444" opacity="0.04" filter="blur(35px)"/>
+    `;
+    textColor = "#ffffff";
+    textFont = "Impact, Charcoal, sans-serif";
+    subtitleColor = "#ef4444";
+  } else {
+    // Style 4: Oceanic Breeze (Deep Navy & Azure Blue)
+    bgGradient = `
+      <radialGradient id="bannerBg" cx="50%" cy="50%" r="70%">
+        <stop offset="0%" stop-color="#021d49"/>
+        <stop offset="100%" stop-color="#000716"/>
+      </radialGradient>
+      <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#38bdf8"/>
+        <stop offset="100%" stop-color="#1d4ed8"/>
+      </linearGradient>
+    `;
+    artwork = `
+      <!-- Smooth concentric waves -->
+      <g stroke="url(#oceanGrad)" stroke-width="1" fill="none" opacity="0.25">
+        <circle cx="600" cy="200" r="220"/>
+        <path d="M 0,200 Q 300,100 600,200 T 1200,200" stroke-width="1.5"/>
+        <path d="M 0,220 Q 300,120 600,220 T 1200,220" opacity="0.5"/>
+        <path d="M 0,180 Q 300,80 600,180 T 1200,180" stroke-dasharray="4 2" opacity="0.5"/>
+        <line x1="100" y1="100" x2="1100" y2="300" stroke-width="0.5" stroke-dasharray="2 10"/>
+      </g>
+      <circle cx="600" cy="200" r="140" fill="#38bdf8" opacity="0.03" filter="blur(30px)"/>
+    `;
+    textColor = "#f0f9ff";
+    textFont = "system-ui, -apple-system, sans-serif";
+    subtitleColor = "#38bdf8";
+  }
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
     <defs>
-      <linearGradient id="bannerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#141416"/>
-        <stop offset="50%" stop-color="#0f0f11"/>
-        <stop offset="100%" stop-color="#09090b"/>
-      </linearGradient>
+      ${bgGradient}
+      <style>
+        .banner-title {
+          font-family: ${textFont};
+          font-weight: 900;
+          fill: ${textColor};
+          font-size: 72px;
+          letter-spacing: -2px;
+          text-anchor: middle;
+          dominant-baseline: middle;
+        }
+        .banner-sub {
+          font-family: system-ui, -apple-system, sans-serif;
+          font-weight: 600;
+          fill: ${subtitleColor};
+          font-size: 20px;
+          letter-spacing: 4px;
+          text-anchor: middle;
+          dominant-baseline: middle;
+          text-transform: uppercase;
+          opacity: 0.8;
+        }
+      </style>
     </defs>
-    <rect width="1200" height="400" fill="url(#bannerGrad)"/>
+    <!-- Background -->
+    <rect width="1200" height="400" fill="url(#bannerBg)"/>
+    
+    <!-- Abstract Artwork background patterns -->
+    ${artwork}
+    
+    <!-- Title Text -->
+    <text x="600" y="190" class="banner-title">${cleanName}</text>
+    
+    <!-- Subtle category tag context -->
+    <text x="600" y="260" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
   </svg>`;
 }
 

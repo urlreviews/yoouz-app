@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -394,8 +394,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
-        || (isMetaMatchingCurrent && preloadedMeta?.image && !preloadedMeta.image.includes('unsplash.com') ? preloadedMeta.image : "") 
-        || "";
+        || (isMetaMatchingCurrent && preloadedMeta?.image ? preloadedMeta.image : "") 
+        || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
       const instantName = preferredName
         || locationDetails?.rawBusinessName
         || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
@@ -474,9 +474,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.logo 
                : (domainCleanLogo || (instantLogo && !isFaviconUrl(instantLogo) ? instantLogo : ""));
 
-             const fetchedBanner = (data.image && !data.image.includes("unsplash.com")) 
+             const fetchedBanner = data.image 
                ? data.image 
-               : (instantBanner && !instantBanner.includes("unsplash.com") ? instantBanner : "");
+               : instantBanner;
              
              const targetName = (currentPlace as any).selectedName
                || preferredName
@@ -499,8 +499,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                name: targetName || currentPlace.name,
                logoUrl: fetchedLogo || instantLogo,
                avatarUrl: fetchedLogo || instantLogo,
-               bannerUrl: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
-               ogImage: (fetchedBanner && !fetchedBanner.includes("unsplash.com")) ? fetchedBanner : ((instantBanner && !instantBanner.includes("unsplash.com")) ? instantBanner : ""),
+               bannerUrl: fetchedBanner || instantBanner || "",
+               ogImage: fetchedBanner || instantBanner || "",
                photos: fetchedBanner ? [fetchedBanner] : (instantBanner ? [instantBanner] : []),
                description: currentPlace.description || data.description || "",
                category: (currentPlace.category && currentPlace.category !== "Website" && currentPlace.category !== "General") ? currentPlace.category : (data.category || currentPlace.category || "Website"),
@@ -625,7 +625,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             {/* Top Hero Banner Canvas - Render ONLY authentic website cover image or clean neutral header */}
             {(() => {
               const rawBanner = searchedPlace.bannerUrl || searchedPlace.ogImage || (searchedPlace.photos && searchedPlace.photos[0]);
-              const hasRealBanner = rawBanner && typeof rawBanner === "string" && rawBanner.trim().length > 0 && !rawBanner.includes("placeholder") && !rawBanner.includes("unsplash.com") && !rawBanner.startsWith("data:image/svg");
+              const hasRealBanner = rawBanner && typeof rawBanner === "string" && rawBanner.trim().length > 0 && !rawBanner.includes("placeholder") && !rawBanner.startsWith("data:image/svg");
 
               if (hasRealBanner) {
                 return (

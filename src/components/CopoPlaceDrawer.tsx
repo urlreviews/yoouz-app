@@ -515,19 +515,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
-    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("unsplash.com") && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
-    if (place.ogImage && !place.ogImage.startsWith("blob:") && place.ogImage.trim() !== "" && !place.ogImage.includes("unsplash.com") && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
+    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
+    if (place.ogImage && !place.ogImage.startsWith("blob:") && place.ogImage.trim() !== "" && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
     for (const v of rawPlaceVideos) {
       const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
       if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
-        if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
+        if (!b.includes("placeholder") && !b.includes("mock")) return b;
       }
     }
     for (const v of (allVideos || [])) {
       if (isPlaceReviewMatch(v, place)) {
         const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
         if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
-          if (!b.includes("unsplash.com") && !b.includes("placeholder") && !b.includes("mock")) return b;
+          if (!b.includes("placeholder") && !b.includes("mock")) return b;
         }
       }
     }
@@ -624,7 +624,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               setIsEnriching(false); // Synchronously clear loading skeletons instantly when server responds
               
               if (data) {
-                const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("unsplash.com") && !url.includes("/api/brand-banner"));
+                const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
                 const resolvedBanner = isRealPhoto(place.bannerUrl) ? place.bannerUrl : (isRealPhoto(data.image) ? data.image : (place.bannerUrl || ""));
                 const resolvedLogo = (hasValidLogo && place.logoUrl) ? place.logoUrl : ((data.logo && !isFaviconUrl(data.logo)) ? data.logo : (place.logoUrl || ""));
                 
@@ -752,7 +752,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanReviewBanner ||
     knownDomainBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
-    "";
+    `/api/brand-banner/${encodeURIComponent(drawerDomain || place.brandDomain || place.id || place.name || "Business")}`;
 
   // Check if photos are authentic place photos
   const allPhotos = React.useMemo(() => {
@@ -1181,12 +1181,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
         </div>
 
-        {hasAuthenticPhoto && !bannerError ? (
+        {(hasAuthenticPhoto || effectiveBanner) && !bannerError ? (
           <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
-              key={allPhotos[photoIndex] || allPhotos[0]}
-              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
+              key={allPhotos[photoIndex] || allPhotos[0] || effectiveBanner}
+              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner)}
               alt={displayedPlaceName}
               loading="eager"
               decoding="sync"
@@ -1204,10 +1204,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   return;
                 }
                 setBannerLoaded(true);
-                const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
+                const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner);
                 if (currentSrc) {
                   KNOWN_LOADED_BANNERS.add(currentSrc);
-                  const rawSrc = allPhotos[photoIndex] || allPhotos[0];
+                  const rawSrc = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
                   if (rawSrc) setActiveBanner(rawSrc);
                 }
               }}
