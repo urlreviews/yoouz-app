@@ -770,10 +770,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     };
 
     const photoCandidates = [
-      cleanFetchedBanner,
       cleanBannerUrl,
       cachedMedia?.bannerUrl,
       cleanOgImage,
+      cleanFetchedBanner,
       activeBanner,
       cleanReviewBanner,
       ...(place.photos || []).filter(isAuthentic),
