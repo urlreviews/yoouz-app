@@ -606,13 +606,17 @@ export function App() {
           }
         }
         if (!placeParam) {
-          const pMatch = pathname.match(/^\/place\/([^\/]+)/);
-          if (pMatch) {
-            placeParam = pMatch[1];
+          if (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+            placeParam = "sample";
           } else {
-            const bMatch = pathname.match(/^\/business\/([^\/]+)/);
-            if (bMatch && bMatch[1] !== "dashboard" && bMatch[1] !== "claim" && bMatch[1] !== "portal") {
-              placeParam = bMatch[1];
+            const pMatch = pathname.match(/^\/place\/([^\/]+)/);
+            if (pMatch) {
+              placeParam = pMatch[1];
+            } else {
+              const bMatch = pathname.match(/^\/business\/([^\/]+)/);
+              if (bMatch && bMatch[1] !== "dashboard" && bMatch[1] !== "claim" && bMatch[1] !== "portal") {
+                placeParam = bMatch[1];
+              }
             }
           }
         }
@@ -647,7 +651,7 @@ export function App() {
           const isRealDom = isValidDomainUrl(cleanPlaceId);
           const inLocalDb = (places || []).some((p: Place) => p.id === cleanPlaceId);
           
-          if (!isRealDom && !inLocalDb) {
+          if (!isRealDom && !inLocalDb && cleanPlaceId !== "sample") {
             console.warn("[App] Blocking navigation to unverified placeholder profile:", cleanPlaceId);
             window.history.replaceState(null, "", "/");
             setSelectedPlaceIdForDrawer(null);

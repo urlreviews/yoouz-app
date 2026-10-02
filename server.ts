@@ -25992,7 +25992,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) ||
                          pathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
-    let placeId = placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null);
+    let placeId = (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") ? "sample" : (placeIdMatch ? placeIdMatch[1] : (params.get('place') && !videoId ? params.get('place') : null));
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
     }
