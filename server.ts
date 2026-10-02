@@ -182,7 +182,6 @@ function isLogoOrIconUrl(urlStr: string): boolean {
     l.includes('no-image') ||
     l.includes('no_image') ||
     l.includes('transparent') ||
-    l.endsWith('.svg') ||
     l.includes('.ico') ||
     l.includes('300x46') ||
     l.includes('196x46') ||
@@ -24209,14 +24208,24 @@ app.get('/api/debug-metadata', async (req, res) => {
 app.get('/api/favicon', async (req, res) => {
   const domain = String(req.query.domain || "");
   if (!domain) return res.redirect('/favicon.png');
-  try {
-    const response = await fetch(`https://${domain}/favicon.ico`, { signal: AbortSignal.timeout(2000) });
-    if (response.ok) {
-      const buffer = await response.arrayBuffer();
-      res.set('Content-Type', 'image/x-icon');
-      return res.send(Buffer.from(buffer));
+  
+  // Try common favicon locations
+  const paths = [`/favicon.ico`, `/favicon.png`];
+  
+  for (const path of paths) {
+    try {
+      const response = await fetch(`https://${domain}${path}`, { signal: AbortSignal.timeout(2000) });
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        const contentType = response.headers.get('Content-Type') || 'image/x-icon';
+        res.set('Content-Type', contentType);
+        return res.send(Buffer.from(buffer));
+      }
+    } catch (e) {
+      // Try next
     }
-  } catch (e) {}
+  }
+  
   res.redirect('/favicon.png');
 });
 
