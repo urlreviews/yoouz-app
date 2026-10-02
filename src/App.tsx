@@ -1192,17 +1192,19 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoIds: targetIds })
-      }).catch(() => {});
+      }).then(res => { if (!res.ok) console.error("Bulk delete failed", res); });
 
       targetIds.forEach(id => {
         fetch("/api/videos/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: id })
-        }).catch(() => {});
-        fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+        }).then(res => { if (!res.ok) console.error(`Video delete failed for ${id}`, res); });
+        
+        fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
+          .then(res => { if (!res.ok) console.error(`NoSQL delete failed for ${id}`, res); });
       });
-    } catch (e) {}
+    } catch (e) { console.error("Error in delete handler:", e); }
 
     // 8. Delete directly from BunnyDB
     try {

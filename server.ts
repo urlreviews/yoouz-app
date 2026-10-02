@@ -6593,12 +6593,10 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
     // 1. Delete from Bunny Database (Cloud libSQL) if configured
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
-      try {
-        await bunnyDb.execute({
-          sql: `DELETE FROM ${colName} WHERE id = ?`,
-          args: [id]
-        });
-      } catch (bunnyDelErr) {}
+      await bunnyDb.execute({
+        sql: `DELETE FROM ${colName} WHERE id = ?`,
+        args: [id]
+      });
     }
 
     // 2. Delete from BunnyDB Admin
@@ -6606,16 +6604,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
 
     // 3. Delete from Drizzle if active
     if (getDb()) {
-      try {
-        const table = getNoSqlTable(colName);
-        if (table) {
-          await db.delete(table).where(eq(table.id, id));
-        }
-      } catch (sqlErr) {}
+      const table = getNoSqlTable(colName);
+      if (table) {
+        await db.delete(table).where(eq(table.id, id));
+      }
     }
 
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error("Deletion failed:", err); res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/places/delete', express.json(), async (req, res) => {
@@ -11787,7 +11783,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         try {
-          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT 100");
+          const bunnyRows = await bunnyDb.execute({
+            sql: "SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT ? OFFSET ?",
+            args: [limit, startIndex]
+          });
           bunnyRows.rows.forEach((r: any) => {
             if (r && r.id && !deletedSet.has(String(r.id))) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
