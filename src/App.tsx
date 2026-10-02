@@ -3927,7 +3927,7 @@ export function App() {
 
   const displayedDrawerPlaceName = useMemo(() => {
     if (!drawerPlace) return undefined;
-    if ((drawerPlace as any).selectedName) return (drawerPlace as any).selectedName;
+    if ((drawerPlace as any).selectedName) return toTitleCase((drawerPlace as any).selectedName);
     const dom = (drawerPlace.brandDomain || drawerPlace.id || "").toLowerCase().replace(/^www\./, "");
     if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
     if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com")) {
@@ -3935,7 +3935,8 @@ export function App() {
       if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
       return toTitleCase(drawerPlace.name);
     }
-    return formatBusinessName(drawerPlace.name || drawerPlace.id, dom) || toTitleCase(drawerPlace.name || drawerPlace.id);
+    const formatted = formatBusinessName(drawerPlace.name || drawerPlace.id, dom);
+    return toTitleCase(formatted || drawerPlace.name || drawerPlace.id);
   }, [drawerPlace]);
 
   const currentFeedContextKey = useMemo(() => {
