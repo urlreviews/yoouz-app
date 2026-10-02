@@ -272,6 +272,7 @@ export function useFeedPagination() {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     let active = true;
@@ -280,7 +281,7 @@ export function useFeedPagination() {
     let sseReconnectTimeout: any = null;
     let sseRetryDelay = 2000;
 
-    const loadData = async (isBackground = false) => {
+    const loadData = async (pageNum: number, isBackground = false) => {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         if (!isBackground) setIsLoading(false);
         return;
@@ -297,7 +298,7 @@ export function useFeedPagination() {
 
       try {
         // 1. Fetch from Server API (with fresh cache-busting)
-        const res = await fetch(`/api/videos/feed?_t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`/api/videos/feed?page=${pageNum}&limit=10&_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok && active) {
           const data = await res.json();
           const hardBannedIds = [
@@ -460,12 +461,16 @@ export function useFeedPagination() {
               const merged = [...pendingLocalVideos, ...mergedServerVideos];
               merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               
+              const result = pageNum === 1 ? merged : [...prev, ...merged];
+              const uniqueResult = Array.from(new Map(result.map(v => [v.id, v])).values());
+              setHasMore(mergedServerVideos.length === 10);
+
               // Persist fresh feed to cache
               try { 
-                localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(merged.slice(0, 50))); 
+                localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(uniqueResult.slice(0, 50))); 
               } catch(e){}
               
-              return merged;
+              return uniqueResult;
             });
             if (!isBackground) setIsLoading(false);
           } else {
@@ -620,7 +625,7 @@ export function useFeedPagination() {
               });
               window.dispatchEvent(new CustomEvent("copo-delete-comment", { detail: payload }));
             } else if (payload.type === "sync_comments") {
-              loadData(true);
+              loadData(1, true);
             } else if (payload.type === "like_comment" && payload.videoId) {
               window.dispatchEvent(new CustomEvent("copo-like-comment", { detail: payload }));
             } else if (payload.type === "heart_comment" && payload.videoId) {
@@ -778,7 +783,7 @@ export function useFeedPagination() {
           unrecordDeletedUsersInLocalStorage(uIds);
         } catch (err) {}
       }
-      loadData(true);
+      loadData(1, true);
     };
 
     window.addEventListener("copo-video-deleted", handleVideoDeletedEvent);
@@ -790,26 +795,26 @@ export function useFeedPagination() {
     window.addEventListener("copo-users-purged", handleUsersPurgedEvent);
 
     // Initial load
-    loadData(false);
+    loadData(1, false);
 
     // Live background polling (every 12 seconds) as backup synchronization
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible' && (typeof navigator === "undefined" || navigator.onLine)) {
-        loadData(true);
+        loadData(1, true);
       }
     }, 12000);
 
     // Immediate refresh on tab focus / app resume / network online
     const handleVisibilityOrFocus = () => {
       if (document.visibilityState === 'visible' && (typeof navigator === "undefined" || navigator.onLine)) {
-        loadData(true);
+        loadData(1, true);
       }
     };
 
     const handleOnline = () => {
       sseRetryDelay = 2000;
       if (!sse) setupSse();
-      loadData(true);
+      loadData(1, true);
     };
 
     const handleOffline = () => {
@@ -848,7 +853,10 @@ export function useFeedPagination() {
   }, []);
 
   const loadMore = async () => {
-    setHasMore(false);
+    if (isLoading || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadData(nextPage);
   };
 
   return { videos, setVideos, isLoading, loadMore, hasMore };

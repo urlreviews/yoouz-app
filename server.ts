@@ -11718,9 +11718,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   });
 
   // Get Video Feed endpoint (combines server index with BunnyDB and uploaded videos with memory caching & write-back resiliency)
-  app.get("/api/videos/feed", async (_req, res) => {
+  app.get("/api/videos/feed", async (req, res) => {
     try {
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
       const now = Date.now();
       const deletedIds = readDeletedReviewsIndex();
       const deletedSet = new Set(deletedIds);
@@ -11766,7 +11770,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         });
         const merged = Array.from(map.values());
         merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
-        return res.json({ success: true, videos: merged, deletedIds });
+        const paginated = merged.slice(startIndex, endIndex);
+        return res.json({ success: true, videos: paginated, total: merged.length, deletedIds });
       }
 
       // Otherwise, fetch from sources to refresh cache
@@ -12063,7 +12068,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         feedCache.lastFetched = now - CACHE_TTL_MS + (60 * 1000);
       }
 
-      return res.json({ success: true, videos: merged, deletedIds });
+      const paginated = merged.slice(startIndex, endIndex);
+      return res.json({ success: true, videos: paginated, total: merged.length, deletedIds });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

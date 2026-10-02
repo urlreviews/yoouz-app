@@ -3440,11 +3440,11 @@ export function App() {
       if (Array.isArray(ids) && ids.length > 0) {
         unrecordDeactivatedUsersInLocalStorage(ids);
       }
-      fetch('/api/videos')
+      fetch('/api/videos/feed?page=1&limit=10')
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data) && data.length > 0) {
-            setVideos(data);
+          if (data.success && Array.isArray(data.videos) && data.videos.length > 0) {
+            setVideos(data.videos);
           }
         })
         .catch(() => {});
