@@ -635,6 +635,14 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       alt={searchedPlace.name} 
                       className="w-full h-full object-cover" 
                       referrerPolicy="no-referrer"
+                      onLoad={(e) => {
+                        if (e.currentTarget.naturalWidth <= 1) {
+                          e.currentTarget.style.display = 'none';
+                        }
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60" />
                   </div>

@@ -22782,8 +22782,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
+    const sendDefaultFavicon = (domainName: string) => {
+      const firstChar = ((domainName || "B").charAt(0) || "B").toUpperCase();
+      const cleanSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#ffffff"/><rect x="0.5" y="0.5" width="127" height="127" rx="27.5" stroke="#e4e4e7" stroke-width="1"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#09090b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="800">${firstChar}</text></svg>`;
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=86400");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      return res.status(200).send(cleanSvg);
+    };
+
     if (!cleanDomain) {
-      return res.status(404).send("Favicon domain missing");
+      return sendDefaultFavicon("B");
     }
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
@@ -22840,16 +22849,40 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
       } catch (e) {}
+
+      // Secondary check: DuckDuckGo favicon service
+      try {
+        const ddgUrl = `https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`;
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 2000);
+        const ddgResp = await fetch(ddgUrl, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (ddgResp.ok) {
+          const ddgBuf = await ddgResp.arrayBuffer();
+          if (ddgBuf && ddgBuf.byteLength > 200 && ddgBuf.byteLength !== 1478) {
+            res.setHeader("Content-Type", "image/x-icon");
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            return res.status(200).send(Buffer.from(ddgBuf));
+          }
+        }
+      } catch (e) {}
     }
 
-    return res.status(404).send("Favicon not found");
+    return sendDefaultFavicon(cleanDomain);
   });
 
   // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
   app.get("/api/proxy-image", async (req: any, res: any) => {
     const sendFallbackImage = () => {
+      // Return a 1x1 transparent PNG with HTTP 200 to prevent browser console 404 errors
+      // while ensuring zero visual artifacts, zero dark boxes, and zero color bleeding.
+      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
       res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.status(404).send("Image unavailable");
+      res.setHeader('X-Image-Fallback', '1');
+      return res.status(200).send(transparentPixel);
     };
 
     try {

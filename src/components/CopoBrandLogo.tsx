@@ -139,7 +139,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             imgLoaded ? "opacity-100" : "opacity-90"
           }`}
           referrerPolicy="no-referrer"
-          onLoad={() => {
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+              setCandidateIdx((prev) => prev + 1);
+              return;
+            }
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
               if (cleanDomain && !LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {

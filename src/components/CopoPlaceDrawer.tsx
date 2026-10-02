@@ -1186,7 +1186,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 opacity-100"
               referrerPolicy="no-referrer"
-              onLoad={() => {
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+                  if (photoIndex + 1 < allPhotos.length) {
+                    setPhotoIndex(prev => prev + 1);
+                  } else {
+                    setBannerError(true);
+                  }
+                  return;
+                }
                 setBannerLoaded(true);
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
                 if (currentSrc) {
