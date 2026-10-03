@@ -31,6 +31,7 @@ import {
   Repeat
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
+import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
 import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES, toTitleCase } from "../utils/placeUtils";
 
@@ -125,49 +126,51 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onCloseEmbed
 }) => {
   const { t } = useLanguage();
-  const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
+  // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
+  const effectiveVideos = (videos && videos.length > 0) ? videos : (feedContextTitle ? [] : INITIAL_SEED_VIDEOS);
+  const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
   // Seamless continuous circular feed: repeats video sequence so swipe momentum flows 100% naturally into next video
-  const [loopCount, setLoopCount] = useState<number>(videos.length > 0 ? 10 : 1);
+  const [loopCount, setLoopCount] = useState<number>(effectiveVideos.length > 0 ? 10 : 1);
   useEffect(() => {
-    setLoopCount(videos.length > 0 ? 10 : 1);
-  }, [videos.length]);
+    setLoopCount(effectiveVideos.length > 0 ? 10 : 1);
+  }, [effectiveVideos.length]);
 
   const displayItems = useMemo(() => {
-    if (videos.length === 0) return [];
-    if (videos.length === 1) {
+    if (effectiveVideos.length === 0) return [];
+    if (effectiveVideos.length === 1) {
       const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
       for (let loop = 0; loop < loopCount; loop++) {
         items.push({
-          video: videos[0],
+          video: effectiveVideos[0],
           cardIndex: loop,
           realIndex: 0,
           slotId: `video-slot-${loop}`,
-          key: `vid-${videos[0].id}-${loop}`
+          key: `vid-${effectiveVideos[0].id}-${loop}`
         });
       }
       return items;
     }
     const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
     for (let loop = 0; loop < loopCount; loop++) {
-      for (let i = 0; i < videos.length; i++) {
-        const cardIndex = loop * videos.length + i;
+      for (let i = 0; i < effectiveVideos.length; i++) {
+        const cardIndex = loop * effectiveVideos.length + i;
         items.push({
-          video: videos[i],
+          video: effectiveVideos[i],
           cardIndex,
           realIndex: i,
           slotId: `video-slot-${cardIndex}`,
-          key: `vid-${videos[i].id}-${cardIndex}`
+          key: `vid-${effectiveVideos[i].id}-${cardIndex}`
         });
       }
     }
     return items;
-  }, [videos, loopCount]);
+  }, [effectiveVideos, loopCount]);
 
   const [activeCardIndex, setActiveCardIndex] = useState<number>(() => {
-    return Math.max(0, Math.min(currentIndex, Math.max(0, videos.length - 1)));
+    return Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)));
   });
   const activeCardIndexRef = useRef<number>(activeCardIndex);
   activeCardIndexRef.current = activeCardIndex;
@@ -1376,31 +1379,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [handleNext, handlePrev, handleTogglePlayPause, toggleMute, moreMenuVideo]);
 
   if (!currentVideo) {
-    // On the main home feed (!feedContextTitle), always show the sleek loading skeleton when videos are hydrating.
-    // Never show the "No Video Reviews Yet" empty box on the home feed.
     if (isLoading || !showEmptyState || !feedContextTitle) {
       return (
         <main
           id="copo-loading-feed-container"
           className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 p-0 md:p-3"
-        >
-          <div className="w-full h-full md:w-[440px] lg:w-[480px] xl:w-[500px] md:h-[92vh] md:max-h-[890px] bg-zinc-900 md:rounded-3xl overflow-hidden md:shadow-2xl md:border md:border-zinc-800 flex flex-col justify-between p-6 animate-pulse relative">
-            <div className="flex justify-between items-start z-10 w-full pt-12 md:pt-4">
-              <div className="h-7 w-36 bg-white/20 rounded-full" />
-              <div className="h-10 w-10 bg-white/20 rounded-full" />
-            </div>
-            <div className="flex justify-between items-end z-10 w-full mb-16 md:mb-6">
-              <div className="flex flex-col gap-3">
-                <div className="h-7 w-52 bg-white/20 rounded-lg" />
-                <div className="h-5 w-64 bg-white/20 rounded-lg" />
-              </div>
-              <div className="flex flex-col gap-4 items-center">
-                <div className="h-12 w-12 bg-white/20 rounded-full" />
-                <div className="h-12 w-12 bg-white/20 rounded-full" />
-              </div>
-            </div>
-          </div>
-        </main>
+        />
       );
     }
 
