@@ -1875,126 +1875,100 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 2: VIDEO REVIEWS - Premium High-End Grid & Comprehensive Sort & Rating Filters */}
+          {/* TAB 2: VIDEO REVIEWS - Clean, Content-First Grid */}
           {activeTab === "reviews" && (
-            <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Reviews Header & Score Bar */}
-              <div className="flex items-center justify-between pb-1 border-b border-zinc-800/80">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-zinc-300" />
-                    <span>{t("profile.allVideoReviews", "All Video Reviews")}</span>
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-black border border-zinc-700">
-                    {rawPlaceVideos.length}
-                  </span>
-                </div>
-
-                {rawPlaceVideos.length > 0 && (
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400/10 border border-amber-400/25 text-amber-400 text-xs font-black">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>{dynamicAvgRating.toFixed(1)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Sort & Star Filter Controls (Visible whenever reviews exist) */}
-              {rawPlaceVideos.length > 0 && (
-                <div className="space-y-2.5 bg-zinc-900/60 p-3 rounded-2xl border border-zinc-800/80 backdrop-blur-sm">
-                  {/* Sort Selection: Latest | Highest | Lowest */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10.5px] font-black uppercase tracking-wider text-zinc-400 shrink-0">
-                      {t("place.sortBy", "Sort by")}
-                    </span>
-                    <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded-xl p-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("latest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "latest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.latest", "Latest")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("highest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "highest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.highestRated", "Highest")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("lowest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "lowest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.lowestRated", "Lowest")}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Star Rating Filter Chips: All | 5★ | 4★ | 3★ | 2★ | 1★ */}
-                  <div className="pt-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            <div className="p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Only show Sort & Star Filter if there are multiple reviews (2+) */}
+              {rawPlaceVideos.length > 1 && (
+                <div className="flex items-center justify-between gap-2 pb-1">
+                  {/* Subtle, Minimalist Sort Pills */}
+                  <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-0.5">
                     <button
                       type="button"
                       onClick={() => {
                         triggerHaptic("light");
-                        setStarFilter("all");
+                        setReviewSort("latest");
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black shrink-0 transition-all cursor-pointer border ${
-                        starFilter === "all"
-                          ? "bg-white text-zinc-950 border-white shadow-sm"
-                          : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200"
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        reviewSort === "latest"
+                          ? "bg-white text-zinc-950 shadow-sm"
+                          : "text-zinc-400 hover:text-white"
                       }`}
                     >
-                      {t("place.allStars", "All")} ({rawPlaceVideos.length})
+                      {t("place.latest", "Latest")}
                     </button>
-                    {[5, 4, 3, 2, 1].map((stars) => {
-                      const count = starCounts[stars as keyof typeof starCounts] || 0;
-                      const isSelected = starFilter === stars;
-
-                      return (
-                        <button
-                          key={stars}
-                          type="button"
-                          onClick={() => {
-                            triggerHaptic("light");
-                            setStarFilter(isSelected ? "all" : stars);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer border ${
-                            isSelected
-                              ? "bg-amber-400 text-zinc-950 border-amber-400 shadow-sm font-black"
-                              : count > 0
-                                ? "bg-zinc-950 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white"
-                                : "bg-zinc-950/40 text-zinc-600 border-zinc-900"
-                          }`}
-                        >
-                          <Star className={`w-3 h-3 ${isSelected ? "fill-zinc-950 text-zinc-950" : count > 0 ? "fill-amber-400 text-amber-400" : "fill-zinc-700 text-zinc-700"}`} />
-                          <span>{stars}★</span>
-                          <span className="text-[9.5px] opacity-80">({count})</span>
-                        </button>
-                      );
-                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setReviewSort("highest");
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        reviewSort === "highest"
+                          ? "bg-white text-zinc-950 shadow-sm"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.highestRated", "Highest")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setReviewSort("lowest");
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        reviewSort === "lowest"
+                          ? "bg-white text-zinc-950 shadow-sm"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.lowestRated", "Lowest")}
+                    </button>
                   </div>
+
+                  {/* Star Rating Filter - Only show existing ratings */}
+                  {Object.values(starCounts).filter(c => c > 0).length > 1 && (
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic("light");
+                          setStarFilter("all");
+                        }}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
+                          starFilter === "all"
+                            ? "bg-white text-zinc-950 border-white shadow-sm"
+                            : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white"
+                        }`}
+                      >
+                        {t("place.allStars", "All")}
+                      </button>
+                      {[5, 4, 3, 2, 1].filter(stars => (starCounts[stars as keyof typeof starCounts] || 0) > 0).map((stars) => {
+                        const count = starCounts[stars as keyof typeof starCounts] || 0;
+                        const isSelected = starFilter === stars;
+                        return (
+                          <button
+                            key={stars}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic("light");
+                              setStarFilter(isSelected ? "all" : stars);
+                            }}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer border ${
+                              isSelected
+                                ? "bg-amber-400 text-zinc-950 border-amber-400 shadow-sm font-black"
+                                : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white"
+                            }`}
+                          >
+                            <Star className={`w-2.5 h-2.5 ${isSelected ? "fill-zinc-950 text-zinc-950" : "fill-amber-400 text-amber-400"}`} />
+                            <span>{stars}★</span>
+                            <span className="text-[9px] opacity-75">({count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
