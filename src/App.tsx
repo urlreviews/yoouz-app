@@ -4849,7 +4849,7 @@ export function App() {
 
     const now = Date.now();
     const lastClick = pendingFollowClickRef.current.get(cleanAuthorHandle.toLowerCase()) || 0;
-    if (now - lastClick < 350) return; // Throttles rapid multi-clicks
+    if (now - lastClick < 100) return; // Ultra-responsive instant toggle (100ms debouncing)
     pendingFollowClickRef.current.set(cleanAuthorHandle.toLowerCase(), now);
 
     // Determine current follow state accurately from currentUser followedAuthors and localStorage

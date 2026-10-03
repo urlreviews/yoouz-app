@@ -12335,19 +12335,31 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         return;
       }
 
-      // Multi-channel deduplication guard:
-      // If an identical notification was recently generated for this recipient, type, and text, skip to prevent double notification
+      // Multi-channel deduplication guard (10-second throttle for SAME sender & SAME recipient)
       try {
         const recentCheck = await bunnyDb.execute({
-          sql: `SELECT id FROM notifications 
+          sql: `SELECT id, data FROM notifications 
                 WHERE recipientEmail = ? AND type = ? AND text = ?
                 ORDER BY rowid DESC LIMIT 1`,
           args: [params.recipientEmail, params.type, params.text]
         });
         if (recentCheck && recentCheck.rows && recentCheck.rows.length > 0) {
-          const rowId = String(recentCheck.rows[0].id);
-          if (!params.customId || rowId !== params.customId) {
-            console.log(`[Notification Service] Prevented duplicate notification for ${params.recipientEmail} (${params.type}: "${params.text.slice(0, 30)}")`);
+          const row: any = recentCheck.rows[0];
+          let rData: any = {};
+          try { rData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+          const prevSender = rData.user?.email || rData.senderEmail || "";
+          const prevCreatedAt = Number(rData.createdAt || 0);
+
+          // Do NOT throttle follow notifications or explicit customId updates so rapid re-following works instantly
+          if (
+            params.type !== "follow" &&
+            prevSender &&
+            senderEmail &&
+            prevSender.toLowerCase() === senderEmail.toLowerCase() &&
+            Date.now() - prevCreatedAt < 3000 &&
+            (!params.customId || row.id !== params.customId)
+          ) {
+            console.log(`[Notification Service] Throttled rapid duplicate notification for ${params.recipientEmail} (${params.type})`);
             return;
           }
         }
@@ -12379,7 +12391,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       await bunnyDb.execute({
         sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, updatedAt)
               VALUES (?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(id) DO NOTHING`,
+              ON CONFLICT(id) DO UPDATE SET isRead = 0, text = excluded.text, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
         args: [notifId, params.recipientEmail, params.type, params.text, jsonStr]
       });
 
@@ -14408,6 +14420,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             sql: "DELETE FROM follows WHERE id = ?",
             args: [followId]
           });
+          // Clear previous follow notification for clean re-follow trigger
+          const cleanCustomId = `notif_follow_${followerUserId}_${targetHandle.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+          await bunnyDb.execute({
+            sql: "DELETE FROM notifications WHERE id = ?",
+            args: [cleanCustomId]
+          }).catch(() => {});
         }
 
         // Live update target user's follower count and list in bunnyDb users table
