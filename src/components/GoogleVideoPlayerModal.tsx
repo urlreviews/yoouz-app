@@ -522,22 +522,39 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       </div>
 
         {/* Floating Prev/Next Buttons */}
-        <div className="hidden sm:flex flex-col gap-3">
-          <button
-            onClick={handlePrev}
-            className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all backdrop-blur-md"
-            title="Previous Video"
-          >
-            <ChevronUp className="w-6 h-6" />
-          </button>
-          <button
-            onClick={handleNext}
-            className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all backdrop-blur-md"
-            title="Next Video"
-          >
-            <ChevronDown className="w-6 h-6" />
-          </button>
-        </div>
+        {reviews.length > 0 && (() => {
+          const isAtFirstVideo = currentIndex <= 0;
+          const isAtLastVideo = currentIndex >= reviews.length - 1;
+
+          return (
+            <div className="hidden sm:flex flex-col gap-3 select-none">
+              <button
+                onClick={handlePrev}
+                disabled={isAtFirstVideo}
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all backdrop-blur-md ${
+                  isAtFirstVideo
+                    ? "bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed opacity-35"
+                    : "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+                }`}
+                title={isAtFirstVideo ? "First Video" : "Previous Video"}
+              >
+                <ChevronUp className="w-6 h-6" />
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={isAtLastVideo}
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all backdrop-blur-md ${
+                  isAtLastVideo
+                    ? "bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed opacity-35"
+                    : "bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+                }`}
+                title={isAtLastVideo ? "Last Video" : "Next Video"}
+              >
+                <ChevronDown className="w-6 h-6" />
+              </button>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

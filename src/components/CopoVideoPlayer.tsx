@@ -1554,30 +1554,39 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         {/* Floating Up/Down Navigation Buttons (Desktop & Tablet) - Flex sibling beside the video card */}
         {!hideFloatingNav && videos.length > 0 && (() => {
           const isAtFirstVideo = activeCardIndex <= 0;
+          const isAtLastVideo = activeCardIndex >= videos.length - 1;
 
           return (
             <div
               id="copo-floating-nav-buttons"
               className="hidden sm:flex flex-col gap-3 z-30 shrink-0 select-none"
             >
-              {/* Only show Up arrow if we are not on the first video */}
-              {!isAtFirstVideo && (
-                <button
-                  id="btn-scroll-prev-video"
-                  onClick={handlePrev}
-                  className="w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer animate-in fade-in zoom-in-90 duration-150"
-                  title="Previous Video (Up Arrow)"
-                >
-                  <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-                </button>
-              )}
+              {/* Up arrow to scroll to previous video */}
+              <button
+                id="btn-scroll-prev-video"
+                onClick={handlePrev}
+                disabled={isAtFirstVideo}
+                className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-xl ${
+                  isAtFirstVideo
+                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-35"
+                    : "bg-zinc-900/95 border-white/20 text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                }`}
+                title={isAtFirstVideo ? "First Video on Page" : "Previous Video (Up Arrow)"}
+              >
+                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+              </button>
 
               {/* Down arrow to scroll to next video */}
               <button
                 id="btn-scroll-next-video"
                 onClick={handleNext}
-                className="w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer animate-in fade-in zoom-in-90 duration-150"
-                title="Next Video (Down Arrow)"
+                disabled={isAtLastVideo}
+                className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-xl ${
+                  isAtLastVideo
+                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-35"
+                    : "bg-zinc-900/95 border-white/20 text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                }`}
+                title={isAtLastVideo ? "Last Video on Page" : "Next Video (Down Arrow)"}
               >
                 <ChevronDown className="w-6 h-6 stroke-[2.5]" />
               </button>
