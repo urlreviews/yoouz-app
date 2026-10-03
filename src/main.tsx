@@ -10,7 +10,7 @@ if (typeof localStorage !== 'undefined') {
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith("yoouz_cached_videos_") || key === "copo_videos") && key !== "yoouz_cached_videos_v35") {
+      if (key && (key.startsWith("yoouz_cached_videos_") || key === "copo_videos") && key !== "yoouz_cached_videos_v36") {
         localStorage.removeItem(key);
       }
     }

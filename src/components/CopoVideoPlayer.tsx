@@ -743,8 +743,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       isManuallyPausedRef.current = false;
       setIsManuallyPaused(false);
       previousContextKeyRef.current = contextKey;
+
+      // Instantly reset player state and scroll container to top for the new context
+      activeCardIndexRef.current = 0;
+      lastObserverIndexRef.current = 0;
+      setActiveCardIndex(0);
+      onSelectVideoIndex(0);
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+      }
     }
-  }, [contextKey]);
+  }, [contextKey, onSelectVideoIndex]);
 
   // Direct isPaused watcher: Pause when overlay is active, resume automatically when overlay closes!
   useEffect(() => {
@@ -1160,7 +1169,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   useEffect(() => {
     const currentRealIdx = activeCardIndexRef.current % (videos.length || 1);
     if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < videos.length) {
-      scrollToCard(currentIndex, "smooth");
+      scrollToCard(currentIndex, currentIndex === 0 ? "instant" : "smooth");
     }
   }, [currentIndex, videos.length, scrollToCard]);
 

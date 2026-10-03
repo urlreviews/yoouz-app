@@ -4092,12 +4092,12 @@ export function App() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     // Priority 1: Place Drawer context (business profile open on desktop/mobile)
-    if (isDesktop && isPlaceView && drawerPlace) {
+    if (isPlaceView && drawerPlace) {
       return visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
     }
 
     // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
-    if (isDesktop && isCreatorView && selectedAuthorForDrawer) {
+    if (isCreatorView && selectedAuthorForDrawer) {
       return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
     }
 
@@ -4432,10 +4432,7 @@ export function App() {
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
     
-    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-    if (isDesktop) {
-      setCurrentVideoIndex(0);
-    }
+    setCurrentVideoIndex(0);
   };
 
   // Open Creator Drawer
@@ -4529,10 +4526,7 @@ export function App() {
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(enrichedAuthor);
 
-    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-    if (isDesktop) {
-      setCurrentVideoIndex(0);
-    }
+    setCurrentVideoIndex(0);
   };
 
   // Handle Likes - fully synced with BunnyDB
@@ -5713,14 +5707,14 @@ export function App() {
 
       // Update cached feed immediately to prevent resurrection on page reload
       try {
-        const cached = localStorage.getItem("yoouz_cached_videos_v30");
+        const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed)) {
             const updatedCache = parsed.map((v: any) =>
               v.id === videoId ? { ...v, comments: updatedComments, commentsCount: totalCount } : v
             );
-            localStorage.setItem("yoouz_cached_videos_v30", JSON.stringify(updatedCache));
+            localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updatedCache));
           }
         }
       } catch (e) {}

@@ -222,7 +222,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
      place.address.toLowerCase().includes("online") ||
      place.address.toLowerCase().includes("global headquarters"))
   );
-  const rawPlaceVideos = allVideos.filter((v) => isPlaceReviewMatch(v, place));
+  const rawPlaceVideos = React.useMemo(() => {
+    return allVideos
+      .filter((v) => isPlaceReviewMatch(v, place))
+      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+  }, [allVideos, place]);
 
   const displayAddress = React.useMemo(() => {
     const cleanPlaceDomain = (place.brandDomain || place.id || place.name || place.website || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].trim();
@@ -1562,7 +1566,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 ) : (
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-1.5">
-                      {rawPlaceVideos.slice(0, 6).map((v) => {
+                      {placeVideos.slice(0, 6).map((v) => {
                         const displayViews = getDisplayViews(v);
                         const formattedViews = formatViewCount(displayViews);
 

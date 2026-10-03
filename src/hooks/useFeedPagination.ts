@@ -238,34 +238,43 @@ export function useFeedPagination() {
         }
       } catch (e) {}
 
+      const combinedMap = new Map<string, VideoReview>();
+
+      // 1. Initial fresh seed baseline (guarantees latest production reviews are immediately active at 0ms)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
+        if (v && v.id) combinedMap.set(String(v.id), v);
+      });
+
+      // 2. Local published (optimistic uploads in last 60 seconds)
+      localPublished.forEach((v) => {
+        if (v && v.id) combinedMap.set(String(v.id), v);
+      });
+
+      // 3. Cached feed videos from localStorage (preserving new dynamic items while never letting stale cache overwrite newer seed reviews)
       const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const filtered = parsed.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
-          if (filtered.length > 0) {
-            const combinedMap = new Map<string, VideoReview>();
-            localPublished.forEach((v) => combinedMap.set(v.id, v));
-            filtered.forEach((v) => {
-              if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
-            });
-            const result = Array.from(combinedMap.values());
-            result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
-            return result;
-          }
+          parsed.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
+            if (v && v.id) {
+              const existing = combinedMap.get(String(v.id));
+              if (!existing) {
+                combinedMap.set(String(v.id), v);
+              } else {
+                const existingTime = getReviewTime(existing);
+                const cachedTime = getReviewTime(v);
+                if (cachedTime > existingTime) {
+                  combinedMap.set(String(v.id), v);
+                }
+              }
+            }
+          });
         }
       }
 
-      if (localPublished.length > 0) {
-        const combinedMap = new Map<string, VideoReview>();
-        localPublished.forEach((v) => combinedMap.set(v.id, v));
-        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
-          if (!combinedMap.has(v.id)) combinedMap.set(v.id, v);
-        });
-        const result = Array.from(combinedMap.values());
-        result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
-        return result;
-      }
+      const result = Array.from(combinedMap.values());
+      result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
+      return result;
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
     const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
