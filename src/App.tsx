@@ -4087,12 +4087,8 @@ export function App() {
         return visibleVideos.filter(v => isAuthorMatch(v, fullscreenFeedContext.authorData!));
       }
       if (fullscreenFeedContext.type === "place" && (fullscreenFeedContext.placeData || fullscreenFeedContext.id)) {
-        const placeId = fullscreenFeedContext.placeData?.id || fullscreenFeedContext.id;
-        const placeName = fullscreenFeedContext.placeData?.name;
-        return visibleVideos.filter(v => 
-          (placeId && (v.placeId === placeId || isPlaceReviewMatch(v, placeId))) ||
-          (placeName && (v.placeName === placeName || isPlaceReviewMatch(v, placeName)))
-        );
+        const pObj = fullscreenFeedContext.placeData || places.find(pl => pl.id === fullscreenFeedContext.id || pl.name === fullscreenFeedContext.id) || fullscreenFeedContext.id;
+        return visibleVideos.filter(v => isPlaceReviewMatch(v, pObj));
       }
       if (fullscreenFeedContext.type === "profile") {
         return userVideos;
@@ -4103,12 +4099,7 @@ export function App() {
 
     // Priority 1: Place Drawer context (business profile open on desktop/mobile)
     if (isDesktop && isPlaceView && drawerPlace) {
-      const pId = drawerPlace.id;
-      const pName = drawerPlace.name;
-      return visibleVideos.filter(v => 
-        (pId && (v.placeId === pId || isPlaceReviewMatch(v, pId))) ||
-        (pName && (v.placeName === pName || isPlaceReviewMatch(v, pName)))
-      );
+      return visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
     }
 
     // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
@@ -4239,10 +4230,7 @@ export function App() {
       const placeName = p?.name || targetVid.placeName;
 
       const placeVids = videos.filter((v) => 
-        !hiddenVideoIds.includes(v.id) && (
-          (placeId && (v.placeId === placeId || isPlaceReviewMatch(v, placeId))) ||
-          (placeName && (v.placeName === placeName || isPlaceReviewMatch(v, placeName)))
-        )
+        !hiddenVideoIds.includes(v.id) && isPlaceReviewMatch(v, p || placeId || placeName)
       );
       const idx = placeVids.findIndex((v) => v.id === videoId);
 
