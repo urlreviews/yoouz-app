@@ -103,20 +103,13 @@ export const LanguageSelectorModal: React.FC<LanguageSelectorModalProps> = ({
                     : "bg-transparent hover:bg-zinc-800/70 text-white"
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 pr-2">
                   <span className="text-xl sm:text-2xl leading-none shrink-0 select-none">
                     {lang.flag}
                   </span>
-                  <div className="min-w-0">
-                    <div className={`text-sm leading-tight truncate ${isSelected ? "font-bold text-zinc-950" : "font-semibold text-white"}`}>
-                      {lang.nativeName}
-                    </div>
-                    {lang.name !== lang.nativeName && (
-                      <div className={`text-xs truncate leading-tight mt-0.5 ${isSelected ? "text-zinc-600 font-medium" : "text-zinc-400"}`}>
-                        {lang.name}
-                      </div>
-                    )}
-                  </div>
+                  <span className={`text-sm leading-tight truncate ${isSelected ? "font-bold text-zinc-950" : "font-semibold text-white"}`}>
+                    {lang.name}
+                  </span>
                 </div>
 
                 {isSelected && (

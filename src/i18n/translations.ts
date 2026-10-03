@@ -505,9 +505,9 @@ export interface LanguageMeta {
 
 export const SUPPORTED_LANGUAGES: LanguageMeta[] = [
   // --- Americas ---
-  { code: "en", name: "English (US)", nativeName: "English", direction: "ltr", flag: "🇺🇸", region: "Americas" },
+  { code: "en", name: "English", nativeName: "English", direction: "ltr", flag: "🇺🇸", region: "Americas" },
   { code: "es", name: "Spanish", nativeName: "Español", direction: "ltr", flag: "🇪🇸", region: "Americas" },
-  { code: "pt", name: "Portuguese (Brazil)", nativeName: "Português (Brasil)", direction: "ltr", flag: "🇧🇷", region: "Americas" },
+  { code: "pt", name: "Portuguese", nativeName: "Português", direction: "ltr", flag: "🇧🇷", region: "Americas" },
   { code: "fr", name: "French", nativeName: "Français", direction: "ltr", flag: "🇫🇷", region: "Americas" },
 
   // --- Europe ---
@@ -545,7 +545,7 @@ export const SUPPORTED_LANGUAGES: LanguageMeta[] = [
   { code: "ar", name: "Arabic", nativeName: "العربية", direction: "rtl", flag: "🇦🇪", region: "Middle East" },
   { code: "he", name: "Hebrew", nativeName: "עברית", direction: "rtl", flag: "🇮🇱", region: "Middle East" },
   { code: "tr", name: "Turkish", nativeName: "Türkçe", direction: "ltr", flag: "🇹🇷", region: "Middle East" },
-  { code: "fa", name: "Persian (Farsi)", nativeName: "فارسی", direction: "rtl", flag: "🇮🇷", region: "Middle East" },
+  { code: "fa", name: "Persian", nativeName: "فارسی", direction: "rtl", flag: "🇮🇷", region: "Middle East" },
   { code: "ur", name: "Urdu", nativeName: "اردو", direction: "rtl", flag: "🇵🇰", region: "Middle East" },
   { code: "ka", name: "Georgian", nativeName: "ქართული", direction: "ltr", flag: "🇬🇪", region: "Middle East" },
   { code: "hy", name: "Armenian", nativeName: "Հայերեն", direction: "ltr", flag: "🇦🇲", region: "Middle East" },
@@ -569,7 +569,7 @@ export const SUPPORTED_LANGUAGES: LanguageMeta[] = [
   { code: "ms", name: "Malay", nativeName: "Bahasa Melayu", direction: "ltr", flag: "🇲🇾", region: "Asia & Pacific" },
   { code: "th", name: "Thai", nativeName: "ไทย", direction: "ltr", flag: "🇹🇭", region: "Asia & Pacific" },
   { code: "vi", name: "Vietnamese", nativeName: "Tiếng Việt", direction: "ltr", flag: "🇻🇳", region: "Asia & Pacific" },
-  { code: "tl", name: "Filipino (Tagalog)", nativeName: "Filipino", direction: "ltr", flag: "🇵🇭", region: "Asia & Pacific" },
+  { code: "tl", name: "Filipino", nativeName: "Filipino", direction: "ltr", flag: "🇵🇭", region: "Asia & Pacific" },
   { code: "my", name: "Burmese", nativeName: "မြန်မာဘာသာ", direction: "ltr", flag: "🇲🇲", region: "Asia & Pacific" },
   { code: "km", name: "Khmer", nativeName: "ភាសាខ្មែរ", direction: "ltr", flag: "🇰🇭", region: "Asia & Pacific" },
   { code: "lo", name: "Lao", nativeName: "ພາສາລາວ", direction: "ltr", flag: "🇱🇦", region: "Asia & Pacific" },

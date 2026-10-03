@@ -1175,18 +1175,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </h2>
                   </div>
 
-                  <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-2xl shrink-0">
-                    <span className="text-2xl select-none">{currentLanguageMeta.flag}</span>
-                    <div>
-                      <div className="text-sm font-bold text-white leading-tight">
-                        {currentLanguageMeta.nativeName}
-                      </div>
-                      {currentLanguageMeta.name !== currentLanguageMeta.nativeName && (
-                        <div className="text-xs text-zinc-400 leading-tight">
-                          {currentLanguageMeta.name}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 px-3.5 py-2 rounded-2xl shrink-0">
+                    <span className="text-xl select-none">{currentLanguageMeta.flag}</span>
+                    <span className="text-sm font-bold text-white leading-none">
+                      {currentLanguageMeta.name}
+                    </span>
                   </div>
                 </div>
 
@@ -1230,26 +1223,17 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           key={lang.code}
                           id={`more-lang-card-${lang.code}`}
                           onClick={() => setLanguage(lang.code)}
-                          className={`p-3.5 rounded-2xl transition-all text-left flex items-center justify-between cursor-pointer border ${
+                          className={`px-3.5 py-3 rounded-2xl transition-all text-left flex items-center justify-between cursor-pointer border ${
                             isSelected
                               ? "bg-white text-zinc-950 border-white shadow-md"
                               : "bg-zinc-950/60 hover:bg-zinc-800 text-white border-zinc-800/80 hover:border-zinc-700"
                           }`}
                         >
-                          <div className="min-w-0 pr-2">
-                            <div className="flex items-center gap-2.5">
-                              <span className="text-xl leading-none select-none shrink-0">{lang.flag}</span>
-                              <div className="min-w-0">
-                                <div className={`text-sm leading-tight truncate ${isSelected ? "font-bold text-zinc-950" : "font-semibold text-white"}`}>
-                                  {lang.nativeName}
-                                </div>
-                                {lang.name !== lang.nativeName && (
-                                  <div className={`text-xs truncate leading-tight mt-0.5 ${isSelected ? "text-zinc-600 font-medium" : "text-zinc-400"}`}>
-                                    {lang.name}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                          <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                            <span className="text-xl leading-none select-none shrink-0">{lang.flag}</span>
+                            <span className={`text-sm leading-tight truncate ${isSelected ? "font-bold text-zinc-950" : "font-semibold text-white"}`}>
+                              {lang.name}
+                            </span>
                           </div>
 
                           {isSelected && (

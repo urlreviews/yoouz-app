@@ -1693,8 +1693,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 >
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 text-zinc-200 group-hover:text-white" />
-                    <span className="text-xs font-medium text-zinc-200 group-hover:text-white">
-                      {currentLanguageMeta.flag} {currentLanguageMeta.nativeName} ({currentLanguageMeta.name})
+                    <span className="text-xs font-medium text-zinc-200 group-hover:text-white flex items-center gap-1.5">
+                      <span>{currentLanguageMeta.flag}</span>
+                      <span>{currentLanguageMeta.name}</span>
                     </span>
                   </div>
                   <span className="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-200 font-mono uppercase border border-zinc-700">
