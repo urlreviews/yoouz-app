@@ -25,9 +25,6 @@ import {
   Check,
   Sparkles,
   Loader2,
-  RotateCcw,
-  CheckCircle2,
-  ArrowUp,
   ArrowDown,
   Plus,
   Download,
@@ -1134,6 +1131,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(nextIdx, "smooth");
+    } else if (videos.length > 1) {
+      // Seamlessly loop to first video
+      scrollToCard(0, "smooth");
     }
   }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
@@ -1149,8 +1149,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(prevIdx, "smooth");
+    } else if (videos.length > 1) {
+      // Seamlessly loop to last video
+      scrollToCard(videos.length - 1, "smooth");
     }
-  }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
@@ -1514,73 +1517,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               />
             );
           })}
-
-          {/* End of Feed Card (Matches Screenshot 2) */}
-          {videos.length > 0 && (
-            <div
-              key="feed-end-card"
-              data-video-index={videos.length}
-              ref={(el) => {
-                cardRefs.current[videos.length] = el;
-              }}
-              className="w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:aspect-[9/16] md:max-w-[440px] md:rounded-3xl border-0 md:border md:border-white/10 snap-start shrink-0 flex flex-col items-center justify-center p-6 sm:p-8 bg-black text-center select-none relative"
-            >
-              {/* Checkmark circle - natural dark mode */}
-              <div className="w-16 h-16 rounded-full bg-zinc-850 border border-zinc-700/80 flex items-center justify-center mb-5 text-zinc-100 shadow-md">
-                <CheckCircle2 className="w-8 h-8 stroke-[2]" />
-              </div>
-
-              {/* Feed Completed Pill */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-200 uppercase tracking-wider mb-3">
-                {t("video.feedCompleted", "FEED COMPLETED")}
-              </div>
-
-              {/* Title */}
-              <h3 className="text-2xl font-bold text-white tracking-tight mb-2">
-                {t("video.allCaughtUp", "You're all caught up!")}
-              </h3>
-
-              {/* Subtitle */}
-              <p className="text-sm text-zinc-200 leading-relaxed mb-8 max-w-[280px]">
-                {t("video.watchedAllReviews", "You've watched all reviews in this feed.")}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="w-full max-w-[280px] flex flex-col gap-3">
-                <button
-                  type="button"
-                  id="btn-end-card-back-to-top"
-                  onClick={() => scrollToCard(0, "smooth")}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-white hover:bg-zinc-200 active:scale-95 text-black font-bold text-sm transition-all shadow-xl flex items-center justify-center gap-2.5 cursor-pointer"
-                >
-                  <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-                  <span>{t("video.backToFirstReview", "Back to First Review")}</span>
-                </button>
-
-                <button
-                  type="button"
-                  id="btn-end-card-revisit-last"
-                  onClick={() => scrollToCard(videos.length - 1, "smooth")}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 active:scale-95 text-white font-semibold text-sm transition-all border border-white/15 flex items-center justify-center gap-2.5 cursor-pointer"
-                >
-                  <ArrowUp className="w-4 h-4 stroke-[2.5]" />
-                  <span>{t("video.revisitLastReview", "Revisit Last Review")}</span>
-                </button>
-
-                {onOpenCreateModal && (
-                  <button
-                    type="button"
-                    id="btn-end-card-record-review"
-                    onClick={onOpenCreateModal}
-                    className="mt-2 text-xs font-medium text-zinc-300 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer py-2"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>{t("video.recordYourOwnReview", "Record your own video review")}</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop) */}
@@ -1592,9 +1528,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <button
               id="btn-scroll-prev-video"
               onClick={handlePrev}
-              disabled={currentIndex <= 0}
+              disabled={videos.length <= 1}
               className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-                currentIndex <= 0
+                videos.length <= 1
                   ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                   : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
               }`}
@@ -1606,9 +1542,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <button
               id="btn-scroll-next-video"
               onClick={handleNext}
-              disabled={currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)}
+              disabled={videos.length <= 1}
               className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-                currentIndex >= (videos.length > 0 ? videos.length - 1 : 0)
+                videos.length <= 1
                   ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
                   : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
               }`}

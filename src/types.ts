@@ -127,6 +127,7 @@ export interface VideoReview {
   placeRating?: number;
   placeWebsite?: string;
   placeLogoUrl?: string;
+  logoUrl?: string;
   placeBannerUrl?: string;
   placeDescription?: string;
   author?: {
