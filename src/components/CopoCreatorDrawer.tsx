@@ -1911,7 +1911,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 >
                   <span>{t("profile.followers", "Followers")}</span>
                   <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${socialModalTab === "followers" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
-                    {socialData?.followersCount ?? effectiveFollowersCount}
+                    {effectiveFollowersCount}
                   </span>
                 </button>
 
@@ -1926,7 +1926,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 >
                   <span>{t("profile.following", "Following")}</span>
                   <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${socialModalTab === "following" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
-                    {socialData?.followingCount ?? effectiveFollowingCount}
+                    {effectiveFollowingCount}
                   </span>
                 </button>
               </div>
