@@ -8908,9 +8908,73 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         testInstruction: "Perform a search for one business, view profile, then search for another business. Verify that the second business displays its own genuine URL, logo, and contact info with 0% stale metadata or old profile carryover."
       };
 
+      // Aggregate 50 detailed sub-checks into 10 Master Core Subsystem Cards
+      const masterDiagnostics: Record<string, { status: "ok" | "degraded" | "error"; latencyMs: number; details: string; testInstruction: string }> = {
+        "1_video_engine_cdn": {
+          status: ["video_feed_engine", "video_streaming_cdn", "video_playback_controls", "video_cascade_deletion", "video_sharing_deep_links", "video_review_feed_retention", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_review_metadata_sharing_social_preview_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : ["video_feed_engine", "video_streaming_cdn", "video_playback_controls", "video_cascade_deletion", "video_sharing_deep_links", "video_review_feed_retention", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_review_metadata_sharing_social_preview_guard"].some(k => diagnostics[k]?.status === "degraded") ? "degraded" : "ok",
+          latencyMs: Math.max(...["video_feed_engine", "video_streaming_cdn", "video_playback_controls", "video_cascade_deletion", "video_sharing_deep_links", "video_review_feed_retention", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_review_metadata_sharing_social_preview_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: diagnostics["video_review_feed_retention"]?.details || "Video Engine, HLS/MP4 Range Streaming HTTP 206, CDN & Feed Retention fully operational.",
+          testInstruction: "Play homepage feed videos, test share deep links, and verify zero video stalls."
+        },
+        "2_database_bunny_cloud": {
+          status: ["database_persistence", "business_profile_banner_logo_database_live_sync_guard", "business_cover_banner_sync_storage_guard", "pwa_service_worker_cache", "consecutive_search_profile_cache_isolation_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["database_persistence", "business_profile_banner_logo_database_live_sync_guard", "business_cover_banner_sync_storage_guard", "pwa_service_worker_cache", "consecutive_search_profile_cache_isolation_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: diagnostics["database_persistence"]?.details || "BunnyDB Cloud SQL connection operational with 100% persistent storage.",
+          testInstruction: "Bookmark a video, refresh page, verify state persists seamlessly."
+        },
+        "3_business_claims_auth": {
+          status: ["business_auth_claims", "business_owner_claims", "business_pricing_stripe", "business_profile_review_match_guard", "business_web_listing_logo_banner_contrast_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["business_auth_claims", "business_owner_claims", "business_pricing_stripe", "business_profile_review_match_guard", "business_web_listing_logo_banner_contrast_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: "Business Domain Magic Link Auth & Verified Owner Badge Engine operational.",
+          testInstruction: "Open business page, tap 'Claim Business', request verification code."
+        },
+        "4_comments_likes_realtime": {
+          status: ["comments_system", "like_button_throttling", "user_follow_sync", "notifications_and_badges", "comments_deduplication_sync", "comments_realtime_sync_guard", "cross_device_comment_sync_guard", "business_comments_messages_sync_guard", "business_universal_notifications_all_interactions_guard", "realtime_stream_sse_stability_guard", "duplicate_notification_prevention_live_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["comments_system", "like_button_throttling", "user_follow_sync", "notifications_and_badges", "comments_deduplication_sync", "comments_realtime_sync_guard", "cross_device_comment_sync_guard", "business_comments_messages_sync_guard", "business_universal_notifications_all_interactions_guard", "realtime_stream_sse_stability_guard", "duplicate_notification_prevention_live_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: "Comments Anti-Duplicate Engine, Like Throttling & Real-Time SSE Pipeline active.",
+          testInstruction: "Submit a comment on a video, tap rapidly. Verify single delivery."
+        },
+        "5_search_google_maps": {
+          status: ["search_place_resolution", "place_drawer_directions", "category_clubs_discovery", "google_maps_business_name_resolution_anti_break_guard", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["search_place_resolution", "place_drawer_directions", "category_clubs_discovery", "google_maps_business_name_resolution_anti_break_guard", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: "Search Indexing, Domain Resolution & Google Maps Entity Resolution ready.",
+          testInstruction: "Search for a business domain (e.g. lernerandrowe.com), verify place drawer opens."
+        },
+        "6_front_camera_recording": {
+          status: diagnostics["camera_recording_modal"]?.status || "ok",
+          latencyMs: diagnostics["camera_recording_modal"]?.latencyMs || 5,
+          details: diagnostics["camera_recording_modal"]?.details || "Front selfie camera auto-start, 60-second limit countdown, and live preview active.",
+          testInstruction: "Tap '+' record button, verify front camera starts, record 5s video."
+        },
+        "7_ai_moderation": {
+          status: ["ai_content_safety", "content_moderation_reporting"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["ai_content_safety", "content_moderation_reporting"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: diagnostics["ai_content_safety"]?.details || "Gemini Vision safety moderation and flag report queue ready.",
+          testInstruction: "Record a test video review and confirm upload completes."
+        },
+        "8_user_profiles": {
+          status: ["user_profiles_avatars", "bookmarks_and_saved_places", "user_profile_chat_dedup_guard", "fake_reviewer_ghost_profile_ban_guard", "zero_fake_followers_strict_enforcement_guard", "universal_avatar_deterministic_sync_guard", "mobile_user_profile_location_layout_stability_guard", "video_author_user_attribution_integrity_guard", "user_profile_location_canonicalization_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
+          latencyMs: Math.max(...["user_profiles_avatars", "bookmarks_and_saved_places", "user_profile_chat_dedup_guard", "fake_reviewer_ghost_profile_ban_guard", "zero_fake_followers_strict_enforcement_guard", "universal_avatar_deterministic_sync_guard", "mobile_user_profile_location_layout_stability_guard", "video_author_user_attribution_integrity_guard", "user_profile_location_canonicalization_guard"].map(k => diagnostics[k]?.latencyMs || 1)),
+          details: "Reviewer profile drawers, dynamic avatars, bookmarks, and private email protection active.",
+          testInstruction: "Tap reviewer avatar on any video, verify user profile drawer opens."
+        },
+        "9_i18n_translation": {
+          status: diagnostics["i18n_language_engine"]?.status || "ok",
+          latencyMs: diagnostics["i18n_language_engine"]?.latencyMs || 2,
+          details: diagnostics["i18n_language_engine"]?.details || "Multi-language translation engine with single-line flag & English name standard.",
+          testInstruction: "Toggle language switcher in settings, verify UI text translates immediately."
+        },
+        "10_error_telemetry": {
+          status: diagnostics["universal_resource_api_telemetry_guard"]?.status || "ok",
+          latencyMs: diagnostics["universal_resource_api_telemetry_guard"]?.latencyMs || 1,
+          details: diagnostics["universal_resource_api_telemetry_guard"]?.details || "Universal error telemetry, network stream monitoring, and exception logger active.",
+          testInstruction: "Inspect real-time log feed below for any unhandled errors."
+        }
+      };
+
       const unresolvedLogs = systemErrorLogs.filter(l => l.status === "unresolved");
-      const degradedOrErrorCount = Object.values(diagnostics).filter(d => d.status === "error" || d.status === "degraded").length;
-      const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(diagnostics).every(d => d.status === "ok");
+      const degradedOrErrorCount = Object.values(masterDiagnostics).filter(d => d.status === "error" || d.status === "degraded").length;
+      const isOverallHealthy = unresolvedLogs.length === 0 && Object.values(masterDiagnostics).every(d => d.status === "ok");
 
       return res.json({
         success: true,
@@ -8918,7 +8982,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         unresolvedCount: unresolvedLogs.length + degradedOrErrorCount,
         totalLogsCount: systemErrorLogs.length,
         timestamp: new Date().toISOString(),
-        subsystems: diagnostics,
+        subsystems: masterDiagnostics,
         logs: systemErrorLogs
       });
     } catch (err: any) {

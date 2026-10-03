@@ -2679,144 +2679,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* DEDICATED BUSINESS NAME & COMPOUND WORD INTEGRITY CENTER */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 border border-emerald-500/30 shadow-xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-black text-white tracking-tight">Business Name & Compound Word Integrity Center</h3>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          SUB-SYSTEM #48 ACTIVE
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        Guarantees zero single-word concatenations (e.g. separates <span className="text-zinc-200 font-mono">lassustandartsen.nl</span> → <span className="text-emerald-400 font-bold font-mono">Lassus Tandartsen</span>, <span className="text-zinc-200 font-mono">dentisteerpent.be</span> → <span className="text-emerald-400 font-bold font-mono">Dentiste Erpent</span>).
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleRepairAllBusinessNames}
-                      disabled={isRepairingBrandNames}
-                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isRepairingBrandNames ? "animate-spin" : ""}`} />
-                      <span>{isRepairingBrandNames ? "Repairing All Names..." : "Audit & Repair All Names"}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Live Brand Parser Test Console */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                  <div className="lg:col-span-7 space-y-2">
-                    <label className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
-                      <span>Live URL & Brand Separation Test Sandbox</span>
-                      <span className="text-[10px] text-zinc-500 font-normal">(Test any website, slug, or compound string)</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                        <input
-                          type="text"
-                          value={brandTestInput}
-                          onChange={(e) => setBrandTestInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleTestBrandName(); }}
-                          placeholder="e.g. lassustandartsen.nl, dentisteerpent.be, tandis.be..."
-                          className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 font-mono"
-                        />
-                      </div>
-                      <button
-                        onClick={() => handleTestBrandName()}
-                        disabled={isTestingBrand || !brandTestInput.trim()}
-                        className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                      >
-                        {isTestingBrand ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
-                        <span>Parse Name</span>
-                      </button>
-                    </div>
-
-                    {/* Quick Test Chips */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mr-1">Quick Test:</span>
-                      {[
-                        "lassustandartsen.nl",
-                        "dentisteerpent.be",
-                        "tandis.be",
-                        "dentiste-namur.be",
-                        "dental365.nl",
-                        "brusselsdental.com",
-                        "aldhabidental.ae"
-                      ].map((sample) => (
-                        <button
-                          key={sample}
-                          type="button"
-                          onClick={() => {
-                            setBrandTestInput(sample);
-                            handleTestBrandName(sample);
-                          }}
-                          className="px-2 py-0.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white border border-zinc-800 transition cursor-pointer"
-                        >
-                          {sample}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Test Result Display */}
-                  <div className="lg:col-span-5 bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 min-h-[92px] flex flex-col justify-center">
-                    {brandTestResult ? (
-                      <div className="space-y-1.5 animate-in fade-in duration-300">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-zinc-400 font-medium">Parsed Business Name:</span>
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold font-mono text-[11px] border border-emerald-500/20">
-                            {brandTestResult.wordCount} {brandTestResult.wordCount === 1 ? "Word" : "Separated Words"}
-                          </span>
-                        </div>
-                        <div className="text-base font-black text-white font-sans flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>{brandTestResult.parsedName || "—"}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[10px] text-zinc-400 pt-0.5">
-                          <span>Domain: <strong className="text-zinc-300 font-mono">{brandTestResult.cleanDomain}</strong></span>
-                          <span>Known Dictionary: <strong className={brandTestResult.isKnownBrand ? "text-emerald-400" : "text-amber-400"}>{brandTestResult.isKnownBrand ? "Yes (Official)" : "Auto-Split"}</strong></span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-2 text-xs text-zinc-400 flex flex-col items-center gap-1">
-                        <Sparkles className="w-4 h-4 text-emerald-400" />
-                        <span>Click &quot;Parse Name&quot; or select a quick test domain above</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Repair Report Summary if run */}
-                {brandRepairReport && (
-                  <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-700/50 flex items-start justify-between gap-3 animate-in slide-in-from-top-2">
-                    <div className="space-y-1 text-xs">
-                      <div className="font-bold text-emerald-300 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <span>{brandRepairReport.message || "Audit and repair completed successfully."}</span>
-                      </div>
-                      <p className="text-[11px] text-emerald-200/80">
-                        All database business entries and video reviews in BunnyDB verified. Single-word concatenations are permanently purged.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setBrandRepairReport(null)}
-                      className="text-zinc-400 hover:text-white p-1 cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
               {/* Subsystems Control & Filter Bar */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
                 {/* Search input */}
@@ -2885,73 +2747,33 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {healthData?.subsystems && Object.entries(healthData.subsystems)
                   .filter(([key, item]: [string, any]) => {
-                    const titles: Record<string, string> = {
-                      video_feed_engine: "1. Video Feed Engine & Feed Retention",
-                      video_streaming_cdn: "1. Video Range Streaming & CDN",
-                      video_playback_controls: "1. Video Controls & Speed Rate Toggle",
-                      video_cascade_deletion: "1. Review Deletion & Storage Cleanup",
-                      video_sharing_deep_links: "1. Deep Links, Share & Embed Generator",
-                      video_review_feed_retention: "1. Video Review Feed Retention Guard",
-                      video_recording_upload_anti_stall_guard: "1. Video Upload Anti-Stall Guard",
-                      video_cross_device_instant_live_sync_guard: "1. Video Cross-Device Instant Live Sync",
-                      video_review_metadata_sharing_social_preview_guard: "1. Video Social Sharing Preview & OpenGraph",
-                      database_persistence: "2. BunnyDB Cloud & Storage Persistence",
-                      business_profile_banner_logo_database_live_sync_guard: "2. Business Profile Logo & Banner Live Storage",
-                      business_cover_banner_sync_storage_guard: "2. Business Cover Banner Sync & Asset Storage",
-                      pwa_service_worker_cache: "2. PWA Cache & Service Worker Sync",
-                      consecutive_search_profile_cache_isolation_guard: "2. Consecutive Search Profile Cache Isolation",
-                      business_auth_claims: "3. Business Auth & Magic Link Verification",
-                      business_owner_claims: "3. Business Claims & Verified Badge Engine",
-                      business_pricing_stripe: "3. Business Plans & Agency Partnerships",
-                      business_profile_review_match_guard: "3. Business Profile Review Matching Guard",
-                      business_web_listing_logo_banner_contrast_guard: "3. Business Web Listing Banner & Dark-Mode Contrast",
-                      comments_system: "4. Comments & Anti-Double Message Engine",
-                      like_button_throttling: "4. Like Button Multi-Click Throttling",
-                      user_follow_sync: "4. Follow Button & Profile State Sync",
-                      notifications_and_badges: "4. Notifications & Activity Feed Badges",
-                      comments_deduplication_sync: "4. Comments Deduplication & Sanitizer",
-                      comments_realtime_sync_guard: "4. Comments Real-Time Sync Guard",
-                      cross_device_comment_sync_guard: "4. Cross-Device Comment Deletion & Cache Guard",
-                      business_comments_messages_sync_guard: "4. Business Comments & Direct Messages Sync",
-                      business_universal_notifications_all_interactions_guard: "4. Business Universal Interaction Notifications",
-                      realtime_stream_sse_stability_guard: "4. Real-Time Stream & SSE Connection Stability",
-                      duplicate_notification_prevention_live_guard: "4. Duplicate Notification Prevention Guard",
-                      search_place_resolution: "5. Search Indexing & Domain Resolution",
-                      place_drawer_directions: "5. Google Maps Directions & Contact Actions",
-                      category_clubs_discovery: "5. Category Filters & Place Discovery",
-                      google_maps_business_name_resolution_anti_break_guard: "5. Google Maps Entity Resolution & Anti-Break Guard",
-                      business_name_word_separation_integrity_guard: "5. Multi-Language Word Separation & Name Integrity",
-                      zero_mock_business_data_geocoding_guard: "5. Zero-Mock Business Data Accuracy & Geocoding",
-                      camera_recording_modal: "6. Front Selfie Camera & 60s Limit",
-                      ai_content_safety: "7. Gemini Vision Safety Moderation",
-                      content_moderation_reporting: "7. Content Flagging & Moderation Queue",
-                      user_profiles_avatars: "8. Reviewer Profile Drawers & Dynamic Avatars",
-                      bookmarks_and_saved_places: "8. Bookmarks & Saved Collections",
-                      user_profile_chat_dedup_guard: "8. Business Chat & User Address Protection",
-                      fake_reviewer_ghost_profile_ban_guard: "8. Fake Reviewer Profile & Anonymous Recipient Ban Guard",
-                      zero_fake_followers_strict_enforcement_guard: "8. Zero Fake Followers Enforcement Guard",
-                      universal_avatar_deterministic_sync_guard: "8. Dynamic Universal Avatar Parity Guard",
-                      mobile_user_profile_location_layout_stability_guard: "8. Mobile Profile Location Layout Guard",
-                      video_author_user_attribution_integrity_guard: "8. Video Review Author Identity Guard",
-                      user_profile_location_canonicalization_guard: "8. Profile Location Canonicalization Guard",
-                      i18n_language_engine: "9. Multi-Language i18n Translation Engine",
-                      universal_resource_api_telemetry_guard: "10. Universal Application & Error Telemetry"
+                    const masterTitles: Record<string, string> = {
+                      "1_video_engine_cdn": "1. Video Feed Engine, CDN Range Streaming & Retention",
+                      "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
+                      "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
+                      "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
+                      "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
+                      "6_front_camera_recording": "6. Live Front Camera & 60s Recording Engine",
+                      "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
+                      "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
+                      "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
+                      "10_error_telemetry": "10. Universal Application & Error Telemetry"
                     };
 
-                    const title = titles[key] || key;
+                    const title = masterTitles[key] || key;
                     const details = item?.details || "";
 
                     // Category matching
                     if (subsystemCategory === "database") {
-                      if (!["database_persistence", "video_feed_engine", "video_review_persistence_sync", "video_cascade_deletion", "pwa_service_worker_cache", "video_review_feed_retention", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
+                      if (!["2_database_bunny_cloud"].includes(key)) return false;
                     } else if (subsystemCategory === "media") {
-                      if (!["video_streaming_cdn", "video_playback_controls", "camera_recording_modal", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_sharing_deep_links", "video_review_metadata_sharing_social_preview_guard"].includes(key)) return false;
+                      if (!["1_video_engine_cdn", "6_front_camera_recording"].includes(key)) return false;
                     } else if (subsystemCategory === "security") {
-                      if (!["business_auth_claims", "ai_content_safety", "business_owner_claims", "business_pricing_stripe", "content_moderation_reporting", "fake_reviewer_ghost_profile_ban_guard", "zero_fake_followers_strict_enforcement_guard", "video_author_user_attribution_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
+                      if (!["3_business_claims_auth", "7_ai_moderation"].includes(key)) return false;
                     } else if (subsystemCategory === "realtime") {
-                      if (!["realtime_stream_sse_stability_guard", "duplicate_notification_prevention_live_guard", "business_comments_messages_sync_guard", "business_universal_notifications_all_interactions_guard", "comments_realtime_sync_guard", "cross_device_comment_sync_guard", "comments_system", "like_button_throttling", "notifications_and_badges"].includes(key)) return false;
+                      if (!["4_comments_likes_realtime"].includes(key)) return false;
                     } else if (subsystemCategory === "social") {
-                      if (!["user_follow_sync", "bookmarks_and_saved_places", "i18n_language_engine", "user_profiles_avatars", "comments_deduplication_sync", "user_profile_chat_dedup_guard", "universal_avatar_deterministic_sync_guard", "universal_resource_api_telemetry_guard", "mobile_user_profile_location_layout_stability_guard", "user_profile_location_canonicalization_guard", "business_profile_review_match_guard", "business_profile_banner_logo_database_live_sync_guard", "google_maps_business_name_resolution_anti_break_guard", "business_cover_banner_sync_storage_guard", "business_web_listing_logo_banner_contrast_guard", "business_name_word_separation_integrity_guard", "zero_mock_business_data_geocoding_guard"].includes(key)) return false;
+                      if (!["5_search_google_maps", "8_user_profiles", "9_i18n_translation", "10_error_telemetry"].includes(key)) return false;
                     }
 
                     // Search matching
@@ -2963,113 +2785,34 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     return true;
                   })
                   .map(([key, item]: [string, any]) => {
-                    const titles: Record<string, string> = {
-                      video_feed_engine: "1. Video Feed & Caching Engine",
-                      comments_system: "2. Comments & Double Message Guard",
-                      database_persistence: "3. BunnyDB Cloud & Storage Backup",
-                      video_streaming_cdn: "4. Video Range Streaming (HTTP 206)",
-                      business_auth_claims: "5. Business Auth & Magic Link",
-                      search_place_resolution: "6. Search & Domain Resolution",
-                      ai_content_safety: "7. Gemini Vision Safety Moderation",
-                      like_button_throttling: "8. Like Button Multi-Click Throttling",
-                      user_follow_sync: "9. Follow Button & Profile State Sync",
-                      video_playback_controls: "10. Video Controls & Speed Rate Toggle",
-                      camera_recording_modal: "11. Front Camera Selfie & 60s Countdown",
-                      bookmarks_and_saved_places: "12. Bookmarks & Saved Collections",
-                      notifications_and_badges: "13. Notifications & Activity Feed",
-                      i18n_language_engine: "14. Multi-Language i18n Translation",
-                      video_review_persistence_sync: "15. Review Submission & Business Page Sync Guard",
-                      business_owner_claims: "16. Business Claims & Verified Badge Engine",
-                      place_drawer_directions: "17. Google Maps Directions & Contact Actions",
-                      user_profiles_avatars: "18. Reviewer Profile Drawers & Avatars",
-                      video_cascade_deletion: "19. Review Deletion & Cascade Storage Cleanup",
-                      business_pricing_stripe: "20. Business Agency Partnerships & Verification",
-                      content_moderation_reporting: "21. Content Flagging & Moderation Queue",
-                      pwa_service_worker_cache: "22. PWA Cache Eviction & Service Worker",
-                      video_sharing_deep_links: "23. Deep Links, Share & Embed Generator",
-                      category_clubs_discovery: "24. Category Filters & Place Discovery",
-                      video_review_feed_retention: "25. Video Review Retention & Feed Disappearance Guard",
-                      comments_deduplication_sync: "26. Review ID Leak Guard, Caption Sanitizer & Comments Deduplication",
-                      business_profile_review_match_guard: "27. Business Profile Place Review Matching & Empty State Guard",
-                      comments_realtime_sync_guard: "28. Video Comments & Owner Response Real-Time Sync Guard",
-                      cross_device_comment_sync_guard: "29. Cross-Device Comment Deletion, Mobile Cache & Business Owner Logo Guard",
-                      user_profile_chat_dedup_guard: "30. Business Chat Single-Profile & User Address Update Guard",
-                      fake_reviewer_ghost_profile_ban_guard: "31. Fake/Mock Reviewer Profile, Anonymous UUID Recipient & Ghost Creator Drawer Ban Guard",
-                      zero_fake_followers_strict_enforcement_guard: "32. Zero Fake/Synthetic Followers for Businesses & Users Guard",
-                      business_comments_messages_sync_guard: "33. Business Video Review Comments & Direct Messages Notification Sync Guard",
-                      business_universal_notifications_all_interactions_guard: "34. Business Universal All-Interaction Notifications & Direct Message Delivery Guard",
-                      business_profile_banner_logo_database_live_sync_guard: "35. Business Profile Logo, Cover Banner & Info Live Database Storage Guard",
-                      google_maps_business_name_resolution_anti_break_guard: "36. Google Maps Entity Resolution, Embedded Maps & Directions Anti-Break Guard",
-                      universal_avatar_deterministic_sync_guard: "37. Universal Avatar Parity & Deterministic Color Sync Guard",
-                      business_cover_banner_sync_storage_guard: "38. Business Profile Cover Banner Instant Sync & Storage Asset Purge Guard",
-                      realtime_stream_sse_stability_guard: "39. Real-Time Stream & SSE Connection Stability Guard",
-                      universal_resource_api_telemetry_guard: "40. Universal Application & Resource Error Telemetry Guard",
-                      mobile_user_profile_location_layout_stability_guard: "41. Mobile User Profile Location Layout Stability & Anti-Flicker Guard",
-                      video_author_user_attribution_integrity_guard: "42. Video Review Author Identity & User Attribution Anti-Collision Guard",
-                      video_review_metadata_sharing_social_preview_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
-                      user_profile_location_canonicalization_guard: "43. Video Review Social Sharing Preview & OpenGraph Metadata Integrity Guard",
-                      video_recording_upload_anti_stall_guard: "44. Video Recording, 95% Anti-Stall & Resilient Publishing Guard",
-                      video_cross_device_instant_live_sync_guard: "45. Video Review Cross-Device Instant Live Feed Broadcast & Global Cloud Sync Guard",
-                      business_web_listing_logo_banner_contrast_guard: "46. Business Web Listing Logo, Cover Banner Instant Resolution & Dark-Mode High-Contrast Visibility Guard",
-                      duplicate_notification_prevention_live_guard: "47. Real-Time Video Comments Duplicate Notification Prevention & Multi-Channel Anti-Collision Guard",
-                      business_name_word_separation_integrity_guard: "48. Multi-Language Compound Word & Business Name Separation Integrity Guard",
-                      zero_mock_business_data_geocoding_guard: "49. Zero-Mock Business Data Accuracy, Geocoding & Address Integrity Guard",
-                      consecutive_search_profile_cache_isolation_guard: "50. Consecutive Search & Profile Cache Isolation Guard"
+                    const masterTitles: Record<string, string> = {
+                      "1_video_engine_cdn": "1. Video Feed Engine, CDN Range Streaming & Retention",
+                      "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
+                      "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
+                      "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
+                      "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
+                      "6_front_camera_recording": "6. Live Front Camera & 60s Recording Engine",
+                      "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
+                      "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
+                      "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
+                      "10_error_telemetry": "10. Universal Application & Error Telemetry"
                     };
 
                     const icons: Record<string, string> = {
-                      video_feed_engine: "🎬",
-                      comments_system: "💬",
-                      database_persistence: "⚡",
-                      video_streaming_cdn: "📡",
-                      business_auth_claims: "🔐",
-                      search_place_resolution: "🔍",
-                      ai_content_safety: "🛡️",
-                      like_button_throttling: "❤️",
-                      user_follow_sync: "👤",
-                      video_playback_controls: "⏯️",
-                      camera_recording_modal: "📷",
-                      bookmarks_and_saved_places: "🔖",
-                      notifications_and_badges: "🔔",
-                      i18n_language_engine: "🌐",
-                      video_review_persistence_sync: "📹",
-                      business_owner_claims: "🏷️",
-                      place_drawer_directions: "🗺️",
-                      user_profiles_avatars: "🖼️",
-                      video_cascade_deletion: "🗑️",
-                      business_pricing_stripe: "🤝",
-                      content_moderation_reporting: "🚩",
-                      pwa_service_worker_cache: "📲",
-                      video_sharing_deep_links: "🔗",
-                      category_clubs_discovery: "🧭",
-                      video_review_feed_retention: "🛡️",
-                      comments_deduplication_sync: "💬",
-                      business_profile_review_match_guard: "🏢",
-                      comments_realtime_sync_guard: "⚡",
-                      cross_device_comment_sync_guard: "🔄",
-                      user_profile_chat_dedup_guard: "👤",
-                      fake_reviewer_ghost_profile_ban_guard: "👻",
-                      zero_fake_followers_strict_enforcement_guard: "🛡️",
-                      business_comments_messages_sync_guard: "🔔",
-                      business_universal_notifications_all_interactions_guard: "📬",
-                      business_profile_banner_logo_database_live_sync_guard: "🖼️",
-                      google_maps_business_name_resolution_anti_break_guard: "🗺️",
-                      universal_avatar_deterministic_sync_guard: "🎨",
-                      business_cover_banner_sync_storage_guard: "🖼️",
-                      realtime_stream_sse_stability_guard: "⚡",
-                      universal_resource_api_telemetry_guard: "🛡️",
-                      mobile_user_profile_location_layout_stability_guard: "📍",
-                      video_author_user_attribution_integrity_guard: "🛡️",
-                      video_review_metadata_sharing_social_preview_guard: "🔗",
-                      user_profile_location_canonicalization_guard: "📍",
-                      video_recording_upload_anti_stall_guard: "📹",
-                      video_cross_device_instant_live_sync_guard: "🔄",
-                      business_web_listing_logo_banner_contrast_guard: "✨",
-                      duplicate_notification_prevention_live_guard: "🔔",
-                      business_name_word_separation_integrity_guard: "🏢",
-                      zero_mock_business_data_geocoding_guard: "📍",
-                      consecutive_search_profile_cache_isolation_guard: "🔒"
+                      "1_video_engine_cdn": "🎬",
+                      "2_database_bunny_cloud": "⚡",
+                      "3_business_claims_auth": "🛡️",
+                      "4_comments_likes_realtime": "💬",
+                      "5_search_google_maps": "🔍",
+                      "6_front_camera_recording": "🎥",
+                      "7_ai_moderation": "✨",
+                      "8_user_profiles": "👥",
+                      "9_i18n_translation": "🌐",
+                      "10_error_telemetry": "📡"
                     };
+
+                    const title = masterTitles[key] || key;
+                    const icon = icons[key] || "⚙️";
 
                     const isExpanded = expandedSubsystems[key] || false;
 
@@ -3078,8 +2821,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div>
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-lg shrink-0">{icons[key] || "⚙️"}</span>
-                              <span className="text-xs font-bold text-white leading-tight truncate">{titles[key] || key}</span>
+                              <span className="text-lg shrink-0">{icon}</span>
+                              <span className="text-xs font-bold text-white leading-tight truncate">{title}</span>
                             </div>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 border ${
                               item.status === 'ok'
