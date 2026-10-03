@@ -4190,7 +4190,9 @@ export function App() {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
 
-      const authorVids = videos.filter((v) => !hiddenVideoIds.includes(v.id) && isAuthorMatch(v, author));
+      const authorVids = videos
+        .filter((v) => !hiddenVideoIds.includes(v.id) && isAuthorMatch(v, author))
+        .sort((a, b) => getReviewTime(b) - getReviewTime(a));
       const idx = authorVids.findIndex((v) => v.id === videoId);
 
       if (isDesktop) {
@@ -4223,9 +4225,9 @@ export function App() {
       const placeId = p?.id || targetVid.placeId;
       const placeName = p?.name || targetVid.placeName;
 
-      const placeVids = videos.filter((v) => 
-        !hiddenVideoIds.includes(v.id) && isPlaceReviewMatch(v, p || placeId || placeName)
-      );
+      const placeVids = videos
+        .filter((v) => !hiddenVideoIds.includes(v.id) && isPlaceReviewMatch(v, p || placeId || placeName))
+        .sort((a, b) => getReviewTime(b) - getReviewTime(a));
       const idx = placeVids.findIndex((v) => v.id === videoId);
 
       if (isDesktop) {

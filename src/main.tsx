@@ -5,6 +5,18 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import './index.css';
 
+// Purge any stale client-side caches synchronously before initial render
+if (typeof localStorage !== 'undefined') {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("yoouz_cached_videos_") || key === "copo_videos") && key !== "yoouz_cached_videos_v35") {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch (e) {}
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
