@@ -1994,7 +1994,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 }
 
                 return filtered.map((u: any, idx: number) => {
-                  const nameStr = u.name || "Community Reviewer";
+                  if (!u || !u.name || isYoouzMemberStr(u.name)) return null;
+                  const nameStr = u.name;
                   const safeAvatar = getSafeAvatarUrl(u.avatar, nameStr, u.handle || nameStr);
                   const locationStr = u.location ? formatCityCountry(u.location) : (u.city ? `${u.city}${u.country ? `, ${u.country}` : ''}` : "");
                   

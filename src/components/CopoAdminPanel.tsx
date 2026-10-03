@@ -4695,7 +4695,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-zinc-200" />
-                    <span className="text-sm font-bold text-white">All Users & Community Members</span>
+                    <span className="text-sm font-bold text-white">All Registered Users</span>
                   </div>
 
                   <select
@@ -4704,7 +4704,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
                   >
                     <option value="all">All Users ({uniqueUsers.length})</option>
-                    <option value="members">Community Members ({standardUsersList.length})</option>
+                    <option value="members">Standard Users ({standardUsersList.length})</option>
                     <option value="creators">Creators ({creatorsList.length})</option>
                     <option value="registered">Registered Accounts</option>
                   </select>
