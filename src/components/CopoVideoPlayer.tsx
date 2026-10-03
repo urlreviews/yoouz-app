@@ -33,7 +33,7 @@ import {
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
 import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
-import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES, toTitleCase } from "../utils/placeUtils";
+import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES, toTitleCase, getReviewTime } from "../utils/placeUtils";
 
 interface CopoVideoPlayerProps {
   videos: VideoReview[];
@@ -127,7 +127,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 }) => {
   const { t } = useLanguage();
   // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
-  const effectiveVideos = (videos && videos.length > 0) ? videos : (feedContextTitle ? [] : INITIAL_SEED_VIDEOS);
+  const effectiveVideos = useMemo(() => {
+    const base = (videos && videos.length > 0) ? videos : (feedContextTitle ? [] : INITIAL_SEED_VIDEOS);
+    return [...base].sort((a, b) => getReviewTime(b) - getReviewTime(a));
+  }, [videos, feedContextTitle]);
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);

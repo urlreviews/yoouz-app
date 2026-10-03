@@ -213,10 +213,15 @@ export function useFeedPagination() {
     });
 
     try {
-      // Purge legacy caches
-      ["yoouz_cached_videos_v30", "yoouz_cached_videos_v29", "yoouz_cached_videos_v28", "yoouz_cached_videos_v27", "yoouz_cached_videos_v26", "yoouz_cached_videos_v25"].forEach(k => {
-        try { localStorage.removeItem(k); } catch (e) {}
-      });
+      // Purge all legacy and older cache versions from localStorage
+      if (typeof localStorage !== "undefined") {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith("yoouz_cached_videos_") || key === "copo_videos") && key !== YOOUZ_VIDEOS_CACHE_KEY) {
+            try { localStorage.removeItem(key); } catch (e) {}
+          }
+        }
+      }
 
       let localPublished: any[] = [];
       try {

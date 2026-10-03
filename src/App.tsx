@@ -4031,8 +4031,10 @@ export function App() {
 
   // Active Feed Videos (Filtered by Fullscreen Context or Drawer state if active, otherwise Home feed)
   const activeFeedVideos = useMemo(() => {
-    // Filter out hidden/blocked videos and deactivated users
-    const visibleVideos = videos.filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName));
+    // Filter out hidden/blocked videos and deactivated users, strictly sorted latest-first
+    const visibleVideos = [...videos]
+      .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
+      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
     if (embedTargetId) {
       const cleanSlug = embedTargetId.toLowerCase().trim();
