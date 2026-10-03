@@ -3,7 +3,43 @@ import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImag
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
-export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v30";
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v31";
+
+/**
+ * Universal, highly robust review timestamp extractor
+ * Handles createdAtMs, createdAt ISO/SQL strings, recordedAt, rev- timestamp IDs, and date objects
+ */
+export function getReviewTime(v: any): number {
+  if (!v) return 0;
+  let fromMs = 0;
+  if (typeof v.createdAtMs === "number" && !isNaN(v.createdAtMs) && v.createdAtMs > 0) {
+    fromMs = v.createdAtMs;
+  }
+  let fromDt = 0;
+  if (v.createdAt && typeof v.createdAt === "string") {
+    try {
+      const normalized = v.createdAt.includes("T") ? v.createdAt : v.createdAt.replace(" ", "T") + (v.createdAt.endsWith("Z") ? "" : "Z");
+      const parsed = new Date(normalized).getTime();
+      if (!isNaN(parsed) && parsed > 0) fromDt = parsed;
+    } catch (e) {}
+  }
+  let fromRec = 0;
+  if (v.recordedAt && typeof v.recordedAt === "string" && v.recordedAt !== "Just now") {
+    try {
+      const parsed = new Date(v.recordedAt).getTime();
+      if (!isNaN(parsed) && parsed > 0) fromRec = parsed;
+    } catch (e) {}
+  }
+  let fromId = 0;
+  if (v.id && typeof v.id === "string" && v.id.startsWith("rev-")) {
+    const parts = v.id.split("-");
+    if (parts.length >= 2) {
+      const parsed = parseInt(parts[1], 10);
+      if (!isNaN(parsed) && parsed > 1600000000000) fromId = parsed;
+    }
+  }
+  return Math.max(fromMs, fromDt, fromRec, fromId, 0);
+}
 
 /**
  * Cleanly extracts domain name from URL or text string

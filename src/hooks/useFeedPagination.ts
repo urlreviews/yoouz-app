@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoReview } from '../types';
-import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY } from '../utils/placeUtils';
+import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY, getReviewTime } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
@@ -214,17 +214,9 @@ export function useFeedPagination() {
 
     try {
       // Purge legacy caches
-      ["yoouz_cached_videos_v28", "yoouz_cached_videos_v27", "yoouz_cached_videos_v26", "yoouz_cached_videos_v25"].forEach(k => {
+      ["yoouz_cached_videos_v30", "yoouz_cached_videos_v29", "yoouz_cached_videos_v28", "yoouz_cached_videos_v27", "yoouz_cached_videos_v26", "yoouz_cached_videos_v25"].forEach(k => {
         try { localStorage.removeItem(k); } catch (e) {}
       });
-
-      const getReviewTime = (v: any) => {
-        if (!v) return 0;
-        const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-        const fromMs = typeof v.createdAtMs === 'number' ? v.createdAtMs : 0;
-        const fromId = (v.id && typeof v.id === 'string' && v.id.startsWith('rev-')) ? parseInt(v.id.split('-')[1], 10) : 0;
-        return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
-      };
 
       let localPublished: any[] = [];
       try {
@@ -272,6 +264,7 @@ export function useFeedPagination() {
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
     const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
+    seeds.sort((a, b) => getReviewTime(b) - getReviewTime(a));
     return seeds;
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);

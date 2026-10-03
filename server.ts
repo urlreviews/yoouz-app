@@ -1349,6 +1349,48 @@ try {
   }
 } catch (e) {}
 
+// Asynchronously sync latest from BunnyDB on startup
+setTimeout(async () => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      const rows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT 100");
+      if (rows.rows && rows.rows.length > 0) {
+        const deletedIds = readDeletedReviewsIndex();
+        const deletedSet = new Set(deletedIds);
+        const mapped = rows.rows.filter((r: any) => r && r.id && !deletedSet.has(String(r.id))).map((r: any) => {
+          const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+          return {
+            ...parsedData,
+            id: r.id,
+            placeId: r.placeId || parsedData.placeId,
+            placeName: r.placeName || parsedData.placeName,
+            authorName: r.authorName || parsedData.authorName,
+            authorAvatar: r.authorAvatar || parsedData.authorAvatar,
+            rating: Number(r.rating) || Number(parsedData.rating) || 5,
+            videoUrl: r.videoUrl || parsedData.videoUrl,
+            thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
+            duration: r.duration || parsedData.duration || 60,
+            createdAt: r.createdAt || parsedData.createdAt,
+            createdAtMs: typeof parsedData.createdAtMs === 'number' ? parsedData.createdAtMs : (r.createdAt ? new Date(r.createdAt.replace(' ', 'T') + 'Z').getTime() : Date.now()),
+            likesCount: typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : 0),
+            bookmarksCount: typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : 0),
+            sharesCount: typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : 0),
+            viewsCount: typeof r.viewsCount === 'number' ? r.viewsCount : (typeof parsedData.viewsCount === 'number' ? parsedData.viewsCount : 0)
+          };
+        });
+        if (mapped.length > 0) {
+          feedCache.videos = mapped;
+          feedCache.lastFetched = Date.now();
+          console.log(`🐰 [Server] Live BunnyDB feed cache refreshed with ${mapped.length} reviews`);
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error("Error pre-fetching BunnyDB feed cache:", err?.message || err);
+  }
+}, 50);
+
 function normalizeUserLocationServer(
   loc?: string,
   city?: string,

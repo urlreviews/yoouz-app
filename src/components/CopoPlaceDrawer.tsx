@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -365,8 +365,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     // Sort order
     list.sort((a, b) => {
-      const timeA = a.createdAtMs || (a.recordedAt ? new Date(a.recordedAt).getTime() : 0) || 0;
-      const timeB = b.createdAtMs || (b.recordedAt ? new Date(b.recordedAt).getTime() : 0) || 0;
+      const timeA = getReviewTime(a);
+      const timeB = getReviewTime(b);
 
       if (reviewSort === "latest") {
         return timeB - timeA;
@@ -375,15 +375,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return timeA - timeB;
       }
       if (reviewSort === "highest") {
-        return b.rating - a.rating;
+        return (b.rating || 5) - (a.rating || 5) || (timeB - timeA);
       }
       if (reviewSort === "lowest") {
-        return a.rating - b.rating;
+        return (a.rating || 5) - (b.rating || 5) || (timeB - timeA);
       }
       if (reviewSort === "popular") {
-        return b.likes - a.likes;
+        return (b.likes || 0) - (a.likes || 0) || (timeB - timeA);
       }
-      return 0;
+      return timeB - timeA;
     });
 
     return list;

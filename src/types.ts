@@ -38,9 +38,12 @@ export type FeedSubTab = "discover" | "following";
 
 export interface ReviewComment {
   id: string;
+  videoId?: string;
+  userId?: string;
   authorName: string;
   authorHandle?: string;
   authorAvatar: string;
+  author?: any;
   text: string;
   createdAt: string;
   createdAtMs?: number;
@@ -130,6 +133,7 @@ export interface VideoReview {
   logoUrl?: string;
   placeBannerUrl?: string;
   placeDescription?: string;
+  placeOpeningHours?: any;
   author?: {
     name: string;
     handle?: string;

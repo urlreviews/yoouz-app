@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { isValidLatLng, sanitizeLatLng, getCachedUserLocation } from "../utils/geo";
-import { isPlaceReviewMatch, getGoogleMapsDirectionsUrl } from "../utils/placeUtils";
+import { isPlaceReviewMatch, getGoogleMapsDirectionsUrl, getReviewTime } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoStarRating } from "./CopoStarRating";
 
@@ -56,7 +56,11 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId) || places[0];
-  const placeVideos = selectedPlace ? videos.filter((v) => isPlaceReviewMatch(v, selectedPlace)) : [];
+  const placeVideos = selectedPlace
+    ? videos
+        .filter((v) => isPlaceReviewMatch(v, selectedPlace))
+        .sort((a, b) => getReviewTime(b) - getReviewTime(a))
+    : [];
 
   // Load cached location if available without auto-prompting browser geolocation
   useEffect(() => {

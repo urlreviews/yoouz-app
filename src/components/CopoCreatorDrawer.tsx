@@ -28,7 +28,7 @@ import {
   EyeOff
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -398,8 +398,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   if (!author) return null;
 
-  // Filter videos belonging to this author
-  const authorVideos = allVideos.filter((v) => isAuthorMatch(v, author));
+  // Filter videos belonging to this author, sorted latest-first
+  const authorVideos = allVideos
+    .filter((v) => isAuthorMatch(v, author))
+    .sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
   // Check if any video by this author contains a genuine Google / high-res avatar
   const videoWithAuthenticAvatar = authorVideos.find((v) => {
