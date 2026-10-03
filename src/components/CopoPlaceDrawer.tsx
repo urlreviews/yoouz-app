@@ -1880,71 +1880,66 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Only show Sort & Star Filter if there are multiple reviews (2+) */}
               {rawPlaceVideos.length > 1 && (
-                <div className="space-y-2 pb-1 bg-zinc-900/40 p-2.5 rounded-2xl border border-zinc-800/60">
-                  {/* Row 1: Minimalist Sort Pills */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                      {t("place.sortBy", "Sort")}
-                    </span>
-                    <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800/80 rounded-xl p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("latest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "latest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.latest", "Latest")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("highest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "highest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.highestRated", "Highest")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setReviewSort("lowest");
-                        }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
-                          reviewSort === "lowest"
-                            ? "bg-white text-zinc-950 shadow-sm"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
-                      >
-                        {t("place.lowestRated", "Lowest")}
-                      </button>
-                    </div>
+                <div className="space-y-2.5 pb-1">
+                  {/* Full-Width Balanced Segmented Sort Control */}
+                  <div className="grid grid-cols-3 gap-1 bg-zinc-900/90 border border-zinc-800/90 rounded-xl p-1 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setReviewSort("latest");
+                      }}
+                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                        reviewSort === "latest"
+                          ? "bg-white text-zinc-950 shadow-sm font-black"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.latest", "Latest")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setReviewSort("highest");
+                      }}
+                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                        reviewSort === "highest"
+                          ? "bg-white text-zinc-950 shadow-sm font-black"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.highestRated", "Highest")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setReviewSort("lowest");
+                      }}
+                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                        reviewSort === "lowest"
+                          ? "bg-white text-zinc-950 shadow-sm font-black"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.lowestRated", "Lowest")}
+                    </button>
                   </div>
 
-                  {/* Row 2: Star Rating Filter Pills (Only when distinct ratings exist) */}
+                  {/* Single-Line Horizontal Star Filter Chips (Never wraps to awkward extra lines) */}
                   {Object.values(starCounts).filter(c => c > 0).length > 1 && (
-                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5 border-t border-zinc-800/50">
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => {
                           triggerHaptic("light");
                           setStarFilter("all");
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer border ${
+                        className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all shrink-0 cursor-pointer border ${
                           starFilter === "all"
                             ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                            : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+                            : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
                         }`}
                       >
                         {t("place.allStars", "All")} ({rawPlaceVideos.length})
@@ -1960,10 +1955,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               triggerHaptic("light");
                               setStarFilter(isSelected ? "all" : stars);
                             }}
-                            className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition-all cursor-pointer border ${
+                            className={`px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer border ${
                               isSelected
                                 ? "bg-amber-400 text-zinc-950 border-amber-400 shadow-sm font-black"
-                                : "bg-zinc-950 text-zinc-300 border-zinc-800 hover:text-white hover:border-zinc-700"
+                                : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white hover:border-zinc-700"
                             }`}
                           >
                             <Star className={`w-3 h-3 ${isSelected ? "fill-zinc-950 text-zinc-950" : "fill-amber-400 text-amber-400"}`} />
