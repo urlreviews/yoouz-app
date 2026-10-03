@@ -343,11 +343,14 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
     const list: Array<{
       name: string;
+      handle?: string;
       avatar: string;
       bio?: string;
       location?: string;
+      isVerified?: boolean;
       isFollowed: boolean;
       followersCount: number;
+      videoReviewCount?: number;
     }> = [];
     const seen = new Set<string>();
 
@@ -365,13 +368,17 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         if (!key || seen.has(key)) return;
         seen.add(key);
 
+        const matchingAuthor = allAuthorsMap.get(userName.toLowerCase()) || allAuthorsMap.get(getCanonicalAuthorKey(u));
         list.push({
           name: userName,
-          avatar: getSafeAvatarUrl(u.avatar, userName, u.handle || userName),
-          bio: u.bio || "Community reviewer",
-          location: u.location,
+          handle: u.handle || `@${userName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+          avatar: getSafeAvatarUrl(u.avatar || matchingAuthor?.avatar, userName, u.handle || userName),
+          bio: u.bio || matchingAuthor?.bio || "Community reviewer",
+          location: u.location || matchingAuthor?.location,
+          isVerified: Boolean(u.isVerified || matchingAuthor?.isVerified),
           isFollowed: followedAuthorsSet.has(userName.toLowerCase()),
-          followersCount: typeof u.followersCount === "number" ? u.followersCount : 0
+          followersCount: typeof u.followersCount === "number" ? u.followersCount : (matchingAuthor?.followersCount || 0),
+          videoReviewCount: matchingAuthor?.videoReviewCount || u.videoReviewCount || 0
         });
       }
     });
@@ -900,15 +907,20 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           }}
                         />
                         <div className="min-w-0 flex-1 text-left">
+                          {/* Row 1: Name + Verification Badge */}
                           <div className="flex items-center gap-1.5 min-w-0">
                             <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {follower.name}
                             </h3>
+                            {follower.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
                           </div>
 
+                          {/* Row 2: Video Reviews Count + Location */}
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                             <span className="shrink-0 text-zinc-300 text-xs">
-                              {follower.bio || "Community reviewer"}
+                              {follower.videoReviewCount
+                                ? `${follower.videoReviewCount} ${follower.videoReviewCount === 1 ? "video review" : "video reviews"}`
+                                : "Local Reviewer"}
                             </span>
                             {follower.location && (
                               <>

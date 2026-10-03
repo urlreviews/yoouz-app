@@ -4918,11 +4918,15 @@ export function App() {
     // 5. Update selectedAuthorForDrawer if drawer is open
     setSelectedAuthorForDrawer((prev) => {
       if (prev && prev.name && prev.name.toLowerCase() === cleanAuthorHandle.toLowerCase()) {
-        const curCount = typeof prev.followersCount === "number" ? prev.followersCount : 0;
+        const curFollowers = Array.isArray((prev as any).followers) ? (prev as any).followers : [];
+        const nextFollowers = newFollowState
+          ? (curFollowers.includes(myIdentifier) ? curFollowers : [...curFollowers, myIdentifier])
+          : curFollowers.filter((f: string) => f !== myIdentifier);
         return {
           ...prev,
           isFollowed: newFollowState,
-          followersCount: Math.max(0, curCount + (newFollowState ? 1 : -1))
+          followers: nextFollowers,
+          followersCount: nextFollowers.length
         };
       }
       return prev;
@@ -4940,15 +4944,13 @@ export function App() {
 
         if (isTarget) {
           targetUserObj = u;
-          const curCount = typeof u.followersCount === "number" ? u.followersCount : 0;
-          const nextCount = Math.max(0, curCount + (newFollowState ? 1 : -1));
           const curFollowers = Array.isArray(u.followers) ? u.followers : [];
           const nextFollowers = newFollowState
             ? (curFollowers.includes(myIdentifier) ? curFollowers : [...curFollowers, myIdentifier])
             : curFollowers.filter((f: string) => f !== myIdentifier);
           return {
             ...u,
-            followersCount: nextCount,
+            followersCount: nextFollowers.length,
             followers: nextFollowers
           };
         }

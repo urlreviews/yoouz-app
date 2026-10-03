@@ -493,11 +493,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     );
   });
 
-  const effectiveFollowersCount = typeof liveUserFromRegistry?.followersCount === "number"
-    ? liveUserFromRegistry.followersCount
-    : (typeof safeCreator?.followersCount === "number" && safeCreator.followersCount > 0
-        ? safeCreator.followersCount
-        : (author?.followersCount || 0));
+  const liveFollowersList = Array.isArray(liveUserFromRegistry?.followers)
+    ? liveUserFromRegistry.followers
+    : (Array.isArray((author as any)?.followers) ? (author as any).followers : []);
+
+  const effectiveFollowersCount = liveFollowersList.length > 0
+    ? liveFollowersList.length
+    : (typeof liveUserFromRegistry?.followersCount === "number"
+        ? liveUserFromRegistry.followersCount
+        : (typeof safeCreator?.followersCount === "number" && safeCreator.followersCount > 0
+            ? safeCreator.followersCount
+            : (author?.followersCount || 0)));
 
   const handleShare = () => {
     setIsShareModalOpen(true);
