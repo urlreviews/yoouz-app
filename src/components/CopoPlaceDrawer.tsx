@@ -1865,145 +1865,60 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 2: VIDEO REVIEWS - TikTok-Style 3-Column Grid */}
+          {/* TAB 2: VIDEO REVIEWS - TikTok-Style 3-Column Clean Grid (Option 1) */}
           {activeTab === "reviews" && (
-            <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {/* Premium Sort & Filter Control Center */}
-              <div className="p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 space-y-3 shadow-lg backdrop-blur-md">
-                {/* Header Row: Clean Rating & Video Count */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-400">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-black text-white">
-                        {rawPlaceVideos.length > 0 
-                          ? (rawPlaceVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / rawPlaceVideos.length).toFixed(1)
-                          : (place.rating || 5.0).toFixed(1)}
+            <div className="p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Elegant Minimalist Header */}
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Video className="w-4 h-4 text-zinc-300" />
+                    <span>{t("profile.allVideoReviews", "All Video Reviews")} ({rawPlaceVideos.length})</span>
+                  </h3>
+                  {rawPlaceVideos.length > 0 && (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[11px] font-black">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span>
+                        {(rawPlaceVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / rawPlaceVideos.length).toFixed(1)}
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-zinc-300">
-                      {rawPlaceVideos.length} {rawPlaceVideos.length === 1 ? t("place.videoReviewSingular", "Video Review") : t("place.videoReviewsPlural", "Video Reviews")}
-                    </span>
-                  </div>
-
-                  {/* Active Filter Reset */}
-                  {(starFilter !== "all" || reviewSort !== "latest") && (
-                    <button
-                      onClick={() => {
-                        setStarFilter("all");
-                        setReviewSort("latest");
-                      }}
-                      className="text-[11px] text-zinc-400 hover:text-white font-medium transition-colors cursor-pointer"
-                    >
-                      {t("place.resetFilters", "Reset")}
-                    </button>
                   )}
                 </div>
 
-                {/* Row 1: 4-Way Segmented Sort Switcher (Latest, Most Liked, Highest, Lowest) */}
-                <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                  <button
-                    onClick={() => setReviewSort("latest")}
-                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
-                      reviewSort === "latest"
-                        ? "bg-white text-zinc-950 shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
-                    }`}
-                  >
-                    {t("place.latest", "Latest")}
-                  </button>
-                  <button
-                    onClick={() => setReviewSort("popular")}
-                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
-                      reviewSort === "popular"
-                        ? "bg-white text-zinc-950 shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
-                    }`}
-                  >
-                    {t("place.mostLiked", "Most Liked")}
-                  </button>
-                  <button
-                    onClick={() => setReviewSort("highest")}
-                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
-                      reviewSort === "highest"
-                        ? "bg-white text-zinc-950 shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
-                    }`}
-                  >
-                    {t("place.highestRated", "Highest")}
-                  </button>
-                  <button
-                    onClick={() => setReviewSort("lowest")}
-                    className={`py-1.5 px-1 rounded-lg text-[11px] font-extrabold transition-all text-center cursor-pointer ${
-                      reviewSort === "lowest"
-                        ? "bg-white text-zinc-950 shadow-sm"
-                        : "text-zinc-400 hover:text-zinc-200"
-                    }`}
-                  >
-                    {t("place.lowestRated", "Lowest")}
-                  </button>
-                </div>
-
-                {/* Row 2: Striking 6-Column Star Rating Filter Bar - Symmetrical & Clean */}
-                <div className="grid grid-cols-6 gap-1 w-full pt-0.5 pb-0.5">
-                  <button
-                    onClick={() => setStarFilter("all")}
-                    className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1 cursor-pointer min-w-0 ${
-                      starFilter === "all"
-                        ? "bg-white border-white text-zinc-950 shadow-sm"
-                        : "bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
-                    }`}
-                  >
-                    <span>{t("place.all", "All")}</span>
-                    <span className="text-[10px] opacity-75">({rawPlaceVideos.length})</span>
-                  </button>
-                  {[5, 4, 3, 2, 1].map((stars) => {
-                    const count = rawPlaceVideos.filter((v) => Math.round(v.rating || 5) === stars).length;
-                    const isSelected = starFilter === stars;
-
-                    return (
-                      <button
-                        key={stars}
-                        onClick={() => setStarFilter(isSelected ? "all" : stars)}
-                        className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-0.5 cursor-pointer min-w-0 ${
-                          isSelected
-                            ? "bg-amber-400 text-zinc-950 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)] font-black"
-                            : count > 0
-                            ? "bg-zinc-950/80 border-zinc-800 text-zinc-200 hover:border-amber-400/40 hover:text-white"
-                            : "bg-zinc-950/40 border-zinc-850 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-                        }`}
-                        title={`${stars} Stars (${count})`}
-                      >
-                        <span>{stars}</span>
-                        <Star
-                          className={`w-3 h-3 shrink-0 ${
-                            isSelected
-                              ? "fill-zinc-950 text-zinc-950"
-                              : count > 0
-                              ? "fill-amber-400 text-amber-400"
-                              : "fill-zinc-600 text-zinc-600"
-                          }`}
-                        />
-                        {count > 0 && (
-                          <span className={`text-[9px] px-1 py-0.2 rounded-md font-bold leading-none ${
-                            isSelected ? "bg-black/20 text-zinc-950" : "bg-zinc-800 text-zinc-300"
-                          }`}>
-                            {count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Compact Sort Filter for multiple reviews */}
+                {rawPlaceVideos.length > 3 && (
+                  <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setReviewSort("latest")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        reviewSort === "latest"
+                          ? "bg-white text-zinc-950 shadow-xs"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.latest", "Latest")}
+                    </button>
+                    <button
+                      onClick={() => setReviewSort("highest")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        reviewSort === "highest"
+                          ? "bg-white text-zinc-950 shadow-xs"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {t("place.highestRated", "Highest")}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 3-Column Video Reviews Grid */}
               {placeVideos.length === 0 ? (
-                <div className="flex flex-col items-center gap-6 py-12 px-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/80 text-center">
-                  <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
-                    <Video className="w-8 h-8 text-zinc-500" />
+                <div className="flex flex-col items-center gap-6 py-12 px-6 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-center">
+                  <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center mb-1">
+                    <Video className="w-7 h-7 text-zinc-400" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <h3 className="text-sm font-bold text-white">{t("place.noReviewsYetFor", `No video reviews yet for ${displayedPlaceName}`)}</h3>
                     <p className="text-xs text-zinc-400 max-w-[260px] mx-auto leading-relaxed">
                       {t("place.beTheFirstForBusiness", `Be the first to share your experience with a 60-second video review for ${displayedPlaceName}.`)}
@@ -2014,18 +1929,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       triggerHaptic("medium");
                       onRecordForPlace(place);
                     }}
-                    className="w-full max-w-[240px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-3.5 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full max-w-[220px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Video className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
                     <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <div className="grid grid-cols-3 gap-2 pt-0.5">
                   {placeVideos.map((v) => {
                     const displayViews = getDisplayViews(v);
                     const formattedViews = formatViewCount(displayViews);
-                    const posterUrl = resolveVideoPosterUrl(v);
 
                     return (
                       <div
@@ -2033,7 +1947,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         onClick={() => {
                           onSelectVideo(v.id);
                         }}
-                        className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
+                        className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md hover:opacity-90 ring-1 ring-zinc-800 hover:ring-zinc-600"
                       >
                         {/* Video Thumbnail */}
                         <CopoVideoThumbnail
