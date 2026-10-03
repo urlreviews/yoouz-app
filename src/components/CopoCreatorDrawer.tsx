@@ -35,7 +35,7 @@ import {
   UserMinus
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -73,6 +73,7 @@ interface CopoCreatorDrawerProps {
   onToggleSaveCreator?: (author: VideoAuthor) => void;
   onOpenNotificationSettings?: () => void;
   onOpenPlace?: (placeId: string) => void;
+  onOpenCreator?: (author: VideoAuthor) => void;
 }
 
 export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
@@ -95,7 +96,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   isSaved: propIsSaved,
   onToggleSaveCreator,
   onOpenNotificationSettings,
-  onOpenPlace
+  onOpenPlace,
+  onOpenCreator
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1864,16 +1866,18 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
       {/* SOCIAL NETWORK MODAL (FOLLOWERS & FOLLOWING) */}
       {socialModalTab && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none">
+          <div className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/50">
+            <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60">
               <div className="min-w-0 pr-2">
                 <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2 truncate">
-                  <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <Users className="w-4 h-4 text-zinc-300 shrink-0" />
                   <span className="truncate">{displayName}</span>
                 </h3>
-                <p className="text-xs text-zinc-400 font-mono truncate">@{authorHandleKey}</p>
+                <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                  Manage followers and reviewers on Yoouz
+                </p>
               </div>
               <button
                 type="button"
@@ -1885,54 +1889,56 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {/* Pill Tabs: Followers | Following */}
-            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSocialModalOpen("followers")}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                  socialModalTab === "followers"
-                    ? "bg-white text-zinc-950 shadow-md"
-                    : "bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800"
-                }`}
-              >
-                <span>{t("profile.followers", "Followers")}</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-[10px] text-zinc-300 font-mono">
-                  {socialData?.followersCount ?? effectiveFollowersCount}
-                </span>
-              </button>
+            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60">
+              <div className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setSocialModalOpen("followers")}
+                  className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                    socialModalTab === "followers"
+                      ? "bg-white text-zinc-950 shadow-sm"
+                      : "text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  <span>{t("profile.followers", "Followers")}</span>
+                  <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${socialModalTab === "followers" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
+                    {socialData?.followersCount ?? effectiveFollowersCount}
+                  </span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setSocialModalOpen("following")}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                  socialModalTab === "following"
-                    ? "bg-white text-zinc-950 shadow-md"
-                    : "bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800"
-                }`}
-              >
-                <span>{t("profile.following", "Following")}</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-[10px] text-zinc-300 font-mono">
-                  {socialData?.followingCount ?? effectiveFollowingCount}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setSocialModalOpen("following")}
+                  className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                    socialModalTab === "following"
+                      ? "bg-white text-zinc-950 shadow-sm"
+                      : "text-zinc-300 hover:text-white"
+                  }`}
+                >
+                  <span>{t("profile.following", "Following")}</span>
+                  <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${socialModalTab === "following" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
+                    {socialData?.followingCount ?? effectiveFollowingCount}
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Search Filter */}
             <div className="p-3 border-b border-zinc-800/60 bg-zinc-950">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <input
                   type="text"
                   value={socialSearch}
                   onChange={(e) => setSocialSearch(e.target.value)}
-                  placeholder={`Search ${socialModalTab}...`}
-                  className="w-full pl-9 pr-8 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
+                  placeholder={`Search ${socialModalTab} by name or handle...`}
+                  className="w-full pl-10 pr-9 py-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
                 />
                 {socialSearch && (
                   <button
                     type="button"
                     onClick={() => setSocialSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-zinc-800 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -1941,61 +1947,98 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {/* Users List Container */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar min-h-[220px]">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar min-h-[260px]">
               {isSocialLoading ? (
                 <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-emerald-400 animate-spin" />
+                  <RefreshCw className="w-5 h-5 text-zinc-300 animate-spin" />
                   <span>Loading {socialModalTab}...</span>
                 </div>
               ) : (() => {
-                const list = socialModalTab === "followers" ? (socialData?.followers || []) : (socialData?.following || []);
-                const filtered = list.filter((u: any) => {
+                const rawList = socialModalTab === "followers" ? (socialData?.followers || []) : (socialData?.following || []);
+                const filtered = rawList.filter((u: any) => {
                   if (!socialSearch.trim()) return true;
                   const q = socialSearch.toLowerCase();
-                  return (u.name || "").toLowerCase().includes(q) || (u.handle || "").toLowerCase().includes(q);
+                  return (u.name || "").toLowerCase().includes(q) || (u.handle || "").toLowerCase().includes(q) || (u.location || "").toLowerCase().includes(q);
                 });
 
                 if (filtered.length === 0) {
                   return (
-                    <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
-                      <Users className="w-6 h-6 text-zinc-600" />
-                      <span>{socialSearch ? "No matching members found" : `No ${socialModalTab} yet.`}</span>
+                    <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 text-center text-zinc-400 space-y-2">
+                      <Users className="w-8 h-8 text-zinc-600 mx-auto" />
+                      <p className="font-bold text-white text-sm">
+                        {socialSearch ? "No matching members found" : `No ${socialModalTab} yet`}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {socialSearch ? `No user matches "${socialSearch}". Try another search.` : `When users appear in ${socialModalTab}, they will be listed here.`}
+                      </p>
                     </div>
                   );
                 }
 
                 return filtered.map((u: any, idx: number) => {
                   const nameStr = u.name || u.handle || "Yoouz Member";
-                  const handleStr = u.handle ? `@${u.handle.replace(/^@/, '')}` : "";
-                  const avatarUrl = u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nameStr)}`;
+                  const handleStr = u.handle ? (u.handle.startsWith('@') ? u.handle : `@${u.handle}`) : "";
+                  const safeAvatar = getSafeAvatarUrl(u.avatar, nameStr, u.handle || nameStr);
+                  const locationStr = u.location ? formatCityCountry(u.location) : (u.city ? `${u.city}${u.country ? `, ${u.country}` : ''}` : "");
+                  const videoCount = typeof u.videoReviewCount === "number" ? u.videoReviewCount : 0;
+                  const isPlace = u.type === "place";
+
+                  const isMemberFollowed = currentUser?.followedAuthors
+                    ? currentUser.followedAuthors.some((h) => {
+                        const cleanH = h.replace(/^@+/, "").toLowerCase().trim();
+                        return cleanH === nameStr.toLowerCase().trim() || (u.handle && cleanH === u.handle.replace(/^@+/, "").toLowerCase().trim());
+                      })
+                    : false;
 
                   return (
                     <div
                       key={u.id || idx}
-                      className="p-3 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800/80 flex items-center justify-between gap-3 transition"
+                      onClick={() => {
+                        setSocialModalOpen(null);
+                        if (isPlace && onOpenPlace) {
+                          onOpenPlace(u.id);
+                        } else if (onOpenCreator) {
+                          onOpenCreator({
+                            name: nameStr,
+                            handle: u.handle || `@${nameStr.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+                            avatar: safeAvatar,
+                            location: locationStr,
+                            isVerified: Boolean(u.isVerified)
+                          });
+                        }
+                      }}
+                      className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
-                          src={avatarUrl}
+                          src={safeAvatar}
                           alt={nameStr}
-                          className="w-10 h-10 rounded-full object-cover bg-zinc-800 border border-zinc-700 shrink-0"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nameStr)}`;
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = getSafeAvatarUrl(null, nameStr, u.handle || nameStr);
                           }}
                         />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-white truncate leading-tight">{nameStr}</span>
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <h4 className="text-sm font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                              {nameStr}
+                            </h4>
                             {u.isVerified && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 fill-sky-400/20 shrink-0" />
+                              <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-400 truncate">
-                            {handleStr && <span className="font-mono text-zinc-300">{handleStr}</span>}
-                            {u.location && (
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
+                            <span className="shrink-0 text-zinc-300 text-xs">
+                              {videoCount > 0 ? `${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}` : (handleStr || "Community reviewer")}
+                            </span>
+                            {locationStr && (
                               <>
-                                <span>·</span>
-                                <span className="truncate">{u.location}</span>
+                                <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                <span className="text-[11px] sm:text-xs text-zinc-400 sm:text-zinc-300 flex items-center gap-1 mt-0.5 sm:mt-0 truncate min-w-0">
+                                  <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                                  <span className="truncate">{locationStr}</span>
+                                </span>
                               </>
                             )}
                           </div>
@@ -2003,20 +2046,36 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       </div>
 
                       {/* Action Button: Follow / Following Toggle */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const targetH = u.handle || u.name || u.id;
-                          if (targetH && onToggleFollow) {
-                            onToggleFollow(targetH);
-                            fetchSocialNetwork();
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1"
-                      >
-                        <span>{t("profile.follow", "Follow")}</span>
-                      </button>
+                      {!isOwner && nameStr.toLowerCase().trim() !== (currentUser?.name || "").toLowerCase().trim() && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const targetH = u.handle || nameStr || u.id;
+                            if (targetH && onToggleFollow) {
+                              onToggleFollow(targetH);
+                              setTimeout(() => fetchSocialNetwork(), 300);
+                            }
+                          }}
+                          className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                            isMemberFollowed
+                              ? "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                              : "bg-white text-zinc-950 hover:bg-zinc-200 border border-white"
+                          }`}
+                        >
+                          {isMemberFollowed ? (
+                            <>
+                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                              <span>Following</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-3.5 h-3.5" />
+                              <span>Follow</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   );
                 });

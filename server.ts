@@ -14575,17 +14575,68 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       let followingList: any[] = [];
       let targetUserData: any = null;
 
-      if (bunnyDb) {
-        const userRows = await bunnyDb.execute({
-          sql: `SELECT id, name, email, data FROM users WHERE LOWER(name) = ? OR LOWER(email) = ? OR id = ? LIMIT 1`,
-          args: [rawHandle.toLowerCase(), rawHandle.toLowerCase(), rawHandle]
-        });
+      // 1. Pre-fetch all user profiles to enrich handles/names with real avatars, cities, review counts
+      const userProfileMap = new Map<string, any>();
+      const videoCountsMap = new Map<string, number>();
 
-        if (userRows && userRows.rows && userRows.rows.length > 0) {
-          const uRow: any = userRows.rows[0];
-          try { targetUserData = typeof uRow.data === 'string' ? JSON.parse(uRow.data) : (uRow.data || {}); } catch(e) {}
+      if (bunnyDb) {
+        try {
+          const userRows = await bunnyDb.execute({
+            sql: `SELECT id, name, email, data FROM users`
+          });
+          if (userRows && userRows.rows) {
+            userRows.rows.forEach((r: any) => {
+              let parsedData: any = {};
+              try { parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e) {}
+              const uObj = {
+                id: r.id,
+                name: r.name || parsedData.name || "Yoouz Member",
+                email: r.email || parsedData.email || "",
+                handle: parsedData.handle || (r.name ? `@${r.name.toLowerCase().replace(/[^a-z0-9]/g, '')}` : ""),
+                avatar: parsedData.avatar || "",
+                location: parsedData.location || (parsedData.city ? `${parsedData.city}${parsedData.country ? `, ${parsedData.country}` : ''}` : ""),
+                city: parsedData.city || "",
+                country: parsedData.country || "",
+                isVerified: Boolean(parsedData.isVerified || parsedData.verified),
+                followersCount: typeof parsedData.followersCount === 'number' ? parsedData.followersCount : (Array.isArray(parsedData.followers) ? parsedData.followers.length : 0),
+                raw: parsedData
+              };
+              if (r.id) userProfileMap.set(String(r.id).toLowerCase(), uObj);
+              if (r.name) userProfileMap.set(String(r.name).toLowerCase().trim(), uObj);
+              if (r.email) userProfileMap.set(String(r.email).toLowerCase().trim(), uObj);
+              if (uObj.handle) userProfileMap.set(String(uObj.handle).toLowerCase().trim().replace(/^@+/, ''), uObj);
+            });
+          }
+        } catch (e) {
+          console.warn("Could not load users for social-network enrichment:", e);
         }
 
+        try {
+          const videoRows = await bunnyDb.execute({
+            sql: `SELECT data FROM video_reviews`
+          });
+          if (videoRows && videoRows.rows) {
+            videoRows.rows.forEach((r: any) => {
+              let vData: any = {};
+              try { vData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e) {}
+              const authorName = vData.authorName || vData.author?.name || vData.author;
+              if (authorName && typeof authorName === 'string') {
+                const k = authorName.toLowerCase().trim();
+                videoCountsMap.set(k, (videoCountsMap.get(k) || 0) + 1);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("Could not load video review counts for social network:", e);
+        }
+
+        // Fetch target user data
+        const targetMatched = userProfileMap.get(rawHandle.toLowerCase().replace(/^@+/, ''));
+        if (targetMatched) {
+          targetUserData = targetMatched.raw;
+        }
+
+        // 2. Fetch followers from follows table
         const followersQuery = await bunnyDb.execute({
           sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followingId) = ? OR followingId = ?`,
           args: [rawHandle.toLowerCase(), rawHandle]
@@ -14595,18 +14646,32 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           followersQuery.rows.forEach((row: any) => {
             let fData: any = {};
             try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+            const fUserId = row.followerId || fData.followerUserId || row.id;
+            const fName = fData.followerName || fData.name || row.followerId || "Yoouz Member";
+            const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
+
+            const name = enriched?.name || fName;
+            const handle = enriched?.handle || fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : ((fData.followerAvatar && !fData.followerAvatar.includes('dicebear')) ? fData.followerAvatar : "");
+            const location = enriched?.location || fData.location || "Miami, FL";
+            const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
+            const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+
             followersList.push({
-              id: row.followerId || fData.followerUserId || row.id,
-              name: fData.followerName || fData.name || row.followerId || "Yoouz Member",
-              handle: fData.followerHandle || fData.handle || row.followerId || "user",
-              avatar: fData.followerAvatar || fData.avatar || "",
-              location: fData.location || "Yoouz Creator",
-              isVerified: Boolean(fData.isVerified || fData.verified),
+              id: fUserId,
+              name,
+              handle,
+              avatar,
+              location,
+              isVerified,
+              videoReviewCount,
+              followersCount: enriched?.followersCount || 0,
               createdAt: fData.createdAt || new Date().toISOString()
             });
           });
         }
 
+        // 3. Fetch following from follows table
         const followingQuery = await bunnyDb.execute({
           sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followerId) = ? OR followerId = ?`,
           args: [rawHandle.toLowerCase(), rawHandle]
@@ -14616,47 +14681,90 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           followingQuery.rows.forEach((row: any) => {
             let fData: any = {};
             try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-            followingList.push({
-              id: row.followingId || fData.followingUserId || fData.placeId || row.id,
-              name: fData.followingName || fData.placeName || fData.name || row.followingId || "Yoouz Member",
-              handle: fData.followingHandle || fData.handle || row.followingId || "user",
-              avatar: fData.followingAvatar || fData.avatar || "",
-              type: fData.type || "user",
-              location: fData.location || "Yoouz Community",
-              isVerified: Boolean(fData.isVerified || fData.verified),
-              createdAt: fData.createdAt || new Date().toISOString()
-            });
+            const targetId = row.followingId || fData.followingUserId || fData.placeId || row.id;
+            const targetName = fData.followingName || fData.placeName || fData.name || row.followingId || "Yoouz Member";
+            const isPlace = fData.type === "place" || Boolean(fData.placeId);
+            
+            if (isPlace) {
+              followingList.push({
+                id: targetId,
+                name: targetName,
+                handle: fData.placeWebsite || targetId,
+                avatar: fData.followingAvatar || fData.avatar || fData.logoUrl || "",
+                type: "place",
+                location: fData.placeAddress || fData.location || "Verified Business",
+                isVerified: true,
+                createdAt: fData.createdAt || new Date().toISOString()
+              });
+            } else {
+              const enriched = userProfileMap.get(String(targetId).toLowerCase()) || userProfileMap.get(String(targetName).toLowerCase()) || null;
+              const name = enriched?.name || targetName;
+              const handle = enriched?.handle || fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+              const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : ((fData.followingAvatar && !fData.followingAvatar.includes('dicebear')) ? fData.followingAvatar : "");
+              const location = enriched?.location || fData.location || "Miami, FL";
+              const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
+              const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+
+              followingList.push({
+                id: targetId,
+                name,
+                handle,
+                avatar,
+                type: "user",
+                location,
+                isVerified,
+                videoReviewCount,
+                followersCount: enriched?.followersCount || 0,
+                createdAt: fData.createdAt || new Date().toISOString()
+              });
+            }
           });
         }
       }
 
+      // Fallbacks if follows table is empty or missing entries
       if (followersList.length === 0 && targetUserData && Array.isArray(targetUserData.followers)) {
         followersList = targetUserData.followers.map((f: any) => {
-          if (typeof f === 'string') {
-            return {
-              id: f,
-              name: f,
-              handle: f,
-              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f)}`,
-              location: "Verified Member"
-            };
-          }
-          return f;
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Yoouz Member");
+          const enriched = userProfileMap.get(String(rawStr).toLowerCase());
+          const name = enriched?.name || rawStr;
+          const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+          const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
+          const location = enriched?.location || "Miami, FL";
+          const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || 0;
+          return {
+            id: enriched?.id || rawStr,
+            name,
+            handle,
+            avatar,
+            location,
+            isVerified: Boolean(enriched?.isVerified),
+            videoReviewCount,
+            followersCount: enriched?.followersCount || 0
+          };
         });
       }
 
       if (followingList.length === 0 && targetUserData && Array.isArray(targetUserData.followedAuthors)) {
         followingList = targetUserData.followedAuthors.map((f: any) => {
-          if (typeof f === 'string') {
-            return {
-              id: f,
-              name: f,
-              handle: f,
-              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f)}`,
-              location: "Followed Creator"
-            };
-          }
-          return f;
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Yoouz Member");
+          const enriched = userProfileMap.get(String(rawStr).toLowerCase());
+          const name = enriched?.name || rawStr;
+          const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+          const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
+          const location = enriched?.location || "Miami, FL";
+          const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || 0;
+          return {
+            id: enriched?.id || rawStr,
+            name,
+            handle,
+            avatar,
+            type: "user",
+            location,
+            isVerified: Boolean(enriched?.isVerified),
+            videoReviewCount,
+            followersCount: enriched?.followersCount || 0
+          };
         });
       }
 

@@ -6437,6 +6437,7 @@ export function App() {
             onDeleteVideo={handleDeleteUserVideo}
             isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
             onToggleSaveCreator={handleToggleSaveCreator}
+            onOpenCreator={handleOpenCreatorDrawer}
             onSignOut={async () => {
               await logOutUser();
               setCurrentUser(null);
@@ -6699,6 +6700,7 @@ export function App() {
           onDeleteVideo={handleDeleteUserVideo}
           isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
           onToggleSaveCreator={handleToggleSaveCreator}
+          onOpenCreator={handleOpenCreatorDrawer}
           onSignOut={async () => {
             await logOutUser();
             setCurrentUser(null);
