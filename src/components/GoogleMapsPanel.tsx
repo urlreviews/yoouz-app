@@ -22,6 +22,7 @@ import { Place, VideoReview } from "../types";
 import { formatBusinessName, getEffectivePlaceDescription, formatPhoneNumber, getGoogleMapsEmbedUrl } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { GoogleVideoReviewCard } from "./GoogleVideoReviewCard";
+import { CopoStarRating } from "./CopoStarRating";
 
 interface GoogleMapsPanelProps {
   place: Place;
@@ -136,18 +137,12 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
 
         <div className="flex items-center gap-1.5 mt-1 text-[13px] text-zinc-200">
           <span className="font-bold text-zinc-100 text-[14px]">{place.rating}</span>
-          <div className="flex items-center text-[#e37400]">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`w-3.5 h-3.5 ${
-                  i < Math.floor(place.rating)
-                    ? "fill-[#fbbc04] text-[#fbbc04]"
-                    : "text-[#dadce0] fill-[#dadce0]"
-                }`}
-              />
-            ))}
-          </div>
+          <CopoStarRating
+            rating={place.rating || 5}
+            starClassName="w-3.5 h-3.5"
+            filledColorClass="fill-[#fbbc04] text-[#fbbc04]"
+            emptyColorClass="text-[#dadce0] fill-[#dadce0]"
+          />
           <span>({(placeVideoReviews.length > 0 ? placeVideoReviews.length : (place.totalReviews || 0)).toLocaleString()})</span>
           <span>•</span>
           <span>{place.category}</span>
@@ -283,17 +278,13 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                 <span className="text-[44px] font-normal leading-none text-zinc-100 font-['Google_Sans',Roboto,sans-serif]">
                   {place.rating}
                 </span>
-                <div className="flex items-center gap-0.5 my-1 text-[#fbbc04]">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(place.rating)
-                          ? "fill-[#fbbc04] text-[#fbbc04]"
-                          : "text-[#dadce0] fill-[#dadce0]"
-                      }`}
-                    />
-                  ))}
+                <div className="my-1">
+                  <CopoStarRating
+                    rating={place.rating || 5}
+                    starClassName="w-4 h-4"
+                    filledColorClass="fill-[#fbbc04] text-[#fbbc04]"
+                    emptyColorClass="text-[#dadce0] fill-[#dadce0]"
+                  />
                 </div>
                 <span className="text-[12px] text-zinc-200">
                   {(place.totalReviews || 0).toLocaleString()} {(place.totalReviews || 0) === 1 ? "review" : "reviews"}

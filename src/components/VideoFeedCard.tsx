@@ -37,6 +37,7 @@ import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
+import { CopoStarRating } from "./CopoStarRating";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -1003,18 +1004,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3.5 h-3.5 ${
-                      i < Math.round(video.rating || 5)
-                        ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                        : "fill-zinc-600/70 text-zinc-200/80"
-                    }`}
-                  />
-                ))}
-              </div>
+              <CopoStarRating
+                rating={video.rating || 5}
+                starClassName="w-3.5 h-3.5"
+                filledColorClass="fill-amber-400 text-amber-400 drop-shadow-sm"
+                emptyColorClass="fill-zinc-600/70 text-zinc-200/80"
+              />
               {(video.recordedAt || video.createdAtMs) && (
                 <span className="text-white/90 text-[11.5px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1">
                   <Clock className="w-3 h-3 text-white/80 shrink-0" />

@@ -21,6 +21,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlo
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { getSafeAvatarUrl, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { CopoStarRating } from "./CopoStarRating";
 
 interface GoogleVideoReviewCardProps {
   review: VideoReview;
@@ -174,18 +175,12 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
 
       {/* 2. Rating Stars & Timestamp */}
       <div className="flex items-center gap-2 text-[13px] text-zinc-200">
-        <div className="flex items-center gap-0.5 text-zinc-200">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`w-3.5 h-3.5 ${
-                i < review.rating
-                  ? "fill-white text-white"
-                  : "text-zinc-700 fill-zinc-700"
-              }`}
-            />
-          ))}
-        </div>
+        <CopoStarRating
+          rating={review.rating || 5}
+          starClassName="w-3.5 h-3.5"
+          filledColorClass="fill-white text-white"
+          emptyColorClass="text-zinc-700 fill-zinc-700"
+        />
         {(review.recordedAt || review.createdAtMs) && (
           <span className="text-[12px] text-zinc-200 font-normal">
             • {formatRecordedDate(review.recordedAt, review.createdAtMs)}

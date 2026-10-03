@@ -3,6 +3,7 @@ import { Search, Globe, Video, Star, CheckCircle, Building2, MapPin, Loader2, Sp
 import { Place, VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { CopoStarRating } from "./CopoStarRating";
 import { extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES, isPlaceReviewMatch } from "../utils/placeUtils";
 
 interface CopoSearchTestViewProps {
@@ -442,14 +443,12 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     {totalReviewsCount > 0 ? (
                       <>
                         <span className="font-black text-amber-400 text-sm leading-none">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center text-amber-400 gap-1.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4.5 h-4.5 ${i < Math.round(averageRating) ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" : "fill-zinc-800 text-zinc-800"}`}
-                            />
-                          ))}
-                        </div>
+                        <CopoStarRating
+                          rating={averageRating}
+                          starClassName="w-4.5 h-4.5"
+                          filledColorClass="fill-amber-400 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]"
+                          emptyColorClass="fill-zinc-800 text-zinc-800"
+                        />
                         <span className="text-zinc-300 font-extrabold text-xs border-l border-zinc-700/80 pl-2.5">
                           {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
                         </span>

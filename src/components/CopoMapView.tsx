@@ -22,6 +22,7 @@ import { Place, VideoReview } from "../types";
 import { isValidLatLng, sanitizeLatLng, getCachedUserLocation } from "../utils/geo";
 import { isPlaceReviewMatch, getGoogleMapsDirectionsUrl } from "../utils/placeUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
+import { CopoStarRating } from "./CopoStarRating";
 
 interface CopoMapViewProps {
   places: Place[];
@@ -304,18 +305,12 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
             <h2 className="text-xl font-bold tracking-tight text-white">{selectedPlace.name}</h2>
             <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
               <span className="font-bold text-white">{selectedPlace.rating?.toFixed(1) || "3.7"}</span>
-              <div className="flex items-center text-white">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3.5 h-3.5 ${
-                      i < Math.floor(selectedPlace.rating || 3.7)
-                        ? "fill-white text-white"
-                        : "text-zinc-700 fill-zinc-700"
-                    }`}
-                  />
-                ))}
-              </div>
+              <CopoStarRating
+                rating={selectedPlace.rating || 3.7}
+                starClassName="w-3.5 h-3.5"
+                filledColorClass="fill-white text-white"
+                emptyColorClass="text-zinc-700 fill-zinc-700"
+              />
               <span className="text-zinc-200 font-medium">
                 ({(placeVideos.length > 0 ? placeVideos.length : (selectedPlace.totalReviews || 0)).toLocaleString()})
               </span>

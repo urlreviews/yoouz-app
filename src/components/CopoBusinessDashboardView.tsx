@@ -9,6 +9,7 @@ import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModa
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { CopoMessagesView } from './CopoMessagesView';
 import { CopoNotificationsView } from './CopoNotificationsView';
+import { CopoStarRating } from './CopoStarRating';
 import { 
   Shield, 
   Eye, 
@@ -2890,18 +2891,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-zinc-300 flex-wrap">
-                              <div className="flex items-center gap-0.5 text-amber-400 shrink-0">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
-                                      i < (video.rating || 5)
-                                        ? 'fill-amber-400 text-amber-400'
-                                        : 'fill-zinc-800 text-zinc-700'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
+                              <CopoStarRating
+                                rating={video.rating || 5}
+                                starClassName="w-3 h-3 sm:w-3.5 sm:h-3.5"
+                                filledColorClass="fill-amber-400 text-amber-400"
+                                emptyColorClass="fill-zinc-800 text-zinc-700"
+                              />
                               <span className="text-zinc-600 font-bold shrink-0">•</span>
                               <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                               {video.dishOrItem && (

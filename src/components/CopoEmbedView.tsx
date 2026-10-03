@@ -6,6 +6,7 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
+import { CopoStarRating } from "./CopoStarRating";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -610,18 +611,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
               {/* Line 2: Rating Stars & Recorded Time */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3.5 h-3.5 ${
-                        i < Math.round(currentVideo?.rating || 5)
-                          ? "fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
-                          : "fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
-                      }`}
-                    />
-                  ))}
-                </div>
+                <CopoStarRating
+                  rating={currentVideo?.rating || 5}
+                  starClassName="w-3.5 h-3.5"
+                  filledColorClass="fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                  emptyColorClass="fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                />
                 <span className="text-white text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] flex items-center gap-1 shrink-0">
                   <Clock className="w-3 h-3 text-white/80 shrink-0" />
                   <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>

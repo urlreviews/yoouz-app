@@ -58,6 +58,7 @@ import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";
 import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
+import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoPlaceDrawerProps {
@@ -1316,18 +1317,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <span className="font-black text-white text-2xl leading-none tracking-tight">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
-                  <div className="flex items-center text-amber-500 gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-6 h-6 ${
-                          i < Math.round(dynamicAvgRating)
-                            ? "fill-amber-500 text-amber-500"
-                            : "fill-zinc-800 text-zinc-700"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  <CopoStarRating
+                    rating={dynamicAvgRating}
+                    starClassName="w-6 h-6"
+                    filledColorClass="fill-amber-500 text-amber-500"
+                    emptyColorClass="fill-zinc-800 text-zinc-700"
+                  />
                 </div>
                 <div className="h-6 w-px bg-zinc-800 mx-1" />
                 <span className="text-zinc-400 font-bold text-xs uppercase tracking-wider whitespace-nowrap">

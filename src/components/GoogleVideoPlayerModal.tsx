@@ -24,6 +24,7 @@ import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDeco
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
+import { CopoStarRating } from "./CopoStarRating";
 
 interface GoogleVideoPlayerModalProps {
   reviews: VideoReview[];
@@ -427,18 +428,12 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                   </span>
                 </h4>
                 <div className="flex items-center gap-1.5 text-[11px] text-zinc-200">
-                  <div className="flex items-center text-amber-400">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < currentReview.rating
-                            ? "fill-amber-400 text-amber-400"
-                            : "text-zinc-200 fill-zinc-500"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  <CopoStarRating
+                    rating={currentReview.rating || 5}
+                    starClassName="w-3 h-3"
+                    filledColorClass="fill-amber-400 text-amber-400"
+                    emptyColorClass="text-zinc-200 fill-zinc-500"
+                  />
                   {(currentReview.recordedAt || currentReview.createdAtMs) && (
                     <span className="text-zinc-200 text-[11px]">
                       • {formatRecordedDate(currentReview.recordedAt, currentReview.createdAtMs)}
