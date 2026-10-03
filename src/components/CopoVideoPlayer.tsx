@@ -130,20 +130,25 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
   // Seamless continuous circular feed: repeats video sequence so swipe momentum flows 100% naturally into next video
-  const [loopCount, setLoopCount] = useState<number>(videos.length > 1 ? 10 : 1);
+  const [loopCount, setLoopCount] = useState<number>(videos.length > 0 ? 10 : 1);
   useEffect(() => {
-    setLoopCount(videos.length > 1 ? 10 : 1);
+    setLoopCount(videos.length > 0 ? 10 : 1);
   }, [videos.length]);
 
   const displayItems = useMemo(() => {
-    if (videos.length <= 1) {
-      return videos.map((v, i) => ({
-        video: v,
-        cardIndex: i,
-        realIndex: i,
-        slotId: `video-slot-${i}`,
-        key: `vid-${v.id}-${i}`
-      }));
+    if (videos.length === 0) return [];
+    if (videos.length === 1) {
+      const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
+      for (let loop = 0; loop < loopCount; loop++) {
+        items.push({
+          video: videos[0],
+          cardIndex: loop,
+          realIndex: 0,
+          slotId: `video-slot-${loop}`,
+          key: `vid-${videos[0].id}-${loop}`
+        });
+      }
+      return items;
     }
     const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
     for (let loop = 0; loop < loopCount; loop++) {
@@ -1066,7 +1071,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             onSelectVideoIndex(realIdx);
 
             // Dynamically extend loop buffer when approaching the end of loaded loops
-            if (videos.length > 1 && cardIdx >= displayItems.length - 4) {
+            if (videos.length > 0 && cardIdx >= displayItems.length - 4) {
               setLoopCount((prev) => prev + 5);
             }
 
@@ -1165,7 +1170,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(nextIdx, "smooth");
-    } else if (videos.length > 1) {
+    } else if (videos.length >= 1) {
       setLoopCount((prev) => prev + 5);
       scrollToCard(nextIdx, "smooth");
     }
@@ -1183,7 +1188,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(prevIdx, "smooth");
-    } else if (videos.length > 1) {
+    } else if (videos.length >= 1) {
       scrollToCard(displayItems.length - 1, "smooth");
     }
   }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
@@ -1551,7 +1556,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop & Tablet) - Flex sibling beside the video card */}
-        {!hideFloatingNav && videos.length > 1 && (() => {
+        {!hideFloatingNav && videos.length > 0 && (() => {
           const isAtFirstVideo = activeCardIndex <= 0;
 
           return (
