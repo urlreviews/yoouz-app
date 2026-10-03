@@ -517,6 +517,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [socialData, setSocialData] = useState<{ followers: any[]; following: any[]; followersCount: number; followingCount: number } | null>(null);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [socialSearch, setSocialSearch] = useState("");
+  const [hoveredUnfollowModalUser, setHoveredUnfollowModalUser] = useState<string | null>(null);
 
   const liveFollowingList = Array.isArray(liveUserFromRegistry?.followedAuthors)
     ? liveUserFromRegistry.followedAuthors
@@ -1987,7 +1988,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   const nameStr = u.name || "Community Reviewer";
                   const safeAvatar = getSafeAvatarUrl(u.avatar, nameStr, u.handle || nameStr);
                   const locationStr = u.location ? formatCityCountry(u.location) : (u.city ? `${u.city}${u.country ? `, ${u.country}` : ''}` : "");
-                  const videoCount = typeof u.videoReviewCount === "number" ? u.videoReviewCount : 0;
+                  
+                  // Dynamically compute exact video review count from allVideos or server social network payload
+                  const matchingVidsCount = (allVideos || []).filter((v) => {
+                    const vAuthName = (v.author?.name || "").toLowerCase().trim();
+                    const vAuthHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase().trim();
+                    const targetN = nameStr.toLowerCase().trim();
+                    const targetH = (u.handle || "").replace(/^@+/, "").toLowerCase().trim();
+                    return (targetN && vAuthName === targetN) || (targetH && vAuthHandle === targetH);
+                  }).length;
+                  const videoCount = Math.max(matchingVidsCount, typeof u.videoReviewCount === "number" ? u.videoReviewCount : 0);
                   const isPlace = u.type === "place";
 
                   const isMemberFollowed = currentUser?.followedAuthors
@@ -1996,6 +2006,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         return cleanH === nameStr.toLowerCase().trim() || (u.handle && cleanH === u.handle.replace(/^@+/, "").toLowerCase().trim());
                       })
                     : false;
+
+                  const isSelf = currentUser
+                    ? ((currentUser.name && nameStr.toLowerCase().trim() === currentUser.name.toLowerCase().trim()) ||
+                       (currentUser.email && u.email && u.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()))
+                    : false;
+
+                  const isHoveredUnfollow = hoveredUnfollowModalUser === nameStr;
 
                   return (
                     <div
@@ -2036,8 +2053,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             )}
                           </div>
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
-                            <span className="shrink-0 text-zinc-300 text-xs">
-                              {videoCount > 0 ? `${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}` : "Community reviewer"}
+                            <span className="shrink-0 text-zinc-300 text-xs font-medium">
+                              {`${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}`}
                             </span>
                             {locationStr && (
                               <>
@@ -2052,10 +2069,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         </div>
                       </div>
 
-                      {/* Action Button: Follow / Following Toggle */}
-                      {!isOwner && nameStr.toLowerCase().trim() !== (currentUser?.name || "").toLowerCase().trim() && (
+                      {/* Action Button: Follow / Following Toggle with Hover Unfollow State */}
+                      {!isSelf && (
                         <button
                           type="button"
+                          onMouseEnter={() => setHoveredUnfollowModalUser(nameStr)}
+                          onMouseLeave={() => setHoveredUnfollowModalUser(null)}
                           onClick={(e) => {
                             e.stopPropagation();
                             const targetH = u.handle || nameStr || u.id;
@@ -2066,15 +2085,25 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           }}
                           className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                             isMemberFollowed
-                              ? "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                              ? isHoveredUnfollow
+                                ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
                               : "bg-white text-zinc-950 hover:bg-zinc-200 border border-white"
                           }`}
+                          title={isMemberFollowed ? (isHoveredUnfollow ? "Unfollow this reviewer" : "You are following this reviewer") : "Follow this reviewer"}
                         >
                           {isMemberFollowed ? (
-                            <>
-                              <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                              <span>Following</span>
-                            </>
+                            isHoveredUnfollow ? (
+                              <>
+                                <UserMinus className="w-3.5 h-3.5" />
+                                <span>Unfollow</span>
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
+                                <span>Following</span>
+                              </>
+                            )
                           ) : (
                             <>
                               <UserPlus className="w-3.5 h-3.5" />
