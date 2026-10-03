@@ -99,6 +99,7 @@ export interface UserProfile {
   banner?: string;
   location?: string;
   isVerified?: boolean;
+  videoReviewCount?: number;
   memberSince?: string;
   followersCount?: number;
   followingCount?: number;

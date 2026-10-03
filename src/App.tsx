@@ -5992,6 +5992,47 @@ export function App() {
     savedHomeVideoIndexRef.current = 0;
     setPendingVideoId(newReview.id);
 
+    // Automatically grant verified badge (isVerified = true) to user on publishing their first video review
+    if (currentUser) {
+      const nextCount = (currentUser.videoReviewCount || 0) + 1;
+      const updatedUser: UserProfile = {
+        ...currentUser,
+        videoReviewCount: nextCount,
+        isVerified: true
+      };
+      setCurrentUser(updatedUser);
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(updatedUser));
+      } catch (e) {}
+
+      setAllRegisteredUsers((prev) =>
+        prev.map((u) => {
+          if (
+            (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+            (u.id && currentUser.id && u.id === currentUser.id)
+          ) {
+            return {
+              ...u,
+              videoReviewCount: nextCount,
+              isVerified: true
+            };
+          }
+          return u;
+        })
+      );
+
+      fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: currentUser.email,
+          name: currentUser.name,
+          videoReviewCount: nextCount,
+          isVerified: true
+        })
+      }).catch(() => {});
+    }
+
     // Persist to local durable backup store so it is never dropped across reload or navigation
     try {
       const existingSaved = localStorage.getItem("yoouz_local_created_reviews");
