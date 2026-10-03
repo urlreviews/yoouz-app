@@ -471,6 +471,34 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? currentUser.bio
     : (liveUserProfile?.bio || safeCreator.bio || author?.bio || "");
 
+  // Real-time follow state calculation
+  const authorNameKey = (author?.name || "").toLowerCase().trim();
+  const authorHandleKey = (author?.handle || author?.name || "").replace(/^@+/, "").toLowerCase().trim();
+
+  const isFollowed = currentUser?.followedAuthors
+    ? currentUser.followedAuthors.some((h) => {
+        const cleanH = h.replace(/^@+/, "").toLowerCase().trim();
+        return cleanH === authorNameKey || cleanH === authorHandleKey;
+      })
+    : Boolean(author?.isFollowed);
+
+  // Live user matching in allUsers registry
+  const liveUserFromRegistry = (allUsers || []).find((u) => {
+    const uName = (u.name || "").toLowerCase().trim();
+    const uHandle = (u.handle || "").replace(/^@+/, "").toLowerCase().trim();
+    const uEmail = (u.email || "").toLowerCase().trim();
+    return (
+      (authorNameKey && (uName === authorNameKey || uHandle === authorNameKey || uEmail === authorNameKey)) ||
+      (authorHandleKey && (uName === authorHandleKey || uHandle === authorHandleKey || uEmail === authorHandleKey))
+    );
+  });
+
+  const effectiveFollowersCount = typeof liveUserFromRegistry?.followersCount === "number"
+    ? liveUserFromRegistry.followersCount
+    : (typeof safeCreator?.followersCount === "number" && safeCreator.followersCount > 0
+        ? safeCreator.followersCount
+        : (author?.followersCount || 0));
+
   const handleShare = () => {
     setIsShareModalOpen(true);
   };
@@ -936,12 +964,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <button
                 onClick={() => onToggleFollow(author.name)}
                 className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border ${
-                  author.isFollowed
+                  isFollowed
                     ? "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
                     : "bg-white text-zinc-950 hover:bg-zinc-200 border-white"
                 }`}
               >
-                {author.isFollowed ? (
+                {isFollowed ? (
                   <>
                     <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
                     <span>{t("profile.following", "Following")}</span>
@@ -964,7 +992,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </span>
               <span className="text-zinc-600">·</span>
               <span className="text-zinc-200">
-                {author.followersCount || 0} {t("profile.followers", "followers")}
+                {effectiveFollowersCount} {t("profile.followers", "followers")}
               </span>
             </div>
 
@@ -1321,7 +1349,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-black text-white">{author.followersCount || 0}</span>
+                    <span className="text-base font-black text-white">{effectiveFollowersCount}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>

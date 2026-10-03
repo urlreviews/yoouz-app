@@ -1781,7 +1781,7 @@ export function getEffectivePlaceDescription(place?: any, fallbackCategory?: str
   });
 }
 
-export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string }> = {
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string; followersCount?: number }> = {
   "stevenakan": {
     name: "Steven Akan",
     handle: "@stevenakan",
@@ -1801,14 +1801,16 @@ export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: strin
     handle: "@benblue",
     avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
     bio: "Authentic food & venue explorer on Yoouz.",
-    location: "Sydney, Australia"
+    location: "Sydney, Australia",
+    followersCount: 1
   },
   "ben-blue": {
     name: "Ben Blue",
     handle: "@benblue",
     avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
     bio: "Authentic food & venue explorer on Yoouz.",
-    location: "Sydney, Australia"
+    location: "Sydney, Australia",
+    followersCount: 1
   }
 };
 

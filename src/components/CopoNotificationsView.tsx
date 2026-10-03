@@ -469,35 +469,35 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
             <AnimatePresence initial={false}>
             {filteredNotifications.map((notif) => {
-              // Custom badge styles
+              // Vibrant & polished type-specific badge styles for notification avatar overlays
               const badgeStyles = {
                 like: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                  icon: <Heart className="w-2.5 h-2.5 fill-current" />
+                  bg: "bg-rose-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Heart className="w-3 h-3 fill-current shrink-0" />
                 },
                 comment: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                  icon: <MessageSquare className="w-2.5 h-2.5 fill-current" />
+                  bg: "bg-emerald-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <MessageSquare className="w-3 h-3 fill-current shrink-0" />
                 },
                 follow: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                  icon: <UserPlus className="w-2.5 h-2.5" />
+                  bg: "bg-sky-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <UserPlus className="w-3 h-3 stroke-[2.5] shrink-0" />
                 },
                 repost: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                  icon: <Repeat2 className="w-2.5 h-2.5" />
+                  bg: "bg-indigo-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0" />
                 },
                 bookmark: {
-                  bg: "bg-amber-500 text-white ring-2 ring-zinc-950",
-                  icon: <Bookmark className="w-2.5 h-2.5 fill-current" />
+                  bg: "bg-amber-500 text-zinc-950 ring-2 ring-zinc-950 shadow-md",
+                  icon: <Bookmark className="w-3 h-3 fill-current shrink-0" />
                 },
                 message: {
-                  bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                  icon: <Mail className="w-2.5 h-2.5" />
+                  bg: "bg-blue-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Mail className="w-3 h-3 stroke-[2.5] shrink-0" />
                 }
               }[notif.type] || {
-                bg: "bg-zinc-700 text-white ring-2 ring-zinc-950",
-                icon: <Bell className="w-2.5 h-2.5" />
+                bg: "bg-zinc-700 text-white ring-2 ring-zinc-950 shadow-md",
+                icon: <Bell className="w-3 h-3 shrink-0" />
               };
 
               const resolvedThumbnail = resolveNotificationThumbnail(notif);
@@ -633,7 +633,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           />
                         );
                       })()}
-                      <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center text-[9px] shadow-xs ${badgeStyles.bg}`}>
+                      <span className={`absolute -bottom-1 -right-1 w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shrink-0 z-20 ${badgeStyles.bg}`}>
                         {badgeStyles.icon}
                       </span>
                     </div>

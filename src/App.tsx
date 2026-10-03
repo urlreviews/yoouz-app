@@ -5019,31 +5019,6 @@ export function App() {
       }).catch(() => {});
     }
 
-    // 10. Send real-time social notification to target reviewer
-    if (newFollowState && currentUser) {
-      let recEmail = (targetUserObj?.email && targetUserObj.email.includes("@")) ? targetUserObj.email : "";
-      let recId = targetUserObj?.id || targetUserObj?.uid || "";
-      if (!recEmail) {
-        const lower = cleanAuthorHandle.toLowerCase();
-        if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) recEmail = "avr6566gd@gmail.com";
-        else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
-        else if (lower.includes("aouisesmee")) recEmail = "aouisesmee@gmail.com";
-      }
-
-      sendSocialNotification({
-        recipientHandle: cleanAuthorHandle,
-        recipientEmail: recEmail || cleanAuthorHandle.replace(/^@/, ""),
-        recipientId: recId || recEmail || cleanAuthorHandle,
-        type: "follow",
-        user: {
-          name: currentUser.name,
-          avatar: currentUser.avatar,
-          email: currentUser.email
-        },
-        text: `started following your reviews`,
-        customId: `notif_follow_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${cleanAuthorHandle}`
-      }).catch(() => {});
-    }
   };
 
   // Handle Follow Place (Business) - Strict Explicit Follow Only

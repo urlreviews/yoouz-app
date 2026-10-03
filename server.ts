@@ -12283,6 +12283,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
   async function createAndBroadcastBackendNotification(params: {
     senderUserId: string;
+    senderName?: string;
+    senderAvatar?: string;
     recipientEmail: string;
     recipientId: string;
     recipientHandle: string;
@@ -12297,20 +12299,20 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     if (!bunnyDb) return;
 
     try {
-      let senderName = "Yoouz Member";
-      let senderAvatar = "";
+      let senderName = params.senderName || "Yoouz Member";
+      let senderAvatar = params.senderAvatar || "";
       let senderEmail = params.senderUserId;
 
       const senderRows = await bunnyDb.execute({
-        sql: "SELECT * FROM users WHERE id = ? OR email = ? LIMIT 1",
-        args: [params.senderUserId, params.senderUserId]
+        sql: "SELECT * FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1",
+        args: [params.senderUserId, params.senderUserId, params.senderName || params.senderUserId]
       });
       if (senderRows && senderRows.rows && senderRows.rows.length > 0) {
         const row: any = senderRows.rows[0];
         let pData: any = {};
         try { pData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-        senderName = row.name || pData.name || senderName;
-        senderAvatar = row.avatar || pData.avatar || senderAvatar;
+        senderName = params.senderName || row.name || pData.name || senderName;
+        senderAvatar = params.senderAvatar || row.avatar || pData.avatar || senderAvatar;
         senderEmail = row.email || pData.email || senderEmail;
       }
 
@@ -14385,6 +14387,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
             await createAndBroadcastBackendNotification({
               senderUserId: followerUserId,
+              senderName: followerName,
+              senderAvatar: followerAvatar,
               recipientEmail: recEmail || targetHandle,
               recipientId: recId || recEmail || targetHandle,
               recipientHandle: recHandle || targetHandle,
