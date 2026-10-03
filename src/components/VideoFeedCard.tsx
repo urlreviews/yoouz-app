@@ -80,6 +80,7 @@ interface VideoFeedCardProps {
   businessBannerUrl?: string | null;
   cardRef: (el: HTMLDivElement | null) => void;
   slotRef?: (el: HTMLDivElement | null) => void;
+  slotId?: string;
   isSessionAudioUnlocked?: boolean;
   onUnlockAudio?: () => void;
   onRecordView?: (videoId: string) => void;
@@ -135,6 +136,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   businessBannerUrl,
   cardRef,
   slotRef,
+  slotId,
   isSessionAudioUnlocked = false,
   onUnlockAudio,
   onRecordView,
@@ -690,7 +692,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
-        id={`video-slot-${video.id}`}
+        id={slotId || `video-slot-${video.id}`}
         ref={slotRef}
         data-video-slot="true"
         className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black pointer-events-none"

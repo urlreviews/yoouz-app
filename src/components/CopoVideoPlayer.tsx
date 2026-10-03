@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
@@ -128,6 +128,44 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = videos[Math.min(currentIndex, Math.max(0, videos.length - 1))] || videos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
+
+  // Seamless continuous circular feed: repeats video sequence so swipe momentum flows 100% naturally into next video
+  const [loopCount, setLoopCount] = useState<number>(videos.length > 1 ? 10 : 1);
+  useEffect(() => {
+    setLoopCount(videos.length > 1 ? 10 : 1);
+  }, [videos.length]);
+
+  const displayItems = useMemo(() => {
+    if (videos.length <= 1) {
+      return videos.map((v, i) => ({
+        video: v,
+        cardIndex: i,
+        realIndex: i,
+        slotId: `video-slot-${i}`,
+        key: `vid-${v.id}-${i}`
+      }));
+    }
+    const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
+    for (let loop = 0; loop < loopCount; loop++) {
+      for (let i = 0; i < videos.length; i++) {
+        const cardIndex = loop * videos.length + i;
+        items.push({
+          video: videos[i],
+          cardIndex,
+          realIndex: i,
+          slotId: `video-slot-${cardIndex}`,
+          key: `vid-${videos[i].id}-${cardIndex}`
+        });
+      }
+    }
+    return items;
+  }, [videos, loopCount]);
+
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(() => {
+    return Math.max(0, Math.min(currentIndex, Math.max(0, videos.length - 1)));
+  });
+  const activeCardIndexRef = useRef<number>(activeCardIndex);
+  activeCardIndexRef.current = activeCardIndex;
 
   // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
   // Maintains strictly 3 hardware video elements across the feed to guarantee 0ms instant playback on swipe
@@ -321,7 +359,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const pool = videoPoolRef.current;
     if (!pool || pool.length === 0) return;
 
-    if (currentIndex >= videos.length || !videos[currentIndex]) {
+    const currentCard = displayItems[activeCardIndex] || displayItems[0];
+    if (!currentCard || !currentCard.video) {
       pool.forEach((v) => {
         try {
           v.pause();
@@ -333,9 +372,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       return;
     }
 
-    const activeVideo = videos[currentIndex];
-    const nextVideo = (currentIndex + 1 < videos.length) ? videos[currentIndex + 1] : null;
-    const prevVideo = (currentIndex - 1 >= 0) ? videos[currentIndex - 1] : null;
+    const activeVideo = currentCard.video;
+    const nextCard = displayItems[activeCardIndex + 1] || (videos.length > 1 ? displayItems[0] : null);
+    const nextVideo = nextCard?.video || null;
+    const prevCard = activeCardIndex > 0 ? displayItems[activeCardIndex - 1] : null;
+    const prevVideo = prevCard?.video || null;
 
     const neededVideoIds = new Set<string>();
     neededVideoIds.add(activeVideo.id);
@@ -370,8 +411,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     });
 
     // Mount activeVid into its target card slot
+    const activeSlotId = currentCard.slotId || `video-slot-${activeCardIndex}`;
     const mountActive = () => {
-      const activeSlot = document.getElementById(`video-slot-${activeVideo.id}`);
+      const activeSlot = document.getElementById(activeSlotId);
       if (activeSlot && activeVid && activeVid.parentElement !== activeSlot) {
         activeSlot.appendChild(activeVid);
       }
@@ -510,7 +552,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     // Giving the active video 100% of bandwidth and network connections on desktop startup
     const prewarmTimer = setTimeout(() => {
       // Pre-warm next upcoming video
-      if (nextVideo) {
+      if (nextCard && nextVideo) {
         let nextVid = slotBindingRef.current.get(nextVideo.id);
         if (!nextVid || nextVid === activeVid || !pool.includes(nextVid)) {
           nextVid = pool.find((v) => v !== activeVid && (!slotBindingRef.current.get(prevVideo?.id || "") || v !== slotBindingRef.current.get(prevVideo?.id || ""))) || pool.find((v) => v !== activeVid) || null;
@@ -527,7 +569,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           nextVid.muted = true;
           try { nextVid.pause(); } catch (e) {}
 
-          const nextSlot = document.getElementById(`video-slot-${nextVideo.id}`);
+          const nextSlot = document.getElementById(nextCard.slotId);
           if (nextSlot && nextVid.parentElement !== nextSlot) {
             nextSlot.appendChild(nextVid);
           }
@@ -545,7 +587,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
 
       // Preserve / Pre-warm previous video
-      if (prevVideo) {
+      if (prevCard && prevVideo) {
         let prevVid = slotBindingRef.current.get(prevVideo.id);
         if (!prevVid || prevVid === activeVid || !pool.includes(prevVid)) {
           prevVid = pool.find((v) => v !== activeVid && (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id))) || null;
@@ -562,7 +604,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           prevVid.muted = true;
           try { prevVid.pause(); } catch (e) {}
 
-          const prevSlot = document.getElementById(`video-slot-${prevVideo.id}`);
+          const prevSlot = document.getElementById(prevCard.slotId);
           if (prevSlot && prevVid.parentElement !== prevSlot) {
             prevSlot.appendChild(prevVid);
           }
@@ -604,7 +646,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       clearTimeout(prewarmTimer);
       clearTimeout(viewTimer);
     };
-  }, [currentIndex, videos, onRecordView, isPaused, contextKey]);
+  }, [activeCardIndex, displayItems, videos, onRecordView, isPaused, contextKey]);
 
   // Scrubbing & High-Precision Seeking Handlers
   const wasPlayingBeforeScrubRef = useRef<boolean>(true);
@@ -778,7 +820,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
   useEffect(() => {
-    const maxIdx = videos.length > 0 ? videos.length : 0;
+    const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
     if (currentIndex > maxIdx) {
       onSelectVideoIndex(maxIdx);
     }
@@ -812,27 +854,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isProgrammaticScrollRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const currentIndexRef = useRef<number>(currentIndex);
   const lastObserverIndexRef = useRef<number>(currentIndex);
-
-  // Sync ref
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
 
   // Robust programmatic scroll function that guarantees instant synchronization
   const scrollToCard = useCallback(
-    (targetIndex: number, behavior: ScrollBehavior = "smooth") => {
-      const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
-      if (targetIndex < 0 || targetIndex > maxIdx) return;
+    (targetCardIndex: number, behavior: ScrollBehavior = "smooth") => {
+      const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
+      if (targetCardIndex < 0 || targetCardIndex > maxIdx) return;
 
-      // Update refs and trigger state change immediately to prevent race conditions
-      const isJump = Math.abs(targetIndex - currentIndexRef.current) > 1;
-      currentIndexRef.current = targetIndex;
-      lastObserverIndexRef.current = targetIndex;
-      onSelectVideoIndex(targetIndex);
+      const isJump = Math.abs(targetCardIndex - activeCardIndexRef.current) > 1;
+      activeCardIndexRef.current = targetCardIndex;
+      lastObserverIndexRef.current = targetCardIndex;
+      setActiveCardIndex(targetCardIndex);
 
-      const cardEl = cardRefs.current[targetIndex];
+      const realIdx = targetCardIndex % (videos.length || 1);
+      onSelectVideoIndex(realIdx);
+
+      const cardEl = cardRefs.current[targetCardIndex];
       const container = containerRef.current;
       if (cardEl && container) {
         isProgrammaticScrollRef.current = true;
@@ -845,7 +883,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }, 500);
       }
     },
-    [videos.length, onSelectVideoIndex]
+    [displayItems.length, videos.length, onSelectVideoIndex]
   );
 
   // Compute Place Logo Map for fast lookups
@@ -998,9 +1036,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         // If user is at the top of the scroll container, firmly lock to first video (index 0)
         if (container.scrollTop <= 20) {
-          if (currentIndexRef.current !== 0) {
-            currentIndexRef.current = 0;
+          if (activeCardIndexRef.current !== 0) {
+            activeCardIndexRef.current = 0;
             lastObserverIndexRef.current = 0;
+            setActiveCardIndex(0);
             onSelectVideoIndex(0);
           }
           return;
@@ -1016,14 +1055,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         const idxAttr = bestEntry.target.getAttribute("data-video-index");
         if (idxAttr !== null) {
-          const idx = parseInt(idxAttr, 10);
-          const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
-          if (!isNaN(idx) && idx >= 0 && idx <= maxIdx && idx !== currentIndexRef.current) {
-            currentIndexRef.current = idx;
-            lastObserverIndexRef.current = idx;
-            onSelectVideoIndex(idx);
-            if (idx < videos.length) {
-              prefetchUpcomingVideos(videos, idx);
+          const cardIdx = parseInt(idxAttr, 10);
+          const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
+          if (!isNaN(cardIdx) && cardIdx >= 0 && cardIdx <= maxIdx && cardIdx !== activeCardIndexRef.current) {
+            activeCardIndexRef.current = cardIdx;
+            lastObserverIndexRef.current = cardIdx;
+            setActiveCardIndex(cardIdx);
+
+            const realIdx = cardIdx % (videos.length || 1);
+            onSelectVideoIndex(realIdx);
+
+            // Dynamically extend loop buffer when approaching the end of loaded loops
+            if (videos.length > 1 && cardIdx >= displayItems.length - 4) {
+              setLoopCount((prev) => prev + 5);
+            }
+
+            if (realIdx < videos.length) {
+              prefetchUpcomingVideos(videos, realIdx);
             }
           }
         }
@@ -1041,7 +1089,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     return () => {
       observer.disconnect();
     };
-  }, [videos, onSelectVideoIndex]);
+  }, [displayItems.length, videos, onSelectVideoIndex]);
 
   // Keep top-of-feed locked to index 0 when feed updates or new video is published
   const prevFirstVideoIdRef = useRef<string | null>(null);
@@ -1049,9 +1097,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const currentFirstId = videos[0]?.id || null;
     if (currentFirstId && currentFirstId !== prevFirstVideoIdRef.current) {
       prevFirstVideoIdRef.current = currentFirstId;
-      if (currentIndexRef.current === 0) {
+      if (activeCardIndexRef.current === 0) {
         lastObserverIndexRef.current = 0;
-        currentIndexRef.current = 0;
+        activeCardIndexRef.current = 0;
+        setActiveCardIndex(0);
         onSelectVideoIndex(0);
         if (containerRef.current) {
           containerRef.current.scrollTo({ top: 0, behavior: "instant" });
@@ -1098,33 +1147,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
   // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
-    if (currentIndex !== lastObserverIndexRef.current) {
-      const isJump = Math.abs(currentIndex - currentIndexRef.current) > 1;
-      lastObserverIndexRef.current = currentIndex;
-      currentIndexRef.current = currentIndex;
-
-      const cardEl = cardRefs.current[currentIndex];
-      const container = containerRef.current;
-      if (cardEl && container) {
-        isProgrammaticScrollRef.current = true;
-        const targetTop = cardEl.offsetTop - container.offsetTop;
-        container.scrollTo({ top: targetTop, behavior: isJump ? "auto" : "smooth" });
-
-        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 500);
-      }
+    const currentRealIdx = activeCardIndexRef.current % (videos.length || 1);
+    if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < videos.length) {
+      scrollToCard(currentIndex, "smooth");
     }
-  }, [currentIndex]);
+  }, [currentIndex, videos.length, scrollToCard]);
 
   const handleNext = useCallback(() => {
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
     }
-    const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
-    if (currentIndexRef.current < maxIdx) {
-      const nextIdx = currentIndexRef.current + 1;
+    const nextIdx = activeCardIndexRef.current + 1;
+    if (nextIdx < displayItems.length) {
       if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
         feedVideoRef.current.muted = false;
         safeSetVolume(feedVideoRef.current, 1);
@@ -1132,17 +1166,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
       scrollToCard(nextIdx, "smooth");
     } else if (videos.length > 1) {
-      // Seamlessly loop to first video
-      scrollToCard(0, "smooth");
+      setLoopCount((prev) => prev + 5);
+      scrollToCard(nextIdx, "smooth");
     }
-  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   const handlePrev = useCallback(() => {
     if (isSessionAudioUnlocked && !isMuted) {
       ensureSharedAudioContextUnlocked();
     }
-    if (currentIndexRef.current > 0) {
-      const prevIdx = currentIndexRef.current - 1;
+    if (activeCardIndexRef.current > 0) {
+      const prevIdx = activeCardIndexRef.current - 1;
       if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
         feedVideoRef.current.muted = false;
         safeSetVolume(feedVideoRef.current, 1);
@@ -1150,10 +1184,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
       scrollToCard(prevIdx, "smooth");
     } else if (videos.length > 1) {
-      // Seamlessly loop to last video
-      scrollToCard(videos.length - 1, "smooth");
+      scrollToCard(displayItems.length - 1, "smooth");
     }
-  }, [videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
@@ -1249,14 +1282,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         isWheeling = true;
 
         if (e.deltaY > 0) {
-          const maxIdx = videos.length > 0 ? videos.length : 0;
-          if (currentIndexRef.current < maxIdx) {
-            handleNext();
-          }
+          handleNext();
         } else {
-          if (currentIndexRef.current > 0) {
-            handlePrev();
-          }
+          handlePrev();
         }
 
         if (wheelTimeout) clearTimeout(wheelTimeout);
@@ -1446,19 +1474,22 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             overflowAnchor: "none"
           }}
         >
-          {videos.map((vid, idx) => {
-            const isCardActive = idx === currentIndex;
+          {displayItems.map((item) => {
+            const vid = item.video;
+            const idx = item.cardIndex;
+            const isCardActive = idx === activeCardIndex;
             // Adaptive sliding window (±1 on mobile/touch, ±2 on desktop) protects mobile hardware decoders
             // from crashing or freezing across Brave, Firefox & Safari (WebKit limit ~3-4 decoders)
             const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
             const bufferRadius = isTouch ? 1 : 2;
-            const isCardNear = Math.abs(idx - currentIndex) <= bufferRadius;
+            const isCardNear = Math.abs(idx - activeCardIndex) <= bufferRadius;
 
             return (
               <VideoFeedCard
-                key={vid.id}
+                key={item.key}
                 video={vid}
                 index={idx}
+                slotId={item.slotId}
                 isActive={isCardActive}
                 isNear={isCardNear}
                 isMuted={isMuted}
@@ -1520,40 +1551,45 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
 
         {/* Floating Up/Down Navigation Buttons (Desktop) */}
-        {!hideFloatingNav && (
-          <div
-            id="copo-floating-nav-buttons"
-            className="hidden sm:flex flex-col gap-3 z-30"
-          >
-            <button
-              id="btn-scroll-prev-video"
-              onClick={handlePrev}
-              disabled={videos.length <= 1}
-              className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-                videos.length <= 1
-                  ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
-                  : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
-              }`}
-              title="Previous Video (Up Arrow)"
-            >
-              <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-            </button>
+        {!hideFloatingNav && (() => {
+          const isPrevDisabled = activeCardIndex <= 0 || videos.length <= 1;
+          const isNextDisabled = activeCardIndex >= displayItems.length - 1 || videos.length <= 1;
 
-            <button
-              id="btn-scroll-next-video"
-              onClick={handleNext}
-              disabled={videos.length <= 1}
-              className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
-                videos.length <= 1
-                  ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800"
-                  : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
-              }`}
-              title="Next Video (Down Arrow)"
+          return (
+            <div
+              id="copo-floating-nav-buttons"
+              className="hidden sm:flex flex-col gap-3 z-30"
             >
-              <ChevronDown className="w-6 h-6 stroke-[2.5]" />
-            </button>
-          </div>
-        )}
+              <button
+                id="btn-scroll-prev-video"
+                onClick={handlePrev}
+                disabled={isPrevDisabled}
+                className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
+                  isPrevDisabled
+                    ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800 pointer-events-none"
+                    : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                }`}
+                title={isPrevDisabled ? "First Video" : "Previous Video (Up Arrow)"}
+              >
+                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+              </button>
+
+              <button
+                id="btn-scroll-next-video"
+                onClick={handleNext}
+                disabled={isNextDisabled}
+                className={`w-12 h-12 rounded-full bg-zinc-900/95 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-xl ${
+                  isNextDisabled
+                    ? "opacity-25 cursor-not-allowed text-zinc-600 border-zinc-800 pointer-events-none"
+                    : "text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                }`}
+                title={isNextDisabled ? "Last Video" : "Next Video (Down Arrow)"}
+              >
+                <ChevronDown className="w-6 h-6 stroke-[2.5]" />
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* More Options Modal */}
