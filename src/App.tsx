@@ -4372,7 +4372,7 @@ export function App() {
         userId: matchedUser?.userId || matchedUser?.id || cleanP,
         id: matchedUser?.id || matchedUser?.userId || cleanP,
         avatar: matchedUser?.avatar || getSafeAvatarUrl(null, cleanName, cleanP),
-        bio: matchedUser?.bio || "Active Yoouz Member",
+        bio: matchedUser?.bio || "Community Reviewer",
         location: matchedUser?.location || "Global Community",
         followersCount: matchedUser?.followersCount || 0,
         isVerified: matchedUser?.isVerified || false,

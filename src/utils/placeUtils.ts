@@ -1947,6 +1947,20 @@ const PROTECTED_CREATORS_SET = new Set([
 
 export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): boolean {
   if (!userOrIdOrEmail) return false;
+
+  const isFakeOrDeletedStr = (str?: any) => {
+    if (!str) return false;
+    const s = String(str).toLowerCase().trim().replace(/^@+/, '');
+    return s.includes('yoouz member') || s.includes('yoouz-member') || s.includes('yoouzmember') || s === 'registered user' || s === 'reviewer' || s.includes('david');
+  };
+
+  if (typeof userOrIdOrEmail === 'string') {
+    if (isFakeOrDeletedStr(userOrIdOrEmail)) return true;
+  } else if (typeof userOrIdOrEmail === 'object') {
+    const u = userOrIdOrEmail;
+    if (isFakeOrDeletedStr(u.name) || isFakeOrDeletedStr(u.id) || isFakeOrDeletedStr(u.uid) || isFakeOrDeletedStr(u.userId) || isFakeOrDeletedStr(u.email) || isFakeOrDeletedStr(u.handle)) return true;
+  }
+
   const list = deletedIds || getDeletedUserIds();
   if (!list || list.length === 0) return false;
   const set = new Set(list.map((s) => String(s).toLowerCase().trim()).filter(Boolean));

@@ -218,7 +218,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const resolvedAuthorName = isVideoMode && video
     ? (video.author?.name || (video as any)?.authorName || "Verified Reviewer")
-    : (title || "Yoouz Member");
+    : (title || "Community Reviewer");
 
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : 5;
 

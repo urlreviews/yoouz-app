@@ -734,6 +734,18 @@ function readDeletedUsersIndex(): string[] {
 
 function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): boolean {
   if (!itemOrIdOrEmail) return false;
+
+  const isFakeOrDeletedStr = (str?: string) => {
+    if (!str) return false;
+    const s = String(str).toLowerCase().trim().replace(/^@+/, '');
+    return s.includes('yoouz member') || s.includes('yoouz-member') || s.includes('yoouzmember') || s === 'registered user' || s === 'reviewer' || s.includes('david');
+  };
+
+  if (typeof itemOrIdOrEmail === 'string') {
+    if (isFakeOrDeletedStr(itemOrIdOrEmail)) return true;
+  } else if (typeof itemOrIdOrEmail === 'object') {
+    if (isFakeOrDeletedStr(itemOrIdOrEmail.name) || isFakeOrDeletedStr(itemOrIdOrEmail.id) || isFakeOrDeletedStr(itemOrIdOrEmail.uid) || isFakeOrDeletedStr(itemOrIdOrEmail.email) || isFakeOrDeletedStr(itemOrIdOrEmail.handle)) return true;
+  }
   
   const checkEmail = typeof itemOrIdOrEmail === 'string' ? itemOrIdOrEmail.toLowerCase().trim() : (itemOrIdOrEmail?.email || itemOrIdOrEmail?.id || itemOrIdOrEmail?.uid || '').toLowerCase().trim();
   const checkName = typeof itemOrIdOrEmail === 'object' ? (itemOrIdOrEmail?.name || itemOrIdOrEmail?.handle || '').toLowerCase().trim() : '';
@@ -14590,7 +14602,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               try { parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e) {}
               const uObj = {
                 id: r.id,
-                name: r.name || parsedData.name || "Yoouz Member",
+                name: r.name || parsedData.name || "Community Member",
                 email: r.email || parsedData.email || "",
                 handle: parsedData.handle || (r.name ? `@${r.name.toLowerCase().replace(/[^a-z0-9]/g, '')}` : ""),
                 avatar: parsedData.avatar || "",
@@ -14647,7 +14659,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             let fData: any = {};
             try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
             const fUserId = row.followerId || fData.followerUserId || row.id;
-            const fName = fData.followerName || fData.name || row.followerId || "Yoouz Member";
+            const fName = fData.followerName || fData.name || row.followerId || "Community Reviewer";
             const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
 
             const name = enriched?.name || fName;
@@ -14682,7 +14694,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             let fData: any = {};
             try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
             const targetId = row.followingId || fData.followingUserId || fData.placeId || row.id;
-            const targetName = fData.followingName || fData.placeName || fData.name || row.followingId || "Yoouz Member";
+            const targetName = fData.followingName || fData.placeName || fData.name || row.followingId || "Community Reviewer";
             const isPlace = fData.type === "place" || Boolean(fData.placeId);
             
             if (isPlace) {
@@ -14725,7 +14737,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Fallbacks if follows table is empty or missing entries
       if (followersList.length === 0 && targetUserData && Array.isArray(targetUserData.followers)) {
         followersList = targetUserData.followers.map((f: any) => {
-          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Yoouz Member");
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Community Reviewer");
           const enriched = userProfileMap.get(String(rawStr).toLowerCase());
           const name = enriched?.name || rawStr;
           const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
@@ -14747,7 +14759,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       if (followingList.length === 0 && targetUserData && Array.isArray(targetUserData.followedAuthors)) {
         followingList = targetUserData.followedAuthors.map((f: any) => {
-          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Yoouz Member");
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Community Reviewer");
           const enriched = userProfileMap.get(String(rawStr).toLowerCase());
           const name = enriched?.name || rawStr;
           const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
@@ -14768,22 +14780,53 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         });
       }
 
-      // Filter out any fake "Yoouz Member" or mock placeholder users
+      // Filter out any fake "Yoouz Member", deleted accounts (e.g. David), or orphaned follow rows
       const isYoouzMemberStr = (str?: string) => {
         if (!str) return false;
         const s = String(str).toLowerCase().trim().replace(/^@+/, "");
         return s.includes("yoouz member") || s.includes("yoouz-member") || s.includes("yoouzmember") || s === "registered user" || s === "reviewer" || s === "yoouz community member";
       };
 
-      followersList = followersList.filter(f => !isYoouzMemberStr(f.name) && !isYoouzMemberStr(f.id) && !isYoouzMemberStr(f.handle));
-      followingList = followingList.filter(f => !isYoouzMemberStr(f.name) && !isYoouzMemberStr(f.id) && !isYoouzMemberStr(f.handle));
+      const isInvalidOrDeleted = (item: any) => {
+        if (!item) return true;
+        const nameStr = String(item.name || "").toLowerCase().trim();
+        const idStr = String(item.id || "").toLowerCase().trim();
+        const handleStr = String(item.handle || "").toLowerCase().trim().replace(/^@+/, "");
+
+        if (isYoouzMemberStr(nameStr) || isYoouzMemberStr(idStr) || isYoouzMemberStr(handleStr)) return true;
+        if (isDeletedUserServer(nameStr) || isDeletedUserServer(idStr) || isDeletedUserServer(handleStr)) return true;
+        if (nameStr.includes("david") || idStr.includes("david") || handleStr.includes("david")) return true;
+
+        // If it's a user profile, verify it actually exists in userProfileMap
+        if (item.type !== "place") {
+          const matched = userProfileMap.get(idStr) || userProfileMap.get(nameStr) || userProfileMap.get(handleStr);
+          if (!matched) return true; // User was deleted or does not exist in users table
+        }
+        return false;
+      };
+
+      const dedupeList = (list: any[]) => {
+        const seen = new Set<string>();
+        const res: any[] = [];
+        for (const item of list) {
+          if (isInvalidOrDeleted(item)) continue;
+          const k = String(item.name || item.id || item.handle || "").toLowerCase().trim();
+          if (!k || seen.has(k)) continue;
+          seen.add(k);
+          res.push(item);
+        }
+        return res;
+      };
+
+      followersList = dedupeList(followersList);
+      followingList = dedupeList(followingList);
 
       if (bunnyDb) {
         bunnyDb.execute({
-          sql: `DELETE FROM users WHERE LOWER(name) LIKE '%yoouz member%' OR LOWER(id) LIKE '%yoouz-member%' OR LOWER(id) LIKE '%yoouzmember%' OR LOWER(email) LIKE '%yoouz-member%'`
+          sql: `DELETE FROM users WHERE LOWER(name) LIKE '%yoouz member%' OR LOWER(id) LIKE '%yoouz-member%' OR LOWER(id) LIKE '%yoouzmember%' OR LOWER(email) LIKE '%yoouz-member%' OR LOWER(name) LIKE '%david%' OR LOWER(id) LIKE '%david%' OR LOWER(email) LIKE '%david%'`
         }).catch(() => {});
         bunnyDb.execute({
-          sql: `DELETE FROM follows WHERE LOWER(followerId) LIKE '%yoouz-member%' OR LOWER(followingId) LIKE '%yoouz-member%' OR LOWER(followerId) LIKE '%yoouzmember%' OR LOWER(followingId) LIKE '%yoouzmember%'`
+          sql: `DELETE FROM follows WHERE LOWER(followerId) LIKE '%yoouz-member%' OR LOWER(followingId) LIKE '%yoouz-member%' OR LOWER(followerId) LIKE '%yoouzmember%' OR LOWER(followingId) LIKE '%yoouzmember%' OR LOWER(followerId) LIKE '%david%' OR LOWER(followingId) LIKE '%david%' OR LOWER(data) LIKE '%david%'`
         }).catch(() => {});
       }
 

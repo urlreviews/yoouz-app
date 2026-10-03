@@ -1417,7 +1417,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       userId: id || name || "user",
       id: id || name || "user",
       avatar: avatar || getSafeAvatarUrl(avatar, fallbackName, id),
-      bio: "Active Yoouz Member",
+      bio: "Community Reviewer",
       location: "Global Community",
       followersCount: 0,
       isVerified: false,

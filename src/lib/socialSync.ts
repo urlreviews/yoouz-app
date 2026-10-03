@@ -278,7 +278,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     recipientId: targetId || targetEmail,
     type: params.type,
     user: {
-      name: params.user.name || "Yoouz Member",
+      name: params.user.name || "Community Reviewer",
       avatar: params.user.avatar || generateGoogleLetterAvatarSvg(params.user.name || "User", 128, senderEmail || params.user.name || "User"),
       email: senderEmail
     },
@@ -568,7 +568,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recipientHandle: data.recipientHandle || recHandle,
       type: data.type || "like",
       user: {
-        name: data.user?.name || parsedInner.user?.name || "Yoouz Member",
+        name: data.user?.name || parsedInner.user?.name || "Community Reviewer",
         avatar: data.user?.avatar || parsedInner.user?.avatar || generateGoogleLetterAvatarSvg(data.user?.name || parsedInner.user?.name || "User", 128, senderEmail || data.user?.name || parsedInner.user?.name || "User"),
         email: data.user?.email || parsedInner.user?.email || senderEmail
       },
@@ -1554,7 +1554,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           otherAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "ben_blue");
           otherId = "@benblue";
         } else {
-          otherName = data.senderName || data.recipientName || "Yoouz Member";
+          otherName = data.senderName || data.recipientName || "Community Reviewer";
           otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherName);
           otherId = data.senderId || data.recipientId || String(data.id);
         }
