@@ -14768,6 +14768,25 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         });
       }
 
+      // Filter out any fake "Yoouz Member" or mock placeholder users
+      const isYoouzMemberStr = (str?: string) => {
+        if (!str) return false;
+        const s = String(str).toLowerCase().trim().replace(/^@+/, "");
+        return s.includes("yoouz member") || s.includes("yoouz-member") || s.includes("yoouzmember") || s === "registered user" || s === "reviewer" || s === "yoouz community member";
+      };
+
+      followersList = followersList.filter(f => !isYoouzMemberStr(f.name) && !isYoouzMemberStr(f.id) && !isYoouzMemberStr(f.handle));
+      followingList = followingList.filter(f => !isYoouzMemberStr(f.name) && !isYoouzMemberStr(f.id) && !isYoouzMemberStr(f.handle));
+
+      if (bunnyDb) {
+        bunnyDb.execute({
+          sql: `DELETE FROM users WHERE LOWER(name) LIKE '%yoouz member%' OR LOWER(id) LIKE '%yoouz-member%' OR LOWER(id) LIKE '%yoouzmember%' OR LOWER(email) LIKE '%yoouz-member%'`
+        }).catch(() => {});
+        bunnyDb.execute({
+          sql: `DELETE FROM follows WHERE LOWER(followerId) LIKE '%yoouz-member%' OR LOWER(followingId) LIKE '%yoouz-member%' OR LOWER(followerId) LIKE '%yoouzmember%' OR LOWER(followingId) LIKE '%yoouzmember%'`
+        }).catch(() => {});
+      }
+
       return res.json({
         success: true,
         handle: rawHandle,

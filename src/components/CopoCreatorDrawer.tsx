@@ -1867,7 +1867,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       {/* SOCIAL NETWORK MODAL (FOLLOWERS & FOLLOWING) */}
       {socialModalTab && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none">
-          <div className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60">
               <div className="min-w-0 pr-2">
@@ -1931,7 +1931,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   type="text"
                   value={socialSearch}
                   onChange={(e) => setSocialSearch(e.target.value)}
-                  placeholder={`Search ${socialModalTab} by name or handle...`}
+                  placeholder={`Search ${socialModalTab} by name or location...`}
                   className="w-full pl-10 pr-9 py-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
                 />
                 {socialSearch && (
@@ -1947,19 +1947,27 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {/* Users List Container */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar min-h-[260px]">
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-2 no-scrollbar min-h-[260px]">
               {isSocialLoading ? (
                 <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
                   <RefreshCw className="w-5 h-5 text-zinc-300 animate-spin" />
                   <span>Loading {socialModalTab}...</span>
                 </div>
               ) : (() => {
+                const isYoouzMemberStr = (str?: string) => {
+                  if (!str) return false;
+                  const s = String(str).toLowerCase().trim().replace(/^@+/, "");
+                  return s.includes("yoouz member") || s.includes("yoouz-member") || s.includes("yoouzmember") || s === "registered user" || s === "reviewer" || s === "yoouz community member";
+                };
+
                 const rawList = socialModalTab === "followers" ? (socialData?.followers || []) : (socialData?.following || []);
-                const filtered = rawList.filter((u: any) => {
-                  if (!socialSearch.trim()) return true;
-                  const q = socialSearch.toLowerCase();
-                  return (u.name || "").toLowerCase().includes(q) || (u.handle || "").toLowerCase().includes(q) || (u.location || "").toLowerCase().includes(q);
-                });
+                const filtered = rawList
+                  .filter((u: any) => !isYoouzMemberStr(u.name) && !isYoouzMemberStr(u.id) && !isYoouzMemberStr(u.handle))
+                  .filter((u: any) => {
+                    if (!socialSearch.trim()) return true;
+                    const q = socialSearch.toLowerCase();
+                    return (u.name || "").toLowerCase().includes(q) || (u.location || "").toLowerCase().includes(q);
+                  });
 
                 if (filtered.length === 0) {
                   return (
@@ -1976,8 +1984,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 }
 
                 return filtered.map((u: any, idx: number) => {
-                  const nameStr = u.name || u.handle || "Yoouz Member";
-                  const handleStr = u.handle ? (u.handle.startsWith('@') ? u.handle : `@${u.handle}`) : "";
+                  const nameStr = u.name || "Community Reviewer";
                   const safeAvatar = getSafeAvatarUrl(u.avatar, nameStr, u.handle || nameStr);
                   const locationStr = u.location ? formatCityCountry(u.location) : (u.city ? `${u.city}${u.country ? `, ${u.country}` : ''}` : "");
                   const videoCount = typeof u.videoReviewCount === "number" ? u.videoReviewCount : 0;
@@ -2007,7 +2014,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           });
                         }
                       }}
-                      className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                      className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
                       <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img
@@ -2021,7 +2028,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         />
                         <div className="min-w-0 flex-1 text-left">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <h4 className="text-sm font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                            <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {nameStr}
                             </h4>
                             {u.isVerified && (
@@ -2030,7 +2037,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           </div>
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                             <span className="shrink-0 text-zinc-300 text-xs">
-                              {videoCount > 0 ? `${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}` : (handleStr || "Community reviewer")}
+                              {videoCount > 0 ? `${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}` : "Community reviewer"}
                             </span>
                             {locationStr && (
                               <>
