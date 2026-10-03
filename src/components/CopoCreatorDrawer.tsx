@@ -1431,7 +1431,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
                   >
                     <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-black text-white">{socialData?.followersCount ?? effectiveFollowersCount}</span>
+                    <span className="text-base font-black text-white">{effectiveFollowersCount}</span>
                   </button>
                   <button
                     type="button"
@@ -1439,7 +1439,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
                   >
                     <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.following", "Following")}</span>
-                    <span className="text-base font-black text-white">{socialData?.followingCount ?? effectiveFollowingCount}</span>
+                    <span className="text-base font-black text-white">{effectiveFollowingCount}</span>
                   </button>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
