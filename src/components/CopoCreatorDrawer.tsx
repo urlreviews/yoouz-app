@@ -504,13 +504,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? liveUserFromRegistry.followers
     : (Array.isArray((author as any)?.followers) ? (author as any).followers : []);
 
-  const effectiveFollowersCount = liveFollowersList.length > 0
-    ? liveFollowersList.length
-    : (typeof liveUserFromRegistry?.followersCount === "number"
-        ? liveUserFromRegistry.followersCount
-        : (typeof safeCreator?.followersCount === "number" && safeCreator.followersCount > 0
-            ? safeCreator.followersCount
-            : (author?.followersCount || 0)));
+  const liveFollowingList = Array.isArray(liveUserFromRegistry?.followedAuthors)
+    ? liveUserFromRegistry.followedAuthors
+    : (Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors : []);
 
   // Social Network Modal State (Followers & Following)
   const [socialModalTab, setSocialModalOpen] = useState<"followers" | "following" | null>(null);
@@ -519,17 +515,29 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [socialSearch, setSocialSearch] = useState("");
   const [hoveredUnfollowModalUser, setHoveredUnfollowModalUser] = useState<string | null>(null);
 
-  const liveFollowingList = Array.isArray(liveUserFromRegistry?.followedAuthors)
-    ? liveUserFromRegistry.followedAuthors
-    : (Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors : []);
+  const isInvalidName = (name?: string) => {
+    if (!name) return true;
+    const s = String(name).toLowerCase().trim().replace(/^@+/, "");
+    return (
+      s.includes("yoouz") ||
+      s.includes("member") ||
+      s.includes("reviewer") ||
+      s.includes("registered user") ||
+      s.includes("david") ||
+      s === "user" ||
+      s === "community member" ||
+      s === "community reviewer"
+    );
+  };
 
-  const effectiveFollowingCount = socialData?.followingCount ?? (liveFollowingList.length > 0
-    ? liveFollowingList.length
-    : (typeof liveUserFromRegistry?.followingCount === "number"
-        ? liveUserFromRegistry.followingCount
-        : (typeof (safeCreator as any)?.followingCount === "number"
-            ? (safeCreator as any).followingCount
-            : ((author as any)?.followingCount || 0))));
+  const rawFollowers = socialData?.followers || liveFollowersList;
+  const filteredFollowers = rawFollowers.filter((u: any) => u && u.name && !isInvalidName(u.name));
+
+  const rawFollowing = socialData?.following || liveFollowingList;
+  const filteredFollowing = rawFollowing.filter((u: any) => u && (u.name || u.id) && !isInvalidName(u.name || u.id));
+
+  const effectiveFollowersCount = filteredFollowers.length;
+  const effectiveFollowingCount = filteredFollowing.length;
 
   const targetHandle = safeCreator?.name || author?.name || author?.id || "";
 
