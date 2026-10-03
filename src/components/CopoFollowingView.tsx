@@ -93,20 +93,20 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   // Set of places the current user follows
   const followedPlacesSet = useMemo(() => {
     const set = new Set<string>();
-    (currentUser?.followedPlaces || []).forEach((id) => {
-      if (id) set.add(id.toLowerCase().trim());
+    const list = Array.isArray(currentUser?.followedPlaces)
+      ? currentUser!.followedPlaces
+      : (() => {
+          try {
+            const stored = localStorage.getItem("copo_followed_places");
+            return stored ? JSON.parse(stored) : [];
+          } catch (e) {
+            return [];
+          }
+        })();
+
+    (Array.isArray(list) ? list : []).forEach((id) => {
+      if (id) set.add(String(id).toLowerCase().trim());
     });
-    try {
-      const stored = localStorage.getItem("copo_followed_places");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((id) => {
-            if (id) set.add(String(id).toLowerCase().trim());
-          });
-        }
-      }
-    } catch (e) {}
     return set;
   }, [currentUser?.followedPlaces, profileSyncTick]);
 

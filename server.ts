@@ -14297,7 +14297,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                   nextFollowedPlaces.push(String(targetPlaceId));
                 }
               } else {
-                nextFollowedPlaces = nextFollowedPlaces.filter((id) => id !== String(targetPlaceId));
+                const targetClean = String(targetPlaceId).toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+                nextFollowedPlaces = nextFollowedPlaces.filter((id) => {
+                  const clean = String(id).toLowerCase().trim();
+                  return clean !== String(targetPlaceId).toLowerCase().trim() && clean.replace(/[^a-z0-9]/g, "") !== targetClean;
+                });
               }
               const updatedFData = {
                 ...fData,

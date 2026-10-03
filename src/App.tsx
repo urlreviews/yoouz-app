@@ -5033,17 +5033,35 @@ export function App() {
     const cleanPlaceId = String(placeId || "").trim();
     if (!cleanPlaceId) return;
 
-    const currentFollows = currentUser.followedPlaces || [];
-    const isFollowing = currentFollows.some((id) => String(id).toLowerCase().trim() === cleanPlaceId.toLowerCase());
+    const currentFollows = Array.isArray(currentUser.followedPlaces) ? currentUser.followedPlaces : [];
+    const targetClean = cleanPlaceId.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+    
+    const isFollowing = currentFollows.some((id) => {
+      const clean = String(id).toLowerCase().trim();
+      return clean === cleanPlaceId.toLowerCase().trim() || clean.replace(/[^a-z0-9]/g, "") === targetClean;
+    });
+
     const updatedFollowedPlaces = isFollowing
-      ? currentFollows.filter((id) => String(id).toLowerCase().trim() !== cleanPlaceId.toLowerCase())
-      : [...currentFollows, cleanPlaceId];
+      ? currentFollows.filter((id) => {
+          const clean = String(id).toLowerCase().trim();
+          return clean !== cleanPlaceId.toLowerCase().trim() && clean.replace(/[^a-z0-9]/g, "") !== targetClean;
+        })
+      : [...currentFollows.filter((id) => {
+          const clean = String(id).toLowerCase().trim();
+          return clean !== cleanPlaceId.toLowerCase().trim() && clean.replace(/[^a-z0-9]/g, "") !== targetClean;
+        }), cleanPlaceId];
       
     const followerUid = currentUser.id || currentUser.uid || currentUser.email || "guest";
-    setCurrentUser((prev) => (prev ? { ...prev, followedPlaces: updatedFollowedPlaces } : null));
+    const updatedUser = {
+      ...currentUser,
+      followedPlaces: updatedFollowedPlaces,
+      followingCount: (currentUser.followedAuthors?.length || 0) + updatedFollowedPlaces.length
+    };
+    setCurrentUser(updatedUser);
 
     // Save strictly to followed places in localStorage
     try {
+      localStorage.setItem("copo_user_profile", JSON.stringify(updatedUser));
       localStorage.setItem("copo_followed_places", JSON.stringify(updatedFollowedPlaces));
     } catch (e) {}
 
