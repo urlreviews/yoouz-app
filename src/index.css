@@ -51,7 +51,9 @@ html, body, #root {
 #copo-main-feed-container,
 #copo-main-feed-container *,
 [data-hide-scrollbar="true"],
-[data-hide-scrollbar="true"] * {
+[data-hide-scrollbar="true"] *,
+[id^="copo-video-card-"],
+[id^="copo-video-card-"] * {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
@@ -62,11 +64,15 @@ html, body, #root {
 #copo-main-feed-container::-webkit-scrollbar,
 #copo-main-feed-container *::-webkit-scrollbar,
 [data-hide-scrollbar="true"]::-webkit-scrollbar,
-[data-hide-scrollbar="true"] *::-webkit-scrollbar {
+[data-hide-scrollbar="true"] *::-webkit-scrollbar,
+[id^="copo-video-card-"]::-webkit-scrollbar,
+[id^="copo-video-card-"] *::-webkit-scrollbar {
   display: none !important;
   width: 0px !important;
   height: 0px !important;
   background: transparent !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
   -webkit-appearance: none !important;
 }
 

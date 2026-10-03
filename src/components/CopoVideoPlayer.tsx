@@ -1460,7 +1460,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full overflow-y-scroll snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center ${
+          className={`w-full h-full overflow-y-auto snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
             isEmbed
               ? "gap-3 p-1 justify-center"
               : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(88vh,780px)] md:w-auto md:gap-4"
@@ -1550,14 +1550,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           })}
         </div>
 
-        {/* Floating Up/Down Navigation Buttons (Desktop & Tablet) */}
+        {/* Floating Up/Down Navigation Buttons (Desktop & Tablet) - Flex sibling beside the video card */}
         {!hideFloatingNav && videos.length > 1 && (() => {
           const isAtFirstVideo = activeCardIndex <= 0;
 
           return (
             <div
               id="copo-floating-nav-buttons"
-              className="hidden sm:flex flex-col gap-3 z-40 absolute right-4 sm:right-6 lg:right-8 top-1/2 -translate-y-1/2 pointer-events-auto select-none"
+              className="hidden sm:flex flex-col gap-3 z-30 shrink-0 select-none"
             >
               {/* Only show Up arrow if we are not on the first video */}
               {!isAtFirstVideo && (
