@@ -231,7 +231,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.setAttribute("x5-video-player-fullscreen", "true");
         vid.loop = true;
         vid.autoplay = false;
-        vid.preload = "metadata";
+        vid.preload = "auto";
         vid.disablePictureInPicture = true;
         vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
 

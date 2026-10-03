@@ -114,16 +114,7 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Direct clean server streaming endpoint (Always works for newly uploaded videos, 0ms latency)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
-    }
-  }
-
-  // 3. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
+  // 2. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
   if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
@@ -131,12 +122,21 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Bunny CDN Edge URL fallback
+  // 3. Direct Bunny CDN Edge URL (instant 0ms loading without 302 redirect)
   if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
     if (!sources.includes(cdnUrlMp4)) {
       sources.push(cdnUrlMp4);
+    }
+  }
+
+  // 4. Direct clean server streaming endpoint (Fallback for local disk uploads)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
     }
   }
 
