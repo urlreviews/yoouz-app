@@ -249,112 +249,236 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   };
 
   const faqItems: FaqItem[] = [
+    // --- Reviewer FAQs ---
     {
       id: "rev-1",
       category: "reviewers",
       question: "How long can my video review be?",
       answer:
-        "Every video review has a strict limit of 60 seconds. This ensures content remains high-impact, focused, digestible, and easy for other users to browse quickly without fluff or scripted commercials.",
-      tags: ["video", "length", "limit", "recording", "duration"]
+        "Every video review has a strict limit of 60 seconds. This ensures content remains high-impact, focused, digestible, and easy for other users to browse quickly without fluff or commercial filler.",
+      tags: ["video", "length", "limit", "recording", "duration", "60 seconds"]
     },
     {
       id: "rev-2",
       category: "reviewers",
-      question: "Can viewers and other users comment or ask questions on my video reviews?",
+      question: "Why does the video recorder only use the live front camera and disable gallery uploads?",
       answer:
-        "Yes! Unlike traditional review platforms where reviews sit as dead, static text, every Yoouz video review features a live community discussion feed. Viewers can ask you follow-up questions ('Did you try the dessert?', 'Is parking easy?'), share their own tips, and discuss their experiences directly underneath your video.",
-      tags: ["comments", "questions", "community", "discussion"]
+        "To guarantee 100% authentic human experiences, Yoouz auto-starts the live front (selfie) camera for direct recording. Uploading pre-recorded gallery files or marketing commercials is strictly disabled to eliminate fake reviews and bot uploads.",
+      tags: ["camera", "front camera", "selfie", "recording", "no uploads", "gallery", "authenticity"]
     },
     {
       id: "rev-3",
       category: "reviewers",
-      question: "Can I review any website domain or local establishment?",
+      question: "Do I automatically receive a Verified badge when I create an account?",
       answer:
-        "Yes! You can search and review any valid base website domain (e.g., airbnb.com, stripe.com) or local brick-and-mortar place (restaurants, gyms, cafes, services). This helps create a single centralized hub of user opinions.",
-      tags: ["domain", "website", "places", "search", "business"]
+        "No. All new accounts start as standard unverified profiles. Your official 'Verified Reviewer' badge is automatically granted as soon as you record and publish your first live video review.",
+      tags: ["verified", "badge", "signup", "first review", "profile"]
     },
     {
       id: "rev-4",
       category: "reviewers",
-      question: "How do I earn the 'Verified Reviewer' status and badges?",
+      question: "Can viewers comment, ask questions, or interact on my video reviews?",
       answer:
-        "Users who post genuine, live front-camera reviews that receive positive community feedback, bookmarks, and engagement automatically receive verification badges and higher discovery ranking.",
-      tags: ["verified", "badge", "ranking", "trust"]
+        "Yes! Every video review includes a live community discussion feed. Viewers can ask follow-up questions ('Is parking easy?', 'Did you try the dessert?'), share tips, and discuss their experiences directly beneath your video.",
+      tags: ["comments", "questions", "community", "discussion", "interaction"]
     },
     {
       id: "rev-5",
       category: "reviewers",
-      question: "Can I edit or delete my reviews?",
+      question: "Can I review any website domain or local establishment?",
       answer:
-        "Absolutely. You have full ownership of your uploads. You can modify your star rating or delete any of your posted video reviews at any time directly from your Profile page or the video player controls.",
+        "Yes! You can search and review any base website domain (e.g., stripe.com, airbnb.com) or local brick-and-mortar place (restaurants, cafes, services, gyms) to build a unified hub of authentic opinions.",
+      tags: ["domain", "website", "places", "search", "business", "establishment"]
+    },
+    {
+      id: "rev-6",
+      category: "reviewers",
+      question: "Can I edit or delete my reviews later?",
+      answer:
+        "Absolutely. You maintain complete ownership of your uploaded content. You can modify your star rating or permanently delete any of your posted video reviews at any time directly from your Profile drawer or video player options.",
       tags: ["edit", "delete", "rating", "manage", "profile"]
     },
-    // Business FAQs
+    {
+      id: "rev-7",
+      category: "reviewers",
+      question: "How does direct messaging work between community members?",
+      answer:
+        "Reviewers and users can message each other directly through the 'Messages' tab to ask private questions about venues, recommend local spots, or connect with fellow explorers.",
+      tags: ["messaging", "direct message", "chat", "community", "contact"]
+    },
+
+    // --- Business FAQs ---
     {
       id: "biz-1",
       category: "business",
-      question: "How can my business claim its official domain page?",
+      question: "How can my business claim its official domain or place page?",
       answer:
-        "Businesses can verify their ownership of a base domain to unlock official response tools, pin verified announcements to customer video reviews, and showcase verified achievements directly to potential customers.",
+        "Business owners can claim their listing through the business verification flow. Claiming unlocks official owner dashboard tools, category settings, operating hours management, and customer dialogue features.",
       tags: ["claim", "domain", "verification", "business", "owner"]
     },
     {
       id: "biz-2",
       category: "business",
-      question: "How does the interactive comments section benefit verified businesses?",
+      question: "How do official Business Owner replies and pinned comments work?",
       answer:
-        "Verified business owners can join the conversation directly with a distinguished 'Business Owner' badge. You can answer customer questions in real time, provide updates, or pin an official response at the top of the comment feed to address feedback constructively.",
-      tags: ["owner response", "pinned", "support", "dialogue"]
+        "Claimed business owners can participate in comment threads with a highlighted 'Business Owner' badge. Owners can also pin official responses to the top of comment feeds to highlight updates, resolutions, or special announcements.",
+      tags: ["owner response", "pinned", "support", "dialogue", "comments"]
     },
     {
       id: "biz-3",
       category: "business",
-      question: "Can businesses pay to remove negative reviews?",
+      question: "What is the Business Hours Manager and how does it sync?",
       answer:
-        "No. Yoouz is founded on absolute trust and authenticity. We never delete or hide negative video reviews for payment. If a review violates our safety, spam, or explicit content policies, it can be flagged for immediate human review.",
-      tags: ["policy", "negative reviews", "moderation", "trust"]
+        "Claimed business owners can configure weekly operating hours, special holiday schedules, and open/closed statuses directly in their dashboard. Changes sync live across search results and place profile drawers.",
+      tags: ["hours", "business hours", "operating hours", "dashboard", "schedule"]
     },
     {
       id: "biz-4",
       category: "business",
-      question: "How can Yoouz reviews help my conversion rate?",
+      question: "Can businesses export or download Branded Video Ads?",
       answer:
-        "Authentic customer video reviews build unparalleled trust. Verified businesses can share and embed Yoouz testimonial feeds to showcase genuine user experiences.",
-      tags: ["conversion", "embed", "testimonials", "growth"]
+        "Yes! Claimed businesses can export customer video reviews as high-resolution branded video ad assets with official watermark overlays for use in social media campaigns and marketing ads.",
+      tags: ["export", "branded ad", "ad export", "download", "marketing"]
     },
-    // Trust FAQs
+    {
+      id: "biz-5",
+      category: "business",
+      question: "Can businesses pay to remove or hide negative video reviews?",
+      answer:
+        "No. Yoouz is built on uncompromised trust and authenticity. We never delete or alter honest video reviews for payment. Reviews that violate safety or explicit content guidelines can be flagged for human moderation review.",
+      tags: ["policy", "negative reviews", "moderation", "trust", "payment"]
+    },
+    {
+      id: "biz-6",
+      category: "business",
+      question: "Can businesses embed Yoouz video reviews on their own websites?",
+      answer:
+        "Yes! Verified businesses can copy interactive iframe video feed embeds from their place drawer or Business Dashboard to display live, authentic 60-second customer video reviews directly on their e-commerce store or landing page.",
+      tags: ["embed", "iframe", "website", "widgets", "testimonials"]
+    },
+    {
+      id: "biz-7",
+      category: "business",
+      question: "How do Yoouz video reviews improve customer trust and conversion rates?",
+      answer:
+        "Video reviews eliminate the suspicion surrounding fake text reviews. Seeing real people share genuine video feedback builds instant consumer trust, driving higher engagement and conversion rates.",
+      tags: ["conversion", "trust", "growth", "sales", "testimonials"]
+    },
+    {
+      id: "biz-8",
+      category: "business",
+      question: "How do I manage business categories and contact details?",
+      answer:
+        "Claimed owners can select official business categories, add verified phone numbers with international country codes, and link official web domains directly within the Business Dashboard.",
+      tags: ["category", "contact", "phone", "details", "dashboard"]
+    },
+
+    // --- Trust & Authenticity FAQs ---
     {
       id: "trust-1",
       category: "trust",
-      question: "What makes Yoouz different from text-based review sites?",
+      question: "What makes Yoouz different from traditional text-based review sites?",
       answer:
-        "Traditional text reviews are heavily prone to manipulation, paid bots, and AI-generated copy. By requiring short, authentic video formats with proof of face and voice, Yoouz guarantees you are seeing real people sharing honest experiences.",
-      tags: ["text vs video", "ai bots", "authenticity", "proof"]
+        "Traditional text review platforms are heavily compromised by AI bots, paid copywriters, and fake accounts. Yoouz relies strictly on live front-camera video feedback, ensuring you see real faces, real voices, and genuine experiences.",
+      tags: ["text vs video", "ai bots", "authenticity", "proof", "trust"]
     },
     {
       id: "trust-2",
       category: "trust",
+      question: "Is my private email address exposed on my public profile or business claim badge?",
+      answer:
+        "No. Yoouz strictly protects user privacy. Public profiles and claimed business badges remain private and anonymous (e.g., 'Business Claimed') without ever displaying personal or owner email addresses to the public.",
+      tags: ["privacy", "email", "anonymous", "protection", "security"]
+    },
+    {
+      id: "trust-3",
+      category: "trust",
+      question: "How are community guidelines and safety rules enforced?",
+      answer:
+        "Every video review and comment includes a report flag button. Community submissions triggering policy violations (hate speech, spam, harassment, or explicit content) are queued for immediate review and removal.",
+      tags: ["guidelines", "safety", "report", "moderation", "flag"]
+    },
+    {
+      id: "trust-4",
+      category: "trust",
+      question: "What are Local Guide and Top Reviewer badges?",
+      answer:
+        "Active reviewers who regularly contribute high-quality video reviews across local venues and domains automatically earn 'Local Guide' and 'Top Reviewer' badges, highlighting their standing in the community.",
+      tags: ["local guide", "top reviewer", "badges", "reputation"]
+    },
+    {
+      id: "trust-5",
+      category: "trust",
       question: "Why are community comments and live discussions a core part of the Yoouz trust model?",
       answer:
         "Authentic reviews shouldn't be isolated rants or echo chambers. An open, transparent comment section creates crowdsourced accountability—allowing the community to validate experiences, share real-time updates, and interact directly with both the reviewer and the business.",
-      tags: ["accountability", "community", "transparency"]
+      tags: ["accountability", "community", "transparency", "comments"]
     },
-    // Technical FAQs
+
+    // --- Technical & Navigation FAQs ---
     {
       id: "tech-1",
       category: "technical",
-      question: "Is Yoouz free to use for both consumers and businesses?",
+      question: "How does Google Maps and Live Directions integration work?",
       answer:
-        "Yes, Yoouz is 100% free to browse, search, bookmark, and upload 60-second video reviews. Basic verification for businesses and domain discovery is also completely free.",
-      tags: ["free", "pricing", "cost", "subscription"]
+        "Yoouz integrates interactive Google Maps with live pin clustering. Users can tap any place to view street locations and launch step-by-step turn-by-turn driving, walking, biking, or transit directions.",
+      tags: ["maps", "google maps", "directions", "navigation", "location"]
     },
     {
       id: "tech-2",
       category: "technical",
-      question: "How is my account and video data secured?",
+      question: "How can I share video reviews or business profiles with friends?",
       answer:
-        "Your profile and video reviews are safeguarded with industry-standard encryption and strict privacy controls. Only you have permission to edit or remove your content.",
-      tags: ["security", "privacy", "protection"]
+        "Tap the 'Share' button on any video or place to generate instant direct web links, downloadable QR codes, or share directly to WhatsApp, X (Twitter), Facebook, LinkedIn, or Email.",
+      tags: ["share", "qr code", "social", "link", "whatsapp"]
+    },
+    {
+      id: "tech-3",
+      category: "technical",
+      question: "Can I customize the appearance of embedded video feeds?",
+      answer:
+        "Yes! The embed builder allows businesses to preview mobile and desktop views, customize dark/light themes, set video limits, and toggle autoplay or sound controls.",
+      tags: ["embed", "customization", "themes", "autoplay"]
+    },
+    {
+      id: "tech-4",
+      category: "technical",
+      question: "Where can I find video reviews or places I have saved for later?",
+      answer:
+        "Any video review or business listing you bookmark or save is immediately stored in your 'Bookmarks' tab in the main navigation menu for quick access on any device.",
+      tags: ["bookmarks", "saved", "favorites", "navigation"]
+    },
+    {
+      id: "tech-5",
+      category: "technical",
+      question: "How do I navigate between video reviews on desktop and mobile?",
+      answer:
+        "On mobile, swipe up or down to move between videos. On desktop, use your keyboard arrow keys, mouse wheel, or the fixed vertical Up (^) and Down (v) floating chevron buttons. The Up chevron is dimmed on the first video to indicate you are at the start of the feed.",
+      tags: ["navigation", "desktop", "mobile", "chevrons", "scroll"]
+    },
+    {
+      id: "tech-6",
+      category: "technical",
+      question: "How does Yoouz work offline as a Progressive Web App (PWA)?",
+      answer:
+        "Yoouz supports PWA offline capabilities and IndexedDB video caching, allowing instant zero-latency video playback and offline review draft queues when connectivity is low.",
+      tags: ["pwa", "offline", "cache", "indexeddb", "speed"]
+    },
+    {
+      id: "tech-7",
+      category: "technical",
+      question: "How many languages does Yoouz support, and how do I change my language?",
+      answer:
+        "Yoouz supports 64 global languages with full UI internationalization. You can switch your preferred language at any time from the sidebar, footer, profile drawer, or Knowledge Center settings.",
+      tags: ["languages", "64 languages", "i18n", "translation", "settings"]
+    },
+    {
+      id: "tech-8",
+      category: "technical",
+      question: "Is Yoouz free for consumers and businesses?",
+      answer:
+        "Yes! Browsing, searching, bookmarking, posting 60-second video reviews, and basic business domain claiming are 100% free.",
+      tags: ["free", "pricing", "cost", "subscription"]
     }
   ];
 
