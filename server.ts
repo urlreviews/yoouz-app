@@ -14562,6 +14562,118 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
   });
 
+  // GET /api/users/social-network?handle=:handle
+  app.get("/api/users/social-network", async (req, res) => {
+    try {
+      const rawHandle = String(req.query.handle || req.query.username || req.query.id || "").trim();
+      if (!rawHandle) {
+        return res.status(400).json({ error: "Missing user handle or ID" });
+      }
+
+      const bunnyDb = getBunnyDb();
+      let followersList: any[] = [];
+      let followingList: any[] = [];
+      let targetUserData: any = null;
+
+      if (bunnyDb) {
+        const userRows = await bunnyDb.execute({
+          sql: `SELECT id, name, email, data FROM users WHERE LOWER(name) = ? OR LOWER(email) = ? OR id = ? LIMIT 1`,
+          args: [rawHandle.toLowerCase(), rawHandle.toLowerCase(), rawHandle]
+        });
+
+        if (userRows && userRows.rows && userRows.rows.length > 0) {
+          const uRow: any = userRows.rows[0];
+          try { targetUserData = typeof uRow.data === 'string' ? JSON.parse(uRow.data) : (uRow.data || {}); } catch(e) {}
+        }
+
+        const followersQuery = await bunnyDb.execute({
+          sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followingId) = ? OR followingId = ?`,
+          args: [rawHandle.toLowerCase(), rawHandle]
+        });
+
+        if (followersQuery && followersQuery.rows && followersQuery.rows.length > 0) {
+          followersQuery.rows.forEach((row: any) => {
+            let fData: any = {};
+            try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+            followersList.push({
+              id: row.followerId || fData.followerUserId || row.id,
+              name: fData.followerName || fData.name || row.followerId || "Yoouz Member",
+              handle: fData.followerHandle || fData.handle || row.followerId || "user",
+              avatar: fData.followerAvatar || fData.avatar || "",
+              location: fData.location || "Yoouz Creator",
+              isVerified: Boolean(fData.isVerified || fData.verified),
+              createdAt: fData.createdAt || new Date().toISOString()
+            });
+          });
+        }
+
+        const followingQuery = await bunnyDb.execute({
+          sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followerId) = ? OR followerId = ?`,
+          args: [rawHandle.toLowerCase(), rawHandle]
+        });
+
+        if (followingQuery && followingQuery.rows && followingQuery.rows.length > 0) {
+          followingQuery.rows.forEach((row: any) => {
+            let fData: any = {};
+            try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+            followingList.push({
+              id: row.followingId || fData.followingUserId || fData.placeId || row.id,
+              name: fData.followingName || fData.placeName || fData.name || row.followingId || "Yoouz Member",
+              handle: fData.followingHandle || fData.handle || row.followingId || "user",
+              avatar: fData.followingAvatar || fData.avatar || "",
+              type: fData.type || "user",
+              location: fData.location || "Yoouz Community",
+              isVerified: Boolean(fData.isVerified || fData.verified),
+              createdAt: fData.createdAt || new Date().toISOString()
+            });
+          });
+        }
+      }
+
+      if (followersList.length === 0 && targetUserData && Array.isArray(targetUserData.followers)) {
+        followersList = targetUserData.followers.map((f: any) => {
+          if (typeof f === 'string') {
+            return {
+              id: f,
+              name: f,
+              handle: f,
+              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f)}`,
+              location: "Verified Member"
+            };
+          }
+          return f;
+        });
+      }
+
+      if (followingList.length === 0 && targetUserData && Array.isArray(targetUserData.followedAuthors)) {
+        followingList = targetUserData.followedAuthors.map((f: any) => {
+          if (typeof f === 'string') {
+            return {
+              id: f,
+              name: f,
+              handle: f,
+              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(f)}`,
+              location: "Followed Creator"
+            };
+          }
+          return f;
+        });
+      }
+
+      return res.json({
+        success: true,
+        handle: rawHandle,
+        followersCount: followersList.length,
+        followingCount: followingList.length,
+        followers: followersList,
+        following: followingList
+      });
+    } catch (err: any) {
+      console.error("Error fetching social network:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Dedicated follow-place endpoint alias
   app.post("/api/interactions/follow-place", async (req, res) => {
     try {

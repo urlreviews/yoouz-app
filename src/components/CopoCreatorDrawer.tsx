@@ -27,7 +27,12 @@ import {
   ShieldAlert,
   Shield,
   CheckCircle2,
-  EyeOff
+  EyeOff,
+  Users,
+  Search,
+  RefreshCw,
+  ChevronRight,
+  UserMinus
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime } from "../utils/placeUtils";
@@ -504,6 +509,48 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         : (typeof safeCreator?.followersCount === "number" && safeCreator.followersCount > 0
             ? safeCreator.followersCount
             : (author?.followersCount || 0)));
+
+  // Social Network Modal State (Followers & Following)
+  const [socialModalTab, setSocialModalOpen] = useState<"followers" | "following" | null>(null);
+  const [socialData, setSocialData] = useState<{ followers: any[]; following: any[]; followersCount: number; followingCount: number } | null>(null);
+  const [isSocialLoading, setIsSocialLoading] = useState(false);
+  const [socialSearch, setSocialSearch] = useState("");
+
+  const liveFollowingList = Array.isArray(liveUserFromRegistry?.followedAuthors)
+    ? liveUserFromRegistry.followedAuthors
+    : (Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors : []);
+
+  const effectiveFollowingCount = socialData?.followingCount ?? (liveFollowingList.length > 0
+    ? liveFollowingList.length
+    : (typeof liveUserFromRegistry?.followingCount === "number"
+        ? liveUserFromRegistry.followingCount
+        : (typeof (safeCreator as any)?.followingCount === "number"
+            ? (safeCreator as any).followingCount
+            : ((author as any)?.followingCount || 0))));
+
+  const targetHandle = safeCreator?.name || author?.name || author?.id || "";
+
+  const fetchSocialNetwork = async () => {
+    if (!targetHandle) return;
+    setIsSocialLoading(true);
+    try {
+      const res = await fetch(`/api/users/social-network?handle=${encodeURIComponent(targetHandle)}`);
+      const data = await res.json();
+      if (data && data.success) {
+        setSocialData(data);
+      }
+    } catch (e) {
+      console.warn("Error loading social network:", e);
+    } finally {
+      setIsSocialLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (author && targetHandle) {
+      fetchSocialNetwork();
+    }
+  }, [author, targetHandle]);
 
   const handleShare = () => {
     setIsShareModalOpen(true);
@@ -991,15 +1038,29 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
 
           <div className="space-y-1">
-            {/* Line 1: Review count & Follower count */}
-            <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium">
+            {/* Line 1: Review count, Follower count & Following count */}
+            <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium flex-wrap">
               <span className="text-zinc-200">
                 {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
               </span>
               <span className="text-zinc-600">·</span>
-              <span className="text-zinc-200">
-                {effectiveFollowersCount} {t("profile.followers", "followers")}
-              </span>
+              <button
+                type="button"
+                onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
+                className="text-zinc-200 hover:text-white font-semibold transition cursor-pointer hover:underline flex items-center gap-1"
+              >
+                <span>{socialData?.followersCount ?? effectiveFollowersCount}</span>
+                <span>{t("profile.followers", "followers")}</span>
+              </button>
+              <span className="text-zinc-600">·</span>
+              <button
+                type="button"
+                onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
+                className="text-zinc-200 hover:text-white font-semibold transition cursor-pointer hover:underline flex items-center gap-1"
+              >
+                <span>{socialData?.followingCount ?? effectiveFollowingCount}</span>
+                <span>{t("profile.following", "following")}</span>
+              </button>
             </div>
 
             {/* Line 2: Dedicated solid location line strictly below stats */}
@@ -1353,10 +1414,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   {t("profile.communityStats", "Community Stats")}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-black text-white">{effectiveFollowersCount}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
+                    className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
+                    <span className="text-base font-black text-white">{socialData?.followersCount ?? effectiveFollowersCount}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
+                    className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
+                  >
+                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.following", "Following")}</span>
+                    <span className="text-base font-black text-white">{socialData?.followingCount ?? effectiveFollowingCount}</span>
+                  </button>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
                     <span className="text-base font-black text-white">{totalLikes}</span>
@@ -1784,6 +1857,170 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               >
                 {t("common.delete", "Delete")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SOCIAL NETWORK MODAL (FOLLOWERS & FOLLOWING) */}
+      {socialModalTab && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/50">
+              <div className="min-w-0 pr-2">
+                <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2 truncate">
+                  <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="truncate">{displayName}</span>
+                </h3>
+                <p className="text-xs text-zinc-400 font-mono truncate">@{authorHandleKey}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSocialModalOpen(null)}
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Pill Tabs: Followers | Following */}
+            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSocialModalOpen("followers")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  socialModalTab === "followers"
+                    ? "bg-white text-zinc-950 shadow-md"
+                    : "bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                <span>{t("profile.followers", "Followers")}</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-[10px] text-zinc-300 font-mono">
+                  {socialData?.followersCount ?? effectiveFollowersCount}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSocialModalOpen("following")}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  socialModalTab === "following"
+                    ? "bg-white text-zinc-950 shadow-md"
+                    : "bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                <span>{t("profile.following", "Following")}</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-[10px] text-zinc-300 font-mono">
+                  {socialData?.followingCount ?? effectiveFollowingCount}
+                </span>
+              </button>
+            </div>
+
+            {/* Search Filter */}
+            <div className="p-3 border-b border-zinc-800/60 bg-zinc-950">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                <input
+                  type="text"
+                  value={socialSearch}
+                  onChange={(e) => setSocialSearch(e.target.value)}
+                  placeholder={`Search ${socialModalTab}...`}
+                  className="w-full pl-9 pr-8 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
+                />
+                {socialSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setSocialSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Users List Container */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 no-scrollbar min-h-[220px]">
+              {isSocialLoading ? (
+                <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-emerald-400 animate-spin" />
+                  <span>Loading {socialModalTab}...</span>
+                </div>
+              ) : (() => {
+                const list = socialModalTab === "followers" ? (socialData?.followers || []) : (socialData?.following || []);
+                const filtered = list.filter((u: any) => {
+                  if (!socialSearch.trim()) return true;
+                  const q = socialSearch.toLowerCase();
+                  return (u.name || "").toLowerCase().includes(q) || (u.handle || "").toLowerCase().includes(q);
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="py-12 text-center text-xs text-zinc-400 flex flex-col items-center gap-2">
+                      <Users className="w-6 h-6 text-zinc-600" />
+                      <span>{socialSearch ? "No matching members found" : `No ${socialModalTab} yet.`}</span>
+                    </div>
+                  );
+                }
+
+                return filtered.map((u: any, idx: number) => {
+                  const nameStr = u.name || u.handle || "Yoouz Member";
+                  const handleStr = u.handle ? `@${u.handle.replace(/^@/, '')}` : "";
+                  const avatarUrl = u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nameStr)}`;
+
+                  return (
+                    <div
+                      key={u.id || idx}
+                      className="p-3 rounded-2xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800/80 flex items-center justify-between gap-3 transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <img
+                          src={avatarUrl}
+                          alt={nameStr}
+                          className="w-10 h-10 rounded-full object-cover bg-zinc-800 border border-zinc-700 shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(nameStr)}`;
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-white truncate leading-tight">{nameStr}</span>
+                            {u.isVerified && (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 fill-sky-400/20 shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-400 truncate">
+                            {handleStr && <span className="font-mono text-zinc-300">{handleStr}</span>}
+                            {u.location && (
+                              <>
+                                <span>·</span>
+                                <span className="truncate">{u.location}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button: Follow / Following Toggle */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const targetH = u.handle || u.name || u.id;
+                          if (targetH && onToggleFollow) {
+                            onToggleFollow(targetH);
+                            fetchSocialNetwork();
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1"
+                      >
+                        <span>{t("profile.follow", "Follow")}</span>
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
