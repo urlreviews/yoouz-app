@@ -17093,6 +17093,87 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
+  // 6c. User Account Deletion Request Endpoint (Dispatches to support@yoouz.com)
+  app.post("/api/account/deletion-request", express.json(), async (req, res) => {
+    try {
+      const {
+        userId = "Unknown ID",
+        userName = "User",
+        userEmail = "Not provided",
+        reason = "I no longer use this account",
+        details = ""
+      } = req.body || {};
+
+      const reqId = `del-req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      console.info(`[YOOUZ DELETION REQUEST] Received account deletion request (${reqId}):`, {
+        userId,
+        userName,
+        userEmail,
+        reason,
+        details
+      });
+
+      // Persist deletion request locally for audit trail
+      try {
+        const delReqFile = path.join(globalUploadsDir, "account_deletion_requests.json");
+        let list: any[] = [];
+        if (fs.existsSync(delReqFile)) {
+          try { list = JSON.parse(fs.readFileSync(delReqFile, "utf8")); } catch (e) {}
+        }
+        list.push({
+          reqId,
+          userId,
+          userName,
+          userEmail,
+          reason,
+          details,
+          submittedAt: new Date().toISOString()
+        });
+        fs.writeFileSync(delReqFile, JSON.stringify(list, null, 2), "utf8");
+      } catch (fErr) {}
+
+      // Dispatch automated notification email to support@yoouz.com via Resend if active
+      const resend = getResendClient();
+      if (resend) {
+        try {
+          const fromAddress = getResendFromEmail("Yoouz Trust & Safety <support@yoouz.com>");
+          await resend.emails.send({
+            from: fromAddress,
+            to: ["support@yoouz.com"],
+            subject: `[ACCOUNT DELETION REQUEST] ${userName} (${userId})`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #09090b; color: #f4f4f5; border-radius: 16px; border: 1px solid #27272a;">
+                <h2 style="color: #fff; margin-bottom: 8px;">Account Deletion Request</h2>
+                <p style="color: #a1a1aa; font-size: 14px;">A user has submitted a formal request to delete their account.</p>
+                <div style="background: #18181b; padding: 16px; border-radius: 12px; margin: 16px 0; border: 1px solid #27272a;">
+                  <p style="margin: 4px 0; font-size: 13px;"><strong>User ID:</strong> ${userId}</p>
+                  <p style="margin: 4px 0; font-size: 13px;"><strong>Name:</strong> ${userName}</p>
+                  <p style="margin: 4px 0; font-size: 13px;"><strong>Email:</strong> ${userEmail}</p>
+                  <p style="margin: 4px 0; font-size: 13px;"><strong>Reason:</strong> ${reason}</p>
+                  ${details ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Additional Notes:</strong> ${details}</p>` : ''}
+                  <p style="margin: 4px 0; font-size: 13px; color: #71717a;"><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+                </div>
+                <p style="font-size: 12px; color: #71717a;">Yoouz Trust & Safety System</p>
+              </div>
+            `,
+            text: `Account Deletion Request:\nUser ID: ${userId}\nName: ${userName}\nEmail: ${userEmail}\nReason: ${reason}\nDetails: ${details || 'None'}`
+          });
+        } catch (mErr) {
+          console.warn("[YOOUZ DELETION REQUEST] Email dispatch warning:", mErr);
+        }
+      }
+
+      return res.json({
+        success: true,
+        reqId,
+        message: "Your account deletion request has been submitted to support@yoouz.com."
+      });
+    } catch (err: any) {
+      console.error("[YOOUZ DELETION REQUEST] Error:", err);
+      return res.status(500).json({ error: err.message || "Failed to process deletion request" });
+    }
+  });
+
   // 6b. Agency Partnership & Reseller Inquiry Endpoint (Delivers directly to info@yoouz.com)
   app.post("/api/agency/inquiry", express.json({ limit: "10mb" }), async (req, res) => {
     try {

@@ -220,10 +220,26 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </div>
               </section>
 
-              {/* Section 5 */}
+              {/* Section 5: Account Deactivation and Deletion Requests */}
               <section className="space-y-2">
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">5</span>
+                  {t("legal.sec5TitleDeactivation", "Account Deactivation & Deletion Requests")}
+                </h3>
+                <div className="space-y-2 text-zinc-200">
+                  <p>
+                    {t("legal.sec5DeactivationBody", "Users may request to deactivate or permanently delete their account and personal profile at any time by submitting a formal request through the in-app Account Settings request form. To protect authentic user reviews and prevent fraudulent or accidental account wipeouts, deletion requests are securely verified and processed by our compliance desk within 24 to 48 hours without requiring public email communication.")}
+                  </p>
+                  <p>
+                    {t("legal.sec5DeactivationPurge", "Upon completed review and verification of the deletion request, the user's account records, authentication credentials, and personal profile data are permanently eradicated across our database and storage systems.")}
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 6 */}
+              <section className="space-y-2">
+                <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">6</span>
                   {t("legal.sec5Title", "Limitation of Liability")}
                 </h3>
                 <p className="text-zinc-200">
@@ -231,10 +247,10 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </p>
               </section>
 
-              {/* Section 6 */}
+              {/* Section 7 */}
               <section className="space-y-2">
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">6</span>
+                  <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">7</span>
                   {t("legal.sec6Title", "Changes to Terms")}
                 </h3>
                 <p className="text-zinc-200">
@@ -242,7 +258,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </p>
               </section>
 
-              {/* Section 7 */}
+              {/* Section 8 */}
               <section className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-white space-y-2">
                 <h3 className="text-sm font-black flex items-center gap-2 text-white">
                   <Globe className="w-4 h-4 text-white" />
@@ -356,26 +372,19 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <p className="text-zinc-200">{t("legal.privSec5Subtitle", "You have the right to:")}</p>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.privSec5Item1", "Access the personal data we hold about you.")}</li>
-                  <li>{t("legal.privSec5Item2", "Request the correction or deletion of your account and associated review data.")}</li>
-                  <li>{t("legal.privSec5Item3", "Withdraw your consent to data processing at any time by deleting your account.")}</li>
+                  <li>{t("legal.privSec5Item2", "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.")}</li>
+                  <li>{t("legal.privSec5Item3", "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.")}</li>
                 </ul>
               </section>
 
               {/* Section 6 */}
               <section className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                 <h3 className="text-sm font-black text-white flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-white" />
-                  {t("legal.privSec6Title", "Contact Us")}
+                  <ShieldCheck className="w-4 h-4 text-white" />
+                  {t("legal.privSec6Title", "Privacy Officer & In-App Inquiries")}
                 </h3>
                 <p className="text-xs text-zinc-200 leading-relaxed">
-                  {t("legal.privSec6Body", "If you have any questions about this Privacy Policy, you can contact our privacy officer at")}{" "}
-                  <a
-                    href="mailto:support@yoouz.com"
-                    className="font-bold text-white hover:underline"
-                  >
-                    support@yoouz.com
-                  </a>
-                  .
+                  {t("legal.privSec6BodyNoEmail", "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.")}
                 </p>
               </section>
             </article>

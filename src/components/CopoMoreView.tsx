@@ -85,14 +85,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     "biz-1": true
   });
 
-  // Delete Confirmation Modal State
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [deleteInputText, setDeleteInputText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Deactivate Confirmation Modal State
-  const [isDeactivateConfirmOpen, setIsDeactivateConfirmOpen] = useState(false);
-  const [isDeactivating, setIsDeactivating] = useState(false);
+  // Account Deletion Request State
+  const [isMoreDeletionModalOpen, setIsMoreDeletionModalOpen] = useState(false);
+  const [moreDeletionReason, setMoreDeletionReason] = useState("I no longer use this account");
+  const [moreDeletionNotes, setMoreDeletionNotes] = useState("");
+  const [isSubmittingMoreDeletion, setIsSubmittingMoreDeletion] = useState(false);
+  const [moreDeletionSuccessToast, setMoreDeletionSuccessToast] = useState(false);
 
   // Contact Support Form State
   const [contactCategory, setContactCategory] = useState("support");
@@ -913,67 +911,30 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 </div>
               </div>
 
-              {/* Deactivate Account (Temporary & Safe - Only for signed in user) */}
-              {currentUser && onDeactivateProfile && (
-                <div className="bg-zinc-900 rounded-3xl p-8 border border-amber-500/30 shadow-xs space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                      <EyeOff className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-black text-white">{t("trustCenter.deactivateAccountTitle", "Deactivate Account (Temporary Hide)")}</h3>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/20">
-                          {t("profile.reversible", "Reversible")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">
-                        {t("trustCenter.deactivateAccountDesc", "Take a break without losing any of your data. Your profile and reviews will be temporarily hidden from the public feed. When you log back in, everything is instantly restored.")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-amber-500/20 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-xs text-zinc-400 font-medium">
-                      {t("trustCenter.deactivateAccountWarning", "Confirming will log you out and hide your content until you sign in again.")}
-                    </p>
-                    <button
-                      onClick={() => setIsDeactivateConfirmOpen(true)}
-                      className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-black shadow-md shadow-amber-500/15 transition-all cursor-pointer shrink-0"
-                    >
-                      {t("trustCenter.deactivateAccountBtn", "Deactivate Account")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Danger Zone: Account Deletion (Only for signed in user) */}
+              {/* Account Deletion Request (Safe & Standard) */}
               {currentUser && (
-                <div className="bg-zinc-900 rounded-3xl p-8 border border-rose-900/50 shadow-xs space-y-4">
+                <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
-                      <Trash2 className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-zinc-300 shrink-0">
+                      <Shield className="w-6 h-6" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-black text-white">{t("trustCenter.dangerZoneTitle", "Danger Zone: Delete Account Profile")}</h3>
-                      <p className="text-xs text-zinc-200 leading-relaxed">
-                        {t("trustCenter.dangerZoneDesc", "Permanently erase your user profile details, bio, avatar, and cached session information. This action cannot be reversed.")}
+                      <h3 className="text-base font-black text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        {t("trustCenter.requestDeletionNotice", "Submit a formal request to permanently delete your account & profile. Our support team will process your request within 24–48 hours.")}
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-rose-900/40 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-xs text-zinc-200 font-medium">
-                      {t("trustCenter.deleteAccountWarning", "Confirming will sign you out immediately and purge your profile record.")}
+                  <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="text-xs text-zinc-400 font-medium">
+                      {t("trustCenter.requestDeletionDesc", "Under GDPR & international privacy standards, all associated data and profile records will be securely handled upon review.")}
                     </p>
                     <button
-                      onClick={() => {
-                        setIsDeleteConfirmOpen(true);
-                        setDeleteInputText("");
-                      }}
-                      className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer shrink-0"
+                      onClick={() => setIsMoreDeletionModalOpen(true)}
+                      className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs"
                     >
-                      {t("trustCenter.deleteAccountBtn", "Delete Account")}
+                      {t("profile.requestBtn", "Request Deletion")}
                     </button>
                   </div>
                 </div>
@@ -1344,111 +1305,111 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
         </footer>
       </main>
 
-      {/* Deactivate Confirmation Modal */}
-      {isDeactivateConfirmOpen && (
+      {/* Account Deletion Request Modal (Dark Mode) */}
+      {isMoreDeletionModalOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setIsDeactivateConfirmOpen(false)}
+          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setIsMoreDeletionModalOpen(false)}
         >
           <div
-            className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-              <EyeOff className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 flex items-center justify-center mx-auto shadow-inner">
+              <Shield className="w-6 h-6 text-zinc-300" />
             </div>
 
-            <div className="text-center space-y-1.5">
-              <h3 className="text-base font-black text-white">{t("trustCenter.deactivateAccountConfirmTitle", "Deactivate Your Account?")}</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                {t("trustCenter.deactivateAccountConfirmDesc", "Your profile and videos will be temporarily hidden from the public feed. None of your data is erased. You can reactivate at any time simply by logging back in.")}
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-black text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                {t("profile.requestDeletionNotice", "Please select a reason below. Our support team will review and process your account deletion within 24–48 hours.")}
               </p>
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  {t("profile.reasonLabel", "Reason")}
+                </label>
+                <select
+                  value={moreDeletionReason}
+                  onChange={(e) => setMoreDeletionReason(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition-colors"
+                >
+                  <option value="I no longer use this account">I no longer use this account</option>
+                  <option value="Privacy concerns">Privacy concerns</option>
+                  <option value="Created by mistake">Created by mistake</option>
+                  <option value="Temporary break">Temporary break</option>
+                  <option value="Other reason">Other reason</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  {t("profile.notesLabel", "Additional Notes (Optional)")}
+                </label>
+                <textarea
+                  value={moreDeletionNotes}
+                  onChange={(e) => setMoreDeletionNotes(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Tell us if there is anything we can help with..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsDeactivateConfirmOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-200 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                onClick={() => setIsMoreDeletionModalOpen(false)}
+                disabled={isSubmittingMoreDeletion}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
-                disabled={isDeactivating}
                 onClick={async () => {
-                  setIsDeactivating(true);
+                  setIsSubmittingMoreDeletion(true);
                   try {
-                    if (onDeactivateProfile) {
-                      await onDeactivateProfile();
-                    }
-                    setIsDeactivateConfirmOpen(false);
+                    await fetch("/api/account/deletion-request", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        userId: currentUser?.uid || currentUser?.id || "Unknown ID",
+                        userName: currentUser?.name || "User",
+                        userEmail: currentUser?.email || "Not provided",
+                        reason: moreDeletionReason,
+                        details: moreDeletionNotes.trim()
+                      })
+                    });
                   } catch (e) {
-                    console.error(e);
+                    console.error("Deletion request error:", e);
                   } finally {
-                    setIsDeactivating(false);
+                    setIsSubmittingMoreDeletion(false);
+                    setIsMoreDeletionModalOpen(false);
+                    setMoreDeletionSuccessToast(true);
+                    setTimeout(() => setMoreDeletionSuccessToast(false), 5000);
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-zinc-950 text-xs font-black shadow-md shadow-amber-500/15 transition-all cursor-pointer"
+                disabled={isSubmittingMoreDeletion}
+                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-black transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
-                {isDeactivating ? t("trustCenter.deactivating", "Deactivating...") : t("trustCenter.confirmDeactivate", "Deactivate")}
+                {isSubmittingMoreDeletion ? t("common.submitting", "Submitting...") : t("profile.submitRequest", "Submit Request")}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-5 animate-in zoom-in-95 duration-150 text-center">
-            <div className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto">
-              <Trash2 className="w-6 h-6" />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-black text-white">{t("trustCenter.confirmDeleteTitle", "Confirm Profile Deletion")}</h3>
-              <p className="text-xs text-zinc-200 font-medium leading-relaxed">
-                {t("trustCenter.confirmDeleteDesc", "This is a permanent operation. To delete profile")} <strong className="text-white">{currentUser?.email}</strong>, {t("trustCenter.typeDeletePrompt", "please type DELETE below.")}
-              </p>
-            </div>
-
-            <input
-              type="text"
-              value={deleteInputText}
-              onChange={(e) => setDeleteInputText(e.target.value)}
-              placeholder={t("trustCenter.typeDeletePlaceholder", "Type DELETE to confirm")}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-center font-bold tracking-widest text-white focus:outline-none focus:border-rose-500"
-            />
-
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setIsDeleteConfirmOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-200 text-xs font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                {t("common.cancel", "Cancel")}
-              </button>
-              <button
-                type="button"
-                disabled={deleteInputText !== "DELETE" || isDeleting}
-                onClick={async () => {
-                  setIsDeleting(true);
-                  try {
-                    await onDeleteProfile();
-                    setIsDeleteConfirmOpen(false);
-                  } catch (e) {
-                    console.error(e);
-                  } finally {
-                    setIsDeleting(false);
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:bg-zinc-800 disabled:text-zinc-200 text-white text-xs font-bold shadow-md shadow-rose-600/15 transition-all cursor-pointer"
-              >
-                {isDeleting ? t("trustCenter.deleting", "Deleting...") : t("trustCenter.permanentlyDelete", "Permanently Delete")}
-              </button>
-            </div>
-          </div>
+      {/* Confirmation Toast */}
+      {moreDeletionSuccessToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <p className="text-xs font-semibold leading-snug text-zinc-200">
+            {t("profile.deletionRequestSuccess", "Your account deletion request has been submitted. Our team will process it within 24–48 hours.")}
+          </p>
         </div>
       )}
     </div>

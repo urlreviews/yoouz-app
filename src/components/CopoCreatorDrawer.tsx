@@ -25,6 +25,8 @@ import {
   ExternalLink,
   Flag,
   ShieldAlert,
+  Shield,
+  CheckCircle2,
   EyeOff
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
@@ -95,8 +97,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const { t, currentLanguageMeta } = useLanguage();
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-  const [isDeactivateAccountModalOpen, setIsDeactivateAccountModalOpen] = useState(false);
-  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [isDeletionRequestModalOpen, setIsDeletionRequestModalOpen] = useState(false);
+  const [deletionReason, setDeletionReason] = useState("I no longer use this account");
+  const [deletionNotes, setDeletionNotes] = useState("");
+  const [isSubmittingDeletion, setIsSubmittingDeletion] = useState(false);
+  const [deletionSuccessToast, setDeletionSuccessToast] = useState(false);
   const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
   const [copiedNotification, setCopiedNotification] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
@@ -1349,95 +1354,111 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         </div>
       </aside>
 
-      {/* Deactivate Account / Profile Confirmation Modal */}
-      {isDeactivateAccountModalOpen && (
+      {/* Account Deletion Request Modal (Dark Mode) */}
+      {isDeletionRequestModalOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setIsDeactivateAccountModalOpen(false)}
+          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setIsDeletionRequestModalOpen(false)}
         >
           <div
-            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-              <EyeOff className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 flex items-center justify-center mx-auto shadow-inner">
+              <Shield className="w-6 h-6 text-zinc-300" />
             </div>
 
-            <div className="text-center space-y-1.5">
-              <h3 className="text-base font-black text-white">{t("profile.deactivateAccountTitle", "Deactivate Profile & Account?")}</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                {t("profile.deactivateAccountDesc", "Your profile, videos, and comments will be temporarily hidden from the public feed. Nothing will be deleted. You can restore and reactivate your account at any time simply by logging back in.")}
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-black text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                {t("profile.requestDeletionNotice", "Please select a reason below. Our support team will review and process your account deletion within 24–48 hours.")}
               </p>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  {t("profile.reasonLabel", "Reason")}
+                </label>
+                <select
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition-colors"
+                >
+                  <option value="I no longer use this account">I no longer use this account</option>
+                  <option value="Privacy concerns">Privacy concerns</option>
+                  <option value="Created by mistake">Created by mistake</option>
+                  <option value="Temporary break">Temporary break</option>
+                  <option value="Other reason">Other reason</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  {t("profile.notesLabel", "Additional Notes (Optional)")}
+                </label>
+                <textarea
+                  value={deletionNotes}
+                  onChange={(e) => setDeletionNotes(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Tell us if there is anything we can help with..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors resize-none"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsDeactivateAccountModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                onClick={() => setIsDeletionRequestModalOpen(false)}
+                disabled={isSubmittingDeletion}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
                 onClick={async () => {
-                  setIsDeactivateAccountModalOpen(false);
-                  if (onDeactivateProfile) {
-                    await onDeactivateProfile();
+                  setIsSubmittingDeletion(true);
+                  try {
+                    await fetch("/api/account/deletion-request", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        userId: author?.userId || author?.id || currentUser?.uid || currentUser?.id,
+                        userName: author?.name || currentUser?.name,
+                        userEmail: author?.email || currentUser?.email,
+                        reason: deletionReason,
+                        details: deletionNotes.trim()
+                      })
+                    });
+                  } catch (e) {
+                    console.error("Deletion request error:", e);
+                  } finally {
+                    setIsSubmittingDeletion(false);
+                    setIsDeletionRequestModalOpen(false);
+                    setDeletionSuccessToast(true);
+                    setTimeout(() => setDeletionSuccessToast(false), 5000);
                   }
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-black transition-colors shadow-sm cursor-pointer"
+                disabled={isSubmittingDeletion}
+                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-black transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
-                {t("profile.deactivateAccountBtn", "Deactivate Account")}
+                {isSubmittingDeletion ? t("common.submitting", "Submitting...") : t("profile.submitRequest", "Submit Request")}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Account / Profile Confirmation Modal */}
-      {isDeleteAccountModalOpen && (
-        <div
-          className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setIsDeleteAccountModalOpen(false)}
-        >
-          <div
-            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in fade-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-200 flex items-center justify-center mx-auto">
-              <Trash2 className="w-6 h-6" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-black text-white">{t("profile.deleteAccountTitle", "Delete Profile & Account?")}</h3>
-              <p className="text-xs text-zinc-200 leading-relaxed">
-                {t("profile.deleteAccountDesc", "This will permanently delete your Yoouz profile, saved places, and reviewer account. This action cannot be undone.")}
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsDeleteAccountModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                {t("common.cancel", "Cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsDeleteAccountModalOpen(false);
-                  if (onDeleteProfile) {
-                    await onDeleteProfile();
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer border border-zinc-700"
-              >
-                {t("profile.deleteAccount", "Delete Account")}
-              </button>
-            </div>
-          </div>
+      {/* Confirmation Toast */}
+      {deletionSuccessToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <p className="text-xs font-semibold leading-snug text-zinc-200">
+            {t("profile.deletionRequestSuccess", "Your account deletion request has been submitted. Our team will process it within 24–48 hours.")}
+          </p>
         </div>
       )}
 
@@ -1654,64 +1675,31 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">{t("common.save", "Save Changes")}</button>
               </div>
 
-              {/* Account Management & Danger Zone */}
-              {(onDeactivateProfile || onDeleteProfile) && (
-                <div className="pt-3 border-t border-zinc-800 space-y-2.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
-                    {t("profile.accountManagement", "Account Management")}
-                  </span>
+              {/* Account Settings: Request Deletion */}
+              <div className="pt-3 border-t border-zinc-800 space-y-2.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
+                  {t("profile.accountSettings", "Account Settings")}
+                </span>
 
-                  {/* Deactivate Option (Temporary & Safe) */}
-                  {onDeactivateProfile && (
-                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-colors">
-                      <div className="space-y-0.5 pr-2">
-                        <div className="flex items-center gap-1.5">
-                          <EyeOff className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                          <p className="text-xs font-bold text-zinc-200">{t("profile.deactivateAccountTitle", "Deactivate Account")}</p>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/20">
-                            {t("profile.reversible", "Reversible")}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-zinc-400 leading-snug">
-                          {t("profile.deactivateAccountDescShort", "Hide your profile & videos. Reactivate anytime simply by logging back in.")}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditModalOpen(false);
-                          setIsDeactivateAccountModalOpen(true);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
-                      >
-                        {t("profile.deactivateBtn", "Deactivate")}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Delete Option (Permanent) */}
-                  {onDeleteProfile && (
-                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800">
-                      <div className="space-y-0.5 pr-2">
-                        <p className="text-xs font-bold text-zinc-200">{t("profile.deleteAccountTitle", "Delete Profile & Account")}</p>
-                        <p className="text-[11px] text-zinc-400 leading-snug">
-                          {t("profile.deleteAccountDesc", "Permanently remove your profile, videos, and review data.")}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditModalOpen(false);
-                          setIsDeleteAccountModalOpen(true);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
-                      >
-                        {t("common.delete", "Delete")}
-                      </button>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 transition-colors">
+                  <div className="space-y-0.5 pr-2">
+                    <p className="text-xs font-bold text-zinc-200">{t("profile.requestDeletionTitle", "Request Account Deletion")}</p>
+                    <p className="text-[11px] text-zinc-400 leading-snug">
+                      {t("profile.requestDeletionDesc", "Submit a request to permanently delete your account & profile.")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setIsDeletionRequestModalOpen(true);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-700/80 text-zinc-300 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
+                  >
+                    {t("profile.requestBtn", "Request")}
+                  </button>
                 </div>
-              )}
+              </div>
             </form>
           </div>
         </div>
