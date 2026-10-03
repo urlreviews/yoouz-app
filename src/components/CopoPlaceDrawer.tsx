@@ -1529,6 +1529,75 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-4">
+              {/* Featured Video Reviews Section (Top Priority - Immediately Visible) */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-zinc-300" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                      {t("place.videoReviews", "Video Reviews")} ({rawPlaceVideos.length})
+                    </h3>
+                  </div>
+                  {rawPlaceVideos.length > 0 && (
+                    <button
+                      onClick={() => handleTabClick("reviews")}
+                      className="text-[11px] font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
+                    >
+                      {t("place.seeAll", "See all")} ({rawPlaceVideos.length})
+                    </button>
+                  )}
+                </div>
+
+                {rawPlaceVideos.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <p className="text-xs text-zinc-400 font-medium">
+                      {t("place.noReviewsYetShort", `No video reviews yet for ${displayedPlaceName}.`)}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {rawPlaceVideos.slice(0, 6).map((v) => {
+                        const displayViews = getDisplayViews(v);
+                        const formattedViews = formatViewCount(displayViews);
+
+                        return (
+                          <div
+                            key={v.id}
+                            onClick={() => onSelectVideo(v.id)}
+                            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
+                          >
+                            <CopoVideoThumbnail
+                              video={v}
+                              alt={v.caption || v.placeName}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
+
+                            {/* Rating Badge */}
+                            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
+                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                              <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
+                            </div>
+
+                            {/* Bottom Meta Info */}
+                            <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
+                              <span className="text-[9.5px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
+                                {getDisplayUrlAsDomain(v)}
+                              </span>
+                              <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
+                                <Play className="w-2.5 h-2.5 fill-white shrink-0" />
+                                <span>{formattedViews}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Business Description Card */}
               <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-2">
                 <div className="flex items-center gap-2">
@@ -1737,75 +1806,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
                       title="Google Maps Location Preview"
                     />
-                  </div>
-                )}
-              </div>
-
-              {/* Featured Video Reviews Section */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-zinc-300" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                      {t("place.videoReviews", "Video Reviews")} ({rawPlaceVideos.length})
-                    </h3>
-                  </div>
-                  {rawPlaceVideos.length > 0 && (
-                    <button
-                      onClick={() => handleTabClick("reviews")}
-                      className="text-[11px] font-bold text-zinc-300 hover:text-white hover:underline cursor-pointer"
-                    >
-                      {t("place.seeAll", "See all")} ({rawPlaceVideos.length})
-                    </button>
-                  )}
-                </div>
-
-                {rawPlaceVideos.length === 0 ? (
-                  <div className="py-4 text-center">
-                    <p className="text-xs text-zinc-400 font-medium">
-                      {t("place.noReviewsYetShort", `No video reviews yet for ${displayedPlaceName}.`)}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {rawPlaceVideos.slice(0, 6).map((v) => {
-                        const displayViews = getDisplayViews(v);
-                        const formattedViews = formatViewCount(displayViews);
-
-                        return (
-                          <div
-                            key={v.id}
-                            onClick={() => onSelectVideo(v.id)}
-                            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
-                          >
-                            <CopoVideoThumbnail
-                              video={v}
-                              alt={v.caption || v.placeName}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
-
-                            {/* Rating Badge */}
-                            <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
-                              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                              <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
-                            </div>
-
-                            {/* Bottom Meta Info */}
-                            <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                              <span className="text-[9.5px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
-                                {getDisplayUrlAsDomain(v)}
-                              </span>
-                              <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
-                                <Play className="w-2.5 h-2.5 fill-white shrink-0" />
-                                <span>{formattedViews}</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 )}
               </div>
