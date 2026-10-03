@@ -3,7 +3,7 @@ import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImag
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
-export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v36";
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v38";
 
 /**
  * Universal, highly robust review timestamp extractor
@@ -3429,4 +3429,90 @@ export function formatPhoneNumber(raw?: string | null, countryOrDomainContext?: 
 
   return clean;
 }
+
+/**
+ * Comprehensive client-side storage scrubber for deleted video reviews.
+ * Eradicates all traces from localStorage, likes, bookmarks, saves, comments, and caches.
+ */
+export function purgeVideoIdFromClientStorage(videoId: string): void {
+  if (!videoId || typeof window === "undefined" || !window.localStorage) return;
+  const strId = String(videoId);
+
+  // 1. Add to permanent client blacklist copo_deleted_videos
+  try {
+    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+    let deletedVideos: string[] = [];
+    try { deletedVideos = JSON.parse(deletedStr); } catch (e) {}
+    if (!deletedVideos.includes(strId)) {
+      deletedVideos.push(strId);
+      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
+    }
+  } catch (e) {}
+
+  // 2. Remove from liked video IDs
+  try {
+    const likedStr = localStorage.getItem("copo_liked_video_ids");
+    if (likedStr) {
+      const parsed = JSON.parse(likedStr);
+      if (Array.isArray(parsed)) {
+        localStorage.setItem("copo_liked_video_ids", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+      }
+    }
+  } catch (e) {}
+
+  // 3. Remove from saved / bookmarked video IDs
+  try {
+    const savedStr = localStorage.getItem("copo_saved_video_ids");
+    if (savedStr) {
+      const parsed = JSON.parse(savedStr);
+      if (Array.isArray(parsed)) {
+        localStorage.setItem("copo_saved_video_ids", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const bkmkStr = localStorage.getItem("yoouz_bookmarked_reviews");
+    if (bkmkStr) {
+      const parsed = JSON.parse(bkmkStr);
+      if (Array.isArray(parsed)) {
+        localStorage.setItem("yoouz_bookmarked_reviews", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+      }
+    }
+  } catch (e) {}
+
+  // 4. Clean out of local published & cached feeds
+  const targetKeys = [
+    YOOUZ_VIDEOS_CACHE_KEY,
+    "copo_videos",
+    "yoouz_local_created_reviews",
+    "yoouz_cached_places"
+  ];
+  targetKeys.forEach((key) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const cleaned = parsed.filter((item: any) => item && String(item.id) !== strId && String(item.videoId) !== strId);
+          localStorage.setItem(key, JSON.stringify(cleaned));
+        }
+      }
+    } catch (e) {}
+  });
+
+  // 5. Scan all keys in localStorage for legacy caches or video-specific comments / interactions
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.includes(strId)) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      } else if (k.startsWith("yoouz_cached_videos_") && k !== YOOUZ_VIDEOS_CACHE_KEY) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      }
+    }
+  } catch (e) {}
+}
+
 

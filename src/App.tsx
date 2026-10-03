@@ -43,7 +43,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -905,6 +905,9 @@ export function App() {
       if (!targetId) return;
       const strId = String(targetId);
 
+      // Scrub client storage traces (likes, bookmarks, caches, comments)
+      purgeVideoIdFromClientStorage(strId);
+
       // Instantly remove from videos feed state
       setVideos(prev => prev.filter(v => String(v.id) !== strId));
 
@@ -960,6 +963,31 @@ export function App() {
     const remainingVideos = videos.filter(v => String(v.id) !== targetId);
     setVideos(remainingVideos);
 
+    // Update all registered users and creators video review counts dynamically
+    setAllRegisteredUsers(prev => prev.map(u => {
+      const remainingUserVideos = remainingVideos.filter(v => isAuthorMatch(v, u));
+      return {
+        ...u,
+        videoReviewCount: remainingUserVideos.length,
+        totalReviews: remainingUserVideos.length
+      };
+    }));
+
+    // Update current logged-in user profile if matching
+    setCurrentUser(prev => {
+      if (!prev) return prev;
+      const remainingUserVideos = remainingVideos.filter(v => isAuthorMatch(v, prev));
+      const updated = {
+        ...prev,
+        videoReviewCount: remainingUserVideos.length,
+        totalReviews: remainingUserVideos.length
+      };
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
     // 2. Remove from places reviews list & recalculate counts accurately
     setPlaces(prev => {
       const updated = prev.map(p => {
@@ -1010,52 +1038,8 @@ export function App() {
     setActiveCommentVideo(prev => (prev?.id === targetId ? null : prev));
     setActiveShareVideo(prev => (prev?.id === targetId ? null : prev));
 
-    // 4. Save to deleted videos list to prevent re-merging from any cache
-    try {
-      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-      let deletedVideos: string[] = [];
-      try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
-      if (!deletedVideos.includes(targetId)) {
-        deletedVideos.push(targetId);
-        localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
-      }
-
-      // Clean active and legacy local storage caches
-      const cacheKeys = [
-        YOOUZ_VIDEOS_CACHE_KEY,
-        "yoouz_cached_videos_v28",
-        "yoouz_cached_videos_v27",
-        "yoouz_cached_videos_v26",
-        "yoouz_cached_videos_v25",
-        "copo_videos"
-      ];
-      cacheKeys.forEach(k => {
-        try {
-          const raw = localStorage.getItem(k);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              const cleaned = parsed.filter((item: any) => item && item.id !== targetId);
-              localStorage.setItem(k, JSON.stringify(cleaned));
-            } else {
-              localStorage.removeItem(k);
-            }
-          }
-        } catch (e) {}
-      });
-
-      // Clean local published reviews
-      try {
-        const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
-        if (localPubStr) {
-          const parsedLocal = JSON.parse(localPubStr);
-          if (Array.isArray(parsedLocal)) {
-            const cleaned = parsedLocal.filter((item: any) => item && item.id !== targetId);
-            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleaned));
-          }
-        }
-      } catch (e) {}
-    } catch (e) {}
+    // 4. Comprehensively scrub all localStorage keys, likes, bookmarks, saves, comments, and caches
+    purgeVideoIdFromClientStorage(targetId);
 
     // 5. Clear IndexedDB cache
     deleteVideoBlobFromIndexedDB(targetId).catch(() => {});
@@ -1097,6 +1081,31 @@ export function App() {
     const remainingVideos = videos.filter(v => !idSet.has(String(v.id)));
     setVideos(remainingVideos);
 
+    // Update all registered users and creators video review counts dynamically
+    setAllRegisteredUsers(prev => prev.map(u => {
+      const remainingUserVideos = remainingVideos.filter(v => isAuthorMatch(v, u));
+      return {
+        ...u,
+        videoReviewCount: remainingUserVideos.length,
+        totalReviews: remainingUserVideos.length
+      };
+    }));
+
+    // Update current logged-in user profile if matching
+    setCurrentUser(prev => {
+      if (!prev) return prev;
+      const remainingUserVideos = remainingVideos.filter(v => isAuthorMatch(v, prev));
+      const updated = {
+        ...prev,
+        videoReviewCount: remainingUserVideos.length,
+        totalReviews: remainingUserVideos.length
+      };
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
     // 2. Remove from places reviews list & accurately recalculate counts
     setPlaces(prev => {
       const updated = prev.map(p => {
@@ -1126,52 +1135,8 @@ export function App() {
     setActiveCommentVideo(prev => (prev && idSet.has(prev.id) ? null : prev));
     setActiveShareVideo(prev => (prev && idSet.has(prev.id) ? null : prev));
 
-    // 4. Save deleted video IDs to prevent re-merging
-    try {
-      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-      let deletedVideos: string[] = [];
-      try { deletedVideos = JSON.parse(deletedStr); } catch(e){}
-      targetIds.forEach(id => {
-        if (!deletedVideos.includes(id)) deletedVideos.push(id);
-      });
-      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
-
-      // Clean active and legacy local storage caches
-      const cacheKeys = [
-        YOOUZ_VIDEOS_CACHE_KEY,
-        "yoouz_cached_videos_v28",
-        "yoouz_cached_videos_v27",
-        "yoouz_cached_videos_v26",
-        "yoouz_cached_videos_v25",
-        "copo_videos"
-      ];
-      cacheKeys.forEach(k => {
-        try {
-          const raw = localStorage.getItem(k);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              const cleaned = parsed.filter((item: any) => item && !idSet.has(String(item.id)));
-              localStorage.setItem(k, JSON.stringify(cleaned));
-            } else {
-              localStorage.removeItem(k);
-            }
-          }
-        } catch (e) {}
-      });
-
-      // Clean local published reviews
-      try {
-        const localPubStr = localStorage.getItem("yoouz_local_created_reviews");
-        if (localPubStr) {
-          const parsedLocal = JSON.parse(localPubStr);
-          if (Array.isArray(parsedLocal)) {
-            const cleaned = parsedLocal.filter((item: any) => item && !idSet.has(String(item.id)));
-            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleaned));
-          }
-        }
-      } catch (e) {}
-    } catch (e) {}
+    // 4. Comprehensively scrub all localStorage keys, likes, bookmarks, saves, comments, and caches
+    targetIds.forEach(id => purgeVideoIdFromClientStorage(id));
 
     // 5. Clear IndexedDB cache for bulk deleted videos
     targetIds.forEach(id => deleteVideoBlobFromIndexedDB(id).catch(() => {}));

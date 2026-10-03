@@ -4082,6 +4082,15 @@ async function purgeVideoFromAllStores(videoId: string) {
     const list = readReviewsIndex();
     const filtered = list.filter((item: any) => item && item.id !== videoId);
     writeReviewsIndex(filtered);
+
+    // Keep static frontend seed file in sync on disk so Vite bundle never serves deleted reviews
+    try {
+      const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+      if (fs.existsSync(seedReviewsPath)) {
+        const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = ' + JSON.stringify(filtered, null, 2) + ';\n';
+        fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
+      }
+    } catch (sErr) {}
   } catch (e) {
     console.warn("Failed to remove video from reviews_index.json:", e);
   }
@@ -4175,6 +4184,48 @@ async function purgeVideoFromAllStores(videoId: string) {
           }
         } catch (pSyncErr) {
           console.warn("Could not update place review count in BunnyDB:", pSyncErr);
+        }
+      }
+
+      // Synchronize affected user/creator in BunnyDB users table to reflect accurate video review count
+      const authorUserId = existingVideoObj?.userId || existingVideoObj?.uid;
+      const authorEmail = existingVideoObj?.userEmail || existingVideoObj?.email;
+      const authorName = existingVideoObj?.authorName || existingVideoObj?.author?.name;
+      const authorHandle = existingVideoObj?.authorHandle || existingVideoObj?.author?.handle;
+
+      if (authorUserId || authorEmail || authorName || authorHandle) {
+        try {
+          const userSearchKeys = [authorUserId, authorEmail, authorName, authorHandle].filter(Boolean);
+          for (const uk of userSearchKeys) {
+            const uRows = await bunnyClient.execute({
+              sql: `SELECT id, name, email, data FROM users WHERE id = ? OR uid = ? OR email = ? OR name = ? LIMIT 1`,
+              args: [uk, uk, uk, uk]
+            });
+            if (uRows && uRows.rows && uRows.rows[0]) {
+              const uRow: any = uRows.rows[0];
+              let uData: any = {};
+              try { uData = typeof uRow.data === 'string' ? JSON.parse(uRow.data) : (uRow.data || {}); } catch (e) {}
+
+              // Count remaining active reviews for this user across videoReviews
+              const uCountRows = await bunnyClient.execute({
+                sql: `SELECT COUNT(*) as cnt FROM videoReviews WHERE (userId = ? OR userEmail = ? OR authorName = ? OR data LIKE ?) AND id != ?`,
+                args: [uRow.id, uRow.email || uRow.id, uRow.name || uRow.id, `%"${uRow.id}"%`, videoId]
+              });
+              const remUserCount = Number((uCountRows?.rows?.[0] as any)?.cnt || 0);
+
+              uData.videoReviewCount = remUserCount;
+              uData.totalReviews = remUserCount;
+
+              await bunnyClient.execute({
+                sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [JSON.stringify(uData), uRow.id]
+              });
+              console.log(`🐰 [BunnyDB] Synchronized user ${uRow.id} review count to ${remUserCount} after video deletion`);
+              break;
+            }
+          }
+        } catch (uSyncErr) {
+          console.warn("Could not update user review count in BunnyDB:", uSyncErr);
         }
       }
     } catch (bErr: any) {

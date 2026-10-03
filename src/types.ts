@@ -145,6 +145,7 @@ export interface VideoReview {
     banner?: string;
     location?: string;
     city?: string;
+    state?: string;
     country?: string;
     isLocalGuide?: boolean;
     localGuideLevel?: number;
@@ -178,6 +179,9 @@ export interface VideoReview {
   views?: number;
   viewsCount?: number;
   sharesCount?: number;
+  reviewsCount?: number;
+  totalReviews?: number;
+  reviewCount?: number;
   recordedAt?: string; // e.g. "a week ago", "3 days ago"
   feedCategory?: "discover" | "following";
   transcript?: string;

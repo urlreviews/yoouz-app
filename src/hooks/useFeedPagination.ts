@@ -1,51 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoReview } from '../types';
-import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY, getReviewTime } from '../utils/placeUtils';
+import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY, getReviewTime, purgeVideoIdFromClientStorage } from '../utils/placeUtils';
 import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
 // Helper to record deleted video IDs in localStorage and aggressively purge from all caches
 function recordClientDeletedId(id: string) {
   if (!id) return;
-  const strId = String(id);
-  try {
-    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-    let deletedIds: string[] = [];
-    try {
-      const parsed = JSON.parse(deletedStr);
-      if (Array.isArray(parsed)) deletedIds = parsed;
-    } catch (e) {}
-
-    if (!deletedIds.includes(strId)) {
-      deletedIds.push(strId);
-      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedIds));
-    }
-
-    // Aggressively scan relevant localStorage keys for cached video data and purge the ID
-    const targetKeys = [
-      YOOUZ_VIDEOS_CACHE_KEY,
-      "yoouz_local_created_reviews",
-      "copo_videos",
-      "yoouz_cached_videos_v28",
-      "yoouz_cached_videos_v27",
-      "yoouz_cached_videos_v26",
-      "yoouz_cached_videos_v25"
-    ];
-    targetKeys.forEach((key) => {
-      try {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            const filtered = parsed.filter((v: any) => v && (v.id !== strId && v.videoId !== strId));
-            if (filtered.length !== parsed.length) {
-              localStorage.setItem(key, JSON.stringify(filtered));
-            }
-          }
-        }
-      } catch (e) {}
-    });
-  } catch (e) {}
+  purgeVideoIdFromClientStorage(id);
 }
 
 // Helper to cleanly sanitize and normalize author data
@@ -110,6 +72,26 @@ function normalizeReview(v: any): VideoReview {
 }
 
 const HARD_DELETED_IDS = [
+  "rev-1790285022487-sx8xw",
+  "rev-1790284845793-3h79d",
+  "rev-1790282915287-46f7p",
+  "rev-1790281811670-0id4f",
+  "rev-1790278190422-qwzvw",
+  "rev-1790259993561-a7622",
+  "rev-1790070757373-dj8p0",
+  "rev-1790344780190-1jqsf",
+  "rev-1790339546979-n56mr",
+  "rev-1790330711352-95fgt",
+  "rev-1790330467164-vkfnx",
+  "rev-1790329140988-422nf",
+  "rev-1790328985692-cbgxc",
+  "rev-1790323841535-1wmfi",
+  "rev-1789577075627-3488d",
+  "rev-1789577075627-benblue",
+  "rev-1789421411968-6xx3t",
+  "rev-1789421309884-ca7le",
+  "rev-1789421167017-8i4l3",
+  "rev-1789420100396-2578b",
   "rev-1787774080951-vuu2k",
   "rev-1788295000000-hertz",
   "rev-1788294000000-avis",
@@ -121,11 +103,7 @@ const HARD_DELETED_IDS = [
 const PROTECTED_FEED_PLACES = new Set([
   "yoouz.com",
   "yoouz",
-  "www.yoouz.com",
-  "nevadalegalservices.org",
-  "lernerandrowe.com",
-  "mcveaghfleming.co.nz",
-  "vanlawfirm.com"
+  "www.yoouz.com"
 ]);
 
 const PROTECTED_FEED_CREATORS = new Set([
