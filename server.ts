@@ -738,7 +738,16 @@ function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): bo
   const isFakeOrDeletedStr = (str?: string) => {
     if (!str) return false;
     const s = String(str).toLowerCase().trim().replace(/^@+/, '');
-    return s.includes('yoouz member') || s.includes('yoouz-member') || s.includes('yoouzmember') || s === 'registered user' || s === 'reviewer' || s.includes('david');
+    return (
+      s.includes('yoouz') ||
+      s.includes('member') ||
+      s.includes('reviewer') ||
+      s.includes('registered user') ||
+      s.includes('david') ||
+      s === 'user' ||
+      s === 'community member' ||
+      s === 'community reviewer'
+    );
   };
 
   if (typeof itemOrIdOrEmail === 'string') {
@@ -14602,7 +14611,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               try { parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e) {}
               const uObj = {
                 id: r.id,
-                name: r.name || parsedData.name || "Community Member",
+                name: r.name || parsedData.name || "",
                 email: r.email || parsedData.email || "",
                 handle: parsedData.handle || (r.name ? `@${r.name.toLowerCase().replace(/[^a-z0-9]/g, '')}` : ""),
                 avatar: parsedData.avatar || "",
@@ -14613,6 +14622,31 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                 followersCount: typeof parsedData.followersCount === 'number' ? parsedData.followersCount : (Array.isArray(parsedData.followers) ? parsedData.followers.length : 0),
                 raw: parsedData
               };
+
+              // Thoroughly ignore any fake or deleted user profile rows
+              const checkName = String(r.name || parsedData.name || "").toLowerCase().trim();
+              const checkId = String(r.id || "").toLowerCase().trim();
+              const checkEmail = String(r.email || parsedData.email || "").toLowerCase().trim();
+              const checkHandle = String(parsedData.handle || uObj.handle || "").toLowerCase().trim().replace(/^@+/, '');
+
+              const isFake = (s: string) => {
+                if (!s) return false;
+                return (
+                  s.includes('yoouz') ||
+                  s.includes('member') ||
+                  s.includes('reviewer') ||
+                  s.includes('registered user') ||
+                  s.includes('david') ||
+                  s === 'user' ||
+                  s === 'community member' ||
+                  s === 'community reviewer'
+                );
+              };
+
+              if (isFake(checkName) || isFake(checkId) || isFake(checkEmail) || isFake(checkHandle)) {
+                return; // SKIP fake or deleted user rows completely
+              }
+
               if (r.id) userProfileMap.set(String(r.id).toLowerCase(), uObj);
               if (r.name) userProfileMap.set(String(r.name).toLowerCase().trim(), uObj);
               if (r.email) userProfileMap.set(String(r.email).toLowerCase().trim(), uObj);
@@ -14661,10 +14695,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             const fUserId = row.followerId || fData.followerUserId || row.id;
             const fName = fData.followerName || fData.name || row.followerId || "Community Reviewer";
             const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
+            if (!enriched) {
+              return; // SKIP orphaned follow rows
+            }
 
-            const name = enriched?.name || fName;
-            const handle = enriched?.handle || fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-            const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : ((fData.followerAvatar && !fData.followerAvatar.includes('dicebear')) ? fData.followerAvatar : "");
+            const name = enriched.name;
+            const handle = enriched.handle || fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
             const location = enriched?.location || fData.location || "Miami, FL";
             const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
             const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
@@ -14710,9 +14747,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               });
             } else {
               const enriched = userProfileMap.get(String(targetId).toLowerCase()) || userProfileMap.get(String(targetName).toLowerCase()) || null;
-              const name = enriched?.name || targetName;
-              const handle = enriched?.handle || fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-              const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : ((fData.followingAvatar && !fData.followingAvatar.includes('dicebear')) ? fData.followingAvatar : "");
+              if (!enriched) {
+                return; // SKIP orphaned followings
+              }
+              const name = enriched.name;
+              const handle = enriched.handle || fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+              const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
               const location = enriched?.location || fData.location || "Miami, FL";
               const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
               const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
@@ -14737,54 +14777,67 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Fallbacks if follows table is empty or missing entries
       if (followersList.length === 0 && targetUserData && Array.isArray(targetUserData.followers)) {
         followersList = targetUserData.followers.map((f: any) => {
-          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Community Reviewer");
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "");
+          if (!rawStr) return null;
           const enriched = userProfileMap.get(String(rawStr).toLowerCase());
-          const name = enriched?.name || rawStr;
-          const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-          const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
-          const location = enriched?.location || "Miami, FL";
+          if (!enriched) return null;
+          const name = enriched.name;
+          const handle = enriched.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+          const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
+          const location = enriched.location || "Miami, FL";
           const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || 0;
           return {
-            id: enriched?.id || rawStr,
+            id: enriched.id || rawStr,
             name,
             handle,
             avatar,
             location,
-            isVerified: Boolean(enriched?.isVerified),
+            isVerified: Boolean(enriched.isVerified),
             videoReviewCount,
-            followersCount: enriched?.followersCount || 0
+            followersCount: enriched.followersCount || 0
           };
-        });
+        }).filter(Boolean);
       }
 
       if (followingList.length === 0 && targetUserData && Array.isArray(targetUserData.followedAuthors)) {
         followingList = targetUserData.followedAuthors.map((f: any) => {
-          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "Community Reviewer");
+          const rawStr = typeof f === 'string' ? f : (f.name || f.id || "");
+          if (!rawStr) return null;
           const enriched = userProfileMap.get(String(rawStr).toLowerCase());
-          const name = enriched?.name || rawStr;
-          const handle = enriched?.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-          const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
-          const location = enriched?.location || "Miami, FL";
+          if (!enriched) return null;
+          const name = enriched.name;
+          const handle = enriched.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+          const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
+          const location = enriched.location || "Miami, FL";
           const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || 0;
           return {
-            id: enriched?.id || rawStr,
+            id: enriched.id || rawStr,
             name,
             handle,
             avatar,
             type: "user",
             location,
-            isVerified: Boolean(enriched?.isVerified),
+            isVerified: Boolean(enriched.isVerified),
             videoReviewCount,
-            followersCount: enriched?.followersCount || 0
+            followersCount: enriched.followersCount || 0
           };
-        });
+        }).filter(Boolean);
       }
 
       // Filter out any fake "Yoouz Member", deleted accounts (e.g. David), or orphaned follow rows
       const isYoouzMemberStr = (str?: string) => {
         if (!str) return false;
         const s = String(str).toLowerCase().trim().replace(/^@+/, "");
-        return s.includes("yoouz member") || s.includes("yoouz-member") || s.includes("yoouzmember") || s === "registered user" || s === "reviewer" || s === "yoouz community member";
+        return (
+          s.includes("yoouz") ||
+          s.includes("member") ||
+          s.includes("reviewer") ||
+          s.includes("registered user") ||
+          s.includes("david") ||
+          s === "user" ||
+          s === "community member" ||
+          s === "community reviewer"
+        );
       };
 
       const isInvalidOrDeleted = (item: any) => {
@@ -14823,10 +14876,18 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
       if (bunnyDb) {
         bunnyDb.execute({
-          sql: `DELETE FROM users WHERE LOWER(name) LIKE '%yoouz member%' OR LOWER(id) LIKE '%yoouz-member%' OR LOWER(id) LIKE '%yoouzmember%' OR LOWER(email) LIKE '%yoouz-member%' OR LOWER(name) LIKE '%david%' OR LOWER(id) LIKE '%david%' OR LOWER(email) LIKE '%david%'`
+          sql: `DELETE FROM users WHERE 
+            LOWER(name) LIKE '%yoouz%' OR LOWER(id) LIKE '%yoouz%' OR LOWER(email) LIKE '%yoouz%' OR
+            LOWER(name) LIKE '%member%' OR LOWER(id) LIKE '%member%' OR LOWER(email) LIKE '%member%' OR
+            LOWER(name) LIKE '%reviewer%' OR LOWER(id) LIKE '%reviewer%' OR LOWER(email) LIKE '%reviewer%' OR
+            LOWER(name) LIKE '%david%' OR LOWER(id) LIKE '%david%' OR LOWER(email) LIKE '%david%'`
         }).catch(() => {});
         bunnyDb.execute({
-          sql: `DELETE FROM follows WHERE LOWER(followerId) LIKE '%yoouz-member%' OR LOWER(followingId) LIKE '%yoouz-member%' OR LOWER(followerId) LIKE '%yoouzmember%' OR LOWER(followingId) LIKE '%yoouzmember%' OR LOWER(followerId) LIKE '%david%' OR LOWER(followingId) LIKE '%david%' OR LOWER(data) LIKE '%david%'`
+          sql: `DELETE FROM follows WHERE 
+            LOWER(followerId) LIKE '%yoouz%' OR LOWER(followingId) LIKE '%yoouz%' OR LOWER(data) LIKE '%yoouz%' OR
+            LOWER(followerId) LIKE '%member%' OR LOWER(followingId) LIKE '%member%' OR LOWER(data) LIKE '%member%' OR
+            LOWER(followerId) LIKE '%reviewer%' OR LOWER(followingId) LIKE '%reviewer%' OR LOWER(data) LIKE '%reviewer%' OR
+            LOWER(followerId) LIKE '%david%' OR LOWER(followingId) LIKE '%david%' OR LOWER(data) LIKE '%david%'`
         }).catch(() => {});
       }
 

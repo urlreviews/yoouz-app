@@ -1958,7 +1958,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 const isYoouzMemberStr = (str?: string) => {
                   if (!str) return false;
                   const s = String(str).toLowerCase().trim().replace(/^@+/, "");
-                  return s.includes("yoouz member") || s.includes("yoouz-member") || s.includes("yoouzmember") || s === "registered user" || s === "reviewer" || s === "yoouz community member";
+                  return (
+                    s.includes("yoouz") ||
+                    s.includes("member") ||
+                    s.includes("reviewer") ||
+                    s.includes("registered user") ||
+                    s.includes("david") ||
+                    s === "user" ||
+                    s === "community member" ||
+                    s === "community reviewer"
+                  );
                 };
 
                 const rawList = socialModalTab === "followers" ? (socialData?.followers || []) : (socialData?.following || []);

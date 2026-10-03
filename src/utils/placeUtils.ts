@@ -1951,7 +1951,16 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
   const isFakeOrDeletedStr = (str?: any) => {
     if (!str) return false;
     const s = String(str).toLowerCase().trim().replace(/^@+/, '');
-    return s.includes('yoouz member') || s.includes('yoouz-member') || s.includes('yoouzmember') || s === 'registered user' || s === 'reviewer' || s.includes('david');
+    return (
+      s.includes('yoouz') ||
+      s.includes('member') ||
+      s.includes('reviewer') ||
+      s.includes('registered user') ||
+      s.includes('david') ||
+      s === 'user' ||
+      s === 'community member' ||
+      s === 'community reviewer'
+    );
   };
 
   if (typeof userOrIdOrEmail === 'string') {
