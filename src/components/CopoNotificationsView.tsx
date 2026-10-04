@@ -599,9 +599,24 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       {(() => {
                         const userName = notif.user.name || "";
                         const userDomain = extractCleanDomain(userName || notif.user.avatar || "");
+                        const isYoouzSystem = Boolean(
+                          userName.toLowerCase().includes("yoouz") ||
+                          (notif.user.email && notif.user.email.toLowerCase().includes("yoouz")) ||
+                          (notif.user.avatar && (notif.user.avatar.includes("yoouz") || notif.user.avatar.includes("favicon")))
+                        );
+
+                        if (isYoouzSystem) {
+                          return (
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 shadow-sm hover:ring-2 hover:ring-white/40 transition-all">
+                              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            </div>
+                          );
+                        }
+
                         const isBusinessNotif = Boolean(
                           userName.includes(".") ||
-                          userName.toLowerCase().includes("yoouz") ||
                           (notif.user.avatar && (notif.user.avatar.includes("/logos/") || notif.user.avatar.includes("/api/logo") || notif.user.avatar.includes("logo")))
                         );
 

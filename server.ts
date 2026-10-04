@@ -27817,6 +27817,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="twitter:image:alt" content="${safeTitle}" />
     
     <link rel="canonical" href="${safeUrl}" />
+    ${meta.touchIcon ? `<link rel="apple-touch-icon" href="${escapeHtml(meta.touchIcon)}" />` : `<link rel="apple-touch-icon" href="${safeImage}" />`}
+    ${meta.logoUrl ? `<link rel="icon" type="image/png" href="${escapeHtml(meta.logoUrl)}" />` : ''}
     `;
 
     if (meta.videoUrl) {

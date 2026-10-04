@@ -635,21 +635,28 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
 
-                {/* TOP BAR: Place pill & Options button */}
+                {/* TOP BAR: Place pill with Business Logo, Place Name & Rating */}
                 <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[72%]">
-                    <span className="text-amber-400 text-xs font-black shrink-0">★</span>
+                  <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
+                    <CopoBrandLogo
+                      domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
+                      name={title}
+                      website={resolvedWebsite || video?.placeWebsite}
+                      logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
+                      className="w-5 h-5 rounded-md bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
+                      imageClassName="w-full h-full object-contain rounded-xs"
+                      fallbackTextClassName="font-black text-[8px] text-white"
+                    />
                     <span className="text-white text-xs font-bold truncate">
                       {title}
                     </span>
                     {ratingVal && (
-                      <span className="text-amber-400 text-[11px] font-bold shrink-0">
-                        {ratingVal}.0
-                      </span>
+                      <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0">
+                        <span className="text-xs font-black">★</span>
+                        <span>{ratingVal}.0</span>
+                      </div>
                     )}
                   </div>
-
-
                 </div>
 
                 {/* CENTER: Play Button for Videos */}

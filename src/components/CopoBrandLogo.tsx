@@ -106,11 +106,18 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Dedicated Yoouz emblem
   if (isYoouz) {
+    const cleanCls = className
+      ? className
+          .replace(/\bbg-\S+/g, "")
+          .replace(/\bp-\S+/g, "")
+          .replace(/\bborder-\S+/g, "")
+      : "";
     return (
-      <div className={className} id="copo-brand-logo-yoouz">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={imageClassName}>
-          <rect width="24" height="24" rx="6" fill="#09090b" />
-          <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
+      <div
+        className={`relative flex items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
+        id="copo-brand-logo-yoouz"
+      >
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
         </svg>
       </div>
