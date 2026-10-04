@@ -4163,6 +4163,12 @@ async function purgeVideoFromAllStores(videoId: string) {
           args: [videoId]
         });
       } catch (e) {}
+      try {
+        await bunnyClient.execute({
+          sql: `DELETE FROM notifications WHERE videoId = ?`,
+          args: [videoId]
+        });
+      } catch (e) {}
       console.log(`🐰 [Server] BunnyDB successfully purged review ${videoId}`);
 
       // Synchronize affected business place in BunnyDB places table to reflect accurate review count
@@ -7127,11 +7133,21 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }
     } catch (e) {}
 
-    // Auto-purge orphaned comments whose parent video does not exist
+    // Auto-purge orphaned interaction records (comments, likes, shares, bookmarks, notifications) whose parent video no longer exists
     try {
-      await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`);
-      const cRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM comments`);
-      counts['comments'] = Number(cRes.rows?.[0]?.c || 0);
+      await bunnyDb.execute(`DELETE FROM comments WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
+      await bunnyDb.execute(`DELETE FROM likes WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
+      await bunnyDb.execute(`DELETE FROM shares WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
+      await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
+      await bunnyDb.execute(`DELETE FROM notifications WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
+
+      // Re-query accurate row counts for all tables after orphan cleanup
+      for (const tbl of tables) {
+        try {
+          const queryRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM ${tbl}`);
+          counts[tbl] = Number(queryRes.rows?.[0]?.c || 0);
+        } catch (err) {}
+      }
     } catch (e) {}
   } else {
     for (const tbl of tables) {
