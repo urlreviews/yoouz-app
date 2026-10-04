@@ -2214,50 +2214,84 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               </div>
 
-              {/* Staff & Ownership - Premium Section */}
-              <div className="pt-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-zinc-200" />
-                  <h4 className="text-xs font-bold text-zinc-200">{t("place.managementStaff", "Management & Staff")}</h4>
-                </div>
-                
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                        <UserCheck className="w-4 h-4 text-zinc-200" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-white">{t("place.verifiedManagement", "Verified Management")}</p>
-                        <p className="text-[10px] text-zinc-200">{t("place.authorizedManage", "Authorized to manage this profile")}</p>
-                      </div>
-                    </div>
+              {/* Staff & Ownership - Executive Ultra-Premium Section */}
+              <div className="pt-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-zinc-300" />
+                    <h4 className="text-xs font-bold tracking-tight text-zinc-200">
+                      {t("place.managementStaff", "Management & Ownership")}
+                    </h4>
                   </div>
+                  {isClaimed ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {t("place.verifiedClaimed", "VERIFIED")}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-400">
+                      {t("place.unclaimedListing", "UNCLAIMED")}
+                    </span>
+                  )}
+                </div>
 
-                  {place.staffEmails && place.staffEmails.length > 0 && (
-                    <div className="pt-2 space-y-2 border-t border-zinc-800">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-200">{t("place.recognizedStaff", "Recognized Staff")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {place.staffEmails.map((email, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 bg-zinc-850 border border-zinc-800 px-2.5 py-1 rounded-full">
-                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                            <span className="text-[10px] font-medium text-zinc-200">{email.split('@')[0]}</span>
-                          </div>
-                        ))}
+                {isClaimed ? (
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/20 space-y-3 shadow-xs">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-white">
+                          {t("place.verifiedManagement", "Official Business Representative")}
+                        </p>
+                        <p className="text-[11px] text-zinc-300 leading-relaxed">
+                          {t("place.authorizedManage", "This profile is verified and active. Management can publish official video replies and control listing details.")}
+                        </p>
                       </div>
                     </div>
-                  )}
 
-                  {!isClaimed && (
+                    {place.staffEmails && place.staffEmails.length > 0 && (
+                      <div className="pt-2 space-y-2 border-t border-zinc-800/80">
+                        <p className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-400">
+                          {t("place.recognizedStaff", "Recognized Management Team")}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {place.staffEmails.map((email, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-lg">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <span className="text-[10px] font-medium text-zinc-200">{email.split('@')[0]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700/80 transition-all space-y-3.5 shadow-xs">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                        <Building2 className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-white">
+                          {t("place.claimTitle", "Are you the owner or official manager?")}
+                        </p>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed">
+                          {t("place.claimSubtitle", "Claim this listing to manage customer video reviews, post official video responses, and access merchant tools.")}
+                        </p>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => setIsClaimModalOpen(true)}
-                      className="w-full py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-[11px] font-bold text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                      className="w-full py-3 px-4 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.99]"
                     >
-                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
-                      {t("place.claimVerifyListing", "Claim & Verify Business Listing")}
+                      <ShieldCheck className="w-4 h-4 text-zinc-950 shrink-0" />
+                      <span>{t("place.claimVerifyListing", "Claim & Verify Business Listing")}</span>
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {onOpenReport && (
@@ -2272,9 +2306,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         placeId: place.id
                       });
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-900/60 hover:bg-red-500/10 border border-zinc-800 hover:border-red-500/30 text-zinc-300 hover:text-red-400 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
-                    <Flag className="w-3.5 h-3.5" />
+                    <Flag className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                     <span>{t("place.reportInaccurate", "Report inaccurate info or flag business")}</span>
                   </button>
                 </div>
