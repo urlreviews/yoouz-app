@@ -28,6 +28,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   logoUrl,
   className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2 z-30",
   imageClassName = "w-full h-full object-contain rounded-xl",
+  fallbackTextClassName,
   loading = "eager",
   fetchPriority = "high",
   onLoad
@@ -52,8 +53,20 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const isYoouz = useMemo(() => {
     const cd = cleanDomain;
     const cn = (name || "").toLowerCase().trim();
-    return cd === "yoouz.com" || cd === "yoouz" || cn === "yoouz" || cn === "yoouz.com";
-  }, [cleanDomain, name]);
+    const cl = (logoUrl || "").toLowerCase().trim();
+    const cw = (website || "").toLowerCase().trim();
+    return (
+      cd === "yoouz.com" ||
+      cd === "yoouz" ||
+      cd.includes("yoouz") ||
+      cn === "yoouz" ||
+      cn === "yoouz.com" ||
+      cn.includes("yoouz") ||
+      cl.includes("yoouz") ||
+      cl.includes("favicon.svg") ||
+      cw.includes("yoouz.com")
+    );
+  }, [cleanDomain, name, logoUrl, website]);
 
   // Build candidate fallback array for authentic brand logos
   const candidateUrls = useMemo(() => {
@@ -70,10 +83,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // 1. Direct match in KNOWN_BRAND_LOGOS
-    if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
-      const known = KNOWN_BRAND_LOGOS[cleanDomain];
-      if (!isGenericOrPlaceholderLogo(known)) {
-        candidates.push(known);
+    if (cleanDomain) {
+      const strippedDomain = cleanDomain.replace(/^www\./, "");
+      if (KNOWN_BRAND_LOGOS[cleanDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[cleanDomain])) {
+        candidates.push(KNOWN_BRAND_LOGOS[cleanDomain]);
+      } else if (KNOWN_BRAND_LOGOS[strippedDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[strippedDomain])) {
+        candidates.push(KNOWN_BRAND_LOGOS[strippedDomain]);
       }
     }
 
@@ -82,7 +97,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon"))
+      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon.svg"))
     ) {
       candidates.push(logoUrl);
     }
@@ -114,10 +129,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       : "";
     return (
       <div
-        className={`relative flex items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
+        className={`relative flex items-center justify-center rounded-xl bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
         id="copo-brand-logo-yoouz"
       >
-        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+        <svg viewBox="0 0 24 24" className="w-full h-full p-[16%] fill-white">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
         </svg>
       </div>
@@ -163,8 +178,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-white text-zinc-400">
-          <Building2 className="w-8 h-8 opacity-75" />
+        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-300">
+          {displayName && displayName !== "Business" ? (
+            <span className={`font-black uppercase select-none ${fallbackTextClassName || "text-xs text-white"}`}>
+              {displayName.charAt(0)}
+            </span>
+          ) : (
+            <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400" />
+          )}
         </div>
       )}
     </div>

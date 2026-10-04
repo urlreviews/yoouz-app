@@ -9,6 +9,7 @@ import {
 import { VideoReview, Place } from '../types';
 import { exportBrandedAdVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
 import { getProxiedImageUrl } from '../utils/logoUtils';
+import { CopoBrandLogo } from './CopoBrandLogo';
 
 interface CopoBrandedAdExportModalProps {
   isOpen: boolean;
@@ -117,15 +118,15 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
               {/* TOP LEFT: Business Squircle Logo & Rating Pill (Matches Screenshot 3) */}
               <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[70%]">
                 {/* Left Squircle Logo Container */}
-                <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                  {placeLogoUrl ? (
-                    <img src={placeLogoUrl} alt={placeName} className="w-6 h-6 object-contain" />
-                  ) : (
-                    <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  )}
-                </div>
+                <CopoBrandLogo
+                  domain={targetDomain}
+                  name={placeName}
+                  website={place?.website}
+                  logoUrl={placeLogoUrl}
+                  className="w-8 h-8 rounded-xl bg-zinc-950 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden shadow-xs p-1"
+                  imageClassName="w-full h-full object-contain rounded-md"
+                  fallbackTextClassName="font-extrabold text-[11px] text-white"
+                />
                 {/* Text column */}
                 <div className="flex flex-col min-w-0 justify-center">
                   <div className="flex items-center gap-1 min-w-0">

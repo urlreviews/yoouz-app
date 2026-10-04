@@ -600,16 +600,20 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                         const userName = notif.user.name || "";
                         const userDomain = extractCleanDomain(userName || notif.user.avatar || "");
                         const isYoouzSystem = Boolean(
-                          userName.toLowerCase().includes("yoouz") ||
-                          (notif.user.email && notif.user.email.toLowerCase().includes("yoouz")) ||
-                          (notif.user.avatar && (notif.user.avatar.includes("yoouz") || notif.user.avatar.includes("favicon")))
+                          userName.toLowerCase().trim() === "yoouz" ||
+                          userName.toLowerCase().trim() === "yoouz beta" ||
+                          userName.toLowerCase().trim() === "@yoouz" ||
+                          userName.toLowerCase().trim() === "yoouz official" ||
+                          userName.toLowerCase().trim() === "yoouz team" ||
+                          (notif.user.email && (notif.user.email.toLowerCase().includes("info@yoouz.com") || notif.user.email.toLowerCase().includes("admin@yoouz.com"))) ||
+                          (notif.user.avatar && (notif.user.avatar.includes("favicon.svg") || notif.user.avatar.includes("yoouz-avatar")))
                         );
 
                         if (isYoouzSystem) {
                           return (
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 shadow-sm hover:ring-2 hover:ring-white/40 transition-all">
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] bg-zinc-950 border border-white/20 flex items-center justify-center shrink-0 shadow-sm hover:ring-2 hover:ring-white/40 transition-all p-2.5">
+                              <svg viewBox="0 0 24 24" className="w-full h-full fill-white">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                               </svg>
                             </div>
                           );
@@ -626,9 +630,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                               domain={userDomain || userName}
                               name={userName}
                               logoUrl={notif.user.avatar}
-                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-1 border border-zinc-200/60 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0 flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-zinc-950 p-1 border border-white/20 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0 flex items-center justify-center overflow-hidden ring-1 ring-white/10"
                               imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
-                              fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                              fallbackTextClassName="font-extrabold text-xs text-white"
                             />
                           );
                         }
