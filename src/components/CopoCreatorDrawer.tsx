@@ -1891,10 +1891,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button
                   type="button"
                   onClick={() => setSocialModalOpen(null)}
-                  className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm"
-                  title="Close"
+                  className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm active:scale-95"
+                  title="Back"
                 >
-                  <X className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
                 </button>
                 <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 truncate">
@@ -1906,13 +1906,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSocialModalOpen(null)}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
             </div>
 
             {/* Pill Tabs: Followers | Following */}
