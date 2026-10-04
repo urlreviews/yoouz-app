@@ -26346,8 +26346,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       if (placeLogoBuf) {
         try {
           const resizedLogo = await sharp(placeLogoBuf, { density: 300 })
-            .resize(256, 256, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .png()
+            .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+            .png({ quality: 100 })
             .toBuffer();
           logoPngBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
         } catch (e) {}
@@ -26399,18 +26399,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 </g>
               ` : `
                 <rect x="10" y="10" width="42" height="42" rx="13" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
-                <rect x="13" y="13" width="36" height="36" rx="10" fill="#ffffff"/>
                 ${logoPngBase64 ? `
-                  <g transform="translate(13, 13)">
+                  <g transform="translate(11, 11)">
                     <clipPath id="squircleLogoClip1">
-                      <rect x="0" y="0" width="36" height="36" rx="9"/>
+                      <rect x="0" y="0" width="40" height="40" rx="11"/>
                     </clipPath>
-                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="2" y="2" width="32" height="32" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="40" height="40" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
                   </g>
                 ` : `
-                  <g transform="translate(13, 13)">
-                    <rect x="0" y="0" width="36" height="36" rx="9" fill="#18181b"/>
-                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+                  <g transform="translate(11, 11)">
+                    <rect x="0" y="0" width="40" height="40" rx="11" fill="#18181b"/>
+                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20, true) / 2), 26, 20, true, '#ffffff')}
                   </g>
                 `}
               `}
@@ -26510,18 +26509,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
               </g>
             ` : `
               <rect x="10" y="10" width="42" height="42" rx="13" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
-              <rect x="13" y="13" width="36" height="36" rx="10" fill="#ffffff"/>
               ${logoPngBase64 ? `
-                <g transform="translate(13, 13)">
+                <g transform="translate(11, 11)">
                   <clipPath id="squircleLogoClip2">
-                    <rect x="0" y="0" width="36" height="36" rx="9"/>
+                    <rect x="0" y="0" width="40" height="40" rx="11"/>
                   </clipPath>
-                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="2" y="2" width="32" height="32" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="40" height="40" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
                 </g>
               ` : `
-                <g transform="translate(13, 13)">
-                  <rect x="0" y="0" width="36" height="36" rx="9" fill="#18181b"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+                <g transform="translate(11, 11)">
+                  <rect x="0" y="0" width="40" height="40" rx="11" fill="#18181b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20, true) / 2), 26, 20, true, '#ffffff')}
                 </g>
               `}
             `}
