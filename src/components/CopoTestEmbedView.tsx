@@ -36,7 +36,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
     }
     return "https://www.yoouz.com/embed/yoouz.com";
   });
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile" | "full">("desktop");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [iframeKey, setIframeKey] = useState<number>(0);
 
@@ -74,7 +74,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   const iframeSrc = `/embed/${encodeURIComponent(testSlug)}`;
   const fullEmbedSnippet = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
-  <iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${testSlug} on Yoouz"></iframe>
+  <iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${testSlug} on Yoouz"></iframe>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -130,7 +130,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
             }`}
           >
             <Monitor className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Widget (440px)</span>
+            <span className="hidden sm:inline">Widget (Desktop)</span>
           </button>
           <button
             onClick={() => setPreviewDevice("mobile")}
@@ -140,15 +140,6 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
           >
             <Smartphone className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Mobile (375px)</span>
-          </button>
-          <button
-            onClick={() => setPreviewDevice("full")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-medium ${
-              previewDevice === "full" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Full Player (800px)</span>
           </button>
         </div>
       </header>
@@ -219,12 +210,10 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
           {/* Frame Container */}
           <div className="p-4 sm:p-8 bg-zinc-950/80 flex items-center justify-center min-h-[540px]">
             <div
-              className={`transition-all duration-300 relative shadow-2xl rounded-[28px] overflow-hidden border border-zinc-850 bg-black ${
+              className={`transition-all duration-300 relative shadow-2xl rounded-[24px] overflow-hidden border border-white/10 bg-black ${
                 previewDevice === "desktop"
                   ? "w-full max-w-[390px] h-[520px]"
-                  : previewDevice === "mobile"
-                  ? "w-[360px] h-[520px]"
-                  : "w-full max-w-[440px] h-[560px]"
+                  : "w-[360px] h-[520px]"
               }`}
             >
               <iframe
@@ -232,7 +221,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
                 src={iframeSrc}
                 title="Yoouz Live Embed Preview"
                 className="w-full h-full border-0 bg-transparent"
-                allow="autoplay; encrypted-media; picture-in-picture; camera; microphone"
+                allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
               />
             </div>
           </div>

@@ -40,8 +40,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   allUsers = [],
   onOpenComments: _onOpenComments,
   onOpenShare: _onOpenShare,
-  onOpenPlace: _onOpenPlace,
-  onOpenCreator: _onOpenCreator,
+  onOpenPlace,
+  onOpenCreator,
   onToggleLike: _onToggleLike,
   onToggleBookmark: _onToggleBookmark,
   onToggleFollow: _onToggleFollow,
@@ -356,16 +356,22 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     }
   }, [playingVideoId, isVideoPaused]);
 
-  // Canonical place profile URL on Yoouz (e.g. https://www.yoouz.com/place/lernerandrowe.com or https://www.yoouz.com/)
+  // Canonical place profile URL on Yoouz (e.g. /place/lernerandrowe.com or https://www.yoouz.com/place/...)
   const placeProfileUrl = useMemo(() => {
     const slug = getPlaceSlug(targetPlace) || targetPlace.id || cleanSlug;
     if (!slug || slug === "yoouz.com" || slug === "yoouz" || slug === "www.yoouz.com") {
+      if (typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")) {
+        return "/";
+      }
       return "https://www.yoouz.com/";
+    }
+    if (typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")) {
+      return `/place/${encodeURIComponent(slug)}`;
     }
     return `https://www.yoouz.com/place/${encodeURIComponent(slug)}`;
   }, [targetPlace, cleanSlug]);
 
-  // Canonical reviewer user profile URL on Yoouz (e.g. https://www.yoouz.com/@ben-blue or https://www.yoouz.com/@benblue)
+  // Canonical reviewer user profile URL on Yoouz (e.g. /@ben-blue or https://www.yoouz.com/@benblue)
   const reviewerProfileUrl = useMemo(() => {
     const rawHandle = safeAuthor.handle ? safeAuthor.handle.replace(/^@+/, "").trim() : "";
     const rawName = (safeAuthor.name || "").trim();
@@ -379,8 +385,124 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     if (!cleanSlugCandidate || cleanSlugCandidate === "reviewer" || cleanSlugCandidate === "user" || cleanSlugCandidate === "registered-user") {
       return placeProfileUrl;
     }
+    if (typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")) {
+      return `/@${encodeURIComponent(cleanSlugCandidate)}`;
+    }
     return `https://www.yoouz.com/@${encodeURIComponent(cleanSlugCandidate)}`;
   }, [safeAuthor, placeProfileUrl]);
+
+  // Safe non-blocking navigation handler when business clicks their own logo in embed
+  const handleLogoClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 1. If onOpenPlace is provided by parent container (e.g. running in App.tsx)
+      if (onOpenPlace) {
+        handleStopVideo();
+        onOpenPlace(targetPlace.id || cleanSlug);
+        return;
+      }
+
+      // 2. If running inside an iframe (e.g. business dashboard embed preview or embed tester)
+      if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(
+            {
+              type: "YOOUZ_OPEN_PLACE",
+              placeId: targetPlace.id || cleanSlug,
+              slug: cleanSlug,
+              url: placeProfileUrl
+            },
+            "*"
+          );
+        } catch {}
+
+        // If parent window is on the same origin (dashboard preview in the app)
+        try {
+          if (window.parent.location.origin === window.location.origin) {
+            // Inside own dashboard preview - never trigger a popup blocked error!
+            return;
+          }
+        } catch {
+          // Cross-origin iframe (e.g. merchant site)
+        }
+
+        // External merchant site: open place profile safely without popup blocking
+        try {
+          const opened = window.open(placeProfileUrl, "_blank", "noopener,noreferrer");
+          if (!opened) {
+            window.location.href = placeProfileUrl;
+          }
+        } catch {
+          window.location.href = placeProfileUrl;
+        }
+        return;
+      }
+
+      // 3. Standalone mode: navigate directly
+      if (typeof window !== "undefined") {
+        if (placeProfileUrl.startsWith("/")) {
+          window.location.href = placeProfileUrl;
+        } else {
+          window.open(placeProfileUrl, "_blank", "noopener,noreferrer");
+        }
+      }
+    },
+    [onOpenPlace, handleStopVideo, targetPlace, cleanSlug, placeProfileUrl]
+  );
+
+  // Safe non-blocking navigation handler when reviewer avatar/name is clicked
+  const handleReviewerClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (onOpenCreator && safeAuthor) {
+        handleStopVideo();
+        onOpenCreator(safeAuthor);
+        return;
+      }
+
+      if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(
+            {
+              type: "YOOUZ_OPEN_CREATOR",
+              author: safeAuthor,
+              url: reviewerProfileUrl
+            },
+            "*"
+          );
+        } catch {}
+
+        try {
+          if (window.parent.location.origin === window.location.origin) {
+            return;
+          }
+        } catch {}
+
+        try {
+          const opened = window.open(reviewerProfileUrl, "_blank", "noopener,noreferrer");
+          if (!opened) {
+            window.location.href = reviewerProfileUrl;
+          }
+        } catch {
+          window.location.href = reviewerProfileUrl;
+        }
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        if (reviewerProfileUrl.startsWith("/")) {
+          window.location.href = reviewerProfileUrl;
+        } else {
+          window.open(reviewerProfileUrl, "_blank", "noopener,noreferrer");
+        }
+      }
+    },
+    [onOpenCreator, safeAuthor, handleStopVideo, reviewerProfileUrl]
+  );
 
   return (
     <div
@@ -473,10 +595,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             rel="noopener noreferrer"
             className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
             title={`View verified reviews for ${displayBusinessName} on Yoouz`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleStopVideo();
-            }}
+            onClick={handleLogoClick}
           >
             <CopoBrandLogo
               domain={displayDomain}
@@ -564,10 +683,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
               title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleStopVideo();
-              }}
+              onClick={handleReviewerClick}
             >
               <img
                 src={reviewerAvatarUrl}
@@ -596,10 +712,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                 title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStopVideo();
-                }}
+                onClick={handleReviewerClick}
               >
                 <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   By {safeAuthor.name}
@@ -639,10 +752,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStopVideo();
-                }}
+                onClick={handleLogoClick}
               >
                 Live Sync Powered by Yoouz
               </a>

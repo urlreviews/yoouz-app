@@ -905,6 +905,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   }, [embedPreviewPaused, embedPreviewPlayingId]);
 
+  // Handle messages from embedded widget preview (e.g. clicking logo inside preview)
+  useEffect(() => {
+    const handleWidgetMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'YOOUZ_OPEN_PLACE') {
+        setWidgetNotice(`✨ Verified widget connected to ${currentPlace?.name || 'your venue'}.`);
+        setTimeout(() => setWidgetNotice(null), 3500);
+      }
+    };
+    window.addEventListener('message', handleWidgetMessage);
+    return () => window.removeEventListener('message', handleWidgetMessage);
+  }, [currentPlace]);
+
   const handleToggleEmbedPreviewPlay = useCallback((video: VideoReview) => {
     if (!video) return;
     if (embedPreviewPlayingId === video.id) {
@@ -2007,7 +2019,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     return `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
-  <iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
+  <iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -3641,7 +3653,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           src={`/embed/${getPlaceSlug(currentPlace)}`}
                           title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
                           className="w-full h-full border-0 bg-transparent"
-                          allow="autoplay; encrypted-media; picture-in-picture; camera; microphone"
+                          allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
                         />
                       </div>
                     )}
