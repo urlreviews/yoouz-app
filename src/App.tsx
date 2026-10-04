@@ -1049,22 +1049,24 @@ export function App() {
     
     // 7. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
     try {
-      fetch("/api/videos/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: targetId })
-      }).catch(() => {});
-
-      fetch("/api/admin/videos/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId: targetId })
-      }).catch(() => {});
-
-      fetch(`/api/nosql/videoReviews/${encodeURIComponent(targetId)}`, {
-        method: "DELETE"
-      }).catch(() => {});
-    } catch (e) {}
+      await Promise.all([
+        fetch("/api/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: targetId })
+        }),
+        fetch("/api/admin/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: targetId })
+        }),
+        fetch(`/api/nosql/videoReviews/${encodeURIComponent(targetId)}`, {
+          method: "DELETE"
+        })
+      ]);
+    } catch (e) {
+      console.warn("Server delete API notice:", e);
+    }
 
     // 8. Delete directly from BunnyDB
     try {
@@ -1148,23 +1150,24 @@ export function App() {
     
     // 7. Call backend admin API & video delete endpoints
     try {
-      fetch("/api/admin/videos/bulk-delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoIds: targetIds })
-      }).then(res => { if (!res.ok) console.error("Bulk delete failed", res); });
-
-      targetIds.forEach(id => {
-        fetch("/api/videos/delete", {
+      await Promise.all([
+        fetch("/api/admin/videos/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId: id })
-        }).then(res => { if (!res.ok) console.error(`Video delete failed for ${id}`, res); });
-        
-        fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
-          .then(res => { if (!res.ok) console.error(`NoSQL delete failed for ${id}`, res); });
-      });
-    } catch (e) { console.error("Error in delete handler:", e); }
+          body: JSON.stringify({ videoIds: targetIds })
+        }),
+        ...targetIds.flatMap(id => [
+          fetch("/api/videos/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId: id })
+          }),
+          fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
+        ])
+      ]);
+    } catch (e) {
+      console.error("Error in delete handler:", e);
+    }
 
     // 8. Delete directly from BunnyDB
     try {
