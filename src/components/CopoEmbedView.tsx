@@ -766,13 +766,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
             {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
             <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
-              <a
-                href={placeProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                title={`View verified reviews for ${displayBusinessName} on Yoouz`}
-                onClick={handleLogoClick}
+              <div
+                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 text-white transition-all text-left shadow-xl min-w-0 max-w-[calc(100%-48px)] select-none"
               >
                 <CopoBrandLogo
                   domain={displayDomain}
@@ -782,16 +777,16 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   bannerUrl={targetPlace.bannerUrl}
                   loading="eager"
                   fetchPriority="high"
-                  className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md transition-transform"
+                  className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md"
                   imageClassName="w-full h-full object-contain rounded-lg"
                   fallbackTextClassName="font-extrabold text-[11px] text-white"
                 />
                 <div className="min-w-0 flex-1 py-0.5">
-                  <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
-                    <span className="truncate no-underline">{displayBusinessName}</span>
+                  <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                    <span className="truncate">{displayBusinessName}</span>
                     <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5 no-underline">
+                  <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5">
                     <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                     <span>{overallRating.toFixed(1)}</span>
                     <span className="text-zinc-300 font-normal">
@@ -799,7 +794,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     </span>
                   </div>
                 </div>
-              </a>
+              </div>
 
               {/* Mute / Unmute Button */}
               <button
@@ -853,14 +848,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
               {/* Reviewer Metadata (Frameless, clean overlay matching original Yoouz video feed) */}
               <div className="flex items-start gap-2.5 min-w-0">
-                {/* Reviewer Avatar -> Direct link to user profile on Yoouz */}
-                <a
-                  href={reviewerProfileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
-                  title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-                  onClick={handleReviewerClick}
+                {/* Reviewer Avatar */}
+                <div
+                  className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md select-none"
                 >
                   <img
                     src={reviewerAvatarUrl}
@@ -879,25 +869,20 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                       }
                     }}
                   />
-                </a>
+                </div>
 
                 <div className="min-w-0 flex flex-col gap-0.5">
-                  {/* Line 1: Author Name with Verified Check -> Direct link to user profile on Yoouz */}
-                  <a
-                    href={reviewerProfileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                    title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-                    onClick={handleReviewerClick}
+                  {/* Line 1: Author Name with Verified Check */}
+                  <div
+                    className="flex items-center gap-1.5 min-w-0 w-fit select-none"
                   >
-                    <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                    <span className="text-[13.5px] sm:text-[14px] font-black text-white truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       By {safeAuthor.name}
                     </span>
                     {safeAuthor.isVerified && (
                       <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
                     )}
-                  </a>
+                  </div>
 
                   {/* Line 2: Rating Stars & Recorded Time */}
                   <div className="flex items-center gap-2">
@@ -925,11 +910,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   <a
-                    href={placeProfileUrl}
+                    href="https://yoouz.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                    onClick={handleLogoClick}
+                    title="Powered by Yoouz - Authentic Video Review Platform"
                   >
                     Live Sync Powered by Yoouz
                   </a>
