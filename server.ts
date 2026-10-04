@@ -5123,6 +5123,46 @@ app.get('/api/nosql/:collection', async (req, res) => {
                   parsedData.videoId = String(row.videoId);
                 }
               }
+              if (colName === 'chats') {
+                if (Array.isArray(parsedData.history)) {
+                  parsedData.history.forEach((m: any) => {
+                    if (m) {
+                      let mTime = Number(m.createdAt || m.createdAtMs || 0);
+                      if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                        const idMatch = String(m.id || '').match(/(1[5-9]\d{11}|2\d{12})/);
+                        if (idMatch) mTime = Number(idMatch[1]);
+                      }
+                      if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                        const thTime = Number(parsedData.updatedAt || parsedData.createdAt || 0);
+                        if (thTime && thTime > 1500000000000) mTime = thTime;
+                      }
+                      if (mTime > 1500000000000) {
+                        m.createdAt = mTime;
+                        m.createdAtMs = mTime;
+                        m.resolvedTime = mTime;
+                        if (!m.timestamp || m.timestamp === 'Just now' || m.timestamp === 'now') {
+                          m.timestamp = new Date(mTime).toISOString();
+                        }
+                      }
+                    }
+                  });
+                }
+                let thMs = 0;
+                if (Array.isArray(parsedData.history) && parsedData.history.length > 0) {
+                  const lastM = parsedData.history[parsedData.history.length - 1];
+                  thMs = Number(lastM?.createdAt || lastM?.createdAtMs || 0);
+                }
+                if (!thMs || isNaN(thMs) || thMs < 1500000000000) {
+                  thMs = Number(parsedData.updatedAt || parsedData.createdAt || 0);
+                }
+                if (thMs && thMs > 1500000000000) {
+                  parsedData.createdAtMs = thMs;
+                  parsedData.updatedAt = thMs;
+                  if (!parsedData.timestamp || parsedData.timestamp === 'Just now' || parsedData.timestamp === 'now') {
+                    parsedData.timestamp = new Date(thMs).toISOString();
+                  }
+                }
+              }
               itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
             }
           });
@@ -5720,6 +5760,47 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             }
           }
           
+          if (colName === 'chats') {
+            if (Array.isArray(parsedData.history)) {
+              parsedData.history.forEach((m: any) => {
+                if (m) {
+                  let mTime = Number(m.createdAt || m.createdAtMs || 0);
+                  if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                    const idMatch = String(m.id || '').match(/(1[5-9]\d{11}|2\d{12})/);
+                    if (idMatch) mTime = Number(idMatch[1]);
+                  }
+                  if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                    const thTime = Number(parsedData.updatedAt || parsedData.createdAt || 0);
+                    if (thTime && thTime > 1500000000000) mTime = thTime;
+                  }
+                  if (mTime > 1500000000000) {
+                    m.createdAt = mTime;
+                    m.createdAtMs = mTime;
+                    m.resolvedTime = mTime;
+                    if (!m.timestamp || m.timestamp === 'Just now' || m.timestamp === 'now') {
+                      m.timestamp = new Date(mTime).toISOString();
+                    }
+                  }
+                }
+              });
+            }
+            let thMs = 0;
+            if (Array.isArray(parsedData.history) && parsedData.history.length > 0) {
+              const lastM = parsedData.history[parsedData.history.length - 1];
+              thMs = Number(lastM?.createdAt || lastM?.createdAtMs || 0);
+            }
+            if (!thMs || isNaN(thMs) || thMs < 1500000000000) {
+              thMs = Number(parsedData.updatedAt || parsedData.createdAt || 0);
+            }
+            if (thMs && thMs > 1500000000000) {
+              parsedData.createdAtMs = thMs;
+              parsedData.updatedAt = thMs;
+              if (!parsedData.timestamp || parsedData.timestamp === 'Just now' || parsedData.timestamp === 'now') {
+                parsedData.timestamp = new Date(thMs).toISOString();
+              }
+            }
+          }
+          
           return res.json({ id: String(row.id), ...parsedData });
         }
       } catch (bunnyErr) {}
@@ -5912,7 +5993,23 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
                     msgMap.set(key, m);
                   }
                 });
-                finalDataObj.history = Array.from(msgMap.values()).sort((a, b) => {
+                finalDataObj.history = Array.from(msgMap.values()).map((m: any) => {
+                  let mTime = Number(m.createdAt || m.createdAtMs || 0);
+                  if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                    const idMatch = String(m.id || '').match(/(1[5-9]\d{11}|2\d{12})/);
+                    if (idMatch) mTime = Number(idMatch[1]);
+                  }
+                  if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+                    mTime = Date.now();
+                  }
+                  return {
+                    ...m,
+                    createdAt: mTime,
+                    createdAtMs: mTime,
+                    resolvedTime: mTime,
+                    timestamp: (!m.timestamp || m.timestamp === 'Just now' || m.timestamp === 'now') ? new Date(mTime).toISOString() : m.timestamp
+                  };
+                }).sort((a, b) => {
                   const tA = Number(a.createdAt || a.createdAtMs || 0);
                   const tB = Number(b.createdAt || b.createdAtMs || 0);
                   return tA - tB;
@@ -14201,13 +14298,27 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         });
 
         for (const msg of sorted) {
+          let mTime = Number(msg.createdAt || msg.createdAtMs || 0);
+          if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+            const idMatch = String(msg.id || '').match(/(1[5-9]\d{11}|2\d{12})/);
+            if (idMatch) mTime = Number(idMatch[1]);
+          }
+          if (!mTime || isNaN(mTime) || mTime < 1500000000000) {
+            mTime = Date.now();
+          }
+          msg.createdAt = mTime;
+          msg.createdAtMs = mTime;
+          msg.resolvedTime = mTime;
+          if (!msg.timestamp || msg.timestamp === 'Just now' || msg.timestamp === 'now') {
+            msg.timestamp = new Date(mTime).toISOString();
+          }
+
           const mId = msg.id ? String(msg.id).trim() : "";
           if (mId && seenKeys.has(mId)) continue;
           if (mId) seenKeys.add(mId);
 
           const mText = (msg.text || "").trim().toLowerCase();
           const mSender = (msg.senderEmail || msg.senderName || msg.senderId || "").trim().toLowerCase();
-          const mTime = Number(msg.createdAt || msg.createdAtMs || 0);
 
           const isDuplicate = mergedHistory.some((existing) => {
             if (mId && existing.id && mId === existing.id) return true;
@@ -14238,6 +14349,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         };
 
         const lastMsg = mergedHistory[mergedHistory.length - 1];
+        const lastMsgTime = lastMsg ? Number(lastMsg.createdAt || lastMsg.createdAtMs || 0) : Date.now();
 
         finalThreadData = {
           ...existingData,
@@ -14249,6 +14361,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           lastMessage: message?.text || threadData.lastMessage || lastMsg?.text || "",
           lastSenderEmail: message?.senderEmail || threadData.lastSenderEmail || lastMsg?.senderEmail || "",
           lastSenderName: message?.senderName || threadData.lastSenderName || lastMsg?.senderName || "",
+          timestamp: new Date(lastMsgTime).toISOString(),
+          createdAtMs: lastMsgTime,
           updatedAt: Date.now()
         };
 

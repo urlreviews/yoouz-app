@@ -1,7 +1,7 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
 import { getCanonicalUserKey, isGenericUsername } from "./userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "./avatar";
-import { formatRecordedDate, parseTimestampToMs } from "../utils/dateUtils";
+import { formatRecordedDate, parseTimestampToMs, resolveMessageTimestampMs } from "../utils/dateUtils";
 
 export interface CreateNotificationParams {
   recipientEmail?: string;
@@ -283,7 +283,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
       email: senderEmail
     },
     text: params.text,
-    timestamp: "Just now",
+    timestamp: new Date().toISOString(),
     createdAt: Date.now(),
     createdAtMs: Date.now(),
     videoId: params.videoId || "",
@@ -1661,15 +1661,20 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             }
           }
 
+          const itemMs = resolveMessageTimestampMs(m, m.createdAtMs || m.createdAt || m.created_at);
+          const finalItemMs = itemMs > 0 ? itemMs : (parseTimestampToMs(m.id) || parseTimestampToMs(data.updatedAt) || parseTimestampToMs(data.createdAt) || Date.now());
+
           return {
-            id: m.id || `msg_${Date.now()}_${Math.random()}`,
+            id: m.id || `msg_${finalItemMs}_${Math.random().toString(36).substring(2, 6)}`,
             senderName: finalSenderName,
             senderAvatar: finalSenderAvatar || generateGoogleLetterAvatarSvg(finalSenderName, 128, finalSenderId || finalSenderEmail || finalSenderName),
             senderEmail: finalSenderEmail,
             senderId: finalSenderId,
             text: m.text || "",
-            timestamp: m.timestamp || "Just now",
-            createdAtMs: m.createdAt,
+            timestamp: new Date(finalItemMs).toISOString(),
+            createdAt: finalItemMs,
+            createdAtMs: finalItemMs,
+            resolvedTime: finalItemMs,
             isMe: Boolean(isSender),
             videoThumbnail: m.videoThumbnail,
             videoId: m.videoId,
@@ -1705,6 +1710,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       const cleanRawLastMsg = (data.lastMessage && data.lastMessage !== "Conversation started" && data.lastMessage !== "Direct conversation") ? data.lastMessage.trim() : "";
       const lastMsg = (processedHistory[processedHistory.length - 1]?.text) || cleanRawLastMsg || "";
 
+      const threadMs = resolveMessageTimestampMs(lastProcessedMsg) || resolveMessageTimestampMs(data, data.updatedAt || data.createdAt) || Date.now();
+
       threads.push({
         id: String(data.id),
         senderId: otherId,
@@ -1713,8 +1720,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         senderEmail: data.senderEmail,
         recipientEmail: data.recipientEmail,
         lastMessage: lastMsg,
-        timestamp: data.timestamp || "Just now",
-        createdAtMs: data.updatedAt || data.createdAt || (processedHistory[processedHistory.length - 1]?.createdAtMs) || Date.now(),
+        timestamp: new Date(threadMs).toISOString(),
+        createdAtMs: threadMs,
+        updatedAt: threadMs,
         unreadCount: Number(unreadCount) || 0,
         videoPreviewUrl: data.videoPreviewUrl,
         history: processedHistory
@@ -1971,9 +1979,16 @@ export function deduplicateChatHistory(messages: any[]): any[] {
   const result: any[] = [];
   const seenIds = new Set<string>();
 
-  const sorted = [...messages].filter(Boolean).sort((a, b) => {
-    const tA = Number(a.createdAtMs || a.createdAt || (typeof a.id === "string" && a.id.startsWith("msg_") ? parseInt(a.id.split("_")[1]) : 0) || 0);
-    const tB = Number(b.createdAtMs || b.createdAt || (typeof b.id === "string" && b.id.startsWith("msg_") ? parseInt(b.id.split("_")[1]) : 0) || 0);
+  const sorted = [...messages].filter(Boolean).map((m: any) => {
+    const t = resolveMessageTimestampMs(m, m.createdAtMs || m.createdAt);
+    return {
+      ...m,
+      createdAtMs: t > 0 ? t : (m.createdAtMs || 0),
+      createdAt: t > 0 ? t : (m.createdAt || 0)
+    };
+  }).sort((a, b) => {
+    const tA = Number(a.createdAtMs || 0);
+    const tB = Number(b.createdAtMs || 0);
     return tA - tB;
   });
 
@@ -1996,7 +2011,7 @@ export function deduplicateChatHistory(messages: any[]): any[] {
       if (mText && eText && mText === eText) {
         const isSameSender = !mSender || !eSender || mSender === eSender || (m.isMe && existing.isMe);
         if (isSameSender) {
-          if (!mTime || !eTime || Math.abs(mTime - eTime) < 45000) {
+          if (mTime > 0 && eTime > 0 && Math.abs(mTime - eTime) < 15000) {
             return true;
           }
         }
@@ -2236,7 +2251,7 @@ export async function sendChatMessage(
     senderName: currentUser.name || "Reviewer",
     senderAvatar: currentUser.avatar || generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, userEmail || currentUser.name || "User"),
     text: messageText.trim(),
-    timestamp: "Just now",
+    timestamp: new Date(msgTime).toISOString(),
     createdAt: msgTime,
     createdAtMs: msgTime,
     isMe: false,
@@ -2361,8 +2376,9 @@ export async function sendChatMessage(
     recipientId: recipientId,
     recipientName: recipient.name,
     recipientAvatar: recipient.avatar,
-    timestamp: "Just now",
-    updatedAt: Date.now(),
+    timestamp: new Date(msgTime).toISOString(),
+    updatedAt: msgTime,
+    createdAt: msgTime,
     videoPreviewUrl: videoUrl || "",
     history: fullHistory,
     unreadCounts: {
@@ -2451,32 +2467,41 @@ export async function sendChatMessage(
     senderName: recipient.name,
     senderAvatar: recipient.avatar,
     lastMessage: messageText.trim(),
-    timestamp: "Just now",
+    timestamp: new Date(msgTime).toISOString(),
+    createdAtMs: msgTime,
+    updatedAt: msgTime,
     unreadCount: 0,
     videoPreviewUrl: videoUrl,
-    history: fullHistory.map((m: any) => ({
-      id: m.id,
-      senderName: m.senderName || "Member",
-      senderAvatar: m.senderAvatar || "",
-      text: m.text || "",
-      timestamp: m.timestamp || "Just now",
-      createdAtMs: m.createdAt,
-      isMe: Boolean(
-        (userEmail && (m.senderEmail?.toLowerCase() === userEmail || m.senderId === userEmail)) ||
-        (emailPrefix && (m.senderEmail?.toLowerCase().startsWith(emailPrefix) || m.senderId === emailPrefix)) ||
-        (userHandle && (m.senderId === userHandle || m.senderName?.toLowerCase() === userHandle)) ||
-        (userName && m.senderName?.toLowerCase() === userName.toLowerCase()) ||
-        m.id === newMessage.id
-      ),
-      videoThumbnail: m.videoThumbnail,
-      videoId: m.videoId,
-      placeId: m.placeId,
-      placeName: m.placeName,
-      placeAddress: m.placeAddress,
-      placeCategory: m.placeCategory,
-      placeRating: m.placeRating,
-      placeImage: m.placeImage
-    }))
+    history: fullHistory.map((m: any) => {
+      const mMs = resolveMessageTimestampMs(m, m.createdAtMs || m.createdAt || m.created_at) || parseTimestampToMs(m.id) || msgTime;
+      return {
+        id: m.id,
+        senderName: m.senderName || "Member",
+        senderAvatar: m.senderAvatar || "",
+        senderEmail: m.senderEmail,
+        senderId: m.senderId,
+        text: m.text || "",
+        timestamp: new Date(mMs).toISOString(),
+        createdAt: mMs,
+        createdAtMs: mMs,
+        resolvedTime: mMs,
+        isMe: Boolean(
+          (userEmail && (m.senderEmail?.toLowerCase() === userEmail || m.senderId === userEmail)) ||
+          (emailPrefix && (m.senderEmail?.toLowerCase().startsWith(emailPrefix) || m.senderId === emailPrefix)) ||
+          (userHandle && (m.senderId === userHandle || m.senderName?.toLowerCase() === userHandle)) ||
+          (userName && m.senderName?.toLowerCase() === userName.toLowerCase()) ||
+          m.id === newMessage.id
+        ),
+        videoThumbnail: m.videoThumbnail,
+        videoId: m.videoId,
+        placeId: m.placeId,
+        placeName: m.placeName,
+        placeAddress: m.placeAddress,
+        placeCategory: m.placeCategory,
+        placeRating: m.placeRating,
+        placeImage: m.placeImage
+      };
+    })
   };
 }
 

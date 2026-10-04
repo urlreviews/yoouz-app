@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { formatRecordedDate, formatChatMessageTime } from "../utils/dateUtils";
+import { formatRecordedDate, formatChatMessageTime, formatChatDateDivider, formatMessageTimeOnly, formatThreadPreviewTime, isSameCalendarDay, resolveMessageTimestampMs, parseTimestampToMs } from "../utils/dateUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
@@ -837,9 +837,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       ].filter(Boolean))
     );
 
+    const nowMs = Date.now();
     const newThread: CopoMessage = {
       id: newId,
-      senderId: recipient.id || finalEmail || `usr_${Date.now()}`,
+      senderId: recipient.id || finalEmail || `usr_${nowMs}`,
       senderName: recipient.name,
       senderAvatar: recipient.avatar,
       senderEmail: finalEmail,
@@ -851,8 +852,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       placeId: isBizRecipient && recipient.id !== "yoouz" && recipient.id !== "yoouz.com" ? (recipient.id as any) : undefined,
       participants,
       lastMessage: "",
-      timestamp: "Just now",
-      createdAtMs: Date.now(),
+      timestamp: new Date(nowMs).toISOString(),
+      createdAtMs: nowMs,
       unreadCount: 0,
       history: []
     };
@@ -888,9 +889,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       recipientId: recipient.id,
       recipientName: recipient.name,
       recipientAvatar: recipient.avatar,
-      timestamp: "Just now",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      timestamp: new Date(nowMs).toISOString(),
+      createdAt: nowMs,
+      updatedAt: nowMs,
       history: []
     };
 
@@ -1038,12 +1039,28 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   }, [currentUser]);
 
   const activeThreadMessages = useMemo(() => {
-    return deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
+    const raw = deduplicateChatHistory(activeThread?.history || []).filter((m: any) => {
       const t = (m.text || "").trim();
       if (t === "Conversation started" || t === "Direct conversation") return false;
       return Boolean(t || m.videoThumbnail || m.videoId || m.placeId || m.placeName);
     });
-  }, [activeThread?.history]);
+
+    const withResolvedTimes = raw.map((m: any) => {
+      const ms = resolveMessageTimestampMs(m, m.createdAtMs || m.createdAt || m.created_at);
+      const fallbackMs = parseTimestampToMs(m.id) || parseTimestampToMs(activeThread?.createdAtMs) || parseTimestampToMs(activeThread?.createdAt) || Date.now();
+      const finalMs = ms > 0 ? ms : fallbackMs;
+      return {
+        ...m,
+        createdAt: finalMs,
+        createdAtMs: finalMs,
+        resolvedTime: finalMs,
+        timestamp: new Date(finalMs).toISOString()
+      };
+    });
+
+    withResolvedTimes.sort((a, b) => a.resolvedTime - b.resolvedTime);
+    return withResolvedTimes;
+  }, [activeThread?.history, activeThread?.createdAtMs, activeThread?.createdAt]);
 
 
 
@@ -1092,9 +1109,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       senderEmail: curEmail,
       senderId: curEmail || curId || curName,
       text: text.trim(),
-      timestamp: "Just now",
+      timestamp: new Date(nowMs).toISOString(),
       createdAt: nowMs,
       createdAtMs: nowMs,
+      resolvedTime: nowMs,
       isMe: true,
       videoThumbnail: sanitizedThumb,
       videoId: customVideoId,
@@ -1119,7 +1137,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             ? {
                 ...m,
                 lastMessage: text.trim(),
-                timestamp: "Just now",
+                timestamp: new Date(nowMs).toISOString(),
+                createdAtMs: m.createdAtMs || nowMs,
+                updatedAt: nowMs,
                 unreadCount: 0,
                 videoPreviewUrl: sanitizedThumb || m.videoPreviewUrl,
                 history: updatedHistory
@@ -1130,7 +1150,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           {
             ...activeThread,
             lastMessage: text.trim(),
-            timestamp: "Just now",
+            timestamp: new Date(nowMs).toISOString(),
+            createdAtMs: activeThread.createdAtMs || nowMs,
+            updatedAt: nowMs,
             unreadCount: 0,
             videoPreviewUrl: sanitizedThumb || activeThread.videoPreviewUrl,
             history: updatedHistory
@@ -1864,7 +1886,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                   </span>
                                 )}
                               </button>
-                              <span className="text-[10px] text-zinc-400 font-bold shrink-0">{formatRecordedDate(thread.timestamp, thread.createdAtMs)}</span>
+                              <span className="text-[10px] text-zinc-400 font-bold shrink-0">
+                                {(() => {
+                                  const hist = thread.history || [];
+                                  const lastHistMsg = hist.length > 0 ? hist[hist.length - 1] : null;
+                                  const effMs = lastHistMsg
+                                    ? resolveMessageTimestampMs(lastHistMsg)
+                                    : resolveMessageTimestampMs(thread, (typeof thread.updatedAt === "number" ? thread.updatedAt : Number(thread.updatedAt)) || thread.createdAtMs);
+                                  return formatThreadPreviewTime(effMs || thread.createdAtMs) || formatRecordedDate(thread.timestamp, effMs || thread.createdAtMs);
+                                })()}
+                              </span>
                             </div>
                             <p className={`text-[11px] truncate ${isUnread ? "text-white font-black" : "text-zinc-300 font-medium"}`}>
                               {(() => {
@@ -2136,8 +2167,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       </div>
                     </div>
                   ) : (
-                    activeThreadMessages.map((msg) => {
+                    activeThreadMessages.map((msg, idx) => {
+                      const prevMsg = idx > 0 ? activeThreadMessages[idx - 1] : null;
+                      const nextMsg = idx < activeThreadMessages.length - 1 ? activeThreadMessages[idx + 1] : null;
+
+                      const msgTime = (msg as any).resolvedTime || resolveMessageTimestampMs(msg, msg.createdAtMs || msg.createdAt);
+                      const prevTime = prevMsg ? ((prevMsg as any).resolvedTime || resolveMessageTimestampMs(prevMsg, prevMsg.createdAtMs || prevMsg.createdAt)) : 0;
+                      const nextTime = nextMsg ? ((nextMsg as any).resolvedTime || resolveMessageTimestampMs(nextMsg, nextMsg.createdAtMs || nextMsg.createdAt)) : 0;
+
                       const isMe = checkIsMessageFromMe(msg);
+                      const prevMsgIsMe = prevMsg ? checkIsMessageFromMe(prevMsg) : null;
+                      const nextMsgIsMe = nextMsg ? checkIsMessageFromMe(nextMsg) : null;
+
+                      // Date separator: show when starting the conversation or when day changes
+                      const showDateDivider = idx === 0 || !isSameCalendarDay(prevTime, msgTime);
+
+                      // Message grouping burst (same sender within 5 mins on same day)
+                      const isFirstInGroup = idx === 0 || showDateDivider || prevMsgIsMe !== isMe || (msgTime - prevTime > 5 * 60 * 1000);
+                      const isLastInGroup = idx === activeThreadMessages.length - 1 || (nextMsg && !isSameCalendarDay(msgTime, nextTime)) || nextMsgIsMe !== isMe || (nextTime - msgTime > 5 * 60 * 1000);
+
                       const isBiz = Boolean(partnerDetails.isBusiness);
                       const currentUserName = (currentUser?.name || "").toLowerCase().trim();
                       const rawSenderName = (msg.senderName || "").trim();
@@ -2150,36 +2198,43 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                         ? (currentUser?.avatar || msg.senderAvatar)
                         : (msg.senderAvatar || partnerDetails.avatar);
 
+                      const timeFormatted = formatMessageTimeOnly(msgTime);
+                      const fullTooltip = formatChatMessageTime(msg.timestamp, msgTime, msg.id);
+
                       return (
-                        <div
-                          key={`msg-log-${msg.id}`}
-                          className={`flex items-start gap-2.5 sm:gap-3 ${isMe ? "flex-row-reverse" : ""} animate-in fade-in duration-200`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (isMe && currentUser) {
-                                handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
-                              } else {
-                                handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
-                              }
-                            }}
-                            className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                        <React.Fragment key={`msg-log-${msg.id || idx}`}>
+                          {showDateDivider && (
+                            <div className="flex items-center justify-center my-3.5 select-none">
+                              <span className="px-3.5 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-semibold text-zinc-400 shadow-xs backdrop-blur-md">
+                                {formatChatDateDivider(msgTime)}
+                              </span>
+                            </div>
+                          )}
+
+                          <div
+                            className={`flex items-start gap-2.5 sm:gap-3 ${isMe ? "flex-row-reverse" : ""} ${isFirstInGroup ? (idx > 0 && !showDateDivider ? "mt-3" : "mt-0.5") : "mt-1"} animate-in fade-in duration-200`}
                           >
-                            {(() => {
-                              if (isMe) {
-                                return (
+                            {/* Avatar or Spacer to keep bubbles aligned cleanly */}
+                            {isFirstInGroup ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isMe && currentUser) {
+                                    handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
+                                  } else {
+                                    handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
+                                  }
+                                }}
+                                className="shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                              >
+                                {isMe ? (
                                   <img
                                     src={getSafeAvatarUrl(displayAvatar, currentUser?.name || "You", currentUser?.email || (currentUser as any)?.handle)}
                                     alt={currentUser?.name || "You"}
                                     className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
                                     onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, currentUser?.name || "You", currentUser?.email); }}
                                   />
-                                );
-                              }
-
-                              if (isBiz) {
-                                return (
+                                ) : isBiz ? (
                                   <CopoBrandLogo
                                     domain={partnerDetails.id}
                                     name={partnerDetails.name}
@@ -2188,50 +2243,64 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                     imageClassName="w-full h-full object-contain rounded-sm"
                                     fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
                                   />
-                                );
-                              }
+                                ) : (
+                                  <img
+                                    src={getSafeAvatarUrl(displayAvatar, displaySenderName, msg.senderId || partnerDetails.id)}
+                                    alt={displaySenderName}
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
+                                    onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, displaySenderName, msg.senderId); }}
+                                  />
+                                )}
+                              </button>
+                            ) : (
+                              <div className="w-7 sm:w-8 shrink-0" aria-hidden="true" />
+                            )}
 
-                              return (
-                                <img
-                                  src={getSafeAvatarUrl(displayAvatar, displaySenderName, msg.senderId || partnerDetails.id)}
-                                  alt={displaySenderName}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-zinc-800"
-                                  onError={(e) => { const target = e.currentTarget as HTMLImageElement; target.src = getSafeAvatarUrl(null, displaySenderName, msg.senderId); }}
-                                />
-                              );
-                            })()}
-                          </button>
-                          <div className={`flex flex-col space-y-1 max-w-sm sm:max-w-md ${isMe ? "items-end text-right" : "items-start text-left"}`}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isMe && currentUser) {
-                                  handleOpenAuthorProfile(currentUser.name, currentUser.userId || currentUser.email, currentUser.avatar);
-                                } else {
-                                  handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
-                                }
-                              }}
-                              className="text-[10px] text-zinc-200 font-bold hover:text-white cursor-pointer transition-colors flex items-center gap-1"
-                            >
-                              <span>{displaySenderName}</span>
-                              {!isMe && isPartnerVerified && (
-                                <span title="Verified" className="inline-flex items-center">
-                                  <CheckCircle2 className="w-2.5 h-2.5 fill-white text-zinc-950 shrink-0" />
-                                </span>
+                            {/* Message Bubble Column */}
+                            <div className={`flex flex-col space-y-0.5 max-w-[85%] sm:max-w-md ${isMe ? "items-end text-right" : "items-start text-left"}`}>
+                              {/* Sender Name only above first message of incoming burst */}
+                              {!isMe && isFirstInGroup && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleOpenAuthorProfile(partnerDetails.name, partnerDetails.id || partnerDetails.email, partnerDetails.avatar, undefined, partnerDetails.isBusiness);
+                                  }}
+                                  className="text-[10px] text-zinc-300 font-bold hover:text-white cursor-pointer transition-colors flex items-center gap-1 mb-0.5"
+                                >
+                                  <span>{displaySenderName}</span>
+                                  {isPartnerVerified && (
+                                    <span title="Verified" className="inline-flex items-center">
+                                      <CheckCircle2 className="w-2.5 h-2.5 fill-white text-zinc-950 shrink-0" />
+                                    </span>
+                                  )}
+                                </button>
                               )}
-                              <span>· {formatChatMessageTime(msg.timestamp, msg.createdAtMs)}</span>
-                            </button>
-                            <div
-                              className={`p-3 text-xs sm:text-sm shadow-2xs leading-relaxed rounded-2xl w-fit max-w-full ${
-                                isMe
-                                  ? "bg-zinc-800 text-white rounded-tr-none text-left font-medium"
-                                  : "bg-zinc-900 text-zinc-200 rounded-tl-none text-left border border-zinc-800"
-                              }`}
-                            >
-                              <p className="px-1">{msg.text}</p>
+
+                              {/* Bubble with message text and clean native corner timestamp */}
+                              <div
+                                className={`px-3.5 py-2 text-xs sm:text-sm shadow-2xs leading-relaxed w-fit max-w-full group ${
+                                  isMe
+                                    ? `bg-zinc-800 text-white text-left font-medium ${isFirstInGroup ? 'rounded-2xl rounded-tr-xs' : 'rounded-2xl'}`
+                                    : `bg-zinc-900 text-zinc-200 text-left border border-zinc-800/90 ${isFirstInGroup ? 'rounded-2xl rounded-tl-xs' : 'rounded-2xl'}`
+                                }`}
+                              >
+                                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                                
+                                <div
+                                  className={`flex items-center gap-1.5 mt-1 select-none text-[10px] ${
+                                    isMe ? "justify-end text-zinc-400" : "justify-start text-zinc-400"
+                                  }`}
+                                  title={fullTooltip}
+                                >
+                                  <span className="font-medium tracking-tight">
+                                    {timeFormatted}
+                                  </span>
+                                  {isMe && <CheckCheck className="w-3 h-3 text-zinc-400 shrink-0 stroke-[2.2]" />}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </React.Fragment>
                       );
                     })
                   )}

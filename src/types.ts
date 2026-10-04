@@ -346,6 +346,8 @@ export interface CopoMessage {
   lastMessage: string;
   timestamp: string;
   createdAtMs?: number;
+  createdAt?: number | string;
+  updatedAt?: number | string;
   unreadCount: number;
   videoPreviewUrl?: string;
   history?: {
@@ -353,9 +355,12 @@ export interface CopoMessage {
     senderName: string;
     senderAvatar: string;
     senderEmail?: string;
+    senderId?: string;
     text: string;
     timestamp: string;
     createdAtMs?: number;
+    createdAt?: number | string;
+    resolvedTime?: number;
     isMe: boolean;
     videoThumbnail?: string;
     videoId?: string;

@@ -3051,7 +3051,8 @@ export function App() {
       ].filter(Boolean))
     );
 
-    const newThreadId = `thread_${Date.now()}`;
+    const nowMs = Date.now();
+    const newThreadId = `thread_${nowMs}`;
     const newThread: CopoMessage = {
       id: newThreadId,
       senderId,
@@ -3064,8 +3065,8 @@ export function App() {
       recipientAvatar: currentUser?.avatar || "",
       participants,
       lastMessage: "",
-      timestamp: "Just now",
-      createdAtMs: Date.now(),
+      timestamp: new Date(nowMs).toISOString(),
+      createdAtMs: nowMs,
       unreadCount: 0,
       history: []
     };
@@ -3099,9 +3100,9 @@ export function App() {
       recipientId: senderId,
       recipientName: senderName,
       recipientAvatar: senderAvatar,
-      timestamp: "Just now",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      timestamp: new Date(nowMs).toISOString(),
+      createdAt: nowMs,
+      updatedAt: nowMs,
       history: []
     };
 

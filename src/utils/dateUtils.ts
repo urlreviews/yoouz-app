@@ -1,19 +1,36 @@
 export function parseTimestampToMs(raw: any): number | null {
-  if (typeof raw === "number" && !isNaN(raw) && raw > 1500000000000 && raw < 2500000000000) {
-    return raw;
+  if (typeof raw === "number" && !isNaN(raw)) {
+    if (raw > 1500000000000 && raw < 2500000000000) return raw; // ms timestamp
+    if (raw > 1500000000 && raw < 2500000000) return raw * 1000; // sec timestamp
   }
   if (typeof raw === "string" && raw.trim()) {
     const s = raw.trim();
+    const lower = s.toLowerCase();
+    if (lower === "just now" || lower === "now" || lower === "recently") return null;
+
     if (/^\d{12,14}$/.test(s)) {
       const n = Number(s);
       if (!isNaN(n) && n > 1500000000000 && n < 2500000000000) return n;
     }
-    // Match 13-digit millisecond timestamp embedded in string/ID (e.g. notif_179019... or rev-178984...)
-    const idMatch = s.match(/(17\d{11})/);
-    if (idMatch) {
-      const num = Number(idMatch[1]);
+    if (/^\d{10}$/.test(s)) {
+      const n = Number(s);
+      if (!isNaN(n) && n > 1500000000 && n < 2500000000) return n * 1000;
+    }
+
+    // Match 13-digit millisecond timestamp embedded in string/ID (e.g. msg_179019... or notif_179019... or rev-178984...)
+    const msMatch = s.match(/(1[5-9]\d{11}|2\d{12})/);
+    if (msMatch) {
+      const num = Number(msMatch[1]);
       if (!isNaN(num) && num > 1500000000000 && num < 2500000000000) return num;
     }
+
+    // Match 10-digit unix timestamp in string/ID
+    const secMatch = s.match(/(1[5-9]\d{8}|2\d{9})/);
+    if (secMatch) {
+      const num = Number(secMatch[1]);
+      if (!isNaN(num) && num > 1500000000 && num < 2500000000) return num * 1000;
+    }
+
     // Try ISO or SQL date string
     const iso = s.includes("T")
       ? (s.endsWith("Z") ? s : s + "Z")
@@ -65,52 +82,182 @@ export function formatRecordedDate(recordedAt?: string, createdAtMs?: number): s
   return "Recently";
 }
 
-export function formatChatMessageTime(timestamp?: string, createdAtMs?: number): string {
-  if (createdAtMs && createdAtMs > 0) {
-    const now = Date.now();
-    const diffMs = now - createdAtMs;
-    const diffSec = Math.floor(diffMs / 1000);
-    if (diffSec < 60) return "Just now";
+/**
+ * Robustly resolve exact timestamp in milliseconds from a message object or raw value.
+ * Handles embedded timestamps in IDs (msg_1790192617149_06ib), ISO strings, and createdAtMs.
+ */
+export function resolveMessageTimestampMs(msgOrTimestamp?: any, createdAtMs?: number): number {
+  if (typeof createdAtMs === 'number' && createdAtMs > 1500000000000) return createdAtMs;
+  if (!msgOrTimestamp) return 0;
+  if (typeof msgOrTimestamp === 'number') {
+    const p = parseTimestampToMs(msgOrTimestamp);
+    if (p && p > 0) return p;
+  }
 
-    const msgDate = new Date(createdAtMs);
-    const nowDate = new Date(now);
-    const isToday = msgDate.toDateString() === nowDate.toDateString();
+  if (typeof msgOrTimestamp === 'object') {
+    // 1. Check createdAtMs / createdAt / created_at
+    const pCreatedAtMs = parseTimestampToMs(msgOrTimestamp.createdAtMs);
+    if (pCreatedAtMs && pCreatedAtMs > 0) return pCreatedAtMs;
 
-    const timeStr = msgDate.toLocaleTimeString("en-US", {
+    const pCreatedAt = parseTimestampToMs(msgOrTimestamp.createdAt);
+    if (pCreatedAt && pCreatedAt > 0) return pCreatedAt;
+
+    const pCreated_at = parseTimestampToMs(msgOrTimestamp.created_at);
+    if (pCreated_at && pCreated_at > 0) return pCreated_at;
+
+    // 2. Check resolvedTime
+    const pResolved = parseTimestampToMs(msgOrTimestamp.resolvedTime);
+    if (pResolved && pResolved > 0) return pResolved;
+
+    // 3. Check updatedAt / updated_at
+    const pUpdated = parseTimestampToMs(msgOrTimestamp.updatedAt || msgOrTimestamp.updated_at);
+    if (pUpdated && pUpdated > 0) return pUpdated;
+
+    // 4. Check ISO / real string in timestamp
+    if (typeof msgOrTimestamp.timestamp === 'string') {
+      const p = parseTimestampToMs(msgOrTimestamp.timestamp);
+      if (p && p > 0) return p;
+    }
+
+    // 5. Check embedded timestamp in id
+    if (typeof msgOrTimestamp.id === 'string' || typeof msgOrTimestamp.id === 'number') {
+      const p = parseTimestampToMs(msgOrTimestamp.id);
+      if (p && p > 0) return p;
+    }
+  } else if (typeof msgOrTimestamp === 'string') {
+    const p = parseTimestampToMs(msgOrTimestamp);
+    if (p && p > 0) return p;
+  }
+  return 0;
+}
+
+/**
+ * Check if two timestamps are on the exact same calendar day (local time)
+ */
+export function isSameCalendarDay(ms1: number, ms2: number): boolean {
+  if (!ms1 || !ms2) return false;
+  const d1 = new Date(ms1);
+  const d2 = new Date(ms2);
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+}
+
+/**
+ * Date header separator pill (e.g. "Today", "Yesterday", "Wednesday, Sep 23", "Sep 24, 2026")
+ * Matches standard UI conventions of WhatsApp, Telegram, iMessage, and Slack.
+ */
+export function formatChatDateDivider(timestampMs: number): string {
+  if (!timestampMs || timestampMs <= 0) return "Earlier";
+  const now = Date.now();
+  const msgDate = new Date(timestampMs);
+  const nowDate = new Date(now);
+
+  if (isSameCalendarDay(timestampMs, now)) {
+    return "Today";
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameCalendarDay(timestampMs, yesterday.getTime())) {
+    return "Yesterday";
+  }
+
+  const diffDays = Math.floor((now - timestampMs) / (1000 * 60 * 60 * 24));
+  if (diffDays >= 0 && diffDays < 7) {
+    return msgDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  }
+
+  if (msgDate.getFullYear() === nowDate.getFullYear()) {
+    return msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  return msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+/**
+ * Formats time only for chat bubbles (e.g. "7:51 AM", "12:05 PM").
+ * Major platforms (WhatsApp, Telegram, iMessage, Signal) NEVER display "Just now" on a bubble.
+ * They display the exact clock time of the message.
+ */
+export function formatMessageTimeOnly(timestampMs: number): string {
+  const validMs = timestampMs > 0 ? timestampMs : Date.now();
+  const msgDate = new Date(validMs);
+  return msgDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+/**
+ * Format conversation preview timestamp in inbox list (e.g. "3:50 PM", "Yesterday", "Wed", "Sep 21").
+ * Matches standard conventions of WhatsApp, iMessage, and Telegram.
+ */
+export function formatThreadPreviewTime(timestampMs?: number | null): string {
+  if (!timestampMs || timestampMs <= 0) return "";
+  const now = Date.now();
+  const msgDate = new Date(timestampMs);
+
+  if (isSameCalendarDay(timestampMs, now)) {
+    return msgDate.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true
     });
-
-    if (isToday) {
-      return timeStr;
-    }
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = msgDate.toDateString() === yesterday.toDateString();
-    if (isYesterday) {
-      return `Yesterday, ${timeStr}`;
-    }
-
-    const isThisYear = msgDate.getFullYear() === nowDate.getFullYear();
-    if (isThisYear) {
-      const monthDay = msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      return `${monthDay}, ${timeStr}`;
-    }
-
-    return msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }
 
-  if (!timestamp) return "Just now";
-
-  const lower = timestamp.toLowerCase().trim();
-  if (lower === "just now" || lower === "now") return "Just now";
-
-  const parsed = Date.parse(timestamp);
-  if (!isNaN(parsed)) {
-    return formatChatMessageTime(undefined, parsed);
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameCalendarDay(timestampMs, yesterday.getTime())) {
+    return "Yesterday";
   }
 
-  return timestamp;
+  const diffDays = Math.floor((now - timestampMs) / (1000 * 60 * 60 * 24));
+  if (diffDays >= 0 && diffDays < 7) {
+    return msgDate.toLocaleDateString("en-US", { weekday: "short" });
+  }
+
+  const nowDate = new Date(now);
+  if (msgDate.getFullYear() === nowDate.getFullYear()) {
+    return msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  return msgDate.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "2-digit" });
+}
+
+/**
+ * Comprehensive formatted time string for message headers, tooltips, or fallback displays.
+ * (e.g. "3:50 PM", "Yesterday, 3:50 PM", "Mon, Sep 21, 3:50 PM", "Sep 21, 2026, 3:50 PM")
+ */
+export function formatChatMessageTime(timestamp?: string, createdAtMs?: number, msgId?: string): string {
+  const ms = resolveMessageTimestampMs({ id: msgId, timestamp, createdAtMs }, createdAtMs);
+  const validMs = ms > 0 ? ms : Date.now();
+  const now = Date.now();
+  const msgDate = new Date(validMs);
+  const timeStr = msgDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+
+  if (isSameCalendarDay(validMs, now)) {
+    return timeStr;
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameCalendarDay(validMs, yesterday.getTime())) {
+    return `Yesterday, ${timeStr}`;
+  }
+
+  const nowDate = new Date(now);
+  if (msgDate.getFullYear() === nowDate.getFullYear()) {
+    const monthDay = msgDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    return `${monthDay}, ${timeStr}`;
+  }
+
+  return `${msgDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}, ${timeStr}`;
 }
