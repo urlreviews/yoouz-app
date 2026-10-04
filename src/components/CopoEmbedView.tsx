@@ -583,7 +583,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         onMouseUp={handleMouseUp}
       >
         {!hasReviews ? (
-          /* OPTION A: Branded "Be the First to Record" Invitation State */
+          /* OPTION A / C: Branded Pure Darkmode "Be the First to Record" Invitation State */
           <div className="relative w-full h-full flex flex-col justify-between p-4 sm:p-5 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white select-none">
             {/* Top Bar: Venue Header Pill */}
             <div className="flex items-center justify-between gap-2 z-20">
@@ -615,17 +615,17 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 </div>
               </a>
 
-              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-900/80 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-300 bg-zinc-900/90 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
                 <span>Verified</span>
               </div>
             </div>
 
             {/* Centerpiece: Floating Brand Badge + Interactive Call to Action */}
             <div className="flex-1 flex flex-col items-center justify-center text-center px-2 py-3 z-20 space-y-3.5 sm:space-y-4">
-              {/* Pulsing Studio Camera Icon Ring */}
+              {/* Studio Camera Icon Ring */}
               <div className="relative group/camera cursor-pointer" onClick={handleRecordClick}>
-                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 border border-white/20 shadow-2xl flex items-center justify-center relative overflow-hidden backdrop-blur-xl group-hover/camera:scale-105 transition-transform duration-300">
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-zinc-900 border border-white/20 shadow-2xl flex items-center justify-center relative overflow-hidden backdrop-blur-xl group-hover/camera:scale-105 transition-transform duration-300">
                   <CopoBrandLogo
                     domain={displayDomain}
                     name={displayBusinessName}
@@ -634,13 +634,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     bannerUrl={targetPlace.bannerUrl}
                     loading="eager"
                     fetchPriority="high"
-                    className="w-12 h-12 rounded-2xl bg-zinc-950/80 border border-white/10 flex items-center justify-center p-1.5 shadow-md"
+                    className="w-12 h-12 rounded-2xl bg-zinc-950/90 border border-white/10 flex items-center justify-center p-1.5 shadow-md"
                     imageClassName="w-full h-full object-contain"
                     fallbackTextClassName="font-black text-sm text-white"
                   />
-                  {/* Subtle red live record badge */}
-                  <div className="absolute -bottom-1 -right-1 bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-zinc-950 flex items-center gap-1 shadow-md">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                  {/* Subtle record badge */}
+                  <div className="absolute -bottom-1 -right-1 bg-zinc-800 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-zinc-950 flex items-center gap-1 shadow-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
                     <span>60s</span>
                   </div>
                 </div>
@@ -650,7 +650,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               <div className="space-y-1 max-w-[280px]">
                 <h3 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
                   Be the first to review <br />
-                  <span className="text-amber-400 truncate inline-block max-w-[240px] align-bottom">
+                  <span className="text-zinc-200 truncate inline-block max-w-[240px] align-bottom">
                     {displayBusinessName}
                   </span>
                 </h3>
@@ -663,14 +663,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               <button
                 type="button"
                 onClick={handleRecordClick}
-                className="w-full max-w-[260px] flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs sm:text-sm shadow-xl active:scale-95 transition-all cursor-pointer border border-white/40"
+                className="w-full max-w-[260px] flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs sm:text-sm shadow-xl active:scale-95 transition-all cursor-pointer border border-white/40"
               >
-                <Video className="w-4 h-4 fill-rose-600 text-rose-600" />
+                <Video className="w-4 h-4 fill-zinc-950 text-zinc-950" />
                 <span>Record Video Review</span>
               </button>
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-400 font-semibold pt-0.5">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+                <Sparkles className="w-3 h-3 text-zinc-400" />
                 <span>100% Authentic • Live Video Only</span>
               </div>
             </div>
@@ -678,12 +678,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             {/* Bottom Bar: Live Sync */}
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10 z-20 text-[11px] text-zinc-400">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shrink-0" />
                 <a
                   href={placeProfileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] font-medium text-white/80 hover:text-white transition-colors no-underline"
+                  className="text-[11px] font-medium text-zinc-300 hover:text-white transition-colors no-underline"
                   onClick={handleLogoClick}
                 >
                   Live Sync Powered by Yoouz

@@ -3586,54 +3586,51 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             {activeTab === 'embed' && (
               <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-200">
                 {placeVideos.length === 0 ? (
-                  /* OPTION C: Guidance State for Venues with 0 Reviews */
+                  /* STRICT DARKMODE: Guidance State for Venues with 0 Reviews - Embed Code Locked */
                   <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-6 sm:p-10 shadow-xl space-y-6 text-center relative overflow-hidden">
-                    {/* Subtle glowing backdrop */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-36 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
-
                     {/* Top Status Pill */}
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-zinc-950 border border-zinc-750 text-xs font-bold text-amber-400 shadow-sm">
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Activates After Your 1st Video Review</span>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 shadow-sm">
+                      <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>Unlocks After 1st Video Review</span>
                     </div>
 
                     {/* Center Visual & Messaging */}
                     <div className="space-y-3 max-w-lg mx-auto relative z-10">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto shadow-2xl relative">
-                        <QrCode className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-rose-600 border-2 border-zinc-900 flex items-center justify-center text-white shadow-md">
+                        <QrCode className="w-8 h-8 sm:w-10 sm:h-10 text-zinc-300" />
+                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-white shadow-md">
                           <Video className="w-3.5 h-3.5 fill-white text-white" />
                         </div>
                       </div>
 
                       <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                        Collect Your First Video Review to Activate Your Website Embed
+                        Collect Your First Video Review to Unlock Website Embed
                       </h2>
                       <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                        To maximize visitor trust and authentic social proof on your website, your responsive video carousel unlocks automatically as soon as your venue receives its first verified 60-second video review.
+                        To guarantee high conversion and visitor trust on your website, your responsive video carousel and embed iframe code unlock automatically as soon as your venue receives its first verified 60-second video review.
                       </p>
                     </div>
 
-                    {/* Action Cards */}
+                    {/* Darkmode Action Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto pt-2 relative z-10">
                       <button
                         type="button"
                         onClick={() => setActiveTab('qr_invites')}
-                        className="p-4 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-950 text-left transition-all active:scale-[0.98] shadow-lg flex flex-col justify-between gap-3 group cursor-pointer border border-white"
+                        className="p-4 rounded-2xl bg-zinc-950 hover:bg-zinc-800/80 text-white text-left transition-all active:scale-[0.98] shadow-lg flex flex-col justify-between gap-3 group cursor-pointer border border-zinc-800 hover:border-zinc-700"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-                            <QrCode className="w-5 h-5" />
+                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center">
+                            <QrCode className="w-5 h-5 text-white" />
                           </div>
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-700">
                             Recommended
                           </span>
                         </div>
                         <div>
-                          <div className="text-sm font-black leading-tight group-hover:text-zinc-900">
+                          <div className="text-sm font-black leading-tight text-white group-hover:text-zinc-200">
                             Print Table QR Standees
                           </div>
-                          <div className="text-xs text-zinc-600 font-medium mt-0.5">
+                          <div className="text-xs text-zinc-400 font-medium mt-0.5">
                             Place printed QR cards at tables to collect customer reviews live.
                           </div>
                         </div>
@@ -3642,20 +3639,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <button
                         type="button"
                         onClick={copyDirectReviewLink}
-                        className="p-4 rounded-2xl bg-zinc-950 hover:bg-zinc-800/90 text-white text-left transition-all active:scale-[0.98] border border-zinc-800 hover:border-zinc-700 shadow-md flex flex-col justify-between gap-3 group cursor-pointer"
+                        className="p-4 rounded-2xl bg-zinc-950 hover:bg-zinc-800/80 text-white text-left transition-all active:scale-[0.98] border border-zinc-800 hover:border-zinc-700 shadow-md flex flex-col justify-between gap-3 group cursor-pointer"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-amber-400 flex items-center justify-center">
-                            <Link2 className="w-5 h-5" />
+                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center">
+                            <Link2 className="w-5 h-5 text-white" />
                           </div>
                           {isDirectReviewLinkCopied && (
-                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-white px-2 py-0.5 rounded-full flex items-center gap-1 border border-zinc-700">
                               <Check className="w-3 h-3" /> Copied!
                             </span>
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-black leading-tight text-white group-hover:text-amber-400 transition-colors">
+                          <div className="text-sm font-black leading-tight text-white group-hover:text-zinc-200 transition-colors">
                             {isDirectReviewLinkCopied ? 'Review Link Copied!' : 'Copy Direct Review Link'}
                           </div>
                           <div className="text-xs text-zinc-400 font-medium mt-0.5">
@@ -3664,49 +3661,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         </div>
                       </button>
                     </div>
-
-                    {/* Advanced Accordion for Early Site Developers */}
-                    <div className="pt-4 border-t border-zinc-800/80 max-w-xl mx-auto text-left relative z-10">
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvanceEmbedCode(!showAdvanceEmbedCode)}
-                        className="text-xs text-zinc-400 hover:text-white flex items-center justify-between w-full p-2 rounded-xl hover:bg-zinc-800/50 transition cursor-pointer"
-                      >
-                        <span className="font-semibold flex items-center gap-2">
-                          <Code className="w-4 h-4 text-zinc-400" />
-                          <span>Setting up website in advance? View Embed Snippet</span>
-                        </span>
-                        <span className="text-[11px] text-amber-400 font-bold">
-                          {showAdvanceEmbedCode ? 'Hide Code' : 'Show Code'}
-                        </span>
-                      </button>
-
-                      {showAdvanceEmbedCode && (
-                        <div className="mt-3 p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 animate-in fade-in duration-200">
-                          <p className="text-xs text-zinc-400">
-                            You can paste this snippet into your website now. As soon as your first review is published, the widget will start streaming video reviews automatically.
-                          </p>
-                          <div className="bg-black border border-zinc-850 rounded-xl p-3 font-mono text-[10.5px] text-zinc-300 max-h-36 overflow-y-auto whitespace-pre-wrap break-all leading-relaxed">
-                            {getEmbedCode()}
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={copyEmbedCode}
-                              className="px-3.5 py-1.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
-                            >
-                              {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{isCodeCopied ? 'Copied' : 'Copy Snippet'}</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 ) : (
                   /* FULL UNLOCKED STATE WHEN >= 1 VIDEO REVIEW EXISTS */
                   <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-7 shadow-xl space-y-5 sm:space-y-6">
-                    {/* Clean Simple Title Header */}
+                    {/* Clean Dark Title Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-zinc-800 pb-4 sm:pb-5">
                       <div>
                         <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
@@ -3716,7 +3675,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           Embed authentic video reviews directly on your website or reservation page.
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400 self-start sm:self-auto">
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 self-start sm:self-auto">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         <span>Live Stream Active ({placeVideos.length} {placeVideos.length === 1 ? 'Review' : 'Reviews'})</span>
                       </div>
@@ -3729,18 +3688,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           Embed Snippet
                         </span>
                         {isCodeCopied && (
-                          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                          <span className="text-xs font-bold text-zinc-200 flex items-center gap-1">
                             <Check className="w-3.5 h-3.5 stroke-[2.5]" /> Copied!
                           </span>
                         )}
                       </div>
 
-                      <p className="text-[11.5px] text-zinc-300 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                      <div className="text-[11.5px] text-zinc-400 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 flex items-center gap-2">
+                        <Star className="w-3.5 h-3.5 fill-zinc-300 text-zinc-300 shrink-0" />
                         <span>
-                          <strong>Google SEO Star Snippet Enabled:</strong> Automatic Schema.org JSON-LD is included natively to display golden review stars on Google Search automatically.
+                          <strong className="text-zinc-200">Google SEO Star Snippet Enabled:</strong> Automatic Schema.org JSON-LD is included natively to display golden review stars on Google Search automatically.
                         </span>
-                      </p>
+                      </div>
 
                       <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 sm:p-3.5 font-mono text-xs max-h-48 overflow-y-auto">
                         <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 whitespace-pre-wrap break-all leading-relaxed">
@@ -3752,7 +3711,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <button
                           type="button"
                           onClick={() => setShowEmbedTester(true)}
-                          className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors cursor-pointer bg-transparent border-none p-0"
+                          className="text-xs font-semibold text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer bg-transparent border-none p-0"
                         >
                           <span>Open Live Embed Tester</span>
                         </button>
@@ -3760,9 +3719,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         <button
                           type="button"
                           onClick={copyEmbedCode}
-                          className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                          className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
                         >
-                          {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950" /> : <Copy className="w-3.5 h-3.5" />}
+                          {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950" /> : <Copy className="w-3.5 h-3.5 text-zinc-950" />}
                           <span>{isCodeCopied ? 'Copied' : 'Copy Embed Snippet'}</span>
                         </button>
                       </div>
