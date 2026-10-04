@@ -26337,7 +26337,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
-      const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || "";
+      const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
       try {
         placeLogoBuf = await fetchPlaceLogoBuffer(rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
       } catch (e) {}
@@ -26352,6 +26352,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           logoPngBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
         } catch (e) {}
       }
+
+      const isYoouzPlace = rawTargetDomain === 'yoouz.com' || rawTargetDomain === 'www.yoouz.com' || rawTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
       const maxBottomWidth = Math.max(authorWidth + 20, starsWidth, videoReviewWidth);
       const authorPillWidth = Math.min(600, Math.max(280, 76 + maxBottomWidth + 24));
@@ -26388,20 +26390,29 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
               
               <!-- Left Squircle Logo Container -->
-              <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-              <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
-              ${logoPngBase64 ? `
-                <g transform="translate(13, 13)">
-                  <clipPath id="squircleLogoClip1">
-                    <rect x="0" y="0" width="36" height="36" rx="9"/>
-                  </clipPath>
-                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+              ${isYoouzPlace ? `
+                <rect x="10" y="10" width="42" height="42" rx="13" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+                <g transform="translate(14, 14)">
+                  <svg width="34" height="34" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
+                  </svg>
                 </g>
               ` : `
-                <g transform="translate(13, 13)">
-                  <rect x="0" y="0" width="36" height="36" rx="9" fill="#09090b"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
-                </g>
+                <rect x="10" y="10" width="42" height="42" rx="13" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                <rect x="13" y="13" width="36" height="36" rx="10" fill="#ffffff"/>
+                ${logoPngBase64 ? `
+                  <g transform="translate(13, 13)">
+                    <clipPath id="squircleLogoClip1">
+                      <rect x="0" y="0" width="36" height="36" rx="9"/>
+                    </clipPath>
+                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="2" y="2" width="32" height="32" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                  </g>
+                ` : `
+                  <g transform="translate(13, 13)">
+                    <rect x="0" y="0" width="36" height="36" rx="9" fill="#18181b"/>
+                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+                  </g>
+                `}
               `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
@@ -26484,20 +26495,30 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
           <g transform="translate(48, 40)">
             <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <rect x="10" y="10" width="42" height="42" rx="13" fill="#18181b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-            <rect x="13" y="13" width="36" height="36" rx="10" fill="#09090b"/>
-            ${logoPngBase64 ? `
-              <g transform="translate(13, 13)">
-                <clipPath id="squircleLogoClip2">
-                  <rect x="0" y="0" width="36" height="36" rx="9"/>
-                </clipPath>
-                <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+            
+            ${isYoouzPlace ? `
+              <rect x="10" y="10" width="42" height="42" rx="13" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+              <g transform="translate(14, 14)">
+                <svg width="34" height="34" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
+                </svg>
               </g>
             ` : `
-              <g transform="translate(13, 13)">
-                <rect x="0" y="0" width="36" height="36" rx="9" fill="#09090b"/>
-                ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
-              </g>
+              <rect x="10" y="10" width="42" height="42" rx="13" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+              <rect x="13" y="13" width="36" height="36" rx="10" fill="#ffffff"/>
+              ${logoPngBase64 ? `
+                <g transform="translate(13, 13)">
+                  <clipPath id="squircleLogoClip2">
+                    <rect x="0" y="0" width="36" height="36" rx="9"/>
+                  </clipPath>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="2" y="2" width="32" height="32" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+                </g>
+              ` : `
+                <g transform="translate(13, 13)">
+                  <rect x="0" y="0" width="36" height="36" rx="9" fill="#18181b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+                </g>
+              `}
             `}
 
             ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
@@ -27211,18 +27232,9 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
     <rect x="42" y="24" width="16" height="52" rx="4" fill="#ffffff"/>
     <rect x="24" y="42" width="52" height="16" rx="4" fill="#ffffff"/>
   </svg>`,
-  "izci.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="22" fill="#09090b"/>
-    <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
-    <circle cx="50" cy="50" r="32" fill="#005691"/>
-    <text x="50" y="58" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">BOSCH</text>
-  </svg>`,
-  "www.izci.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-    <rect width="100" height="100" rx="22" fill="#09090b"/>
-    <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
-    <circle cx="50" cy="50" r="32" fill="#005691"/>
-    <text x="50" y="58" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">BOSCH</text>
-  </svg>`
+  "izci.be": "https://www.izci.be/themes/custom/bosch/logo.svg",
+  "www.izci.be": "https://www.izci.be/themes/custom/bosch/logo.svg",
+  "izci": "https://www.izci.be/themes/custom/bosch/logo.svg"
 };
 
 function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): string {
@@ -27435,6 +27447,22 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
+  // If no direct URL, attempt to lookup place in database / memory
+  if (!directUrl && (domain || name || placeObj?.placeId)) {
+    try {
+      const resolved = await resolvePlaceFromAnySource(domain || name || placeObj?.placeId);
+      if (resolved && resolved.logoUrl) {
+        directUrl = resolved.logoUrl;
+        if (directUrl.includes("proxy-image?url=")) {
+          const match = directUrl.match(/url=([^&]+)/);
+          if (match && match[1]) {
+            directUrl = decodeURIComponent(match[1]);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   // Check if this is Yoouz itself
   if (domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
     try {
@@ -27448,6 +27476,17 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
         }
       }
     } catch (e) {}
+  }
+
+  // Direct Local File
+  if (directUrl && directUrl.startsWith("/") && !directUrl.startsWith("//")) {
+    try {
+      const localP = path.join(process.cwd(), directUrl.startsWith("/public") ? directUrl : `public${directUrl}`);
+      if (fs.existsSync(localP)) {
+        const fileData = fs.readFileSync(localP);
+        logoBuf = await sharp(fileData).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+      }
+    } catch(e) {}
   }
 
   // 1. Direct Data URL
@@ -28056,7 +28095,10 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         const rawAuthorAvatar = foundVideo?.authorAvatar || foundVideo?.author?.avatar || foundVideo?.userAvatar || "";
         const authorAvatarParam = rawAuthorAvatar ? `&authorAvatar=${encodeURIComponent(rawAuthorAvatar)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}${authorAvatarParam}&v=9`;
+        const rawPlaceLogo = foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
+        const placeLogoParam = rawPlaceLogo ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
+        const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}${placeDomainParam}${placeLogoParam}${authorAvatarParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";

@@ -187,18 +187,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   let resolvedBannerUrl: string | undefined = undefined;
 
   if (isVideoMode && video) {
-    const domainSlug = getPlaceSlug(video.placeWebsite || video.placeId || video.placeName || video);
+    const rawDomain = video.placeWebsite || (video.placeId && video.placeId.includes('.') ? video.placeId : '') || (video.placeName && video.placeName.includes('.') ? video.placeName : '') || video.placeId || video.placeName || "";
+    const domainSlug = getPlaceSlug(rawDomain || video);
     shareUrl = `${appOrigin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(video.id)}`;
-    const placeName = formatBusinessName(video.placeName || "Business");
+    const placeName = formatBusinessName(video.placeName || (video.placeId ? extractCleanDomain(video.placeId) : "Business"));
     title = placeName;
     const authorName = video.author?.name || (video as any)?.authorName || "Verified Reviewer";
     subtitle = authorName ? `${authorName} • 60s Review` : "Authentic 60s Video Review";
     isBusiness = false;
     resolvedAvatarUrl = video.author?.avatar || (video as any)?.authorAvatar;
-    resolvedDomain = video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "";
+    resolvedDomain = extractCleanDomain(rawDomain);
     resolvedWebsite = video.placeWebsite || "";
-    resolvedLogoUrl = video.placeLogoUrl;
-    resolvedBannerUrl = video.placeBannerUrl;
+    resolvedLogoUrl = video.placeLogoUrl || (video as any)?.placeLogo || (video as any)?.logoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo || (video as any)?.place?.logoUrl;
+    resolvedBannerUrl = video.placeBannerUrl || (video as any)?.bannerUrl || (video as any)?.place?.bannerUrl;
   } else {
     shareUrl = propShareUrl || appOrigin;
     title = propTitle || "Yoouz - Real People. Real Reviews.";
@@ -225,7 +226,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&v=4`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=9`
       : isBusiness
       ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=20`
       : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=16`
@@ -643,9 +644,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       name={title}
                       website={resolvedWebsite || video?.placeWebsite}
                       logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
-                      className="w-5 h-5 rounded-md bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
+                      className="w-5 h-5 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
                       imageClassName="w-full h-full object-contain rounded-xs"
-                      fallbackTextClassName="font-black text-[8px] text-white"
+                      fallbackTextClassName="font-black text-[8px] text-zinc-950"
                     />
                     <span className="text-white text-xs font-bold truncate">
                       {title}
