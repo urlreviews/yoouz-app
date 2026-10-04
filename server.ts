@@ -26370,7 +26370,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (thumbBuf) {
         const overlaySvg = `
-          <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+          <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
             <defs>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#000000" stop-opacity="0.75" />
@@ -26395,10 +26395,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
                   <clipPath id="squircleLogoClip1">
                     <rect x="0" y="0" width="36" height="36" rx="9"/>
                   </clipPath>
-                  <image href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
                 </g>
               ` : `
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+                <g transform="translate(13, 13)">
+                  <rect x="0" y="0" width="36" height="36" rx="9" fill="#09090b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+                </g>
               `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
@@ -26428,7 +26431,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                   <clipPath id="reviewerAvatarClip1">
                     <circle cx="26" cy="26" r="26"/>
                   </clipPath>
-                  <image href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
                 </g>
               ` : `
                 <!-- Avatar Circle (Matching App Player Color) -->
@@ -26455,13 +26458,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
         return await sharp(thumbBuf)
           .resize(1200, 630, { fit: 'cover', position: 'center' })
           .composite([{ input: Buffer.from(overlaySvg), top: 0, left: 0 }])
-          .png({ quality: 92 })
+          .png({ quality: 90 })
           .toBuffer();
       }
 
       // Clean cinema fallback card if no video thumbnail is available
       const fallbackCinemaSvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
           <defs>
             <linearGradient id="bgCinema" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#09090b" />
@@ -26488,10 +26491,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <clipPath id="squircleLogoClip2">
                   <rect x="0" y="0" width="36" height="36" rx="9"/>
                 </clipPath>
-                <image href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+                <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="36" height="36" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
               </g>
             ` : `
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(20, 20) scale(0.9)"/>
+              <g transform="translate(13, 13)">
+                <rect x="0" y="0" width="36" height="36" rx="9" fill="#09090b"/>
+                ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 18, true) / 2), 24, 18, true, '#ffffff')}
+              </g>
             `}
 
             ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
@@ -26519,7 +26525,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <clipPath id="reviewerAvatarClip2">
                   <circle cx="26" cy="26" r="26"/>
                 </clipPath>
-                <image href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
+                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
               </g>
             ` : `
               <!-- Avatar Circle (Matching App Player Color) -->
@@ -27204,11 +27210,41 @@ const KNOWN_BRAND_LOGOS: Record<string, string> = {
     <rect width="100" height="100" rx="22" fill="#15803d"/>
     <rect x="42" y="24" width="16" height="52" rx="4" fill="#ffffff"/>
     <rect x="24" y="42" width="52" height="16" rx="4" fill="#ffffff"/>
+  </svg>`,
+  "izci.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#09090b"/>
+    <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+    <circle cx="50" cy="50" r="32" fill="#005691"/>
+    <text x="50" y="58" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">BOSCH</text>
+  </svg>`,
+  "www.izci.be": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <rect width="100" height="100" rx="22" fill="#09090b"/>
+    <rect x="4" y="4" width="92" height="92" rx="18" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+    <circle cx="50" cy="50" r="32" fill="#005691"/>
+    <text x="50" y="58" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">BOSCH</text>
   </svg>`
 };
 
 function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" fill="none"></svg>`;
+  const clean = (nameOrDomain || "").trim();
+  const isYoouz = clean.toLowerCase().includes("yoouz");
+  if (isYoouz) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+      <rect width="${size}" height="${size}" rx="${Math.round(size * 0.28)}" fill="#09090b"/>
+      <rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="${Math.round(size * 0.28) - 1}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="${Math.max(2, size * 0.03)}"/>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" transform="translate(${Math.round(size * 0.22)}, ${Math.round(size * 0.22)}) scale(${size * 0.024})"/>
+    </svg>`;
+  }
+
+  const initial = clean.charAt(0).toUpperCase() || "B";
+  const fontSize = Math.round(size * 0.52);
+  const textY = Math.round(size * 0.68);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.28)}" fill="#09090b"/>
+    <rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="${Math.round(size * 0.28) - 1}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="${Math.max(2, size * 0.03)}"/>
+    <text x="50%" y="${textY}" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="${fontSize}" fill="#ffffff" text-anchor="middle" dominant-baseline="auto">${initial}</text>
+  </svg>`;
 }
 
 // Multi-Source Business Place Resolver (In-Memory, BunnyDB, BunnyDB, Drizzle SQL)
@@ -27387,14 +27423,25 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   }
 
   let logoBuf: Buffer | null = null;
-  const directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
+  let directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.placeLogoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
+
+  // Unwrap proxy-image?url=
+  if (directUrl && directUrl.includes("proxy-image?url=")) {
+    try {
+      const match = directUrl.match(/url=([^&]+)/);
+      if (match && match[1]) {
+        directUrl = decodeURIComponent(match[1]);
+      }
+    } catch (e) {}
+  }
 
   // Check if this is Yoouz itself
   if (domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
     try {
-      const localIconPath = path.join(process.cwd(), 'public', 'icon-512.png');
-      if (fs.existsSync(localIconPath)) {
-        logoBuf = fs.readFileSync(localIconPath);
+      const localFaviconPath = path.join(process.cwd(), 'public', 'favicon.svg');
+      if (fs.existsSync(localFaviconPath)) {
+        const svgContent = fs.readFileSync(localFaviconPath);
+        logoBuf = await sharp(svgContent).resize(360, 360).png().toBuffer();
         if (logoBuf && logoBuf.length > 0) {
           placeLogoBufferCache.set(cacheKey, { buf: logoBuf, timestamp: Date.now() });
           return logoBuf;
@@ -27408,30 +27455,42 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     logoBuf = decodeDataUrl(directUrl);
   }
 
-  // 2. Direct SVG for known brands
-  if (!logoBuf && domain && KNOWN_BRAND_LOGOS[domain]) {
-    try {
-      if (KNOWN_BRAND_LOGOS[domain].startsWith('<svg')) {
-        logoBuf = Buffer.from(KNOWN_BRAND_LOGOS[domain]);
-      }
-    } catch (e) {}
+  // 2. Direct SVG or Data URL for known brands
+  if (!logoBuf && domain) {
+    const dClean = domain.replace(/^www\./, "").toLowerCase().trim();
+    const rawKnown = KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[dClean];
+    if (rawKnown) {
+      try {
+        if (rawKnown.startsWith('<svg')) {
+          logoBuf = await sharp(Buffer.from(rawKnown)).resize(360, 360).png().toBuffer();
+        } else if (rawKnown.startsWith('data:image/svg')) {
+          const svgStr = decodeURIComponent(rawKnown.split(',')[1]);
+          logoBuf = await sharp(Buffer.from(svgStr)).resize(360, 360).png().toBuffer();
+        } else if (rawKnown.startsWith('data:image')) {
+          logoBuf = decodeDataUrl(rawKnown);
+        }
+      } catch (e) {}
+    }
   }
 
-  // 3. Parallel Network Fetch from authentic brand asset sources only (STRICTLY NO favicon CDNs)
+  // 3. Parallel Network Fetch from authentic brand asset sources or direct URL
   if (!logoBuf) {
     const candidateUrls: string[] = [];
-    if (directUrl && directUrl.startsWith("http") && !isFaviconUrl(directUrl)) {
+    if (directUrl && (directUrl.startsWith("http://") || directUrl.startsWith("https://"))) {
       candidateUrls.push(directUrl);
     }
     if (domain && domain.includes(".")) {
-      if (KNOWN_BRAND_LOGOS[domain]) {
+      const dClean = domain.replace(/^www\./, "").toLowerCase().trim();
+      if (KNOWN_BRAND_LOGOS[domain] && KNOWN_BRAND_LOGOS[domain].startsWith("http")) {
         candidateUrls.push(KNOWN_BRAND_LOGOS[domain]);
+      } else if (KNOWN_BRAND_LOGOS[dClean] && KNOWN_BRAND_LOGOS[dClean].startsWith("http")) {
+        candidateUrls.push(KNOWN_BRAND_LOGOS[dClean]);
       }
     }
 
     const fetchPromises = candidateUrls.map(async (u) => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
+      const timeout = setTimeout(() => controller.abort(), 3500);
       try {
         const resp = await fetch(u, {
           signal: controller.signal,
@@ -27444,11 +27503,9 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
         if (resp.ok) {
           const ab = await resp.arrayBuffer();
           const buf = Buffer.from(ab);
-          if (buf.length > 80) {
-            const meta = await sharp(buf).metadata().catch(() => null);
-            if (meta && meta.width && meta.height && meta.width >= 64 && meta.height >= 64) {
-              return buf;
-            }
+          if (buf.length > 50) {
+            const pngBuf = await sharp(buf).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+            if (pngBuf) return pngBuf;
           }
         }
       } catch (e) {
@@ -27470,7 +27527,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   if (!logoBuf && domain && domain.includes(".")) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
+      const timeout = setTimeout(() => controller.abort(), 3000);
       const siteResp = await fetch(`https://${domain}`, {
         signal: controller.signal,
         headers: {
@@ -27484,7 +27541,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
         const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed)["'][^>]+href=["']([^"']+)["']/i);
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         const iconHref = appleIconMatch ? appleIconMatch[1] : (ogImageMatch ? ogImageMatch[1] : null);
-        if (iconHref && !isFaviconUrl(iconHref)) {
+        if (iconHref) {
           let fullIconUrl = iconHref;
           if (iconHref.startsWith("//")) {
             fullIconUrl = `https:${iconHref}`;
@@ -27499,11 +27556,9 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
           if (iconResp.ok) {
             const ab = await iconResp.arrayBuffer();
             const buf = Buffer.from(ab);
-            if (buf.length > 80) {
-              const meta = await sharp(buf).metadata().catch(() => null);
-              if (meta && meta.width && meta.height && meta.width >= 64 && meta.height >= 64) {
-                logoBuf = buf;
-              }
+            if (buf.length > 50) {
+              const pngBuf = await sharp(buf).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+              if (pngBuf) logoBuf = pngBuf;
             }
           }
         }
@@ -27817,8 +27872,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="twitter:image:alt" content="${safeTitle}" />
     
     <link rel="canonical" href="${safeUrl}" />
-    ${meta.touchIcon ? `<link rel="apple-touch-icon" href="${escapeHtml(meta.touchIcon)}" />` : `<link rel="apple-touch-icon" href="${safeImage}" />`}
-    ${meta.logoUrl ? `<link rel="icon" type="image/png" href="${escapeHtml(meta.logoUrl)}" />` : ''}
+    <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/apple-touch-icon.png'}" />
+    <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="${baseUrl}/icon-192.png" />
+    <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
     `;
 
     if (meta.videoUrl) {
