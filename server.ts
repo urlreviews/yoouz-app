@@ -7110,10 +7110,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }
     }
 
-    // If counts.videoReviews is 0 in BunnyDB, augment with local reviews index
+    // Use authoritative BunnyDB videoReviews count directly (only augment with local index if BunnyDB count is 0)
     try {
-      const localRevCount = readReviewsIndex().length;
-      counts.videoReviews = Math.max(counts.videoReviews || 0, localRevCount);
+      if (!counts.videoReviews || counts.videoReviews === 0) {
+        counts.videoReviews = readReviewsIndex().length;
+      }
     } catch (e) {}
 
     // Ensure total users accurately reflects active accounts and creators
