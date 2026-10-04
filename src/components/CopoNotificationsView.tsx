@@ -45,7 +45,7 @@ interface CopoNotificationsViewProps {
   onOpenCreator?: (author: any) => void;
 }
 
-type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "people" | "bookmarks";
+type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "shares" | "people" | "bookmarks";
 
 export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   notifications,
@@ -166,15 +166,17 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         if (n.type === "comment" && userPrefs.comments === false) return false;
         if ((n.type === "message" || (n.type as any) === "chat") && userPrefs.messages === false) return false;
         if (n.type === "follow" && userPrefs.follows === false) return false;
-        if ((n.type === "bookmark" || n.type === "repost") && userPrefs.bookmarks === false) return false;
+        if (n.type === "bookmark" && userPrefs.bookmarks === false) return false;
+        if ((n.type === "repost" || n.type === "share") && (userPrefs.shares === false || (userPrefs.shares === undefined && userPrefs.bookmarks === false))) return false;
       }
 
       if (activeFilter === "unread") return !n.isRead;
       if (activeFilter === "messages") return n.type === "message";
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
+      if (activeFilter === "shares") return n.type === "share" || n.type === "repost";
       if (activeFilter === "people") return n.type === "follow";
-      if (activeFilter === "bookmarks") return n.type === "bookmark" || n.type === "repost";
+      if (activeFilter === "bookmarks") return n.type === "bookmark";
       return true;
     });
   }, [notifications, activeFilter, userPrefs]);
@@ -192,6 +194,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
     { label: "Messages", value: "messages" },
     { label: "Likes", value: "likes" },
     { label: "Comments", value: "comments" },
+    { label: "Shares", value: "shares" },
     { label: "Followers", value: "people" },
     { label: "Saves", value: "bookmarks" }
   ];
@@ -484,6 +487,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   icon: <UserPlus className="w-3 h-3 stroke-[2.5] shrink-0" />
                 },
                 repost: {
+                  bg: "bg-indigo-500 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0" />
+                },
+                share: {
                   bg: "bg-indigo-500 text-white ring-2 ring-zinc-950 shadow-md",
                   icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0" />
                 },

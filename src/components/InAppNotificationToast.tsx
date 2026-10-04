@@ -7,7 +7,7 @@ import { NotificationPreferences } from "../types";
 export interface InAppToastPayload {
   id: string;
   type: "message" | "notification";
-  actionType?: "like" | "comment" | "follow" | "bookmark" | "repost" | "message";
+  actionType?: "like" | "comment" | "follow" | "bookmark" | "repost" | "share" | "message";
   title: string;
   subtitle: string;
   avatar?: string;
@@ -51,7 +51,8 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     if (aType === "like" && effectivePrefs?.likes === false) return true;
     if (aType === "comment" && effectivePrefs?.comments === false) return true;
     if (aType === "follow" && effectivePrefs?.follows === false) return true;
-    if ((aType === "bookmark" || aType === "repost") && effectivePrefs?.bookmarks === false) return true;
+    if (aType === "bookmark" && effectivePrefs?.bookmarks === false) return true;
+    if ((aType === "repost" || aType === "share") && (effectivePrefs?.shares === false || (effectivePrefs?.shares === undefined && effectivePrefs?.bookmarks === false))) return true;
     return false;
   })();
 
@@ -117,7 +118,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     badgeBg = "bg-amber-400 text-zinc-950";
     progressBg = "bg-amber-400";
     ActionIcon = Bookmark;
-  } else if (actionType === "repost") {
+  } else if (actionType === "repost" || actionType === "share") {
     badgeBg = "bg-blue-400 text-zinc-950";
     progressBg = "bg-blue-400";
     ActionIcon = Repeat2;

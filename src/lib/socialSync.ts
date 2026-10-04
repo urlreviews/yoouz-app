@@ -547,7 +547,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       if (normNotifType === "comment" && prefs.comments === false) continue;
       if ((normNotifType === "message" || normNotifType === "chat") && prefs.messages === false) continue;
       if (normNotifType === "follow" && prefs.follows === false) continue;
-      if ((normNotifType === "bookmark" || normNotifType === "save" || normNotifType === "repost" || normNotifType === "share") && prefs.bookmarks === false) continue;
+      if ((normNotifType === "bookmark" || normNotifType === "save") && prefs.bookmarks === false) continue;
+      if ((normNotifType === "repost" || normNotifType === "share") && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) continue;
     }
 
     // Resolve authentic creation timestamp

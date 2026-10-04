@@ -65,6 +65,7 @@ export interface NotificationPreferences {
   messages: boolean;
   follows: boolean;
   bookmarks: boolean;
+  shares?: boolean;
   emailNotifications: boolean;
 }
 
@@ -75,6 +76,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   messages: true,
   follows: true,
   bookmarks: true,
+  shares: true,
   emailNotifications: false,
 };
 
@@ -312,7 +314,7 @@ export interface Place {
 
 export interface CopoNotification {
   id: string;
-  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark";
+  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark" | "share";
   user: {
     name: string;
     avatar: string;

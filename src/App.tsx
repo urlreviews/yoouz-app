@@ -190,6 +190,7 @@ export function App() {
   const [inAppToast, setInAppToast] = useState<InAppToastPayload | null>(null);
   const prevNotifIdsRef = useRef<Set<string>>(new Set());
   const isFirstNotifLoadRef = useRef<boolean>(true);
+  const appMountTimeRef = useRef<number>(Date.now());
   const prevChatHistoryLengthRef = useRef<Map<string, number>>(new Map());
   const isFirstChatLoadRef = useRef<boolean>(true);
 
@@ -425,7 +426,8 @@ export function App() {
           (aType === "like" && newSettings.likes === false) ||
           (aType === "comment" && newSettings.comments === false) ||
           (aType === "follow" && newSettings.follows === false) ||
-          ((aType === "bookmark" || aType === "repost") && newSettings.bookmarks === false)
+          (aType === "bookmark" && newSettings.bookmarks === false) ||
+          ((aType === "repost" || aType === "share") && newSettings.shares === false)
         ) {
           setInAppToast(null);
         }
@@ -437,7 +439,8 @@ export function App() {
         if (n.type === "comment" && newSettings.comments === false) return false;
         if ((n.type === "message" || (n.type as any) === "chat") && newSettings.messages === false) return false;
         if (n.type === "follow" && newSettings.follows === false) return false;
-        if ((n.type === "bookmark" || n.type === "repost") && newSettings.bookmarks === false) return false;
+        if (n.type === "bookmark" && newSettings.bookmarks === false) return false;
+        if ((n.type === "repost" || n.type === "share") && (newSettings.shares === false || (newSettings.shares === undefined && newSettings.bookmarks === false))) return false;
         return true;
       }));
     }
@@ -1998,8 +2001,15 @@ export function App() {
         return;
       }
 
-      // Check for brand new unread notification
-      const newIncoming = notifs.find((n) => !n.isRead && !prevNotifIdsRef.current.has(n.id));
+      // Check for brand new live incoming notification (only for events created while current session is live)
+      const newIncoming = notifs.find((n) => {
+        if (n.isRead) return false;
+        if (prevNotifIdsRef.current.has(n.id)) return false;
+        // Prevent historical / stale notifications from firing a popup toast on page refresh
+        const notifTime = n.createdAtMs || (n as any).createdAt || 0;
+        if (notifTime > 0 && notifTime < appMountTimeRef.current - 15000) return false;
+        return true;
+      });
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
 
       if (newIncoming && activeSectionRef.current !== "notifications") {
@@ -2015,14 +2025,15 @@ export function App() {
         if (newIncoming.type === "like" && prefs?.likes === false) return;
         if (newIncoming.type === "comment" && prefs?.comments === false) return;
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
-        if ((newIncoming.type === "bookmark" || newIncoming.type === "repost") && prefs?.bookmarks === false) return;
+        if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
+        if ((newIncoming.type === "repost" || newIncoming.type === "share") && (prefs?.shares === false || (prefs?.shares === undefined && prefs?.bookmarks === false))) return;
 
         let title = "1 new notification";
         if (newIncoming.type === "like") title = "1 new like";
         else if (newIncoming.type === "comment") title = "1 new comment";
         else if (newIncoming.type === "follow") title = "1 new follower";
         else if (newIncoming.type === "bookmark") title = "1 new save";
-        else if (newIncoming.type === "repost") title = "1 new share";
+        else if (newIncoming.type === "repost" || newIncoming.type === "share") title = "1 new share";
 
         const targetThreadId = (newIncoming as any).threadId || (newIncoming as any).chatId;
 

@@ -5504,7 +5504,8 @@ async function isNotificationAllowedForRecipient(recipientIdentifier: string, no
         if (normType === 'comment' && prefs.comments === false) return false;
         if ((normType === 'message' || normType === 'chat') && prefs.messages === false) return false;
         if (normType === 'follow' && prefs.follows === false) return false;
-        if ((normType === 'bookmark' || normType === 'save' || normType === 'repost' || normType === 'share') && prefs.bookmarks === false) return false;
+        if ((normType === 'bookmark' || normType === 'save') && prefs.bookmarks === false) return false;
+        if ((normType === 'repost' || normType === 'share') && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) return false;
       }
     }
   } catch (err) {
@@ -6199,7 +6200,8 @@ app.get('/api/nosql/:collection', async (req, res) => {
                   if (t === 'comment' && prefs.comments === false) return false;
                   if ((t === 'message' || t === 'chat') && prefs.messages === false) return false;
                   if (t === 'follow' && prefs.follows === false) return false;
-                  if ((t === 'bookmark' || t === 'save' || t === 'repost' || t === 'share') && prefs.bookmarks === false) return false;
+                  if ((t === 'bookmark' || t === 'save') && prefs.bookmarks === false) return false;
+                  if ((t === 'repost' || t === 'share') && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) return false;
                   return true;
                 });
               }

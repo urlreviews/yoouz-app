@@ -7,6 +7,7 @@ import {
   Mail,
   UserPlus,
   Bookmark,
+  Repeat2,
   X,
   Check,
   ShieldCheck,
@@ -406,6 +407,34 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                     checked={prefs.bookmarks && prefs.enabled}
                     disabled={!prefs.enabled}
                     onChange={() => handleToggle("bookmarks")}
+                  />
+                </div>
+
+                {/* 6. Video Shares & Reposts */}
+                <div
+                  onClick={() => {
+                    if (prefs.enabled) handleToggle("shares");
+                  }}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                      <Repeat2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
+                        Shares & Reposts
+                      </p>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
+                        When viewers share or repost your authentic video reviews
+                      </p>
+                    </div>
+                  </div>
+                  <DarkSwitch
+                    id="toggle-notif-shares"
+                    checked={prefs.shares !== false && prefs.enabled}
+                    disabled={!prefs.enabled}
+                    onChange={() => handleToggle("shares")}
                   />
                 </div>
               </div>
