@@ -26300,8 +26300,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
           }
           if (buf && buf.length > 100) {
-            const resizedAvatar = await sharp(buf)
-              .resize(52, 52, { fit: "cover" })
+            const resizedAvatar = await sharp(buf, { density: 300 })
+              .resize(256, 256, { fit: "cover" })
               .png()
               .toBuffer();
             authorAvatarPngBase64 = `data:image/png;base64,${resizedAvatar.toString("base64")}`;
@@ -26345,8 +26345,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       let logoPngBase64 = "";
       if (placeLogoBuf) {
         try {
-          const resizedLogo = await sharp(placeLogoBuf)
-            .resize(36, 36, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          const resizedLogo = await sharp(placeLogoBuf, { density: 300 })
+            .resize(256, 256, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
             .png()
             .toBuffer();
           logoPngBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
@@ -26466,10 +26466,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
           </svg>
         `;
 
+        const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 150 })
+          .resize(1200, 630)
+          .png()
+          .toBuffer();
+
         return await sharp(thumbBuf)
           .resize(1200, 630, { fit: 'cover', position: 'center' })
-          .composite([{ input: Buffer.from(overlaySvg), top: 0, left: 0 }])
-          .png({ quality: 90 })
+          .composite([{ input: overlayBuf, top: 0, left: 0 }])
+          .png({ quality: 95 })
           .toBuffer();
       }
 
@@ -26595,6 +26600,129 @@ app.get('/api/og-preview-v2', async (req, res) => {
         const ogBannerPath = path.join(process.cwd(), 'public', 'og-banner.png');
         if (fs.existsSync(ogBannerPath)) return res.sendFile(ogBannerPath);
         return res.status(500).send("Error generating image");
+      }
+    });
+
+    async function generateSquareTouchIconBuffer(domain: string, name: string, explicitLogoUrl?: string, placeObj?: any): Promise<Buffer> {
+      const isYoouz = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || name?.toLowerCase() === 'yoouz';
+      
+      if (isYoouz) {
+        const yoouzSvg = `
+          <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <rect width="512" height="512" rx="140" fill="#09090b"/>
+            <rect x="3" y="3" width="506" height="506" rx="137" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="6"/>
+            <path d="M256 50l66 133.7 147.5 21.4-106.7 104 25.2 146.9-132-69.4-132 69.4 25.2-146.9-106.7-104L190 183.7z" fill="#ffffff"/>
+          </svg>
+        `;
+        return await sharp(Buffer.from(yoouzSvg), { density: 300 }).resize(180, 180).png({ quality: 95 }).toBuffer();
+      }
+
+      const logoBuf = await fetchPlaceLogoBuffer(domain, name, explicitLogoUrl, placeObj);
+      
+      if (logoBuf) {
+        const resizedLogo = await sharp(logoBuf, { density: 300 })
+          .resize(380, 380, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+          .png()
+          .toBuffer();
+        const logoBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
+
+        const touchIconSvg = `
+          <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <rect width="512" height="512" rx="128" fill="#ffffff"/>
+            <rect x="2" y="2" width="508" height="508" rx="126" fill="none" stroke="#e4e4e7" stroke-width="4"/>
+            <g transform="translate(66, 66)">
+              <clipPath id="touchLogoClip">
+                <rect x="0" y="0" width="380" height="380" rx="96"/>
+              </clipPath>
+              <image href="${logoBase64}" xlink:href="${logoBase64}" x="0" y="0" width="380" height="380" preserveAspectRatio="xMidYMid meet" clip-path="url(#touchLogoClip)"/>
+            </g>
+          </svg>
+        `;
+
+        return await sharp(Buffer.from(touchIconSvg), { density: 300 })
+          .resize(180, 180)
+          .png({ quality: 95 })
+          .toBuffer();
+      }
+
+      const fallbackSvg = generateBrandMonogramSvg(name || domain, 512);
+      return await sharp(Buffer.from(fallbackSvg), { density: 300 }).resize(180, 180).png({ quality: 95 }).toBuffer();
+    }
+
+    // Dedicated high-resolution touch icon endpoint for iOS Safari native share sheet & AirDrop
+    app.get(['/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
+      try {
+        const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
+        const queryParams = sanitizeQueryParams(req.query);
+        let foundVideo: any = null;
+
+        if (videoId) {
+          if (typeof readReviewsIndex === 'function') {
+            try {
+              const localList = readReviewsIndex();
+              foundVideo = localList.find((v: any) => v.id === videoId);
+            } catch (e) {}
+          }
+          if (!foundVideo) {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+              try {
+                const bRes = await bunnyDb.execute({
+                  sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+                  args: [videoId]
+                });
+                if (bRes.rows && bRes.rows.length > 0 && (bRes.rows[0] as any).data) {
+                  const raw = (bRes.rows[0] as any).data;
+                  foundVideo = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
+        const placeName = formatBusinessName(rawPlace);
+        const rawTargetDomain = queryParams.placeDomain || queryParams.domain || foundVideo?.placeWebsite || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : placeName));
+        const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
+
+        const iconBuf = await generateSquareTouchIconBuffer(rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
+
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Content-Length", iconBuf.length);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        return res.end(iconBuf);
+      } catch (e) {
+        const fallbackPath = path.join(process.cwd(), 'public', 'icon-192.png');
+        if (fs.existsSync(fallbackPath)) return res.sendFile(fallbackPath);
+        return res.status(500).send("Error generating touch icon");
+      }
+    });
+
+    app.get(['/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
+      try {
+        const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").trim();
+        const queryParams = sanitizeQueryParams(req.query);
+        let placeObj: any = null;
+        try {
+          placeObj = await resolvePlaceFromAnySource(rawDomain || queryParams.name || "");
+        } catch (e) {}
+
+        const cleanDomain = cleanDomainName(rawDomain || placeObj?.domain || placeObj?.website || "business.com");
+        const placeName = formatBusinessName(placeObj?.name || queryParams.name || cleanDomain || "Business");
+        const explicitLogoUrl = queryParams.logoUrl || placeObj?.logoUrl || "";
+
+        const iconBuf = await generateSquareTouchIconBuffer(cleanDomain, placeName, explicitLogoUrl, placeObj);
+
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Content-Length", iconBuf.length);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        return res.end(iconBuf);
+      } catch (e) {
+        const fallbackPath = path.join(process.cwd(), 'public', 'icon-192.png');
+        if (fs.existsSync(fallbackPath)) return res.sendFile(fallbackPath);
+        return res.status(500).send("Error generating touch icon");
       }
     });
 
@@ -27469,7 +27597,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
       const localFaviconPath = path.join(process.cwd(), 'public', 'favicon.svg');
       if (fs.existsSync(localFaviconPath)) {
         const svgContent = fs.readFileSync(localFaviconPath);
-        logoBuf = await sharp(svgContent).resize(360, 360).png().toBuffer();
+        logoBuf = await sharp(svgContent, { density: 300 }).resize(512, 512).png().toBuffer();
         if (logoBuf && logoBuf.length > 0) {
           placeLogoBufferCache.set(cacheKey, { buf: logoBuf, timestamp: Date.now() });
           return logoBuf;
@@ -27484,7 +27612,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
       const localP = path.join(process.cwd(), directUrl.startsWith("/public") ? directUrl : `public${directUrl}`);
       if (fs.existsSync(localP)) {
         const fileData = fs.readFileSync(localP);
-        logoBuf = await sharp(fileData).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+        logoBuf = await sharp(fileData, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
       }
     } catch(e) {}
   }
@@ -27501,10 +27629,10 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     if (rawKnown) {
       try {
         if (rawKnown.startsWith('<svg')) {
-          logoBuf = await sharp(Buffer.from(rawKnown)).resize(360, 360).png().toBuffer();
+          logoBuf = await sharp(Buffer.from(rawKnown), { density: 300 }).resize(512, 512).png().toBuffer();
         } else if (rawKnown.startsWith('data:image/svg')) {
           const svgStr = decodeURIComponent(rawKnown.split(',')[1]);
-          logoBuf = await sharp(Buffer.from(svgStr)).resize(360, 360).png().toBuffer();
+          logoBuf = await sharp(Buffer.from(svgStr), { density: 300 }).resize(512, 512).png().toBuffer();
         } else if (rawKnown.startsWith('data:image')) {
           logoBuf = decodeDataUrl(rawKnown);
         }
@@ -27543,7 +27671,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
           const ab = await resp.arrayBuffer();
           const buf = Buffer.from(ab);
           if (buf.length > 50) {
-            const pngBuf = await sharp(buf).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+            const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
             if (pngBuf) return pngBuf;
           }
         }
@@ -27596,7 +27724,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
             const ab = await iconResp.arrayBuffer();
             const buf = Buffer.from(ab);
             if (buf.length > 50) {
-              const pngBuf = await sharp(buf).resize(360, 360, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+              const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
               if (pngBuf) logoBuf = pngBuf;
             }
           }
@@ -27608,8 +27736,8 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   // 5. If STILL not found: Render a Brand Monogram specifically for THIS business (Never the Yoouz logo!)
   if (!logoBuf) {
     try {
-      const monoSvg = generateBrandMonogramSvg(name || domain, 360);
-      logoBuf = await sharp(Buffer.from(monoSvg)).resize(360, 360).png().toBuffer();
+      const monoSvg = generateBrandMonogramSvg(name || domain, 512);
+      logoBuf = await sharp(Buffer.from(monoSvg), { density: 300 }).resize(512, 512).png().toBuffer();
     } catch (e) {}
   }
 
@@ -27912,9 +28040,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     
     <link rel="canonical" href="${safeUrl}" />
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/apple-touch-icon.png'}" />
-    <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="192x192" href="${baseUrl}/icon-192.png" />
-    <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
+    <link rel="apple-touch-icon" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/apple-touch-icon.png'}" />
+    <link rel="icon" type="image/png" sizes="192x192" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/icon-192.png'}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/favicon.ico'}" />
+    <link rel="shortcut icon" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/favicon.ico'}" />
     `;
 
     if (meta.videoUrl) {
@@ -27949,11 +28078,12 @@ function injectOpenGraphTags(html: string, meta: any) {
       `;
     }
 
-    // Strip out all existing title and og/twitter meta tags so they don't conflict
+    // Strip out all existing title, og/twitter meta tags and static link icons so they don't conflict
     return html
       .replace(/<title>[\s\S]*?<\/title>/gi, '')
       .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
+      .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '')
       .replace('</head>', `${headInject}</head>`);
   }
 
@@ -27998,6 +28128,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     let title = "Yoouz - Authentic 60-Second Video Reviews";
     let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
     let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=25`;
+    let touchIcon = `${publicBase}/apple-touch-icon.png`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
@@ -28099,6 +28230,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const placeLogoParam = rawPlaceLogo ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
         const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
         imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}${placeDomainParam}${placeLogoParam}${authorAvatarParam}&v=9`;
+        touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
@@ -28243,6 +28375,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
         imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=20`;
+        touchIcon = `${baseUrl}/api/touch-icon/place/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=20`;
         twitterCard = "summary_large_image";
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing
@@ -28571,6 +28704,8 @@ function injectOpenGraphTags(html: string, meta: any) {
       title,
       description,
       imageUrl,
+      touchIcon,
+      logoUrl: touchIcon,
       videoUrl,
       embedUrl,
       type,
