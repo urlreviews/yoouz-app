@@ -52,8 +52,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 48,
-    "viewsCount": 48,
+    "views": 136,
+    "viewsCount": 136,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -70,9 +70,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1791023696621-7obmi",
@@ -143,9 +143,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1791023009708-0qszq",
@@ -198,8 +198,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 7,
-    "viewsCount": 7,
+    "views": 26,
+    "viewsCount": 26,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -216,9 +216,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1791021692476-auirn",
@@ -271,8 +271,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 8,
-    "viewsCount": 8,
+    "views": 38,
+    "viewsCount": 38,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -289,9 +289,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1791020765196-3ni9f",
@@ -302,8 +302,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeId": "izci.be",
     "placeName": "Bosch Car Service Izci",
     "placeCategory": "Website",
-    "placeAddress": "Gent",
-    "placeCity": "Gent",
+    "placeAddress": "2 maanden geleden",
+    "placeCity": "Online",
     "placeCountry": "Belgium",
     "placePhone": "+32 9 226 28 11",
     "placeEmail": "ramazanizci@hotmail.com",
@@ -344,8 +344,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 9,
-    "viewsCount": 9,
+    "views": 20,
+    "viewsCount": 20,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -362,9 +362,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1791020683183-yegpo",
@@ -375,8 +375,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeId": "izci.be",
     "placeName": "Bosch Car Service Izci",
     "placeCategory": "Website",
-    "placeAddress": "Gent",
-    "placeCity": "Gent",
+    "placeAddress": "2 maanden geleden",
+    "placeCity": "Online",
     "placeCountry": "Belgium",
     "placePhone": "+32 9 226 28 11",
     "placeEmail": "ramazanizci@hotmail.com",
@@ -417,8 +417,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 6,
-    "viewsCount": 6,
+    "views": 14,
+    "viewsCount": 14,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -435,9 +435,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1790368898192-sw74n",
@@ -448,8 +448,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeId": "izci.be",
     "placeName": "Bosch Car Service Izci",
     "placeCategory": "Website",
-    "placeAddress": "Gent",
-    "placeCity": "Gent",
+    "placeAddress": "2 maanden geleden",
+    "placeCity": "Online",
     "placeCountry": "Belgium",
     "placePhone": "+32 9 226 28 11",
     "placeEmail": "ramazanizci@hotmail.com",
@@ -490,8 +490,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 415,
-    "viewsCount": 415,
+    "views": 421,
+    "viewsCount": 421,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -508,9 +508,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 8,
-    "reviewCount": 8,
-    "totalReviews": 8
+    "reviewsCount": 7,
+    "reviewCount": 7,
+    "totalReviews": 7
   },
   {
     "id": "rev-1790363378621-w65oy",
@@ -563,8 +563,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 45,
-    "viewsCount": 45,
+    "views": 53,
+    "viewsCount": 53,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -635,8 +635,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 59,
-    "viewsCount": 59,
+    "views": 64,
+    "viewsCount": 64,
     "sharesCount": 0,
     "tags": [
       "Pharmacy & Healthcare"
