@@ -230,23 +230,23 @@ export function useFeedPagination() {
 
       const combinedMap = new Map<string, VideoReview>();
 
-      // 1. Cached feed videos from localStorage
+      // 1. Initial fresh seed baseline (authoritative server-synced baseline takes absolute precedence)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+        if (v && v.id) combinedMap.set(String(v.id), v);
+      });
+
+      // 2. Cached feed videos from localStorage (only fill in any additional non-conflicting items)
       const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-            if (v && v.id) {
+            if (v && v.id && !combinedMap.has(String(v.id))) {
               combinedMap.set(String(v.id), v);
             }
           });
         }
       }
-
-      // 2. Initial fresh seed baseline (authoritative server-synced baseline overrides local cache to guarantee 100% up-to-date comments/likes)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-        if (v && v.id) combinedMap.set(String(v.id), v);
-      });
 
       // 3. Local published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
@@ -255,6 +255,12 @@ export function useFeedPagination() {
 
       const result = Array.from(combinedMap.values());
       result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
+      
+      // Immediately persist fresh authoritative baseline back to localStorage cache
+      try {
+        localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(result.slice(0, 50)));
+      } catch (e) {}
+
       return result;
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
