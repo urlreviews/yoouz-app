@@ -3902,6 +3902,166 @@ async function startServer() {
     res.status(404).send("Not found");
   });
 
+  // Dedicated SEO Competitor Comparison Hub & Landing Pages
+  app.get("/compare", (req, res) => {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("X-Entity-Name", "Yoouz");
+
+    const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoouz vs Legacy Review Sites: Yelp, Google Reviews, Trustpilot & TripAdvisor</title>
+  <meta name="description" content="Compare Yoouz authentic 60-second video reviews to Yelp, Google Reviews, Trustpilot, and TripAdvisor. Discover why video reviews eliminate fake text reviews." />
+  <meta name="keywords" content="Yelp alternative, Google reviews alternative, Trustpilot alternative, TripAdvisor alternative, video reviews vs text reviews, Yoouz, yooz, best review app 2026" />
+  <link rel="canonical" href="https://yoouz.com/compare" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Yoouz vs Legacy Review Sites: The 2026 Comparison Hub" />
+  <meta property="og:description" content="Why millions are switching from fake text reviews on Yelp and Google to authentic 60-second video reviews on Yoouz." />
+  <meta property="og:url" content="https://yoouz.com/compare" />
+  <meta property="og:image" content="https://yoouz.com/og-banner.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Yoouz vs Legacy Review Platforms Comparison Hub",
+    "description": "Comprehensive comparisons of Yoouz video reviews against Yelp, Google Reviews, Trustpilot, and TripAdvisor.",
+    "url": "https://yoouz.com/compare",
+    "publisher": { "@type": "Organization", "name": "Yoouz", "url": "https://yoouz.com/" },
+    "hasPart": [
+      { "@type": "WebPage", "name": "Yoouz vs Yelp", "url": "https://yoouz.com/compare/yelp-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs Google Reviews", "url": "https://yoouz.com/compare/google-reviews-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs Trustpilot", "url": "https://yoouz.com/compare/trustpilot-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs TripAdvisor", "url": "https://yoouz.com/compare/tripadvisor-alternative" }
+    ]
+  }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #09090b; color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; padding: 24px; }
+    .container { max-width: 880px; margin: 0 auto; padding-top: 32px; }
+    .nav-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 1px solid #27272a; }
+    .logo { font-size: 22px; font-weight: 900; color: #ffffff; text-decoration: none; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: #18181b; border: 1px solid #27272a; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #a1a1aa; margin-bottom: 16px; }
+    h1 { font-size: 34px; font-weight: 900; letter-spacing: -0.03em; color: #ffffff; line-height: 1.2; margin-bottom: 16px; }
+    .lead { font-size: 17px; color: #a1a1aa; margin-bottom: 32px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 26px; } }
+    .comp-card { background: #18181b; border: 1px solid #27272a; border-radius: 20px; padding: 24px; text-decoration: none; color: inherit; transition: all 0.15s ease; display: block; }
+    .comp-card:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+    .comp-card h3 { font-size: 18px; font-weight: 800; color: #ffffff; margin-bottom: 8px; }
+    .comp-card p { font-size: 13px; color: #a1a1aa; margin-bottom: 12px; }
+    .comp-link { font-size: 13px; font-weight: 700; color: #ffffff; }
+    .table-wrap { overflow-x: auto; margin-bottom: 40px; }
+    table { width: 100%; border-collapse: collapse; background: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; }
+    th, td { padding: 14px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid #27272a; }
+    th { background: #121215; font-weight: 800; color: #ffffff; }
+    td.highlight { color: #ffffff; font-weight: 700; background: rgba(255,255,255,0.03); }
+    .cta-btn { display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #09090b; padding: 14px 28px; border-radius: 9999px; font-size: 15px; font-weight: 800; text-decoration: none; box-shadow: 0 4px 20px rgba(255,255,255,0.15); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-bar">
+      <a href="/" class="logo">Yoouz ★</a>
+      <a href="/" class="cta-btn" style="padding: 8px 18px; font-size: 13px;">Launch App</a>
+    </div>
+
+    <div class="badge">Platform Comparison Hub</div>
+    <h1>Yoouz vs. Legacy Review Platforms</h1>
+    <p class="lead">Online reviews influence trillions in commerce, but text reviews are overwhelmed by AI bots and paid review manipulation. Compare Yoouz authentic 60-second video reviews to legacy directories.</p>
+
+    <div class="grid">
+      <a href="/compare/yelp-alternative" class="comp-card">
+        <h3>Yoouz vs. Yelp →</h3>
+        <p>Why diners and restaurant owners are abandoning Yelp's anonymous text rants and pay-to-filter advertising model for live video reviews.</p>
+        <span class="comp-link">Read Full Yelp Comparison →</span>
+      </a>
+
+      <a href="/compare/google-reviews-alternative" class="comp-card">
+        <h3>Yoouz vs. Google Reviews →</h3>
+        <p>Google Maps is great for directions, but flooded with unverified bot text. Learn how Yoouz mandates live camera proof.</p>
+        <span class="comp-link">Read Google Reviews Comparison →</span>
+      </a>
+
+      <a href="/compare/trustpilot-alternative" class="comp-card">
+        <h3>Yoouz vs. Trustpilot →</h3>
+        <p>E-commerce shoppers are tired of paid text rating farms. Discover how Yoouz video testimonials deliver 300%+ higher conversion.</p>
+        <span class="comp-link">Read Trustpilot Comparison →</span>
+      </a>
+
+      <a href="/compare/tripadvisor-alternative" class="comp-card">
+        <h3>Yoouz vs. TripAdvisor →</h3>
+        <p>Skip the 10-page text travel essays. Get real-time 60-second video walkthroughs of hotels and restaurants before booking.</p>
+        <span class="comp-link">Read TripAdvisor Comparison →</span>
+      </a>
+    </div>
+
+    <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 16px; color: #ffffff;">Feature Comparison Matrix</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Review Format</th>
+            <th>Anti-Bot Verification</th>
+            <th>Time Commitment</th>
+            <th>Pay-to-Remove</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">★ Yoouz</td>
+            <td class="highlight">100% Live Video (≤60s)</td>
+            <td class="highlight">Live Front Camera Only</td>
+            <td class="highlight">Under 1 minute</td>
+            <td class="highlight">STRICTLY FORBIDDEN</td>
+          </tr>
+          <tr>
+            <td>Yelp</td>
+            <td>Anonymous Text & Photos</td>
+            <td>None (Text Bots Common)</td>
+            <td>Long Essays</td>
+            <td>Suspected Filter Extortion</td>
+          </tr>
+          <tr>
+            <td>Google Reviews</td>
+            <td>Unverified Text Stars</td>
+            <td>None (Bulk Bot Spam)</td>
+            <td>Variable Text</td>
+            <td>No Verification</td>
+          </tr>
+          <tr>
+            <td>Trustpilot</td>
+            <td>Text Only</td>
+            <td>None (Paid Review Farms)</td>
+            <td>Variable Text</td>
+            <td>Vendor Managed</td>
+          </tr>
+          <tr>
+            <td>TripAdvisor</td>
+            <td>Text Travelogues & Photos</td>
+            <td>None</td>
+            <td>Lengthy Blogs</td>
+            <td>Ad Supported</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="text-align: center; margin: 40px 0;">
+      <a href="/" class="cta-btn">Experience Yoouz Free →</a>
+      <p style="font-size: 12px; color: #71717a; margin-top: 10px;">Join the video review revolution at yoouz.com</p>
+    </div>
+  </div>
+</body>
+</html>`;
+    return res.send(html);
+  });
+
   // Dedicated SEO Competitor Comparison Landing Pages
   app.get("/compare/:competitor", (req, res) => {
     const slug = (req.params.competitor || "").toLowerCase();

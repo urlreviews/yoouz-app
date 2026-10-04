@@ -2,29 +2,29 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Yoouz Video Reviews Feed</title>
-    <link>https://yoouz.com/</link>
+    <link>https://www.yoouz.com/</link>
     <description>Authentic 60-second video reviews and verified local business recommendations.</description>
     <language>en-US</language>
     <lastBuildDate>Sun, 04 Oct 2026 14:00:00 GMT</lastBuildDate>
-    <atom:link href="https://yoouz.com/feed.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://www.yoouz.com/feed.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Yoouz: The Zero-Fake-Review Video Platform</title>
-      <link>https://yoouz.com/</link>
-      <guid>https://yoouz.com/#about</guid>
+      <link>https://www.yoouz.com/</link>
+      <guid>https://www.yoouz.com/#about</guid>
       <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
       <description>Yoouz replaces fake online text reviews with 100% verified 60-second video reviews recorded live by real customers.</description>
     </item>
     <item>
       <title>Best Yelp Alternative in 2026: Yoouz Video Reviews</title>
-      <link>https://yoouz.com/compare/yelp-alternative</link>
-      <guid>https://yoouz.com/compare/yelp-alternative</guid>
+      <link>https://www.yoouz.com/compare/yelp-alternative</link>
+      <guid>https://www.yoouz.com/compare/yelp-alternative</guid>
       <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
       <description>Why consumers and restaurant diners are choosing Yoouz over Yelp to discover authentic dining without paid review manipulation.</description>
     </item>
     <item>
       <title>Best Google Reviews and Trustpilot Alternative: Live Video Testimonials</title>
-      <link>https://yoouz.com/compare/google-reviews-alternative</link>
-      <guid>https://yoouz.com/compare/google-reviews-alternative</guid>
+      <link>https://www.yoouz.com/compare/google-reviews-alternative</link>
+      <guid>https://www.yoouz.com/compare/google-reviews-alternative</guid>
       <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
       <description>How live front-camera video reviews eliminate bot spam, purchased ratings, and fake accounts.</description>
     </item>
