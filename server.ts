@@ -3916,12 +3916,12 @@ async function startServer() {
   <title>Yoouz vs Legacy Review Sites: Yelp, Google Reviews, Trustpilot & TripAdvisor</title>
   <meta name="description" content="Compare Yoouz authentic 60-second video reviews to Yelp, Google Reviews, Trustpilot, and TripAdvisor. Discover why video reviews eliminate fake text reviews." />
   <meta name="keywords" content="Yelp alternative, Google reviews alternative, Trustpilot alternative, TripAdvisor alternative, video reviews vs text reviews, Yoouz, yooz, best review app 2026" />
-  <link rel="canonical" href="https://yoouz.com/compare" />
+  <link rel="canonical" href="https://www.yoouz.com/compare" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Yoouz vs Legacy Review Sites: The 2026 Comparison Hub" />
   <meta property="og:description" content="Why millions are switching from fake text reviews on Yelp and Google to authentic 60-second video reviews on Yoouz." />
-  <meta property="og:url" content="https://yoouz.com/compare" />
-  <meta property="og:image" content="https://yoouz.com/og-banner.png" />
+  <meta property="og:url" content="https://www.yoouz.com/compare" />
+  <meta property="og:image" content="https://www.yoouz.com/og-banner.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <script type="application/ld+json">
   {
@@ -3929,13 +3929,13 @@ async function startServer() {
     "@type": "CollectionPage",
     "name": "Yoouz vs Legacy Review Platforms Comparison Hub",
     "description": "Comprehensive comparisons of Yoouz video reviews against Yelp, Google Reviews, Trustpilot, and TripAdvisor.",
-    "url": "https://yoouz.com/compare",
-    "publisher": { "@type": "Organization", "name": "Yoouz", "url": "https://yoouz.com/" },
+    "url": "https://www.yoouz.com/compare",
+    "publisher": { "@type": "Organization", "name": "Yoouz", "url": "https://www.yoouz.com/" },
     "hasPart": [
-      { "@type": "WebPage", "name": "Yoouz vs Yelp", "url": "https://yoouz.com/compare/yelp-alternative" },
-      { "@type": "WebPage", "name": "Yoouz vs Google Reviews", "url": "https://yoouz.com/compare/google-reviews-alternative" },
-      { "@type": "WebPage", "name": "Yoouz vs Trustpilot", "url": "https://yoouz.com/compare/trustpilot-alternative" },
-      { "@type": "WebPage", "name": "Yoouz vs TripAdvisor", "url": "https://yoouz.com/compare/tripadvisor-alternative" }
+      { "@type": "WebPage", "name": "Yoouz vs Yelp", "url": "https://www.yoouz.com/compare/yelp-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs Google Reviews", "url": "https://www.yoouz.com/compare/google-reviews-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs Trustpilot", "url": "https://www.yoouz.com/compare/trustpilot-alternative" },
+      { "@type": "WebPage", "name": "Yoouz vs TripAdvisor", "url": "https://www.yoouz.com/compare/tripadvisor-alternative" }
     ]
   }
   </script>
@@ -4155,16 +4155,16 @@ async function startServer() {
   <meta name="description" content="${data.description}" />
   <meta name="keywords" content="${data.badge}, ${data.competitorName} alternative, Yoouz, yooz, getyoouz, video reviews, authentic video reviews, best review platform 2026" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-  <link rel="canonical" href="https://yoouz.com/compare/${slug}" />
+  <link rel="canonical" href="https://www.yoouz.com/compare/${slug}" />
   <meta property="og:type" content="article" />
   <meta property="og:title" content="${data.title}" />
   <meta property="og:description" content="${data.description}" />
-  <meta property="og:url" content="https://yoouz.com/compare/${slug}" />
-  <meta property="og:image" content="https://yoouz.com/og-banner.png" />
+  <meta property="og:url" content="https://www.yoouz.com/compare/${slug}" />
+  <meta property="og:image" content="https://www.yoouz.com/og-banner.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${data.title}" />
   <meta name="twitter:description" content="${data.description}" />
-  <meta name="twitter:image" content="https://yoouz.com/og-banner.png" />
+  <meta name="twitter:image" content="https://www.yoouz.com/og-banner.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -4174,8 +4174,8 @@ async function startServer() {
         "headline": "${data.title}",
         "description": "${data.description}",
         "author": { "@type": "Organization", "name": "Yoouz" },
-        "publisher": { "@type": "Organization", "name": "Yoouz", "logo": { "@type": "ImageObject", "url": "https://yoouz.com/icon-512.png" } },
-        "mainEntityOfPage": "https://yoouz.com/compare/${slug}",
+        "publisher": { "@type": "Organization", "name": "Yoouz", "logo": { "@type": "ImageObject", "url": "https://www.yoouz.com/icon-512.png" } },
+        "mainEntityOfPage": "https://www.yoouz.com/compare/${slug}",
         "datePublished": "2026-10-04T00:00:00Z",
         "dateModified": "2026-10-04T00:00:00Z"
       },
@@ -4260,20 +4260,20 @@ async function startServer() {
     try {
       const https = await import("https");
       const indexNowPayload = JSON.stringify({
-        host: "yoouz.com",
+        host: "www.yoouz.com",
         key: "c0e81c9a89d749969248231ab3f480da",
-        keyLocation: "https://yoouz.com/c0e81c9a89d749969248231ab3f480da.txt",
+        keyLocation: "https://www.yoouz.com/c0e81c9a89d749969248231ab3f480da.txt",
         urlList: [
-          "https://yoouz.com/",
-          "https://yoouz.com/search",
-          "https://yoouz.com/business",
-          "https://yoouz.com/compare/yelp-alternative",
-          "https://yoouz.com/compare/google-reviews-alternative",
-          "https://yoouz.com/compare/trustpilot-alternative",
-          "https://yoouz.com/compare/tripadvisor-alternative",
-          "https://yoouz.com/llms.txt",
-          "https://yoouz.com/llms-full.txt",
-          "https://yoouz.com/feed.xml"
+          "https://www.yoouz.com/",
+          "https://www.yoouz.com/search",
+          "https://www.yoouz.com/business",
+          "https://www.yoouz.com/compare/yelp-alternative",
+          "https://www.yoouz.com/compare/google-reviews-alternative",
+          "https://www.yoouz.com/compare/trustpilot-alternative",
+          "https://www.yoouz.com/compare/tripadvisor-alternative",
+          "https://www.yoouz.com/llms.txt",
+          "https://www.yoouz.com/llms-full.txt",
+          "https://www.yoouz.com/feed.xml"
         ]
       });
 
@@ -4317,20 +4317,20 @@ async function startServer() {
     try {
       const https = await import("https");
       const indexNowPayload = JSON.stringify({
-        host: "yoouz.com",
+        host: "www.yoouz.com",
         key: "c0e81c9a89d749969248231ab3f480da",
-        keyLocation: "https://yoouz.com/c0e81c9a89d749969248231ab3f480da.txt",
+        keyLocation: "https://www.yoouz.com/c0e81c9a89d749969248231ab3f480da.txt",
         urlList: [
-          "https://yoouz.com/",
-          "https://yoouz.com/search",
-          "https://yoouz.com/business",
-          "https://yoouz.com/compare/yelp-alternative",
-          "https://yoouz.com/compare/google-reviews-alternative",
-          "https://yoouz.com/compare/trustpilot-alternative",
-          "https://yoouz.com/compare/tripadvisor-alternative",
-          "https://yoouz.com/llms.txt",
-          "https://yoouz.com/llms-full.txt",
-          "https://yoouz.com/feed.xml"
+          "https://www.yoouz.com/",
+          "https://www.yoouz.com/search",
+          "https://www.yoouz.com/business",
+          "https://www.yoouz.com/compare/yelp-alternative",
+          "https://www.yoouz.com/compare/google-reviews-alternative",
+          "https://www.yoouz.com/compare/trustpilot-alternative",
+          "https://www.yoouz.com/compare/tripadvisor-alternative",
+          "https://www.yoouz.com/llms.txt",
+          "https://www.yoouz.com/llms-full.txt",
+          "https://www.yoouz.com/feed.xml"
         ]
       });
 
@@ -24696,7 +24696,9 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
 
       allVideos.forEach((v) => {
         if (!v || !v.id) return;
-        const videoPageUrl = `${baseUrl}/video/${encodeURIComponent(v.id)}`;
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
+        const videoPageUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
         const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
         const authorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const rawPlace = v.placeName || '';
@@ -24866,7 +24868,9 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
 
       // Add Video Reviews with Google Video schema
       allVideos.forEach((v) => {
-        const videoUrl = `${baseUrl}/video/${encodeURIComponent(v.id)}`;
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
+        const videoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
         const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
         const rawPlace = v.placeName || '';
         const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Business Review';
@@ -27993,17 +27997,25 @@ function formatBusinessName(name?: string | null, domain?: string | null, queryC
 function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);
     const safeDesc = escapeHtml(meta.description);
-    const safeUrl = escapeHtml(meta.url);
+    let safeUrl = escapeHtml(meta.url);
+    if (safeUrl && safeUrl.startsWith("https://yoouz.com")) {
+      safeUrl = safeUrl.replace("https://yoouz.com", "https://www.yoouz.com");
+    }
     const rawImage = meta.imageUrl || "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
     const safeImage = escapeHtml(rawImage);
     const safeKeywords = escapeHtml(meta.keywords || "");
     const safeType = escapeHtml(meta.type || "website");
     const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
 
-    let baseUrl = "https://yoouz.com";
+    let baseUrl = "https://www.yoouz.com";
     try {
       if (meta.url) {
-        baseUrl = new URL(meta.url).origin;
+        const u = new URL(meta.url);
+        if (u.hostname.includes("yoouz.com")) {
+          baseUrl = "https://www.yoouz.com";
+        } else {
+          baseUrl = u.origin;
+        }
       }
     } catch (e) {}
 
@@ -28107,13 +28119,16 @@ function injectOpenGraphTags(html: string, meta: any) {
     const userAgent = req.headers['user-agent'] || '';
     const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
     
-    let rawHost = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+    let rawHost = (req.headers['x-forwarded-host'] || req.headers.host || 'www.yoouz.com').toString().toLowerCase().trim();
     let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     if (rawHost.includes('localhost') || rawHost.includes('127.0.0.1')) {
       if (isCrawler) {
-        rawHost = 'yoouz.com';
+        rawHost = 'www.yoouz.com';
         protocol = 'https';
       }
+    } else if (rawHost.includes('yoouz.com')) {
+      rawHost = 'www.yoouz.com';
+      protocol = 'https';
     } else {
       protocol = 'https';
     }
@@ -28242,7 +28257,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           "@graph": [
             {
               "@type": "VideoObject",
-              "@id": `${baseUrl}/video/${encodeURIComponent(videoId)}#video`,
+              "@id": `${canonicalVideoUrl}#video`,
               "name": title,
               "description": description,
               "thumbnailUrl": [
