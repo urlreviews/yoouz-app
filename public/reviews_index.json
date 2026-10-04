@@ -42,15 +42,31 @@
     "caption": "Video review for izci.be",
     "dishOrItem": "Bosch Car Service Izci",
     "businessName": "Bosch Car Service Izci",
-    "likes": 0,
+    "likes": 1,
     "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
+    "commentsCount": 1,
+    "comments": [
+      {
+        "id": "comm-1791107990472-mk5eb",
+        "authorName": "Ben Blue",
+        "authorHandle": "aouisesmee",
+        "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+        "text": "Nice",
+        "createdAt": "Just now",
+        "createdAtMs": 1791107990472,
+        "likesCount": 0,
+        "isLiked": false,
+        "isOwner": false,
+        "isCreator": true,
+        "replies": [],
+        "videoId": "rev-1791024014248-7ascv"
+      }
+    ],
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 139,
-    "viewsCount": 139,
+    "views": 148,
+    "viewsCount": 148,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -60,16 +76,16 @@
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
     "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg",
+    "likesCount": 1,
     "authorName": "Ben Blue",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 60,
     "createdAt": "2026-10-03 10:40:20",
-    "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 5,
-    "reviewCount": 5,
-    "totalReviews": 5
+    "reviewsCount": 4,
+    "reviewCount": 4,
+    "totalReviews": 4
   },
   {
     "id": "rev-1791023009708-0qszq",
@@ -121,8 +137,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 27,
-    "viewsCount": 27,
+    "views": 29,
+    "viewsCount": 29,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -139,9 +155,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 5,
-    "reviewCount": 5,
-    "totalReviews": 5
+    "reviewsCount": 4,
+    "reviewCount": 4,
+    "totalReviews": 4
   },
   {
     "id": "rev-1791021692476-auirn",
@@ -193,8 +209,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 38,
-    "viewsCount": 38,
+    "views": 39,
+    "viewsCount": 39,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -211,81 +227,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 5,
-    "reviewCount": 5,
-    "totalReviews": 5
-  },
-  {
-    "id": "rev-1791020765196-3ni9f",
-    "userId": "aouisesmee@gmail.com",
-    "userEmail": "aouisesmee@gmail.com",
-    "createdAtMs": 1791020769000,
-    "isLocalUpload": true,
-    "placeId": "izci.be",
-    "placeName": "Bosch Car Service Izci",
-    "placeCategory": "Website",
-    "placeAddress": "2 maanden geleden",
-    "placeCity": "Online",
-    "placeCountry": "Belgium",
-    "placePhone": "+32 9 226 28 11",
-    "placeEmail": "ramazanizci@hotmail.com",
-    "placeRating": 2,
-    "placeWebsite": "https://izci.be",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
-    "placeDescription": "Bosch Car Service Izci · Official business profile for izci.be",
-    "author": {
-      "name": "Ben Blue",
-      "handle": "@benblue",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "localGuideLevel": 7,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "London, City of London, United Kingdom",
-      "city": "London",
-      "country": "United Kingdom"
-    },
-    "rating": 2,
-    "durationSeconds": 8,
-    "videoUrl": "https://rev1.b-cdn.net/videos/rev-1791020765196-3ni9f.mp4",
-    "fallbackVideoUrls": [
-      "https://rev1.b-cdn.net/videos/rev-1791020765196-3ni9f.mp4",
-      "/api/videos/stream/rev-1791020765196-3ni9f.mp4"
-    ],
-    "thumbnailUrl": "https://rev1.b-cdn.net/videos/rev-1791020765196-3ni9f.jpg",
-    "caption": "Video review for izci.be",
-    "dishOrItem": "Bosch Car Service Izci",
-    "businessName": "Bosch Car Service Izci",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 21,
-    "viewsCount": 21,
-    "sharesCount": 0,
-    "tags": [
-      "Website"
-    ],
-    "recordedAt": "Just now",
-    "bunnyVideoId": "rev-1791020765196-3ni9f",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg",
-    "authorName": "Ben Blue",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 60,
-    "createdAt": "2026-10-03 09:46:09",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 5,
-    "reviewCount": 5,
-    "totalReviews": 5
+    "reviewsCount": 4,
+    "reviewCount": 4,
+    "totalReviews": 4
   },
   {
     "id": "rev-1790368898192-sw74n",
@@ -337,8 +281,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 422,
-    "viewsCount": 422,
+    "views": 423,
+    "viewsCount": 423,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -355,9 +299,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 5,
-    "reviewCount": 5,
-    "totalReviews": 5
+    "reviewsCount": 4,
+    "reviewCount": 4,
+    "totalReviews": 4
   },
   {
     "id": "rev-1790363378621-w65oy",
@@ -409,8 +353,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 54,
-    "viewsCount": 54,
+    "views": 56,
+    "viewsCount": 56,
     "sharesCount": 0,
     "tags": [
       "Website"
