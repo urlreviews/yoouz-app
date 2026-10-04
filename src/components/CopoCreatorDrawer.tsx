@@ -1883,30 +1883,40 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
       {/* SOCIAL NETWORK MODAL (FOLLOWERS & FOLLOWING) */}
       {socialModalTab && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[120] bg-zinc-950 text-white flex flex-col overflow-hidden animate-in fade-in duration-200 select-none">
+          <div className="w-full max-w-2xl mx-auto flex flex-col h-full overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60">
-              <div className="min-w-0 pr-2">
-                <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2 truncate">
-                  <Users className="w-4 h-4 text-zinc-300 shrink-0" />
-                  <span className="truncate">{displayName}</span>
-                </h3>
-                <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
-                  Manage followers and reviewers on Yoouz
-                </p>
+            <div className="p-4 sm:p-5 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/60 shrink-0">
+              <div className="min-w-0 pr-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSocialModalOpen(null)}
+                  className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2 truncate">
+                    <Users className="w-5 h-5 text-zinc-300 shrink-0" />
+                    <span className="truncate">{displayName}</span>
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                    Manage followers and reviewers on Yoouz
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSocialModalOpen(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Pill Tabs: Followers | Following */}
-            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60 space-y-2.5">
+            <div className="p-3.5 sm:p-4 bg-zinc-950 border-b border-zinc-800/60 space-y-3 shrink-0">
               <div className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 shadow-inner">
                 <button
                   type="button"
