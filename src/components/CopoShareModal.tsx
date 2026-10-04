@@ -235,6 +235,40 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "Local Business") : "Authentic 60s Video Review");
 
+  const resolvedTouchIcon = isVideoMode && video
+    ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=9`
+    : isBusiness
+    ? `${appOrigin}/api/touch-icon/place/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=20`
+    : `${appOrigin}/apple-touch-icon.png`;
+
+  useEffect(() => {
+    if (!isModalOpen || !resolvedTouchIcon) return;
+    const updateLinkTag = (rel: string, href: string, extraAttrs?: Record<string, string>) => {
+      try {
+        let selector = `link[rel="${rel}"]`;
+        if (extraAttrs?.sizes) selector += `[sizes="${extraAttrs.sizes}"]`;
+        let tag = document.querySelector(selector) as HTMLLinkElement;
+        if (!tag) {
+          tag = document.createElement('link');
+          tag.setAttribute('rel', rel);
+          if (extraAttrs) {
+            for (const [k, v] of Object.entries(extraAttrs)) {
+              tag.setAttribute(k, v);
+            }
+          }
+          document.head.appendChild(tag);
+        }
+        tag.href = href;
+      } catch (e) {}
+    };
+
+    updateLinkTag('apple-touch-icon', resolvedTouchIcon, { sizes: '180x180' });
+    updateLinkTag('apple-touch-icon', resolvedTouchIcon);
+    updateLinkTag('icon', resolvedTouchIcon, { type: 'image/png', sizes: '192x192' });
+    updateLinkTag('icon', resolvedTouchIcon, { type: 'image/png', sizes: '32x32' });
+    updateLinkTag('shortcut icon', resolvedTouchIcon);
+  }, [isModalOpen, resolvedTouchIcon]);
+
   const shareText = isVideoMode && video
     ? `Watch authentic 60s video review of ${title} by ${video.author?.name || "a local guide"} on Yoouz! ${video.rating ? `★ ${video.rating}/5` : ""}`
     : `Check out ${title} on Yoouz - Real People. Real Reviews.`;

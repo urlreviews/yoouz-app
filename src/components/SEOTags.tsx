@@ -4,12 +4,13 @@ interface SEOTagsProps {
   title: string;
   description: string;
   image?: string;
+  touchIcon?: string;
   url?: string;
   jsonLd?: Record<string, any> | Record<string, any>[];
   updateTitle?: boolean;
 }
 
-export function SEOTags({ title, description, image, url, jsonLd, updateTitle = true }: SEOTagsProps) {
+export function SEOTags({ title, description, image, touchIcon, url, jsonLd, updateTitle = true }: SEOTagsProps) {
   useEffect(() => {
     // 1. Update Title only if requested
     if (updateTitle && title) {
@@ -41,20 +42,43 @@ export function SEOTags({ title, description, image, url, jsonLd, updateTitle = 
       tag.setAttribute('content', cleanContent);
     };
 
+    const updateLinkTag = (rel: string, href: string, extraAttrs?: Record<string, string>) => {
+      if (!href) return;
+      let cleanHref = href.trim();
+      let selector = `link[rel="${rel}"]`;
+      if (extraAttrs?.sizes) {
+        selector += `[sizes="${extraAttrs.sizes}"]`;
+      }
+      let tag = document.querySelector(selector);
+      if (!tag) {
+        tag = document.createElement('link');
+        tag.setAttribute('rel', rel);
+        if (extraAttrs) {
+          for (const [k, v] of Object.entries(extraAttrs)) {
+            tag.setAttribute(k, v);
+          }
+        }
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('href', cleanHref);
+    };
+
     updateOGTag('og:title', title);
     updateOGTag('og:description', description);
     if (image) updateOGTag('og:image', image);
     if (url) {
       updateOGTag('og:url', url);
-      let canonical = document.querySelector('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement('link');
-        canonical.setAttribute('rel', 'canonical');
-        document.head.appendChild(canonical);
-      }
-      canonical.setAttribute('href', url);
+      updateLinkTag('canonical', url);
     }
     updateOGTag('og:type', 'website');
+
+    if (touchIcon) {
+      updateLinkTag('apple-touch-icon', touchIcon, { sizes: '180x180' });
+      updateLinkTag('apple-touch-icon', touchIcon);
+      updateLinkTag('icon', touchIcon, { type: 'image/png', sizes: '192x192' });
+      updateLinkTag('icon', touchIcon, { type: 'image/png', sizes: '32x32' });
+      updateLinkTag('shortcut icon', touchIcon);
+    }
 
     // 4. Update JSON-LD Structured Data
     if (jsonLd) {
@@ -69,14 +93,12 @@ export function SEOTags({ title, description, image, url, jsonLd, updateTitle = 
     }
 
     return () => {
-      // Optional cleanup if needed when component unmounts
-      // For a SPA, we usually leave the latest tags, but clearing JSON-LD prevents duplicates if navigating
       if (jsonLd) {
         const script = document.querySelector('#seo-json-ld');
         if (script) script.remove();
       }
     };
-  }, [title, description, image, url, jsonLd]);
+  }, [title, description, image, touchIcon, url, jsonLd, updateTitle]);
 
   return null;
 }
