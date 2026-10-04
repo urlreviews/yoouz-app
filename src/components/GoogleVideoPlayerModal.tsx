@@ -458,7 +458,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 // Strip raw review ID leaks (e.g. rev17895770756273488d.com)
                 trimmed = trimmed.replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com").replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
                 if (/^video review (for|of)\b/i.test(trimmed)) {
-                  const cleanDomain = getDisplayUrlAsDomain(currentReview);
+                  const cleanDomain = getDisplayUrlAsDomain(currentReview) || "yoouz.com";
                   return `Video review for ${cleanDomain}`;
                 }
                 return trimmed;

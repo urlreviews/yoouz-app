@@ -312,11 +312,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       .replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com")
       .replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
     if (/^video review (for|of)\b/i.test(trimmed)) {
-      const cleanDomain = getDisplayUrlAsDomain(currentVideo) || displayDomain;
+      const cleanDomain = getDisplayUrlAsDomain(currentVideo) || displayDomain || "yoouz.com";
       return `Video review for ${cleanDomain}`;
     }
     if (!trimmed) {
-      return `Video review for ${displayDomain}`;
+      return `Video review for ${displayDomain || "yoouz.com"}`;
     }
     return trimmed;
   }, [currentVideo, displayDomain]);

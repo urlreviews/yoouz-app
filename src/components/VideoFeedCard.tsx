@@ -1025,7 +1025,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   let trimmed = video.caption.trim();
                   trimmed = trimmed.replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com").replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
                   if (/^video review (for|of)\b/i.test(trimmed)) {
-                    const cleanDomain = getDisplayUrlAsDomain(video);
+                    const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
                     return `Video review for ${cleanDomain}`;
                   }
                   return trimmed;

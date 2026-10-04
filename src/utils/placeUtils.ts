@@ -187,6 +187,8 @@ export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: str
 
   if (typeof placeSource === "string") {
     if (isRevId(placeSource)) return "";
+    const lowerStr = placeSource.toLowerCase().trim();
+    if (lowerStr.includes("yoouz")) return "yoouz.com";
     const clean = extractCleanDomain(placeSource);
     if (clean && clean.includes(".") && !isRevId(clean)) return clean;
     if (clean && !isRevId(clean)) return clean;
@@ -202,8 +204,13 @@ export function getDisplayUrlAsDomain(placeSource: string | { placeWebsite?: str
   else if (placeSource.name && !isRevId(placeSource.name)) urlSource = placeSource.name;
   else if (placeSource.placeName && !isRevId(placeSource.placeName)) urlSource = placeSource.placeName;
 
-  if (!urlSource || isRevId(urlSource) || urlSource.includes("place-custom") || urlSource.includes("yoouz")) {
+  if (!urlSource || isRevId(urlSource)) {
     return "";
+  }
+
+  const lowerUrl = urlSource.toLowerCase();
+  if (lowerUrl.includes("yoouz") || lowerUrl.includes("place-custom")) {
+    return "yoouz.com";
   }
 
   let domain = extractCleanDomain(urlSource);
