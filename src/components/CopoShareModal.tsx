@@ -171,8 +171,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isModalOpen, activeView, onClose]);
 
-  if (!isModalOpen) return null;
-
   // Derive Canonical Share URL and Metadata
   const appOrigin = typeof window !== "undefined" ? window.location.origin : "https://yoouz.com";
 
@@ -615,6 +613,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const filteredApps = allSharePlatforms.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
   );
+
+  if (!isModalOpen) return null;
 
   const modalContent = (
     <div 
