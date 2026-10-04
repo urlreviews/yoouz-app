@@ -1291,6 +1291,14 @@ function writeReviewsIndex(list: any[]): void {
         }
       } catch (seedErr) {}
     }
+
+    try {
+      const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+      if (fs.existsSync(seedReviewsPath)) {
+        const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = ' + JSON.stringify(sanitized, null, 2) + ';\n';
+        fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
+      }
+    } catch (sErr) {}
   } catch (e) {
     console.warn("Failed to write reviews index:", e);
   }
