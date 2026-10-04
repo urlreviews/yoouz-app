@@ -2037,18 +2037,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     {/* Desktop Dropdown Menu (hidden on mobile, uses full bottom action sheet on mobile) */}
                     {isOptionsOpen && targetActionThread && (
                       <div className="hidden md:block absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150">
-                        {/* Mark as read option */}
-                        <button
-                          id="btn-mark-chat-read"
-                          onClick={() => handleMarkAsReadAction(targetActionThread)}
-                          className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
-                        >
-                          <CheckCheck className="w-4 h-4 text-emerald-400" />
-                          <span>Mark as Read</span>
-                        </button>
-
-                        <div className="my-1 border-t border-zinc-800" />
-
                         {/* Report option */}
                         <button
                           id="btn-report-chat-user"
@@ -2480,30 +2468,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               );
             })()}
             <div className="space-y-1">
-              {/* Mark as read option */}
-              <button
-                type="button"
-                id="btn-options-mark-read"
-                onClick={() => {
-                  if (onMarkThreadRead && targetActionThread) {
-                    onMarkThreadRead(targetActionThread.id);
-                  }
-                  if (targetActionThread) {
-                    const updated = messages.map((m) =>
-                      m.id === targetActionThread.id ? { ...m, unreadCount: 0 } : m
-                    );
-                    onUpdateMessages?.(updated);
-                  }
-                  setIsOptionsOpen(false);
-                  setActionThread(null);
-                  showToast("Marked as read");
-                }}
-                className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-white rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
-              >
-                <CheckCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Mark as Read</span>
-              </button>
-
               {/* Report option */}
               <button
                 type="button"
