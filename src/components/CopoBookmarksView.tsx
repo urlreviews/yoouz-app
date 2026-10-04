@@ -212,6 +212,9 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">
                           {formatBusinessName(video.placeName || getDisplayUrlAsDomain(video))}
                         </h4>
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-900 text-amber-400 text-[10px] font-mono font-bold border border-zinc-800 shrink-0">
+                          {getDisplayUrlAsDomain(video)}
+                        </span>
                         {video.placeCategory && video.placeCategory !== "Website" && video.placeCategory !== "General" && (
                           <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
                             {video.placeCategory}
@@ -225,8 +228,10 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         </div>
                         <span className="text-zinc-650">|</span>
                         <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
-                          <MapPin className="w-3 h-3 text-zinc-400" />
-                          <span className="truncate">{cleanDisplayAddress(video.placeAddress || video.placeCity)}</span>
+                          <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                          <span className="truncate">
+                            {[video.placeAddress, video.placeCity, video.placeCountry].filter(Boolean).join(", ") || video.placeCity || video.placeCountry || "Online"}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 mt-1.5">
