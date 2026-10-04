@@ -6447,12 +6447,14 @@ export function App() {
           <CopoCreatorDrawer
             author={selectedAuthorForDrawer}
             allVideos={videos}
+            places={places}
             currentUser={currentUser}
             allUsers={allRegisteredUsers}
             activeVideoId={videos[currentVideoIndex]?.id}
             onClose={handleCloseDrawers}
             onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
             onToggleFollow={handleToggleFollow}
+            onToggleFollowPlace={handleToggleFollowPlace}
             onStartChat={handleStartChat}
             onUpdateProfile={handleUpdateProfile}
             onOpenReport={(author) => handleOpenReport({ type: "user", author })}
@@ -6710,12 +6712,14 @@ export function App() {
         <CopoCreatorDrawer
           author={selectedAuthorForDrawer}
           allVideos={videos}
+          places={places}
           currentUser={currentUser}
           allUsers={allRegisteredUsers}
           activeVideoId={activeFeedVideos[currentVideoIndex]?.id}
           onClose={handleCloseDrawers}
           onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
           onToggleFollow={handleToggleFollow}
+          onToggleFollowPlace={handleToggleFollowPlace}
           onStartChat={handleStartChat}
           onUpdateProfile={handleUpdateProfile}
           onOpenReport={(author) => handleOpenReport({ type: "user", author })}

@@ -32,14 +32,16 @@ import {
   Search,
   RefreshCw,
   ChevronRight,
-  UserMinus
+  UserMinus,
+  User
 } from "lucide-react";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { countries } from "../utils/countries";
@@ -74,6 +76,8 @@ interface CopoCreatorDrawerProps {
   onOpenNotificationSettings?: () => void;
   onOpenPlace?: (placeId: string) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
+  places?: any[];
+  onToggleFollowPlace?: (placeId: string) => void;
 }
 
 export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
@@ -97,7 +101,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   onToggleSaveCreator,
   onOpenNotificationSettings,
   onOpenPlace,
-  onOpenCreator
+  onOpenCreator,
+  places = [],
+  onToggleFollowPlace
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -514,6 +520,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [socialSearch, setSocialSearch] = useState("");
   const [hoveredUnfollowModalUser, setHoveredUnfollowModalUser] = useState<string | null>(null);
+  const [followingFilter, setFollowingFilter] = useState<"all" | "reviewers" | "businesses">("all");
+  const [hoveredUnfollowPlace, setHoveredUnfollowPlace] = useState<string | null>(null);
 
   const isInvalidName = (name?: string) => {
     if (!name) return true;
@@ -1898,11 +1906,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
 
             {/* Pill Tabs: Followers | Following */}
-            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60">
+            <div className="p-3 bg-zinc-950 border-b border-zinc-800/60 space-y-2.5">
               <div className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 shadow-inner">
                 <button
                   type="button"
-                  onClick={() => setSocialModalOpen("followers")}
+                  onClick={() => {
+                    setSocialModalOpen("followers");
+                    setSocialSearch("");
+                  }}
                   className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     socialModalTab === "followers"
                       ? "bg-white text-zinc-950 shadow-sm"
@@ -1917,7 +1928,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => setSocialModalOpen("following")}
+                  onClick={() => {
+                    setSocialModalOpen("following");
+                    setSocialSearch("");
+                  }}
                   className={`py-2 px-3 text-center text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     socialModalTab === "following"
                       ? "bg-white text-zinc-950 shadow-sm"
@@ -1930,17 +1944,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </span>
                 </button>
               </div>
-            </div>
 
-            {/* Search Filter */}
-            <div className="p-3 border-b border-zinc-800/60 bg-zinc-950">
+              {/* Search Filter */}
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <input
                   type="text"
                   value={socialSearch}
                   onChange={(e) => setSocialSearch(e.target.value)}
-                  placeholder={`Search ${socialModalTab} by name or location...`}
+                  placeholder={socialModalTab === "following" ? "Search followed businesses or reviewers..." : "Search followers by name..."}
                   className="w-full pl-10 pr-9 py-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
                 />
                 {socialSearch && (
@@ -1953,6 +1965,44 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </button>
                 )}
               </div>
+
+              {/* Sub-Filters inside Following: All, Businesses, Reviewers */}
+              {socialModalTab === "following" && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                  <button
+                    onClick={() => setFollowingFilter("all")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border ${
+                      followingFilter === "all"
+                        ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                        : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                    }`}
+                  >
+                    All ({effectiveFollowingCount})
+                  </button>
+                  <button
+                    onClick={() => setFollowingFilter("businesses")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                      followingFilter === "businesses"
+                        ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                        : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Businesses</span>
+                  </button>
+                  <button
+                    onClick={() => setFollowingFilter("reviewers")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                      followingFilter === "reviewers"
+                        ? "bg-white text-zinc-950 border-white shadow-xs font-bold"
+                        : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Reviewers</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Users List Container */}
@@ -1987,7 +2037,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     return (u.name || "").toLowerCase().includes(q) || (u.location || "").toLowerCase().includes(q);
                   });
 
-                if (filtered.length === 0) {
+                const finalFiltered = filtered.filter((u: any) => {
+                  if (socialModalTab !== "following" || followingFilter === "all") return true;
+                  const isPl = u.type === "place" || places.some((p: any) => p.id === u.id || (p.name && u.name && p.name.toLowerCase() === u.name.toLowerCase()));
+                  return followingFilter === "businesses" ? isPl : !isPl;
+                });
+
+                if (finalFiltered.length === 0) {
                   return (
                     <div className="p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 text-center text-zinc-400 space-y-2">
                       <Users className="w-8 h-8 text-zinc-600 mx-auto" />
@@ -2001,22 +2057,34 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   );
                 }
 
-                return filtered.map((u: any, idx: number) => {
+                return finalFiltered.map((u: any, idx: number) => {
                   if (!u || !u.name || isYoouzMemberStr(u.name)) return null;
                   const nameStr = u.name;
+                  const isPlace = u.type === "place" || places.some((p: any) => p.id === u.id || (p.name && nameStr && p.name.toLowerCase() === nameStr.toLowerCase()));
+                  const cleanDomain = extractCleanDomain(u.website || u.id || nameStr);
+                  const formattedTitle = formatBusinessName(nameStr);
                   const safeAvatar = getSafeAvatarUrl(u.avatar, nameStr, u.handle || nameStr);
                   const locationStr = u.location ? formatCityCountry(u.location) : (u.city ? `${u.city}${u.country ? `, ${u.country}` : ''}` : "");
-                  
-                  // Dynamically compute exact video review count from allVideos or server social network payload
-                  const matchingVidsCount = (allVideos || []).filter((v) => {
+
+                  const matchingVideos = (allVideos || []).filter((v) => {
+                    if (isPlace) {
+                      return v.placeId === u.id || v.placeName?.toLowerCase() === nameStr.toLowerCase() || (v.placeWebsite && cleanDomain && extractCleanDomain(v.placeWebsite) === cleanDomain);
+                    }
                     const vAuthName = (v.author?.name || "").toLowerCase().trim();
                     const vAuthHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase().trim();
                     const targetN = nameStr.toLowerCase().trim();
                     const targetH = (u.handle || "").replace(/^@+/, "").toLowerCase().trim();
                     return (targetN && vAuthName === targetN) || (targetH && vAuthHandle === targetH);
-                  }).length;
-                  const videoCount = Math.max(matchingVidsCount, typeof u.videoReviewCount === "number" ? u.videoReviewCount : 0);
-                  const isPlace = u.type === "place";
+                  });
+                  const videoCount = matchingVideos.length;
+                  let dynamicRating = 5.0;
+                  if (isPlace && matchingVideos.length > 0) {
+                    const sum = matchingVideos.reduce((acc, v) => acc + (v.rating || 5), 0);
+                    dynamicRating = Number((sum / matchingVideos.length).toFixed(1));
+                  } else if (isPlace) {
+                    const foundP = places.find((p: any) => p.id === u.id || p.name?.toLowerCase() === nameStr.toLowerCase());
+                    if (foundP && typeof foundP.rating === "number") dynamicRating = foundP.rating;
+                  }
 
                   const isMemberFollowed = currentUser?.followedAuthors
                     ? currentUser.followedAuthors.some((h) => {
@@ -2030,7 +2098,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                        (currentUser.email && u.email && u.email.toLowerCase().trim() === currentUser.email.toLowerCase().trim()))
                     : false;
 
-                  const isHoveredUnfollow = hoveredUnfollowModalUser === nameStr;
+                  const isHoveredUnfollow = (isPlace ? hoveredUnfollowPlace === (u.id || nameStr) : hoveredUnfollowModalUser === nameStr);
 
                   return (
                     <div
@@ -2038,7 +2106,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       onClick={() => {
                         setSocialModalOpen(null);
                         if (isPlace && onOpenPlace) {
-                          onOpenPlace(u.id);
+                          onOpenPlace(u.id || nameStr);
                         } else if (onOpenCreator) {
                           onOpenCreator({
                             name: nameStr,
@@ -2052,28 +2120,65 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
                       <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                        <img
-                          src={safeAvatar}
-                          alt={nameStr}
-                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, nameStr, u.handle || nameStr);
-                          }}
-                        />
+                        {isPlace ? (
+                          <CopoBrandLogo
+                            domain={cleanDomain}
+                            name={formattedTitle}
+                            website={u.website}
+                            logoUrl={u.logoUrl || u.avatar}
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white p-1.5 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform ring-1 ring-white/10"
+                            imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                          />
+                        ) : (
+                          <img
+                            src={safeAvatar}
+                            alt={nameStr}
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = getSafeAvatarUrl(null, nameStr, u.handle || nameStr);
+                            }}
+                          />
+                        )}
+
                         <div className="min-w-0 flex-1 text-left">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                             <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
-                              {nameStr}
+                              {isPlace ? formattedTitle : nameStr}
                             </h4>
-                            {u.isVerified && (
-                              <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                            {isPlace && (
+                              <span className="bg-zinc-800 text-zinc-300 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-zinc-700 uppercase tracking-wider shrink-0">
+                                Business
+                              </span>
                             )}
                           </div>
+
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
-                            <span className="shrink-0 text-zinc-300 text-xs font-medium">
-                              {`${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}`}
-                            </span>
+                            {isPlace ? (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {videoCount > 0 ? (
+                                  <>
+                                    <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
+                                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                      {dynamicRating.toFixed(1)}
+                                    </span>
+                                    <span className="text-zinc-600 shrink-0">·</span>
+                                    <span className="shrink-0">
+                                      {videoCount} {videoCount === 1 ? "video review" : "video reviews"}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-zinc-400 text-xs shrink-0">0 video reviews</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="shrink-0 text-zinc-300 text-xs font-medium">
+                                {`${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}`}
+                              </span>
+                            )}
+
                             {locationStr && (
                               <>
                                 <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
@@ -2087,18 +2192,28 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         </div>
                       </div>
 
-                      {/* Action Button: Follow / Following Toggle with Hover Unfollow State */}
+                      {/* Action Button */}
                       {!isSelf && (
                         <button
                           type="button"
-                          onMouseEnter={() => setHoveredUnfollowModalUser(nameStr)}
-                          onMouseLeave={() => setHoveredUnfollowModalUser(null)}
+                          onMouseEnter={() => {
+                            if (isPlace) setHoveredUnfollowPlace(u.id || nameStr);
+                            else setHoveredUnfollowModalUser(nameStr);
+                          }}
+                          onMouseLeave={() => {
+                            if (isPlace) setHoveredUnfollowPlace(null);
+                            else setHoveredUnfollowModalUser(null);
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const targetH = u.handle || nameStr || u.id;
-                            if (targetH && onToggleFollow) {
-                              onToggleFollow(targetH);
-                              setTimeout(() => fetchSocialNetwork(), 300);
+                            if (isPlace && onToggleFollowPlace) {
+                              onToggleFollowPlace(u.id || nameStr);
+                            } else {
+                              const targetH = u.handle || nameStr || u.id;
+                              if (targetH && onToggleFollow) {
+                                onToggleFollow(targetH);
+                                setTimeout(() => fetchSocialNetwork(), 300);
+                              }
                             }
                           }}
                           className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
@@ -2108,7 +2223,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                                 : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
                               : "bg-white text-zinc-950 hover:bg-zinc-200 border border-white"
                           }`}
-                          title={isMemberFollowed ? (isHoveredUnfollow ? "Unfollow this reviewer" : "You are following this reviewer") : "Follow this reviewer"}
                         >
                           {isMemberFollowed ? (
                             isHoveredUnfollow ? (
