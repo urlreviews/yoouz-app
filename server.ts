@@ -14435,6 +14435,77 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
   });
 
+  app.post("/api/interactions/read_receipt", async (req, res) => {
+    try {
+      const { threadId, readerId, readerEmail, readAt } = req.body || {};
+      if (!threadId) return res.status(400).json({ error: "Missing threadId" });
+
+      const now = Number(readAt) || Date.now();
+      const bunnyDb = getBunnyDb();
+
+      let finalThreadData: any = null;
+
+      if (bunnyDb) {
+        try {
+          const rs = await bunnyDb.execute({
+            sql: "SELECT data FROM chats WHERE id = ? LIMIT 1",
+            args: [threadId]
+          });
+          if (rs && rs.rows && rs.rows.length > 0) {
+            const raw = (rs.rows[0] as any).data;
+            const data = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+
+            const currentReceipts = data.readReceipts || {};
+            const currentUnreads = data.unreadCounts || {};
+
+            const readerKeys = [
+              readerEmail,
+              readerId,
+              readerEmail && readerEmail.includes("@") ? readerEmail.split("@")[0] : null
+            ].filter(Boolean);
+
+            readerKeys.forEach((k: string) => {
+              const lower = k.toLowerCase().trim();
+              currentReceipts[lower] = now;
+              currentUnreads[lower] = 0;
+            });
+
+            data.readReceipts = currentReceipts;
+            data.unreadCounts = currentUnreads;
+            finalThreadData = data;
+
+            await bunnyDb.execute({
+              sql: "UPDATE chats SET data = ? WHERE id = ?",
+              args: [JSON.stringify(data), threadId]
+            });
+          }
+        } catch (e) {}
+      }
+
+      // Broadcast instant live SSE event to all participants
+      const targets: string[] = [];
+      if (finalThreadData && Array.isArray(finalThreadData.participants)) {
+        targets.push(...finalThreadData.participants);
+      }
+      if (readerEmail) targets.push(readerEmail);
+      if (readerId) targets.push(readerId);
+
+      broadcastSseEvent({
+        type: "chat_read",
+        threadId,
+        readerId,
+        readerEmail,
+        readAt: now,
+        readReceipts: finalThreadData?.readReceipts,
+        unreadCounts: finalThreadData?.unreadCounts
+      }, targets);
+
+      res.json({ success: true, readReceipts: finalThreadData?.readReceipts });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/interactions/follow", async (req, res) => {
     try {
       const { followerUserId, followerName, followerAvatar, targetHandle, targetUserId, isFollowed, type, placeId, placeName } = req.body || {};

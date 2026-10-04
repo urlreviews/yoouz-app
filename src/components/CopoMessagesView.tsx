@@ -28,6 +28,7 @@ import {
   Compass,
   AlertTriangle,
   User,
+  Check,
   CheckCheck
 } from "lucide-react";
 import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../types";
@@ -2201,6 +2202,47 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       const timeFormatted = formatMessageTimeOnly(msgTime);
                       const fullTooltip = formatChatMessageTime(msg.timestamp, msgTime, msg.id);
 
+                      const isMessageRead = (() => {
+                        if (!isMe) return false;
+                        const partnerKeys = [
+                          partnerDetails.email,
+                          partnerDetails.id,
+                          partnerDetails.name ? partnerDetails.name.toLowerCase().trim() : null,
+                          partnerDetails.email && partnerDetails.email.includes("@") ? partnerDetails.email.split("@")[0].toLowerCase().trim() : null
+                        ].filter(Boolean) as string[];
+
+                        const receipts = activeThread?.readReceipts || {};
+                        let partnerReadAt = 0;
+                        for (const k of partnerKeys) {
+                          const t = Number(receipts[k] || receipts[k.toLowerCase()] || 0);
+                          if (t > partnerReadAt) partnerReadAt = t;
+                        }
+
+                        if (partnerReadAt >= msgTime) return true;
+
+                        const hasPartnerMessageAfter = activeThreadMessages.some((m) => {
+                          if (checkIsMessageFromMe(m)) return false;
+                          const otherTime = (m as any).resolvedTime || resolveMessageTimestampMs(m);
+                          return otherTime >= msgTime;
+                        });
+                        if (hasPartnerMessageAfter) return true;
+
+                        const unreads = activeThread?.unreadCounts || {};
+                        let partnerUnread: number | null = null;
+                        for (const k of partnerKeys) {
+                          const u = unreads[k] ?? unreads[k.toLowerCase()];
+                          if (typeof u === "number") {
+                            partnerUnread = u;
+                            break;
+                          }
+                        }
+                        if (partnerUnread === 0 && Number(activeThread?.updatedAt || 0) >= msgTime) {
+                          return true;
+                        }
+
+                        return false;
+                      })();
+
                       return (
                         <React.Fragment key={`msg-log-${msg.id || idx}`}>
                           {showDateDivider && (
@@ -2295,7 +2337,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                   <span className="font-medium tracking-tight">
                                     {timeFormatted}
                                   </span>
-                                  {isMe && <CheckCheck className="w-3 h-3 text-zinc-400 shrink-0 stroke-[2.2]" />}
+                                  {isMe && (
+                                    <span title={isMessageRead ? "Read" : "Delivered"} className="inline-flex items-center">
+                                      <CheckCheck
+                                        className={`w-3.5 h-3.5 shrink-0 ${
+                                          isMessageRead
+                                            ? "text-[#00c2ff] dark:text-sky-400 stroke-[2.5]"
+                                            : "text-zinc-400 stroke-[2.2]"
+                                        }`}
+                                      />
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>

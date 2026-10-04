@@ -1724,6 +1724,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         createdAtMs: threadMs,
         updatedAt: threadMs,
         unreadCount: Number(unreadCount) || 0,
+        unreadCounts: data.unreadCounts || {},
+        readReceipts: data.readReceipts || {},
         videoPreviewUrl: data.videoPreviewUrl,
         history: processedHistory
       });
@@ -2153,6 +2155,27 @@ export function subscribeToChats(
           updateThreads(dedupedNext);
         }
       }
+    } else if (evt.type === "chat_read") {
+      const threadId = evt.threadId;
+      const readAt = Number(evt.readAt) || Date.now();
+      const readerEmail = (evt.readerEmail || '').toLowerCase().trim();
+      const readerId = (evt.readerId || '').toLowerCase().trim();
+      if (threadId) {
+        const nextThreads = cachedThreads.map((t) => {
+          if (t.id === threadId) {
+            const currentReceipts = { ...(t.readReceipts || {}), ...(evt.readReceipts || {}) };
+            if (readerEmail) currentReceipts[readerEmail] = readAt;
+            if (readerId) currentReceipts[readerId] = readAt;
+            return {
+              ...t,
+              readReceipts: currentReceipts,
+              unreadCounts: { ...(t.unreadCounts || {}), ...(evt.unreadCounts || {}) }
+            };
+          }
+          return t;
+        });
+        updateThreads(nextThreads);
+      }
     }
   });
 
@@ -2581,6 +2604,19 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
     }
   } catch (e) {}
 
+  // Broadcast live read receipt to server & SSE
+  const readNowMs = Date.now();
+  fetch("/api/interactions/read_receipt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      threadId,
+      readerId: currentUser.userId || (currentUser as any).id || (currentUser as any).uid || userEmail,
+      readerEmail: userEmail,
+      readAt: readNowMs
+    })
+  }).catch(() => {});
+
   // Mirror to BunnyDB
   fetch(`/api/nosql/chats/${threadId}`, {
     method: "POST",
@@ -2588,7 +2624,8 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
     body: JSON.stringify({
       data: {
         unreadCount: 0,
-        unreadCounts: unreadCountsUpdates
+        unreadCounts: unreadCountsUpdates,
+        readReceipts: userEmail ? { [userEmail]: readNowMs } : {}
       },
       merge: true
     })

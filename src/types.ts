@@ -349,6 +349,8 @@ export interface CopoMessage {
   createdAt?: number | string;
   updatedAt?: number | string;
   unreadCount: number;
+  unreadCounts?: Record<string, number>;
+  readReceipts?: Record<string, number>;
   videoPreviewUrl?: string;
   history?: {
     id: string;
