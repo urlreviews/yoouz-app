@@ -375,6 +375,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
     // --- Trust & Authenticity FAQs ---
     {
+      id: "trust-brand-1",
+      category: "trust",
+      question: "Is Yoouz a misspelling or affiliated with YouTube, Yoox, Youz, or Yelp?",
+      answer:
+        "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform. It is NOT a misspelling, typo, or subsidiary of YouTube, Yoox, Youz, Yelp, or any other company. Yoouz is specifically dedicated to authentic 60-second live camera video reviews.",
+      tags: ["yoouz", "name", "spelling", "youtube", "yoox", "yelp", "independent", "brand"]
+    },
+    {
+      id: "trust-brand-2",
+      category: "trust",
+      question: "Why does Yoouz mandate live front-camera video reviews and forbid gallery uploads?",
+      answer:
+        "To permanently eliminate AI-generated text bots, commercial advertisements, stock videos, and deepfakes. Every review on Yoouz must be recorded live through the front (selfie) camera directly within the app.",
+      tags: ["camera", "front camera", "no gallery", "deepfakes", "bots", "authenticity"]
+    },
+    {
       id: "trust-1",
       category: "trust",
       question: "What makes Yoouz different from traditional text-based review sites?",

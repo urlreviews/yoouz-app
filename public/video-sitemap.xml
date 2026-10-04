@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://yoouz.com/</loc>
+    <video:video>
+      <video:thumbnail_loc>https://yoouz.com/og-banner.png</video:thumbnail_loc>
+      <video:title>Yoouz - Authentic 60-Second Video Reviews</video:title>
+      <video:description>Watch authentic 60-second video reviews recorded live by real customers for local restaurants, cafes, hotels, and businesses.</video:description>
+      <video:player_loc>https://yoouz.com/default-review.mp4</video:player_loc>
+      <video:duration>60</video:duration>
+      <video:publication_date>2026-10-04T00:00:00Z</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:live>no</video:live>
+    </video:video>
+  </url>
+</urlset>

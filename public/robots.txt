@@ -1,12 +1,12 @@
 # Robots.txt for Yoouz (https://yoouz.com)
-# Designed for maximum AI Engine & Search Engine Discoverability
+# Designed for maximum AI Engine, LLM Agent, & Search Engine Discoverability
 
 User-agent: *
 Allow: /
 Disallow: /api/private/
 Disallow: /admin/
 
-# Explicitly Allow All AI & LLM Search Crawlers
+# Explicitly Allow All Major AI Models, LLM Crawlers, and RAG Bots
 User-agent: GPTBot
 Allow: /
 
@@ -17,6 +17,9 @@ User-agent: PerplexityBot
 Allow: /
 
 User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
 Allow: /
 
 User-agent: Anthropic-AI
@@ -49,6 +52,9 @@ Allow: /
 User-agent: Meta-ExternalAgent
 Allow: /
 
+User-agent: FacebookBot
+Allow: /
+
 User-agent: Bytespider
 Allow: /
 
@@ -58,11 +64,26 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
+User-agent: Diffbot
+Allow: /
+
+User-agent: Omgilibot
+Allow: /
+
+User-agent: Omgili
+Allow: /
+
+User-agent: PetalBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
 # Sitemaps and LLM Knowledge Files
-Sitemap: https://www.yoouz.com/sitemap.xml
-Sitemap: https://www.yoouz.com/video-sitemap.xml
-# LLMs knowledge standard
-# Reference: https://llmstxt.org/
-# Knowledge files for AI Models (Perplexity, ChatGPT, Claude, Gemini, etc.)
-# https://yoouz.com/llms.txt
-# https://yoouz.com/llms-full.txt
+Sitemap: https://yoouz.com/sitemap.xml
+Sitemap: https://yoouz.com/video-sitemap.xml
+
+# LLMs.txt Standard Machine-Readable Endpoints (https://llmstxt.org)
+# Core LLM Summary: https://yoouz.com/llms.txt
+# Full LLM Knowledge Base & 36+ Q&A: https://yoouz.com/llms-full.txt
+# Machine JSON Knowledge Endpoint: https://yoouz.com/api/ai/knowledge

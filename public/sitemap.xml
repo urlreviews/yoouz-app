@@ -4,8 +4,8 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://yoouz.com/</loc>
-    <lastmod>2026-09-03</lastmod>
-    <changefreq>always</changefreq>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>hourly</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://yoouz.com/icon-512.png</image:loc>
@@ -20,25 +20,49 @@
   </url>
   <url>
     <loc>https://yoouz.com/search</loc>
-    <lastmod>2026-09-03</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://yoouz.com/business</loc>
-    <lastmod>2026-09-03</lastmod>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoouz.com/compare/yelp-alternative</loc>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://yoouz.com/about</loc>
-    <lastmod>2026-09-03</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://yoouz.com/compare/google-reviews-alternative</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoouz.com/compare/trustpilot-alternative</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoouz.com/compare/tripadvisor-alternative</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoouz.com/llms.txt</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yoouz.com/categories</loc>
-    <lastmod>2026-09-03</lastmod>
+    <loc>https://yoouz.com/llms-full.txt</loc>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
