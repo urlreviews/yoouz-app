@@ -7117,14 +7117,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }
     } catch (e) {}
 
-    // Ensure total users accurately reflects active accounts and creators
+    // Use authoritative BunnyDB users count directly
     try {
-      const activeUserIds = new Set<string>();
-      readReviewsIndex().forEach((r: any) => {
-        if (r && r.userId) activeUserIds.add(String(r.userId).toLowerCase());
-        if (r && r.author?.name) activeUserIds.add(String(r.author.name).toLowerCase());
-      });
-      counts.users = Math.max(counts.users || 0, activeUserIds.size, 1);
+      if (!counts.users || counts.users === 0) {
+        const uRes = await bunnyDb.execute("SELECT COUNT(*) as c FROM users");
+        counts.users = Number(uRes.rows?.[0]?.c || 0);
+      }
     } catch (e) {}
   } else {
     for (const tbl of tables) {
