@@ -12958,7 +12958,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Update local reviews index and memory feedCache immediately
       try {
         const list = readReviewsIndex();
-        const vidIdx = list.findIndex((v: any) => v.id === videoId);
+        const vidIdx = list.findIndex((v: any) => v && v.id === videoId);
         if (vidIdx !== -1) {
           list[vidIdx] = {
             ...list[vidIdx],
@@ -12966,8 +12966,18 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             commentsCount: treeResult.count
           };
           writeReviewsIndex(list);
+        } else {
+          const found = (feedCache.videos || []).find((v: any) => v && v.id === videoId);
+          if (found) {
+            list.unshift({
+              ...found,
+              comments: treeResult.comments,
+              commentsCount: treeResult.count
+            });
+            writeReviewsIndex(list);
+          }
         }
-        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v && v.id === videoId);
         if (cachedIdx !== -1) {
           feedCache.videos[cachedIdx] = {
             ...feedCache.videos[cachedIdx],
@@ -27115,6 +27125,22 @@ function injectOpenGraphTags(html: string, meta: any) {
       .replace('</head>', `${headInject}</head>`);
   }
 
+  function injectLiveInitialState(html: string): string {
+    try {
+      const deletedSet = new Set(readDeletedReviewsIndex());
+      const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
+      const liveVideos = (sourceVideos || [])
+        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)))
+        .slice(0, 30);
+      
+      const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
+      const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};</script>`;
+      return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);
+    } catch (e) {
+      return html;
+    }
+  }
+
   async function resolveMetadataForRequest(req: any) {
     const userAgent = req.headers['user-agent'] || '';
     const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
@@ -28174,7 +28200,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
         const meta = await resolveMetadataForRequest(req);
         indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
-        const finalHtml = injectOpenGraphTags(indexTemplate, meta);
+        const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
         return res.status(200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -28220,7 +28246,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const indexPath = path.join(distPath, "index.html");
         let indexTemplate = fs.readFileSync(indexPath, "utf-8");
         const meta = await resolveMetadataForRequest(req);
-        const finalHtml = injectOpenGraphTags(indexTemplate, meta);
+        const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
         res.status(200).set({ 
           'Content-Type': 'text/html',
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',

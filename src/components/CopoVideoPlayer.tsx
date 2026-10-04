@@ -129,9 +129,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const { t } = useLanguage();
   // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
   const effectiveVideos = useMemo(() => {
+    const fallbackList = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
+      ? (window as any).__INITIAL_FEED_VIDEOS__
+      : INITIAL_SEED_VIDEOS;
     const base = (videos && videos.length > 0)
       ? videos.filter(v => !isPurgedItem(v))
-      : (feedContextTitle ? [] : INITIAL_SEED_VIDEOS.filter(v => !isPurgedItem(v)).map(normalizeReview));
+      : (feedContextTitle ? [] : fallbackList.filter((v: any) => !isPurgedItem(v)).map(normalizeReview));
     return [...base].sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos, feedContextTitle]);
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];

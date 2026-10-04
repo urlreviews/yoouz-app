@@ -41,6 +41,11 @@ export function normalizeReview(v: any): VideoReview {
 
     const sharesCountVal = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
 
+    const rawComments = Array.isArray(v.comments) ? v.comments : [];
+    const commentsCountVal = typeof v.commentsCount === 'number' 
+      ? Math.max(v.commentsCount, rawComments.length) 
+      : rawComments.length;
+
     return {
       ...v,
       id: videoId,
@@ -52,6 +57,8 @@ export function normalizeReview(v: any): VideoReview {
       bookmarks: bookmarksCountVal,
       shares: sharesCountVal,
       sharesCount: sharesCountVal,
+      comments: rawComments,
+      commentsCount: commentsCountVal,
       isLiked: isLiked,
       isBookmarked: isBookmarked,
       author: safeAuthor
@@ -230,25 +237,39 @@ export function useFeedPagination() {
 
       const combinedMap = new Map<string, VideoReview>();
 
-      // 1. Initial fresh seed baseline (authoritative server-synced baseline takes absolute precedence)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-        if (v && v.id) combinedMap.set(String(v.id), v);
-      });
+      // 1. Injected server HTML baseline (highest authority! Instant live state for cold starts / private windows)
+      if (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0) {
+        (window as any).__INITIAL_FEED_VIDEOS__
+          .filter((v: any) => !isPurgedItem(v, deletedIds))
+          .map(normalizeReview)
+          .forEach((v: VideoReview) => {
+            if (v && v.id) combinedMap.set(String(v.id), v);
+          });
+      }
 
       // 2. Cached feed videos from localStorage (only fill in any additional non-conflicting items)
       const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-            if (v && v.id && !combinedMap.has(String(v.id))) {
-              combinedMap.set(String(v.id), v);
-            }
-          });
-        }
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v: VideoReview) => {
+              if (v && v.id && !combinedMap.has(String(v.id))) {
+                combinedMap.set(String(v.id), v);
+              }
+            });
+          }
+        } catch (e) {}
       }
 
-      // 3. Local published (optimistic uploads in last 60 seconds)
+      // 3. Initial fresh seed baseline (only fill missing items)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+        if (v && v.id && !combinedMap.has(String(v.id))) {
+          combinedMap.set(String(v.id), v);
+        }
+      });
+
+      // 4. Local published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
         if (v && v.id) combinedMap.set(String(v.id), v);
       });
@@ -263,8 +284,11 @@ export function useFeedPagination() {
 
       return result;
     } catch (e) {}
-    // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
-    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview);
+    // Instant fallback to injected server videos or seed videos
+    const fallbackSource = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
+      ? (window as any).__INITIAL_FEED_VIDEOS__
+      : INITIAL_SEED_VIDEOS;
+    const seeds = fallbackSource.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview);
     seeds.sort((a, b) => getReviewTime(b) - getReviewTime(a));
     return seeds;
   });
@@ -593,18 +617,24 @@ export function useFeedPagination() {
               });
             } else if (payload.type === "new_comment" && payload.videoId) {
               const vidId = String(payload.videoId);
-              setVideos((prev) => prev.map((v) => {
-                if (v.id === vidId) {
-                  const rawList = payload.comments || [...(v.comments || []), payload.comment];
-                  const tree = buildCommentTree(rawList);
-                  return {
-                    ...v,
-                    comments: tree.comments,
-                    commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
-                  };
-                }
-                return v;
-              }));
+              setVideos((prev) => {
+                const nextList = prev.map((v) => {
+                  if (v.id === vidId) {
+                    const rawList = payload.comments || [...(v.comments || []), payload.comment];
+                    const tree = buildCommentTree(rawList);
+                    return {
+                      ...v,
+                      comments: tree.comments,
+                      commentsCount: payload.commentsCount !== undefined ? payload.commentsCount : tree.count
+                    };
+                  }
+                  return v;
+                });
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextList.slice(0, 50)));
+                } catch (e) {}
+                return nextList;
+              });
               window.dispatchEvent(new CustomEvent("copo-new-comment", { detail: payload }));
             } else if (payload.type === "delete_comment" && payload.videoId) {
               const vidId = String(payload.videoId);
@@ -658,18 +688,30 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-owner-response-updated", { detail: payload }));
             } else if (payload.type === "video_liked" && payload.videoId) {
               const vidId = String(payload.videoId);
-              setVideos((prev) => prev.map((v) => v.id === vidId ? {
-                ...v,
-                likes: typeof payload.likesCount === 'number' ? payload.likesCount : v.likes,
-                likesCount: typeof payload.likesCount === 'number' ? payload.likesCount : v.likesCount
-              } : v));
+              setVideos((prev) => {
+                const nextList = prev.map((v) => v.id === vidId ? {
+                  ...v,
+                  likes: typeof payload.likesCount === 'number' ? payload.likesCount : v.likes,
+                  likesCount: typeof payload.likesCount === 'number' ? payload.likesCount : v.likesCount
+                } : v);
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextList.slice(0, 50)));
+                } catch (e) {}
+                return nextList;
+              });
             } else if (payload.type === "video_bookmarked" && payload.videoId) {
               const vidId = String(payload.videoId);
-              setVideos((prev) => prev.map((v) => v.id === vidId ? {
-                ...v,
-                bookmarks: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarks,
-                bookmarksCount: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarksCount
-              } : v));
+              setVideos((prev) => {
+                const nextList = prev.map((v) => v.id === vidId ? {
+                  ...v,
+                  bookmarks: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarks,
+                  bookmarksCount: typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : v.bookmarksCount
+                } : v);
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextList.slice(0, 50)));
+                } catch (e) {}
+                return nextList;
+              });
             } else if (payload.type === "new_video_review" && payload.review && payload.review.id) {
               const incoming = normalizeReview(payload.review);
               const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
@@ -677,19 +719,31 @@ export function useFeedPagination() {
               try { delList = JSON.parse(deletedStr); } catch (e) {}
               if (!delList.includes(String(incoming.id))) {
                 setVideos((prev) => {
+                  let nextList: VideoReview[];
                   if (prev.some((v) => v.id === incoming.id)) {
-                    return prev.map((v) => v.id === incoming.id ? { ...v, ...incoming } : v);
+                    nextList = prev.map((v) => v.id === incoming.id ? { ...v, ...incoming } : v);
+                  } else {
+                    nextList = [incoming, ...prev];
                   }
-                  return [incoming, ...prev];
+                  try {
+                    localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextList.slice(0, 50)));
+                  } catch (e) {}
+                  return nextList;
                 });
               }
             } else if (payload.type === "video_shared" && payload.videoId) {
               const vidId = String(payload.videoId);
-              setVideos((prev) => prev.map((v) => v.id === vidId ? {
-                ...v,
-                shares: typeof payload.sharesCount === 'number' ? Math.max(v.shares || 0, payload.sharesCount) : v.shares,
-                sharesCount: typeof payload.sharesCount === 'number' ? Math.max(v.sharesCount || 0, payload.sharesCount) : v.sharesCount
-              } : v));
+              setVideos((prev) => {
+                const nextList = prev.map((v) => v.id === vidId ? {
+                  ...v,
+                  shares: typeof payload.sharesCount === 'number' ? Math.max(v.shares || 0, payload.sharesCount) : v.shares,
+                  sharesCount: typeof payload.sharesCount === 'number' ? Math.max(v.sharesCount || 0, payload.sharesCount) : v.sharesCount
+                } : v);
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextList.slice(0, 50)));
+                } catch (e) {}
+                return nextList;
+              });
             } else if (payload.type === "purge_all_videos") {
               setVideos([]);
               try {
