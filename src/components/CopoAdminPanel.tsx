@@ -662,7 +662,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   useEffect(() => {
     fetchHealthDiagnostic();
-    const interval = setInterval(fetchHealthDiagnostic, 30000);
+    fetchAdminChats();
+    const interval = setInterval(() => {
+      fetchHealthDiagnostic();
+      fetchAdminChats();
+    }, 30000);
     const unsubscribe = subscribeAppHealth((summary) => {
       setClientHealthSummary(summary);
     });
