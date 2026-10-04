@@ -4,7 +4,7 @@ import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock } from "lucide-react";
+import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock, Video, Sparkles } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { CopoStarRating } from "./CopoStarRating";
 
@@ -46,7 +46,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   onToggleBookmark: _onToggleBookmark,
   onToggleFollow: _onToggleFollow,
   onOpenReport: _onOpenReport,
-  onRecordReview: _onRecordReview,
+  onRecordReview,
   onOpenAuth: _onOpenAuth,
   onOpenMenu: _onOpenMenu,
   onOpenSearch: _onOpenSearch,
@@ -178,14 +178,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       );
     });
 
-    if (matched.length === 0) {
-      return videos.slice(0, 10);
-    }
+    // Option A: Strictly match venue reviews. Never fall back to other venues' videos!
     return matched;
   }, [videos, cleanSlug]);
 
+  const hasReviews = matchingVideos.length > 0;
   // Display list (supports 1, 2, 10, 100, 1000 reviews)
-  const displayVideos = matchingVideos.length > 0 ? matchingVideos : videos.slice(0, 2);
+  const displayVideos = matchingVideos;
   const totalCount = displayVideos.length;
   const safeActiveIndex = Math.min(pageIndex, Math.max(0, totalCount - 1));
 
@@ -504,6 +503,71 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     [onOpenCreator, safeAuthor, handleStopVideo, reviewerProfileUrl]
   );
 
+  // Safe handler to initiate authentic 60-second video recording for this place
+  const handleRecordClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 1. If onRecordReview is passed directly by host
+      if (onRecordReview) {
+        handleStopVideo();
+        onRecordReview(targetPlace);
+        return;
+      }
+
+      // 2. If running inside an iframe (e.g. business dashboard embed preview or external site)
+      if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(
+            {
+              type: "YOOUZ_RECORD_REVIEW",
+              placeId: targetPlace.id || cleanSlug,
+              slug: cleanSlug,
+              place: targetPlace
+            },
+            "*"
+          );
+        } catch {}
+
+        try {
+          if (window.parent.location.origin === window.location.origin) {
+            return;
+          }
+        } catch {}
+
+        // External website embed: open create review screen for this place
+        const recordUrl =
+          typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")
+            ? `/place/${encodeURIComponent(cleanSlug)}?record=true`
+            : `https://www.yoouz.com/place/${encodeURIComponent(cleanSlug)}?record=true`;
+
+        try {
+          const opened = window.open(recordUrl, "_blank", "noopener,noreferrer");
+          if (!opened) {
+            window.location.href = recordUrl;
+          }
+        } catch {
+          window.location.href = recordUrl;
+        }
+        return;
+      }
+
+      // 3. Standalone mode
+      if (typeof window !== "undefined") {
+        const recordUrl = !window.location.hostname.includes("yoouz.com")
+          ? `/place/${encodeURIComponent(cleanSlug)}?record=true`
+          : `https://www.yoouz.com/place/${encodeURIComponent(cleanSlug)}?record=true`;
+        if (recordUrl.startsWith("/")) {
+          window.location.href = recordUrl;
+        } else {
+          window.open(recordUrl, "_blank", "noopener,noreferrer");
+        }
+      }
+    },
+    [onRecordReview, handleStopVideo, targetPlace, cleanSlug]
+  );
+
   return (
     <div
       id="copo-embed-widget-root"
@@ -518,253 +582,368 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        {/* Background Full-Bleed Video / Poster */}
-        <div 
-          className="absolute inset-0 w-full h-full bg-black cursor-pointer"
-          onClick={() => currentVideo && handleTogglePlay(currentVideo)}
-        >
-          {isPlaying ? (
-            <video
-              ref={(el) => {
-                videoElementRef.current = el;
-                if (el) {
-                  if (isVideoPaused || !playingVideoId) {
-                    el.pause();
-                  } else {
-                    el.play().catch(() => {});
-                  }
-                }
-              }}
-              src={currentVideo.videoUrl}
-              poster={
-                currentVideo.thumbnailUrl ||
-                currentVideo.bannerUrl ||
-                currentVideo.ogImage ||
-                `https://rev1.b-cdn.net/videos/${currentVideo.id}.jpg`
-              }
-              playsInline
-              autoPlay
-              loop
-              muted={isMuted}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src={
-                getProxiedImageUrl(
-                  currentVideo?.thumbnailUrl ||
-                  currentVideo?.bannerUrl ||
-                  currentVideo?.ogImage ||
-                  `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
-                )
-              }
-              alt={currentVideo?.caption || currentVideo?.placeName || "Yoouz Review"}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
-              }}
-            />
-          )}
-
-          {/* Cinematic Top and Bottom Gradients for Uncompromising Legibility */}
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-none z-10" />
-
-          {/* Center Luxury Play / Pause Indicator */}
-          {(!isPlaying || isVideoPaused) ? (
-            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-              <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
-                <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
-              </div>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none opacity-0 group-hover/embed:opacity-100 transition-opacity duration-200">
-              <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg flex items-center justify-center">
-                <Pause className="w-5 h-5 fill-white text-white" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
-        <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
-          <a
-            href={placeProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-            title={`View verified reviews for ${displayBusinessName} on Yoouz`}
-            onClick={handleLogoClick}
-          >
-            <CopoBrandLogo
-              domain={displayDomain}
-              name={displayBusinessName}
-              website={targetPlace.website}
-              logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
-              bannerUrl={targetPlace.bannerUrl}
-              loading="eager"
-              fetchPriority="high"
-              className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md transition-transform"
-              imageClassName="w-full h-full object-contain rounded-lg"
-              fallbackTextClassName="font-extrabold text-[11px] text-white"
-            />
-            <div className="min-w-0 flex-1 py-0.5">
-              <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
-                <span className="truncate no-underline">{displayBusinessName}</span>
-                <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5 no-underline">
-                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
-                <span>{overallRating.toFixed(1)}</span>
-                <span className="text-zinc-300 font-normal">
-                  ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
-                </span>
-              </div>
-            </div>
-          </a>
-
-          {/* Mute / Unmute Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMuted((prev) => !prev);
-            }}
-            className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
-            title={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? (
-              <VolumeX className="w-3.5 h-3.5 text-white" />
-            ) : (
-              <Volume2 className="w-3.5 h-3.5 text-white" />
-            )}
-          </button>
-        </div>
-
-        {/* SIDE CHEVRONS (Desktop hover or tap navigation) */}
-        {totalCount > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrevVideo();
-              }}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-70 hover:opacity-100"
-              aria-label="Previous review"
-              title="Previous review"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNextVideo();
-              }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-70 hover:opacity-100"
-              aria-label="Next review"
-              title="Next review"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </>
-        )}
-
-        {/* BOTTOM OVERLAY: Clean Original Video Feed Layout */}
-        <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
-          {/* Reviewer Metadata (Frameless, clean overlay matching original Yoouz video feed) */}
-          <div className="flex items-start gap-2.5 min-w-0">
-            {/* Reviewer Avatar -> Direct link to user profile on Yoouz */}
-            <a
-              href={reviewerProfileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
-              title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-              onClick={handleReviewerClick}
-            >
-              <img
-                src={reviewerAvatarUrl}
-                alt={safeAuthor.name}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  const fallback = generateGoogleLetterAvatarSvg(
-                    safeAuthor.name || "User",
-                    64,
-                    safeAuthor.handle || safeAuthor.name
-                  );
-                  if (target.src !== fallback) {
-                    target.src = fallback;
-                  }
-                }}
-              />
-            </a>
-
-            <div className="min-w-0 flex flex-col gap-0.5">
-              {/* Line 1: Author Name with Verified Check -> Direct link to user profile on Yoouz */}
-              <a
-                href={reviewerProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
-                onClick={handleReviewerClick}
-              >
-                <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-                  By {safeAuthor.name}
-                </span>
-                {safeAuthor.isVerified && (
-                  <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
-                )}
-              </a>
-
-              {/* Line 2: Rating Stars & Recorded Time */}
-              <div className="flex items-center gap-2">
-                <CopoStarRating
-                  rating={currentVideo?.rating || 5}
-                  starClassName="w-3.5 h-3.5"
-                  filledColorClass="fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
-                  emptyColorClass="fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
-                />
-                <span className="text-white text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] flex items-center gap-1 shrink-0">
-                  <Clock className="w-3 h-3 text-white/80 shrink-0" />
-                  <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>
-                </span>
-              </div>
-
-              {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
-              <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
-                {captionText}
-              </p>
-            </div>
-          </div>
-
-          {/* Footer Bar: Live Sync on Left, Video Count (1 of 3) on Right */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+        {!hasReviews ? (
+          /* OPTION A: Branded "Be the First to Record" Invitation State */
+          <div className="relative w-full h-full flex flex-col justify-between p-4 sm:p-5 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black text-white select-none">
+            {/* Top Bar: Venue Header Pill */}
+            <div className="flex items-center justify-between gap-2 z-20">
               <a
                 href={placeProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-xl border border-white/20 text-white transition-all text-left cursor-pointer shadow-lg active:scale-[0.98] min-w-0 max-w-[calc(100%-40px)] no-underline outline-none"
                 onClick={handleLogoClick}
+                title={`View ${displayBusinessName} on Yoouz`}
               >
-                Live Sync Powered by Yoouz
+                <CopoBrandLogo
+                  domain={displayDomain}
+                  name={displayBusinessName}
+                  website={targetPlace.website}
+                  logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
+                  bannerUrl={targetPlace.bannerUrl}
+                  loading="eager"
+                  fetchPriority="high"
+                  className="w-7 h-7 rounded-lg bg-zinc-900 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
+                  imageClassName="w-full h-full object-contain rounded-md"
+                  fallbackTextClassName="font-black text-[10px] text-white"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate flex items-center gap-1 leading-tight font-extrabold text-[12.5px] text-white">
+                    <span className="truncate">{displayBusinessName}</span>
+                    <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                  </div>
+                </div>
               </a>
+
+              <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-400 bg-zinc-900/80 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span>Verified</span>
+              </div>
             </div>
 
-            {totalCount > 1 && (
-              <span className="text-[10.5px] font-extrabold text-white/90 bg-black/45 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 drop-shadow-sm shrink-0">
-                {safeActiveIndex + 1} of {totalCount}
-              </span>
-            )}
+            {/* Centerpiece: Floating Brand Badge + Interactive Call to Action */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-2 py-3 z-20 space-y-3.5 sm:space-y-4">
+              {/* Pulsing Studio Camera Icon Ring */}
+              <div className="relative group/camera cursor-pointer" onClick={handleRecordClick}>
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 border border-white/20 shadow-2xl flex items-center justify-center relative overflow-hidden backdrop-blur-xl group-hover/camera:scale-105 transition-transform duration-300">
+                  <CopoBrandLogo
+                    domain={displayDomain}
+                    name={displayBusinessName}
+                    website={targetPlace.website}
+                    logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
+                    bannerUrl={targetPlace.bannerUrl}
+                    loading="eager"
+                    fetchPriority="high"
+                    className="w-12 h-12 rounded-2xl bg-zinc-950/80 border border-white/10 flex items-center justify-center p-1.5 shadow-md"
+                    imageClassName="w-full h-full object-contain"
+                    fallbackTextClassName="font-black text-sm text-white"
+                  />
+                  {/* Subtle red live record badge */}
+                  <div className="absolute -bottom-1 -right-1 bg-rose-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-zinc-950 flex items-center gap-1 shadow-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    <span>60s</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Invitation Headings */}
+              <div className="space-y-1 max-w-[280px]">
+                <h3 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
+                  Be the first to review <br />
+                  <span className="text-amber-400 truncate inline-block max-w-[240px] align-bottom">
+                    {displayBusinessName}
+                  </span>
+                </h3>
+                <p className="text-[11.5px] sm:text-xs text-zinc-400 font-medium leading-relaxed">
+                  Real customers record authentic 60-second video reviews. Your review will appear live on this website.
+                </p>
+              </div>
+
+              {/* Action Button */}
+              <button
+                type="button"
+                onClick={handleRecordClick}
+                className="w-full max-w-[260px] flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs sm:text-sm shadow-xl active:scale-95 transition-all cursor-pointer border border-white/40"
+              >
+                <Video className="w-4 h-4 fill-rose-600 text-rose-600" />
+                <span>Record Video Review</span>
+              </button>
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-400 font-semibold pt-0.5">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>100% Authentic • Live Video Only</span>
+              </div>
+            </div>
+
+            {/* Bottom Bar: Live Sync */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10 z-20 text-[11px] text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <a
+                  href={placeProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-medium text-white/80 hover:text-white transition-colors no-underline"
+                  onClick={handleLogoClick}
+                >
+                  Live Sync Powered by Yoouz
+                </a>
+              </div>
+              <span className="text-[10px] font-bold text-zinc-400">0 Reviews</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Video Carousel when reviews exist */
+          <>
+            {/* Background Full-Bleed Video / Poster */}
+            <div 
+              className="absolute inset-0 w-full h-full bg-black cursor-pointer"
+              onClick={() => currentVideo && handleTogglePlay(currentVideo)}
+            >
+              {isPlaying ? (
+                <video
+                  ref={(el) => {
+                    videoElementRef.current = el;
+                    if (el) {
+                      if (isVideoPaused || !playingVideoId) {
+                        el.pause();
+                      } else {
+                        el.play().catch(() => {});
+                      }
+                    }
+                  }}
+                  src={currentVideo.videoUrl}
+                  poster={
+                    currentVideo.thumbnailUrl ||
+                    currentVideo.bannerUrl ||
+                    currentVideo.ogImage ||
+                    `https://rev1.b-cdn.net/videos/${currentVideo.id}.jpg`
+                  }
+                  playsInline
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={
+                    getProxiedImageUrl(
+                      currentVideo?.thumbnailUrl ||
+                      currentVideo?.bannerUrl ||
+                      currentVideo?.ogImage ||
+                      `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
+                    )
+                  }
+                  alt={currentVideo?.caption || currentVideo?.placeName || "Yoouz Review"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
+                  }}
+                />
+              )}
+
+              {/* Cinematic Top and Bottom Gradients for Uncompromising Legibility */}
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
+              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-none z-10" />
+
+              {/* Center Luxury Play / Pause Indicator */}
+              {(!isPlaying || isVideoPaused) ? (
+                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                  <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
+                    <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none opacity-0 group-hover/embed:opacity-100 transition-opacity duration-200">
+                  <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg flex items-center justify-center">
+                    <Pause className="w-5 h-5 fill-white text-white" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
+            <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
+              <a
+                href={placeProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all text-left cursor-pointer shadow-xl active:scale-[0.98] min-w-0 max-w-[calc(100%-48px)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                title={`View verified reviews for ${displayBusinessName} on Yoouz`}
+                onClick={handleLogoClick}
+              >
+                <CopoBrandLogo
+                  domain={displayDomain}
+                  name={displayBusinessName}
+                  website={targetPlace.website}
+                  logoUrl={targetPlace.logoUrl || targetPlace.avatarUrl || targetPlace.ogImage}
+                  bannerUrl={targetPlace.bannerUrl}
+                  loading="eager"
+                  fetchPriority="high"
+                  className="w-8 h-8 rounded-xl bg-zinc-900/90 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md transition-transform"
+                  imageClassName="w-full h-full object-contain rounded-lg"
+                  fallbackTextClassName="font-extrabold text-[11px] text-white"
+                />
+                <div className="min-w-0 flex-1 py-0.5">
+                  <div className="truncate flex items-center gap-1 leading-tight font-black text-[13px] sm:text-[14px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] no-underline">
+                    <span className="truncate no-underline">{displayBusinessName}</span>
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-amber-400 font-extrabold leading-none mt-0.5 no-underline">
+                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                    <span>{overallRating.toFixed(1)}</span>
+                    <span className="text-zinc-300 font-normal">
+                      ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
+                    </span>
+                  </div>
+                </div>
+              </a>
+
+              {/* Mute / Unmute Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMuted((prev) => !prev);
+                }}
+                className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-3.5 h-3.5 text-white" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5 text-white" />
+                )}
+              </button>
+            </div>
+
+            {/* SIDE CHEVRONS (Desktop hover or tap navigation) */}
+            {totalCount > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevVideo();
+                  }}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-70 hover:opacity-100"
+                  aria-label="Previous review"
+                  title="Previous review"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNextVideo();
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-xl opacity-70 hover:opacity-100"
+                  aria-label="Next review"
+                  title="Next review"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {/* BOTTOM OVERLAY: Clean Original Video Feed Layout */}
+            <div className="relative z-30 p-3 sm:p-3.5 flex flex-col gap-2 pointer-events-auto">
+              {/* Reviewer Metadata (Frameless, clean overlay matching original Yoouz video feed) */}
+              <div className="flex items-start gap-2.5 min-w-0">
+                {/* Reviewer Avatar -> Direct link to user profile on Yoouz */}
+                <a
+                  href={reviewerProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full overflow-hidden bg-zinc-900/80 border border-white/30 shrink-0 flex items-center justify-center text-white text-[11px] font-bold shadow-md hover:scale-105 hover:border-white/60 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
+                  title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
+                  onClick={handleReviewerClick}
+                >
+                  <img
+                    src={reviewerAvatarUrl}
+                    alt={safeAuthor.name}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      const fallback = generateGoogleLetterAvatarSvg(
+                        safeAuthor.name || "User",
+                        64,
+                        safeAuthor.handle || safeAuthor.name
+                      );
+                      if (target.src !== fallback) {
+                        target.src = fallback;
+                      }
+                    }}
+                  />
+                </a>
+
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  {/* Line 1: Author Name with Verified Check -> Direct link to user profile on Yoouz */}
+                  <a
+                    href={reviewerProfileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer min-w-0 w-fit no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                    title={`View ${safeAuthor.name}'s verified profile on Yoouz`}
+                    onClick={handleReviewerClick}
+                  >
+                    <span className="text-[13.5px] sm:text-[14px] font-black text-white no-underline truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                      By {safeAuthor.name}
+                    </span>
+                    {safeAuthor.isVerified && (
+                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+                    )}
+                  </a>
+
+                  {/* Line 2: Rating Stars & Recorded Time */}
+                  <div className="flex items-center gap-2">
+                    <CopoStarRating
+                      rating={currentVideo?.rating || 5}
+                      starClassName="w-3.5 h-3.5"
+                      filledColorClass="fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                      emptyColorClass="fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                    />
+                    <span className="text-white text-[11px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] flex items-center gap-1 shrink-0">
+                      <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                      <span>{formatRecordedDate(currentVideo?.recordedAt, currentVideo?.createdAtMs)}</span>
+                    </span>
+                  </div>
+
+                  {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
+                  <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
+                    {captionText}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Bar: Live Sync on Left, Video Count (1 of 3) on Right */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <a
+                    href={placeProfileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                    onClick={handleLogoClick}
+                  >
+                    Live Sync Powered by Yoouz
+                  </a>
+                </div>
+
+                {totalCount > 1 && (
+                  <span className="text-[10.5px] font-extrabold text-white/90 bg-black/45 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 drop-shadow-sm shrink-0">
+                    {safeActiveIndex + 1} of {totalCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

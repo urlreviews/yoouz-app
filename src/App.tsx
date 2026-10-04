@@ -4062,7 +4062,7 @@ export function App() {
       if (specificVideo) {
         return [specificVideo];
       }
-      return visibleVideos;
+      return [];
     }
 
     if (fullscreenFeedContext) {

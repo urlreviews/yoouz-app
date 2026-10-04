@@ -2012,7 +2012,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const getEmbedCode = () => {
-    const embedSlug = getPlaceSlug(currentPlace);
+    const rawSlug = getPlaceSlug(currentPlace);
+    const embedSlug = (rawSlug && rawSlug.trim() !== '') ? rawSlug.trim() : (currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com');
     const placeTitle = (currentPlace?.name || 'Business').replace(/"/g, '\\"');
     const placeRating = Number(currentPlace?.rating || 5).toFixed(1);
     const reviewCount = Math.max(1, placeVideos.length);
@@ -3635,28 +3636,25 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
                         Preview
                       </span>
-                      {displayableWidgetVideos.length > 1 && (
+                      {displayableWidgetVideos.length > 1 ? (
                         <span className="text-xs text-zinc-400 font-medium">
                           Swipe or click arrows to view reviews ({displayableWidgetVideos.length} total)
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-400 font-medium">
+                          {displayableWidgetVideos.length === 1 ? "1 Live Video Review" : "Branded Invitation State (0 Reviews)"}
                         </span>
                       )}
                     </div>
 
-                    {displayableWidgetVideos.length === 0 ? (
-                      <div className="w-full max-w-[390px] mx-auto bg-black border border-zinc-800 rounded-3xl p-12 text-center text-zinc-500 space-y-2">
-                        <AlertCircle className="w-8 h-8 mx-auto text-zinc-600" />
-                        <p className="text-xs font-medium text-zinc-400">No video reviews found for widget.</p>
-                      </div>
-                    ) : (
-                      <div className="relative w-full max-w-[390px] h-[520px] mx-auto bg-black border border-white/10 rounded-[24px] overflow-hidden shadow-2xl flex flex-col group/embed select-none">
-                        <iframe
-                          src={`/embed/${getPlaceSlug(currentPlace)}`}
-                          title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
-                          className="w-full h-full border-0 bg-transparent"
-                          allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
-                        />
-                      </div>
-                    )}
+                    <div className="relative w-full max-w-[390px] h-[520px] mx-auto bg-black border border-white/10 rounded-[24px] overflow-hidden shadow-2xl flex flex-col group/embed select-none">
+                      <iframe
+                        src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`}
+                        title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
+                        className="w-full h-full border-0 bg-transparent"
+                        allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
+                      />
+                    </div>
                   </div>
 
 
