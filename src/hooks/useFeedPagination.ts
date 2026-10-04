@@ -230,12 +230,7 @@ export function useFeedPagination() {
 
       const combinedMap = new Map<string, VideoReview>();
 
-      // 1. Initial fresh seed baseline (filtered to remove any deleted items)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-        if (v && v.id) combinedMap.set(String(v.id), v);
-      });
-
-      // 2. Cached feed videos from localStorage (overrides static seeds with latest ratings/updates, while filtering deleted items)
+      // 1. Cached feed videos from localStorage
       const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -247,6 +242,11 @@ export function useFeedPagination() {
           });
         }
       }
+
+      // 2. Initial fresh seed baseline (authoritative server-synced baseline overrides local cache to guarantee 100% up-to-date comments/likes)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+        if (v && v.id) combinedMap.set(String(v.id), v);
+      });
 
       // 3. Local published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
