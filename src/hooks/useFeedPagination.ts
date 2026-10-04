@@ -121,21 +121,32 @@ const PROTECTED_FEED_CREATORS = new Set([
 
 export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {
   if (!v || !v.id) return true;
-  const id = String(v.id);
+  const id = String(v.id).trim();
+  if (!id || id.length < 3) return true;
   if (HARD_DELETED_IDS.includes(id)) return true;
 
-  // Check client blacklist copo_deleted_videos / yoouz_deleted_videos from localStorage unconditionally
+  // Check client blacklist copo_deleted_videos / yoouz_deleted_videos from localStorage (ignore empty/short strings)
   try {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || localStorage.getItem("yoouz_deleted_videos") || "[]";
     const deletedList = JSON.parse(deletedStr);
-    if (Array.isArray(deletedList) && deletedList.includes(id)) return true;
+    if (Array.isArray(deletedList)) {
+      if (deletedList.some(item => item && String(item).trim() === id)) return true;
+    }
   } catch (e) {}
 
   if (extraDeletedIds) {
     if (extraDeletedIds instanceof Set && extraDeletedIds.has(id)) return true;
-    if (Array.isArray(extraDeletedIds) && extraDeletedIds.includes(id)) return true;
+    if (Array.isArray(extraDeletedIds) && extraDeletedIds.some(item => item && String(item).trim() === id)) return true;
   }
   if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
+
+  const uId = (v.userId || "").toLowerCase().trim();
+  const uEmail = (v.userEmail || "").toLowerCase().trim();
+  const uName = (v.author?.name || v.authorName || "").toLowerCase().trim();
+  const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase().trim();
+
+  const isProtectedCreator = PROTECTED_FEED_CREATORS.has(uId) || PROTECTED_FEED_CREATORS.has(uEmail) || PROTECTED_FEED_CREATORS.has(uName) || PROTECTED_FEED_CREATORS.has(uHandle);
+  if (isProtectedCreator) return false;
 
   const pId = (v.placeId || "").toLowerCase().trim();
   const pName = (v.placeName || "").toLowerCase().trim();
@@ -143,14 +154,15 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
 
   const isProtectedPlace = PROTECTED_FEED_PLACES.has(pId) || PROTECTED_FEED_PLACES.has(pName) || PROTECTED_FEED_PLACES.has(pWebsite);
 
-  // Check deleted places from localStorage
+  // Check deleted places from localStorage (ignore empty/short strings)
   if (!isProtectedPlace) {
     try {
       const deletedPlacesStr = localStorage.getItem("copo_deleted_places") || localStorage.getItem("yoouz_deleted_places") || "[]";
       const deletedPlaces: string[] = JSON.parse(deletedPlacesStr);
       if (Array.isArray(deletedPlaces) && deletedPlaces.length > 0) {
         if (deletedPlaces.some(dp => {
-          const dpLow = String(dp).toLowerCase().trim();
+          const dpLow = String(dp || "").toLowerCase().trim();
+          if (dpLow.length < 2) return false;
           return dpLow === pId || dpLow === pName || (pWebsite && dpLow === pWebsite);
         })) {
           return true;
@@ -159,31 +171,23 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
     } catch (e) {}
   }
 
-  const uId = (v.userId || "").toLowerCase();
-  const uEmail = (v.userEmail || "").toLowerCase();
-  const uName = (v.author?.name || v.authorName || "").toLowerCase();
-  const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase();
-
-  const isProtectedCreator = PROTECTED_FEED_CREATORS.has(uId) || PROTECTED_FEED_CREATORS.has(uEmail) || PROTECTED_FEED_CREATORS.has(uName) || PROTECTED_FEED_CREATORS.has(uHandle);
-
-  // Check deleted users from localStorage
-  if (!isProtectedCreator) {
-    try {
-      const deletedUsersStr = localStorage.getItem("copo_deleted_users") || localStorage.getItem("yoouz_deleted_users") || "[]";
-      const deletedUsers: string[] = JSON.parse(deletedUsersStr);
-      if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
-        if (deletedUsers.some(du => {
-          const duLow = String(du).toLowerCase();
-          return duLow === uId || duLow === uEmail || duLow === uName || duLow === uHandle;
-        })) {
-          return true;
-        }
+  // Check deleted users from localStorage (ignore empty/short strings)
+  try {
+    const deletedUsersStr = localStorage.getItem("copo_deleted_users") || localStorage.getItem("yoouz_deleted_users") || "[]";
+    const deletedUsers: string[] = JSON.parse(deletedUsersStr);
+    if (Array.isArray(deletedUsers) && deletedUsers.length > 0) {
+      if (deletedUsers.some(du => {
+        const duLow = String(du || "").toLowerCase().trim();
+        if (duLow.length < 3) return false;
+        return duLow === uId || duLow === uEmail || duLow === uName || duLow === uHandle;
+      })) {
+        return true;
       }
-    } catch (e) {}
-  }
+    }
+  } catch (e) {}
 
   if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
-  const placeNameLower = (v.placeName || "").toLowerCase();
+  const placeNameLower = (v.placeName || "").toLowerCase().trim();
   if (placeNameLower === "hertz" || placeNameLower === "car rentals from avis") return true;
   return false;
 };
