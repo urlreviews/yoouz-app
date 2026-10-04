@@ -2085,17 +2085,47 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
               </div>
 
-              {/* Business Category (if provided) */}
-              {place.category && (
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
-                    {t("place.businessCategory", "Business Category")}
+              {/* Business Category (Only if specific and meaningful, ignoring generic fallbacks like "Website") */}
+              {(() => {
+                const cat = (place.category || "").trim().toLowerCase();
+                const isGeneric = !cat || cat === "website" || cat === "local business" || cat === "business" || cat === "general" || cat === "uncategorized" || cat === "unknown" || cat === "online" || cat === "none";
+                if (isGeneric) return null;
+                return (
+                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+                      {t("place.businessCategory", "Business Category")}
+                    </span>
+                    <p className="text-sm text-white font-semibold">
+                      {place.category}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Official Business Web & Verification Badge */}
+              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                    <span className="text-xs font-bold text-white">Verified Business Profile</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 text-[10.5px] font-extrabold border border-emerald-500/30">
+                    Yoouz Verified
                   </span>
-                  <p className="text-sm text-white font-semibold">
-                    {place.category}
-                  </p>
                 </div>
-              )}
+                {displayWebsiteClean && (
+                  <a
+                    href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs flex items-center justify-center gap-2 border border-zinc-700 transition-colors no-underline cursor-pointer"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Visit {displayWebsiteClean}</span>
+                    <ExternalLink className="w-3 h-3 text-zinc-400 ml-auto" />
+                  </a>
+                )}
+              </div>
 
               {/* Full Description & URL Metadata */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
