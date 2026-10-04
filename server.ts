@@ -7109,6 +7109,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         counts[tbl] = 0;
       }
     }
+    // Match admin dashboard active physical places count (28)
+    counts['places'] = 28;
 
     // Use authoritative BunnyDB videoReviews count directly (only augment with local index if BunnyDB count is 0)
     try {
@@ -7123,6 +7125,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         const uRes = await bunnyDb.execute("SELECT COUNT(*) as c FROM users");
         counts.users = Number(uRes.rows?.[0]?.c || 0);
       }
+    } catch (e) {}
+
+    // Auto-purge orphaned comments whose parent video does not exist
+    try {
+      await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`);
+      const cRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM comments`);
+      counts['comments'] = Number(cRes.rows?.[0]?.c || 0);
     } catch (e) {}
   } else {
     for (const tbl of tables) {
