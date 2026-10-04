@@ -28037,11 +28037,13 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="twitter:image:alt" content="${safeTitle}" />
     
     <link rel="canonical" href="${safeUrl}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/apple-touch-icon.png'}" />
-    <link rel="apple-touch-icon" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/apple-touch-icon.png'}" />
-    <link rel="icon" type="image/png" sizes="192x192" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/icon-192.png'}" />
-    <link rel="icon" type="image/png" sizes="32x32" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/favicon.ico'}" />
-    <link rel="shortcut icon" href="${meta.touchIcon || meta.logoUrl || baseUrl + '/favicon.ico'}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
+    <link rel="apple-touch-icon" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
+    <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="${baseUrl}/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="${baseUrl}/icon-192.png" />
+    <link rel="icon" type="image/x-icon" href="${baseUrl}/favicon.ico" />
+    <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
     `;
 
     if (meta.videoUrl) {

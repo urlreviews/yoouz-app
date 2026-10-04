@@ -75,10 +75,10 @@ export function SEOTags({ title, description, image, touchIcon, url, jsonLd, upd
     if (touchIcon) {
       updateLinkTag('apple-touch-icon', touchIcon, { sizes: '180x180' });
       updateLinkTag('apple-touch-icon', touchIcon);
-      updateLinkTag('icon', touchIcon, { type: 'image/png', sizes: '192x192' });
-      updateLinkTag('icon', touchIcon, { type: 'image/png', sizes: '32x32' });
-      updateLinkTag('shortcut icon', touchIcon);
     }
+    updateLinkTag('icon', '/favicon.svg', { type: 'image/svg+xml' });
+    updateLinkTag('icon', '/favicon.ico', { type: 'image/x-icon' });
+    updateLinkTag('shortcut icon', '/favicon.ico');
 
     // 4. Update JSON-LD Structured Data
     if (jsonLd) {

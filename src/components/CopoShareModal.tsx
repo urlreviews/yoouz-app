@@ -262,9 +262,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
     updateLinkTag('apple-touch-icon', resolvedTouchIcon, { sizes: '180x180' });
     updateLinkTag('apple-touch-icon', resolvedTouchIcon);
-    updateLinkTag('icon', resolvedTouchIcon, { type: 'image/png', sizes: '192x192' });
-    updateLinkTag('icon', resolvedTouchIcon, { type: 'image/png', sizes: '32x32' });
-    updateLinkTag('shortcut icon', resolvedTouchIcon);
   }, [isModalOpen, resolvedTouchIcon]);
 
   const shareText = isVideoMode && video
