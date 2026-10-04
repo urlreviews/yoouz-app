@@ -26321,7 +26321,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         return stars;
       };
 
-      const starsSvg = renderStarsSvg(76, 34, ratingNum);
+      const starsSvg = renderStarsSvg(96, 52, ratingNum);
       const starsWidth = 5 * 17; // 85px
 
       const subSuffix = ` • Verified 60s Review`;
@@ -26359,16 +26359,16 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorPillWidth = Math.min(600, Math.max(280, 76 + maxBottomWidth + 24));
 
       // Top Business Pill calculations
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 18, true);
-      const ratingValWidth = getTextAdvanceWidth(ratingStr, 14, true);
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 22, true);
+      const ratingValWidth = getTextAdvanceWidth(ratingStr, 18, true);
       
-      const topLine1Width = placeWidth + 20; // + badge
-      const topLine2Width = 18 + ratingValWidth; // star + rating
+      const topLine1Width = placeWidth + 24; // + badge
+      const topLine2Width = 24 + ratingValWidth; // star + rating
       const maxTopWidth = Math.max(topLine1Width, topLine2Width);
-      const placePillWidth = Math.min(520, Math.max(170, 62 + maxTopWidth + 22));
+      const placePillWidth = Math.min(680, Math.max(220, 82 + maxTopWidth + 28));
 
-      const initialWidth = getTextAdvanceWidth(authorInitial, 22, true);
-      const initialX = 38 - (initialWidth / 2);
+      const initialWidth = getTextAdvanceWidth(authorInitial, 26, true);
+      const initialX = 48 - (initialWidth / 2);
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -26385,45 +26385,45 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Matching App Player) -->
+            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Prominent & High Resolution for Social Feeds) -->
             <g transform="translate(48, 40)">
-              <rect width="${placePillWidth}" height="62" rx="22" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <rect width="${placePillWidth}" height="80" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
               
               <!-- Left Squircle Logo Container -->
               ${isYoouzPlace ? `
-                <rect x="10" y="10" width="42" height="42" rx="13" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
-                <g transform="translate(14, 14)">
-                  <svg width="34" height="34" viewBox="0 0 24 24">
+                <rect x="10" y="10" width="60" height="60" rx="18" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                <g transform="translate(16, 16)">
+                  <svg width="48" height="48" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                   </svg>
                 </g>
               ` : `
-                <rect x="10" y="10" width="42" height="42" rx="13" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                <rect x="10" y="10" width="60" height="60" rx="18" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
                 ${logoPngBase64 ? `
-                  <g transform="translate(11, 11)">
+                  <g transform="translate(12, 12)">
                     <clipPath id="squircleLogoClip1">
-                      <rect x="0" y="0" width="40" height="40" rx="11"/>
+                      <rect x="0" y="0" width="56" height="56" rx="16"/>
                     </clipPath>
-                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="40" height="40" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="56" height="56" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
                   </g>
                 ` : `
-                  <g transform="translate(11, 11)">
-                    <rect x="0" y="0" width="40" height="40" rx="11" fill="#18181b"/>
-                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 20, true) / 2), 26, 20, true, '#ffffff')}
+                  <g transform="translate(12, 12)">
+                    <rect x="0" y="0" width="56" height="56" rx="16" fill="#18181b"/>
+                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28, true) / 2), 36, 28, true, '#ffffff')}
                   </g>
                 `}
               `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-              ${renderTextPath(safePlaceDisplay, 62, 25, 18, true, '#ffffff')}
-              <g transform="translate(${62 + placeWidth + 6}, 12)">
-                <circle cx="6.5" cy="6.5" r="6.5" fill="#ffffff"/>
-                <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(safePlaceDisplay, 82, 33, 22, true, '#ffffff')}
+              <g transform="translate(${82 + placeWidth + 8}, 16)">
+                <circle cx="8" cy="8" r="8" fill="#ffffff"/>
+                <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: Single Gold Star + Rating Value -->
-              <path d="M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z" fill="#fbbf24" transform="translate(62, 35)"/>
-              ${renderTextPath(ratingStr, 80, 47, 14, true, '#fbbf24')}
+              <path d="M9 0l2.77 5.63 6.22.9-4.5 4.38 1.06 6.2L9 14.19l-5.55 2.92 1.06-6.2-4.5-4.38 6.22-.9L9 0z" fill="#fbbf24" transform="translate(82, 48)"/>
+              ${renderTextPath(ratingStr, 106, 61, 18, true, '#fbbf24')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
@@ -26434,33 +26434,33 @@ app.get('/api/og-preview-v2', async (req, res) => {
             </g>
 
             <!-- BOTTOM LEFT: Reviewer Profile Pill -->
-            <g transform="translate(48, 492)">
-              <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+            <g transform="translate(48, 482)">
+              <rect width="${authorPillWidth}" height="100" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
               ${authorAvatarPngBase64 ? `
-                <g transform="translate(12, 19)">
+                <g transform="translate(14, 14)">
                   <clipPath id="reviewerAvatarClip1">
-                    <circle cx="26" cy="26" r="26"/>
+                    <circle cx="36" cy="36" r="36"/>
                   </clipPath>
-                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
                 </g>
               ` : `
                 <!-- Avatar Circle (Matching App Player Color) -->
-                <circle cx="38" cy="45" r="26" fill="${avatarBgColor}"/>
-                ${renderTextPath(authorInitial, initialX, 53, 22, true, avatarTextColor)}
+                <circle cx="50" cy="50" r="36" fill="${avatarBgColor}"/>
+                ${renderTextPath(authorInitial, initialX, 59, 26, true, avatarTextColor)}
               `}
               
               <!-- Line 1: Reviewer Name (By Author) + Darkmode White Verified Badge -->
-              ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
-              <g transform="translate(${76 + authorWidth + 6}, 13)">
-                <circle cx="6.5" cy="6.5" r="6.5" fill="#ffffff"/>
-                <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(authorDisplayWithPrefix, 96, 32, 24, true, '#ffffff')}
+              <g transform="translate(${96 + authorWidth + 8}, 16)">
+                <circle cx="8" cy="8" r="8" fill="#ffffff"/>
+                <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: Star Icons -->
               ${starsSvg}
 
               <!-- Line 3: Video Review Target Line -->
-              ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
+              ${renderTextPath(videoReviewLine, 96, 78, 16, false, '#94a3b8')}
             </g>
           </svg>
         `;
