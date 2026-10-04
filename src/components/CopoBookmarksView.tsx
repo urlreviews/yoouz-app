@@ -210,11 +210,13 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">
-                          {getDisplayUrlAsDomain(video)}
+                          {formatBusinessName(video.placeName || getDisplayUrlAsDomain(video))}
                         </h4>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
-                          {video.placeCategory}
-                        </span>
+                        {video.placeCategory && video.placeCategory !== "Website" && video.placeCategory !== "General" && (
+                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
+                            {video.placeCategory}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-zinc-200 mt-1">
                         <div className="flex items-center text-amber-400 font-bold shrink-0">
