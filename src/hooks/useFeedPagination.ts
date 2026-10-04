@@ -11,7 +11,7 @@ function recordClientDeletedId(id: string) {
 }
 
 // Helper to cleanly sanitize and normalize author data
-function normalizeReview(v: any): VideoReview {
+export function normalizeReview(v: any): VideoReview {
   try {
     let likedIds: any[] = [];
     let savedIds: any[] = [];
@@ -123,6 +123,14 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   if (!v || !v.id) return true;
   const id = String(v.id);
   if (HARD_DELETED_IDS.includes(id)) return true;
+
+  // Check client blacklist copo_deleted_videos / yoouz_deleted_videos from localStorage unconditionally
+  try {
+    const deletedStr = localStorage.getItem("copo_deleted_videos") || localStorage.getItem("yoouz_deleted_videos") || "[]";
+    const deletedList = JSON.parse(deletedStr);
+    if (Array.isArray(deletedList) && deletedList.includes(id)) return true;
+  } catch (e) {}
+
   if (extraDeletedIds) {
     if (extraDeletedIds instanceof Set && extraDeletedIds.has(id)) return true;
     if (Array.isArray(extraDeletedIds) && extraDeletedIds.includes(id)) return true;
@@ -209,7 +217,7 @@ export function useFeedPagination() {
           const parsedLp = JSON.parse(localPubStr);
           if (Array.isArray(parsedLp)) {
             // Only keep items that are not purged and were created in the last 60 seconds
-            const cleanedLp = parsedLp.filter((v: any) => !isPurgedItem(v) && (now - (v.createdAtMs || 0) < 60000));
+            const cleanedLp = parsedLp.filter((v: any) => !isPurgedItem(v, deletedIds) && (now - (v.createdAtMs || 0) < 60000));
             localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(cleanedLp));
             localPublished = cleanedLp.map(normalizeReview);
           }
@@ -218,44 +226,35 @@ export function useFeedPagination() {
 
       const combinedMap = new Map<string, VideoReview>();
 
-      // 1. Initial fresh seed baseline (guarantees latest production reviews are immediately active at 0ms)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
+      // 1. Initial fresh seed baseline (filtered to remove any deleted items)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
         if (v && v.id) combinedMap.set(String(v.id), v);
       });
 
-      // 2. Local published (optimistic uploads in last 60 seconds)
-      localPublished.forEach((v) => {
-        if (v && v.id) combinedMap.set(String(v.id), v);
-      });
-
-      // 3. Cached feed videos from localStorage (preserving new dynamic items while never letting stale cache overwrite newer seed reviews)
+      // 2. Cached feed videos from localStorage (overrides static seeds with latest ratings/updates, while filtering deleted items)
       const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          parsed.filter((v: any) => !isPurgedItem(v)).map(normalizeReview).forEach((v) => {
+          parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
             if (v && v.id) {
-              const existing = combinedMap.get(String(v.id));
-              if (!existing) {
-                combinedMap.set(String(v.id), v);
-              } else {
-                const existingTime = getReviewTime(existing);
-                const cachedTime = getReviewTime(v);
-                if (cachedTime > existingTime) {
-                  combinedMap.set(String(v.id), v);
-                }
-              }
+              combinedMap.set(String(v.id), v);
             }
           });
         }
       }
+
+      // 3. Local published (optimistic uploads in last 60 seconds)
+      localPublished.forEach((v) => {
+        if (v && v.id) combinedMap.set(String(v.id), v);
+      });
 
       const result = Array.from(combinedMap.values());
       result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
       return result;
     } catch (e) {}
     // Instant fallback to seed videos: eliminates cold-start skeleton and guarantees 0ms first card rendering
-    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v)).map(normalizeReview);
+    const seeds = INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview);
     seeds.sort((a, b) => getReviewTime(b) - getReviewTime(a));
     return seeds;
   });

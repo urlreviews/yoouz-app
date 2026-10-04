@@ -15512,6 +15512,15 @@ app.post("/api/videos/save-review", async (req, res) => {
         };
         updatedReview = list[existingIdx];
         writeReviewsIndex(list);
+
+        // Keep static seed reviews file in sync on disk
+        try {
+          const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+          if (fs.existsSync(seedReviewsPath)) {
+            const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = ' + JSON.stringify(list, null, 2) + ';\n';
+            fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
+          }
+        } catch (sErr) {}
       }
 
       // Invalidate memory cache to force an immediate fresh fetch on all clients
@@ -15548,6 +15557,44 @@ app.post("/api/videos/save-review", async (req, res) => {
               sql: `UPDATE videoReviews SET rating = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
               args: [updates.rating, JSON.stringify(mergedData), videoId]
             });
+
+            // Synchronize affected place average rating in BunnyDB places table
+            const pId = mergedData.placeId;
+            const pName = mergedData.placeName;
+            const pWeb = mergedData.placeWebsite;
+            if (pId || pName || pWeb) {
+              try {
+                const placeSearchKeys = [pId, pName, pWeb].filter(Boolean);
+                for (const pk of placeSearchKeys) {
+                  const plRows = await bunnyDb.execute({
+                    sql: `SELECT id, name, data FROM places WHERE id = ? OR name = ? OR id LIKE ? LIMIT 1`,
+                    args: [pk, pk, `%${pk}%`]
+                  });
+                  if (plRows && plRows.rows && plRows.rows[0]) {
+                    const pRow: any = plRows.rows[0];
+                    let pData: any = {};
+                    try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch (e) {}
+
+                    const countRows = await bunnyDb.execute({
+                      sql: `SELECT COUNT(*) as cnt, AVG(rating) as avgRating FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
+                      args: [pRow.id, pRow.name, `%"${pRow.id}"%`]
+                    });
+                    const remCount = Number((countRows?.rows?.[0] as any)?.cnt || 0);
+                    const remAvg = (countRows?.rows?.[0] as any)?.avgRating;
+                    const newRating = remCount > 0 ? Number(Number(remAvg || 5.0).toFixed(1)) : (pData.rating || 5.0);
+
+                    pData.totalReviews = remCount;
+                    pData.videoReviewCount = remCount;
+                    pData.rating = newRating;
+
+                    await bunnyDb.execute({
+                      sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                      args: [JSON.stringify(pData), pRow.id]
+                    });
+                  }
+                }
+              } catch (plErr) {}
+            }
           } else {
             await bunnyDb.execute({
               sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,

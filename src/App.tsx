@@ -2787,29 +2787,49 @@ export function App() {
 
     // If rating was changed, recalculate the place average rating across all its videos
     if (updates.rating !== undefined) {
-      setPlaces((prev) =>
-        prev.map((p) => {
+      setPlaces((prev) => {
+        const updated = prev.map((p) => {
           if (
             (targetPlaceId && p.id === targetPlaceId) ||
             (targetPlaceName && (p.name || "").toLowerCase().trim() === targetPlaceName.toLowerCase().trim())
           ) {
             const updatedRating = updates.rating!;
             const allPlaceReviews = videos.map((v) =>
-              v.id === videoId ? { ...v, rating: updatedRating } : v
+              v.id === videoId ? { ...v, rating: updatedRating, placeRating: updatedRating } : v
             ).filter((v) => isPlaceReviewMatch(v, p));
 
             if (allPlaceReviews.length > 0) {
-              const sum = allPlaceReviews.reduce((acc, r) => acc + r.rating, 0);
+              const sum = allPlaceReviews.reduce((acc, r) => acc + (r.rating || 5), 0);
               const avg = Number((sum / allPlaceReviews.length).toFixed(1));
-              return {
+              const updatedPlace = {
                 ...p,
                 rating: avg
               };
+
+              // Persist to BunnyDB
+              if (p.id) {
+                fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ 
+                    data: updatedPlace, 
+                    merge: true 
+                  })
+                }).catch(() => {});
+              }
+
+              return updatedPlace;
             }
           }
           return p;
-        })
-      );
+        });
+
+        try {
+          localStorage.setItem("yoouz_cached_places", JSON.stringify(updated));
+        } catch (e) {}
+
+        return updated;
+      });
     }
 
     // Persist immediately to Backend API (BunnyDB + PostgreSQL + Server Index)
@@ -3569,11 +3589,11 @@ export function App() {
           ? Number((matchingV.reduce((acc, v) => acc + (v.rating || 5), 0) / matchingV.length).toFixed(1))
           : (p.rating || 5.0);
 
-        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount) {
+        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount || (matchingV.length > 0 && Math.abs((Number(p.rating) || 0) - computedRating) > 0.01)) {
           next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount, rating: computedRating };
           modified = true;
 
-          // Sync to BunnyDB if review count changed
+          // Sync to BunnyDB if review count or rating changed
           if (p.id) {
             fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
               method: "POST",

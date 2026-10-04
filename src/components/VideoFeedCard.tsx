@@ -28,6 +28,7 @@ import {
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch } from "../utils/placeUtils";
+import { isPurgedItem } from "../hooks/useFeedPagination";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -161,7 +162,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     // 1. Calculate exact count and average rating from allVideos feed if available
     if (allVideos && allVideos.length > 0) {
       const matches = allVideos.filter(v => {
-        if (!v) return false;
+        if (!v || isPurgedItem(v)) return false;
         return isPlaceReviewMatch(v, {
           id: video.placeId,
           name: video.placeName,
