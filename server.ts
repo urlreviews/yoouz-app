@@ -11882,7 +11882,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     res.on("error", cleanup);
   });
 
-  // Get Video Feed endpoint (combines server index with BunnyDB and uploaded videos with memory caching & write-back resiliency)
+  // Get Video Feed endpoint (authoritatively querying BunnyDB as sole source of truth with instant deletion sync)
   app.get("/api/videos/feed", async (req, res) => {
     try {
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -11893,8 +11893,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const now = Date.now();
       const deletedIds = readDeletedReviewsIndex();
       const deletedSet = new Set(deletedIds);
-      const localList = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
-      
+
       const getReviewTime = (v: any) => {
         if (!v) return 0;
         const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
@@ -11903,59 +11902,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
       };
 
-      // If we have a valid memory cache AND we are not due for a live fetch, serve from cache
-      const isCacheValid = (now - feedCache.lastFetched < CACHE_TTL_MS) && feedCache.videos.length > 0;
-      
-      if (isCacheValid) {
-        // Overlay active cache from Bunny DB on top of local baseline (ensuring live counts and comments win!)
-        const map = new Map<string, any>();
-        localList.forEach((r: any) => {
-          if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) {
-            map.set(r.id, r);
-          }
-        });
-        feedCache.videos.forEach((r: any) => {
-          if (r && r.id && !deletedSet.has(String(r.id))) {
-            const existing = map.get(r.id) || {};
-            map.set(r.id, {
-              ...existing,
-              ...r,
-              bookmarksCount: Math.max(Number(existing.bookmarksCount) || 0, Number(r.bookmarksCount) || 0),
-              bookmarks: Math.max(Number(existing.bookmarks) || 0, Number(r.bookmarks) || 0),
-              likesCount: Math.max(Number(existing.likesCount) || 0, Number(r.likesCount) || 0),
-              likes: Math.max(Number(existing.likes) || 0, Number(r.likes) || 0),
-              sharesCount: Math.max(Number(existing.sharesCount) || 0, Number(r.sharesCount) || 0),
-              shares: Math.max(Number(existing.shares) || 0, Number(r.shares) || 0),
-              viewsCount: Math.max(Number(existing.viewsCount) || 0, Number(existing.views) || 0, Number(r.viewsCount) || 0, Number(r.views) || 0),
-              views: Math.max(Number(existing.viewsCount) || 0, Number(existing.views) || 0, Number(r.viewsCount) || 0, Number(r.views) || 0),
-              commentsCount: Math.max(Number(existing.commentsCount) || 0, Number(r.commentsCount) || 0),
-              comments: (Array.isArray(r.comments) && r.comments.length > 0) ? r.comments : (existing.comments || [])
-            });
-          }
-        });
-        const merged = Array.from(map.values());
-        merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
-        const paginated = merged.slice(startIndex, endIndex);
-        return res.json({ success: true, videos: paginated, total: merged.length, deletedIds });
-      }
-
-      // Otherwise, fetch from sources to refresh cache
-      const map = new Map<string, any>();
-      
-      // 1. Populate from local file baseline
-      localList.forEach((r: any) => {
-        if (r && r.id && r.videoUrl && !deletedSet.has(String(r.id))) map.set(r.id, r);
-      });
-
-      // 2. Fetch live records from Bunny Cloud Database (Primary persistent store)
-      let bunnyFetchSuccess = false;
       const bunnyDb = getBunnyDb();
+      const map = new Map<string, any>();
+      let bunnyFetchSuccess = false;
+
       if (bunnyDb) {
         try {
-          const bunnyRows = await bunnyDb.execute({
-            sql: "SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC LIMIT ? OFFSET ?",
-            args: [limit, startIndex]
-          });
+          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC");
           bunnyRows.rows.forEach((r: any) => {
             if (r && r.id && !deletedSet.has(String(r.id))) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
@@ -12020,11 +11973,19 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           });
           bunnyFetchSuccess = true;
         } catch (bunnyReadErr: any) {
-          console.warn("BunnyDB read notice in feed:", bunnyReadErr?.message || bunnyReadErr);
+          console.warn("BunnyDB read error in feed:", bunnyReadErr);
         }
       }
 
-      // 3. Optional SQL mirror if active (Stale data)
+      // If BunnyDB is empty or unavailable, fallback to local reviews index
+      if (!bunnyFetchSuccess || map.size === 0) {
+        const localList = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+        localList.forEach((r: any) => {
+          if (r && r.id && !deletedSet.has(String(r.id))) map.set(r.id, r);
+        });
+      }
+
+      // 3. Optional SQL mirror if active
       if (getDb()) {
         try {
           const dbRecords = await db.select().from(BunnyDB_video_reviews);
