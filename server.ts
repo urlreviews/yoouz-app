@@ -1543,76 +1543,12 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
     return null;
   }
 
-  // Layer 1: Check Predefined Known Community Map
-  const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
-                     KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
-                     KNOWN_COMMUNITY_USERS_SERVER[slugWithSpaces] ||
-                     KNOWN_COMMUNITY_USERS_SERVER[alphaOnly] ||
-                     KNOWN_COMMUNITY_USERS_SERVER[username] ||
-                     KNOWN_COMMUNITY_USERS_SERVER[strippedUsr] ||
-                     (candidateEmailFromUsr ? KNOWN_COMMUNITY_USERS_SERVER[candidateEmailFromUsr] : null);
-  if (knownMatch && !isDeletedUserServer(knownMatch)) {
-    const fName = knownMatch.name.split(' ')[0] || knownMatch.name;
-    const lName = knownMatch.name.includes(' ') ? knownMatch.name.split(' ').slice(1).join(' ') : '';
-    const resolvedEmail = clean.includes('@') ? clean : (candidateEmailFromUsr || `${username}@gmail.com`);
-    return {
-      uid,
-      id: uid,
-      email: resolvedEmail,
-      name: knownMatch.name,
-      firstName: fName,
-      lastName: lName,
-      handle: knownMatch.handle,
-      avatar: knownMatch.avatar,
-      bio: knownMatch.bio || "Community reviewer on Yoouz.",
-      isVerified: true,
-      role: 'user',
-      isNewUser: false
-    };
-  }
-
-  // Layer 2: Check defaultCommunityUsers list
-  const du = defaultCommunityUsers.find((u) => {
-    const uEmail = (u.email || '').toLowerCase().trim();
-    const uHandle = (u.handle || '').toLowerCase().trim().replace(/^@+/, '');
-    const uName = (u.name || '').toLowerCase().trim();
-    const uId = (u.id || u.uid || '').toLowerCase().trim();
-    const uNameAlpha = uName.replace(/[^a-z0-9]/g, '');
-    const uHandleAlpha = uHandle.replace(/[^a-z0-9]/g, '');
-
-    return uEmail === clean || 
-           uEmail === cleanWithoutAt ||
-           (candidateEmailFromUsr && uEmail === candidateEmailFromUsr) ||
-           uHandle === clean ||
-           uHandle === cleanWithoutAt ||
-           uName === clean ||
-           uName === cleanWithoutAt ||
-           uName === slugWithSpaces ||
-           uId === clean ||
-           uId === strippedUsr ||
-           uNameAlpha === alphaOnly ||
-           uHandleAlpha === alphaOnly ||
-           (uEmail.includes('@') && uEmail.split('@')[0] === cleanWithoutAt);
-  });
-  if (du && !isDeletedUserServer(du)) {
-    const fName = du.name.split(' ')[0] || du.name;
-    const lName = du.name.includes(' ') ? du.name.split(' ').slice(1).join(' ') : '';
-    return {
-      ...du,
-      uid: du.uid || uid,
-      id: du.id || uid,
-      firstName: fName,
-      lastName: lName,
-      isNewUser: false
-    };
-  }
-
-  // Layer 3: Check BunnyDB users table
+  // Layer 1: Check BunnyDB live users table FIRST so any user photo/banner/name update is immediately live
   try {
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       const userRows = await bunnyDb.execute({
-        sql: `SELECT id, email, name, avatar, data FROM users 
+        sql: `SELECT id, email, name, avatar, banner, data FROM users 
               WHERE id = ? 
                  OR email = ? 
                  OR id = ? 
@@ -1644,6 +1580,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
         const candidateName = parsed.name || row.name;
         if (candidateName && candidateName !== 'Registered User') {
           const resolvedAv = parsed.avatar || row.avatar || '';
+          const resolvedBanner = parsed.banner || row.banner || '';
           const candidateProfile = {
             uid: parsed.uid || row.id || uid,
             id: parsed.id || row.id || uid,
@@ -1652,6 +1589,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
             firstName: parsed.firstName || candidateName.split(' ')[0] || candidateName,
             lastName: parsed.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
             avatar: resolvedAv,
+            banner: resolvedBanner,
             handle: parsed.handle || `@${candidateName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
             bio: parsed.bio || "Community reviewer on Yoouz.",
             city: parsed.city || '',
@@ -1668,6 +1606,72 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
       }
     }
   } catch (err) {}
+
+  // Layer 2: Check Predefined Known Community Map
+  const knownMatch = KNOWN_COMMUNITY_USERS_SERVER[clean] || 
+                     KNOWN_COMMUNITY_USERS_SERVER[cleanWithoutAt] || 
+                     KNOWN_COMMUNITY_USERS_SERVER[slugWithSpaces] ||
+                     KNOWN_COMMUNITY_USERS_SERVER[alphaOnly] ||
+                     KNOWN_COMMUNITY_USERS_SERVER[username] ||
+                     KNOWN_COMMUNITY_USERS_SERVER[strippedUsr] ||
+                     (candidateEmailFromUsr ? KNOWN_COMMUNITY_USERS_SERVER[candidateEmailFromUsr] : null);
+  if (knownMatch && !isDeletedUserServer(knownMatch)) {
+    const fName = knownMatch.name.split(' ')[0] || knownMatch.name;
+    const lName = knownMatch.name.includes(' ') ? knownMatch.name.split(' ').slice(1).join(' ') : '';
+    const resolvedEmail = clean.includes('@') ? clean : (candidateEmailFromUsr || `${username}@gmail.com`);
+    return {
+      uid,
+      id: uid,
+      email: resolvedEmail,
+      name: knownMatch.name,
+      firstName: fName,
+      lastName: lName,
+      handle: knownMatch.handle,
+      avatar: knownMatch.avatar,
+      banner: (knownMatch as any).banner || '',
+      bio: knownMatch.bio || "Community reviewer on Yoouz.",
+      isVerified: true,
+      role: 'user',
+      isNewUser: false
+    };
+  }
+
+  // Layer 3: Check defaultCommunityUsers list
+  const du = defaultCommunityUsers.find((u) => {
+    const uEmail = (u.email || '').toLowerCase().trim();
+    const uHandle = (u.handle || '').toLowerCase().trim().replace(/^@+/, '');
+    const uName = (u.name || '').toLowerCase().trim();
+    const uId = (u.id || u.uid || '').toLowerCase().trim();
+    const uNameAlpha = uName.replace(/[^a-z0-9]/g, '');
+    const uHandleAlpha = uHandle.replace(/[^a-z0-9]/g, '');
+
+    return uEmail === clean || 
+           uEmail === cleanWithoutAt ||
+           (candidateEmailFromUsr && uEmail === candidateEmailFromUsr) ||
+           uHandle === clean ||
+           uHandle === cleanWithoutAt ||
+           uName === clean ||
+           uName === cleanWithoutAt ||
+           uName === slugWithSpaces ||
+           uId === clean ||
+           uId === strippedUsr ||
+           uNameAlpha === alphaOnly ||
+           uHandleAlpha === alphaOnly ||
+           (uEmail.includes('@') && uEmail.split('@')[0] === cleanWithoutAt);
+  });
+  if (du && !isDeletedUserServer(du)) {
+    const fName = du.name.split(' ')[0] || du.name;
+    const lName = du.name.includes(' ') ? du.name.split(' ').slice(1).join(' ') : '';
+    return {
+      ...du,
+      uid: du.uid || uid,
+      id: du.id || uid,
+      firstName: fName,
+      lastName: lName,
+      banner: (du as any).banner || '',
+      isNewUser: false
+    };
+  }
 
   // Layer 4: Check Drizzle SQL \`users\` table
   try {
@@ -27272,7 +27276,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect x="0" y="0" width="68" height="68" rx="20" ry="20" fill="#ffffff"/>
             </svg>
           `;
-          const resizedAvatar = await sharp(avatarBuf)
+          const resizedAvatar = await sharp(avatarBuf, { density: 300 })
             .resize(68, 68, { fit: 'cover' })
             .composite([{ input: Buffer.from(squircleMaskSvg), blend: 'dest-in' }])
             .png()
@@ -27284,31 +27288,34 @@ app.get('/api/og-preview-v2', async (req, res) => {
       // Calculations for Bottom Author Pill (Shifted left, clean layout matching in-app modal preview)
       const safeAuthorDisplay = displayName.length > 24 ? `${displayName.substring(0, 22)}...` : displayName;
       const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 26, true);
-      const subWidth = getTextAdvanceWidth(subtitleText, 16, false);
+      const subWidth = getTextAdvanceWidth(subtitleText, 17, true);
       const maxTextWidth = Math.max(authorWidth + 28, subWidth);
-      const authorPillWidth = Math.min(840, Math.max(260, 102 + maxTextWidth + 36));
+      const authorPillWidth = Math.min(840, Math.max(280, 102 + maxTextWidth + 36));
 
       const overlaySvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
-            <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="profileVignette" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stop-color="#000000" stop-opacity="0.80" />
               <stop offset="25%" stop-color="#000000" stop-opacity="0.10" />
               <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0.94" />
             </linearGradient>
+            <filter id="profileCardShadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+            </filter>
           </defs>
 
           <!-- Ambient dark gradient vignette -->
-          <rect width="1200" height="630" fill="url(#vignette)"/>
+          <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
           <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
-          <g transform="translate(36, 484)">
-            <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+          <g transform="translate(48, 484)" filter="url(#profileCardShadow)">
+            <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Avatar Container -->
-            <rect x="14" y="14" width="68" height="68" rx="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
             ${avatarPngBase64 ? `
+              <rect x="14" y="14" width="68" height="68" rx="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
               <g transform="translate(14, 14)">
                 <clipPath id="squircleUserClip">
                   <rect x="0" y="0" width="68" height="68" rx="20"/>
@@ -27316,8 +27323,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
               </g>
             ` : `
+              <!-- Lime-green signature avatar matching user profile and Screenshot 1 & 2 -->
+              <rect x="14" y="14" width="68" height="68" rx="20" fill="#65a30d" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
               <g transform="translate(14, 14)">
-                ${renderTextPath(initial, 34 - (getTextAdvanceWidth(initial, 30, true) / 2), 44, 30, true, '#ffffff')}
+                ${renderTextPath(initial, 34 - (getTextAdvanceWidth(initial, 32, true) / 2), 46, 32, true, '#ffffff')}
               </g>
             `}
 
@@ -27329,13 +27338,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
             </g>
 
             <!-- Line 2: Subtitle (Reviewer Profile) -->
-            ${renderTextPath(subtitleText, 98, 72, 16, false, '#cbd5e1')}
+            ${renderTextPath(subtitleText, 98, 72, 17, true, '#cbd5e1')}
           </g>
         </svg>
       `;
 
-      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 150 })
-        .resize(1200, 630)
+      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+        .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
         .png()
         .toBuffer();
 
@@ -27343,56 +27352,66 @@ app.get('/api/og-preview-v2', async (req, res) => {
       if (bannerBuf) {
         try {
           finalImage = await sharp(bannerBuf)
-            .resize(1200, 630, { fit: 'cover', position: 'center' })
+            .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 95 })
+            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           const fallbackBaseSvg = `
             <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#09090b" />
-                  <stop offset="50%" stop-color="#0f172a" />
-                  <stop offset="100%" stop-color="#181820" />
+                <linearGradient id="gridBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#050814" />
+                  <stop offset="50%" stop-color="#090e24" />
+                  <stop offset="100%" stop-color="#0b132b" />
                 </linearGradient>
-                <radialGradient id="centerGlow" cx="50%" cy="40%" r="60%">
-                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
-                  <stop offset="70%" stop-color="#1e3a8a" stop-opacity="0.05" />
+                <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-opacity="0.6"/>
+                </pattern>
+                <radialGradient id="centerBlueGlow" cx="50%" cy="45%" r="55%">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.30" />
+                  <stop offset="60%" stop-color="#1e40af" stop-opacity="0.08" />
                   <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
                 </radialGradient>
               </defs>
-              <rect width="1200" height="630" fill="url(#darkBg)"/>
-              <rect width="1200" height="630" fill="url(#centerGlow)"/>
+              <rect width="1200" height="630" fill="url(#gridBg)"/>
+              <rect width="1200" height="630" fill="url(#gridPattern)"/>
+              <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
             </svg>
           `;
-          finalImage = await sharp(Buffer.from(fallbackBaseSvg))
+          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+            .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 95 })
+            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
         const fallbackBaseSvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#09090b" />
-                <stop offset="50%" stop-color="#0f172a" />
-                <stop offset="100%" stop-color="#181820" />
+              <linearGradient id="gridBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#050814" />
+                <stop offset="50%" stop-color="#090e24" />
+                <stop offset="100%" stop-color="#0b132b" />
               </linearGradient>
-              <radialGradient id="centerGlow" cx="50%" cy="40%" r="60%">
-                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
-                <stop offset="70%" stop-color="#1e3a8a" stop-opacity="0.05" />
+              <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-opacity="0.6"/>
+              </pattern>
+              <radialGradient id="centerBlueGlow" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.30" />
+                <stop offset="60%" stop-color="#1e40af" stop-opacity="0.08" />
                 <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
               </radialGradient>
             </defs>
-            <rect width="1200" height="630" fill="url(#darkBg)"/>
-            <rect width="1200" height="630" fill="url(#centerGlow)"/>
+            <rect width="1200" height="630" fill="url(#gridBg)"/>
+            <rect width="1200" height="630" fill="url(#gridPattern)"/>
+            <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
           </svg>
         `;
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg))
+        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+          .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 95 })
+          .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 

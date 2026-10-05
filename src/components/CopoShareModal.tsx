@@ -757,33 +757,33 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Dark Vignette Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* BOTTOM BAR: Single Author Info with Squircle Avatar & Profile Details */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  {/* BOTTOM BAR: Single Author Info with Frosted Glass Pill matching Screenshot 1 & 2 */}
+                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
+                    <div className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
                       {/* Profile Squircle Avatar Matching Profile Header */}
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] sm:rounded-[18px] overflow-hidden border border-white/30 bg-zinc-900 shadow-xl flex items-center justify-center p-0.5 shrink-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-zinc-900 shadow-xs flex items-center justify-center shrink-0">
                         {resolvedAvatarUrl ? (
                           <img
                             src={getProxiedImageUrl(resolvedAvatarUrl)}
                             alt={title}
-                            className="w-full h-full object-cover rounded-[13px] sm:rounded-[15px]"
+                            className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
+                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=65a30d&color=fff&bold=true&size=128`;
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-sm font-bold rounded-[13px] sm:rounded-[15px]">
+                          <div className="w-full h-full flex items-center justify-center bg-[#65a30d] text-white text-sm font-bold">
                             {title.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-white text-xs sm:text-sm font-bold leading-tight truncate drop-shadow-md flex items-center gap-1.5">
-                          <span>{title}</span>
-                          {/* Dark Mode Verified Checkmark (NO green!) */}
-                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
-                        </p>
-                        <p className="text-zinc-300 text-[11px] sm:text-xs leading-tight truncate drop-shadow-sm opacity-90 mt-0.5 font-medium">
+                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
+                          {/* Dark Mode Verified Checkmark */}
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                        </div>
+                        <p className="text-zinc-300 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5 opacity-90">
                           {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
                         </p>
                       </div>
