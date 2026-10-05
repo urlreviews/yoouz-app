@@ -393,15 +393,12 @@ export function renderBrandedVideoOverlays(
   const authorPrefix = `By ${authorName}`;
   ctx.font = `800 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const authorPrefixWidth = ctx.measureText(authorPrefix).width;
-  const dateStr = timeAgoStr ? ` • ${timeAgoStr}` : "";
-  ctx.font = `500 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  const dateStrWidth = ctx.measureText(dateStr).width;
 
   ctx.font = `700 ${11.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   const domainTextWidth = ctx.measureText(targetDomain).width;
 
   const starsBlockWidth = 5 * (10.5 * safeScale);
-  const botTextWidth = Math.max(authorPrefixWidth + (16 * safeScale) + dateStrWidth, starsBlockWidth + (8 * safeScale) + domainTextWidth);
+  const botTextWidth = Math.max(authorPrefixWidth + (16 * safeScale), starsBlockWidth + (8 * safeScale) + domainTextWidth);
   const avatarDiameter = 36 * safeScale;
   const botPillWidth = (10 * safeScale) + avatarDiameter + (10 * safeScale) + botTextWidth + (14 * safeScale);
 
@@ -471,12 +468,6 @@ export function renderBrandedVideoOverlays(
     botPillY + (17 * safeScale),
     4.5 * safeScale
   );
-
-  if (timeAgoStr) {
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = `500 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-    ctx.fillText(dateStr, botColX + authorPrefixWidth + (14 * safeScale), botPillY + (17 * safeScale));
-  }
 
   // Line 2: 5 Star Icons row + Stark White Domain
   const starY = botPillY + (35 * safeScale);

@@ -26464,8 +26464,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorDisplay = safeAuthorDisplay;
       const authorPrefix = `By ${authorDisplay}`;
       const authorPrefixWidth = getTextAdvanceWidth(authorPrefix, 24, true);
-      const dateSuffix = ` • ${reviewDateStr}`;
-      const dateSuffixWidth = getTextAdvanceWidth(dateSuffix, 16, false);
 
       const domainDisplay = targetDomain;
       const domainDisplayWidth = getTextAdvanceWidth(domainDisplay, 21, true);
@@ -26485,8 +26483,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       };
 
       const starsWidth = 5 * 19;
-      const maxBottomWidth = Math.max(authorPrefixWidth + 24 + dateSuffixWidth, starsWidth + 12 + domainDisplayWidth);
-      const authorPillWidth = Math.min(840, Math.max(300, 92 + maxBottomWidth + 30));
+      const maxBottomWidth = Math.max(authorPrefixWidth + 28, starsWidth + 12 + domainDisplayWidth);
+      const authorPillWidth = Math.min(840, Math.max(280, 92 + maxBottomWidth + 28));
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -26602,13 +26600,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 ${renderTextPath(authorInitial, initialX, 58, 30, true, avatarTextColor)}
               `}
               
-              <!-- Line 1: By Reviewer Name + Verified Badge + Relative Date -->
+              <!-- Line 1: By Reviewer Name + Verified Badge -->
               ${renderTextPath(authorPrefix, 92, 38, 24, true, '#ffffff')}
               <g transform="translate(${92 + authorPrefixWidth + 8}, 20)">
                 <circle cx="9" cy="9" r="9" fill="#ffffff"/>
                 <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
-              ${renderTextPath(dateSuffix, 92 + authorPrefixWidth + 30, 38, 17, false, '#cbd5e1')}
 
               <!-- Line 2: 5 Stars Row + Stark White Clean Domain Name -->
               ${renderFiveStarsRowSvg(92, 52, ratingNum)}
@@ -26715,13 +26712,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
               ${renderTextPath(authorInitial, initialX, 58, 30, true, avatarTextColor)}
             `}
             
-            <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge + Date -->
+            <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge -->
             ${renderTextPath(authorPrefix, 92, 38, 24, true, '#ffffff')}
             <g transform="translate(${92 + authorPrefixWidth + 8}, 20)">
               <circle cx="9" cy="9" r="9" fill="#ffffff"/>
               <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
-            ${renderTextPath(dateSuffix, 92 + authorPrefixWidth + 30, 38, 17, false, '#cbd5e1')}
 
             <!-- Line 2: 5 Stars Row + Clean Stark White Domain -->
             ${renderFiveStarsRowSvg(92, 52, ratingNum)}
