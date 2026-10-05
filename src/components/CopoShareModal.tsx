@@ -852,10 +852,29 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
-                        {/* Line 2: Gold Star + Rating Value + Total Reviews + Domain */}
-                        <div className="flex items-center gap-1 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                          <span className="text-amber-400 font-bold">{placeStats.scoreStr}</span>
+                        {/* Line 2: Rating Score Number + 5-Star Row + Total Reviews + Domain */}
+                        <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5">
+                          <span className="text-white font-bold text-xs">{placeStats.scoreStr}</span>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {[1, 2, 3, 4, 5].map((starIdx) => {
+                              const fillAmount = Math.max(0, Math.min(1, placeStats.avgRating - (starIdx - 1)));
+                              return (
+                                <div key={starIdx} className="relative w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0">
+                                  {/* Background unfilled star */}
+                                  <Star className="w-full h-full text-zinc-600 fill-zinc-800/80 stroke-zinc-600" />
+                                  {/* Foreground filled star */}
+                                  {fillAmount > 0 && (
+                                    <div 
+                                      className="absolute inset-0 overflow-hidden" 
+                                      style={{ width: `${Math.round(fillAmount * 100)}%` }}
+                                    >
+                                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400 shrink-0" />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                           <span className="text-white font-medium">({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})</span>
                           <span className="text-zinc-400">•</span>
                           <span className="text-zinc-300 font-medium">{resolvedDomain || title}</span>

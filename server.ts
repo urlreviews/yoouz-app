@@ -27054,14 +27054,44 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // 4. Layout Dimensions & Calculations (2-Row Compact: Logo + Business Name + Rating & Reviews + Domain)
+      // 4. Layout Dimensions & Calculations (2-Row Compact: Logo + Business Name + Rating Number + 5-Star Row + Reviews + Domain)
       const safePlaceDisplay = placeName.length > 24 ? `${placeName.substring(0, 22)}...` : placeName;
       const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 24, true);
-      const ratingLineText = `${placeRatingStr}  ${reviewsLabel}  •  ${rawDomain}`;
-      const ratingLineWidth = 24 + getTextAdvanceWidth(ratingLineText, 18, true);
       
-      const maxTextWidth = Math.max(placeWidth + 28, ratingLineWidth);
-      const businessPillWidth = Math.min(840, Math.max(280, 96 + maxTextWidth + 30));
+      const ratingNumWidth = getTextAdvanceWidth(placeRatingStr, 20, true);
+      const starsRowWidth = 5 * 20; // 5 stars (18px each + 2px gap)
+      const reviewsLabelWidth = getTextAdvanceWidth(reviewsLabel, 18, true);
+      const domainSuffix = `•  ${rawDomain}`;
+      const domainSuffixWidth = getTextAdvanceWidth(domainSuffix, 18, true);
+      
+      const line2TotalTextWidth = ratingNumWidth + 8 + starsRowWidth + 10 + reviewsLabelWidth + 10 + domainSuffixWidth;
+      const maxTextWidth = Math.max(placeWidth + 28, line2TotalTextWidth);
+      const businessPillWidth = Math.min(960, Math.max(300, 96 + maxTextWidth + 36));
+
+      // Build 5-Star Vector Row with Fractional Rating Support
+      const starsStartX = 96 + ratingNumWidth + 8;
+      const starIconsSvg = [1, 2, 3, 4, 5].map((starIdx, idx) => {
+        const starX = starsStartX + (idx * 20);
+        const fillAmount = Math.max(0, Math.min(1, placeAvgRating - (starIdx - 1)));
+        if (fillAmount >= 0.75) {
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 54) scale(0.88)"/>`;
+        } else if (fillAmount >= 0.25) {
+          const clipId = `halfStarClip_${idx}`;
+          const clipWidth = 18 * fillAmount;
+          return `
+            <clipPath id="${clipId}">
+              <rect x="${starX}" y="54" width="${clipWidth}" height="18"/>
+            </clipPath>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 54) scale(0.88)"/>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 54) scale(0.88)" clip-path="url(#${clipId})"/>
+          `;
+        } else {
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 54) scale(0.88)"/>`;
+        }
+      }).join("\n");
+
+      const reviewsTextStartX = starsStartX + starsRowWidth + 10;
+      const domainTextStartX = reviewsTextStartX + reviewsLabelWidth + 10;
 
       // 5. Build Overlay SVG with Vector Paths
       const overlaySvg = `
@@ -27117,11 +27147,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
-            <!-- Line 2: Gold Star + Rating Value + (X reviews) • domain.com -->
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(96, 52) scale(0.95)"/>
-            ${renderTextPath(placeRatingStr, 120, 69, 20, true, '#fbbf24')}
-            ${renderTextPath(reviewsLabel, 120 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8, 69, 18, true, '#ffffff')}
-            ${renderTextPath(`•  ${rawDomain}`, 120 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8 + getTextAdvanceWidth(reviewsLabel, 18, true) + 10, 69, 18, true, '#cbd5e1')}
+            <!-- Line 2: Rating Score Number + Full 5-Star Row + (X reviews) • domain.com -->
+            ${renderTextPath(placeRatingStr, 96, 69, 20, true, '#ffffff')}
+            ${starIconsSvg}
+            ${renderTextPath(reviewsLabel, reviewsTextStartX, 69, 18, true, '#ffffff')}
+            ${renderTextPath(domainSuffix, domainTextStartX, 69, 18, true, '#cbd5e1')}
           </g>
         </svg>
       `;
