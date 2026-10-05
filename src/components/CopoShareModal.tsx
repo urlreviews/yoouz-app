@@ -271,13 +271,35 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
   })();
 
+  const relativeDateStr = (() => {
+    const raw = (video as any)?.createdAt || (video as any)?.date;
+    if (!raw) return "";
+    try {
+      const d = typeof raw === 'number' ? new Date(raw) : new Date(String(raw));
+      if (isNaN(d.getTime())) return "";
+      const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diffSec < 60) return "Just now";
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr}h ago`;
+      const diffDay = Math.floor(diffHr / 24);
+      if (diffDay < 7) return `${diffDay}d ago`;
+      const diffWeek = Math.floor(diffDay / 7);
+      if (diffWeek < 5) return `${diffWeek}w ago`;
+      return `${Math.floor(diffDay / 30)}mo ago`;
+    } catch (e) {
+      return "";
+    }
+  })();
+
   // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${resolvedAvatarUrl ? `&authorAvatar=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=12`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${relativeDateStr ? `&date=${encodeURIComponent(relativeDateStr)}` : ''}&v=18`
       : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=23`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=17`
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&v=25`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=19`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -879,11 +901,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   )}
 
-                  {/* BOTTOM BAR: Author Info (By Name, 5 Stars, Stark White Video review for domain) */}
+                  {/* BOTTOM BAR: Author Info (Sleek Compact 2-Row: By Name • Date, 5 Stars domain.com) */}
                   <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
                     {isVideoMode && video ? (
-                      <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
-                        <div className="w-9.5 h-9.5 rounded-full overflow-hidden border border-white/35 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/35 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
                           {resolvedAvatarUrl ? (
                             <img
                               src={getProxiedImageUrl(resolvedAvatarUrl)}
@@ -900,26 +922,32 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           )}
                         </div>
                         <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                          {/* Line 1: By AuthorName + Verified badge */}
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">By {resolvedAuthorName}</span>
+                          {/* Line 1: By AuthorName + Verified badge + Relative Date */}
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">By {resolvedAuthorName}</span>
                             <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                          </div>
-                          {/* Line 2: 5 Stars */}
-                          <div className="flex items-center gap-0.5 leading-none my-0.5">
-                            {[1, 2, 3, 4, 5].map((starIdx) => (
-                              <span
-                                key={starIdx}
-                                className={`text-xs ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-amber-400 font-black' : 'text-zinc-600'}`}
-                              >
-                                ★
+                            {relativeDateStr && (
+                              <span className="text-zinc-300 text-[10.5px] font-normal whitespace-nowrap ml-0.5">
+                                • {relativeDateStr}
                               </span>
-                            ))}
+                            )}
                           </div>
-                          {/* Line 3: Video review for domain (Extra Bold Stark Pure White) */}
-                          <span className="text-white text-xs sm:text-[12.5px] font-extrabold leading-tight whitespace-nowrap drop-shadow-md tracking-tight">
-                            Video review for {resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase()}
-                          </span>
+                          {/* Line 2: 5 Stars + Stark White Clean Domain */}
+                          <div className="flex items-center gap-1.5 leading-none mt-0.5">
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((starIdx) => (
+                                <span
+                                  key={starIdx}
+                                  className={`text-[11px] ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-amber-400 font-black' : 'text-zinc-600'}`}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="text-white text-xs font-bold leading-tight whitespace-nowrap drop-shadow-sm tracking-tight">
+                              {resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ) : (

@@ -366,23 +366,44 @@ export function renderBrandedVideoOverlays(
   ctx.fillText(reviewsLabel, topColX + (14 * safeScale) + ratingWidth + (5 * safeScale), topPillY + (38 * safeScale));
 
   // -------------------------------------------------------------
-  // 2. BOTTOM-LEFT: Reviewer Profile Pill (Screenshot 4)
+  // 2. BOTTOM-LEFT: Reviewer Profile Pill (Sleek Compact 2-Row)
   // -------------------------------------------------------------
-  const botPillHeight = 74 * safeScale;
-  const botPillY = height - (32 * safeScale) - botPillHeight;
+  const botPillHeight = 52 * safeScale;
+  const botPillY = height - (28 * safeScale) - botPillHeight;
   const botPillX = 32 * safeScale;
 
+  const rawDate = (video as any)?.createdAt || (video as any)?.date;
+  const timeAgoStr = (() => {
+    if (!rawDate) return "";
+    try {
+      const d = typeof rawDate === 'number' ? new Date(rawDate) : new Date(String(rawDate));
+      if (isNaN(d.getTime())) return "";
+      const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diffSec < 60) return "Just now";
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr}h ago`;
+      const diffDay = Math.floor(diffHr / 24);
+      if (diffDay < 7) return `${diffDay}d ago`;
+      return `${Math.floor(diffDay / 7)}w ago`;
+    } catch(e) { return ""; }
+  })();
+
   const authorPrefix = `By ${authorName}`;
-  ctx.font = `800 ${14.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const authorPrefixWidth = ctx.measureText(authorPrefix).width;
+  const dateStr = timeAgoStr ? ` • ${timeAgoStr}` : "";
+  ctx.font = `500 ${10 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const dateStrWidth = ctx.measureText(dateStr).width;
 
-  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  const videoReviewWidth = ctx.measureText(videoReviewLine).width;
+  ctx.font = `700 ${11.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const domainTextWidth = ctx.measureText(targetDomain).width;
 
-  const starsBlockWidth = 5 * (12 * safeScale);
-  const botTextWidth = Math.max(authorPrefixWidth + (20 * safeScale), starsBlockWidth, videoReviewWidth);
-  const avatarDiameter = 44 * safeScale;
-  const botPillWidth = (12 * safeScale) + avatarDiameter + (12 * safeScale) + botTextWidth + (16 * safeScale);
+  const starsBlockWidth = 5 * (10.5 * safeScale);
+  const botTextWidth = Math.max(authorPrefixWidth + (16 * safeScale) + dateStrWidth, starsBlockWidth + (8 * safeScale) + domainTextWidth);
+  const avatarDiameter = 36 * safeScale;
+  const botPillWidth = (10 * safeScale) + avatarDiameter + (10 * safeScale) + botTextWidth + (14 * safeScale);
 
   // Outer black translucent glass pill
   drawRoundedRect(
@@ -391,14 +412,14 @@ export function renderBrandedVideoOverlays(
     botPillY,
     botPillWidth,
     botPillHeight,
-    22 * safeScale,
-    'rgba(0, 0, 0, 0.85)',
+    16 * safeScale,
+    'rgba(0, 0, 0, 0.88)',
     'rgba(255, 255, 255, 0.22)',
-    1.4 * safeScale
+    1.2 * safeScale
   );
 
   // Circular Reviewer Avatar on the left
-  const avX = botPillX + (12 * safeScale);
+  const avX = botPillX + (10 * safeScale);
   const avY = botPillY + (botPillHeight - avatarDiameter) / 2;
   const avRadius = avatarDiameter / 2;
 
@@ -411,14 +432,13 @@ export function renderBrandedVideoOverlays(
     ctx.drawImage(authorAvatarImage, avX, avY, avatarDiameter, avatarDiameter);
     ctx.restore();
   } else {
-    // Green circle (matching Screenshot 4)
     ctx.save();
     ctx.beginPath();
     ctx.arc(avX + avRadius, avY + avRadius, avRadius, 0, Math.PI * 2);
     ctx.fillStyle = '#65a30d';
     ctx.fill();
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `800 ${14 * safeScale}px system-ui, -apple-system, sans-serif`;
+    ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(authorName.charAt(0).toUpperCase(), avX + avRadius, avY + avRadius);
@@ -430,47 +450,52 @@ export function renderBrandedVideoOverlays(
   ctx.beginPath();
   ctx.arc(avX + avRadius, avY + avRadius, avRadius, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.30)';
-  ctx.lineWidth = 1.2 * safeScale;
+  ctx.lineWidth = 1.0 * safeScale;
   ctx.stroke();
   ctx.restore();
 
-  // Text Column (Line 1: By AuthorName + Verified, Line 2: 5 Stars, Line 3: Video review for domain)
-  const botColX = avX + avatarDiameter + (12 * safeScale);
+  // Text Column
+  const botColX = avX + avatarDiameter + (10 * safeScale);
 
-  // Line 1: By AuthorName
+  // Line 1: By AuthorName + Verified + Date
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `800 ${14.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
+  ctx.font = `800 ${13 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(authorPrefix, botColX, botPillY + (20 * safeScale));
+  ctx.fillText(authorPrefix, botColX, botPillY + (17 * safeScale));
 
-  // Verified checkmark badge right after author name
+  // Verified checkmark badge
   drawVerifiedBadge(
     ctx,
-    botColX + authorPrefixWidth + (8 * safeScale),
-    botPillY + (20 * safeScale),
-    5.5 * safeScale
+    botColX + authorPrefixWidth + (6 * safeScale),
+    botPillY + (17 * safeScale),
+    4.5 * safeScale
   );
 
-  // Line 2: 5 Star Icons row
-  const starY = botPillY + (38 * safeScale);
+  if (timeAgoStr) {
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `500 ${9.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(dateStr, botColX + authorPrefixWidth + (14 * safeScale), botPillY + (17 * safeScale));
+  }
+
+  // Line 2: 5 Star Icons row + Stark White Domain
+  const starY = botPillY + (35 * safeScale);
   for (let i = 0; i < 5; i++) {
     const starFill = i < ratingNum ? '#FBBF24' : '#52525B';
     drawStar(
       ctx,
-      botColX + (i * 12 * safeScale) + (5 * safeScale),
+      botColX + (i * 10 * safeScale) + (4 * safeScale),
       starY,
       5,
-      4.5 * safeScale,
-      2.2 * safeScale,
+      3.8 * safeScale,
+      1.9 * safeScale,
       starFill
     );
   }
 
-  // Line 3: Video review for domain (Bold Stark Pure White)
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = `700 ${11.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText(videoReviewLine, botColX, botPillY + (56 * safeScale));
+  ctx.font = `700 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText(targetDomain, botColX + (5 * 10 * safeScale) + (6 * safeScale), starY);
 
   ctx.restore();
 }
