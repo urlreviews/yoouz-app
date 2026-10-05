@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   CheckCircle,
-  MapPin
+  MapPin,
+  Star
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -48,6 +49,7 @@ interface CopoShareModalProps {
   domain?: string;
   website?: string;
   bannerUrl?: string;
+  handle?: string;
   isCreatorProfile?: boolean;
   isBusinessProfile?: boolean;
   rating?: number;
@@ -71,6 +73,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   domain: propDomain,
   website: propWebsite,
   bannerUrl: propBannerUrl,
+  handle: propHandle,
   isCreatorProfile: propIsCreatorProfile,
   isBusinessProfile: propIsBusinessProfile,
   rating: propRating,
