@@ -26918,11 +26918,68 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const rawDomain = cleanDomainName(rawQueryDomain || placeObj?.domain || placeObj?.website || rawQueryName || "business.com");
       const placeName = formatBusinessName(placeObj?.name || rawQueryName || rawDomain || "Business");
-      const rating = placeObj?.rating || 5.0;
-      const ratingStr = Number(rating).toFixed(1);
       const isYoouzPlace = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
-      // 1. Comprehensive Banner / Cover Photo Resolution
+      // 1. Live Query BunnyDB to get all live reviews and accurate place metrics
+      let placeReviewsCount = 0;
+      let placeAvgRating = 5.0;
+
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const bRes = await bunnyDb.execute({
+            sql: "SELECT id, rating, placeId, placeName, data FROM videoReviews",
+            args: []
+          });
+          if (bRes.rows && bRes.rows.length > 0) {
+            const cleanT = rawDomain.toLowerCase();
+            const matching = bRes.rows.filter((row: any) => {
+              const raw = row.data;
+              const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+              const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || row.placeId || row.placeName || '').toLowerCase();
+              return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+            });
+            if (matching.length > 0) {
+              placeReviewsCount = matching.length;
+              const sum = matching.reduce((acc: number, row: any) => {
+                const raw = row.data;
+                const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                return acc + (Number(v.rating) || Number(row.rating) || 5);
+              }, 0);
+              placeAvgRating = Number((sum / matching.length).toFixed(1));
+            }
+          }
+        }
+      } catch (e) {}
+
+      if (placeReviewsCount === 0) {
+        try {
+          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const cleanT = rawDomain.toLowerCase();
+          const matching = localList.filter((v: any) => {
+            const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
+            return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+          });
+          if (matching.length > 0) {
+            placeReviewsCount = matching.length;
+            const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
+            placeAvgRating = Number((sum / matching.length).toFixed(1));
+          }
+        } catch (e) {}
+      }
+
+      if (placeReviewsCount === 0 && query.reviewsCount) {
+        placeReviewsCount = Number(query.reviewsCount);
+      }
+      if (query.rating) {
+        placeAvgRating = Number(query.rating);
+      }
+      if (placeReviewsCount === 0) placeReviewsCount = 1;
+
+      const placeRatingStr = placeAvgRating.toFixed(1);
+      const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
+
+      // 2. Comprehensive Banner / Cover Photo Resolution
       let bannerCandidateUrl = explicitBannerUrl || placeObj?.bannerUrl || placeObj?.placeBannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
       
       if (!bannerCandidateUrl && (KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`])) {
@@ -26984,113 +27041,160 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // 2. Resolve Business Logo Buffer
+      // 3. Resolve Business Logo Buffer
       const logoBuf = await fetchPlaceLogoBuffer(rawDomain, placeName, explicitLogoUrl || placeObj?.logoUrl, placeObj);
       let logoPngBase64 = "";
       if (logoBuf) {
         try {
           const resizedLogo = await sharp(logoBuf, { density: 300 })
-            .resize(256, 256, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+            .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
             .png({ quality: 100 })
             .toBuffer();
           logoPngBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
         } catch(e) {}
       }
 
-      // 3. Layout Dimensions & Calculations (Clean Single Line: Logo + Business Name + Verified Badge)
+      // 4. Layout Dimensions & Calculations (2-Row Compact: Logo + Business Name + Rating & Reviews + Domain)
       const safePlaceDisplay = placeName.length > 24 ? `${placeName.substring(0, 22)}...` : placeName;
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 28, true);
-      const businessPillWidth = Math.min(840, Math.max(260, 102 + placeWidth + 38));
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 24, true);
+      const ratingLineText = `${placeRatingStr}  ${reviewsLabel}  •  ${rawDomain}`;
+      const ratingLineWidth = 24 + getTextAdvanceWidth(ratingLineText, 18, true);
+      
+      const maxTextWidth = Math.max(placeWidth + 28, ratingLineWidth);
+      const businessPillWidth = Math.min(840, Math.max(280, 96 + maxTextWidth + 30));
 
-      // 4. Build Overlay SVG with Vector Paths (Single prominent bottom business card, watermark top-right, NO duplicate top logo)
+      // 5. Build Overlay SVG with Vector Paths
       const overlaySvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
-            <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="placeVignette" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stop-color="#000000" stop-opacity="0.80" />
               <stop offset="25%" stop-color="#000000" stop-opacity="0.10" />
               <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0.94" />
             </linearGradient>
+            <filter id="placeCardShadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+            </filter>
           </defs>
 
           <!-- Ambient dark gradient vignette -->
-          <rect width="1200" height="630" fill="url(#vignette)"/>
+          <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM LEFT: Single Prominent Business Profile Pill (Shifted left, clean single line, no extra text inside banner) -->
-          <g transform="translate(36, 490)">
-            <rect width="${businessPillWidth}" height="92" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+          <!-- BOTTOM LEFT: Prominent Business Profile Pill (Sleek Compact 2-Row) -->
+          <g transform="translate(48, 484)" filter="url(#placeCardShadow)">
+            <rect width="${businessPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Logo Container (White background container matching profile drawer) -->
             ${isYoouzPlace ? `
-              <rect x="12" y="12" width="68" height="68" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <g transform="translate(18, 18)">
+              <rect x="14" y="14" width="68" height="68" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+              <g transform="translate(20, 20)">
                 <svg width="56" height="56" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="12" y="12" width="68" height="68" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+              <rect x="14" y="14" width="68" height="68" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(16, 16)">
+                <g transform="translate(14, 14)">
                   <clipPath id="squircleLogoClipBiz">
-                    <rect x="0" y="0" width="60" height="60" rx="16"/>
+                    <rect x="0" y="0" width="68" height="68" rx="20"/>
                   </clipPath>
-                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="56" height="56" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>
                 </g>
               ` : `
-                <g transform="translate(16, 16)">
-                  <rect x="0" y="0" width="60" height="60" rx="16" fill="#18181b"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 32, true) / 2), 42, 32, true, '#ffffff')}
+                <g transform="translate(14, 14)">
+                  <rect x="0" y="0" width="68" height="68" rx="20" fill="#18181b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 34 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30, true) / 2), 44, 30, true, '#ffffff')}
                 </g>
               `}
             `}
 
-            <!-- Line 1: Place Name + Dark Mode White Verified Badge (Vertically Centered) -->
-            ${renderTextPath(safePlaceDisplay, 96, 54, 28, true, '#ffffff')}
-            <g transform="translate(${96 + placeWidth + 10}, 33)">
-              <circle cx="11" cy="11" r="11" fill="#ffffff"/>
-              <path d="M6 11l3.5 3.5 7-7" stroke="#09090b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Line 1: Place Name + Dark Mode White Verified Badge -->
+            ${renderTextPath(safePlaceDisplay, 96, 38, 24, true, '#ffffff')}
+            <g transform="translate(${96 + placeWidth + 8}, 20)">
+              <circle cx="9" cy="9" r="9" fill="#ffffff"/>
+              <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
+
+            <!-- Line 2: Gold Star + Rating Value + (X reviews) • domain.com -->
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(96, 52) scale(0.95)"/>
+            ${renderTextPath(placeRatingStr, 120, 69, 20, true, '#fbbf24')}
+            ${renderTextPath(reviewsLabel, 120 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8, 69, 18, true, '#ffffff')}
+            ${renderTextPath(`•  ${rawDomain}`, 120 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8 + getTextAdvanceWidth(reviewsLabel, 18, true) + 10, 69, 18, true, '#cbd5e1')}
           </g>
         </svg>
       `;
 
-      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 150 })
-        .resize(1200, 630)
+      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+        .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
         .png()
         .toBuffer();
 
       let finalImage: Buffer;
       if (bannerBuf) {
-        finalImage = await sharp(bannerBuf)
-          .resize(1200, 630, { fit: 'cover', position: 'center' })
-          .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 95 })
-          .toBuffer();
+        try {
+          finalImage = await sharp(bannerBuf)
+            .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
+            .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+            .toBuffer();
+        } catch(bErr) {
+          const fallbackBaseSvg = `
+            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="gridBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#050814" />
+                  <stop offset="50%" stop-color="#090e24" />
+                  <stop offset="100%" stop-color="#0b132b" />
+                </linearGradient>
+                <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-opacity="0.6"/>
+                </pattern>
+                <radialGradient id="centerBlueGlow" cx="50%" cy="45%" r="55%">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.30" />
+                  <stop offset="60%" stop-color="#1e40af" stop-opacity="0.08" />
+                  <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+                </radialGradient>
+              </defs>
+              <rect width="1200" height="630" fill="url(#gridBg)"/>
+              <rect width="1200" height="630" fill="url(#gridPattern)"/>
+              <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
+            </svg>
+          `;
+          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+            .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
+            .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+            .toBuffer();
+        }
       } else {
-        // High-end cinematic dark atmosphere background (never a raw black box with lines)
         const fallbackBaseSvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#09090b" />
-                <stop offset="50%" stop-color="#0f172a" />
-                <stop offset="100%" stop-color="#181820" />
+              <linearGradient id="gridBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#050814" />
+                <stop offset="50%" stop-color="#090e24" />
+                <stop offset="100%" stop-color="#0b132b" />
               </linearGradient>
-              <radialGradient id="centerGlow" cx="50%" cy="40%" r="60%">
-                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
-                <stop offset="70%" stop-color="#1e3a8a" stop-opacity="0.05" />
+              <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-opacity="0.6"/>
+              </pattern>
+              <radialGradient id="centerBlueGlow" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.30" />
+                <stop offset="60%" stop-color="#1e40af" stop-opacity="0.08" />
                 <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
               </radialGradient>
             </defs>
-            <rect width="1200" height="630" fill="url(#darkBg)"/>
-            <rect width="1200" height="630" fill="url(#centerGlow)"/>
+            <rect width="1200" height="630" fill="url(#gridBg)"/>
+            <rect width="1200" height="630" fill="url(#gridPattern)"/>
+            <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
           </svg>
         `;
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg))
+        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+          .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 95 })
+          .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
@@ -27843,6 +27947,43 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
         if (row.avatarUrl && !row.avatarUrl.startsWith("data:;")) place.avatarUrl = row.avatarUrl;
         if (row.bannerUrl) place.bannerUrl = row.bannerUrl;
         if (row.ogImage) place.ogImage = row.ogImage;
+      }
+
+      // Query BunnyDB live video reviews to update reviewCount, average rating, banner and logo
+      const revRes = await bunnyDb.execute({
+        sql: `SELECT id, rating, placeId, placeName, data FROM videoReviews`,
+        args: []
+      });
+      if (revRes.rows && revRes.rows.length > 0) {
+        const cleanT = domain.toLowerCase();
+        const matching = revRes.rows.filter((r: any) => {
+          const rawData = r.data;
+          const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
+          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || r.placeId || r.placeName || '').toLowerCase();
+          return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+        });
+        if (matching.length > 0) {
+          place.reviews = matching.map((r: any) => {
+            const rawData = r.data;
+            const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
+            return { id: r.id, ...v };
+          });
+          place.reviewCount = matching.length;
+          const sum = matching.reduce((acc: number, r: any) => {
+            const rawData = r.data;
+            const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
+            return acc + (Number(v.rating) || Number(r.rating) || 5);
+          }, 0);
+          place.rating = Number((sum / matching.length).toFixed(1));
+          
+          const first = place.reviews[0];
+          if (!place.bannerUrl && (first.placeBannerUrl || first.bannerUrl || first.thumbnailUrl || first.coverUrl)) {
+            place.bannerUrl = first.placeBannerUrl || first.bannerUrl || first.thumbnailUrl || first.coverUrl;
+          }
+          if (!place.logoUrl && (first.placeLogo || first.placeLogoUrl || first.logoUrl)) {
+            place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
+          }
+        }
       }
     }
   } catch (e) {}

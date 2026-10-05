@@ -237,13 +237,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);
 
-  // Helper to compute place rating & review count (matching Screenshot 3)
+  // Helper to compute place rating & review count (matching live database and local storage)
   const placeStats = (() => {
-    if (!isVideoMode || !video) {
-      return { count: 1, avgRating: 5.0, scoreStr: "5.0" };
-    }
-    const cleanDomain = (resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title || "").toLowerCase();
-    const cleanId = (video.placeId || "").toLowerCase();
+    const cleanDomain = (resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title || "").toLowerCase();
+    const cleanId = (video?.placeId || "").toLowerCase();
     let matching: any[] = [];
     try {
       const saved = localStorage.getItem("yoouz_video_reviews");
@@ -251,14 +248,16 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       if (Array.isArray(list) && list.length > 0) {
         matching = list.filter((v: any) => {
           const vDom = (v.placeWebsite || v.placeId || v.placeName || "").toLowerCase();
-          return (cleanDomain && vDom.includes(cleanDomain)) || (cleanId && vDom.includes(cleanId));
+          return (cleanDomain && (vDom.includes(cleanDomain) || cleanDomain.includes(vDom))) || 
+                 (cleanId && (vDom.includes(cleanId) || cleanId.includes(vDom)));
         });
       }
     } catch(e) {}
     if (matching.length === 0 && Array.isArray(INITIAL_SEED_VIDEOS)) {
       matching = INITIAL_SEED_VIDEOS.filter((v: any) => {
         const vDom = (v.placeWebsite || v.placeId || v.placeName || "").toLowerCase();
-        return (cleanDomain && vDom.includes(cleanDomain)) || (cleanId && vDom.includes(cleanId));
+        return (cleanDomain && (vDom.includes(cleanDomain) || cleanDomain.includes(vDom))) || 
+               (cleanId && (vDom.includes(cleanId) || cleanId.includes(vDom)));
       });
     }
     if (matching.length > 0) {
@@ -267,8 +266,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       const avg = Number((sum / count).toFixed(1));
       return { count, avgRating: avg, scoreStr: avg.toFixed(1) };
     }
-    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || 1);
-    const fallbackRating = Number((video as any)?.placeRating || video.rating || 5.0);
+    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || propReviewCount || 1);
+    const fallbackRating = Number((video as any)?.placeRating || video?.rating || propRating || 5.0);
     return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
   })();
 
@@ -297,10 +296,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${relativeDateStr ? `&date=${encodeURIComponent(relativeDateStr)}` : ''}&v=18`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&v=26`
       : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&v=25`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=19`
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ''}&v=26`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=26`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -824,11 +823,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Ambient dark gradient vignette to ensure absolute legibility */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* BOTTOM BAR: Single Business Profile Info with Squircle Logo & Verified Badge (Clean, more to the left, no extra text inside banner) */}
-                  <div className="absolute bottom-3 left-2.5 sm:left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  {/* BOTTOM BAR: Sleek Business Profile Pill with Squircle Logo, Verified Badge, Rating & Reviews */}
+                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
+                    <div className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
                       {/* Business Squircle Logo Container Matching Profile Header */}
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] sm:rounded-[18px] overflow-hidden border border-white/30 bg-white shadow-xl flex items-center justify-center p-1 shrink-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-white shadow-xs flex items-center justify-center p-1 shrink-0">
                         <CopoBrandLogo
                           domain={resolvedDomain || title}
                           name={title}
@@ -836,16 +835,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           logoUrl={resolvedLogoUrl}
                           bannerUrl={resolvedBannerUrl}
                           className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                          imageClassName="w-full h-full object-contain rounded-[12px] sm:rounded-[14px]"
+                          imageClassName="w-full h-full object-contain rounded-lg"
                           fallbackTextClassName="font-black text-xs text-zinc-950"
                         />
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-white text-xs sm:text-sm font-bold leading-tight truncate drop-shadow-md flex items-center gap-1.5">
-                          <span>{title}</span>
-                          {/* Dark Mode Verified Checkmark (NO green!) */}
-                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
-                        </p>
+                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
+                        {/* Line 1: Business Name + Dark Mode White Verified Checkmark */}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                        </div>
+                        {/* Line 2: Gold Star + Rating Value + Total Reviews + Domain */}
+                        <div className="flex items-center gap-1 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                          <span className="text-amber-400 font-bold">{placeStats.scoreStr}</span>
+                          <span className="text-white font-medium">({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})</span>
+                          <span className="text-zinc-400">•</span>
+                          <span className="text-zinc-300 font-medium">{resolvedDomain || title}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
