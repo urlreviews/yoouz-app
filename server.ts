@@ -17044,13 +17044,17 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
-  // Avatar Upload Endpoint (Direct to Bunny Storage rev1)
-  app.post("/api/user/upload-avatar", async (req, res) => {
+  // Avatar & Banner Upload Endpoint (Direct to Bunny Storage rev1)
+  app.post(["/api/user/upload-avatar", "/api/user/upload-banner"], async (req, res) => {
     try {
-      const { imageBase64, mimeType = 'image/jpeg', userId } = req.body;
+      const { imageBase64, mimeType = 'image/jpeg', userId, type, assetType } = req.body || {};
       if (!imageBase64 || typeof imageBase64 !== 'string') {
         return res.status(400).json({ error: "Missing image data." });
       }
+
+      const isBanner = req.path.includes("banner") || type === "banner" || assetType === "banner";
+      const folder = isBanner ? "banners" : "avatars";
+      const prefix = isBanner ? "banner" : "avatar";
 
       // Strip data uri prefix if present
       const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
@@ -17058,7 +17062,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
       const cleanUserId = (userId || 'user').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `avatar_${cleanUserId}_${Date.now()}${ext}`;
+      const filename = `${prefix}_${cleanUserId}_${Date.now()}${ext}`;
 
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
       const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || 'rev1';
@@ -17067,7 +17071,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       if (bunnyAccessKey && bunnyStorageZone) {
         const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/avatars/${filename}`;
+        const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/${folder}/${filename}`;
 
         const uploadRes = await fetch(bunnyUrl, {
           method: 'PUT',
@@ -17081,21 +17085,34 @@ app.post("/api/videos/save-review", async (req, res) => {
 
         if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
           const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, '');
-          const cdnUrl = `${cdnBase}/avatars/${filename}`;
-          return res.json({ success: true, avatarUrl: cdnUrl, filename });
+          const cdnUrl = `${cdnBase}/${folder}/${filename}`;
+          return res.json({ 
+            success: true, 
+            avatarUrl: cdnUrl, 
+            bannerUrl: cdnUrl,
+            url: cdnUrl, 
+            filename 
+          });
         } else {
-          console.error("Bunny avatar upload error:", await uploadRes.text());
+          console.error(`Bunny ${folder} upload error:`, await uploadRes.text());
         }
       }
 
       // Local fallback if bunny is unavailable
-      const localDir = path.join(serverUploadsDir, 'avatars');
+      const localDir = path.join(serverUploadsDir, folder);
       if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
       fs.writeFileSync(path.join(localDir, filename), buffer);
-      return res.json({ success: true, avatarUrl: `/uploads/avatars/${filename}`, filename });
+      const fallbackUrl = `/uploads/${folder}/${filename}`;
+      return res.json({ 
+        success: true, 
+        avatarUrl: fallbackUrl, 
+        bannerUrl: fallbackUrl,
+        url: fallbackUrl, 
+        filename 
+      });
     } catch (err: any) {
-      console.error("upload-avatar error:", err);
-      return res.status(500).json({ error: err.message || "Failed to upload avatar" });
+      console.error("user upload asset error:", err);
+      return res.status(500).json({ error: err.message || "Failed to upload asset" });
     }
   });
 
@@ -26902,6 +26919,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       // Try Bunny DB
+      let bannerCandidateUrl = (query.bannerUrl as string) || "";
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
@@ -26917,9 +26935,45 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
             const av = parsed.avatar || r.avatar;
             if (av && !candidateUrls.includes(av)) candidateUrls.push(av);
+            if (!bannerCandidateUrl && parsed.banner) bannerCandidateUrl = parsed.banner;
           }
         }
       } catch(e) {}
+
+      // Try local reviews index for banner if not found
+      if (!bannerCandidateUrl) {
+        try {
+          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const m = localList.find((v: any) => 
+            (v.author?.handle && v.author.handle.toLowerCase().replace(/^@/, '') === cleanLower) ||
+            (v.author?.name && v.author.name.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanLower.replace(/[^a-z0-9]/g, ''))
+          );
+          if (m?.author?.banner) bannerCandidateUrl = m.author.banner;
+        } catch(e) {}
+      }
+
+      let bannerBuf: Buffer | null = null;
+      if (bannerCandidateUrl && typeof bannerCandidateUrl === 'string') {
+        try {
+          if (bannerCandidateUrl.startsWith('data:')) {
+            const buf = decodeDataUrl(bannerCandidateUrl);
+            if (buf && buf.length > 50) bannerBuf = buf;
+          } else if (bannerCandidateUrl.startsWith('http')) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4500);
+            const resp = await fetch(bannerCandidateUrl, {
+              signal: controller.signal,
+              headers: { "User-Agent": "Mozilla/5.0 YoouzOgBot" }
+            });
+            clearTimeout(timeout);
+            if (resp.ok) {
+              const ab = await resp.arrayBuffer();
+              const buf = Buffer.from(ab);
+              if (buf.length > 50) bannerBuf = buf;
+            }
+          }
+        } catch(e) {}
+      }
 
       let avatarBuf: Buffer | null = null;
 
@@ -27002,6 +27056,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const safeEscapedHandle = escapeXml(cleanH);
 
       // High-resolution OpenGraph Card SVG Layout (1200x630) for User / Reviewer Profiles
+      const hasCustomBanner = Boolean(bannerBuf);
       const baseSvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -27020,9 +27075,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
             </pattern>
           </defs>
-          <rect width="1200" height="630" fill="url(#bgGrad)"/>
-          <rect width="1200" height="630" fill="url(#grid)"/>
-          <circle cx="600" cy="220" r="320" fill="url(#centerBlueGlow)"/>
+          ${hasCustomBanner 
+            ? `<rect width="1200" height="630" fill="rgba(0,0,0,0.75)"/>`
+            : `<rect width="1200" height="630" fill="url(#bgGrad)"/>
+               <rect width="1200" height="630" fill="url(#grid)"/>
+               <circle cx="600" cy="220" r="320" fill="url(#centerBlueGlow)"/>`
+          }
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
           <!-- Top Left Badge Pill (Dark Mode - NO green) -->
@@ -27108,10 +27166,32 @@ app.get('/api/og-preview-v2', async (req, res) => {
         });
       }
 
-      const finalImage = await sharp(Buffer.from(baseSvg))
-        .composite(composites)
-        .png()
-        .toBuffer();
+      let finalImage: Buffer;
+      if (bannerBuf) {
+        try {
+          const bannerBase = await sharp(bannerBuf)
+            .resize(1200, 630, { fit: 'cover' })
+            .png()
+            .toBuffer();
+          finalImage = await sharp(bannerBase)
+            .composite([
+              { input: Buffer.from(baseSvg) },
+              ...composites
+            ])
+            .png()
+            .toBuffer();
+        } catch(bErr) {
+          finalImage = await sharp(Buffer.from(baseSvg))
+            .composite(composites)
+            .png()
+            .toBuffer();
+        }
+      } else {
+        finalImage = await sharp(Buffer.from(baseSvg))
+          .composite(composites)
+          .png()
+          .toBuffer();
+      }
 
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);

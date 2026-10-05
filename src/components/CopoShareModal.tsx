@@ -662,97 +662,72 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
             <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
               {propIsCreatorProfile || (!isVideoMode && !isBusiness) ? (
-                /* DEDICATED USER / REVIEWER PROFILE CARD (Matching Business Share Card Layout + Profile Banner & Squircle) */
+                /* DEDICATED USER / REVIEWER PROFILE CARD (Single clean author squircle on bottom, matching profile header & banner) */
                 <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
                   {/* Banner Background: User's custom banner or signature dark blue grid banner */}
                   {(resolvedBannerUrl || propBannerUrl) ? (
-                    <img
-                      src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
-                      alt={title}
-                      className="absolute inset-0 w-full h-full object-cover filter brightness-95"
-                    />
+                    <div className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110"
+                        referrerPolicy="no-referrer"
+                      />
+                      <img
+                        src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
+                        alt={title}
+                        className="relative z-1 w-full h-full object-cover filter brightness-95"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
                   ) : (
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
                       <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.18),transparent_70%)]" />
-                      <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
-                        <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
-                          VERIFIED TOP REVIEWER
-                        </span>
-                      </div>
                     </div>
                   )}
 
                   {/* Dark Vignette Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/60 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* TOP BAR: Squircle Avatar Pill + Verified Badge & yoouz.com Watermark */}
-                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                    <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
-                      {/* Squircle Avatar */}
-                      <div className="w-5 h-5 rounded-md bg-zinc-800 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs">
-                        {resolvedAvatarUrl ? (
-                          <img
-                            src={getProxiedImageUrl(resolvedAvatarUrl)}
-                            alt={title}
-                            className="w-full h-full object-cover rounded-xs"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=64`;
-                            }}
-                          />
-                        ) : (
-                          <span className="font-black text-[9px] text-white">
-                            {title.charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-white text-xs font-bold truncate">
-                        {title}
-                      </span>
-                      {/* Dark Mode Verified Checkmark (NO green!) */}
-                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                    </div>
-
+                  {/* TOP BAR: Watermark Pill Only (No duplicate avatar/name on top) */}
+                  <div className="absolute top-2.5 right-2.5 flex items-center z-10">
                     <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                       <span>yoouz.com</span>
                     </div>
                   </div>
 
-                  {/* BOTTOM BAR: Author Info with Squircle Avatar & Yoouz Watermark */}
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    <div className="flex items-center gap-2 min-w-0">
+                  {/* BOTTOM BAR: Single Author Info with Squircle Avatar & Profile Details */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       {/* Profile Squircle Avatar Matching Profile Header */}
-                      <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-md flex items-center justify-center p-0.5">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] sm:rounded-[18px] overflow-hidden border border-white/30 bg-zinc-900 shadow-xl flex items-center justify-center p-0.5 shrink-0">
                         {resolvedAvatarUrl ? (
                           <img
                             src={getProxiedImageUrl(resolvedAvatarUrl)}
                             alt={title}
-                            className="w-full h-full object-cover rounded-[8px]"
+                            className="w-full h-full object-cover rounded-[13px] sm:rounded-[15px]"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-xs font-bold rounded-[8px]">
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-sm font-bold rounded-[13px] sm:rounded-[15px]">
                             {title.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm flex items-center gap-1">
+                        <p className="text-white text-xs sm:text-sm font-bold leading-tight truncate drop-shadow-md flex items-center gap-1.5">
                           <span>{title}</span>
-                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                          {/* Dark Mode Verified Checkmark (NO green!) */}
+                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
                         </p>
-                        <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                        <p className="text-zinc-300 text-[11px] sm:text-xs leading-tight truncate drop-shadow-sm opacity-90 mt-0.5 font-medium">
                           {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
                         </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      <span>yoouz.com</span>
                     </div>
                   </div>
                 </div>

@@ -718,6 +718,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const combinedLocation = locParts.join(", ");
 
     let finalAvatar = editAvatar || currentUser?.avatar;
+    let finalBanner = editBanner || currentUser?.banner;
 
     // If user selected a new photo (base64), upload it directly to Bunny CDN storage
     if (editAvatar && editAvatar.startsWith('data:image/')) {
@@ -742,11 +743,35 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       }
     }
 
+    // If user selected a new banner (base64), upload it directly to Bunny CDN storage
+    if (editBanner && editBanner.startsWith('data:image/')) {
+      setIsSavingProfile(true);
+      try {
+        const uploadBannerRes = await fetch('/api/user/upload-banner', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: editBanner,
+            type: 'banner',
+            userId: `${currentUser?.email || currentUser?.name || 'user'}_banner`
+          })
+        });
+        const bannerData = await uploadBannerRes.json();
+        if (bannerData.bannerUrl || bannerData.url) {
+          finalBanner = bannerData.bannerUrl || bannerData.url;
+        }
+      } catch (bannerErr) {
+        console.warn("Banner upload to Bunny CDN fallback:", bannerErr);
+      } finally {
+        setIsSavingProfile(false);
+      }
+    }
+
     const updatedProfile = {
       name: cleanName,
       bio: editBio.trim(),
       avatar: finalAvatar,
-      banner: editBanner || currentUser?.banner,
+      banner: finalBanner,
       location: combinedLocation,
       city: editCity.trim(),
       state: editState.trim(),
@@ -1840,6 +1865,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         subtitle={t("profile.reviewerProfile", "Reviewer Profile")}
         avatarUrl={effectiveAvatar}
         bannerUrl={effectiveBanner}
+        isCreatorProfile={true}
       />
 
       {/* Video Delete Confirmation Modal */}
