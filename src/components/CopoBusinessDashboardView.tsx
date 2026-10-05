@@ -11,6 +11,8 @@ import { CopoMessagesView } from './CopoMessagesView';
 import { CopoNotificationsView } from './CopoNotificationsView';
 import { CopoStarRating } from './CopoStarRating';
 import { 
+  Home,
+  Menu,
   Shield, 
   Eye, 
   EyeOff,
@@ -2198,6 +2200,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             </div>
 
+            {/* 1. Home button at the top */}
+            <nav className="flex flex-col gap-1.5">
+              <button
+                id="biz-nav-btn-home"
+                onClick={() => onNavigate('home')}
+                className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium"
+                title={t('nav.home', 'Home')}
+              >
+                <div className="relative flex items-center justify-center">
+                  <Home className="w-5 h-5 shrink-0 transition-colors text-white" />
+                </div>
+                <span className="truncate flex-1">{t('nav.home', 'Home')}</span>
+              </button>
+            </nav>
+
             {/* Navigation items list */}
             <div>
               <div className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 mb-1">
@@ -2236,6 +2253,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     </button>
                   );
                 })}
+
+                {/* More Button under Profile */}
+                <button
+                  id="biz-nav-btn-more"
+                  onClick={() => onNavigate('more')}
+                  className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium mt-1"
+                  title={t('nav.more', 'More')}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <Menu className="w-5 h-5 shrink-0 transition-colors text-white" />
+                  </div>
+                  <span className="truncate flex-1">{t('nav.more', 'More')}</span>
+                </button>
               </nav>
             </div>
           </div>
@@ -2486,6 +2516,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode) */}
           <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2.5 shrink-0 z-20">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth px-1">
+              {/* Home Pill */}
+              <button
+                type="button"
+                onClick={() => onNavigate('home')}
+                className="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800"
+                title={t('nav.home', 'Home')}
+              >
+                <Home className="w-4 h-4 text-white shrink-0" />
+                <span>{t('nav.home', 'Home')}</span>
+              </button>
+
               {suiteNavItems.map(item => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -2509,6 +2550,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </button>
                 );
               })}
+
+              {/* More Pill */}
+              <button
+                type="button"
+                onClick={() => onNavigate('more')}
+                className="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800"
+                title={t('nav.more', 'More')}
+              >
+                <Menu className="w-4 h-4 text-white shrink-0" />
+                <span>{t('nav.more', 'More')}</span>
+              </button>
             </div>
           </div>
 

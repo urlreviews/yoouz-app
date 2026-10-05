@@ -209,7 +209,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                   {t("nav.forBusinesses", "Yoouz for Business")}
                 </span>
                 <span className="text-[10px] text-zinc-400 group-hover:text-zinc-300 truncate leading-tight mt-0.5">
-                  {t("nav.claimAndGrow", "Claim & grow your business")}
+                  {t("nav.claimYourBusiness", "Claim your business")}
                 </span>
               </div>
             </div>
