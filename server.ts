@@ -15424,93 +15424,108 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           targetUserData = targetMatched.raw;
         }
 
-        // 2. Fetch followers from follows table
-        const followersQuery = await bunnyDb.execute({
-          sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followingId) = ? OR followingId = ?`,
-          args: [rawHandle.toLowerCase(), rawHandle]
-        });
+        const cleanIdent = (s: string) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+        const targetIdentifiers = new Set<string>();
+        if (rawHandle) targetIdentifiers.add(cleanIdent(rawHandle));
+        if (targetMatched) {
+          if (targetMatched.id) targetIdentifiers.add(cleanIdent(targetMatched.id));
+          if (targetMatched.name) targetIdentifiers.add(cleanIdent(targetMatched.name));
+          if (targetMatched.email) targetIdentifiers.add(cleanIdent(targetMatched.email));
+          if (targetMatched.handle) targetIdentifiers.add(cleanIdent(targetMatched.handle));
+        }
+        targetIdentifiers.delete("");
 
-        if (followersQuery && followersQuery.rows && followersQuery.rows.length > 0) {
-          followersQuery.rows.forEach((row: any) => {
+        // 2. Fetch followers & following from follows table with flexible multi-identifier matching
+        const allFollowsQuery = await bunnyDb.execute("SELECT id, followerId, followingId, data FROM follows");
+        if (allFollowsQuery && allFollowsQuery.rows && allFollowsQuery.rows.length > 0) {
+          allFollowsQuery.rows.forEach((row: any) => {
             let fData: any = {};
             try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+
             const fUserId = row.followerId || fData.followerUserId || row.id;
             const fName = fData.followerName || fData.name || row.followerId || "Community Reviewer";
-            const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
-            if (!enriched) {
-              return; // SKIP orphaned follow rows
-            }
 
-            const name = enriched.name;
-            const handle = enriched.handle || fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-            const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
-            const location = enriched?.location || fData.location || "Miami, FL";
-            const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
-            const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+            const followingTarget = row.followingId || fData.followingUserId || fData.followingName || fData.placeId || "";
+            const followerTarget = row.followerId || fData.followerUserId || fData.followerName || "";
 
-            followersList.push({
-              id: fUserId,
-              name,
-              handle,
-              avatar,
-              location,
-              isVerified,
-              videoReviewCount,
-              followersCount: enriched?.followersCount || 0,
-              createdAt: fData.createdAt || new Date().toISOString()
-            });
-          });
-        }
+            const cleanFollowingTarget = cleanIdent(followingTarget);
+            const cleanFollowerTarget = cleanIdent(followerTarget);
 
-        // 3. Fetch following from follows table
-        const followingQuery = await bunnyDb.execute({
-          sql: `SELECT id, followerId, followingId, data FROM follows WHERE LOWER(followerId) = ? OR followerId = ?`,
-          args: [rawHandle.toLowerCase(), rawHandle]
-        });
+            // Is this row a follower of target user?
+            const isFollowerOfTarget = Array.from(targetIdentifiers).some(i => 
+              cleanFollowingTarget === i || (i.length > 3 && cleanFollowingTarget.includes(i)) || (cleanFollowingTarget.length > 3 && i.includes(cleanFollowingTarget))
+            );
 
-        if (followingQuery && followingQuery.rows && followingQuery.rows.length > 0) {
-          followingQuery.rows.forEach((row: any) => {
-            let fData: any = {};
-            try { fData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-            const targetId = row.followingId || fData.followingUserId || fData.placeId || row.id;
-            const targetName = fData.followingName || fData.placeName || fData.name || row.followingId || "Community Reviewer";
-            const isPlace = fData.type === "place" || Boolean(fData.placeId);
-            
-            if (isPlace) {
-              followingList.push({
-                id: targetId,
-                name: targetName,
-                handle: fData.placeWebsite || targetId,
-                avatar: fData.followingAvatar || fData.avatar || fData.logoUrl || "",
-                type: "place",
-                location: fData.placeAddress || fData.location || "Verified Business",
-                isVerified: true,
-                createdAt: fData.createdAt || new Date().toISOString()
-              });
-            } else {
-              const enriched = userProfileMap.get(String(targetId).toLowerCase()) || userProfileMap.get(String(targetName).toLowerCase()) || null;
-              if (!enriched) {
-                return; // SKIP orphaned followings
-              }
-              const name = enriched.name;
-              const handle = enriched.handle || fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-              const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
-              const location = enriched?.location || fData.location || "Miami, FL";
+            if (isFollowerOfTarget) {
+              const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
+              const name = enriched ? enriched.name : fName;
+              const handle = enriched ? enriched.handle : (fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+              const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followerAvatar || "");
+              const location = enriched?.location || fData.location || "Verified Reviewer";
               const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
               const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
 
-              followingList.push({
-                id: targetId,
-                name,
-                handle,
-                avatar,
-                type: "user",
-                location,
-                isVerified,
-                videoReviewCount,
-                followersCount: enriched?.followersCount || 0,
-                createdAt: fData.createdAt || new Date().toISOString()
-              });
+              if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
+                followersList.push({
+                  id: fUserId,
+                  name,
+                  handle,
+                  avatar,
+                  location,
+                  isVerified,
+                  videoReviewCount,
+                  followersCount: enriched?.followersCount || 0,
+                  createdAt: fData.createdAt || new Date().toISOString()
+                });
+              }
+            }
+
+            // Is target user a follower in this row (i.e. target user is following someone)?
+            const cleanDataFollowerName = cleanIdent(fData.followerName || "");
+            const isTargetFollowing = Array.from(targetIdentifiers).some(i => 
+              cleanFollowerTarget === i || (i.length > 3 && cleanFollowerTarget.includes(i)) || (cleanFollowerTarget.length > 3 && i.includes(cleanFollowerTarget))
+            ) || (cleanDataFollowerName && Array.from(targetIdentifiers).some(i => cleanDataFollowerName === i || cleanDataFollowerName.includes(i)));
+
+            if (isTargetFollowing) {
+              const targetId = row.followingId || fData.followingUserId || fData.placeId || row.id;
+              const targetName = fData.followingName || fData.placeName || fData.name || row.followingId || "Community Reviewer";
+              const isPlace = fData.type === "place" || Boolean(fData.placeId);
+
+              if (isPlace) {
+                followingList.push({
+                  id: targetId,
+                  name: targetName,
+                  handle: fData.placeWebsite || targetId,
+                  avatar: fData.followingAvatar || fData.avatar || fData.logoUrl || "",
+                  type: "place",
+                  location: fData.placeAddress || fData.location || "Verified Business",
+                  isVerified: true,
+                  createdAt: fData.createdAt || new Date().toISOString()
+                });
+              } else {
+                const enriched = userProfileMap.get(String(targetId).toLowerCase()) || userProfileMap.get(String(targetName).toLowerCase()) || null;
+                const name = enriched ? enriched.name : targetName;
+                const handle = enriched ? enriched.handle : (fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+                const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followingAvatar || "");
+                const location = enriched?.location || fData.location || "Verified Reviewer";
+                const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
+                const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+
+                if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
+                  followingList.push({
+                    id: targetId,
+                    name,
+                    handle,
+                    avatar,
+                    type: "user",
+                    location,
+                    isVerified,
+                    videoReviewCount,
+                    followersCount: enriched?.followersCount || 0,
+                    createdAt: fData.createdAt || new Date().toISOString()
+                  });
+                }
+              }
             }
           });
         }

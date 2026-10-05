@@ -540,13 +540,30 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   const rawFollowers = socialData?.followers || liveFollowersList;
-  const filteredFollowers = rawFollowers.filter((u: any) => u && u.name && !isInvalidName(u.name));
+  const filteredFollowers = rawFollowers.filter((u: any) => {
+    if (!u) return false;
+    const nameStr = typeof u === 'string' ? u : (u.name || u.id || u.handle || "");
+    return Boolean(nameStr) && !isInvalidName(nameStr);
+  });
 
   const rawFollowing = socialData?.following || liveFollowingList;
-  const filteredFollowing = rawFollowing.filter((u: any) => u && (u.name || u.id) && !isInvalidName(u.name || u.id));
+  const filteredFollowing = rawFollowing.filter((u: any) => {
+    if (!u) return false;
+    const nameStr = typeof u === 'string' ? u : (u.name || u.id || u.handle || "");
+    return Boolean(nameStr) && !isInvalidName(nameStr);
+  });
 
-  const effectiveFollowersCount = filteredFollowers.length;
-  const effectiveFollowingCount = filteredFollowing.length;
+  const effectiveFollowersCount = Math.max(
+    filteredFollowers.length,
+    typeof liveUserFromRegistry?.followersCount === 'number' ? liveUserFromRegistry.followersCount : (Array.isArray(liveUserFromRegistry?.followers) ? liveUserFromRegistry.followers.length : 0),
+    Array.isArray((author as any)?.followers) ? (author as any).followers.length : 0
+  );
+
+  const effectiveFollowingCount = Math.max(
+    filteredFollowing.length,
+    typeof liveUserFromRegistry?.followingCount === 'number' ? liveUserFromRegistry.followingCount : (Array.isArray(liveUserFromRegistry?.followedAuthors) ? liveUserFromRegistry.followedAuthors.length : 0),
+    Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors.length : 0
+  );
 
   const targetHandle = safeCreator?.name || author?.name || author?.id || "";
 
