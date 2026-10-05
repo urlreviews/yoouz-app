@@ -89,7 +89,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Saved"), icon: Bookmark },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
-    { id: "record_review" as NavSection, label: t("nav.record_review", "Record"), icon: Video, isDarkBlue: true }
   ];
 
   return (
@@ -141,9 +140,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     id={`nav-btn-${item.id}`}
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center transition-all duration-150 cursor-pointer group ${
-                      item.isDarkBlue
-                        ? "justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg my-1 mt-4 active:scale-[0.98] transition-all"
-                        : isActive
+                      isActive
                         ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
                         : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
                     }`}
@@ -163,17 +160,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           }}
                         />
                       ) : (
-                        <Icon
-                          className={`w-5 h-5 shrink-0 transition-colors ${
-                            item.isDarkBlue ? "text-zinc-950 stroke-[2.2]" : "text-white"
-                          }`}
-                        />
+                        <Icon className="w-5 h-5 shrink-0 text-white" />
                       )}
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
                     </div>
-                    <span className={item.isDarkBlue ? "font-bold text-[15px] text-zinc-950 tracking-tight" : "truncate flex-1"}>
+                    <span className="truncate flex-1">
                       {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
                     </span>
                     
@@ -189,11 +182,21 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           </nav>
         </div>
 
-        {/* Lower Section: Legal Footer */}
+        {/* Lower Section: Video Review CTA & Legal Footer */}
         <div className="flex flex-col gap-3">
+          {/* Video Review Primary Hero CTA (Matching Mobile Layout) */}
+          <button
+            id="sidebar-record-btn"
+            onClick={() => onSelectSection("record_review")}
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer"
+          >
+            <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+            <span>{t("nav.record_review", "Video Review")}</span>
+          </button>
+
           {/* Footer & Legal Links */}
-          <div className="px-3 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
-            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-300 w-full">
+          <div className="px-1 pt-2.5 border-t border-zinc-800/80 flex flex-col gap-2">
+            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-300 w-full px-1">
               <button
                 onClick={() => {
                   window.open("/business", "_blank", "noopener,noreferrer");
@@ -224,7 +227,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 {t("legal.about", "About")}
               </button>
             </div>
-            <p className="text-[11px] text-zinc-200 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
+            <p className="text-[11px] text-zinc-400 font-normal px-1">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
           </div>
         </div>
       </aside>
@@ -259,9 +262,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     key={item.id}
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
-                      item.isDarkBlue
-                        ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg my-1 mt-4 active:scale-95 transition-all"
-                        : isActive
+                      isActive
                         ? "bg-zinc-850 border border-zinc-700 text-white shadow-xs"
                         : "text-white hover:bg-zinc-900/90"
                     }`}
@@ -282,11 +283,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                           }}
                         />
                       ) : (
-                        <Icon
-                          className={`w-[22px] h-[22px] shrink-0 transition-colors ${
-                            item.isDarkBlue ? "text-zinc-950 stroke-[2.2]" : "text-white"
-                          }`}
-                        />
+                        <Icon className="w-[22px] h-[22px] shrink-0 text-white" />
                       )}
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
@@ -302,6 +299,15 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               );
             })}
           </nav>
+
+          {/* Tablet Video Review CTA button */}
+          <button
+            onClick={() => onSelectSection("record_review")}
+            className="relative flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg mt-2 active:scale-95 transition-all cursor-pointer"
+            title={t("nav.record_review", "Video Review")}
+          >
+            <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+          </button>
         </div>
       </aside>
 

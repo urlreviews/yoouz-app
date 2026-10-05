@@ -184,8 +184,8 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               );
             })}
 
-            {/* Video Review Primary Hero CTA (Positioned cleanly with mt-auto to sit directly above the footer) */}
-            <div className="mt-auto pt-6 pb-2">
+            {/* Video Review Primary Hero CTA (Balanced padding above footer) */}
+            <div className="mt-auto pt-3 pb-1">
               <button
                 id="mobile-nav-record-btn"
                 onClick={() => {
