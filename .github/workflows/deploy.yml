@@ -1,5 +1,9 @@
 name: Deploy Yoouz App (Bunny Magic Containers)
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
