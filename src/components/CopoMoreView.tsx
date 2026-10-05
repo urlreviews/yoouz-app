@@ -917,18 +917,30 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                 <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-xs text-zinc-200 font-medium">
-                    {t("trustCenter.readyToVerify", "Ready to verify your domain? Contact our verification team with your domain details.")}
+                    {t("trustCenter.readyToVerify", "Ready to manage or verify your domain? Launch our dedicated business suite or contact our team.")}
                   </p>
-                  <button
-                    onClick={() => {
-                      setActiveTab("contact");
-                      setContactCategory("verification");
-                    }}
-                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <BadgeCheck className="w-4 h-4 text-black" />
-                    <span>{t("trustCenter.requestVerification", "Request Domain Verification")}</span>
-                  </button>
+                  <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+                    <button
+                      onClick={() => {
+                        window.open("/business", "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Building2 className="w-4 h-4 text-black" />
+                      <span>{t("nav.forBusinesses", "Open Business Suite")}</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-black" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("contact");
+                        setContactCategory("verification");
+                      }}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs border border-zinc-700 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <BadgeCheck className="w-4 h-4 text-zinc-300" />
+                      <span>{t("trustCenter.requestVerification", "Request Verification")}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

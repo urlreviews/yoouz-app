@@ -14,7 +14,8 @@ import {
   Video,
   Shield,
   Download,
-  Globe
+  Globe,
+  ChevronRight
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -86,7 +87,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
     { id: "notifications" as NavSection, label: t("nav.notifications", "Alerts"), icon: Bell, badge: unreadNotifsCount },
     { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Saved"), icon: Bookmark },
-    { id: "business" as NavSection, label: t("nav.business", "Business"), icon: Shield },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
     { id: "record_review" as NavSection, label: t("nav.record_review", "Record"), icon: Video, isDarkBlue: true }
@@ -189,31 +189,59 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           </nav>
         </div>
 
-        {/* Footer & Legal Links */}
-        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
-            <button
-              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.privacy", "Privacy")}
-            </button>
-            <span className="text-zinc-600">•</span>
-            <button
-              onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.terms", "Terms")}
-            </button>
-            <span className="text-zinc-600">•</span>
-            <button
-              onClick={() => onSelectSection("more")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.about", "About")}
-            </button>
+        {/* Lower Section: Design 1 Sleek Frosted Business Card + Footer */}
+        <div className="flex flex-col gap-3">
+          {/* Design 1: Sleek Frosted Business Card */}
+          <div
+            id="btn-sidebar-business-card"
+            onClick={() => {
+              window.open("/business", "_blank", "noopener,noreferrer");
+            }}
+            className="p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-zinc-700/80 transition-all duration-200 cursor-pointer group flex items-center justify-between gap-2.5 shadow-xs select-none"
+            title={t("nav.forBusinesses", "Yoouz for Business")}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0 group-hover:bg-zinc-700/90 transition-colors">
+                <Shield className="w-4 h-4 text-zinc-200 group-hover:text-white transition-colors" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-zinc-100 group-hover:text-white truncate leading-tight">
+                  {t("nav.forBusinesses", "Yoouz for Business")}
+                </span>
+                <span className="text-[10px] text-zinc-400 group-hover:text-zinc-300 truncate leading-tight mt-0.5">
+                  {t("nav.claimAndGrow", "Claim & grow your business")}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
           </div>
-          <p className="text-[11px] text-zinc-200 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
+
+          {/* Footer & Legal Links */}
+          <div className="px-3 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
+              <button
+                onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.privacy", "Privacy")}
+              </button>
+              <span className="text-zinc-600">•</span>
+              <button
+                onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.terms", "Terms")}
+              </button>
+              <span className="text-zinc-600">•</span>
+              <button
+                onClick={() => onSelectSection("more")}
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.about", "About")}
+              </button>
+            </div>
+            <p className="text-[11px] text-zinc-200 font-normal">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</p>
+          </div>
         </div>
       </aside>
 
