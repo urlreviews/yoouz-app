@@ -480,9 +480,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     isOwner ? currentUser?.country : (liveUserProfile?.country || safeCreator.country || author.country)
   );
 
-  const displayBio = isOwner && typeof currentUser?.bio === 'string'
-    ? currentUser.bio
-    : (liveUserProfile?.bio || safeCreator.bio || author?.bio || "");
+  const displayBio = (currentUser?.bio && currentUser.bio.trim() ? currentUser.bio : "")
+    || (liveUserProfile?.bio && liveUserProfile.bio.trim() ? liveUserProfile.bio : "")
+    || (safeCreator?.bio && safeCreator.bio.trim() ? safeCreator.bio : "")
+    || (author?.bio && author.bio.trim() ? author.bio : "");
 
   // Real-time follow state calculation
   const authorNameKey = (author?.name || "").toLowerCase().trim();
@@ -1226,34 +1227,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="divide-y divide-zinc-800">
-              {/* About Section */}
+              {/* Badges & Status Section */}
               <div className="p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
-                  </h3>
-                </div>
-                {displayBio ? (
-                  <p className="text-zinc-200 text-sm leading-relaxed font-normal">
-                    {displayBio}
-                  </p>
-                ) : (
-                  <div className="bg-zinc-900/40 rounded-xl p-3.5 border border-zinc-800/80 text-zinc-400 text-xs flex items-center justify-between gap-3">
-                    <span className="italic">{isOwner ? t("profile.noBioPrompt", "No bio added yet. Tell the community about yourself!") : t("profile.noBioYet", "No bio added yet.")}</span>
-                    {isOwner && (
-                      <button
-                        onClick={() => setIsEditModalOpen(true)}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] shrink-0 transition-colors cursor-pointer"
-                      >
-                        {t("profile.addBio", "Add Bio")}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Badges / Status Card */}
-                <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
@@ -1434,31 +1410,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {/* Tab 3: ABOUT */}
           {activeTab === "about" && (
             <div className="p-5 space-y-5">
-              <div>
-                <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
-                </h3>
-                {displayBio ? (
-                  <p className="text-zinc-200 text-sm leading-relaxed">
+              {displayBio ? (
+                <div>
+                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
+                  </h3>
+                  <p className="text-zinc-200 text-sm leading-relaxed font-normal">
                     {displayBio}
                   </p>
-                ) : (
-                  <div className="bg-zinc-900/40 rounded-xl p-3.5 border border-zinc-800/80 text-zinc-400 text-xs flex items-center justify-between gap-3">
-                    <span className="italic">{isOwner ? t("profile.noBioPrompt", "No bio added yet. Tell the community about yourself!") : t("profile.noBioYet", "No bio added yet.")}</span>
-                    {isOwner && (
-                      <button
-                        onClick={() => setIsEditModalOpen(true)}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] shrink-0 transition-colors cursor-pointer"
-                      >
-                        {t("profile.addBio", "Add Bio")}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : null}
 
-              <div className="pt-4 border-t border-zinc-800 space-y-3">
+              <div className={displayBio ? "pt-4 border-t border-zinc-800 space-y-3" : "space-y-3"}>
                 <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
                   {t("profile.communityStats", "Community Stats")}
                 </h3>
