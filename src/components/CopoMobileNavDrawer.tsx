@@ -184,24 +184,25 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               );
             })}
 
-            {/* Video Review Primary Hero CTA (Directly below menu items, Twitter/X Post style) */}
-            <div className="pt-3 pb-2">
-              <button
-                id="mobile-nav-record-btn"
-                onClick={() => {
-                  if (onOpenCreateModal) onOpenCreateModal();
-                  onClose();
-                }}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
-                <span>{t("nav.record_review", "Video Review")}</span>
-              </button>
-            </div>
           </nav>
 
-          {/* Legal & Copyright Footer (Single line: For Businesses • Privacy • Terms • About) */}
-          <div className="flex flex-col gap-2 px-3 pt-3.5 pb-[max(12px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 mt-2 shrink-0">
+          {/* Bottom Section: Video Review CTA (Thumb Zone) & Legal Footer */}
+          <div className="flex flex-col gap-3 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 shrink-0">
+            {/* Video Review Primary Hero CTA (Anchored in Mobile Thumb Zone) */}
+            <button
+              id="mobile-nav-record-btn"
+              onClick={() => {
+                if (onOpenCreateModal) onOpenCreateModal();
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+              <span>{t("nav.record_review", "Video Review")}</span>
+            </button>
+
+            {/* Legal & Copyright Footer (Single line: For Businesses • Privacy • Terms • About) */}
+            <div className="flex flex-col gap-2 pt-0.5">
             <div className="flex items-center justify-between text-[10.5px] sm:text-[11px] font-medium text-zinc-300">
               <button
                 onClick={() => {
@@ -248,5 +249,6 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
