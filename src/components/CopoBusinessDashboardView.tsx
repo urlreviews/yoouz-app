@@ -438,6 +438,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [profilePhone, setProfilePhone] = useState((currentPlace as any).phone || '');
   const [profileWebsite, setProfileWebsite] = useState((currentPlace as any).website || '');
   const [profileEmail, setProfileEmail] = useState((currentPlace as any).email || (verifiedBusinessSession as any)?.email || '');
+
+  const displayCleanWebsite = useMemo(() => {
+    const raw = currentPlace?.website || (currentPlace as any)?.domain || 'yoouz.com';
+    return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/.*$/, '').trim() || 'yoouz.com';
+  }, [currentPlace]);
+
+  const displayOwnerEmail = useMemo(() => {
+    if (currentPlace?.id === 'yoouz.com' || currentPlace?.name?.toLowerCase() === 'yoouz') {
+      return 'info@yoouz.com';
+    }
+    return (currentPlace as any)?.claimedByEmail || verifiedBusinessSession?.businessEmail || profileEmail || currentUser?.email || 'info@yoouz.com';
+  }, [currentPlace, verifiedBusinessSession, profileEmail, currentUser]);
   const [profileHours, setProfileHours] = useState((currentPlace as any).hours || currentPlace.openingHours || '');
   const [profileDesc, setProfileDesc] = useState((currentPlace as any).description || '');
   const [profileLogoUrl, setProfileLogoUrl] = useState(currentPlace.logoUrl || (currentPlace.id?.toLowerCase().includes('yoouz') || currentPlace.name?.toLowerCase().includes('yoouz') ? '/favicon.svg' : ''));
@@ -2352,14 +2364,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <button 
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700/80 hover:border-zinc-500 transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 shadow-xs active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700/80 hover:border-zinc-500 transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 shadow-xs active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20 overflow-hidden"
                   title={`${currentPlace.name} - Business Account Menu`}
                 >
                   <CopoBrandLogo
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                    className="w-full h-full rounded-full border border-zinc-700/80 bg-zinc-900 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
+                    className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs"
                     imageClassName="w-full h-full object-contain rounded-full"
                     fallbackTextClassName="font-black text-xs text-white"
                   />
@@ -2382,17 +2394,21 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             domain={currentPlace.website || currentPlace.id}
                             name={currentPlace.name}
                             logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                            className="w-9 h-9 rounded-xl border border-zinc-700/80 bg-zinc-800 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm p-1"
+                            className="w-10 h-10 rounded-xl border border-zinc-700/80 bg-zinc-800 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm p-1"
                             imageClassName="w-full h-full object-contain rounded-lg"
                             fallbackTextClassName="font-black text-xs text-white"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
-                              <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             </div>
-                            <div className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
-                              {currentPlace.website || (currentPlace as any).domain || 'yoouz.com'}
+                            <div className="text-[11px] text-zinc-300 truncate mt-0.5 font-semibold">
+                              {displayCleanWebsite}
+                            </div>
+                            <div className="text-[10.5px] text-zinc-400 truncate mt-0.5 font-normal flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
+                              <span className="truncate">{displayOwnerEmail}</span>
                             </div>
                           </div>
                         </div>

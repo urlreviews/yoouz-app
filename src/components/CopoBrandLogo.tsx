@@ -121,6 +121,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Dedicated Yoouz emblem
   if (isYoouz) {
+    const isFullRound = Boolean(className?.includes("rounded-full"));
+    const shapeRadius = isFullRound ? "rounded-full" : (className?.includes("rounded-2xl") ? "rounded-2xl" : "rounded-xl");
     const cleanCls = className
       ? className
           .replace(/\bbg-\S+/g, "")
@@ -129,7 +131,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       : "";
     return (
       <div
-        className={`relative flex items-center justify-center rounded-xl bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
+        className={`relative flex items-center justify-center ${shapeRadius} bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
         id="copo-brand-logo-yoouz"
       >
         <svg viewBox="0 0 24 24" className="w-full h-full p-[14%] fill-white">
