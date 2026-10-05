@@ -187,7 +187,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           </nav>
 
           {/* Bottom Section: Video Review CTA (Thumb Zone) & Legal Footer */}
-          <div className="flex flex-col gap-3 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 shrink-0">
+          <div className="flex flex-col gap-3 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom,0px))] shrink-0">
             {/* Video Review Primary Hero CTA (Anchored in Mobile Thumb Zone) */}
             <button
               id="mobile-nav-record-btn"
@@ -201,8 +201,8 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               <span>{t("nav.record_review", "Video Review")}</span>
             </button>
 
-            {/* Legal & Copyright Footer (Single line: For Businesses • Privacy • Terms • About) */}
-            <div className="flex flex-col gap-2 pt-0.5">
+            {/* Legal & Copyright Footer (Divided line sits BELOW Video Review) */}
+            <div className="flex flex-col gap-2 pt-3 border-t border-zinc-900/80">
             <div className="flex items-center justify-between text-[10.5px] sm:text-[11px] font-medium text-zinc-300">
               <button
                 onClick={() => {
