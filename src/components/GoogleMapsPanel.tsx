@@ -458,7 +458,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
                 <div className="flex items-center gap-3">
                   <Clock className="w-5 h-5 text-zinc-200 shrink-0" />
                   <div>
-                    <span className={`font-medium ${place.isOpen !== false ? "text-emerald-700" : "text-amber-700"}`}>
+                    <span className={`font-semibold ${place.isOpen !== false ? "text-emerald-400" : "text-amber-400"}`}>
                       {place.openingHours}
                     </span>
                   </div>

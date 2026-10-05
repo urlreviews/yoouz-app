@@ -555,17 +555,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
   const effectiveFollowersCount = Math.max(
     filteredFollowers.length,
+    typeof socialData?.followersCount === 'number' ? socialData.followersCount : 0,
     typeof liveUserFromRegistry?.followersCount === 'number' ? liveUserFromRegistry.followersCount : (Array.isArray(liveUserFromRegistry?.followers) ? liveUserFromRegistry.followers.length : 0),
     Array.isArray((author as any)?.followers) ? (author as any).followers.length : 0
   );
 
   const effectiveFollowingCount = Math.max(
     filteredFollowing.length,
+    typeof socialData?.followingCount === 'number' ? socialData.followingCount : 0,
     typeof liveUserFromRegistry?.followingCount === 'number' ? liveUserFromRegistry.followingCount : (Array.isArray(liveUserFromRegistry?.followedAuthors) ? liveUserFromRegistry.followedAuthors.length : 0),
     Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors.length : 0
   );
 
-  const targetHandle = safeCreator?.name || author?.name || author?.id || "";
+  const targetHandle = safeCreator?.handle?.replace(/^@+/, '') || safeCreator?.name || author?.handle?.replace(/^@+/, '') || author?.name || author?.id || "";
 
   const fetchSocialNetwork = async () => {
     if (!targetHandle) return;
@@ -587,7 +589,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     if (author && targetHandle) {
       fetchSocialNetwork();
     }
-  }, [author, targetHandle]);
+  }, [author?.name, author?.id, targetHandle]);
 
   const handleShare = () => {
     setIsShareModalOpen(true);

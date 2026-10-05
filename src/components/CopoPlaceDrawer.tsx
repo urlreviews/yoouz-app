@@ -1418,33 +1418,45 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-4">
-              {/* Action Buttons Row (Directions, Call, Save, Share, Chat) - Exclusive to Overview */}
+              {/* Action Buttons Row (Directions, Call, Save, Share, Chat) - Guaranteed 5 Buttons for All Businesses */}
               <div className="p-3 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-around text-center gap-1 sm:gap-2 shadow-lg backdrop-blur-md">
-                {hasPhysicalLocation && (
-                  <button
-                    onClick={handleOpenDirections}
-                    className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
-                      <Navigation className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
-                  </button>
-                )}
+                <button
+                  id="btn-directions-place"
+                  onClick={handleOpenDirections}
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  title={t("place.directions", "Directions")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                    <Navigation className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-bold text-[11px] text-white">{t("place.directions", "Directions")}</span>
+                </button>
 
-                {hasGenuinePhone && (
-                  <a
-                    href={`tel:${effectivePhone}`}
-                    className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
-                      <Phone className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="font-bold text-[11px] text-white">{t("place.call", "Call")}</span>
-                  </a>
-                )}
+                <a
+                  id="btn-call-place"
+                  href={hasGenuinePhone && effectivePhone ? `tel:${effectivePhone}` : (effectiveWebsite || "#")}
+                  onClick={(e) => {
+                    if (!hasGenuinePhone || !effectivePhone) {
+                      e.preventDefault();
+                      if (effectiveWebsite) {
+                        window.open(effectiveWebsite, "_blank");
+                      } else {
+                        setCopiedNotification(t("place.contactNotProvided", "Contact phone not provided."));
+                        setTimeout(() => setCopiedNotification(""), 3000);
+                      }
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  title={t("place.call", "Call")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
+                    <Phone className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-bold text-[11px] text-white">{t("place.call", "Call")}</span>
+                </a>
 
                 <button
+                  id="btn-save-place"
                   onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
                   className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
                 >
@@ -1481,33 +1493,33 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <span className="font-bold text-[11px] text-white">{t("common.share", "Share")}</span>
                 </button>
 
-                {onStartChat && (
-                  <button
-                    id="btn-chat-business"
-                    onClick={() => {
-                      triggerHaptic("light");
-                      if (!isClaimed) {
-                        setShowUnclaimedChatModal(true);
-                        return;
-                      }
+                <button
+                  id="btn-chat-business"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    if (!isClaimed) {
+                      setShowUnclaimedChatModal(true);
+                      return;
+                    }
 
-                      if (isUserOwner) {
-                        setCopiedNotification(t("place.ownerChatNotice", "This is your business listing. Customer messages appear in your Messages inbox."));
-                        setTimeout(() => setCopiedNotification(""), 4000);
-                        return;
-                      }
+                    if (isUserOwner) {
+                      setCopiedNotification(t("place.ownerChatNotice", "This is your business listing. Customer messages appear in your Messages inbox."));
+                      setTimeout(() => setCopiedNotification(""), 4000);
+                      return;
+                    }
 
+                    if (onStartChat) {
                       onStartChat(place.id, place.name, getPlaceLogoUrl(place));
-                    }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
-                    title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
-                      <MessageSquare className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="font-bold text-[11px] text-white">{t("place.chat", "Chat")}</span>
-                  </button>
-                )}
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="font-bold text-[11px] text-white">{t("place.chat", "Chat")}</span>
+                </button>
               </div>
               
               {/* CTA Row - Only rendered when business has upgraded or owner is viewing */}
@@ -2154,8 +2166,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </h4>
                   </div>
                   {isClaimed ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
                       {t("place.verifiedClaimed", "VERIFIED")}
                     </span>
                   ) : (
@@ -2166,10 +2178,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {isClaimed ? (
-                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/20 space-y-3 shadow-xs">
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 shadow-xs">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-5 h-5 text-zinc-200" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs font-bold text-white">
@@ -2189,7 +2201,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <div className="flex flex-wrap gap-2">
                           {place.staffEmails.map((email, idx) => (
                             <div key={idx} className="flex items-center gap-1.5 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-lg">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
                               <span className="text-[10px] font-medium text-zinc-200">{email.split('@')[0]}</span>
                             </div>
                           ))}
