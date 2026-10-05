@@ -1818,59 +1818,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 )}
               </div>
-
-              {/* Claim / Edit Business Banner */}
-              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-md">
-                {!isClaimed ? (
-                  <div
-                    onClick={() => {
-                      if (onClaimBusiness) {
-                        onClaimBusiness(place);
-                      } else {
-                        setIsClaimModalOpen(true);
-                      }
-                    }}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="w-5 h-5 text-zinc-300" />
-                      </div>
-                      <div>
-                        <span className="text-xs text-white font-extrabold block">{t("place.claimThisBusiness", "Claim this business")}</span>
-                        <span className="text-[11px] text-zinc-400 block">{t("place.claimSubtitle", "Verify ownership to edit & manage this profile")}</span>
-                      </div>
-                    </div>
-                    <span className="text-xs px-3.5 py-1.5 rounded-xl bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors shadow-sm shrink-0">
-                      {t("place.claim", "Claim")}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
-                        <Check className="w-5 h-5 text-zinc-300" />
-                      </div>
-                      <div>
-                        <span className="text-xs text-white font-extrabold flex items-center gap-1.5">
-                          {t("place.businessClaimed", "Business Claimed")}
-                        </span>
-                        <span className="text-[11px] text-zinc-400 block">
-                          {t("place.claimedDesc", "Official claimed listing on Yoouz")}
-                        </span>
-                      </div>
-                    </div>
-                    {isUserOwner && (
-                      <button
-                        onClick={openEditModal}
-                        className="text-xs px-3.5 py-1.5 rounded-xl bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold hover:bg-zinc-700 transition-colors cursor-pointer"
-                      >
-                        {t("place.editDetails", "Edit Details")}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -2095,36 +2042,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </p>
               </div>
 
-              {/* Maps Integration for physical places */}
+              {/* Maps Integration & Address for physical places */}
               {hasPhysicalLocation && (
                 <div className="pt-2 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-zinc-200">{t("place.locationMap", "Location Map")}</h4>
-                    <button onClick={handleOpenDirections} className="text-[10px] text-blue-400 hover:text-blue-300 font-bold hover:underline flex items-center gap-1 cursor-pointer">
+                    <h4 className="text-xs font-bold text-zinc-200">{t("place.locationAddress", "Location & Address")}</h4>
+                    <button onClick={handleOpenDirections} className="text-[10px] text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer">
                       <Navigation className="w-3 h-3" />
                       {t("place.getDirections", "Get Directions")}
                     </button>
                   </div>
-                  <div className="w-full h-[200px] rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer relative group" onClick={handleOpenDirections}>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                       <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
-                         <ExternalLink className="w-3 h-3 text-white" />
-                         {t("place.openInMaps", "Open in Maps")}
-                       </div>
-                    </div>
-                    <iframe 
-                      width="100%" 
-                      height="100%" 
-                      frameBorder="0" 
-                      style={{ border: 0, pointerEvents: 'none' }} 
-                      referrerPolicy="no-referrer-when-downgrade" 
-                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
-                      title="Google Maps Location"
-                    />
-                  </div>
                   {(currentDisplayAddress || displayAddress) && (
-                     <div className="flex items-start gap-2.5 p-3 bg-zinc-900 rounded-xl border border-zinc-800">
-                       <MapPin className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                     <div className="flex items-start gap-2.5 p-3.5 bg-zinc-900 rounded-xl border border-zinc-800">
+                       <MapPin className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
                        <p className="text-xs text-zinc-200 font-medium leading-relaxed">{currentDisplayAddress || displayAddress}</p>
                      </div>
                   )}
@@ -2214,7 +2144,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               </div>
 
-              {/* Staff & Ownership - Executive Ultra-Premium Section */}
+              {/* Staff & Ownership - Executive Clean Darkmode Section */}
               <div className="pt-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -2229,7 +2159,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       {t("place.verifiedClaimed", "VERIFIED")}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-400">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-zinc-800 border border-zinc-700/80 text-[10px] font-bold text-zinc-300 tracking-wider">
                       {t("place.unclaimedListing", "UNCLAIMED")}
                     </span>
                   )}
@@ -2270,8 +2200,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 ) : (
                   <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700/80 transition-all space-y-3.5 shadow-xs">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                        <Building2 className="w-5 h-5 text-amber-400" />
+                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                        <Building2 className="w-5 h-5 text-zinc-300" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs font-bold text-white">
