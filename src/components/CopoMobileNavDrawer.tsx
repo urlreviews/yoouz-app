@@ -198,20 +198,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             </button>
           </nav>
 
-          {/* Legal & Copyright Footer (Clean 1-line links: Business • Privacy • Terms • About) */}
+          {/* Legal & Copyright Footer (Clean 1-line links: Privacy • Terms • About) */}
           <div className="flex flex-col gap-2 px-3 pt-5 pb-[max(16px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 text-xs text-zinc-400 mt-5">
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                id="mobile-nav-footer-business"
-                onClick={() => {
-                  window.open("/business", "_blank", "noopener,noreferrer");
-                  onClose();
-                }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-xs text-zinc-400"
-              >
-                {t("nav.business", "Business")}
-              </button>
-              <span>•</span>
               <button
                 onClick={() => {
                   if (onOpenLegal) onOpenLegal("privacy");
