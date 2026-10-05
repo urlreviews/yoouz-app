@@ -121,73 +121,71 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
 
         {/* Scrollable Navigation Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-3 flex flex-col justify-between">
-          <div className="flex flex-col flex-1 justify-between gap-6">
-            <nav className="flex flex-col gap-1.5">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                const isProfileItem = item.id === "profile" && currentUser?.avatar;
+          <nav className="flex flex-col gap-1.5 flex-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              const isProfileItem = item.id === "profile" && currentUser?.avatar;
 
-                return (
-                  <button
-                    key={item.id}
-                    id={`mobile-nav-${item.id}`}
-                    onClick={() => {
-                      if (item.id === "search") {
-                        if (onOpenSearch) onOpenSearch();
-                        else handleNavClick("search");
-                        onClose();
-                      } else {
-                        handleNavClick(item.id);
-                      }
-                    }}
-                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] text-left transition-all duration-150 cursor-pointer active:scale-[0.98] ${
-                      isActive
-                        ? "bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                        : "text-white hover:bg-zinc-900/90 font-medium"
-                    }`}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {isProfileItem ? (
-                        <img
-                          src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
-                          alt={currentUser?.name || "Profile"}
-                          className={`w-5 h-5 rounded-full object-cover shrink-0 ring-1.5 ${
-                            isActive ? "ring-white" : "ring-white/40"
-                          }`}
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
-                          }}
-                        />
-                      ) : (
-                        <Icon className="w-5 h-5 shrink-0 text-white" />
-                      )}
+              return (
+                <button
+                  key={item.id}
+                  id={`mobile-nav-${item.id}`}
+                  onClick={() => {
+                    if (item.id === "search") {
+                      if (onOpenSearch) onOpenSearch();
+                      else handleNavClick("search");
+                      onClose();
+                    } else {
+                      handleNavClick(item.id);
+                    }
+                  }}
+                  className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] text-left transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                    isActive
+                      ? "bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                      : "text-white hover:bg-zinc-900/90 font-medium"
+                  }`}
+                >
+                  <div className="relative flex items-center justify-center">
+                    {isProfileItem ? (
+                      <img
+                        src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
+                        alt={currentUser?.name || "Profile"}
+                        className={`w-5 h-5 rounded-full object-cover shrink-0 ring-1.5 ${
+                          isActive ? "ring-white" : "ring-white/40"
+                        }`}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
+                        }}
+                      />
+                    ) : (
+                      <Icon className="w-5 h-5 shrink-0 text-white" />
+                    )}
 
-                      {item.hasDot && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
-                      )}
-                    </div>
+                    {item.hasDot && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
+                    )}
+                  </div>
 
-                    <span className="truncate flex-1">
-                      {item.id === "profile" && currentUser?.name
-                        ? currentUser.name.split(" ")[0]
-                        : item.label}
+                  <span className="truncate flex-1">
+                    {item.id === "profile" && currentUser?.name
+                      ? currentUser.name.split(" ")[0]
+                      : item.label}
+                  </span>
+
+                  {item.badge && item.badge > 0 ? (
+                    <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
+                      {item.badge}
                     </span>
+                  ) : null}
+                </button>
+              );
+            })}
 
-                    {item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
-                        {item.badge}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Video Review Primary Hero CTA (Grounded cleanly above footer) */}
-            <div className="pt-2">
+            {/* Video Review Primary Hero CTA (Positioned cleanly with mt-auto to sit directly above the footer) */}
+            <div className="mt-auto pt-6 pb-2">
               <button
                 id="mobile-nav-record-btn"
                 onClick={() => {
@@ -200,34 +198,44 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 <span>{t("nav.record_review", "Video Review")}</span>
               </button>
             </div>
-          </div>
+          </nav>
 
-          {/* Legal & Copyright Footer (Clean 1-line links: Privacy • Terms • About) */}
-          <div className="flex flex-col gap-2 px-3 pt-4 pb-[max(16px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 mt-4">
-            <div className="flex items-center gap-3.5 text-xs font-medium text-zinc-300">
+          {/* Legal & Copyright Footer (Single line: For Businesses • Privacy • Terms • About) */}
+          <div className="flex flex-col gap-2 px-3 pt-3.5 pb-[max(12px,env(safe-area-inset-bottom,0px))] border-t border-zinc-900/80 mt-2 shrink-0">
+            <div className="flex items-center justify-between text-[10.5px] sm:text-[11px] font-medium text-zinc-300">
+              <button
+                onClick={() => {
+                  window.open("/business", "_blank", "noopener,noreferrer");
+                  onClose();
+                }}
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
+              >
+                {t("nav.forBusinesses", "For Businesses")}
+              </button>
+              <span className="text-zinc-600 font-normal shrink-0">•</span>
               <button
                 onClick={() => {
                   if (onOpenLegal) onOpenLegal("privacy");
                   else handleNavClick("more");
                 }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-medium text-zinc-300"
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
               >
                 {t("legal.privacy", "Privacy")}
               </button>
-              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-600 font-normal shrink-0">•</span>
               <button
                 onClick={() => {
                   if (onOpenLegal) onOpenLegal("terms");
                   else handleNavClick("more");
                 }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-medium text-zinc-300"
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
               >
                 {t("legal.terms", "Terms")}
               </button>
-              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-600 font-normal shrink-0">•</span>
               <button
                 onClick={() => handleNavClick("more")}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-xs font-medium text-zinc-300"
+                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
               >
                 {t("legal.about", "About")}
               </button>
