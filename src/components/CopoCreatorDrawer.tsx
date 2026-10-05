@@ -1132,101 +1132,100 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
         {/* Main Content Area */}
         <div ref={contentRef} className="flex-1 overflow-y-auto divide-y divide-zinc-800 bg-zinc-950" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
-          {/* Action Buttons Row */}
-          <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
-            {onStartChat ? (
-              <button
-                id="btn-chat-creator"
-                onClick={() => {
-                  triggerHaptic("light");
-                  const targetChatId = author.handle ? author.handle.replace(/^@+/, '') : (author.id || author.name);
-                  onStartChat(targetChatId, author.name, effectiveAvatar);
-                }}
-                className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-                title={`${t("profile.chatWith", "Chat with")} ${author.name}`}
-              >
-                <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                  <MessageSquare className="w-5 h-5 text-zinc-200" />
-                </div>
-                <span className="font-semibold text-[11px] text-zinc-200">{t("profile.chat", "Chat")}</span>
-              </button>
-            ) : null}
-
-            <button
-              id="btn-save-creator"
-              onClick={handleToggleSaveCreator}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
-                  isSaved
-                    ? "bg-white text-zinc-950"
-                    : "bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700"
-                }`}
-              >
-                {isSaved ? (
-                  <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
-                ) : (
-                  <Bookmark className="w-5 h-5" />
-                )}
-              </div>
-              <span className="font-semibold text-[11px] text-zinc-200">
-                {isSaved ? t("profile.saved", "Saved") : t("profile.save", "Save")}
-              </span>
-            </button>
-
-            <button
-              id="btn-creator-video-reviews"
-              onClick={() => {
-                triggerHaptic("light");
-                handleTabClick("reviews");
-              }}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title={t("profile.viewVideoReviews", "View Video Reviews")}
-            >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                <Video className="w-5 h-5 text-zinc-200" />
-              </div>
-              <span className="font-semibold text-[11px] text-zinc-200">{t("place.reviews", "Video Reviews")}</span>
-            </button>
-
-            <button
-              id="btn-share-creator-action"
-              onClick={() => {
-                triggerHaptic("light");
-                handleShare();
-              }}
-              className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-              title={t("profile.shareProfile", "Share Profile")}
-            >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                <Share2 className="w-5 h-5 text-zinc-200" />
-              </div>
-              <span className="font-semibold text-[11px] text-zinc-200">{t("common.share", "Share")}</span>
-            </button>
-
-            {!isOwner && onOpenReport && (
-              <button
-                id="btn-report-creator-action"
-                onClick={() => {
-                  triggerHaptic("medium");
-                  if (author) onOpenReport(author);
-                }}
-                className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-                title={t("profile.reportReviewer", "Report or Block Reviewer")}
-              >
-                <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-red-500/10 group-hover:border-red-500/40 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700 transition-colors">
-                  <Flag className="w-4 h-4 text-zinc-200 group-hover:text-red-400 transition-colors" />
-                </div>
-                <span className="font-semibold text-[11px] text-zinc-200 group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
-              </button>
-            )}
-          </div>
-
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="divide-y divide-zinc-800">
+              {/* Action Buttons Row */}
+              <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
+                {onStartChat ? (
+                  <button
+                    id="btn-chat-creator"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      const targetChatId = author.handle ? author.handle.replace(/^@+/, '') : (author.id || author.name);
+                      onStartChat(targetChatId, author.name, effectiveAvatar);
+                    }}
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                    title={`${t("profile.chatWith", "Chat with")} ${author.name}`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
+                      <MessageSquare className="w-5 h-5 text-zinc-200" />
+                    </div>
+                    <span className="font-semibold text-[11px] text-zinc-200">{t("profile.chat", "Chat")}</span>
+                  </button>
+                ) : null}
+
+                <button
+                  id="btn-save-creator"
+                  onClick={handleToggleSaveCreator}
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                      isSaved
+                        ? "bg-white text-zinc-950"
+                        : "bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700"
+                    }`}
+                  >
+                    {isSaved ? (
+                      <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
+                    ) : (
+                      <Bookmark className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span className="font-semibold text-[11px] text-zinc-200">
+                    {isSaved ? t("profile.saved", "Saved") : t("profile.save", "Save")}
+                  </span>
+                </button>
+
+                <button
+                  id="btn-creator-video-reviews"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    handleTabClick("reviews");
+                  }}
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  title={t("profile.viewVideoReviews", "View Video Reviews")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
+                    <Video className="w-5 h-5 text-zinc-200" />
+                  </div>
+                  <span className="font-semibold text-[11px] text-zinc-200">{t("place.reviews", "Video Reviews")}</span>
+                </button>
+
+                <button
+                  id="btn-share-creator-action"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    handleShare();
+                  }}
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  title={t("profile.shareProfile", "Share Profile")}
+                >
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
+                    <Share2 className="w-5 h-5 text-zinc-200" />
+                  </div>
+                  <span className="font-semibold text-[11px] text-zinc-200">{t("common.share", "Share")}</span>
+                </button>
+
+                {!isOwner && onOpenReport && (
+                  <button
+                    id="btn-report-creator-action"
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      if (author) onOpenReport(author);
+                    }}
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                    title={t("profile.reportReviewer", "Report or Block Reviewer")}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-red-500/10 group-hover:border-red-500/40 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700 transition-colors">
+                      <Flag className="w-4 h-4 text-zinc-200 group-hover:text-red-400 transition-colors" />
+                    </div>
+                    <span className="font-semibold text-[11px] text-zinc-200 group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
+                  </button>
+                )}
+              </div>
               {/* Badges & Status Section */}
               <div className="p-5 space-y-3">
                 <div className="grid grid-cols-2 gap-2.5">
