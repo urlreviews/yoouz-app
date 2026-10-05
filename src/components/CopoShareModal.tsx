@@ -21,7 +21,9 @@ import {
   Search,
   SlidersHorizontal,
   Bookmark,
-  Download
+  Download,
+  ShieldCheck,
+  CheckCircle2
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -42,6 +44,7 @@ interface CopoShareModalProps {
   domain?: string;
   website?: string;
   bannerUrl?: string;
+  isCreatorProfile?: boolean;
 
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
@@ -60,6 +63,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   domain: propDomain,
   website: propWebsite,
   bannerUrl: propBannerUrl,
+  isCreatorProfile: propIsCreatorProfile,
   video,
   onClose,
   onOpenReport,
@@ -656,87 +660,144 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <div className="p-4 sm:p-5 flex flex-col space-y-3.5 animate-in fade-in duration-150">
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
             <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
-              <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
-                {/* Clean background thumbnail without duplicate image stacking */}
-                <img
-                  src={getProxiedImageUrl(localPreviewBg || previewImageUrl)}
-                  alt={title}
-                  className="absolute inset-0 w-full h-full object-cover filter brightness-95"
-                />
-
-                {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
-
-                {/* TOP BAR: Place pill with Business Logo, Place Name & Rating */}
-                <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                  <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
-                    <CopoBrandLogo
-                      domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
-                      name={title}
-                      website={resolvedWebsite || video?.placeWebsite}
-                      logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
-                      className="w-5 h-5 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
-                      imageClassName="w-full h-full object-contain rounded-xs"
-                      fallbackTextClassName="font-black text-[8px] text-zinc-950"
-                    />
-                    <span className="text-white text-xs font-bold truncate">
-                      {title}
-                    </span>
-                    {ratingVal && (
-                      <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0">
-                        <span className="text-xs font-black">★</span>
-                        <span>{ratingVal}.0</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* CENTER: Play Button for Videos */}
-                {isVideoMode && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
+              {propIsCreatorProfile || (!isVideoMode && !isBusiness) ? (
+                /* DEDICATED USER / REVIEWER PROFILE CARD (No star rating, clean layout) */
+                <div className="relative aspect-[16/9] w-full overflow-hidden flex flex-col justify-between p-3.5 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-zinc-800/80">
+                  {/* Top Bar: Pill Badge */}
+                  <div className="flex items-center justify-between z-10">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-md">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-white text-xs font-bold">{title}</span>
+                    </div>
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[10px] font-bold text-zinc-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span>yoouz.com</span>
                     </div>
                   </div>
-                )}
 
-                {/* BOTTOM BAR: Author Info & Yoouz Watermark */}
-                <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
+                  {/* Center Area: Avatar, Name & Handle */}
+                  <div className="flex flex-col items-center justify-center text-center my-auto z-10 gap-1.5">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/40 bg-zinc-800 shadow-xl">
                       {resolvedAvatarUrl ? (
                         <img
                           src={getProxiedImageUrl(resolvedAvatarUrl)}
-                          alt={resolvedAuthorName}
+                          alt={title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
+                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
-                          {resolvedAuthorName.charAt(0).toUpperCase()}
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-xl font-black">
+                          {title.charAt(0).toUpperCase()}
                         </div>
                       )}
+                      <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-zinc-950 stroke-[3]" />
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
-                        {resolvedAuthorName}
-                      </p>
-                      <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
-                        {resolvedSubtitle}
+                    <div className="space-y-0.5">
+                      <h4 className="text-white font-black text-sm sm:text-base leading-tight drop-shadow-sm flex items-center justify-center gap-1">
+                        <span>{title}</span>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20 shrink-0" />
+                      </h4>
+                      <p className="text-zinc-400 text-xs font-medium">
+                        {subtitle || t("profile.reviewerProfile", "Reviewer Profile")}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                    <span>yoouz.com</span>
+                  {/* Bottom Bar: Watermark & Badge */}
+                  <div className="flex items-center justify-center text-center z-10">
+                    <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase bg-white/5 px-3 py-0.5 rounded-full border border-white/10">
+                      Yoouz Verified Reviewer Profile
+                    </span>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* BUSINESS & VIDEO REVIEW SHARE CARD */
+                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
+                  {/* Clean background thumbnail without duplicate image stacking */}
+                  <img
+                    src={getProxiedImageUrl(localPreviewBg || previewImageUrl)}
+                    alt={title}
+                    className="absolute inset-0 w-full h-full object-cover filter brightness-95"
+                  />
+
+                  {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
+
+                  {/* TOP BAR: Place pill with Business Logo, Place Name & Rating */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
+                    <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
+                      <CopoBrandLogo
+                        domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
+                        name={title}
+                        website={resolvedWebsite || video?.placeWebsite}
+                        logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
+                        className="w-5 h-5 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
+                        imageClassName="w-full h-full object-contain rounded-xs"
+                        fallbackTextClassName="font-black text-[8px] text-zinc-950"
+                      />
+                      <span className="text-white text-xs font-bold truncate">
+                        {title}
+                      </span>
+                      {ratingVal && (
+                        <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0">
+                          <span className="text-xs font-black">★</span>
+                          <span>{ratingVal}.0</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CENTER: Play Button for Videos */}
+                  {isVideoMode && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BOTTOM BAR: Author Info & Yoouz Watermark */}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
+                        {resolvedAvatarUrl ? (
+                          <img
+                            src={getProxiedImageUrl(resolvedAvatarUrl)}
+                            alt={resolvedAuthorName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
+                            {resolvedAuthorName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
+                          {resolvedAuthorName}
+                        </p>
+                        <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                          {resolvedSubtitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span>yoouz.com</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Hairline Divider */}

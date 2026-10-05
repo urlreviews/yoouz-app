@@ -26996,7 +26996,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // Pure geometric card layout (1200x630) with NO text elements
+      const cleanH = rawHandle;
+      const displayName = rawName && rawName !== "Creator" ? rawName : `@${cleanH}`;
+      const safeEscapedName = escapeXml(displayName);
+      const safeEscapedHandle = escapeXml(cleanH);
+
+      // High-resolution OpenGraph Card SVG Layout (1200x630) for User / Reviewer Profiles
       const baseSvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -27005,15 +27010,36 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <stop offset="50%" stop-color="#121217" />
               <stop offset="100%" stop-color="#181820" />
             </linearGradient>
-            <radialGradient id="centerWhiteGlow" cx="50%" cy="50%" r="50%">
+            <radialGradient id="centerWhiteGlow" cx="50%" cy="40%" r="60%">
               <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
               <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
           </defs>
           <rect width="1200" height="630" fill="url(#bgGrad)"/>
-          <circle cx="600" cy="315" r="300" fill="url(#centerWhiteGlow)"/>
+          <circle cx="600" cy="200" r="280" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+
+          <!-- Top Left Badge Pill -->
+          <rect x="48" y="48" width="310" height="48" rx="24" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <circle cx="76" cy="72" r="12" fill="#10b981"/>
+          <path d="M71 72 L75 76 L82 68" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="100" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="800" fill="#ffffff">Yoouz Verified Reviewer</text>
+
+          <!-- Top Right Watermark Pill -->
+          <rect x="980" y="48" width="172" height="48" rx="24" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <circle cx="1004" cy="72" r="6" fill="#f43f5e"/>
+          <text x="1020" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="900" fill="#ffffff">yoouz.com</text>
+
+          <!-- User Display Name -->
+          <text x="600" y="380" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="-1">${safeEscapedName}</text>
+
+          <!-- User Handle & Role Subtitle -->
+          <text x="600" y="430" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="700" fill="#a1a1aa">@${safeEscapedHandle} • Authentic Video Reviews</text>
+
+          <!-- Bottom Pill Badge -->
+          <rect x="420" y="485" width="360" height="48" rx="24" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <text x="600" y="516" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff">Authentic Video Reviewer Profile</text>
         </svg>
       `;
 
@@ -27021,57 +27047,57 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (avatarBuf) {
         const circleMaskSvg = `
-          <svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="150" cy="150" r="146" fill="#ffffff"/>
+          <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="110" cy="110" r="106" fill="#ffffff"/>
           </svg>
         `;
         const resizedAvatar = await sharp(avatarBuf)
-          .resize(300, 300, { fit: 'cover' })
+          .resize(220, 220, { fit: 'cover' })
           .composite([{ input: Buffer.from(circleMaskSvg), blend: 'dest-in' }])
           .png()
           .toBuffer();
 
         const borderRingSvg = `
-          <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="158" cy="158" r="152" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+          <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="116" cy="116" r="110" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="6"/>
             <!-- Verified Checkmark Badge Icon at bottom right -->
-            <circle cx="248" cy="248" r="32" fill="#18181b" stroke="#09090b" stroke-width="4"/>
-            <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="182" cy="182" r="24" fill="#10b981" stroke="#09090b" stroke-width="3"/>
+            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
 
         const finalAvatarCard = await sharp(Buffer.from(borderRingSvg))
-          .composite([{ input: resizedAvatar, top: 8, left: 8 }])
+          .composite([{ input: resizedAvatar, top: 6, left: 6 }])
           .png()
           .toBuffer();
 
         composites.push({
           input: finalAvatarCard,
-          top: 157,
-          left: 442
+          top: 90,
+          left: 484
         });
       } else {
         const initial = (rawName.trim().replace(/^@+/, '').charAt(0) || cleanLower.charAt(0) || "U").toUpperCase();
         const fallbackAvatarSvg = `
-          <svg width="316" height="316" viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg">
+          <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#27272a" />
                 <stop offset="100%" stop-color="#09090b" />
               </linearGradient>
             </defs>
-            <circle cx="158" cy="158" r="152" fill="url(#avGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="5"/>
+            <circle cx="116" cy="116" r="110" fill="url(#avGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
             <!-- Monogram Initial Letter -->
-            <text x="158" y="205" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-2">${initial}</text>
+            <text x="116" y="152" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="100" font-weight="900" fill="#ffffff" letter-spacing="-2">${initial}</text>
             <!-- Verified Checkmark Badge -->
-            <circle cx="248" cy="248" r="32" fill="#18181b" stroke="#09090b" stroke-width="4"/>
-            <path d="M236 248 L244 256 L260 240" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="182" cy="182" r="24" fill="#10b981" stroke="#09090b" stroke-width="3"/>
+            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
         composites.push({
           input: Buffer.from(fallbackAvatarSvg),
-          top: 157,
-          left: 442
+          top: 90,
+          left: 484
         });
       }
 
