@@ -2508,9 +2508,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <label className="font-bold text-zinc-200 block mb-1">{t("place.phoneNumber", "Phone Number")}</label>
                       <input
                         type="text"
+                        inputMode="tel"
+                        name="biz_drawer_phone_no_autofill"
+                        autoComplete="new-password"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        data-lpignore="true"
+                        data-form-type="other"
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
-                        placeholder="+1 415-555-0100"
+                        placeholder="e.g. +1 (415) 555-0100"
                         className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                       />
                     </div>

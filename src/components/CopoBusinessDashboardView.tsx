@@ -737,15 +737,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Derived country dial and postal formatting info
   const activeCountryDialInfo = useMemo(() => {
+    // 1. Prioritize explicitly selected phone dial code
+    if (phoneDialCode) {
+      if (selectedCountry) {
+        const matchWithCountry = countryDialData.find(
+          c => c.dialCode === phoneDialCode && c.name.toLowerCase() === selectedCountry.toLowerCase()
+        );
+        if (matchWithCountry) return matchWithCountry;
+      }
+      const matchByDial = countryDialData.find(c => c.dialCode === phoneDialCode);
+      if (matchByDial) return matchByDial;
+    }
+    // 2. Fallback to selected country
     if (selectedCountry) {
       const match = countryDialData.find(c => c.name.toLowerCase() === selectedCountry.toLowerCase());
       if (match) return match;
     }
-    if (phoneDialCode) {
-      const match = countryDialData.find(c => c.dialCode === phoneDialCode);
-      if (match) return match;
-    }
-    return getCountryDialInfo(selectedCountry || "United States");
+    return countryDialData[0];
   }, [selectedCountry, phoneDialCode]);
 
   // Dynamic location options derived from country-state-city
@@ -4238,7 +4246,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                           selectedCountry={selectedCountry}
                           onChange={(dialCode, countryObj) => {
                             setPhoneDialCode(dialCode);
-                            if (countryObj && !selectedCountry) {
+                            if (countryObj) {
                               setSelectedCountry(countryObj.name);
                             }
                           }}
@@ -4246,11 +4254,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       </div>
                       <div className="flex-1">
                         <input
-                          type="tel"
+                          type="text"
+                          inputMode="tel"
                           id="input-profile-phone"
+                          name="business_contact_phone_no_autofill"
+                          autoComplete="new-password"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck={false}
+                          data-lpignore="true"
+                          data-form-type="other"
                           value={localPhone}
                           onChange={(e) => setLocalPhone(e.target.value)}
-                          placeholder={activeCountryDialInfo?.phonePlaceholder || "e.g. (555) 012-3456"}
+                          placeholder={activeCountryDialInfo?.phonePlaceholder || "e.g. (212) 555-0198"}
                           className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
                         />
                       </div>
