@@ -1,3 +1,4 @@
+// Yoouz Platform Video Player & Feed Engine
 import React, { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";

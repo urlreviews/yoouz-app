@@ -1,3 +1,4 @@
+// Yoouz Platform Desktop Navigation Sidebar
 import React, { useState } from "react";
 import {
   Home,
