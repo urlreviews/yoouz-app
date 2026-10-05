@@ -180,20 +180,20 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               );
             })}
           </nav>
-        </div>
 
-        {/* Lower Section: Video Review CTA & Legal Footer */}
-        <div className="flex flex-col gap-3">
-          {/* Video Review Primary Hero CTA (Matching Mobile Layout) */}
+          {/* Video Review Primary Hero CTA (Directly below menu items, Twitter/X Post style) */}
           <button
             id="sidebar-record-btn"
             onClick={() => onSelectSection("record_review")}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer mt-1"
           >
             <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
             <span>{t("nav.record_review", "Video Review")}</span>
           </button>
+        </div>
 
+        {/* Lower Section: Legal Footer */}
+        <div className="flex flex-col gap-3">
           {/* Footer & Legal Links */}
           <div className="px-1 pt-2.5 border-t border-zinc-800/80 flex flex-col gap-2">
             <div className="flex items-center justify-between text-[11px] font-medium text-zinc-300 w-full px-1">
