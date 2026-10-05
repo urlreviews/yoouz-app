@@ -4037,7 +4037,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       type="button"
                       id="btn-save-profile-header"
                       onClick={handleSaveProfile}
-                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 border border-white rounded-full text-xs sm:text-[13px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700 rounded-full text-xs sm:text-[13px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
@@ -4459,7 +4459,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             }}
                             className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                               isSelected
-                                ? 'bg-white text-zinc-950 border-white shadow-md'
+                                ? 'bg-zinc-800 text-white border-zinc-600 shadow-md ring-1 ring-zinc-500'
                                 : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white'
                             }`}
                           >
@@ -4503,7 +4503,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                         Live Preview on Yoouz Page
                       </span>
-                      <div className="w-full py-3 bg-white text-zinc-950 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
+                      <div className="w-full py-3 bg-zinc-800 text-white border border-zinc-700/90 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
                         <span>{ctaLabelCustom || 'Book Now'}</span>
                         <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                       </div>
@@ -4516,7 +4516,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       type="button"
                       id="btn-save-profile-bottom"
                       onClick={handleSaveProfile}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-black text-sm transition-all active:scale-[0.98] shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700 font-black text-sm transition-all active:scale-[0.98] shadow-xl flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>

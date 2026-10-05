@@ -1602,7 +1602,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           href={isPhone && !ctaUrl.startsWith('tel:') ? `tel:${ctaUrl}` : (ctaUrl || "#")} 
                           target={isPhone ? "_self" : "_blank"} 
                           rel="noreferrer"
-                          className="w-full py-3 hover:bg-zinc-200 bg-white text-zinc-950 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all block text-center"
+                          className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700/90 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-all block text-center cursor-pointer"
                         >
                           <span>{ctaLabel}</span>
                           <ExternalLink className="w-3.5 h-3.5 opacity-80" />
