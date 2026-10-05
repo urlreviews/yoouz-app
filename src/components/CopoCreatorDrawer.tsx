@@ -1226,51 +1226,66 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="divide-y divide-zinc-800">
-              {/* About This Reviewer Section */}
+              {/* About Section */}
               <div className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
-                    {t("profile.aboutThisReviewer", "About This Reviewer")}
+                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
                   </h3>
                 </div>
-                <p className="text-zinc-200 text-sm leading-relaxed font-normal">
-                  {displayBio}
-                </p>
+                {displayBio ? (
+                  <p className="text-zinc-200 text-sm leading-relaxed font-normal">
+                    {displayBio}
+                  </p>
+                ) : (
+                  <div className="bg-zinc-900/40 rounded-xl p-3.5 border border-zinc-800/80 text-zinc-400 text-xs flex items-center justify-between gap-3">
+                    <span className="italic">{isOwner ? t("profile.noBioPrompt", "No bio added yet. Tell the community about yourself!") : t("profile.noBioYet", "No bio added yet.")}</span>
+                    {isOwner && (
+                      <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] shrink-0 transition-colors cursor-pointer"
+                      >
+                        {t("profile.addBio", "Add Bio")}
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Badges / Status Card */}
                 <div className="grid grid-cols-2 gap-2.5 pt-2">
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-200 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
                       {avgRating !== "—" ? (
                         <>
                           <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                           <span>{avgRating}</span>
-                          <span className="text-zinc-200 text-xs font-normal">/ 5.0</span>
+                          <span className="text-zinc-400 text-xs font-normal">/ 5.0</span>
                         </>
                       ) : (
-                        <span className="text-zinc-300 font-semibold">—</span>
+                        <span className="text-zinc-400 font-semibold">—</span>
                       )}
                     </span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-200 uppercase tracking-wider block mb-0.5">{t("profile.totalReviews", "Total Reviews")}</span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.totalReviews", "Total Reviews")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
-                      <Video className="w-4 h-4 text-zinc-200" />
+                      <Video className="w-4 h-4 text-zinc-400" />
                       <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.video", "Video") : t("feed.videos", "Videos")}</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center gap-2 text-zinc-200">
+                <div className="pt-2 flex items-center gap-2 text-zinc-300">
                   <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
                     {isVerifiedReviewer ? (
-                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
                     ) : (
-                      <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
+                      <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
                     )}
                   </div>
-                  <span className="text-xs font-bold text-zinc-200">
+                  <span className="text-xs font-bold text-zinc-300">
                     {isVerifiedReviewer
                       ? t("profile.verifiedTopContributor", "Yoouz Verified Top Contributor")
                       : t("profile.communityMemberStatus", "Yoouz Community Member")}
@@ -1420,12 +1435,27 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {activeTab === "about" && (
             <div className="p-5 space-y-5">
               <div>
-                <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2">
-                  {t("profile.reviewerBio", "Reviewer Biography")}
+                <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
                 </h3>
-                <p className="text-zinc-200 text-sm leading-relaxed">
-                  {displayBio}
-                </p>
+                {displayBio ? (
+                  <p className="text-zinc-200 text-sm leading-relaxed">
+                    {displayBio}
+                  </p>
+                ) : (
+                  <div className="bg-zinc-900/40 rounded-xl p-3.5 border border-zinc-800/80 text-zinc-400 text-xs flex items-center justify-between gap-3">
+                    <span className="italic">{isOwner ? t("profile.noBioPrompt", "No bio added yet. Tell the community about yourself!") : t("profile.noBioYet", "No bio added yet.")}</span>
+                    {isOwner && (
+                      <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-[11px] shrink-0 transition-colors cursor-pointer"
+                      >
+                        {t("profile.addBio", "Add Bio")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-zinc-800 space-y-3">
@@ -1450,31 +1480,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span className="text-base font-black text-white">{effectiveFollowingCount}</span>
                   </button>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
                     <span className="text-base font-black text-white">{totalLikes}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.totalVideos", "Total Videos")}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalVideos", "Total Videos")}</span>
                     <span className="text-base font-black text-white">{authorVideos.length}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-200 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
                     <span className="text-base font-black text-white">{avgRating !== "—" ? `${avgRating} ⭐` : "—"}</span>
                   </div>
                 </div>
               </div>
-
-              {displayLocation && (
-                <div className="pt-4 border-t border-zinc-800 space-y-1">
-                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-1">
-                    {t("common.location", "Location")}
-                  </h3>
-                  <p className="text-sm font-semibold text-zinc-200 flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-zinc-200" />
-                    <span>{displayLocation}</span>
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>
