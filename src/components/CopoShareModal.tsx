@@ -59,7 +59,7 @@ interface CopoShareModalProps {
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
   onClose: () => void;
-  onOpenReport?: (review: VideoReview) => void;
+  onOpenReport?: (item?: any) => void;
   onShareIncrement?: (videoId: string, nextSharesCount?: number) => void;
 }
 
@@ -672,7 +672,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         window.open(shareUrl, "_blank", "noopener,noreferrer");
       }
     },
-    ...(onOpenReport ? [{
+    {
       id: "report",
       name: t("shareModal.reportShort", "Report"),
       icon: <Flag className="w-5.5 h-5.5 text-zinc-100" />,
@@ -680,9 +680,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       onClick: () => {
         triggerHaptic("medium");
         onClose();
-        onOpenReport(video);
+        if (onOpenReport) {
+          onOpenReport(video || { type: propIsCreatorProfile ? "user" : "place", title, url: shareUrl });
+        } else {
+          window.dispatchEvent(new CustomEvent("yoouz-open-report", {
+            detail: {
+              url: shareUrl,
+              title: title,
+              type: propIsCreatorProfile ? "user" : (isBusiness || propIsBusinessProfile ? "place" : "general")
+            }
+          }));
+        }
       }
-    }] : [])
+    }
   ];
 
   // Filtered apps for the "Apps" view

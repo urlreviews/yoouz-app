@@ -2827,6 +2827,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage || undefined}
         isBusinessProfile={true}
         rating={place.rating || 5.0}
+        onOpenReport={onOpenReport ? () => onOpenReport({ type: "place", placeName: displayedPlaceName, placeId: place.id }) : undefined}
       />
 
       {/* Business Claim & Verification Modal via Resend */}

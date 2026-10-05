@@ -1866,6 +1866,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         avatarUrl={effectiveAvatar}
         bannerUrl={effectiveBanner}
         isCreatorProfile={true}
+        onOpenReport={onOpenReport ? () => onOpenReport(author) : undefined}
       />
 
       {/* Video Delete Confirmation Modal */}
