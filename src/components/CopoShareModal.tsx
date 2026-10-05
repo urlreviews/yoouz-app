@@ -836,11 +836,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* TOP BAR: Place pill with Business Logo, Place Name, Rating & Reviews Count (Matches Screenshot 3) */}
-                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center">
-                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[85%]">
-                      {/* Business Squircle Logo Container */}
-                      <div className="w-8 h-8 rounded-xl bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs">
+                  {/* TOP BAR: Place pill with Business Logo, Place Name, Rating & Reviews Count */}
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center max-w-[96%] pointer-events-none">
+                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-lg min-w-0">
+                      {/* Business Squircle Logo Container with crisp white framing */}
+                      <div className="w-8.5 h-8.5 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-xs">
                         <CopoBrandLogo
                           domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
                           name={title}
@@ -852,15 +852,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         />
                       </div>
                       {/* Text Column */}
-                      <div className="flex flex-col min-w-0 justify-center">
+                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-white text-xs font-bold truncate leading-tight">{title}</span>
+                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
-                        <div className="flex items-center gap-1 leading-tight mt-0.5">
+                        <div className="flex items-center gap-1 leading-tight mt-0.5 whitespace-nowrap">
                           <span className="text-amber-400 text-xs font-black">★</span>
                           <span className="text-amber-400 text-xs font-bold">{placeStats.scoreStr}</span>
-                          <span className="text-zinc-300 text-[10.5px] font-medium ml-0.5">
+                          <span className="text-white text-[11px] font-bold ml-0.5">
                             ({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})
                           </span>
                         </div>
@@ -879,12 +879,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   )}
 
-                  {/* BOTTOM BAR: Author Info (Matches Screenshot 4) or Business Location Pill */}
-                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
+                  {/* BOTTOM BAR: Author Info (By Name, 5 Stars, Stark White Video review for domain) */}
+                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
                     {isVideoMode && video ? (
-                      /* Matches Screenshot 4: By Name + Verified, 5 Stars row, Video review for domain */
-                      <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[80%]">
-                        <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
+                      <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
+                        <div className="w-9.5 h-9.5 rounded-full overflow-hidden border border-white/35 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
                           {resolvedAvatarUrl ? (
                             <img
                               src={getProxiedImageUrl(resolvedAvatarUrl)}
@@ -900,10 +899,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col min-w-0 justify-center">
+                        <div className="flex flex-col min-w-0 justify-center pr-0.5">
                           {/* Line 1: By AuthorName + Verified badge */}
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-white text-xs font-bold truncate leading-tight">By {resolvedAuthorName}</span>
+                            <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">By {resolvedAuthorName}</span>
                             <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                           </div>
                           {/* Line 2: 5 Stars */}
@@ -917,8 +916,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                               </span>
                             ))}
                           </div>
-                          {/* Line 3: Video review for domain */}
-                          <span className="text-zinc-300 text-[10px] leading-tight truncate">
+                          {/* Line 3: Video review for domain (Extra Bold Stark Pure White) */}
+                          <span className="text-white text-xs sm:text-[12.5px] font-extrabold leading-tight whitespace-nowrap drop-shadow-md tracking-tight">
                             Video review for {resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase()}
                           </span>
                         </div>

@@ -26367,25 +26367,53 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const cleanTargetDomain = cleanDomainName(rawTargetDomain).replace(/^https?:\/\//i, '').replace(/^www\./i, '');
       const targetDomain = cleanTargetDomain.length > 26 ? cleanTargetDomain.substring(0, 24) + "..." : cleanTargetDomain;
 
-      // Compute place reviews count & average rating matching Screenshot 3
+      // 1. Live Query BunnyDB to get all live reviews and accurate place metrics
       let placeReviewsCount = Number(queryParams.placeReviewsCount || 0);
       let placeAvgRating = Number(queryParams.placeRating || 0);
 
       try {
-        const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-        const cleanT = cleanTargetDomain.toLowerCase();
-        const matching = localList.filter((v: any) => {
-          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-          return vDom.includes(cleanT) || cleanT.includes(vDom);
-        });
-        if (matching.length > 0) {
-          if (!placeReviewsCount) placeReviewsCount = matching.length;
-          if (!placeAvgRating) {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const bRes = await bunnyDb.execute({
+            sql: "SELECT id, rating, placeId, placeName, authorName, authorAvatar, data FROM videoReviews",
+            args: []
+          });
+          if (bRes.rows && bRes.rows.length > 0) {
+            const cleanT = cleanTargetDomain.toLowerCase();
+            const matching = bRes.rows.filter((row: any) => {
+              const raw = row.data;
+              const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+              const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || row.placeId || row.placeName || '').toLowerCase();
+              return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+            });
+            if (matching.length > 0) {
+              placeReviewsCount = matching.length;
+              const sum = matching.reduce((acc: number, row: any) => {
+                const raw = row.data;
+                const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                return acc + (Number(v.rating) || Number(row.rating) || 5);
+              }, 0);
+              placeAvgRating = Number((sum / matching.length).toFixed(1));
+            }
+          }
+        }
+      } catch (e) {}
+
+      if (!placeReviewsCount) {
+        try {
+          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const cleanT = cleanTargetDomain.toLowerCase();
+          const matching = localList.filter((v: any) => {
+            const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
+            return vDom.includes(cleanT) || cleanT.includes(vDom);
+          });
+          if (matching.length > 0) {
+            placeReviewsCount = matching.length;
             const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
             placeAvgRating = Number((sum / matching.length).toFixed(1));
           }
-        }
-      } catch(e) {}
+        } catch(e) {}
+      }
 
       if (!placeReviewsCount) {
         try {
@@ -26400,42 +26428,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
             });
             if (matching.length > 0) {
               placeReviewsCount = matching.length;
-              if (!placeAvgRating) {
-                const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
-                placeAvgRating = Number((sum / matching.length).toFixed(1));
-              }
-            }
-          }
-        } catch (e) {}
-      }
-
-      if (!placeReviewsCount) {
-        try {
-          const bunnyDb = getBunnyDb();
-          if (bunnyDb) {
-            const bRes = await bunnyDb.execute({
-              sql: "SELECT rating, data FROM videoReviews",
-              args: []
-            });
-            if (bRes.rows && bRes.rows.length > 0) {
-              const cleanT = cleanTargetDomain.toLowerCase();
-              const matching = bRes.rows.filter((row: any) => {
-                const raw = row.data;
-                const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-                return vDom.includes(cleanT) || cleanT.includes(vDom);
-              });
-              if (matching.length > 0) {
-                placeReviewsCount = matching.length;
-                if (!placeAvgRating) {
-                  const sum = matching.reduce((acc: number, row: any) => {
-                    const raw = row.data;
-                    const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                    return acc + (Number(v.rating) || Number(row.rating) || 5);
-                  }, 0);
-                  placeAvgRating = Number((sum / matching.length).toFixed(1));
-                }
-              }
+              const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
+              placeAvgRating = Number((sum / matching.length).toFixed(1));
             }
           }
         } catch (e) {}
@@ -26447,27 +26441,29 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
 
       const videoReviewLine = `Video review for ${targetDomain}`;
-      const videoReviewLineWidth = getTextAdvanceWidth(videoReviewLine, 14, false);
+      const videoReviewLineWidth = getTextAdvanceWidth(videoReviewLine, 24, true);
 
       const authorDisplay = safeAuthorDisplay;
       const authorPrefix = `By ${authorDisplay}`;
-      const authorPrefixWidth = getTextAdvanceWidth(authorPrefix, 20, true);
+      const authorPrefixWidth = getTextAdvanceWidth(authorPrefix, 29, true);
 
-      // 5-Star row helper for reviewer pill (Screenshot 4)
+      // High-Definition Vector 5-Star row helper (Larger, luminous gold stars with clean outline)
       const renderFiveStarsRowSvg = (startX: number, startY: number, filledCount: number) => {
         let stars = '';
-        const starPath = "M7 0l2.16 4.38 4.84.7-3.5 3.41.83 4.82L7 11.04l-4.33 2.27.83-4.82-3.5-3.41 4.84-.7L7 0z";
+        const starPath = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
         for (let i = 0; i < 5; i++) {
-          const x = startX + (i * 18);
-          const color = i < filledCount ? "#fbbf24" : "#52525b";
-          stars += `<path d="${starPath}" fill="${color}" transform="translate(${x}, ${startY})"/>`;
+          const x = startX + (i * 28);
+          const isFilled = i < filledCount;
+          const color = isFilled ? "#fbbf24" : "#3f3f46";
+          const stroke = isFilled ? "none" : "#52525b";
+          stars += `<path d="${starPath}" fill="${color}" stroke="${stroke}" stroke-width="0.8" transform="translate(${x}, ${startY})"/>`;
         }
         return stars;
       };
 
-      const starsBlockWidth = 5 * 18;
-      const maxBottomWidth = Math.max(authorPrefixWidth + 24, videoReviewLineWidth, starsBlockWidth);
-      const authorPillWidth = Math.min(680, Math.max(280, 84 + maxBottomWidth + 24));
+      const starsBlockWidth = 5 * 28;
+      const maxBottomWidth = Math.max(authorPrefixWidth + 34, videoReviewLineWidth, starsBlockWidth);
+      const authorPillWidth = Math.min(880, Math.max(360, 126 + maxBottomWidth + 36));
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -26489,128 +26485,131 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const isYoouzPlace = rawTargetDomain === 'yoouz.com' || rawTargetDomain === 'www.yoouz.com' || rawTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
-      // Top Business Pill calculations (Screenshot 3: PlaceName + Verified, Line 2: Star + Rating + (X reviews))
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 22, true);
+      // Top Business Pill calculations (PlaceName + Verified, Line 2: Star + Rating + (X reviews))
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 29, true);
       const ratingLineText = `${placeRatingStr}  ${reviewsLabel}`;
-      const ratingLineWidth = 22 + getTextAdvanceWidth(ratingLineText, 16, true);
+      const ratingLineWidth = 28 + getTextAdvanceWidth(ratingLineText, 25, true);
       
-      const maxTopWidth = Math.max(placeWidth + 24, ratingLineWidth);
-      const placePillWidth = Math.min(680, Math.max(260, 82 + maxTopWidth + 28));
+      const maxTopWidth = Math.max(placeWidth + 34, ratingLineWidth);
+      const placePillWidth = Math.min(880, Math.max(360, 118 + maxTopWidth + 36));
 
-      const initialWidth = getTextAdvanceWidth(authorInitial, 24, true);
-      const initialX = 42 - (initialWidth / 2);
+      const initialWidth = getTextAdvanceWidth(authorInitial, 36, true);
+      const initialX = 64 - (initialWidth / 2);
 
       if (thumbBuf) {
         const overlaySvg = `
-          <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
             <defs>
               <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.75" />
-                <stop offset="20%" stop-color="#000000" stop-opacity="0.05" />
-                <stop offset="70%" stop-color="#000000" stop-opacity="0.22" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.84" />
+                <stop offset="22%" stop-color="#000000" stop-opacity="0.10" />
+                <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.96" />
               </linearGradient>
+              <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+              </filter>
             </defs>
             
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Matches Screenshot 3) -->
-            <g transform="translate(48, 40)">
-              <rect width="${placePillWidth}" height="80" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+            <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
+            <g transform="translate(48, 38)" filter="url(#cardShadow)">
+              <rect width="${placePillWidth}" height="116" rx="34" fill="#000000" fill-opacity="0.95" stroke="rgba(255,255,255,0.32)" stroke-width="2"/>
               
-              <!-- Left Squircle Logo Container -->
+              <!-- Left Squircle Logo Container with 8px inner padding -->
               ${isYoouzPlace ? `
-                <rect x="10" y="10" width="60" height="60" rx="18" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-                <g transform="translate(16, 16)">
-                  <svg width="48" height="48" viewBox="0 0 24 24">
+                <rect x="14" y="14" width="86" height="86" rx="26" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                <g transform="translate(25, 25)">
+                  <svg width="64" height="64" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                   </svg>
                 </g>
               ` : `
-                <rect x="10" y="10" width="60" height="60" rx="18" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                <rect x="14" y="14" width="86" height="86" rx="26" fill="#ffffff" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
                 ${logoPngBase64 ? `
-                  <g transform="translate(12, 12)">
+                  <g transform="translate(14, 14)">
                     <clipPath id="squircleLogoClip1">
-                      <rect x="0" y="0" width="56" height="56" rx="16"/>
+                      <rect x="0" y="0" width="86" height="86" rx="26"/>
                     </clipPath>
-                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="56" height="56" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
+                    <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="8" y="8" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>
                   </g>
                 ` : `
-                  <g transform="translate(12, 12)">
-                    <rect x="0" y="0" width="56" height="56" rx="16" fill="#18181b"/>
-                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28, true) / 2), 36, 28, true, '#ffffff')}
+                  <g transform="translate(14, 14)">
+                    <rect x="0" y="0" width="86" height="86" rx="26" fill="#18181b"/>
+                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 43 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 38, true) / 2), 54, 38, true, '#ffffff')}
                   </g>
                 `}
               `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-              ${renderTextPath(safePlaceDisplay, 82, 33, 22, true, '#ffffff')}
-              <g transform="translate(${82 + placeWidth + 8}, 16)">
-                <circle cx="8" cy="8" r="8" fill="#ffffff"/>
-                <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(safePlaceDisplay, 118, 48, 29, true, '#ffffff')}
+              <g transform="translate(${118 + placeWidth + 10}, 27)">
+                <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+                <path d="M6.3 11l3 3 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
-              <!-- Line 2: Gold Star + Rating Value + (X reviews) (Matches Screenshot 3) -->
-              <path d="M9 0l2.77 5.63 6.22.9-4.5 4.38 1.06 6.2L9 14.19l-5.55 2.92 1.06-6.2-4.5-4.38 6.22-.9L9 0z" fill="#fbbf24" transform="translate(82, 48)"/>
-              ${renderTextPath(placeRatingStr, 104, 61, 18, true, '#fbbf24')}
-              ${renderTextPath(reviewsLabel, 104 + getTextAdvanceWidth(placeRatingStr, 18, true) + 8, 61, 15, false, '#cbd5e1')}
+              <!-- Line 2: Gold Star + Rating Value + (X reviews) (Crisp Bright Pure White) -->
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(118, 64) scale(0.9)"/>
+              ${renderTextPath(placeRatingStr, 148, 84, 25, true, '#fbbf24')}
+              ${renderTextPath(reviewsLabel, 148 + getTextAdvanceWidth(placeRatingStr, 25, true) + 12, 84, 23, true, '#ffffff')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
-            <g transform="translate(540, 255)">
-              <circle cx="60" cy="60" r="58" fill="#000000" fill-opacity="0.55"/>
-              <circle cx="60" cy="60" r="57" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5"/>
-              <path d="M50 40 L80 60 L50 80 Z" fill="#ffffff"/>
+            <g transform="translate(535, 245)">
+              <circle cx="65" cy="65" r="63" fill="#000000" fill-opacity="0.55"/>
+              <circle cx="65" cy="65" r="62" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5"/>
+              <path d="M54 44 L88 65 L54 86 Z" fill="#ffffff"/>
             </g>
 
-            <!-- BOTTOM LEFT: Reviewer Profile Pill (Matches Screenshot 4: By Name, 5 Stars, Video review for domain) -->
-            <g transform="translate(48, 490)">
-              <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+            <!-- BOTTOM LEFT: Reviewer Profile Pill (By Name, 5 Stars, Stark White Video review for domain) -->
+            <g transform="translate(48, 452)" filter="url(#cardShadow)">
+              <rect width="${authorPillWidth}" height="142" rx="38" fill="#000000" fill-opacity="0.95" stroke="rgba(255,255,255,0.32)" stroke-width="2"/>
               ${authorAvatarPngBase64 ? `
-                <g transform="translate(14, 18)">
+                <g transform="translate(18, 25)">
                   <clipPath id="reviewerAvatarClip1">
-                    <circle cx="30" cy="30" r="30"/>
+                    <circle cx="46" cy="46" r="46"/>
                   </clipPath>
-                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="92" height="92" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
                 </g>
               ` : `
                 <!-- Avatar Circle (Matching App Player Color) -->
-                <circle cx="44" cy="48" r="30" fill="${avatarBgColor}"/>
-                ${renderTextPath(authorInitial, initialX + 2, 56, 24, true, avatarTextColor)}
+                <circle cx="64" cy="71" r="46" fill="${avatarBgColor}"/>
+                ${renderTextPath(authorInitial, initialX, 83, 38, true, avatarTextColor)}
               `}
               
               <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge -->
-              ${renderTextPath(authorPrefix, 86, 30, 20, true, '#ffffff')}
-              <g transform="translate(${86 + authorPrefixWidth + 8}, 14)">
-                <circle cx="8" cy="8" r="8" fill="#ffffff"/>
-                <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(authorPrefix, 126, 42, 29, true, '#ffffff')}
+              <g transform="translate(${126 + authorPrefixWidth + 10}, 21)">
+                <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+                <path d="M6.3 11l3 3 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: 5 Stars Row (Review Rating) -->
-              ${renderFiveStarsRowSvg(86, 42, ratingNum)}
+              ${renderFiveStarsRowSvg(126, 56, ratingNum)}
 
-              <!-- Line 3: Video review for domain -->
-              ${renderTextPath(videoReviewLine, 86, 76, 14, false, '#94a3b8')}
+              <!-- Line 3: Video review for domain (Extra Bold Crisp Pure Stark White) -->
+              ${renderTextPath(videoReviewLine, 126, 116, 24, true, '#ffffff')}
             </g>
           </svg>
         `;
 
-        const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 150 })
-          .resize(1200, 630)
+        const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+          .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .png()
           .toBuffer();
 
         return await sharp(thumbBuf)
-          .resize(1200, 630, { fit: 'cover', position: 'center' })
+          .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 95 })
+          .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
       // Clean cinema fallback card if no video thumbnail is available
       const fallbackCinemaSvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
             <linearGradient id="bgCinema" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#09090b" />
@@ -26622,50 +26621,53 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
+            <filter id="fallbackCardShadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+            </filter>
           </defs>
           <rect width="1200" height="630" fill="url(#bgCinema)"/>
           <circle cx="600" cy="315" r="320" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-          <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Matches Screenshot 3) -->
-          <g transform="translate(48, 40)">
-            <rect width="${placePillWidth}" height="80" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+          <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
+          <g transform="translate(48, 38)" filter="url(#fallbackCardShadow)">
+            <rect width="${placePillWidth}" height="116" rx="34" fill="#000000" fill-opacity="0.95" stroke="rgba(255,255,255,0.32)" stroke-width="2"/>
             
             ${isYoouzPlace ? `
-              <rect x="10" y="10" width="60" height="60" rx="18" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <g transform="translate(16, 16)">
-                <svg width="48" height="48" viewBox="0 0 24 24">
+              <rect x="14" y="14" width="86" height="86" rx="26" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+              <g transform="translate(25, 25)">
+                <svg width="64" height="64" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="10" y="10" width="60" height="60" rx="18" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+              <rect x="14" y="14" width="86" height="86" rx="26" fill="#ffffff" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(12, 12)">
+                <g transform="translate(14, 14)">
                   <clipPath id="squircleLogoClip2">
-                    <rect x="0" y="0" width="56" height="56" rx="16"/>
+                    <rect x="0" y="0" width="86" height="86" rx="26"/>
                   </clipPath>
-                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="56" height="56" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="8" y="8" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>
                 </g>
               ` : `
-                <g transform="translate(12, 12)">
-                  <rect x="0" y="0" width="56" height="56" rx="16" fill="#18181b"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 28, true) / 2), 36, 28, true, '#ffffff')}
+                <g transform="translate(14, 14)">
+                  <rect x="0" y="0" width="86" height="86" rx="26" fill="#18181b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 43 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 38, true) / 2), 54, 38, true, '#ffffff')}
                 </g>
               `}
             `}
 
             <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 82, 33, 22, true, '#ffffff')}
-            <g transform="translate(${82 + placeWidth + 8}, 16)">
-              <circle cx="8" cy="8" r="8" fill="#ffffff"/>
-              <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            ${renderTextPath(safePlaceDisplay, 118, 48, 29, true, '#ffffff')}
+            <g transform="translate(${118 + placeWidth + 10}, 27)">
+              <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+              <path d="M6.3 11l3 3 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
-            <!-- Line 2: Gold Star + Rating Value + (X reviews) (Matches Screenshot 3) -->
-            <path d="M9 0l2.77 5.63 6.22.9-4.5 4.38 1.06 6.2L9 14.19l-5.55 2.92 1.06-6.2-4.5-4.38 6.22-.9L9 0z" fill="#fbbf24" transform="translate(82, 48)"/>
-            ${renderTextPath(placeRatingStr, 104, 61, 18, true, '#fbbf24')}
-            ${renderTextPath(reviewsLabel, 104 + getTextAdvanceWidth(placeRatingStr, 18, true) + 8, 61, 15, false, '#cbd5e1')}
+            <!-- Line 2: Gold Star + Rating Value + (X reviews) -->
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#fbbf24" transform="translate(118, 64) scale(0.9)"/>
+            ${renderTextPath(placeRatingStr, 148, 84, 25, true, '#fbbf24')}
+            ${renderTextPath(reviewsLabel, 148 + getTextAdvanceWidth(placeRatingStr, 25, true) + 12, 84, 23, true, '#ffffff')}
           </g>
 
           <!-- Centered Dark Squircle Logo Emblem -->
@@ -26676,40 +26678,40 @@ app.get('/api/og-preview-v2', async (req, res) => {
           </g>
 
           <!-- BOTTOM LEFT: Reviewer Profile Pill (Matches Screenshot 4) -->
-          <g transform="translate(48, 490)">
-            <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+          <g transform="translate(48, 452)" filter="url(#fallbackCardShadow)">
+            <rect width="${authorPillWidth}" height="142" rx="38" fill="#000000" fill-opacity="0.95" stroke="rgba(255,255,255,0.32)" stroke-width="2"/>
             ${authorAvatarPngBase64 ? `
-              <g transform="translate(14, 18)">
+              <g transform="translate(18, 25)">
                 <clipPath id="reviewerAvatarClip2">
-                  <circle cx="30" cy="30" r="30"/>
+                  <circle cx="46" cy="46" r="46"/>
                 </clipPath>
-                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
+                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="92" height="92" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
               </g>
             ` : `
               <!-- Avatar Circle (Matching App Player Color) -->
-              <circle cx="44" cy="48" r="30" fill="${avatarBgColor}"/>
-              ${renderTextPath(authorInitial, initialX + 2, 56, 24, true, avatarTextColor)}
+              <circle cx="64" cy="71" r="46" fill="${avatarBgColor}"/>
+              ${renderTextPath(authorInitial, initialX, 83, 38, true, avatarTextColor)}
             `}
             
             <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge -->
-            ${renderTextPath(authorPrefix, 86, 30, 20, true, '#ffffff')}
-            <g transform="translate(${86 + authorPrefixWidth + 8}, 14)">
-              <circle cx="8" cy="8" r="8" fill="#ffffff"/>
-              <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            ${renderTextPath(authorPrefix, 126, 42, 29, true, '#ffffff')}
+            <g transform="translate(${126 + authorPrefixWidth + 10}, 21)">
+              <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+              <path d="M6.3 11l3 3 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
             <!-- Line 2: 5 Stars Row (Review Rating) -->
-            ${renderFiveStarsRowSvg(86, 42, ratingNum)}
+            ${renderFiveStarsRowSvg(126, 56, ratingNum)}
 
-            <!-- Line 3: Video review for domain -->
-            ${renderTextPath(videoReviewLine, 86, 76, 14, false, '#94a3b8')}
+            <!-- Line 3: Video review for domain (Extra Bold Crisp Pure Stark White) -->
+            ${renderTextPath(videoReviewLine, 126, 116, 24, true, '#ffffff')}
           </g>
         </svg>
       `;
 
-      return await sharp(Buffer.from(fallbackCinemaSvg), { density: 150 })
-        .resize(1200, 630)
-        .png({ quality: 90 })
+      return await sharp(Buffer.from(fallbackCinemaSvg), { density: 300 })
+        .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
+        .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
         .toBuffer();
     }
 
@@ -28605,22 +28607,53 @@ function injectOpenGraphTags(html: string, meta: any) {
         const rating = Number(foundVideo?.rating || 5.0);
         const caption = foundVideo?.caption || "";
 
-        // Compute place reviews count & average rating across all reviews for this business
+        // Compute place reviews count & average rating across all reviews for this business (BunnyDB live first)
         let placeReviewsCount = 1;
         let placeAvgRating = rating;
+
         try {
-          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
-          const matching = localList.filter((v: any) => {
-            const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-            return vDom.includes(cleanT) || cleanT.includes(vDom);
-          });
-          if (matching.length > 0) {
-            placeReviewsCount = matching.length;
-            const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
-            placeAvgRating = Number((sum / matching.length).toFixed(1));
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            const bRes = await bunnyDb.execute({
+              sql: "SELECT id, rating, placeId, placeName, authorName, authorAvatar, data FROM videoReviews",
+              args: []
+            });
+            if (bRes.rows && bRes.rows.length > 0) {
+              const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
+              const matching = bRes.rows.filter((row: any) => {
+                const raw = row.data;
+                const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || row.placeId || row.placeName || '').toLowerCase();
+                return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+              });
+              if (matching.length > 0) {
+                placeReviewsCount = matching.length;
+                const sum = matching.reduce((acc: number, row: any) => {
+                  const raw = row.data;
+                  const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                  return acc + (Number(v.rating) || Number(row.rating) || 5);
+                }, 0);
+                placeAvgRating = Number((sum / matching.length).toFixed(1));
+              }
+            }
           }
         } catch (e) {}
+
+        if (placeReviewsCount <= 1) {
+          try {
+            const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+            const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
+            const matching = localList.filter((v: any) => {
+              const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
+              return vDom.includes(cleanT) || cleanT.includes(vDom);
+            });
+            if (matching.length > 0) {
+              placeReviewsCount = matching.length;
+              const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
+              placeAvgRating = Number((sum / matching.length).toFixed(1));
+            }
+          } catch (e) {}
+        }
 
         if (placeReviewsCount <= 1) {
           try {
@@ -28640,36 +28673,6 @@ function injectOpenGraphTags(html: string, meta: any) {
               }
             }
           } catch(e) {}
-        }
-
-        if (placeReviewsCount <= 1) {
-          try {
-            const bunnyDb = getBunnyDb();
-            if (bunnyDb) {
-              const bRes = await bunnyDb.execute({
-                sql: "SELECT rating, data FROM videoReviews",
-                args: []
-              });
-              if (bRes.rows && bRes.rows.length > 0) {
-                const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
-                const matching = bRes.rows.filter((row: any) => {
-                  const raw = row.data;
-                  const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                  const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-                  return vDom.includes(cleanT) || cleanT.includes(vDom);
-                });
-                if (matching.length > 0) {
-                  placeReviewsCount = matching.length;
-                  const sum = matching.reduce((acc: number, row: any) => {
-                    const raw = row.data;
-                    const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                    return acc + (Number(v.rating) || Number(row.rating) || 5);
-                  }, 0);
-                  placeAvgRating = Number((sum / matching.length).toFixed(1));
-                }
-              }
-            }
-          } catch (e) {}
         }
 
         canonicalVideoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
@@ -28696,11 +28699,11 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
 
         const rawAuthorAvatar = foundVideo?.authorAvatar || foundVideo?.author?.avatar || foundVideo?.userAvatar || "";
-        const authorAvatarParam = rawAuthorAvatar ? `&authorAvatar=${encodeURIComponent(rawAuthorAvatar)}` : '';
+        const authorAvatarParam = (rawAuthorAvatar && rawAuthorAvatar.startsWith("http") && !rawAuthorAvatar.includes("proxy-image")) ? `&authorAvatar=${encodeURIComponent(rawAuthorAvatar)}` : '';
         const rawPlaceLogo = foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
-        const placeLogoParam = rawPlaceLogo ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
+        const placeLogoParam = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
         const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}&v=10`;
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}&v=16`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame

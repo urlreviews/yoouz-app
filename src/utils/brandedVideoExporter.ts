@@ -361,8 +361,8 @@ export function renderBrandedVideoOverlays(
   ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(ratingScore, topColX + (14 * safeScale), topPillY + (38 * safeScale));
 
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `700 ${11 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(reviewsLabel, topColX + (14 * safeScale) + ratingWidth + (5 * safeScale), topPillY + (38 * safeScale));
 
   // -------------------------------------------------------------
@@ -467,9 +467,9 @@ export function renderBrandedVideoOverlays(
     );
   }
 
-  // Line 3: Video review for domain
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  // Line 3: Video review for domain (Bold Stark Pure White)
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `700 ${11.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(videoReviewLine, botColX, botPillY + (56 * safeScale));
 
   ctx.restore();
