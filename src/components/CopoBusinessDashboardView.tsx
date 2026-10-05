@@ -10,6 +10,7 @@ import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { CopoMessagesView } from './CopoMessagesView';
 import { CopoNotificationsView } from './CopoNotificationsView';
 import { CopoStarRating } from './CopoStarRating';
+import { CopoMoreView } from './CopoMoreView';
 import { 
   Home,
   Menu,
@@ -179,7 +180,7 @@ interface CopoBusinessDashboardViewProps {
   onRecordReview?: (place: Place) => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'more';
 
 
 export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps> = ({ 
@@ -2250,8 +2251,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* More Button under Profile */}
               <button
                 id="biz-nav-btn-more"
-                onClick={() => onNavigate('more')}
-                className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium"
+                onClick={() => setActiveTab('more')}
+                className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                  activeTab === 'more'
+                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
+                    : 'text-white hover:bg-zinc-900/90 font-medium'
+                }`}
                 title={t('nav.more', 'More')}
               >
                 <div className="relative flex items-center justify-center">
@@ -2284,10 +2289,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             <span className="text-zinc-600">•</span>
             <button
               type="button"
-              onClick={() => {
-                onClose();
-                onNavigate("more");
-              }}
+              onClick={() => setActiveTab("more")}
               className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               {t("legal.about", "About")}
@@ -2475,8 +2477,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         type="button"
                         onClick={() => {
                           setShowAccountDropdown(false);
-                          onClose();
-                          onNavigate("more");
+                          setActiveTab("more");
                         }}
                         className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
                       >
@@ -2546,8 +2547,12 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               {/* More Pill */}
               <button
                 type="button"
-                onClick={() => onNavigate('more')}
-                className="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800"
+                onClick={() => setActiveTab('more')}
+                className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                  activeTab === 'more'
+                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
+                    : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
+                }`}
                 title={t('nav.more', 'More')}
               >
                 <Menu className="w-4 h-4 text-white shrink-0" />
@@ -4415,6 +4420,26 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
               </div>
             )}
+
+            {/* TAB 7: MORE / KNOWLEDGE & TRUST CENTER */}
+            {activeTab === 'more' && (
+              <div className="space-y-6 animate-in fade-in duration-200 pb-12 w-full">
+                <CopoMoreView
+                  currentUser={currentUser}
+                  businessDomain={currentPlace?.website || currentPlace?.id}
+                  isBusinessSuiteEmbedded={true}
+                  onBack={() => setActiveTab('overview')}
+                  onOpenLegal={onOpenLegal}
+                  onNavigate={(sec) => {
+                    if (sec === 'home' || sec === 'business') {
+                      setActiveTab('overview');
+                    } else {
+                      onNavigate(sec);
+                    }
+                  }}
+                />
+              </div>
+            )}
             </>
           )}
 
@@ -4439,10 +4464,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 <span className="text-zinc-600">•</span>
                 <button
                   type="button"
-                  onClick={() => {
-                    onClose();
-                    onNavigate("more");
-                  }}
+                  onClick={() => setActiveTab("more")}
                   className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
                 >
                   {t("legal.about", "About")}

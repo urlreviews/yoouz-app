@@ -46,15 +46,18 @@ import { SupportedLanguage } from "../i18n/translations";
 
 interface CopoMoreViewProps {
   currentUser: UserProfile | null;
-  onOpenAuth: () => void;
+  onOpenAuth?: () => void;
   onSuccessAuth?: (user: UserProfile) => void;
-  onSignOut: () => void;
-  onNavigate: (section: NavSection) => void;
+  onSignOut?: () => void;
+  onNavigate?: (section: NavSection) => void;
   onDeactivateProfile?: () => Promise<void>;
-  onDeleteProfile: () => Promise<void>;
+  onDeleteProfile?: () => Promise<void>;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   onOpenComparison?: (competitor?: string) => void;
   onOpenNotificationSettings?: () => void;
+  isBusinessSuiteEmbedded?: boolean;
+  businessDomain?: string;
+  onBack?: () => void;
 }
 
 interface FaqItem {
@@ -73,7 +76,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   onDeleteProfile,
   onOpenLegal,
   onOpenComparison,
-  onOpenNotificationSettings
+  onOpenNotificationSettings,
+  isBusinessSuiteEmbedded = false,
+  businessDomain = "",
+  onBack
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState<"about" | "faq" | "business" | "security" | "contact" | "language">("about");
@@ -107,13 +113,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Prefill contact form when user profile is present
+  // Prefill contact form when user profile or businessDomain is present
   useEffect(() => {
     if (currentUser) {
       setContactName(currentUser.name || "");
       setContactEmail(currentUser.email || "");
     }
-  }, [currentUser]);
+    if (businessDomain) {
+      setContactDomain(businessDomain);
+    }
+  }, [currentUser, businessDomain]);
 
   const processFiles = (filesList: File[]) => {
     setSubmitError("");
@@ -517,9 +526,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       <header className="sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50">
         <div className="h-14 px-4 flex items-center justify-between">
           <button
-            onClick={() => onNavigate("home")}
+            onClick={() => {
+              if (onBack) {
+                onBack();
+              } else if (onNavigate) {
+                onNavigate("home");
+              }
+            }}
             className="w-10 h-10 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
-            title="Back to Feed"
+            title={isBusinessSuiteEmbedded ? "Back to Dashboard" : "Back to Feed"}
           >
             <ChevronLeft className="w-6 h-6 stroke-[2]" />
           </button>
@@ -922,13 +937,18 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                     <button
                       onClick={() => {
-                        window.open("/business", "_blank", "noopener,noreferrer");
+                        if (isBusinessSuiteEmbedded) {
+                          if (onBack) onBack();
+                          else if (onNavigate) onNavigate("business");
+                        } else {
+                          window.open("/business", "_blank", "noopener,noreferrer");
+                        }
                       }}
                       className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Building2 className="w-4 h-4 text-black" />
-                      <span>{t("nav.forBusinesses", "Open Business Suite")}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-black" />
+                      <span>{isBusinessSuiteEmbedded ? t("business.returnToDashboard", "Return to Business Dashboard") : t("nav.forBusinesses", "Open Business Suite")}</span>
+                      {!isBusinessSuiteEmbedded && <ExternalLink className="w-3.5 h-3.5 text-black" />}
                     </button>
                     <button
                       onClick={() => {

@@ -7398,6 +7398,7 @@ export function App() {
                 onToggleCreatorHeart={handleToggleCreatorHeart}
                 onDeleteComment={handleDeleteComment}
                 onUpdatePlace={handleUpdatePlace}
+                onOpenLegal={handleOpenLegal}
                 onRecordReview={(targetPlace) => handleOpenCreateReview(targetPlace)}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt, cardData) => {
                   let effectiveSender = currentUser as any;
@@ -7502,7 +7503,6 @@ export function App() {
                   setNotifications([]);
                 }}
                 onSaveNotificationSettings={handleSaveNotificationSettings}
-                onOpenLegal={handleOpenLegal}
               />
             )}
             {activeSection === "more" && (
