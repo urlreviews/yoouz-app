@@ -51,6 +51,8 @@ interface CopoShareModalProps {
   isCreatorProfile?: boolean;
   isBusinessProfile?: boolean;
   rating?: number;
+  reviewsCount?: number;
+  reviewCount?: number;
 
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
@@ -72,6 +74,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   isCreatorProfile: propIsCreatorProfile,
   isBusinessProfile: propIsBusinessProfile,
   rating: propRating,
+  reviewsCount: propReviewsCount,
+  reviewCount: propReviewCount,
   video,
   onClose,
   onOpenReport,
@@ -266,7 +270,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       const avg = Number((sum / count).toFixed(1));
       return { count, avgRating: avg, scoreStr: avg.toFixed(1) };
     }
-    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || propReviewCount || 1);
+    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || propReviewsCount || propReviewCount || 1);
     const fallbackRating = Number((video as any)?.placeRating || video?.rating || propRating || 5.0);
     return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
   })();
