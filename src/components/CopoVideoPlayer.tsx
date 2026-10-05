@@ -1645,28 +1645,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               onTouchMove={(e) => e.stopPropagation()}
             >
               {(() => {
-                const isVerifiedOwnerOfThisPlace = Boolean(
-                  isBusinessOwnerView ||
-                  (() => {
-                    try {
-                      const s = localStorage.getItem('copo_business_verified_session');
-                      if (!s || !moreMenuVideo) return false;
-                      const parsed = JSON.parse(s);
-                      if (!parsed) return false;
-                      const sessionPlaceId = parsed.placeId;
-                      const sessionPlaceName = (parsed.placeName || '').toLowerCase().trim();
-                      const videoPlaceId = moreMenuVideo.placeId;
-                      const videoPlaceName = (moreMenuVideo.placeName || '').toLowerCase().trim();
-                      
-                      if (sessionPlaceId && videoPlaceId && sessionPlaceId === videoPlaceId) return true;
-                      if (sessionPlaceId === 'place-custom' && sessionPlaceName && videoPlaceName && sessionPlaceName === videoPlaceName) return true;
-                      if (sessionPlaceName && videoPlaceName && (sessionPlaceName === videoPlaceName || (sessionPlaceName === 'yoouz' && (videoPlaceId === 'yoouz.com' || videoPlaceName.includes('yoouz'))))) return true;
-                      return false;
-                    } catch {
-                      return false;
-                    }
-                  })()
-                );
+                // Approach A: Business owner tools (e.g. Download for Ads) are strictly scoped to the Business Suite (isBusinessOwnerView).
+                // They never leak into the consumer feed when browsing as a normal user.
+                const isVerifiedOwnerOfThisPlace = Boolean(isBusinessOwnerView);
 
                 return Boolean(
                   moreMenuVideo &&
