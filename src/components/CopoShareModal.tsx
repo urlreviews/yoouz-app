@@ -201,10 +201,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     const placeName = formatBusinessName(video.placeName || (video.placeId ? extractCleanDomain(video.placeId) : "Business"));
     title = placeName;
     const authorName = video.author?.name || (video as any)?.authorName || "Verified Reviewer";
-    subtitle = authorName ? `${authorName} • 60s Review` : "Authentic 60s Video Review";
+    resolvedDomain = extractCleanDomain(rawDomain);
+    const authorReviewsCount = (video as any)?.author?.reviewCount || (video as any)?.authorReviewCount || 0;
+    const cleanDomain = resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase();
+    subtitle = authorReviewsCount > 0 
+      ? `${authorReviewsCount} ${authorReviewsCount === 1 ? 'review' : 'reviews'} • Review for ${cleanDomain}`
+      : `Review for ${cleanDomain}`;
     isBusiness = false;
     resolvedAvatarUrl = video.author?.avatar || (video as any)?.authorAvatar;
-    resolvedDomain = extractCleanDomain(rawDomain);
     resolvedWebsite = video.placeWebsite || "";
     resolvedLogoUrl = video.placeLogoUrl || (video as any)?.placeLogo || (video as any)?.logoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo || (video as any)?.place?.logoUrl;
     resolvedBannerUrl = video.placeBannerUrl || (video as any)?.bannerUrl || (video as any)?.place?.bannerUrl;
@@ -773,9 +777,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   </div>
 
-                  {/* BOTTOM BAR: Single Business Profile Info with Squircle Logo, Verified Badge, Rating & Location */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  {/* BOTTOM BAR: Single Business Profile Info with Squircle Logo & Verified Badge (Clean, more to the left, no extra text inside banner) */}
+                  <div className="absolute bottom-3 left-2.5 sm:left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                       {/* Business Squircle Logo Container Matching Profile Header */}
                       <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] sm:rounded-[18px] overflow-hidden border border-white/30 bg-white shadow-xl flex items-center justify-center p-1 shrink-0">
                         <CopoBrandLogo
@@ -795,16 +799,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           {/* Dark Mode Verified Checkmark (NO green!) */}
                           <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
                         </p>
-                        <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] sm:text-xs leading-tight truncate drop-shadow-sm opacity-90 mt-0.5 font-medium">
-                          <div className="flex items-center gap-0.5 text-amber-400 font-bold shrink-0">
-                            <span className="text-xs font-black">★</span>
-                            <span>{ratingVal ? `${ratingVal}.0` : "5.0"}</span>
-                          </div>
-                          <span>•</span>
-                          <span className="truncate max-w-[200px]">
-                            {resolvedSubtitle || t("place.businessLocation", "Verified Business")}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -878,8 +872,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
-                            {resolvedAuthorName}
+                          <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm flex items-center gap-1">
+                            <span>{resolvedAuthorName}</span>
+                            <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
                           </p>
                           <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
                             {resolvedSubtitle}

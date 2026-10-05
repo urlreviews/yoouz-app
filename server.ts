@@ -26364,12 +26364,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const subSuffixWidth = getTextAdvanceWidth(subSuffix, 14, false);
 
       const rawTargetDomain = queryParams.placeDomain || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : placeName));
-      const targetDomain = rawTargetDomain.length > 30 ? rawTargetDomain.substring(0, 28) + "..." : rawTargetDomain;
-      const videoReviewLine = `Video review for ${targetDomain}`;
-      const videoReviewWidth = getTextAdvanceWidth(videoReviewLine, 14, false);
+      const cleanTargetDomain = cleanDomainName(rawTargetDomain).replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+      const targetDomain = cleanTargetDomain.length > 26 ? cleanTargetDomain.substring(0, 24) + "..." : cleanTargetDomain;
 
-      const authorDisplayWithPrefix = `By ${safeAuthorDisplay}`;
-      const authorWidth = getTextAdvanceWidth(authorDisplayWithPrefix, 20, true);
+      const authorReviewsCount = foundVideo?.author?.reviewCount || foundVideo?.authorReviewCount || 0;
+      const authorSubLine = authorReviewsCount > 0 
+        ? `${authorReviewsCount} ${authorReviewsCount === 1 ? 'review' : 'reviews'} • Review for ${targetDomain}`
+        : `60s Review for ${targetDomain}`;
+      const authorSubWidth = getTextAdvanceWidth(authorSubLine, 16, false);
+
+      const authorDisplay = safeAuthorDisplay;
+      const authorWidth = getTextAdvanceWidth(authorDisplay, 22, true);
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -26391,8 +26396,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const isYoouzPlace = rawTargetDomain === 'yoouz.com' || rawTargetDomain === 'www.yoouz.com' || rawTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
-      const maxBottomWidth = Math.max(authorWidth + 20, starsWidth, videoReviewWidth);
-      const authorPillWidth = Math.min(600, Math.max(280, 76 + maxBottomWidth + 24));
+      const maxBottomWidth = Math.max(authorWidth + 24, authorSubWidth + 8);
+      const authorPillWidth = Math.min(620, Math.max(280, 84 + maxBottomWidth + 28));
 
       // Top Business Pill calculations
       const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 22, true);
@@ -26403,8 +26408,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const maxTopWidth = Math.max(topLine1Width, topLine2Width);
       const placePillWidth = Math.min(680, Math.max(220, 82 + maxTopWidth + 28));
 
-      const initialWidth = getTextAdvanceWidth(authorInitial, 26, true);
-      const initialX = 48 - (initialWidth / 2);
+      const initialWidth = getTextAdvanceWidth(authorInitial, 24, true);
+      const initialX = 42 - (initialWidth / 2);
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -26421,7 +26426,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Prominent & High Resolution for Social Feeds) -->
+            <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
             <g transform="translate(48, 40)">
               <rect width="${placePillWidth}" height="80" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
               
@@ -26462,6 +26467,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
               ${renderTextPath(ratingStr, 106, 61, 18, true, '#fbbf24')}
             </g>
 
+            <!-- TOP RIGHT: yoouz.com Watermark Pill with Red Dot -->
+            <g transform="translate(980, 48)">
+              <rect width="172" height="48" rx="24" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+              <circle cx="24" cy="24" r="6" fill="#f43f5e"/>
+              ${renderTextPath("yoouz.com", 42, 30, 18, true, '#ffffff')}
+            </g>
+
             <!-- CENTER: Frosted Glass Play Button -->
             <g transform="translate(540, 255)">
               <circle cx="60" cy="60" r="58" fill="#000000" fill-opacity="0.55"/>
@@ -26469,34 +26481,31 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <path d="M50 40 L80 60 L50 80 Z" fill="#ffffff"/>
             </g>
 
-            <!-- BOTTOM LEFT: Reviewer Profile Pill -->
-            <g transform="translate(48, 482)">
-              <rect width="${authorPillWidth}" height="100" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+            <!-- BOTTOM LEFT: Reviewer Profile Pill (Clean layout matching app modal, no duplicate star rating) -->
+            <g transform="translate(48, 502)">
+              <rect width="${authorPillWidth}" height="84" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
               ${authorAvatarPngBase64 ? `
-                <g transform="translate(14, 14)">
+                <g transform="translate(12, 12)">
                   <clipPath id="reviewerAvatarClip1">
-                    <circle cx="36" cy="36" r="36"/>
+                    <circle cx="30" cy="30" r="30"/>
                   </clipPath>
-                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
                 </g>
               ` : `
                 <!-- Avatar Circle (Matching App Player Color) -->
-                <circle cx="50" cy="50" r="36" fill="${avatarBgColor}"/>
-                ${renderTextPath(authorInitial, initialX, 59, 26, true, avatarTextColor)}
+                <circle cx="42" cy="42" r="30" fill="${avatarBgColor}"/>
+                ${renderTextPath(authorInitial, initialX, 50, 24, true, avatarTextColor)}
               `}
               
-              <!-- Line 1: Reviewer Name (By Author) + Darkmode White Verified Badge -->
-              ${renderTextPath(authorDisplayWithPrefix, 96, 32, 24, true, '#ffffff')}
-              <g transform="translate(${96 + authorWidth + 8}, 16)">
+              <!-- Line 1: Reviewer Name + Darkmode White Verified Badge -->
+              ${renderTextPath(authorDisplay, 84, 34, 22, true, '#ffffff')}
+              <g transform="translate(${84 + authorWidth + 8}, 18)">
                 <circle cx="8" cy="8" r="8" fill="#ffffff"/>
                 <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
-              <!-- Line 2: Star Icons -->
-              ${starsSvg}
-
-              <!-- Line 3: Video Review Target Line -->
-              ${renderTextPath(videoReviewLine, 96, 78, 16, false, '#94a3b8')}
+              <!-- Line 2: Author Subtitle & Clean Review Domain (No duplicate star rating!) -->
+              ${renderTextPath(authorSubLine, 84, 60, 15, false, '#cbd5e1')}
             </g>
           </svg>
         `;
@@ -26577,31 +26586,31 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
           </g>
 
-          <!-- BOTTOM LEFT: Reviewer Profile Pill -->
-          <g transform="translate(48, 492)">
-            <rect width="${authorPillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+          <!-- BOTTOM LEFT: Reviewer Profile Pill (Clean layout matching app modal, no duplicate star rating) -->
+          <g transform="translate(48, 502)">
+            <rect width="${authorPillWidth}" height="84" rx="26" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
             ${authorAvatarPngBase64 ? `
-              <g transform="translate(12, 19)">
+              <g transform="translate(12, 12)">
                 <clipPath id="reviewerAvatarClip2">
-                  <circle cx="26" cy="26" r="26"/>
+                  <circle cx="30" cy="30" r="30"/>
                 </clipPath>
-                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="52" height="52" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
+                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
               </g>
             ` : `
               <!-- Avatar Circle (Matching App Player Color) -->
-              <circle cx="38" cy="45" r="26" fill="${avatarBgColor}"/>
-              ${renderTextPath(authorInitial, initialX, 53, 22, true, avatarTextColor)}
+              <circle cx="42" cy="42" r="30" fill="${avatarBgColor}"/>
+              ${renderTextPath(authorInitial, initialX, 50, 24, true, avatarTextColor)}
             `}
             
-            ${renderTextPath(authorDisplayWithPrefix, 76, 26, 20, true, '#ffffff')}
-            <g transform="translate(${76 + authorWidth + 6}, 13)">
-              <circle cx="6.5" cy="6.5" r="6.5" fill="#ffffff"/>
-              <path d="M3.8 6.5l1.8 1.8 3.8-3.8" stroke="#09090b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Line 1: Reviewer Name + Darkmode White Verified Badge -->
+            ${renderTextPath(authorDisplay, 84, 34, 22, true, '#ffffff')}
+            <g transform="translate(${84 + authorWidth + 8}, 18)">
+              <circle cx="8" cy="8" r="8" fill="#ffffff"/>
+              <path d="M4.6 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
-            ${starsSvg}
-
-            ${renderTextPath(videoReviewLine, 76, 68, 14, false, '#94a3b8')}
+            <!-- Line 2: Author Subtitle & Clean Review Domain (No star rating!) -->
+            ${renderTextPath(authorSubLine, 84, 60, 15, false, '#cbd5e1')}
           </g>
         </svg>
       `;
@@ -26873,18 +26882,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // 3. Layout Dimensions & Calculations
+      // 3. Layout Dimensions & Calculations (Clean Single Line: Logo + Business Name + Verified Badge)
       const safePlaceDisplay = placeName.length > 24 ? `${placeName.substring(0, 22)}...` : placeName;
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 26, true);
-
-      const locParts = [placeObj?.city, placeObj?.country].filter(Boolean);
-      const locText = locParts.length > 0 ? locParts.join(", ") : (placeObj?.address && placeObj.address !== "Verified Location" ? placeObj.address : (placeObj?.category || "Verified Business"));
-      const safeLocText = locText.length > 30 ? `${locText.substring(0, 28)}...` : locText;
-      const ratingSubLine = `${ratingStr}  ★   •   ${safeLocText}`;
-      const ratingLineWidth = getTextAdvanceWidth(ratingSubLine, 18, true);
-
-      const maxInnerWidth = Math.max(placeWidth + 36, ratingLineWidth + 16);
-      const businessPillWidth = Math.min(840, Math.max(360, 124 + maxInnerWidth + 36));
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 28, true);
+      const businessPillWidth = Math.min(840, Math.max(260, 102 + placeWidth + 38));
 
       // 4. Build Overlay SVG with Vector Paths (Single prominent bottom business card, watermark top-right, NO duplicate top logo)
       const overlaySvg = `
@@ -26908,45 +26909,41 @@ app.get('/api/og-preview-v2', async (req, res) => {
             ${renderTextPath("yoouz.com", 42, 30, 18, true, '#ffffff')}
           </g>
 
-          <!-- BOTTOM LEFT: Single Prominent Business Profile Pill (Matching User Profile Layout & App Header) -->
-          <g transform="translate(48, 464)">
-            <rect width="${businessPillWidth}" height="118" rx="32" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+          <!-- BOTTOM LEFT: Single Prominent Business Profile Pill (Shifted left, clean single line, no extra text inside banner) -->
+          <g transform="translate(36, 490)">
+            <rect width="${businessPillWidth}" height="92" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
             
             <!-- Left Squircle Logo Container (White background container matching profile drawer) -->
             ${isYoouzPlace ? `
-              <rect x="14" y="14" width="90" height="90" rx="26" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <g transform="translate(23, 23)">
-                <svg width="72" height="72" viewBox="0 0 24 24">
+              <rect x="12" y="12" width="68" height="68" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+              <g transform="translate(18, 18)">
+                <svg width="56" height="56" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="14" y="14" width="90" height="90" rx="26" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+              <rect x="12" y="12" width="68" height="68" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(18, 18)">
+                <g transform="translate(16, 16)">
                   <clipPath id="squircleLogoClipBiz">
-                    <rect x="0" y="0" width="82" height="82" rx="22"/>
+                    <rect x="0" y="0" width="60" height="60" rx="16"/>
                   </clipPath>
-                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="82" height="82" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>
+                  <image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>
                 </g>
               ` : `
-                <g transform="translate(18, 18)">
-                  <rect x="0" y="0" width="82" height="82" rx="22" fill="#18181b"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 41 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 42, true) / 2), 54, 42, true, '#ffffff')}
+                <g transform="translate(16, 16)">
+                  <rect x="0" y="0" width="60" height="60" rx="16" fill="#18181b"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 32, true) / 2), 42, 32, true, '#ffffff')}
                 </g>
               `}
             `}
 
-            <!-- Line 1: Place Name + Dark Mode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 122, 45, 26, true, '#ffffff')}
-            <g transform="translate(${122 + placeWidth + 10}, 24)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.5 10l3 3 6-6" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Line 1: Place Name + Dark Mode White Verified Badge (Vertically Centered) -->
+            ${renderTextPath(safePlaceDisplay, 96, 54, 28, true, '#ffffff')}
+            <g transform="translate(${96 + placeWidth + 10}, 33)">
+              <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+              <path d="M6 11l3.5 3.5 7-7" stroke="#09090b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
-
-            <!-- Line 2: Gold Star + Rating Value + Separator + Location/Category -->
-            <path d="M9 0l2.77 5.63 6.22.9-4.5 4.38 1.06 6.2L9 14.19l-5.55 2.92 1.06-6.2-4.5-4.38 6.22-.9L9 0z" fill="#fbbf24" transform="translate(122, 65)"/>
-            ${renderTextPath(ratingSubLine, 148, 79, 18, true, '#fbbf24')}
           </g>
         </svg>
       `;
@@ -27160,155 +27157,145 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const cleanH = rawHandle;
       const displayName = profile?.name && profile.name !== "Registered User" ? profile.name : (rawName && rawName !== "Creator" ? rawName : `@${cleanH}`);
       const initial = (displayName.trim().replace(/^@+/, '').charAt(0) || cleanH.charAt(0) || "U").toUpperCase();
+      const subtitleText = "Reviewer Profile";
 
-      // Render Avatar Squircle (220x220) with Dark Mode Verified Badge (NO green)
-      let finalAvatarCard: Buffer;
+      // Render Squircle Avatar (68x68, rx=20) matching profile drawer & modal preview
+      let avatarPngBase64 = "";
       if (avatarBuf) {
-        const squircleMaskSvg = `
-          <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="220" height="220" rx="52" ry="52" fill="#ffffff"/>
-          </svg>
-        `;
-        const resizedAvatar = await sharp(avatarBuf)
-          .resize(220, 220, { fit: 'cover' })
-          .composite([{ input: Buffer.from(squircleMaskSvg), blend: 'dest-in' }])
-          .png()
-          .toBuffer();
-
-        const borderRingSvg = `
-          <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="4" width="224" height="224" rx="54" ry="54" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
-            <!-- Dark mode verified badge at bottom right (NO green!) -->
-            <circle cx="182" cy="182" r="24" fill="#18181b" stroke="#ffffff" stroke-width="3"/>
-            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        `;
-
-        finalAvatarCard = await sharp(Buffer.from(borderRingSvg))
-          .composite([{ input: resizedAvatar, top: 6, left: 6 }])
-          .png()
-          .toBuffer();
-      } else {
-        const initWidth = getTextAdvanceWidth(initial, 100, true);
-        const initX = 116 - (initWidth / 2);
-        const fallbackMonogramSvg = `
-          <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1e88e5" />
-                <stop offset="100%" stop-color="#1565c0" />
-              </linearGradient>
-            </defs>
-            <rect x="4" y="4" width="224" height="224" rx="54" ry="54" fill="url(#avGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
-            <!-- Monogram Initial Letter using vector renderTextPath (Zero Tofu!) -->
-            ${renderTextPath(initial, initX, 150, 100, true, '#ffffff')}
-            <!-- Dark mode verified badge (NO green!) -->
-            <circle cx="182" cy="182" r="24" fill="#18181b" stroke="#ffffff" stroke-width="3"/>
-            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        `;
-        finalAvatarCard = await sharp(Buffer.from(fallbackMonogramSvg)).png().toBuffer();
+        try {
+          const squircleMaskSvg = `
+            <svg width="68" height="68" viewBox="0 0 68 68" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0" y="0" width="68" height="68" rx="20" ry="20" fill="#ffffff"/>
+            </svg>
+          `;
+          const resizedAvatar = await sharp(avatarBuf)
+            .resize(68, 68, { fit: 'cover' })
+            .composite([{ input: Buffer.from(squircleMaskSvg), blend: 'dest-in' }])
+            .png()
+            .toBuffer();
+          avatarPngBase64 = `data:image/png;base64,${resizedAvatar.toString('base64')}`;
+        } catch(e) {}
       }
 
-      // Calculations for Centered Vector Text
-      const nameWidth = getTextAdvanceWidth(displayName, 44, true);
-      const nameX = 600 - (nameWidth / 2);
+      // Calculations for Bottom Author Pill (Shifted left, clean layout matching in-app modal preview)
+      const safeAuthorDisplay = displayName.length > 24 ? `${displayName.substring(0, 22)}...` : displayName;
+      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 26, true);
+      const subWidth = getTextAdvanceWidth(subtitleText, 16, false);
+      const maxTextWidth = Math.max(authorWidth + 28, subWidth);
+      const authorPillWidth = Math.min(840, Math.max(260, 102 + maxTextWidth + 36));
 
-      const handleSubtitle = `@${cleanH} - Authentic Video Reviews`;
-      const handleWidth = getTextAdvanceWidth(handleSubtitle, 24, true);
-      const handleX = 600 - (handleWidth / 2);
-
-      const pillLabel = "Verified Reviewer Profile";
-      const pillLabelWidth = getTextAdvanceWidth(pillLabel, 17, true);
-      const pillLabelX = 600 - (pillLabelWidth / 2);
-
-      const baseSvg = `
-        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+      const overlaySvg = `
+        <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
           <defs>
-            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#09090b" />
-              <stop offset="50%" stop-color="#0f172a" />
-              <stop offset="100%" stop-color="#09090b" />
-            </linearGradient>
-            <radialGradient id="centerBlueGlow" cx="50%" cy="36%" r="50%">
-              <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
-              <stop offset="60%" stop-color="#1e3a8a" stop-opacity="0.06" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
-            </radialGradient>
-            <linearGradient id="vignetteCreator" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#000000" stop-opacity="0.82" />
-              <stop offset="25%" stop-color="#000000" stop-opacity="0.20" />
-              <stop offset="70%" stop-color="#000000" stop-opacity="0.40" />
+            <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#000000" stop-opacity="0.80" />
+              <stop offset="25%" stop-color="#000000" stop-opacity="0.10" />
+              <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.92" />
             </linearGradient>
           </defs>
 
-          ${bannerBuf 
-            ? `<rect width="1200" height="630" fill="url(#vignetteCreator)"/>`
-            : `<rect width="1200" height="630" fill="url(#bgGrad)"/>
-               <circle cx="600" cy="220" r="320" fill="url(#centerBlueGlow)"/>`
-          }
-          <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+          <!-- Ambient dark gradient vignette -->
+          <rect width="1200" height="630" fill="url(#vignette)"/>
 
-          <!-- Top Left Badge Pill (Dark Mode - NO green) -->
-          <g transform="translate(48, 48)">
-            <rect width="280" height="48" rx="24" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
-            <circle cx="28" cy="24" r="12" fill="#18181b" stroke="#ffffff" stroke-width="2"/>
-            <path d="M23 24 L27 28 L33 21" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            ${renderTextPath("VERIFIED TOP REVIEWER", 54, 30, 15, true, '#ffffff')}
-          </g>
-
-          <!-- Top Right Watermark Pill with Red Dot -->
+          <!-- TOP RIGHT: yoouz.com Watermark Pill with Red Dot -->
           <g transform="translate(980, 48)">
             <rect width="172" height="48" rx="24" fill="#000000" fill-opacity="0.85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
             <circle cx="24" cy="24" r="6" fill="#f43f5e"/>
             ${renderTextPath("yoouz.com", 42, 30, 18, true, '#ffffff')}
           </g>
 
-          <!-- User Display Name (Vector Path - Zero Tofu!) -->
-          ${renderTextPath(displayName, nameX, 380, 44, true, '#ffffff')}
+          <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
+          <g transform="translate(36, 484)">
+            <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.88" stroke="rgba(255,255,255,0.25)" stroke-width="1.8"/>
+            
+            <!-- Left Squircle Avatar Container -->
+            <rect x="14" y="14" width="68" height="68" rx="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+            ${avatarPngBase64 ? `
+              <g transform="translate(14, 14)">
+                <clipPath id="squircleUserClip">
+                  <rect x="0" y="0" width="68" height="68" rx="20"/>
+                </clipPath>
+                <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
+              </g>
+            ` : `
+              <g transform="translate(14, 14)">
+                ${renderTextPath(initial, 34 - (getTextAdvanceWidth(initial, 30, true) / 2), 44, 30, true, '#ffffff')}
+              </g>
+            `}
 
-          <!-- User Handle & Subtitle (Vector Path - Zero Tofu!) -->
-          ${renderTextPath(handleSubtitle, handleX, 430, 24, true, '#a1a1aa')}
+            <!-- Line 1: User Display Name + Dark Mode White Verified Checkmark Badge -->
+            ${renderTextPath(safeAuthorDisplay, 98, 44, 26, true, '#ffffff')}
+            <g transform="translate(${98 + authorWidth + 10}, 24)">
+              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+              <path d="M5.5 10l3 3 6-6" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
 
-          <!-- Bottom Pill Badge (Vector Path - Zero Tofu!) -->
-          <rect x="420" y="480" width="360" height="48" rx="24" fill="#ffffff" fill-opacity="0.08" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          ${renderTextPath(pillLabel, pillLabelX, 511, 17, true, '#ffffff')}
+            <!-- Line 2: Subtitle (Reviewer Profile) -->
+            ${renderTextPath(subtitleText, 98, 72, 16, false, '#cbd5e1')}
+          </g>
         </svg>
       `;
 
-      const composites: any[] = [
-        {
-          input: finalAvatarCard,
-          top: 90,
-          left: 484
-        }
-      ];
+      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 150 })
+        .resize(1200, 630)
+        .png()
+        .toBuffer();
 
       let finalImage: Buffer;
       if (bannerBuf) {
         try {
-          const bannerBase = await sharp(bannerBuf)
-            .resize(1200, 630, { fit: 'cover' })
-            .png()
-            .toBuffer();
-          finalImage = await sharp(bannerBase)
-            .composite([
-              { input: Buffer.from(baseSvg) },
-              ...composites
-            ])
-            .png()
+          finalImage = await sharp(bannerBuf)
+            .resize(1200, 630, { fit: 'cover', position: 'center' })
+            .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png({ quality: 95 })
             .toBuffer();
         } catch(bErr) {
-          finalImage = await sharp(Buffer.from(baseSvg))
-            .composite(composites)
-            .png()
+          const fallbackBaseSvg = `
+            <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#09090b" />
+                  <stop offset="50%" stop-color="#0f172a" />
+                  <stop offset="100%" stop-color="#181820" />
+                </linearGradient>
+                <radialGradient id="centerGlow" cx="50%" cy="40%" r="60%">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
+                  <stop offset="70%" stop-color="#1e3a8a" stop-opacity="0.05" />
+                  <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+                </radialGradient>
+              </defs>
+              <rect width="1200" height="630" fill="url(#darkBg)"/>
+              <rect width="1200" height="630" fill="url(#centerGlow)"/>
+            </svg>
+          `;
+          finalImage = await sharp(Buffer.from(fallbackBaseSvg))
+            .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png({ quality: 95 })
             .toBuffer();
         }
       } else {
-        finalImage = await sharp(Buffer.from(baseSvg))
-          .composite(composites)
-          .png()
+        const fallbackBaseSvg = `
+          <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#09090b" />
+                <stop offset="50%" stop-color="#0f172a" />
+                <stop offset="100%" stop-color="#181820" />
+              </linearGradient>
+              <radialGradient id="centerGlow" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
+                <stop offset="70%" stop-color="#1e3a8a" stop-opacity="0.05" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
+              </radialGradient>
+            </defs>
+            <rect width="1200" height="630" fill="url(#darkBg)"/>
+            <rect width="1200" height="630" fill="url(#centerGlow)"/>
+          </svg>
+        `;
+        finalImage = await sharp(Buffer.from(fallbackBaseSvg))
+          .composite([{ input: overlayBuf, top: 0, left: 0 }])
+          .png({ quality: 95 })
           .toBuffer();
       }
 
@@ -28791,6 +28778,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let cleanH = creatorHandle.replace(/^@+/, "");
         let authorName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         let authorAvatar = "";
+        let authorBanner = "";
         let authorBio = "Community reviewer on Yoouz.";
 
         try {
@@ -28798,6 +28786,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           if (profile) {
             if (profile.name && profile.name !== "Registered User") authorName = profile.name;
             if (profile.avatar) authorAvatar = profile.avatar;
+            if (profile.banner) authorBanner = profile.banner;
             if (profile.handle) cleanH = profile.handle.replace(/^@+/, "");
             if (profile.bio) authorBio = profile.bio;
           }
@@ -28817,13 +28806,14 @@ function injectOpenGraphTags(html: string, meta: any) {
             if (match && match.author) {
               if (match.author.name && match.author.name !== "Registered User") authorName = match.author.name;
               if (match.author.avatar) authorAvatar = match.author.avatar;
+              if (!authorBanner && (match.placeBannerUrl || match.thumbnailUrl)) authorBanner = match.placeBannerUrl || match.thumbnailUrl;
             }
           } catch(e) {}
         }
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}&v=16`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=16`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 
