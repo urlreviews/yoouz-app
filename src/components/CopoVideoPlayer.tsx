@@ -141,26 +141,24 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Seamless continuous circular feed: repeats video sequence so swipe momentum flows 100% naturally into next video
-  const [loopCount, setLoopCount] = useState<number>(effectiveVideos.length > 0 ? 10 : 1);
+  // Seamless continuous circular feed: ONLY on global discovery feed with many videos
+  // For single videos, place/business review context, or embeds: NEVER duplicate cards
+  const shouldLoop = !feedContextTitle && !isBusinessOwnerView && !isEmbed && effectiveVideos.length >= 4;
+  const [loopCount, setLoopCount] = useState<number>(shouldLoop ? 10 : 1);
   useEffect(() => {
-    setLoopCount(effectiveVideos.length > 0 ? 10 : 1);
-  }, [effectiveVideos.length]);
+    setLoopCount(shouldLoop ? 10 : 1);
+  }, [shouldLoop, effectiveVideos.length]);
 
   const displayItems = useMemo(() => {
     if (effectiveVideos.length === 0) return [];
-    if (effectiveVideos.length === 1) {
-      const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
-      for (let loop = 0; loop < loopCount; loop++) {
-        items.push({
-          video: effectiveVideos[0],
-          cardIndex: loop,
-          realIndex: 0,
-          slotId: `video-slot-${loop}`,
-          key: `vid-${effectiveVideos[0].id}-${loop}`
-        });
-      }
-      return items;
+    if (!shouldLoop || loopCount === 1) {
+      return effectiveVideos.map((vid, i) => ({
+        video: vid,
+        cardIndex: i,
+        realIndex: i,
+        slotId: `video-slot-${i}`,
+        key: `vid-${vid.id}-${i}`
+      }));
     }
     const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
     for (let loop = 0; loop < loopCount; loop++) {
@@ -176,7 +174,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     }
     return items;
-  }, [effectiveVideos, loopCount]);
+  }, [effectiveVideos, loopCount, shouldLoop]);
 
   const [activeCardIndex, setActiveCardIndex] = useState<number>(() => {
     return Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)));
@@ -1092,7 +1090,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             onSelectVideoIndex(realIdx);
 
             // Dynamically extend loop buffer when approaching the end of loaded loops
-            if (videos.length > 0 && cardIdx >= displayItems.length - 4) {
+            if (shouldLoop && videos.length > 0 && cardIdx >= displayItems.length - 4) {
               setLoopCount((prev) => prev + 5);
             }
 
@@ -1191,11 +1189,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(nextIdx, "smooth");
-    } else if (videos.length >= 1) {
+    } else if (shouldLoop && videos.length >= 1) {
       setLoopCount((prev) => prev + 5);
       scrollToCard(nextIdx, "smooth");
     }
-  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted, shouldLoop]);
 
   const handlePrev = useCallback(() => {
     if (isSessionAudioUnlocked && !isMuted) {

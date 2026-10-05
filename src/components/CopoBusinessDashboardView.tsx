@@ -4493,7 +4493,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               currentUser={currentUser || effectiveUser}
               isBusinessOwnerView={true}
               onOpenOwnerReply={(v) => setActiveReplyModalVideo(v)}
-              isEmbed={true}
+              isEmbed={false}
               onCloseEmbed={() => setActiveVideoModal(null)}
             />
           </div>
