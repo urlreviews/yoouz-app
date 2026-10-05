@@ -31,6 +31,7 @@ import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
+import { getAvatarColor } from "../lib/avatar";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -768,11 +769,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                             alt={title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=65a30d&color=fff&bold=true&size=128`;
+                              const dynamicColor = getAvatarColor(title, propHandle || resolvedDomain || title).bg.replace('#', '');
+                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=${dynamicColor}&color=fff&bold=true&size=128`;
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-[#65a30d] text-white text-sm font-bold">
+                          <div 
+                            className="w-full h-full flex items-center justify-center text-white text-sm font-bold"
+                            style={{ backgroundColor: getAvatarColor(title, propHandle || resolvedDomain || title).bg }}
+                          >
                             {title.charAt(0).toUpperCase()}
                           </div>
                         )}

@@ -27143,8 +27143,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         }
       } catch(e) {}
 
-      // Try local reviews index for avatar and user video reviews
-      let userTopVideoThumb = "";
+      // Try local reviews index for avatar ONLY (NEVER use place banner for user profile!)
       try {
         const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
         const matches = localList.filter((v: any) => 
@@ -27155,8 +27154,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
         for (const m of matches) {
           const av = m.author?.avatar || m.authorAvatar;
           if (av && !candidateUrls.includes(av)) candidateUrls.push(av);
-          if (!userTopVideoThumb) {
-            userTopVideoThumb = m.placeBannerUrl || m.thumbnailUrl || m.videoThumbnail || "";
+          if (!profile?.banner && m.author?.banner) {
+            profile = { ...(profile || {}), banner: m.author.banner };
           }
         }
       } catch(e) {}
@@ -27166,14 +27165,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
       if (kn && kn.avatar && !candidateUrls.includes(kn.avatar)) {
         candidateUrls.push(kn.avatar);
       }
+      if (kn && (kn as any).banner && !profile?.banner) {
+        profile = { ...(profile || {}), banner: (kn as any).banner };
+      }
 
-      // Try Bunny DB
+      // Try Bunny DB for user's custom personal banner and avatar ONLY
       let bannerCandidateUrl = (query.bannerUrl as string) || (profile?.banner as string) || "";
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           const res = await bunnyDb.execute({
-            sql: `SELECT avatar, data FROM users WHERE id = ? OR email LIKE ? OR (name IS NOT NULL AND LOWER(name) = ?) LIMIT 1`,
+            sql: `SELECT avatar, banner, data FROM users WHERE id = ? OR email LIKE ? OR (name IS NOT NULL AND LOWER(name) = ?) LIMIT 1`,
             args: [rawHandle, `%${cleanLower}%`, rawName.toLowerCase()]
           });
           if (res.rows && res.rows.length > 0) {
@@ -27184,17 +27186,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
             }
             const av = parsed.avatar || r.avatar;
             if (av && !candidateUrls.includes(av)) candidateUrls.push(av);
-            if (!bannerCandidateUrl && parsed.banner) bannerCandidateUrl = parsed.banner;
+            const bn = parsed.banner || r.banner;
+            if (!bannerCandidateUrl && bn) bannerCandidateUrl = bn;
           }
         }
       } catch(e) {}
 
-      if (!bannerCandidateUrl && userTopVideoThumb) {
-        bannerCandidateUrl = userTopVideoThumb;
-      }
-
       let bannerBuf: Buffer | null = null;
-      if (bannerCandidateUrl && typeof bannerCandidateUrl === 'string') {
+      if (bannerCandidateUrl && typeof bannerCandidateUrl === 'string' && bannerCandidateUrl.trim() !== '') {
         try {
           if (bannerCandidateUrl.startsWith('data:')) {
             const buf = decodeDataUrl(bannerCandidateUrl);
@@ -27243,7 +27242,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
               }
             }
           } else if (candUrl.startsWith('/api/avatar')) {
-            // will render vector monogram below
             break;
           } else if (candUrl.startsWith('http')) {
             const controller = new AbortController();
@@ -27266,6 +27264,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const displayName = profile?.name && profile.name !== "Registered User" ? profile.name : (rawName && rawName !== "Creator" ? rawName : `@${cleanH}`);
       const initial = (displayName.trim().replace(/^@+/, '').charAt(0) || cleanH.charAt(0) || "U").toUpperCase();
       const subtitleText = "Reviewer Profile";
+
+      const avatarColorObj = getAvatarColor(displayName, cleanH);
+      const avatarBgColor = avatarColorObj.bg || "#1E88E5";
+      const avatarTextColor = avatarColorObj.text || "#ffffff";
 
       // Render Squircle Avatar (68x68, rx=20) matching profile drawer & modal preview
       let avatarPngBase64 = "";
@@ -27323,10 +27325,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
               </g>
             ` : `
-              <!-- Lime-green signature avatar matching user profile and Screenshot 1 & 2 -->
-              <rect x="14" y="14" width="68" height="68" rx="20" fill="#65a30d" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <!-- Dynamic signature avatar matching user profile (e.g. Blue for Ben Blue, Light Green for Steven Akan) -->
+              <rect x="14" y="14" width="68" height="68" rx="20" fill="${avatarBgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
               <g transform="translate(14, 14)">
-                ${renderTextPath(initial, 34 - (getTextAdvanceWidth(initial, 32, true) / 2), 46, 32, true, '#ffffff')}
+                ${renderTextPath(initial, 34 - (getTextAdvanceWidth(initial, 32, true) / 2), 46, 32, true, avatarTextColor)}
               </g>
             `}
 
@@ -29056,14 +29058,14 @@ function injectOpenGraphTags(html: string, meta: any) {
             if (match && match.author) {
               if (match.author.name && match.author.name !== "Registered User") authorName = match.author.name;
               if (match.author.avatar) authorAvatar = match.author.avatar;
-              if (!authorBanner && (match.placeBannerUrl || match.thumbnailUrl)) authorBanner = match.placeBannerUrl || match.thumbnailUrl;
+              if (!authorBanner && match.author.banner) authorBanner = match.author.banner;
             }
           } catch(e) {}
         }
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=16`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=35`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 
