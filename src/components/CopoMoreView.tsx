@@ -502,7 +502,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       category: "technical",
       question: "Is Yoouz free for consumers and businesses?",
       answer:
-        "Yes! Browsing, searching, bookmarking, posting 60-second video reviews, and basic business domain claiming are 100% free.",
+        "Yes. Browsing, discovering local venues, posting authentic 60-second video reviews, and venue profile claiming are included for all users and business operators with no hidden fees.",
       tags: ["free", "pricing", "cost", "subscription"]
     }
   ];

@@ -613,7 +613,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           return (
                             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] bg-zinc-950 border border-white/20 flex items-center justify-center shrink-0 shadow-sm hover:ring-2 hover:ring-white/40 transition-all p-2.5">
                               <svg viewBox="0 0 24 24" className="w-full h-full fill-white">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
+                                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
                               </svg>
                             </div>
                           );

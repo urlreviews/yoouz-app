@@ -92,7 +92,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
           >
             <div className="relative flex items-center justify-center w-[40px] h-[40px] rounded-[13px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0 border border-zinc-800">
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
               </svg>
             </div>
             <div className="flex flex-col justify-center min-w-0 pt-0.5">

@@ -2185,7 +2185,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             >
               <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
                 </svg>
               </div>
               <div className="flex flex-col justify-center pt-0.5 min-w-0">
@@ -2359,164 +2359,106 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                    className="w-full h-full rounded-full border border-zinc-200/60 bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
+                    className="w-full h-full rounded-full border border-zinc-700/80 bg-zinc-900 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs p-0.5"
                     imageClassName="w-full h-full object-contain rounded-full"
-                    fallbackTextClassName="font-black text-xs text-zinc-950"
+                    fallbackTextClassName="font-black text-xs text-white"
                   />
                 </button>
 
                 {/* Business Account Dropdown */}
                 {showAccountDropdown && (
-                  <div className="fixed top-[60px] right-3 w-[270px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 sm:w-68 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="px-4 py-3 border-b border-zinc-800 mb-1">
-                      <div className="flex items-center gap-2.5">
-                        <CopoBrandLogo
-                          domain={currentPlace.website || currentPlace.id}
-                          name={currentPlace.name}
-                          logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                          className="w-8 h-8 rounded-xl border border-zinc-200/60 bg-white flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-2xs p-1"
-                          imageClassName="w-full h-full object-contain rounded-lg"
-                          fallbackTextClassName="font-black text-xs text-zinc-950"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1">
-                            <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
-                            <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
-                          </div>
-                          <div className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
-                            {verifiedBusinessSession?.businessEmail || (currentPlace as any).claimedByEmail || 'business@domain.com'}
+                  <>
+                    {/* Fixed invisible backdrop for click-outside dismiss on mobile & desktop */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowAccountDropdown(false)} 
+                    />
+
+                    <div className="fixed top-[60px] right-3 w-[280px] sm:absolute sm:inset-auto sm:top-full sm:right-0 sm:mt-2 bg-zinc-900 rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      {/* Business Header Card */}
+                      <div className="px-4 py-3 border-b border-zinc-800/80 mb-1">
+                        <div className="flex items-center gap-3">
+                          <CopoBrandLogo
+                            domain={currentPlace.website || currentPlace.id}
+                            name={currentPlace.name}
+                            logoUrl={profileLogoUrl || currentPlace.logoUrl}
+                            className="w-9 h-9 rounded-xl border border-zinc-700/80 bg-zinc-800 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm p-1"
+                            imageClassName="w-full h-full object-contain rounded-lg"
+                            fallbackTextClassName="font-black text-xs text-white"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
+                              <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                            </div>
+                            <div className="text-[11px] text-zinc-400 truncate mt-0.5 font-medium">
+                              {currentPlace.website || (currentPlace as any).domain || 'yoouz.com'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-zinc-300 text-[10px] font-bold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                        {t("business.verifiedBusinessActive", "Verified Business (100% Free)")}
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => {
-                        setActiveTab('profile');
-                        setShowAccountDropdown(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <Settings className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.profile", "Profile")}</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        setIsNotificationSettingsOpen(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <Bell className="w-4 h-4 text-zinc-200" />
-                      <span>{t("nav.notifications", "Notifications")}</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        setFaqSearchQuery('');
-                        setShowHelpModal(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <HelpCircle className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.guideSupport", "Guide & Support")}</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        setIsClaiming(true);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <Building2 className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.switchClaimVenue", "Switch or Claim Venue")}</span>
-                    </button>
-                    
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
-                        if (onOpenPlaceDrawer) {
-                          onOpenPlaceDrawer(targetId);
-                        } else {
-                          window.location.href = `/place/${targetId}`;
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <ExternalLink className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.viewPublicListing", "View Public Listing")}</span>
-                    </button>
 
-                    <button
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        onNavigate('home');
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
-                    >
-                      <Home className="w-4 h-4 text-zinc-200" />
-                      <span>{t("business.goToConsumerFeed", "Go to Yoouz Consumer Feed")}</span>
-                    </button>
-                    
-                    <div className="h-px bg-zinc-800 my-1" />
+                        {/* Clean Executive Badge */}
+                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 border border-zinc-700/80 text-zinc-200 text-[10px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] shrink-0" />
+                          <span>{t("business.verifiedWorkspace", "Verified Business Workspace")}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Core Essential Actions */}
+                      <button 
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          setIsClaiming(true);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                      >
+                        <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <span>{t("business.switchClaimVenue", "Switch or Claim Venue")}</span>
+                      </button>
+                      
+                      <button 
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
+                          if (onOpenPlaceDrawer) {
+                            onOpenPlaceDrawer(targetId);
+                          } else {
+                            window.location.href = `/place/${targetId}`;
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                      >
+                        <ExternalLink className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <span>{t("business.viewPublicListing", "View Public Listing")}</span>
+                      </button>
 
-                    <div className="px-4 py-1.5 flex items-center gap-2 text-[11px] font-medium text-zinc-400">
                       <button
-                        type="button"
                         onClick={() => {
                           setShowAccountDropdown(false);
-                          if (onOpenLegal) onOpenLegal("privacy");
-                          else setActiveTab("overview");
+                          onNavigate('home');
                         }}
-                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
                       >
-                        {t("legal.privacy", "Privacy")}
+                        <Home className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <span>{t("business.goToConsumerFeed", "Go to Yoouz Consumer Feed")}</span>
                       </button>
-                      <span className="text-zinc-600">•</span>
-                      <button
-                        type="button"
+                      
+                      <div className="h-px bg-zinc-800 my-1.5" />
+                      
+                      <button 
                         onClick={() => {
                           setShowAccountDropdown(false);
-                          if (onOpenLegal) onOpenLegal("terms");
-                          else setActiveTab("overview");
+                          localStorage.removeItem('copo_business_verified_session');
+                          window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: null }));
+                          setVerifiedBusinessSession(null);
                         }}
-                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 transition-colors text-left text-xs font-bold text-red-400 cursor-pointer min-h-[44px]"
                       >
-                        {t("legal.terms", "Terms")}
-                      </button>
-                      <span className="text-zinc-600">•</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          setActiveTab("more");
-                        }}
-                        className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-                      >
-                        {t("legal.about", "About")}
+                        <LogOut className="w-4 h-4 text-red-400 shrink-0" />
+                        <span>{t("business.signOutBusiness", "Sign Out of Business")}</span>
                       </button>
                     </div>
-
-                    <div className="h-px bg-zinc-800 my-1" />
-                    
-                    <button 
-                      onClick={() => {
-                        setShowAccountDropdown(false);
-                        localStorage.removeItem('copo_business_verified_session');
-                        window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: null }));
-                        setVerifiedBusinessSession(null);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/10 transition-colors text-left text-xs font-bold text-red-400 cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 text-red-400" />
-                      <span>{t("business.signOutBusiness", "Sign Out of Business")}</span>
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
 
@@ -4749,8 +4691,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 {
                   id: 'qa-is-it-free',
                   icon: ShieldCheck,
-                  question: 'Is claiming and managing my venue 100% free?',
-                  answer: 'Yes, completely free forever. Venue claiming, verified status, receiving real-time review alerts, publishing official owner replies, downloading print-ready table QR standees, and website embed widgets are 100% free for all verified venue operators with no credit card or billing ever required.'
+                  question: 'Is claiming and managing my venue free of charge?',
+                  answer: 'Yes. Venue claiming, verified business badges, real-time review alerts, official owner replies, print-ready QR table standees, and website review embeds are fully included for all verified venue operators with zero subscription or hidden fees.'
                 },
                 {
                   id: 'qa-reply-reviews',

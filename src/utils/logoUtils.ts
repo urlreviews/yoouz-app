@@ -165,8 +165,8 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
 
 export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
   <rect width="24" height="24" rx="6" fill="#09090b"/>
-  <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.2)" stroke-width="0.8"/>
-  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" stroke="rgba(255, 255, 255, 0.18)" stroke-width="0.8"/>
+  <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff"/>
 </svg>`;
 
 export const YOOUZ_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(YOOUZ_LOGO_SVG)}`;
