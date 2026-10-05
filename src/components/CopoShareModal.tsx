@@ -24,11 +24,12 @@ import {
   Download,
   ShieldCheck,
   CheckCircle2,
-  CheckCircle
+  CheckCircle,
+  MapPin
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { getProxiedImageUrl } from "../utils/logoUtils";
+import { getProxiedImageUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
@@ -46,6 +47,8 @@ interface CopoShareModalProps {
   website?: string;
   bannerUrl?: string;
   isCreatorProfile?: boolean;
+  isBusinessProfile?: boolean;
+  rating?: number;
 
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
@@ -65,6 +68,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   website: propWebsite,
   bannerUrl: propBannerUrl,
   isCreatorProfile: propIsCreatorProfile,
+  isBusinessProfile: propIsBusinessProfile,
+  rating: propRating,
   video,
   onClose,
   onOpenReport,
@@ -207,7 +212,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     shareUrl = propShareUrl || appOrigin;
     title = propTitle || "Yoouz - Real People. Real Reviews.";
     subtitle = propSubtitle || "Authentic 60-Second Video Reviews";
-    isBusiness = Boolean(propDomain || propWebsite || propLogoUrl);
+    isBusiness = Boolean(propIsBusinessProfile || propDomain || propWebsite || propLogoUrl);
     resolvedDomain = propDomain || (propWebsite ? extractCleanDomain(propWebsite) : "");
     resolvedWebsite = propWebsite || "";
     resolvedLogoUrl = propLogoUrl;
@@ -218,21 +223,21 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Fallback background image (instant, zero-latency thumbnail)
   const localPreviewBg = isVideoMode && video
     ? (video.thumbnailUrl || (video as any).videoThumbnail || (video as any).videoPreviewUrl || resolvedBannerUrl || "")
-    : (resolvedBannerUrl || resolvedLogoUrl || "");
+    : (resolvedBannerUrl || (isBusiness && resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) || "");
 
   const resolvedAuthorName = isVideoMode && video
     ? (video.author?.name || (video as any)?.authorName || "Verified Reviewer")
     : (title || "Community Reviewer");
 
-  const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : 5;
+  const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);
 
   // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
       ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=9`
-      : isBusiness
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=20`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=16`
+      : (isBusiness || propIsBusinessProfile)
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=22`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=16`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -661,7 +666,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           <div className="p-4 sm:p-5 flex flex-col space-y-3.5 animate-in fade-in duration-150">
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
             <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
-              {propIsCreatorProfile || (!isVideoMode && !isBusiness) ? (
+              {propIsCreatorProfile || (!isVideoMode && !isBusiness && !propIsBusinessProfile) ? (
                 /* DEDICATED USER / REVIEWER PROFILE CARD (Single clean author squircle on bottom, matching profile header & banner) */
                 <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
                   {/* Banner Background: User's custom banner or signature dark blue grid banner */}
@@ -731,8 +736,81 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   </div>
                 </div>
+              ) : !isVideoMode && (isBusiness || propIsBusinessProfile) ? (
+                /* DEDICATED BUSINESS PROFILE SHARE CARD (Full Cover Banner + Single Bottom Business Squircle Logo & Info) */
+                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
+                  {/* Banner Background: Business cover banner or cinematic gradient */}
+                  {(resolvedBannerUrl || localPreviewBg) ? (
+                    <div className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={getProxiedImageUrl(resolvedBannerUrl || localPreviewBg || "")}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110"
+                        referrerPolicy="no-referrer"
+                      />
+                      <img
+                        src={getProxiedImageUrl(resolvedBannerUrl || localPreviewBg || "")}
+                        alt={title}
+                        className="relative z-1 w-full h-full object-cover filter brightness-95"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.18),transparent_70%)]" />
+                    </div>
+                  )}
+
+                  {/* Ambient dark gradient vignette to ensure absolute legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
+
+                  {/* TOP BAR: Watermark Pill Only (No redundant duplicate business logo or name on top-left) */}
+                  <div className="absolute top-2.5 right-2.5 flex items-center z-10">
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span>yoouz.com</span>
+                    </div>
+                  </div>
+
+                  {/* BOTTOM BAR: Single Business Profile Info with Squircle Logo, Verified Badge, Rating & Location */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Business Squircle Logo Container Matching Profile Header */}
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[16px] sm:rounded-[18px] overflow-hidden border border-white/30 bg-white shadow-xl flex items-center justify-center p-1 shrink-0">
+                        <CopoBrandLogo
+                          domain={resolvedDomain || title}
+                          name={title}
+                          website={resolvedWebsite}
+                          logoUrl={resolvedLogoUrl}
+                          bannerUrl={resolvedBannerUrl}
+                          className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                          imageClassName="w-full h-full object-contain rounded-[12px] sm:rounded-[14px]"
+                          fallbackTextClassName="font-black text-xs text-zinc-950"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-xs sm:text-sm font-bold leading-tight truncate drop-shadow-md flex items-center gap-1.5">
+                          <span>{title}</span>
+                          {/* Dark Mode Verified Checkmark (NO green!) */}
+                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-black shrink-0" />
+                        </p>
+                        <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] sm:text-xs leading-tight truncate drop-shadow-sm opacity-90 mt-0.5 font-medium">
+                          <div className="flex items-center gap-0.5 text-amber-400 font-bold shrink-0">
+                            <span className="text-xs font-black">★</span>
+                            <span>{ratingVal ? `${ratingVal}.0` : "5.0"}</span>
+                          </div>
+                          <span>•</span>
+                          <span className="truncate max-w-[200px]">
+                            {resolvedSubtitle || t("place.businessLocation", "Verified Business")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                /* BUSINESS & VIDEO REVIEW SHARE CARD */
+                /* VIDEO REVIEW SHARE CARD */
                 <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
                   {/* Clean background thumbnail without duplicate image stacking */}
                   <img
@@ -779,34 +857,44 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   )}
 
-                  {/* BOTTOM BAR: Author Info & Yoouz Watermark */}
+                  {/* BOTTOM BAR: Author Info (for Video) or Location Pill (for Business) & Yoouz Watermark */}
                   <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
-                        {resolvedAvatarUrl ? (
-                          <img
-                            src={getProxiedImageUrl(resolvedAvatarUrl)}
-                            alt={resolvedAuthorName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
-                            {resolvedAuthorName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                    {isVideoMode ? (
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
+                          {resolvedAvatarUrl ? (
+                            <img
+                              src={getProxiedImageUrl(resolvedAvatarUrl)}
+                              alt={resolvedAuthorName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
+                              {resolvedAuthorName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
+                            {resolvedAuthorName}
+                          </p>
+                          <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                            {resolvedSubtitle}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm">
-                          {resolvedAuthorName}
-                        </p>
-                        <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
-                          {resolvedSubtitle}
-                        </p>
+                    ) : (
+                      /* Clean Business Location Pill - No redundant duplicate business logo or name */
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-xs text-white shadow-xs min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                        <span className="font-semibold truncate max-w-[220px]">
+                          {resolvedSubtitle || t("place.businessLocation", "Business Location")}
+                        </span>
                       </div>
-                    </div>
+                    )}
 
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />

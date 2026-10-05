@@ -2738,11 +2738,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         onClose={() => setIsShareModalOpen(false)}
         shareUrl={`${window.location.origin}/place/${getPlaceSlug(place)}`}
         title={displayedPlaceName}
-        subtitle={t("place.businessLocation", "Business Location")}
-        logoUrl={place.logoUrl || primaryLogoUrl || undefined}
+        subtitle={place.address && place.address !== "Verified Location" ? place.address : (place.city ? `${place.city}${place.country ? ', ' + place.country : ''}` : t("place.businessLocation", "Business Location"))}
+        logoUrl={primaryLogoUrl || place.logoUrl || undefined}
         domain={drawerDomain || extractCleanDomain(place.website || place.id) || undefined}
         website={place.website || undefined}
-        bannerUrl={place.bannerUrl || place.ogImage || undefined}
+        bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage || undefined}
+        isBusinessProfile={true}
+        rating={place.rating || 5.0}
       />
 
       {/* Business Claim & Verification Modal via Resend */}
