@@ -2200,8 +2200,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </div>
             </div>
 
-            {/* 1. Home button at the top */}
+            {/* Navigation items list (Clean unified list matching consumer sidebar) */}
             <nav className="flex flex-col gap-1.5">
+              {/* Home button at the top */}
               <button
                 id="biz-nav-btn-home"
                 onClick={() => onNavigate('home')}
@@ -2213,61 +2214,52 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 </div>
                 <span className="truncate flex-1">{t('nav.home', 'Home')}</span>
               </button>
+
+              {suiteNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    id={`biz-nav-btn-${item.id}`}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                      isActive 
+                        ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
+                        : 'text-white hover:bg-zinc-900/90 font-medium'
+                    }`}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <Icon className="w-5 h-5 shrink-0 transition-colors text-white" />
+                    </div>
+                    <span className="truncate flex-1">{item.label}</span>
+                    {item.badge !== undefined && (
+                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
+                        {item.badge}
+                      </span>
+                    )}
+                    {(item as any).isProBadge && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
+                        {t("business.active", "Active")}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* More Button under Profile */}
+              <button
+                id="biz-nav-btn-more"
+                onClick={() => onNavigate('more')}
+                className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium"
+                title={t('nav.more', 'More')}
+              >
+                <div className="relative flex items-center justify-center">
+                  <Menu className="w-5 h-5 shrink-0 transition-colors text-white" />
+                </div>
+                <span className="truncate flex-1">{t('nav.more', 'More')}</span>
+              </button>
             </nav>
-
-            {/* Navigation items list */}
-            <div>
-              <div className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-zinc-200 mb-1">
-                {t("business.managementSuite", "Management Suite")}
-              </div>
-
-              <nav className="flex flex-col gap-1.5 mt-1">
-                {suiteNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      id={`biz-nav-btn-${item.id}`}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
-                        isActive 
-                          ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
-                          : 'text-white hover:bg-zinc-900/90 font-medium'
-                      }`}
-                    >
-                      <div className="relative flex items-center justify-center">
-                        <Icon className="w-5 h-5 shrink-0 transition-colors text-white" />
-                      </div>
-                      <span className="truncate flex-1">{item.label}</span>
-                      {item.badge !== undefined && (
-                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
-                          {item.badge}
-                        </span>
-                      )}
-                      {(item as any).isProBadge && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
-                          {t("business.active", "Active")}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {/* More Button under Profile */}
-                <button
-                  id="biz-nav-btn-more"
-                  onClick={() => onNavigate('more')}
-                  className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium mt-1"
-                  title={t('nav.more', 'More')}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <Menu className="w-5 h-5 shrink-0 transition-colors text-white" />
-                  </div>
-                  <span className="truncate flex-1">{t('nav.more', 'More')}</span>
-                </button>
-              </nav>
-            </div>
           </div>
         </div>
 
