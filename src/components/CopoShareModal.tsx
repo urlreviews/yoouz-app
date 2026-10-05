@@ -34,6 +34,7 @@ import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/p
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
+import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 
 interface CopoShareModalProps {
   // Mode A: General Share
@@ -235,13 +236,48 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);
 
+  // Helper to compute place rating & review count (matching Screenshot 3)
+  const placeStats = (() => {
+    if (!isVideoMode || !video) {
+      return { count: 1, avgRating: 5.0, scoreStr: "5.0" };
+    }
+    const cleanDomain = (resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title || "").toLowerCase();
+    const cleanId = (video.placeId || "").toLowerCase();
+    let matching: any[] = [];
+    try {
+      const saved = localStorage.getItem("yoouz_video_reviews");
+      const list = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(list) && list.length > 0) {
+        matching = list.filter((v: any) => {
+          const vDom = (v.placeWebsite || v.placeId || v.placeName || "").toLowerCase();
+          return (cleanDomain && vDom.includes(cleanDomain)) || (cleanId && vDom.includes(cleanId));
+        });
+      }
+    } catch(e) {}
+    if (matching.length === 0 && Array.isArray(INITIAL_SEED_VIDEOS)) {
+      matching = INITIAL_SEED_VIDEOS.filter((v: any) => {
+        const vDom = (v.placeWebsite || v.placeId || v.placeName || "").toLowerCase();
+        return (cleanDomain && vDom.includes(cleanDomain)) || (cleanId && vDom.includes(cleanId));
+      });
+    }
+    if (matching.length > 0) {
+      const count = matching.length;
+      const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
+      const avg = Number((sum / count).toFixed(1));
+      return { count, avgRating: avg, scoreStr: avg.toFixed(1) };
+    }
+    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || 1);
+    const fallbackRating = Number((video as any)?.placeRating || video.rating || 5.0);
+    return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
+  })();
+
   // Pre-generate dynamic social preview image url (server generated composite)
   const previewImageUrl = `${appOrigin}/api/og?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&v=9`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${resolvedAvatarUrl ? `&authorAvatar=${encodeURIComponent(resolvedAvatarUrl)}` : ""}&v=12`
       : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=22`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=16`
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=23`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}${resolvedAvatarUrl ? `&avatarUrl=${encodeURIComponent(resolvedAvatarUrl)}` : ""}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ""}&v=17`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -699,14 +735,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Dark Vignette Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* TOP BAR: Watermark Pill Only (No duplicate avatar/name on top) */}
-                  <div className="absolute top-2.5 right-2.5 flex items-center z-10">
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      <span>yoouz.com</span>
-                    </div>
-                  </div>
-
                   {/* BOTTOM BAR: Single Author Info with Squircle Avatar & Profile Details */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -769,14 +797,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Ambient dark gradient vignette to ensure absolute legibility */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* TOP BAR: Watermark Pill Only (No redundant duplicate business logo or name on top-left) */}
-                  <div className="absolute top-2.5 right-2.5 flex items-center z-10">
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      <span>yoouz.com</span>
-                    </div>
-                  </div>
-
                   {/* BOTTOM BAR: Single Business Profile Info with Squircle Logo & Verified Badge (Clean, more to the left, no extra text inside banner) */}
                   <div className="absolute bottom-3 left-2.5 sm:left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
                     <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
@@ -816,27 +836,35 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
 
-                  {/* TOP BAR: Place pill with Business Logo, Place Name & Rating */}
-                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
-                    <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
-                      <CopoBrandLogo
-                        domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
-                        name={title}
-                        website={resolvedWebsite || video?.placeWebsite}
-                        logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
-                        className="w-5 h-5 rounded-md bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs"
-                        imageClassName="w-full h-full object-contain rounded-xs"
-                        fallbackTextClassName="font-black text-[8px] text-zinc-950"
-                      />
-                      <span className="text-white text-xs font-bold truncate">
-                        {title}
-                      </span>
-                      {ratingVal && (
-                        <div className="flex items-center gap-0.5 text-amber-400 text-[11px] font-bold shrink-0">
-                          <span className="text-xs font-black">★</span>
-                          <span>{ratingVal}.0</span>
+                  {/* TOP BAR: Place pill with Business Logo, Place Name, Rating & Reviews Count (Matches Screenshot 3) */}
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center">
+                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[85%]">
+                      {/* Business Squircle Logo Container */}
+                      <div className="w-8 h-8 rounded-xl bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs">
+                        <CopoBrandLogo
+                          domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
+                          name={title}
+                          website={resolvedWebsite || video?.placeWebsite}
+                          logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
+                          className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                          imageClassName="w-full h-full object-contain rounded-lg"
+                          fallbackTextClassName="font-black text-[10px] text-zinc-950"
+                        />
+                      </div>
+                      {/* Text Column */}
+                      <div className="flex flex-col min-w-0 justify-center">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className="text-white text-xs font-bold truncate leading-tight">{title}</span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
-                      )}
+                        <div className="flex items-center gap-1 leading-tight mt-0.5">
+                          <span className="text-amber-400 text-xs font-black">★</span>
+                          <span className="text-amber-400 text-xs font-bold">{placeStats.scoreStr}</span>
+                          <span className="text-zinc-300 text-[10.5px] font-medium ml-0.5">
+                            ({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -851,11 +879,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   )}
 
-                  {/* BOTTOM BAR: Author Info (for Video) or Location Pill (for Business) & Yoouz Watermark */}
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
-                    {isVideoMode ? (
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs">
+                  {/* BOTTOM BAR: Author Info (Matches Screenshot 4) or Business Location Pill */}
+                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
+                    {isVideoMode && video ? (
+                      /* Matches Screenshot 4: By Name + Verified, 5 Stars row, Video review for domain */
+                      <div className="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[80%]">
+                        <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
                           {resolvedAvatarUrl ? (
                             <img
                               src={getProxiedImageUrl(resolvedAvatarUrl)}
@@ -866,23 +895,36 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[10.5px] font-bold">
+                            <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[11px] font-bold">
                               {resolvedAuthorName.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm flex items-center gap-1">
-                            <span>{resolvedAuthorName}</span>
-                            <CheckCircle className="w-3 h-3 fill-white text-black shrink-0" />
-                          </p>
-                          <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
-                            {resolvedSubtitle}
-                          </p>
+                        <div className="flex flex-col min-w-0 justify-center">
+                          {/* Line 1: By AuthorName + Verified badge */}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-white text-xs font-bold truncate leading-tight">By {resolvedAuthorName}</span>
+                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                          </div>
+                          {/* Line 2: 5 Stars */}
+                          <div className="flex items-center gap-0.5 leading-none my-0.5">
+                            {[1, 2, 3, 4, 5].map((starIdx) => (
+                              <span
+                                key={starIdx}
+                                className={`text-xs ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-amber-400 font-black' : 'text-zinc-600'}`}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                          {/* Line 3: Video review for domain */}
+                          <span className="text-zinc-300 text-[10px] leading-tight truncate">
+                            Video review for {resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase()}
+                          </span>
                         </div>
                       </div>
                     ) : (
-                      /* Clean Business Location Pill - No redundant duplicate business logo or name */
+                      /* Clean Business Location Pill */
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-xs text-white shadow-xs min-w-0">
                         <MapPin className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                         <span className="font-semibold truncate max-w-[220px]">
@@ -890,11 +932,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         </span>
                       </div>
                     )}
-
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      <span>yoouz.com</span>
-                    </div>
                   </div>
                 </div>
               )}

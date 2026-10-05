@@ -228,6 +228,8 @@ export function renderBrandedVideoOverlays(
   const ratingScore = rawRating.toFixed(1);
   const ratingNum = Math.round(rawRating);
   const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
+  const reviewsCount = Number((place as any)?.reviewsCount || (place as any)?.videoReviewCount || (video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || (video as any)?.totalReviews || 1);
+  const reviewsLabel = `(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`;
 
   const rawTargetDomain =
     (video as any)?.placeDomain ||
@@ -267,7 +269,11 @@ export function renderBrandedVideoOverlays(
   ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   const ratingWidth = ctx.measureText(ratingScore).width;
 
-  const topTextWidth = Math.max(nameWidth + (20 * safeScale), (16 * safeScale) + ratingWidth);
+  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const reviewsLabelWidth = ctx.measureText(reviewsLabel).width;
+  const ratingLineWidth = (14 * safeScale) + ratingWidth + (6 * safeScale) + reviewsLabelWidth;
+
+  const topTextWidth = Math.max(nameWidth + (20 * safeScale), ratingLineWidth);
   const topPillWidth = (8 * safeScale) + sqSize + (10 * safeScale) + topTextWidth + (14 * safeScale);
 
   // Outer black translucent glass pill
@@ -340,7 +346,7 @@ export function renderBrandedVideoOverlays(
     5.5 * safeScale
   );
 
-  // Line 2: Gold Star + Rating
+  // Line 2: Gold Star + Rating + Reviews Count
   drawStar(
     ctx,
     topColX + (5 * safeScale),
@@ -354,6 +360,10 @@ export function renderBrandedVideoOverlays(
   ctx.fillStyle = '#FBBF24';
   ctx.font = `800 ${12 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(ratingScore, topColX + (14 * safeScale), topPillY + (38 * safeScale));
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText(reviewsLabel, topColX + (14 * safeScale) + ratingWidth + (5 * safeScale), topPillY + (38 * safeScale));
 
   // -------------------------------------------------------------
   // 2. BOTTOM-LEFT: Reviewer Profile Pill (Screenshot 4)
@@ -461,45 +471,6 @@ export function renderBrandedVideoOverlays(
   ctx.fillStyle = '#94A3B8';
   ctx.font = `500 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(videoReviewLine, botColX, botPillY + (56 * safeScale));
-
-  // -------------------------------------------------------------
-  // 3. BOTTOM-RIGHT: yoouz.com watermark badge with red live dot
-  // -------------------------------------------------------------
-  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  const wmText = 'yoouz.com';
-  const wmTextWidth = ctx.measureText(wmText).width;
-  const redDotRadius = 3.2 * safeScale;
-  const wmPillHeight = 28 * safeScale;
-  const wmPillWidth = (12 * safeScale) + (redDotRadius * 2) + (6 * safeScale) + wmTextWidth + (12 * safeScale);
-  const wmX = width - wmPillWidth - (32 * safeScale);
-  const wmY = height - (32 * safeScale) - wmPillHeight;
-
-  drawRoundedRect(
-    ctx,
-    wmX,
-    wmY,
-    wmPillWidth,
-    wmPillHeight,
-    wmPillHeight / 2,
-    'rgba(0, 0, 0, 0.80)',
-    'rgba(255, 255, 255, 0.22)',
-    1.2 * safeScale
-  );
-
-  // Pulsing red dot
-  const dotCenterX = wmX + (12 * safeScale) + redDotRadius;
-  const dotCenterY = wmY + (wmPillHeight / 2);
-  ctx.beginPath();
-  ctx.arc(dotCenterX, dotCenterY, redDotRadius, 0, Math.PI * 2);
-  ctx.fillStyle = '#f43f5e';
-  ctx.fill();
-
-  // yoouz.com text
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = `800 ${10.5 * safeScale}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(wmText, dotCenterX + redDotRadius + (6 * safeScale), dotCenterY);
 
   ctx.restore();
 }
