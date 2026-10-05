@@ -193,7 +193,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
         <div className="flex flex-col gap-3">
           {/* Footer & Legal Links */}
           <div className="px-3 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
+            <div className="flex items-center gap-3.5 text-[11.5px] font-medium text-zinc-300">
               <button
                 onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
                 className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
