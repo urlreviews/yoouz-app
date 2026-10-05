@@ -2115,7 +2115,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
   // Nav Items array with clean Google Material icons (short, super premium labels matching CopoSidebar)
   const suiteNavItems = [
-    { id: 'overview' as BusinessTab, label: t('business.overview', 'Overview'), icon: BarChart3 },
     { 
       id: 'reviews' as BusinessTab, 
       label: t('business.reviews', 'Reviews'), 
@@ -2182,7 +2181,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             <div 
               id="biz-brand-logo"
               className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
-              onClick={() => onNavigate('home')}
+              onClick={() => setActiveTab('overview')}
             >
               <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
@@ -2206,11 +2205,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
             {/* Navigation items list (Clean unified list matching consumer sidebar) */}
             <nav className="flex flex-col gap-1.5">
-              {/* Home button at the top */}
+              {/* Home button at the top (Navigates to Business Suite Overview) */}
               <button
                 id="biz-nav-btn-home"
-                onClick={() => onNavigate('home')}
-                className="relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group text-white hover:bg-zinc-900/90 font-medium"
+                onClick={() => setActiveTab('overview')}
+                className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                  activeTab === 'overview'
+                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
+                    : 'text-white hover:bg-zinc-900/90 font-medium'
+                }`}
                 title={t('nav.home', 'Home')}
               >
                 <div className="relative flex items-center justify-center">
@@ -2448,6 +2451,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       <ExternalLink className="w-4 h-4 text-zinc-200" />
                       <span>{t("business.viewPublicListing", "View Public Listing")}</span>
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setShowAccountDropdown(false);
+                        onNavigate('home');
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer"
+                    >
+                      <Home className="w-4 h-4 text-zinc-200" />
+                      <span>{t("business.goToConsumerFeed", "Go to Yoouz Consumer Feed")}</span>
+                    </button>
                     
                     <div className="h-px bg-zinc-800 my-1" />
 
@@ -2457,7 +2471,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onClick={() => {
                           setShowAccountDropdown(false);
                           if (onOpenLegal) onOpenLegal("privacy");
-                          else onNavigate("home");
+                          else setActiveTab("overview");
                         }}
                         className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
                       >
@@ -2469,7 +2483,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                         onClick={() => {
                           setShowAccountDropdown(false);
                           if (onOpenLegal) onOpenLegal("terms");
-                          else onNavigate("home");
+                          else setActiveTab("overview");
                         }}
                         className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
                       >
@@ -2512,11 +2526,15 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode) */}
           <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2.5 shrink-0 z-20">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth px-1">
-              {/* Home Pill */}
+              {/* Home Pill (Navigates to Business Suite Overview) */}
               <button
                 type="button"
-                onClick={() => onNavigate('home')}
-                className="px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800"
+                onClick={() => setActiveTab('overview')}
+                className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                  activeTab === 'overview'
+                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
+                    : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
+                }`}
                 title={t('nav.home', 'Home')}
               >
                 <Home className="w-4 h-4 text-white shrink-0" />
