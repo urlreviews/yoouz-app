@@ -23,7 +23,8 @@ import {
   Bookmark,
   Download,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  CheckCircle
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -661,57 +662,98 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
             <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
               {propIsCreatorProfile || (!isVideoMode && !isBusiness) ? (
-                /* DEDICATED USER / REVIEWER PROFILE CARD (No star rating, clean layout) */
-                <div className="relative aspect-[16/9] w-full overflow-hidden flex flex-col justify-between p-3.5 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-zinc-800/80">
-                  {/* Top Bar: Pill Badge */}
-                  <div className="flex items-center justify-between z-10">
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-md">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="text-white text-xs font-bold">{title}</span>
+                /* DEDICATED USER / REVIEWER PROFILE CARD (Matching Business Share Card Layout + Profile Banner & Squircle) */
+                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
+                  {/* Banner Background: User's custom banner or signature dark blue grid banner */}
+                  {(resolvedBannerUrl || propBannerUrl) ? (
+                    <img
+                      src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
+                      alt={title}
+                      className="absolute inset-0 w-full h-full object-cover filter brightness-95"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.18),transparent_70%)]" />
+                      <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
+                        <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
+                          VERIFIED TOP REVIEWER
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[10px] font-bold text-zinc-300">
+                  )}
+
+                  {/* Dark Vignette Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/60 pointer-events-none" />
+
+                  {/* TOP BAR: Squircle Avatar Pill + Verified Badge & yoouz.com Watermark */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10">
+                    <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 shadow-md min-w-0 max-w-[80%]">
+                      {/* Squircle Avatar */}
+                      <div className="w-5 h-5 rounded-md bg-zinc-800 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-xs">
+                        {resolvedAvatarUrl ? (
+                          <img
+                            src={getProxiedImageUrl(resolvedAvatarUrl)}
+                            alt={title}
+                            className="w-full h-full object-cover rounded-xs"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=64`;
+                            }}
+                          />
+                        ) : (
+                          <span className="font-black text-[9px] text-white">
+                            {title.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-white text-xs font-bold truncate">
+                        {title}
+                      </span>
+                      {/* Dark Mode Verified Checkmark (NO green!) */}
+                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                    </div>
+
+                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                       <span>yoouz.com</span>
                     </div>
                   </div>
 
-                  {/* Center Area: Avatar, Name & Handle */}
-                  <div className="flex flex-col items-center justify-center text-center my-auto z-10 gap-1.5">
-                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/40 bg-zinc-800 shadow-xl">
-                      {resolvedAvatarUrl ? (
-                        <img
-                          src={getProxiedImageUrl(resolvedAvatarUrl)}
-                          alt={title}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-xl font-black">
-                          {title.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-zinc-950 stroke-[3]" />
+                  {/* BOTTOM BAR: Author Info with Squircle Avatar & Yoouz Watermark */}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {/* Profile Squircle Avatar Matching Profile Header */}
+                      <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-md flex items-center justify-center p-0.5">
+                        {resolvedAvatarUrl ? (
+                          <img
+                            src={getProxiedImageUrl(resolvedAvatarUrl)}
+                            alt={title}
+                            className="w-full h-full object-cover rounded-[8px]"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=27272a&color=fff&bold=true&size=128`;
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white text-xs font-bold rounded-[8px]">
+                            {title.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-xs font-semibold leading-tight truncate drop-shadow-sm flex items-center gap-1">
+                          <span>{title}</span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                        </p>
+                        <p className="text-zinc-300 text-[10.5px] leading-tight truncate drop-shadow-sm opacity-90">
+                          {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
+                        </p>
                       </div>
                     </div>
-                    <div className="space-y-0.5">
-                      <h4 className="text-white font-black text-sm sm:text-base leading-tight drop-shadow-sm flex items-center justify-center gap-1">
-                        <span>{title}</span>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20 shrink-0" />
-                      </h4>
-                      <p className="text-zinc-400 text-xs font-medium">
-                        {subtitle || t("profile.reviewerProfile", "Reviewer Profile")}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Bottom Bar: Watermark & Badge */}
-                  <div className="flex items-center justify-center text-center z-10">
-                    <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase bg-white/5 px-3 py-0.5 rounded-full border border-white/10">
-                      Yoouz Verified Reviewer Profile
-                    </span>
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white shrink-0 shadow-xs">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span>yoouz.com</span>
+                    </div>
                   </div>
                 </div>
               ) : (

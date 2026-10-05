@@ -27005,64 +27005,70 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const baseSvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
           <defs>
+            ${EMBEDDED_FONT_STYLE}
             <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#09090b" />
-              <stop offset="50%" stop-color="#121217" />
-              <stop offset="100%" stop-color="#181820" />
+              <stop offset="50%" stop-color="#0f172a" />
+              <stop offset="100%" stop-color="#09090b" />
             </linearGradient>
-            <radialGradient id="centerWhiteGlow" cx="50%" cy="40%" r="60%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
-              <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
+            <radialGradient id="centerBlueGlow" cx="50%" cy="36%" r="50%">
+              <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
+              <stop offset="60%" stop-color="#1e3a8a" stop-opacity="0.06" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            </pattern>
           </defs>
           <rect width="1200" height="630" fill="url(#bgGrad)"/>
-          <circle cx="600" cy="200" r="280" fill="url(#centerWhiteGlow)"/>
+          <rect width="1200" height="630" fill="url(#grid)"/>
+          <circle cx="600" cy="220" r="320" fill="url(#centerBlueGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-          <!-- Top Left Badge Pill -->
-          <rect x="48" y="48" width="310" height="48" rx="24" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <circle cx="76" cy="72" r="12" fill="#10b981"/>
-          <path d="M71 72 L75 76 L82 68" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="100" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="800" fill="#ffffff">Yoouz Verified Reviewer</text>
+          <!-- Top Left Badge Pill (Dark Mode - NO green) -->
+          <rect x="48" y="48" width="280" height="48" rx="24" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <circle cx="76" cy="72" r="12" fill="#18181b" stroke="#ffffff" stroke-width="2"/>
+          <path d="M71 72 L75 76 L81 69" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="180" y="78" font-family="YoouzSans, sans-serif" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">VERIFIED TOP REVIEWER</text>
 
           <!-- Top Right Watermark Pill -->
           <rect x="980" y="48" width="172" height="48" rx="24" fill="rgba(0,0,0,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
           <circle cx="1004" cy="72" r="6" fill="#f43f5e"/>
-          <text x="1020" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="900" fill="#ffffff">yoouz.com</text>
+          <text x="1080" y="78" font-family="YoouzSans, sans-serif" font-size="18" font-weight="700" fill="#ffffff" text-anchor="middle">yoouz.com</text>
 
           <!-- User Display Name -->
-          <text x="600" y="380" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="-1">${safeEscapedName}</text>
+          <text x="600" y="380" text-anchor="middle" font-family="YoouzSans, sans-serif" font-size="44" font-weight="700" fill="#ffffff" letter-spacing="-1">${safeEscapedName}</text>
 
-          <!-- User Handle & Role Subtitle -->
-          <text x="600" y="430" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="700" fill="#a1a1aa">@${safeEscapedHandle} • Authentic Video Reviews</text>
+          <!-- User Handle & Role Subtitle (ASCII dash, no tofu unicode) -->
+          <text x="600" y="430" text-anchor="middle" font-family="YoouzSans, sans-serif" font-size="24" font-weight="700" fill="#a1a1aa">@${safeEscapedHandle} - Authentic Video Reviews</text>
 
           <!-- Bottom Pill Badge -->
-          <rect x="420" y="485" width="360" height="48" rx="24" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <text x="600" y="516" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="800" fill="#ffffff">Authentic Video Reviewer Profile</text>
+          <rect x="420" y="480" width="360" height="48" rx="24" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <text x="600" y="511" text-anchor="middle" font-family="YoouzSans, sans-serif" font-size="17" font-weight="700" fill="#ffffff">Verified Reviewer Profile</text>
         </svg>
       `;
 
       const composites: any[] = [];
 
       if (avatarBuf) {
-        const circleMaskSvg = `
+        // Squircle mask matching User Profile Header Avatar
+        const squircleMaskSvg = `
           <svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="110" cy="110" r="106" fill="#ffffff"/>
+            <rect x="0" y="0" width="220" height="220" rx="48" ry="48" fill="#ffffff"/>
           </svg>
         `;
         const resizedAvatar = await sharp(avatarBuf)
           .resize(220, 220, { fit: 'cover' })
-          .composite([{ input: Buffer.from(circleMaskSvg), blend: 'dest-in' }])
+          .composite([{ input: Buffer.from(squircleMaskSvg), blend: 'dest-in' }])
           .png()
           .toBuffer();
 
         const borderRingSvg = `
           <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="116" cy="116" r="110" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="6"/>
-            <!-- Verified Checkmark Badge Icon at bottom right -->
-            <circle cx="182" cy="182" r="24" fill="#10b981" stroke="#09090b" stroke-width="3"/>
-            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="4" y="4" width="224" height="224" rx="52" ry="52" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
+            <!-- Dark mode verified badge at bottom right (NO green!) -->
+            <circle cx="182" cy="182" r="24" fill="#18181b" stroke="#ffffff" stroke-width="3"/>
+            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
 
@@ -27081,17 +27087,18 @@ app.get('/api/og-preview-v2', async (req, res) => {
         const fallbackAvatarSvg = `
           <svg width="232" height="232" viewBox="0 0 232 232" xmlns="http://www.w3.org/2000/svg">
             <defs>
+              ${EMBEDDED_FONT_STYLE}
               <linearGradient id="avGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#27272a" />
-                <stop offset="100%" stop-color="#09090b" />
+                <stop offset="0%" stop-color="#1e88e5" />
+                <stop offset="100%" stop-color="#1565c0" />
               </linearGradient>
             </defs>
-            <circle cx="116" cy="116" r="110" fill="url(#avGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
+            <rect x="4" y="4" width="224" height="224" rx="52" ry="52" fill="url(#avGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="5"/>
             <!-- Monogram Initial Letter -->
-            <text x="116" y="152" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="100" font-weight="900" fill="#ffffff" letter-spacing="-2">${initial}</text>
-            <!-- Verified Checkmark Badge -->
-            <circle cx="182" cy="182" r="24" fill="#10b981" stroke="#09090b" stroke-width="3"/>
-            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="116" y="152" text-anchor="middle" font-family="YoouzSans, sans-serif" font-size="110" font-weight="700" fill="#ffffff">${initial}</text>
+            <!-- Dark mode verified badge (NO green!) -->
+            <circle cx="182" cy="182" r="24" fill="#18181b" stroke="#ffffff" stroke-width="3"/>
+            <path d="M173 182 L179 188 L193 174" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
         composites.push({
