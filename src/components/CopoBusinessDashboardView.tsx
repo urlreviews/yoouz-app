@@ -63,24 +63,25 @@ import {
   Send,
   AlertCircle,
   Smartphone,
+  Calendar,
+  ShoppingBag,
+  Utensils,
+  Ticket,
+  Phone,
+  FileText,
   Sparkles,
   Share2,
   Heart,
   Bookmark,
   CheckCircle,
   Link2,
-  Calendar,
   Layers,
   MapPin,
-  Phone,
   Clock,
   Info,
   LayoutDashboard,
   Wrench,
-  ShoppingBag,
   Hotel,
-  Utensils,
-  FileText,
   Users,
   UserPlus,
   UserCheck,
@@ -1992,6 +1993,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       window.dispatchEvent(new CustomEvent('yoouz-place-updated', { detail: updatedPlaceObj }));
       window.dispatchEvent(new CustomEvent('copo_place_updated', { detail: updatedPlaceObj }));
     } catch (e) {}
+
+    handleSaveCta();
 
     setIsProfileSaved(true);
     setTimeout(() => setIsProfileSaved(false), 3000);
@@ -4395,6 +4398,98 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       value={businessCategory}
                       onChange={(cat) => setBusinessCategory(cat)}
                     />
+                  </div>
+
+                  {/* FEATURED ACTION BUTTON (CALL-TO-ACTION / CTA) */}
+                  <div className="space-y-3.5 pt-3 border-t border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Featured Action Button (CTA)
+                      </label>
+                      <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60">
+                        Appears on Business Page
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Choose the primary action button guests see on your Yoouz profile (e.g. Book Now, Order Online, Call Now, Contact Us).
+                    </p>
+
+                    {/* Action Preset Selector Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                      {[
+                        { id: 'book_now', label: 'Book Now', icon: Calendar },
+                        { id: 'order_online', label: 'Order Online', icon: ShoppingBag },
+                        { id: 'reserve_table', label: 'Reserve Table', icon: Utensils },
+                        { id: 'contact_us', label: 'Contact Us', icon: Mail },
+                        { id: 'visit_website', label: 'Visit Website', icon: ExternalLink },
+                        { id: 'call_now', label: 'Call Now', icon: Phone },
+                        { id: 'get_quote', label: 'Get Quote', icon: FileText },
+                        { id: 'buy_tickets', label: 'Buy Tickets', icon: Ticket },
+                        { id: 'custom', label: 'Custom Button', icon: Sparkles },
+                      ].map((preset) => {
+                        const Icon = preset.icon;
+                        const isSelected = ctaType === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              setCtaType(preset.id);
+                              if (preset.id !== 'custom') {
+                                setCtaLabelCustom(preset.label);
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                              isSelected
+                                ? 'bg-white text-zinc-950 border-white shadow-md'
+                                : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white'
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{preset.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Custom Button Label Input */}
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide block">
+                        Button Display Text
+                      </label>
+                      <input
+                        type="text"
+                        value={ctaLabelCustom}
+                        onChange={(e) => setCtaLabelCustom(e.target.value.slice(0, 40))}
+                        placeholder="e.g. Book Appointment"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                      />
+                    </div>
+
+                    {/* Target Link or Phone URL */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide block">
+                        Target Link URL or Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        value={ctaUrl}
+                        onChange={(e) => setCtaUrl(e.target.value)}
+                        placeholder="e.g. https://yourbusiness.com/book or tel:+12125550198"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                      />
+                    </div>
+
+                    {/* Live Yoouz Page Preview Box */}
+                    <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800/80 space-y-1.5">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                        Live Preview on Yoouz Page
+                      </span>
+                      <div className="w-full py-3 bg-white text-zinc-950 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
+                        <span>{ctaLabelCustom || 'Book Now'}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Bottom Save Action Button */}
