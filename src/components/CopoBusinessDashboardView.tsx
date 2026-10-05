@@ -4007,32 +4007,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       >
                         <Camera className="w-3.5 h-3.5" />
                       </button>
-                      {profileLogoUrl && (
-                        <button
-                          type="button"
-                          id="btn-remove-logo-badge"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const oldUrl = profileLogoUrl;
-                            setProfileLogoUrl("");
-                            try {
-                              await fetch('/api/business/delete-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  url: oldUrl,
-                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
-                                  type: 'logo'
-                                })
-                              });
-                            } catch (err) {}
-                          }}
-                          className="absolute -top-1.5 -right-1.5 p-1.5 bg-zinc-900/90 hover:bg-rose-900/90 text-zinc-400 hover:text-white rounded-full shadow-md transition-colors cursor-pointer border border-zinc-700 active:scale-95"
-                          title="Remove custom picture"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
                       <input 
                         type="file" 
                         ref={logoFileInputRef} 
@@ -4087,33 +4061,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                       >
                         <Camera className="w-3.5 h-3.5" />
                       </button>
-                      {profileBannerUrl && (
-                        <button
-                          type="button"
-                          id="btn-remove-banner-badge"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const oldUrl = profileBannerUrl;
-                            setProfileBannerUrl("");
-                            setBannerPreviewFailed(false);
-                            try {
-                              await fetch('/api/business/delete-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  url: oldUrl,
-                                  placeId: selectedPlaceId || currentPlace.id || 'yoouz.com',
-                                  type: 'banner'
-                                })
-                              });
-                            } catch (err) {}
-                          }}
-                          className="absolute top-2.5 right-2.5 p-1.5 bg-zinc-900/90 hover:bg-rose-900/90 text-zinc-400 hover:text-white rounded-full shadow-md transition-colors cursor-pointer border border-zinc-700 active:scale-95"
-                          title="Remove custom banner"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       <input 
                         type="file" 
                         ref={bannerFileInputRef} 

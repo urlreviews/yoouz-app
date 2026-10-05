@@ -178,6 +178,69 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [showHoursHelper, setShowHoursHelper] = useState(false);
   const [copiedTag, setCopiedTag] = useState(false);
 
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploadingLogo(true);
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const base64 = ev.target?.result as string;
+          const targetId = place.id || place.brandDomain || 'yoouz.com';
+          const uploadRes = await fetch("/api/business/upload-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64: base64, imageType: "logo", placeId: targetId })
+          });
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            setEditLogoUrl(data.imageUrl || base64);
+          } else {
+            setEditLogoUrl(base64);
+          }
+        } catch (err) {
+          console.error("Logo upload failed", err);
+        } finally {
+          setIsUploadingLogo(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploadingBanner(true);
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const base64 = ev.target?.result as string;
+          const targetId = place.id || place.brandDomain || 'yoouz.com';
+          const uploadRes = await fetch("/api/business/upload-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64: base64, imageType: "banner", placeId: targetId })
+          });
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            setEditBannerUrl(data.imageUrl || base64);
+          } else {
+            setEditBannerUrl(base64);
+          }
+        } catch (err) {
+          console.error("Banner upload failed", err);
+        } finally {
+          setIsUploadingBanner(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Review Sort & Filter State (Controlled or Uncontrolled)
   const [localReviewSort, setLocalReviewSort] = useState<"latest" | "oldest" | "highest" | "lowest" | "popular">("latest");
   const [localStarFilter, setLocalStarFilter] = useState<number | "all">("all");
@@ -2306,7 +2369,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             {/* Scrollable Modal Content */}
             <div className="overflow-y-auto py-2 flex-1 pr-1 -mr-1">
               {modalStep === 1 ? (
-                /* STEP 1: SUGGEST EDITS FORM */
+                /* STEP 1: SUGGEST EDITS / BUSINESS EDIT FORM */
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -2316,6 +2379,108 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   }} 
                   className="space-y-4 text-xs"
                 >
+                  {/* Business Logo Uploader (Matching User Edit Profile) */}
+                  <div className="flex flex-col items-center gap-2 pt-1">
+                    <div 
+                      className="relative group cursor-pointer" 
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] sm:rounded-[28px] border-[4px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center relative p-2 ring-1 ring-white/15 overflow-hidden group">
+                        {(() => {
+                          const activeLogo = editLogoUrl || place.logoUrl || primaryLogoUrl || getPlaceLogoUrl(place) || null;
+                          return activeLogo ? (
+                            <img
+                              src={getProxiedImageUrl(activeLogo)}
+                              alt="Business logo preview"
+                              className="w-full h-full object-contain rounded-[16px] sm:rounded-[18px] group-hover:scale-105 transition-transform duration-200"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-[16px] sm:rounded-[18px] flex items-center justify-center shadow-inner select-none bg-gradient-to-br from-zinc-800 to-zinc-900">
+                              <span className="font-black text-3xl sm:text-4xl text-white drop-shadow-md font-sans">
+                                {(displayedPlaceName || "B").charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white rounded-[24px] sm:rounded-[28px]">
+                          <Camera className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          logoInputRef.current?.click();
+                        }}
+                        className="absolute -bottom-1 -right-1 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700 z-10"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={logoInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleLogoUpload} 
+                      />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-zinc-200 block">{t("place.logo", "Business Logo")}</span>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">{isUploadingLogo ? t("common.uploading", "Uploading...") : t("profile.uploadCustomPhoto", "Click to upload a custom JPG or PNG")}</p>
+                    </div>
+                  </div>
+
+                  {/* Cover Banner Uploader (Matching User Edit Profile) */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div 
+                      className="relative group cursor-pointer w-full" 
+                      onClick={() => bannerInputRef.current?.click()}
+                    >
+                      <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center">
+                        {(() => {
+                          const activeBannerSrc = editBannerUrl || place.bannerUrl || activeBannerUrl || null;
+                          return activeBannerSrc ? (
+                            <img 
+                              src={getProxiedImageUrl(activeBannerSrc)} 
+                              alt="Cover banner preview" 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                              referrerPolicy="no-referrer" 
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                              <span className="text-xs text-zinc-500 font-medium">{t("place.noBanner", "No banner uploaded")}</span>
+                            </div>
+                          );
+                        })()}
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Camera className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          bannerInputRef.current?.click();
+                        }}
+                        className="absolute bottom-2 right-2 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={bannerInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleBannerUpload} 
+                      />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-zinc-200 block">{t("place.banner", "Cover Banner")}</span>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">{isUploadingBanner ? t("common.uploading", "Uploading...") : t("profile.uploadCustomBanner", "Click to upload a custom JPG or PNG")}</p>
+                    </div>
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="font-bold text-zinc-200">{t("place.address", "Address")}</label>
@@ -2370,97 +2535,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       placeholder="e.g. contact@business.com"
                       className="w-full px-3 py-2.5 border border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500 bg-zinc-950 text-white placeholder:text-zinc-400 transition-all"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-zinc-200 block mb-1">{t("place.logo", "Logo")}</label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setIsUploadingLogo(true);
-                              const reader = new FileReader();
-                              reader.onload = async (ev) => {
-                                try {
-                                  const base64 = ev.target?.result as string;
-                                  const targetId = place.id || 'yoouz.com';
-                                  const uploadRes = await fetch("/api/business/upload-image", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ imageBase64: base64, imageType: "logo", placeId: targetId })
-                                  });
-                                  if (uploadRes.ok) {
-                                    const data = await uploadRes.json();
-                                    setEditLogoUrl(data.imageUrl || base64);
-                                  } else {
-                                    setEditLogoUrl(base64);
-                                  }
-                                } catch (err) {
-                                  console.error("Logo upload failed", err);
-                                } finally {
-                                  setIsUploadingLogo(false);
-                                }
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="hidden"
-                          id="logo-upload"
-                        />
-                        <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-zinc-700 rounded-xl bg-zinc-950 text-zinc-200 hover:border-zinc-500 cursor-pointer transition-all">
-                          <ImageIcon className="w-4 h-4" />
-                          <span className="text-xs truncate">{isUploadingLogo ? t("common.uploading", "Uploading...") : editLogoUrl ? t("common.changeLogo", "Change Logo") : t("common.uploadLogo", "Upload Logo")}</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="font-bold text-zinc-200 block mb-1">{t("place.banner", "Cover Banner")}</label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setIsUploadingBanner(true);
-                              const reader = new FileReader();
-                              reader.onload = async (ev) => {
-                                try {
-                                  const base64 = ev.target?.result as string;
-                                  const targetId = place.id || 'yoouz.com';
-                                  const uploadRes = await fetch("/api/business/upload-image", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ imageBase64: base64, imageType: "banner", placeId: targetId })
-                                  });
-                                  if (uploadRes.ok) {
-                                    const data = await uploadRes.json();
-                                    setEditBannerUrl(data.imageUrl || base64);
-                                  } else {
-                                    setEditBannerUrl(base64);
-                                  }
-                                } catch (err) {
-                                  console.error("Banner upload failed", err);
-                                } finally {
-                                  setIsUploadingBanner(false);
-                                }
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="hidden"
-                          id="banner-upload"
-                        />
-                        <label htmlFor="banner-upload" className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border border-zinc-700 rounded-xl bg-zinc-950 text-zinc-200 hover:border-zinc-500 cursor-pointer transition-all">
-                          <ImageIcon className="w-4 h-4" />
-                          <span className="text-xs truncate">{isUploadingBanner ? t("common.uploading", "Uploading...") : editBannerUrl ? t("common.changeBanner", "Change Banner") : t("common.uploadBanner", "Upload Banner")}</span>
-                        </label>
-                      </div>
-                    </div>
                   </div>
 
                   <div>
