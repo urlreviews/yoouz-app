@@ -671,6 +671,188 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const activeSeconds = Math.max(0, Math.min(effectiveDuration, (previewPct / 100) * effectiveDuration));
   const scrubTimeText = formatTimeText(activeSeconds);
 
+  const renderActionButtons = (isDesktop: boolean) => (
+    <>
+      {/* Creator Avatar */}
+      <div className="relative group/avatar mb-0.5">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPauseVideo?.();
+            onOpenCreator(safeAuthor);
+          }}
+          className={`${
+            isDesktop ? "w-12 h-12" : "w-11 h-11 sm:w-12 sm:h-12"
+          } rounded-full p-0.5 border border-white/30 hover:border-white/70 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none select-none`}
+          title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
+        >
+          <img
+            src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
+            alt={safeAuthor.name}
+            loading={isActive || isNear ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={isActive ? "high" : "auto"}
+            className="w-full h-full object-cover rounded-full"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget as HTMLImageElement;
+              const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
+              if (target.src !== fallback) {
+                target.src = fallback;
+              }
+            }}
+          />
+        </button>
+
+        {!safeAuthor.isFollowed && (
+          <button
+            onClick={() => {
+              triggerHaptic("medium");
+              onToggleFollow(safeAuthor.name);
+            }}
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-zinc-950"
+            title={t("video.follow", "Follow")}
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3] text-zinc-950" />
+          </button>
+        )}
+      </div>
+
+      {/* Like */}
+      <div className="flex flex-col items-center">
+        <button
+          id={isDesktop ? `btn-like-desktop-${video.id}` : `btn-like-${video.id}`}
+          onClick={() => {
+            triggerHaptic(video.isLiked ? "selection" : "medium");
+            onToggleLike(video.id);
+          }}
+          className={`${
+            isDesktop
+              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+          } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
+          title={t("video.like", "Like")}
+        >
+          <Heart
+            className={`w-5 h-5 md:w-5.5 md:h-5.5 transition-colors ${
+              video.isLiked
+                ? "fill-[#ff2d55] text-[#ff2d55] drop-shadow-sm"
+                : "text-white fill-none stroke-[2]"
+            }`}
+          />
+        </button>
+        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+          {Math.max(
+            typeof video.likes === 'number' ? video.likes : (video.likesCount || 0),
+            video.isLiked ? 1 : 0
+          )}
+        </span>
+      </div>
+
+      {/* Comments */}
+      <div className="flex flex-col items-center">
+        <button
+          id={isDesktop ? `btn-comments-desktop-${video.id}` : `btn-comments-${video.id}`}
+          onClick={() => {
+            triggerHaptic("light");
+            onOpenComments(video);
+          }}
+          className={`${
+            isDesktop
+              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+          } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
+          title={t("video.comments", "Comments")}
+        >
+          <MessageCircle className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[2]" />
+        </button>
+        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+          {typeof video.commentsCount === 'number' ? video.commentsCount : ((video.comments?.length || 0) + (video.ownerResponse && !(video.comments || []).some(c => c.isOwner || c.id?.startsWith("owner_comm_")) ? 1 : 0))}
+        </span>
+      </div>
+
+      {/* Save / Bookmark */}
+      <div className="flex flex-col items-center">
+        <button
+          id={isDesktop ? `btn-bookmark-desktop-${video.id}` : `btn-bookmark-${video.id}`}
+          onClick={() => {
+            triggerHaptic(video.isBookmarked ? "selection" : "medium");
+            onToggleBookmark(video.id);
+          }}
+          className={`${
+            isDesktop
+              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+          } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
+          title={t("video.save", "Save Review")}
+        >
+          <Bookmark
+            className={`w-5 h-5 md:w-5.5 md:h-5.5 transition-colors ${
+              video.isBookmarked
+                ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                : "text-white fill-none stroke-[2]"
+            }`}
+          />
+        </button>
+        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+          {Math.max(
+            typeof video.bookmarksCount === 'number' ? video.bookmarksCount : 0,
+            typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0,
+            video.isBookmarked ? 1 : 0
+          )}
+        </span>
+      </div>
+
+      {/* Share */}
+      <div className="flex flex-col items-center">
+        <button
+          id={isDesktop ? `btn-share-desktop-${video.id}` : `btn-share-${video.id}`}
+          onClick={() => {
+            triggerHaptic("light");
+            onOpenShare(video);
+          }}
+          className={`${
+            isDesktop
+              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+          } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
+          title={t("video.shareVideoReview", "Share Video Review")}
+        >
+          <Share2 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[2]" />
+        </button>
+        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+          {video.sharesCount || video.shares || 0}
+        </span>
+      </div>
+
+      {/* More Options */}
+      <div className="flex flex-col items-center relative z-50 pointer-events-auto">
+        <button
+          id={isDesktop ? `btn-more-options-desktop-${video.id}` : `btn-more-options-${video.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerHaptic("light");
+            onOpenMoreMenu(video);
+          }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            triggerHaptic("light");
+            onOpenMoreMenu(video);
+          }}
+          className={`${
+            isDesktop
+              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+          } rounded-full backdrop-blur-xl border flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer shadow-xl relative z-50 pointer-events-auto`}
+          title={t("video.moreOptions", "More options")}
+        >
+          <MoreHorizontal className="w-5 h-5 md:w-5.5 md:h-5.5 stroke-[2] text-white" />
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
       {isActive && isExplicitVideoUrl && (
@@ -685,13 +867,22 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     <div
       ref={cardRef}
       data-video-index={index}
-      id={`copo-video-card-${video.id}`}
-      className={`snap-start snap-always shrink-0 relative bg-black select-none flex flex-col justify-end group ${
+      id={`copo-feed-item-${video.id}`}
+      className={`snap-start snap-always shrink-0 relative select-none flex flex-row items-end justify-center ${
         isEmbed
-          ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto overflow-hidden"
-          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-180px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90 overflow-hidden md:overflow-visible"
+          ? "w-auto h-full max-h-full"
+          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)]"
       }`}
     >
+      {/* 1. Main 9:16 Video Box */}
+      <div
+        id={`copo-video-card-${video.id}`}
+        className={`relative bg-black select-none flex flex-col justify-end group overflow-hidden ${
+          isEmbed
+            ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto"
+            : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-180px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+        }`}
+      >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
       <div
         id={slotId || `video-slot-${video.id}`}
@@ -1036,167 +1227,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
         </footer>
 
-        {/* Right Side Action Column (Inside overlay on Mobile, OUTSIDE to the right on Desktop like TikTok) */}
+        {/* MOBILE ONLY: Right Side Action Column (hidden on desktop md:) */}
         <aside
           id={`copo-video-actions-col-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2 md:absolute md:left-[calc(100%+16px)] md:bottom-3 md:right-auto md:mb-0 md:gap-3.5"
+          className="md:hidden relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2"
         >
-          {/* Creator Avatar */}
-          <div className="relative group/avatar mb-0.5">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPauseVideo?.();
-                onOpenCreator(safeAuthor);
-              }}
-              className="w-11 h-11 sm:w-12 sm:h-12 md:w-12 md:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/70 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
-              title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
-            >
-              <img
-                src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
-                alt={safeAuthor.name}
-                loading={isActive || isNear ? "eager" : "lazy"}
-                decoding="async"
-                fetchPriority={isActive ? "high" : "auto"}
-                className="w-full h-full object-cover rounded-full"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
-                  if (target.src !== fallback) {
-                    target.src = fallback;
-                  }
-                }}
-              />
-            </button>
-
-            {!safeAuthor.isFollowed && (
-              <button
-                onClick={() => {
-                  triggerHaptic("medium");
-                  onToggleFollow(safeAuthor.name);
-                }}
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-110 active:scale-90 transition-transform cursor-pointer border-2 border-zinc-950"
-                title={t("video.follow", "Follow")}
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[3] text-zinc-950" />
-              </button>
-            )}
-          </div>
-
-          {/* Like */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-like-${video.id}`}
-              onClick={() => {
-                triggerHaptic(video.isLiked ? "selection" : "medium");
-                onToggleLike(video.id);
-              }}
-              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
-              title={t("video.like", "Like")}
-            >
-              <Heart
-                className={`w-5 h-5 transition-colors ${
-                  video.isLiked
-                    ? "fill-[#ff2d55] text-[#ff2d55] drop-shadow-sm"
-                    : "text-white fill-none stroke-[2]"
-                }`}
-              />
-            </button>
-            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {Math.max(
-                typeof video.likes === 'number' ? video.likes : (video.likesCount || 0),
-                video.isLiked ? 1 : 0
-              )}
-            </span>
-          </div>
-
-          {/* Comments */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-comments-${video.id}`}
-              onClick={() => {
-                triggerHaptic("light");
-                onOpenComments(video);
-              }}
-              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
-              title={t("video.comments", "Comments")}
-            >
-              <MessageCircle className="w-5 h-5 text-white stroke-[2]" />
-            </button>
-            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {typeof video.commentsCount === 'number' ? video.commentsCount : ((video.comments?.length || 0) + (video.ownerResponse && !(video.comments || []).some(c => c.isOwner || c.id?.startsWith("owner_comm_")) ? 1 : 0))}
-            </span>
-          </div>
-
-          {/* Save / Bookmark */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-bookmark-${video.id}`}
-              onClick={() => {
-                triggerHaptic(video.isBookmarked ? "selection" : "medium");
-                onToggleBookmark(video.id);
-              }}
-              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
-              title={t("video.save", "Save Review")}
-            >
-              <Bookmark
-                className={`w-5 h-5 transition-colors ${
-                  video.isBookmarked
-                    ? "fill-amber-400 text-amber-400 drop-shadow-sm"
-                    : "text-white fill-none stroke-[2]"
-                }`}
-              />
-            </button>
-            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {Math.max(
-                typeof video.bookmarksCount === 'number' ? video.bookmarksCount : 0,
-                typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0,
-                video.isBookmarked ? 1 : 0
-              )}
-            </span>
-          </div>
-
-          {/* Share */}
-          <div className="flex flex-col items-center">
-            <button
-              id={`btn-share-${video.id}`}
-              onClick={() => {
-                triggerHaptic("light");
-                onOpenShare(video);
-              }}
-              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
-              title={t("video.shareVideoReview", "Share Video Review")}
-            >
-              <Share2 className="w-5 h-5 text-white stroke-[2]" />
-            </button>
-            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
-              {video.sharesCount || video.shares || 0}
-            </span>
-          </div>
-
-          {/* More Options */}
-          <div className="flex flex-col items-center relative z-50 pointer-events-auto">
-            <button
-              id={`btn-more-options-${video.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                triggerHaptic("light");
-                onOpenMoreMenu(video);
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                triggerHaptic("light");
-                onOpenMoreMenu(video);
-              }}
-              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer shadow-lg relative z-50 pointer-events-auto"
-              title={t("video.moreOptions", "More options")}
-            >
-              <MoreHorizontal className="w-5 h-5 stroke-[2] text-white" />
-            </button>
-          </div>
+          {renderActionButtons(false)}
         </aside>
       </div>
 
@@ -1267,6 +1304,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </div>
           </div>
         </div>
+      )}
+      </div>
+
+      {/* 2. DESKTOP ONLY: Action Buttons Column (OUTSIDE the video player box, directly to the right, exactly like TikTok) */}
+      {!isEmbed && (
+        <aside
+          id={`copo-desktop-actions-${video.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="hidden md:flex flex-col items-center gap-3.5 ml-3.5 mb-2.5 z-30 shrink-0 select-none text-white pointer-events-auto"
+        >
+          {renderActionButtons(true)}
+        </aside>
       )}
     </div>
     </>
