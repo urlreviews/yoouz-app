@@ -1580,8 +1580,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtFirstVideo}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtFirstVideo
-                    ? "bg-zinc-800/50 border-white/15 text-zinc-400 cursor-not-allowed"
-                    : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
+                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
                 title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
                 aria-label="Previous Video"
@@ -1596,8 +1596,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtLastVideo}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtLastVideo
-                    ? "bg-zinc-800/50 border-white/15 text-zinc-400 cursor-not-allowed"
-                    : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
+                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
                 title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
                 aria-label="Next Video"
