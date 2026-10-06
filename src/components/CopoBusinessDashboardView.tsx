@@ -2996,7 +2996,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                                 rating={video.rating || 5}
                                 starClassName="w-3 h-3 sm:w-3.5 sm:h-3.5"
                                 filledColorClass="fill-amber-400 text-amber-400"
-                                emptyColorClass="fill-zinc-800 text-zinc-700"
+                                emptyColorClass="fill-zinc-900/90 text-zinc-400"
                               />
                               <span className="text-zinc-600 font-bold shrink-0">•</span>
                               <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>

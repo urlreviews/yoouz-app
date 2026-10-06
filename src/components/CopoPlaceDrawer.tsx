@@ -1387,8 +1387,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <CopoStarRating
                     rating={dynamicAvgRating}
                     starClassName="w-6 h-6"
-                    filledColorClass="fill-amber-500 text-amber-500"
-                    emptyColorClass="fill-zinc-800 text-zinc-700"
+                    filledColorClass="fill-amber-400 text-amber-400"
+                    emptyColorClass="fill-zinc-900/90 text-zinc-400"
                   />
                 </div>
                 <div className="h-6 w-px bg-zinc-800 mx-1" />

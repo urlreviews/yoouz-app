@@ -25,9 +25,9 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
   rating,
   maxStars = 5,
   starClassName = "w-6 h-6",
-  filledColorClass = "text-amber-500 fill-amber-500",
-  emptyColorClass = "text-zinc-700 fill-zinc-800",
-  className = "flex items-center text-amber-500 gap-0.5"
+  filledColorClass = "text-amber-400 fill-amber-400",
+  emptyColorClass = "text-zinc-400 fill-zinc-900/90",
+  className = "flex items-center text-amber-400 gap-0.5"
 }) => {
   const rounded = getRoundedRating(rating);
   const fullStars = Math.floor(rounded);

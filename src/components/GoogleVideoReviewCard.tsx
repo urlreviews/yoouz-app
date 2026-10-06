@@ -178,8 +178,8 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         <CopoStarRating
           rating={review.rating || 5}
           starClassName="w-3.5 h-3.5"
-          filledColorClass="fill-white text-white"
-          emptyColorClass="text-zinc-700 fill-zinc-700"
+          filledColorClass="fill-amber-400 text-amber-400"
+          emptyColorClass="fill-zinc-900/90 text-zinc-400"
         />
         {(review.recordedAt || review.createdAtMs) && (
           <span className="text-[12px] text-zinc-200 font-normal">
