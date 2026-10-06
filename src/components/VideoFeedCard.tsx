@@ -686,10 +686,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       ref={cardRef}
       data-video-index={index}
       id={`copo-video-card-${video.id}`}
-      className={`snap-start snap-always shrink-0 relative bg-black select-none flex flex-col justify-end group overflow-hidden ${
+      className={`snap-start snap-always shrink-0 relative bg-black select-none flex flex-col justify-end group ${
         isEmbed
-          ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto"
-          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-120px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+          ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto overflow-hidden"
+          : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-[min(88vh,780px)] md:aspect-[9/16] md:max-w-[min(480px,calc(100vw-180px))] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90 overflow-hidden md:overflow-visible"
       }`}
     >
       {/* Video Container (Host slot for the persistent hardware-accelerated video player) */}
@@ -1036,11 +1036,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
         </footer>
 
-        {/* Right Side Action Column */}
+        {/* Right Side Action Column (Inside overlay on Mobile, OUTSIDE to the right on Desktop like TikTok) */}
         <aside
           id={`copo-video-actions-col-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2"
+          className="relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2 md:absolute md:left-[calc(100%+16px)] md:bottom-3 md:right-auto md:mb-0 md:gap-3.5"
         >
           {/* Creator Avatar */}
           <div className="relative group/avatar mb-0.5">
@@ -1050,7 +1050,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/60 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
+              className="w-11 h-11 sm:w-12 sm:h-12 md:w-12 md:h-12 rounded-full p-0.5 border border-white/30 hover:border-white/70 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none focus:outline-none focus:ring-0 focus-visible:outline-none select-none [-webkit-tap-highlight-color:transparent]"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
               <img
@@ -1093,7 +1093,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic(video.isLiked ? "selection" : "medium");
                 onToggleLike(video.id);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center transition-all active:scale-90 shadow-lg"
+              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
               title={t("video.like", "Like")}
             >
               <Heart
@@ -1104,7 +1104,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }`}
               />
             </button>
-            <span className="text-[11.5px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {Math.max(
                 typeof video.likes === 'number' ? video.likes : (video.likesCount || 0),
                 video.isLiked ? 1 : 0
@@ -1120,12 +1120,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenComments(video);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center transition-all active:scale-90 shadow-lg"
+              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
               title={t("video.comments", "Comments")}
             >
               <MessageCircle className="w-5 h-5 text-white stroke-[2]" />
             </button>
-            <span className="text-[11.5px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {typeof video.commentsCount === 'number' ? video.commentsCount : ((video.comments?.length || 0) + (video.ownerResponse && !(video.comments || []).some(c => c.isOwner || c.id?.startsWith("owner_comm_")) ? 1 : 0))}
             </span>
           </div>
@@ -1138,7 +1138,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic(video.isBookmarked ? "selection" : "medium");
                 onToggleBookmark(video.id);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center transition-all active:scale-90 shadow-lg"
+              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
               title={t("video.save", "Save Review")}
             >
               <Bookmark
@@ -1149,7 +1149,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 }`}
               />
             </button>
-            <span className="text-[11.5px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {Math.max(
                 typeof video.bookmarksCount === 'number' ? video.bookmarksCount : 0,
                 typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0,
@@ -1166,12 +1166,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenShare(video);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center transition-all active:scale-90 shadow-lg"
+              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-lg cursor-pointer"
               title={t("video.shareVideoReview", "Share Video Review")}
             >
               <Share2 className="w-5 h-5 text-white stroke-[2]" />
             </button>
-            <span className="text-[11.5px] font-extrabold mt-0.5 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
+            <span className="text-[11.5px] md:text-xs font-extrabold mt-0.5 text-white md:text-zinc-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
               {video.sharesCount || video.shares || 0}
             </span>
           </div>
@@ -1191,7 +1191,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 triggerHaptic("light");
                 onOpenMoreMenu(video);
               }}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 hover:border-white/50 hover:bg-black/75 flex items-center justify-center hover:scale-105 transition-all active:scale-90 text-white cursor-pointer shadow-lg relative z-50 pointer-events-auto"
+              className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 md:bg-zinc-800/90 md:hover:bg-zinc-700 backdrop-blur-xl border border-white/20 md:border-white/15 hover:border-white/50 flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer shadow-lg relative z-50 pointer-events-auto"
               title={t("video.moreOptions", "More options")}
             >
               <MoreHorizontal className="w-5 h-5 stroke-[2] text-white" />
