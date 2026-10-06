@@ -1565,8 +1565,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         {/* Floating Up/Down Navigation Buttons (Desktop Only) - Positioned on far right edge ("super right") like TikTok */}
         {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
-          const isAtFirstVideo = !shouldLoop && activeCardIndex <= 0;
-          const isAtLastVideo = !shouldLoop && activeCardIndex >= displayItems.length - 1;
+          const isAtFirstVideo = activeCardIndex <= 0;
+          const isAtLastVideo = !shouldLoop && activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
 
           return (
             <div
