@@ -1645,6 +1645,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       if (n.type === 'message' && !businessNotificationSettings.messages) return false;
       if (n.type === 'follow' && !businessNotificationSettings.follows) return false;
       if (n.type === 'bookmark' && !businessNotificationSettings.bookmarks) return false;
+      if (n.type === 'review' && businessNotificationSettings.reviews === false) return false;
       if ((n.type === 'repost' || n.type === 'share') && (businessNotificationSettings.shares === false || (businessNotificationSettings.shares === undefined && !businessNotificationSettings.bookmarks))) return false;
 
       // 3. Welcome notification check (e.g. system welcome for the claimed business)

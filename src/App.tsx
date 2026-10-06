@@ -429,6 +429,7 @@ export function App() {
           (aType === "comment" && newSettings.comments === false) ||
           (aType === "follow" && newSettings.follows === false) ||
           (aType === "bookmark" && newSettings.bookmarks === false) ||
+          (aType === "review" && newSettings.reviews === false) ||
           ((aType === "repost" || aType === "share") && newSettings.shares === false)
         ) {
           setInAppToast(null);
@@ -442,6 +443,7 @@ export function App() {
         if ((n.type === "message" || (n.type as any) === "chat") && newSettings.messages === false) return false;
         if (n.type === "follow" && newSettings.follows === false) return false;
         if (n.type === "bookmark" && newSettings.bookmarks === false) return false;
+        if (n.type === "review" && newSettings.reviews === false) return false;
         if ((n.type === "repost" || n.type === "share") && (newSettings.shares === false || (newSettings.shares === undefined && newSettings.bookmarks === false))) return false;
         return true;
       }));
@@ -2029,6 +2031,7 @@ export function App() {
         if (newIncoming.type === "comment" && prefs?.comments === false) return;
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
         if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
+        if (newIncoming.type === "review" && prefs?.reviews === false) return;
         if ((newIncoming.type === "repost" || newIncoming.type === "share") && (prefs?.shares === false || (prefs?.shares === undefined && prefs?.bookmarks === false))) return;
         if ((newIncoming.type === "message" || (newIncoming.type as any) === "chat") && prefs?.messages === false) return;
 
@@ -2037,6 +2040,7 @@ export function App() {
         else if (newIncoming.type === "comment") title = "1 new comment";
         else if (newIncoming.type === "follow") title = "1 new follower";
         else if (newIncoming.type === "bookmark") title = "1 new save";
+        else if (newIncoming.type === "review") title = `1 new review for ${newIncoming.placeName || 'your place'}`;
         else if (newIncoming.type === "repost" || newIncoming.type === "share") title = "1 new share";
         else if (newIncoming.type === "message" || (newIncoming.type as any) === "chat") title = `1 new message from ${newIncoming.user?.name || 'Yoouz'}`;
 
@@ -6221,6 +6225,31 @@ export function App() {
           body: JSON.stringify({ data: targetPlace, merge: true })
         }).catch(() => {});
       }
+
+      // Dispatch instant live notification to business owner and subscribers
+      try {
+        const placeNameClean = newReview.placeName || targetPlace?.name || "your business";
+        const placeIdClean = targetPlace?.id || newReview.placeId || "";
+        const bizEmail = targetPlace?.claimedByEmail || (placeIdClean.includes(".") ? placeIdClean : undefined);
+
+        sendSocialNotification({
+          recipientEmail: bizEmail,
+          recipientId: placeIdClean,
+          recipientHandle: placeNameClean,
+          type: "review",
+          user: {
+            name: currentUser?.name || newReview.author?.name || "A reviewer",
+            avatar: currentUser?.avatar || newReview.author?.avatar || "",
+            email: currentUser?.email || ""
+          },
+          text: `posted a ${newReview.rating}★ video review for ${placeNameClean}`,
+          videoId: newReview.id,
+          videoThumbnail: resolveVideoPosterUrl(newReview) || newReview.author?.avatar,
+          placeId: placeIdClean,
+          placeName: placeNameClean,
+          customId: `notif_review_${newReview.id}`
+        }).catch(() => {});
+      } catch (e) {}
 
       return nextList;
     });

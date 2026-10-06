@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MessageSquare, Bell, Heart, UserPlus, Bookmark, Repeat2, Mail, ChevronRight, X } from "lucide-react";
+import { MessageSquare, Bell, Heart, UserPlus, Bookmark, Repeat2, Mail, Star, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 import { NotificationPreferences } from "../types";
@@ -7,7 +7,7 @@ import { NotificationPreferences } from "../types";
 export interface InAppToastPayload {
   id: string;
   type: "message" | "notification";
-  actionType?: "like" | "comment" | "follow" | "bookmark" | "repost" | "share" | "message";
+  actionType?: "like" | "comment" | "follow" | "bookmark" | "repost" | "share" | "message" | "review";
   title: string;
   subtitle: string;
   avatar?: string;
@@ -52,6 +52,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     if (aType === "comment" && effectivePrefs?.comments === false) return true;
     if (aType === "follow" && effectivePrefs?.follows === false) return true;
     if (aType === "bookmark" && effectivePrefs?.bookmarks === false) return true;
+    if (aType === "review" && effectivePrefs?.reviews === false) return true;
     if ((aType === "repost" || aType === "share") && (effectivePrefs?.shares === false || (effectivePrefs?.shares === undefined && effectivePrefs?.bookmarks === false))) return true;
     return false;
   })();
@@ -118,6 +119,10 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     badgeBg = "bg-amber-400 text-zinc-950";
     progressBg = "bg-amber-400";
     ActionIcon = Bookmark;
+  } else if (actionType === "review") {
+    badgeBg = "bg-amber-400 text-zinc-950";
+    progressBg = "bg-amber-400";
+    ActionIcon = Star;
   } else if (actionType === "repost" || actionType === "share") {
     badgeBg = "bg-blue-400 text-zinc-950";
     progressBg = "bg-blue-400";

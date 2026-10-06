@@ -45,7 +45,7 @@ interface CopoNotificationsViewProps {
   onOpenCreator?: (author: any) => void;
 }
 
-type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "shares" | "people" | "bookmarks";
+type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "shares" | "people" | "bookmarks" | "reviews";
 
 export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   notifications,
@@ -167,10 +167,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         if ((n.type === "message" || (n.type as any) === "chat") && userPrefs.messages === false) return false;
         if (n.type === "follow" && userPrefs.follows === false) return false;
         if (n.type === "bookmark" && userPrefs.bookmarks === false) return false;
+        if (n.type === "review" && userPrefs.reviews === false) return false;
         if ((n.type === "repost" || n.type === "share") && (userPrefs.shares === false || (userPrefs.shares === undefined && userPrefs.bookmarks === false))) return false;
       }
 
       if (activeFilter === "unread") return !n.isRead;
+      if (activeFilter === "reviews") return n.type === "review";
       if (activeFilter === "messages") return n.type === "message";
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
@@ -191,6 +193,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const filterPills: { label: string; value: FilterType; count?: number }[] = [
     { label: "All", value: "all" },
     { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined },
+    { label: "Reviews", value: "reviews" },
     { label: "Messages", value: "messages" },
     { label: "Likes", value: "likes" },
     { label: "Comments", value: "comments" },
@@ -251,7 +254,20 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       };
     }
 
-    // Case D: Likes / Shares / Comments / Saves on a review of a place/domain
+    // Case D: New Video Review for a business
+    if (notif.type === "review" || /^posted a (?:video )?review|^left a (?:video )?review/i.test(raw)) {
+      const starMatch = raw.match(/(?:⭐|★|\b)(\d(?:\.\d)?)(?:\/5|\s*stars?|★)?/i);
+      const forMatch = raw.match(/(?:for|of)\s+(.+)$/i);
+      const cleanPlace = forMatch ? (extractCleanDomain(forMatch[1].trim()) || forMatch[1].trim()) : (notif.placeName || notif.placeId || "your business");
+      return {
+        type: "new_review" as const,
+        action: "posted a video review for",
+        target: cleanPlace,
+        rating: starMatch ? parseFloat(starMatch[1]).toFixed(1) : undefined
+      };
+    }
+
+    // Case E: Likes / Shares / Comments / Saves on a review of a place/domain
     const ofMatch = raw.match(/^(liked your video review of|shared your video review of|saved your video review of|saved your review of|bookmarked your review of|commented:\s*".*?"\s*on your review of)\s*(.+)$/i);
     if (ofMatch) {
       const actionPart = ofMatch[1];
@@ -274,7 +290,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   // Helper to resolve the best person speaking / video review thumbnail
   const resolveNotificationThumbnail = (notif: CopoNotification): string | null => {
     // Only display right video thumbnail if this is actually a video review interaction or has an explicit videoId
-    if (!notif.videoId && notif.type !== "like" && notif.type !== "comment" && notif.type !== "repost" && notif.type !== "bookmark") {
+    if (!notif.videoId && notif.type !== "like" && notif.type !== "comment" && notif.type !== "repost" && notif.type !== "bookmark" && notif.type !== "review") {
       return null;
     }
 
@@ -498,6 +514,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   bg: "bg-amber-500 text-zinc-950 ring-2 ring-zinc-950 shadow-md",
                   icon: <Bookmark className="w-3 h-3 fill-current shrink-0" />
                 },
+                review: {
+                  bg: "bg-amber-500 text-zinc-950 ring-2 ring-zinc-950 shadow-md",
+                  icon: <Star className="w-3 h-3 fill-current shrink-0" />
+                },
                 message: {
                   bg: "bg-blue-500 text-white ring-2 ring-zinc-950 shadow-md",
                   icon: <Mail className="w-3 h-3 stroke-[2.5] shrink-0" />
@@ -693,6 +713,19 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             <span className="text-zinc-300 font-medium">shared a review for</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               {details.target}
+                            </span>
+                            {details.rating && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <span>{details.rating}</span>
+                              </span>
+                            )}
+                          </>
+                        ) : details.type === "new_review" || notif.type === "review" ? (
+                          <>
+                            <span className="text-zinc-300 font-medium">{details.action || "posted a video review for"}</span>{" "}
+                            <span className="font-bold text-white underline-offset-2 hover:underline">
+                              {details.target || notif.placeName || "your business"}
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">

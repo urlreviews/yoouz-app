@@ -8,6 +8,7 @@ import {
   UserPlus,
   Bookmark,
   Repeat2,
+  Star,
   X,
   Check,
   ShieldCheck,
@@ -270,7 +271,35 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   !prefs.enabled ? "opacity-35 pointer-events-none" : "opacity-100"
                 }`}
               >
-                {/* 1. Direct Messages */}
+                {/* 1. New Reviews & Ratings */}
+                <div
+                  onClick={() => {
+                    if (prefs.enabled) handleToggle("reviews");
+                  }}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400 group-hover:text-amber-300 transition-colors shadow-inner">
+                      <Star className="w-4 h-4 fill-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
+                        New Video Reviews & Ratings
+                      </p>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
+                        Immediate alerts when customers post a video review for your business
+                      </p>
+                    </div>
+                  </div>
+                  <DarkSwitch
+                    id="toggle-notif-reviews"
+                    checked={prefs.reviews !== false && prefs.enabled}
+                    disabled={!prefs.enabled}
+                    onChange={() => handleToggle("reviews")}
+                  />
+                </div>
+
+                {/* 2. Direct Messages */}
                 <div
                   onClick={() => {
                     if (prefs.enabled) handleToggle("messages");

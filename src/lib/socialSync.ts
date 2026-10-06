@@ -7,7 +7,7 @@ export interface CreateNotificationParams {
   recipientEmail?: string;
   recipientHandle?: string;
   recipientId?: string;
-  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark";
+  type: "like" | "comment" | "follow" | "repost" | "message" | "bookmark" | "share" | "review";
   user: {
     name: string;
     avatar: string;
@@ -16,6 +16,7 @@ export interface CreateNotificationParams {
   text: string;
   videoId?: string;
   videoThumbnail?: string;
+  placeId?: string;
   placeName?: string;
   customId?: string;
 }
@@ -288,6 +289,7 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
     createdAtMs: Date.now(),
     videoId: params.videoId || "",
     videoThumbnail: sanitizedThumbnail,
+    placeId: params.placeId || "",
     placeName: params.placeName || "",
     isRead: false
   });
