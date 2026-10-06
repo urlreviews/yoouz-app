@@ -1580,7 +1580,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtFirstVideo}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtFirstVideo
-                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
+                    ? "bg-zinc-800/50 border-white/15 text-zinc-400 cursor-not-allowed"
                     : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
                 title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
@@ -1596,7 +1596,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtLastVideo}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtLastVideo
-                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
+                    ? "bg-zinc-800/50 border-white/15 text-zinc-400 cursor-not-allowed"
                     : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
                 title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
