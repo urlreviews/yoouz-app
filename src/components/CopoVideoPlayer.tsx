@@ -1567,30 +1567,27 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
           const isAtFirstVideo = !shouldLoop && activeCardIndex <= 0;
           const isAtLastVideo = !shouldLoop && activeCardIndex >= displayItems.length - 1;
-          const showUpButton = activeCardIndex > 0 || hasScrolledAway;
 
           return (
             <div
               id="copo-floating-nav-buttons"
               className="hidden md:flex flex-col gap-2.5 z-50 select-none fixed right-4 lg:right-8 top-1/2 -translate-y-1/2"
             >
-              {/* Up arrow to scroll to previous video (only shown if not on initial first video) */}
-              {showUpButton && (
-                <button
-                  id="btn-scroll-prev-video"
-                  onClick={handlePrev}
-                  disabled={isAtFirstVideo}
-                  className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                    isAtFirstVideo
-                      ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
-                      : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
-                  }`}
-                  title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
-                  aria-label="Previous Video"
-                >
-                  <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-                </button>
-              )}
+              {/* Up arrow to scroll to previous video (disabled/dimmed when at first video) */}
+              <button
+                id="btn-scroll-prev-video"
+                onClick={handlePrev}
+                disabled={isAtFirstVideo}
+                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
+                  isAtFirstVideo
+                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
+                    : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                }`}
+                title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
+                aria-label="Previous Video"
+              >
+                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+              </button>
 
               {/* Down arrow to scroll to next video */}
               <button
