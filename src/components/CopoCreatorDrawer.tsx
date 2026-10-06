@@ -1496,7 +1496,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
-                    <span className="text-base font-black text-white">{avgRating !== "—" ? `${avgRating} ⭐` : "—"}</span>
+                    <span className="text-base font-black text-white inline-flex items-center gap-1.5">
+                      {avgRating !== "—" ? (
+                        <>
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                          <span>{avgRating}</span>
+                        </>
+                      ) : "—"}
+                    </span>
                   </div>
                 </div>
               </div>

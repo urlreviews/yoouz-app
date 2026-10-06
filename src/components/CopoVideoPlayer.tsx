@@ -1971,8 +1971,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
-                    {(() => {
+                  <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20 inline-flex items-center gap-1.5">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                    <span>{(hoverRating || editRating).toFixed(1)} • {(() => {
                       const val = hoverRating || editRating;
                       switch (val) {
                         case 5: return t("video.exceptional", "Exceptional");
@@ -1982,33 +1983,47 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         case 1: return t("video.poorExperience", "Poor Experience");
                         default: return t("video.selected", "Selected");
                       }
-                    })()}
+                    })()}</span>
                   </span>
                 </div>
               </div>
 
               {/* Star Rating Interactive Selector */}
               <div className="space-y-4 bg-zinc-950/50 p-5 rounded-2xl border border-zinc-800/90">
-                <div className="text-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                <div className="text-center space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-200 block">
                     {t("video.tapToSelectStars", "Tap to Select Stars (1 to 5)")}
                   </span>
-                  <div className="text-base font-black text-amber-400 mt-1">
-                    {(() => {
-                      const val = hoverRating || editRating;
-                      switch (val) {
-                        case 5: return `⭐⭐⭐⭐⭐ ${t("video.exceptional", "Exceptional")} (5.0)`;
-                        case 4: return `⭐⭐⭐⭐ ${t("video.greatExperience", "Great Experience")} (4.0)`;
-                        case 3: return `⭐⭐⭐ ${t("video.goodAverage", "Good / Average")} (3.0)`;
-                        case 2: return `⭐⭐ ${t("video.needsImprovement", "Needs Improvement")} (2.0)`;
-                        case 1: return `⭐ ${t("video.poorExperience", "Poor Experience")} (1.0)`;
-                        default: return `${val.toFixed(1)} ${t("video.stars", "Stars")}`;
-                      }
-                    })()}
+                  <div className="inline-flex items-center justify-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-4 h-4 ${
+                            s <= (hoverRating || editRating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-zinc-700 fill-zinc-800"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-black text-amber-400">
+                      {(hoverRating || editRating).toFixed(1)} • {(() => {
+                        const val = hoverRating || editRating;
+                        switch (val) {
+                          case 5: return t("video.exceptional", "Exceptional");
+                          case 4: return t("video.greatExperience", "Great Experience");
+                          case 3: return t("video.goodAverage", "Good / Average");
+                          case 2: return t("video.needsImprovement", "Needs Improvement");
+                          case 1: return t("video.poorExperience", "Poor Experience");
+                          default: return t("video.selected", "Selected");
+                        }
+                      })()}
+                    </span>
                   </div>
                 </div>
 
-                {/* 5 Interactive Glowing Stars */}
+                {/* 5 Interactive Clean Gold Stars */}
                 <div className="flex items-center justify-center gap-3 py-1">
                   {[1, 2, 3, 4, 5].map((starNum) => {
                     const activeVal = hoverRating || editRating;
@@ -2023,14 +2038,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         onMouseLeave={() => setHoverRating(null)}
                         className={`p-2 rounded-2xl transition-all cursor-pointer transform hover:scale-115 active:scale-95 ${
                           isFilled
-                            ? "text-amber-400 drop-shadow-[0_0_16px_rgba(251,191,36,0.6)]"
-                            : "text-zinc-600 hover:text-zinc-200"
+                            ? "text-amber-400"
+                            : "text-zinc-600 hover:text-zinc-400"
                         }`}
                         title={`Rate ${starNum} Stars`}
                       >
                         <Star
                           className={`w-10 h-10 transition-colors ${
-                            isFilled ? "fill-amber-400 text-amber-400" : "text-zinc-600"
+                            isFilled ? "fill-amber-400 text-amber-400" : "text-zinc-700 fill-zinc-900/60"
                           }`}
                         />
                       </button>
