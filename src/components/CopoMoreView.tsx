@@ -1176,11 +1176,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-black text-white">{t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}</h3>
                       <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
-                        {t("trustCenter.googleVerified", "Google Verified")}
+                        {t("trustCenter.privacyVerifiedBadge", "Enterprise Security • Zero Passwords Stored")}
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
-                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use Google OAuth for secure passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.")}
+                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use secure email verification for passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.")}
                     </p>
                   </div>
                 </div>
@@ -1197,7 +1197,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
                       <p className="text-xs text-zinc-200 leading-normal">
-                        {t("trustCenter.privacyPolicyDesc", "Covers Google profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.")}
+                        {t("trustCenter.privacyPolicyDesc", "Covers account profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.")}
                       </p>
                     </div>
                     <button
@@ -1264,16 +1264,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <p className="text-[11px] text-zinc-200 leading-normal">
                       {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.")}
                     </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-zinc-200 font-medium">
-                    Software Build: <strong className="text-white">Yoouz Cloud v2.0 (Stable Release)</strong> • Contact: <a href="mailto:support@yoouz.com" className="text-white underline hover:text-zinc-200 font-bold">support@yoouz.com</a>
-                  </div>
-                  <div className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-bold flex items-center gap-1.5 w-fit">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>{t("trustCenter.allSystemsOperational", "All Systems Operational")}</span>
                   </div>
                 </div>
               </div>

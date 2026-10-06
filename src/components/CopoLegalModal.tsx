@@ -276,7 +276,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
             <article className="space-y-6">
               <header className="border-b border-zinc-800 pb-4 space-y-1">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-black uppercase tracking-wider mb-1">
-                  {t("legal.googleOauthCompliant", "Google OAuth Compliant")}
+                  {t("legal.privacyArchitecture", "Privacy & Security Compliant")}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {t("legal.privacyHeading", "Privacy Policy for Yoouz")}
@@ -327,7 +327,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <p className="text-zinc-200">{t("legal.privSec2Subtitle", "We use the information we collect to:")}</p>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.privSec2Item1", "Create and manage your Yoouz user account.")}</li>
-                  <li>{t("legal.privSec2Item2", "Authenticate your identity securely via Google.")}</li>
+                  <li>{t("legal.privSec2Item2", "Authenticate your identity securely via passwordless email verification.")}</li>
                   <li>{t("legal.privSec2Item3", "Process, host, and display your live-recorded video reviews on the platform.")}</li>
                   <li>{t("legal.privSec2Item4", "Maintain platform security and prevent fraudulent activity.")}</li>
                 </ul>
