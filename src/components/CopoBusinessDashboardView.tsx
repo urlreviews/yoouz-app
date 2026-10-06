@@ -975,6 +975,32 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
 
+  const accountDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Automatically close account dropdown when switching tabs or claiming
+  useEffect(() => {
+    setShowAccountDropdown(false);
+  }, [activeTab, isClaiming, selectedPlaceId]);
+
+  // Click outside / pointerdown handler to close account dropdown when clicking anywhere else
+  useEffect(() => {
+    if (!showAccountDropdown) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowAccountDropdown(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [showAccountDropdown]);
+
   // Business Notification Preferences (Persisted across local storage, component state, and bunnydb)
   const [businessNotificationSettings, setBusinessNotificationSettings] = useState<NotificationPreferences>(() => {
     if (currentUser?.notificationSettings) {
@@ -2362,7 +2388,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               </button>
 
               {/* Profile / Account Control with Clean Google-Style Circular Avatar */}
-              <div className="relative">
+              <div className="relative" ref={accountDropdownRef}>
                 <button 
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
@@ -3055,37 +3081,13 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
                             </div>
 
-                            {/* Action Buttons: Flexible Grid/Wrap that perfectly fits mobile without horizontal overflow */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-stretch sm:justify-end w-full pt-2 border-t border-zinc-800/80">
-                              <button
-                                type="button"
-                                onClick={() => toggleHideVideo(video.id)}
-                                className="flex-1 sm:flex-initial px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800"
-                                title={isHidden ? 'Restore to website widget' : 'Hide from website widget'}
-                              >
-                                {isHidden ? <Eye className="w-3.5 h-3.5 text-zinc-200" /> : <EyeOff className="w-3.5 h-3.5 text-zinc-200" />}
-                                <span>{isHidden ? 'Unhide' : 'Hide'}</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => toggleMarkReviewAsRead(video.id)}
-                                className={`flex-1 sm:flex-initial px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
-                                  seenReviewIds.has(video.id)
-                                    ? 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200'
-                                    : 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700'
-                                }`}
-                                title={seenReviewIds.has(video.id) ? 'Review acknowledged. Click to toggle.' : 'Mark this review as reviewed'}
-                              >
-                                <Check className={`w-3.5 h-3.5 ${seenReviewIds.has(video.id) ? 'text-zinc-500' : 'text-zinc-300'}`} />
-                                <span>{seenReviewIds.has(video.id) ? 'Reviewed' : 'Review'}</span>
-                              </button>
-
+                            {/* Action Buttons: Essential 2-button toolbar (Export & Reply) */}
+                            <div className="flex items-center gap-2 flex-wrap justify-end w-full pt-2 border-t border-zinc-800/80">
                               <button
                                 type="button"
                                 onClick={() => handleDownloadVideoForAds(video)}
-                                className="flex-1 sm:flex-initial px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
-                                title="Export Ultra-HD branded 16:9 widescreen video review for Facebook, social media & web"
+                                className="flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                                title="Export Ultra-HD branded video review for Facebook, social media & web"
                               >
                                 <Download className="w-3.5 h-3.5 text-white" />
                                 <span>Export</span>
