@@ -142,9 +142,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
 
-  // Seamless continuous circular feed: ONLY on global discovery feed with many videos
-  // For single videos, place/business review context, or embeds: NEVER duplicate cards
-  const shouldLoop = !feedContextTitle && !isBusinessOwnerView && !isEmbed && effectiveVideos.length >= 4;
+  // Disable automatic feed looping so home page stops at the last video matching business and user profiles
+  const shouldLoop = false;
   const [loopCount, setLoopCount] = useState<number>(shouldLoop ? 10 : 1);
   useEffect(() => {
     setLoopCount(shouldLoop ? 10 : 1);
