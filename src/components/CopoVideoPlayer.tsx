@@ -1556,7 +1556,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           })}
         </div>
 
-        {/* Floating Up/Down Navigation Buttons (Desktop & Tablet) - Flex sibling beside the video card */}
+        {/* Floating Up/Down Navigation Buttons (Desktop Only) - Positioned on far right edge ("super right") like TikTok */}
         {!hideFloatingNav && videos.length > 0 && (() => {
           const isAtFirstVideo = activeCardIndex <= 0;
           const isAtLastVideo = activeCardIndex >= videos.length - 1;
@@ -1564,19 +1564,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return (
             <div
               id="copo-floating-nav-buttons"
-              className="hidden sm:flex flex-col gap-3 z-30 shrink-0 select-none"
+              className="hidden md:flex flex-col gap-2.5 z-50 select-none fixed right-4 lg:right-8 top-1/2 -translate-y-1/2"
             >
               {/* Up arrow to scroll to previous video */}
               <button
                 id="btn-scroll-prev-video"
                 onClick={handlePrev}
                 disabled={isAtFirstVideo}
-                className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-xl ${
+                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtFirstVideo
-                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-35"
-                    : "bg-zinc-900/95 border-white/20 text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
+                    : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
-                title={isAtFirstVideo ? "First Video on Page" : "Previous Video (Up Arrow)"}
+                title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
+                aria-label="Previous Video"
               >
                 <ChevronUp className="w-6 h-6 stroke-[2.5]" />
               </button>
@@ -1586,12 +1587,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-scroll-next-video"
                 onClick={handleNext}
                 disabled={isAtLastVideo}
-                className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-xl ${
+                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtLastVideo
-                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-35"
-                    : "bg-zinc-900/95 border-white/20 text-white hover:bg-black hover:border-white/40 hover:scale-105 active:scale-95 cursor-pointer"
+                    ? "bg-zinc-900/40 border-white/10 text-zinc-600 cursor-not-allowed opacity-30"
+                    : "bg-zinc-900/80 border-white/20 text-white hover:bg-black hover:border-white/50 hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
-                title={isAtLastVideo ? "Last Video on Page" : "Next Video (Down Arrow)"}
+                title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
+                aria-label="Next Video"
               >
                 <ChevronDown className="w-6 h-6 stroke-[2.5]" />
               </button>
