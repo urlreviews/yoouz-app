@@ -1517,20 +1517,17 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
       if (isOtherActuallyMe) {
         const rawHistoryList = Array.isArray(data.history) ? data.history : [];
-        const nonMeHistoryMsg = rawHistoryList.find((h: any) => {
+        const nonMeHistoryMsg = rawHistoryList.slice().reverse().find((h: any) => {
+          if (!h) return false;
           const hName = (h.senderName || "").toLowerCase().trim();
           const hEmail = (h.senderEmail || "").toLowerCase().trim();
           const hId = (((h as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, "");
-          if (isBenBlue) {
-            return hName.includes("steven") || hName.includes("avt") || hEmail.includes("avr6566gd") || hId.includes("steven");
-          }
-          if (isStevenAkan) {
-            return hName.includes("ben") || hEmail.includes("aouisesmee") || hId.includes("ben");
-          }
-          if (isBizRiv) {
-            return !hName.includes("biz") && !hEmail.includes("louis42111");
-          }
-          return (hName && hName !== userName && hName !== "you") || (hEmail && hEmail !== userEmail) || (hId && hId !== userId);
+          if (h.isMe) return false;
+          if (userEmail && (hEmail === userEmail || hId === userEmail)) return false;
+          if (userName && userName !== "user" && userName !== "member" && hName === userName) return false;
+          if (userId && (hId === userId || hEmail === userId)) return false;
+          if (userHandle && (hId === userHandle || hName === userHandle)) return false;
+          return Boolean(hName || hEmail || hId);
         });
 
         if (nonMeHistoryMsg) {
@@ -1538,26 +1535,50 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           otherAvatar = nonMeHistoryMsg.senderAvatar || otherAvatar;
           otherId = nonMeHistoryMsg.senderId || nonMeHistoryMsg.senderEmail || otherId;
           otherEmail = nonMeHistoryMsg.senderEmail || otherEmail;
-        } else if (data.recipientName && (!isBenBlue || !data.recipientName.toLowerCase().includes("ben")) && (!isStevenAkan || !data.recipientName.toLowerCase().includes("steven"))) {
-          otherName = data.recipientName;
+        } else if (!isBusinessUser && (data.placeName || data.placeId || data.isBusiness)) {
+          // If viewer is a regular user and thread is with a business
+          otherName = data.placeName || data.recipientName || "Business";
           otherAvatar = data.recipientAvatar || otherAvatar;
-          otherId = data.recipientId || data.recipientEmail || otherId;
-        } else if (data.senderName && (!isBenBlue || !data.senderName.toLowerCase().includes("ben")) && (!isStevenAkan || !data.senderName.toLowerCase().includes("steven"))) {
-          otherName = data.senderName;
-          otherAvatar = data.senderAvatar || otherAvatar;
-          otherId = data.senderId || data.senderEmail || otherId;
-        } else if (isBenBlue) {
-          otherName = "Steven Akan";
-          otherAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "steven_akan");
-          otherId = "@stevenakan";
-        } else if (isStevenAkan) {
-          otherName = "Ben Blue";
-          otherAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "ben_blue");
-          otherId = "@benblue";
+          otherId = data.placeId || data.recipientId || "business";
+          otherEmail = data.recipientEmail || otherEmail;
         } else {
-          otherName = data.senderName || data.recipientName || "Community Reviewer";
-          otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherName);
-          otherId = data.senderId || data.recipientId || String(data.id);
+          // Check recipient/sender fields that do not match the current user
+          const rName = (data.recipientName || "").trim();
+          const rEmail = (data.recipientEmail || "").toLowerCase().trim();
+          const rId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+          const isRMe = (userEmail && (rEmail === userEmail || rId === userEmail)) || (userName && rName.toLowerCase() === userName) || (userId && rId === userId);
+
+          const sName = (data.senderName || "").trim();
+          const sEmail = (data.senderEmail || "").toLowerCase().trim();
+          const sId = (data.senderId || "").toLowerCase().trim().replace(/^@/, "");
+          const isSMe = (userEmail && (sEmail === userEmail || sId === userEmail)) || (userName && sName.toLowerCase() === userName) || (userId && sId === userId);
+
+          if (rName && !isRMe) {
+            otherName = rName;
+            otherAvatar = data.recipientAvatar || otherAvatar;
+            otherId = rId || rEmail || otherId;
+            otherEmail = rEmail || otherEmail;
+          } else if (sName && !isSMe) {
+            otherName = sName;
+            otherAvatar = data.senderAvatar || otherAvatar;
+            otherId = sId || sEmail || otherId;
+            otherEmail = sEmail || otherEmail;
+          } else {
+            // Check participants array for any other participant
+            const otherP = participants.find((p: string) => {
+              const pl = (p || "").toLowerCase().trim();
+              return pl && pl !== userEmail && pl !== userId && pl !== userName && pl !== userHandle && !pl.includes("test");
+            });
+            if (otherP) {
+              otherName = otherP.includes("@") ? otherP.split("@")[0] : otherP;
+              otherId = otherP;
+              otherEmail = otherP.includes("@") ? otherP : "";
+            } else {
+              otherName = data.senderName || data.recipientName || "Member";
+              otherAvatar = data.senderAvatar || data.recipientAvatar || generateGoogleLetterAvatarSvg(otherName, 128, otherName);
+              otherId = data.senderId || data.recipientId || String(data.id);
+            }
+          }
         }
       }
 
@@ -1751,12 +1772,10 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
   const userName = (user?.name || "").toLowerCase().trim();
   const userHandle = (user?.handle || user?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
   const userId = (user?.userId || (user as any)?.id || "").toLowerCase().trim();
-
-  // 1. If explicit business / place thread
-  if (thread.isBusiness || (thread.placeId && thread.placeId !== "yoouz" && thread.placeId !== "yoouz.com")) {
-    const pId = (thread.placeId || thread.senderId || "").toLowerCase().trim();
-    if (pId && pId !== "yoouz" && pId !== "yoouz.com") return `biz_${pId}`;
-  }
+  const isUserBusiness = Boolean((user as any)?.isBusiness || (user as any)?.placeId || userId.startsWith("place_"));
+  const userPlaceId = (((user as any)?.placeId || userId || "") as string).toLowerCase().trim();
+  const userDomain = (userPlaceId.includes(".") ? userPlaceId : "").toLowerCase().trim();
+  const isUserYoouz = userPlaceId === "yoouz.com" || userPlaceId === "yoouz" || userName === "yoouz" || userEmail.includes("info@yoouz.com") || userEmail.endsWith("@yoouz.com");
 
   const sName = (thread.senderName || "").toLowerCase().trim();
   const sId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
@@ -1766,65 +1785,61 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
   const rId = (thread.recipientId || "").toLowerCase().trim().replace(/^@/, "");
   const rEmail = (thread.recipientEmail || "").toLowerCase().trim();
 
-  if (
-    sName === "yoouz" || sId === "yoouz" || sId === "yoouz.com" || sEmail.includes("info@yoouz.com") || sEmail.endsWith("@yoouz.com") ||
-    rName === "yoouz" || rId === "yoouz" || rId === "yoouz.com" || rEmail.includes("info@yoouz.com") || rEmail.endsWith("@yoouz.com")
-  ) {
-    return "biz_yoouz";
-  }
+  // Helper to check if a side matches currentUser
+  const isMe = (name?: string, email?: string, id?: string) => {
+    if (!user) return false;
+    const cleanE = (email || "").toLowerCase().trim();
+    const cleanId = (id || "").toLowerCase().trim().replace(/^@/, "");
+    const cleanN = (name || "").toLowerCase().trim();
 
-  // 2. Resolve canonical user identity clusters for both sides
-  const senderCanonicalKey = getCanonicalUserKey({
-    email: sEmail,
-    name: sName,
-    handle: sId,
-    id: sId
-  });
+    if (userEmail && (cleanE === userEmail || cleanId === userEmail)) return true;
+    if (userId && (cleanId === userId || cleanE === userId)) return true;
+    if (userHandle && userHandle.length >= 3 && (cleanId === userHandle || cleanN === userHandle)) return true;
+    if (userName && userName !== "user" && userName !== "member" && userName !== "reviewer" && cleanN === userName) return true;
 
-  const recipientCanonicalKey = getCanonicalUserKey({
-    email: rEmail,
-    name: rName,
-    handle: rId,
-    id: rId
-  });
-
-  const myCanonicalKey = user ? getCanonicalUserKey({ email: userEmail, name: userName, handle: userHandle, id: userId }) : "";
-
-  // 3. Evaluate relative to active/current user if available
-  if (user && (userEmail || userName || userId || myCanonicalKey)) {
-    const isSenderMe = Boolean(
-      (myCanonicalKey && senderCanonicalKey === myCanonicalKey) ||
-      (userEmail && (sEmail === userEmail || sId === userEmail)) ||
-      (userHandle && userHandle.length >= 3 && (sId === userHandle || sName === userHandle)) ||
-      (userName && userName.length >= 3 && sName === userName) ||
-      (userId && (sId === userId || sEmail === userId))
-    );
-
-    const isRecipientMe = Boolean(
-      (myCanonicalKey && recipientCanonicalKey === myCanonicalKey) ||
-      (userEmail && (rEmail === userEmail || rId === userEmail)) ||
-      (userHandle && userHandle.length >= 3 && (rId === userHandle || rName === userHandle)) ||
-      (userName && userName.length >= 3 && rName === userName) ||
-      (userId && (rId === userId || rEmail === userId))
-    );
-
-    if (isSenderMe && !isRecipientMe) {
-      return recipientCanonicalKey || (rEmail || rId || rName || "partner").toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+    if (isUserBusiness) {
+      if (userPlaceId && (cleanId === userPlaceId || cleanE === userPlaceId)) return true;
+      if (userDomain && (cleanId === userDomain || cleanE.includes(userDomain))) return true;
+      if (isUserYoouz && (cleanN === "yoouz" || cleanId === "yoouz" || cleanId === "yoouz.com" || cleanE.includes("info@yoouz.com"))) return true;
     }
-    if (isRecipientMe && !isSenderMe) {
-      return senderCanonicalKey || (sEmail || sId || sName || "partner").toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+
+    const myCluster = getCanonicalUserKey({ email: userEmail, name: userName, handle: userHandle, id: userId });
+    const theirCluster = getCanonicalUserKey({ email: cleanE, name: cleanN, handle: cleanId, id: cleanId });
+    if (myCluster && theirCluster && myCluster === theirCluster) return true;
+
+    return false;
+  };
+
+  const isSenderMe = isMe(sName, sEmail, sId);
+  const isRecipientMe = isMe(rName, rEmail, rId);
+
+  // If sender is ME, the conversation partner is the RECIPIENT
+  if (isSenderMe && !isRecipientMe) {
+    const isTargetBiz = Boolean(thread.isBusiness || thread.placeId || rId.includes(".") || rId.startsWith("place-") || rId === "yoouz" || rId === "yoouz.com" || rName === "yoouz");
+    if (isTargetBiz) {
+      const bizId = thread.placeId || (rId.includes(".") ? rId : (rId === "yoouz" || rName === "yoouz" ? "yoouz.com" : rId)) || "biz";
+      return `biz_${bizId}`.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
     }
+    const rKey = getCanonicalUserKey({ email: rEmail, name: rName, handle: rId, id: rId });
+    return rKey || (rEmail || rId || rName || "partner").replace(/[^a-z0-9]/g, "_");
   }
 
-  // 4. Fallback: return the non-me canonical key or the cleanest canonical partner identity
-  if (senderCanonicalKey && myCanonicalKey && senderCanonicalKey !== myCanonicalKey) {
-    return senderCanonicalKey;
-  }
-  if (recipientCanonicalKey && myCanonicalKey && recipientCanonicalKey !== myCanonicalKey) {
-    return recipientCanonicalKey;
+  // If recipient is ME (e.g. business receiving a customer message), the partner is the SENDER
+  if (isRecipientMe && !isSenderMe) {
+    const isSenderBiz = Boolean(thread.isBusiness || thread.placeId || sId.includes(".") || sId.startsWith("place-") || sId === "yoouz" || sId === "yoouz.com" || sName === "yoouz");
+    if (isSenderBiz) {
+      const bizId = thread.placeId || (sId.includes(".") ? sId : (sId === "yoouz" || sName === "yoouz" ? "yoouz.com" : sId)) || "biz";
+      return `biz_${bizId}`.toLowerCase().replace(/[^a-z0-9_.]/g, "_");
+    }
+    const sKey = getCanonicalUserKey({ email: sEmail, name: sName, handle: sId, id: sId });
+    return sKey || (sEmail || sId || sName || "partner").replace(/[^a-z0-9]/g, "_");
   }
 
-  return senderCanonicalKey || recipientCanonicalKey || (sEmail || sId || sName || rEmail || rId || rName || String(thread.id || "")).toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+  // General fallback: return unique canonical pair key so distinct users never merge into one another
+  const sKey = getCanonicalUserKey({ email: sEmail, name: sName, handle: sId, id: sId }) || sEmail || sId || sName || "user1";
+  const rKey = getCanonicalUserKey({ email: rEmail, name: rName, handle: rId, id: rId }) || rEmail || rId || rName || "user2";
+  const pair = [sKey, rKey].sort();
+  return `pair_${pair[0]}_${pair[1]}`.replace(/[^a-z0-9_]/g, "_");
 }
 
 /**
@@ -1849,14 +1864,7 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
       const matchedIdx = result.findIndex((res) => {
         const resPartnerKey = getThreadPartnerKey(res, currentUserOverride);
         if (partnerKey && resPartnerKey && partnerKey === resPartnerKey) return true;
-
-        const resSenderName = (res.senderName || "").toLowerCase().trim();
-        const resSenderEmail = (res.senderEmail || "").toLowerCase().trim();
-        const resSenderId = (res.senderId || "").toLowerCase().trim();
-        const resCanonicalKey = getCanonicalUserKey({ email: resSenderEmail, name: resSenderName, handle: resSenderId, id: resSenderId });
-
-        if (rawCanonicalKey && resCanonicalKey && rawCanonicalKey === resCanonicalKey) return true;
-        if (rawSenderName && resSenderName && rawSenderName === resSenderName && !isGenericUsername(rawSenderName)) return true;
+        if (raw.id && res.id && raw.id === res.id) return true;
         return false;
       });
 

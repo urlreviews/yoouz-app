@@ -94,14 +94,14 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
   if (!thread) return { name: "Member", avatar: "", email: "", id: "", handle: "", isBusiness: false };
 
   const uEmail = (currentUser?.email || "").toLowerCase().trim();
-  const uId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || "").toLowerCase().trim().replace(/^@/, "");
+  const uId = (currentUser?.userId || (currentUser as any)?.id || (currentUser as any)?.uid || (currentUser as any)?.placeId || "").toLowerCase().trim().replace(/^@/, "");
   const uName = (currentUser?.name || "").toLowerCase().trim();
   const uHandle = ((currentUser as any)?.handle || "").toLowerCase().trim().replace(/^@/, "");
+  const isCurUserBusiness = Boolean((currentUser as any)?.isBusiness || (currentUser as any)?.placeId || uId.startsWith("place_") || uId.includes("."));
+  const uPlaceId = ((currentUser as any)?.placeId || (isCurUserBusiness ? uId : "")).toLowerCase().trim();
+  const isCurYoouz = isCurUserBusiness && (uPlaceId === "yoouz.com" || uPlaceId === "yoouz" || uName === "yoouz" || uEmail.includes("info@yoouz.com") || uEmail.endsWith("@yoouz.com"));
 
-  const isStevenViewing = uEmail.includes("avr6566gd") || uName.includes("steven") || uName.includes("avt");
-  const isBenViewing = uEmail.includes("aouisesmee") || uEmail.includes("aouisemee") || uName.includes("ben");
-
-  // Helper to check if a message is from currentUser
+  // Helper to check if a message/identity is from currentUser
   const isMsgFromMe = (msg: any) => {
     if (!msg) return false;
     if (msg.isMe === true || msg.isMe === "true" || msg.senderName === "you" || msg.senderName === "You") return true;
@@ -112,8 +112,29 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
     if (uId && (mId === uId || mEmail === uId)) return true;
     if (uHandle && (mId === uHandle || mName === uHandle)) return true;
     if (uName && uName !== "user" && uName !== "member" && uName !== "reviewer" && mName === uName) return true;
+    if (isCurUserBusiness) {
+      if (uPlaceId && (mId === uPlaceId || mEmail === uPlaceId)) return true;
+      if (isCurYoouz && (mName === "yoouz" || mId === "yoouz" || mId === "yoouz.com" || mEmail.includes("info@yoouz.com") || mEmail.endsWith("@yoouz.com"))) return true;
+    }
     return false;
   };
+
+  const isIdentityMe = (name?: string, email?: string, id?: string) => {
+    const cleanE = (email || "").toLowerCase().trim();
+    const cleanId = (id || "").toLowerCase().trim().replace(/^@/, "");
+    const cleanN = (name || "").toLowerCase().trim();
+    if (uEmail && (cleanE === uEmail || cleanId === uEmail)) return true;
+    if (uId && (cleanId === uId || cleanE === uId)) return true;
+    if (uHandle && (cleanId === uHandle || cleanN === uHandle)) return true;
+    if (uName && uName !== "user" && uName !== "member" && uName !== "reviewer" && cleanN === uName) return true;
+    if (isCurUserBusiness) {
+      if (uPlaceId && (cleanId === uPlaceId || cleanE === uPlaceId)) return true;
+      if (isCurYoouz && (cleanN === "yoouz" || cleanId === "yoouz" || cleanId === "yoouz.com" || cleanE.includes("info@yoouz.com") || cleanE.endsWith("@yoouz.com"))) return true;
+    }
+    return false;
+  };
+
+  let partner: { name: string; avatar: string; email: string; id: string; handle: string; isBusiness: boolean } | null = null;
 
   // 1. Inspect history for any message from partner
   if (Array.isArray(thread.history) && thread.history.length > 0) {
@@ -122,7 +143,7 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
       if (m && !isMsgFromMe(m)) {
         const mName = (m.senderName || "").trim();
         if (mName && mName.toLowerCase() !== "user" && mName.toLowerCase() !== "reviewer" && mName.toLowerCase() !== "member" && mName.toLowerCase() !== uName) {
-          return {
+          partner = {
             name: mName,
             avatar: m.senderAvatar || "",
             email: (m.senderEmail || "").toLowerCase().trim(),
@@ -130,88 +151,126 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
             handle: ((m as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
             isBusiness: Boolean(thread.isBusiness || m.isBusiness)
           };
+          break;
         }
       }
     }
   }
 
   // 2. Try participantProfiles map
-  if (thread.participantProfiles && typeof thread.participantProfiles === "object") {
+  if (!partner && thread.participantProfiles && typeof thread.participantProfiles === "object") {
     const profiles = Object.entries(thread.participantProfiles);
     for (const [key, p] of profiles) {
       if (!p || typeof p !== "object") continue;
       const pEmail = ((p as any).email || key || "").toLowerCase().trim();
       const pName = ((p as any).name || "").trim();
-      const pNameLower = pName.toLowerCase();
-      const isMe = (uEmail && pEmail === uEmail) || (uName && pNameLower === uName && uName !== "user");
-      if (!isMe && pName && pNameLower !== "user" && pNameLower !== "reviewer" && pNameLower !== "member") {
-        return {
+      const pId = ((p as any).id || key || "").toLowerCase().trim().replace(/^@/, "");
+      if (!isIdentityMe(pName, pEmail, pId) && pName && pName.toLowerCase() !== "user" && pName.toLowerCase() !== "reviewer" && pName.toLowerCase() !== "member") {
+        partner = {
           name: pName,
           avatar: (p as any).avatar || "",
           email: pEmail,
-          id: (p as any).id || key,
+          id: pId,
           handle: ((p as any).handle || "").toLowerCase().trim().replace(/^@/, ""),
-          isBusiness: Boolean(thread.isBusiness)
+          isBusiness: Boolean(thread.isBusiness || (p as any).isBusiness)
         };
+        break;
       }
     }
   }
 
   // 3. Compare sender vs recipient fields
-  const tSenderEmail = (thread.senderEmail || "").toLowerCase().trim();
-  const tSenderId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
-  const tSenderName = (thread.senderName || "").trim();
+  if (!partner) {
+    const tSenderEmail = (thread.senderEmail || "").toLowerCase().trim();
+    const tSenderId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+    const tSenderName = (thread.senderName || "").trim();
 
-  const isSenderMe = Boolean(
-    (uEmail && (tSenderEmail === uEmail || tSenderId === uEmail)) ||
-    (uId && (tSenderId === uId || tSenderEmail === uId)) ||
-    (uHandle && (tSenderId === uHandle || tSenderName.toLowerCase() === uHandle)) ||
-    (uName && tSenderName.toLowerCase() === uName && uName !== "member" && uName !== "user" && uName !== "reviewer")
-  );
+    const isSenderMe = isIdentityMe(tSenderName, tSenderEmail, tSenderId);
 
-  if (isSenderMe) {
-    const rName = (thread.recipientName || "").trim();
-    const cleanRName = (rName && rName.toLowerCase() !== "user" && rName.toLowerCase() !== uName) ? rName : "";
-    if (cleanRName) {
-      return {
-        name: cleanRName,
-        avatar: thread.recipientAvatar || "",
-        email: (thread.recipientEmail || "").toLowerCase().trim(),
-        id: (thread.recipientId || "").toLowerCase().trim().replace(/^@/, ""),
-        handle: ((thread as any).recipientHandle || "").toLowerCase().trim().replace(/^@/, ""),
+    if (isSenderMe) {
+      const rName = (thread.recipientName || "").trim();
+      const cleanRName = (rName && rName.toLowerCase() !== "user" && rName.toLowerCase() !== uName) ? rName : "";
+      if (cleanRName) {
+        partner = {
+          name: cleanRName,
+          avatar: thread.recipientAvatar || "",
+          email: (thread.recipientEmail || "").toLowerCase().trim(),
+          id: (thread.recipientId || "").toLowerCase().trim().replace(/^@/, ""),
+          handle: ((thread as any).recipientHandle || "").toLowerCase().trim().replace(/^@/, ""),
+          isBusiness: Boolean(thread.isBusiness)
+        };
+      }
+    } else if (tSenderName && tSenderName.toLowerCase() !== "user" && tSenderName.toLowerCase() !== uName) {
+      partner = {
+        name: tSenderName,
+        avatar: thread.senderAvatar || "",
+        email: tSenderEmail,
+        id: tSenderId,
+        handle: ((thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
         isBusiness: Boolean(thread.isBusiness)
       };
     }
-  } else if (tSenderName && tSenderName.toLowerCase() !== "user" && tSenderName.toLowerCase() !== uName) {
-    return {
-      name: tSenderName,
-      avatar: thread.senderAvatar || "",
-      email: tSenderEmail,
-      id: tSenderId,
-      handle: ((thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
+  }
+
+  // 4. Clean Fallback: Use thread recipient/sender/place fields
+  if (!partner) {
+    const fallbackName = (thread.recipientName && thread.recipientName.toLowerCase() !== uName)
+      ? thread.recipientName
+      : (thread.senderName && thread.senderName.toLowerCase() !== uName)
+      ? thread.senderName
+      : thread.placeName || "Business / Member";
+
+    const fallbackAvatar = thread.recipientAvatar || thread.senderAvatar || "";
+    const fallbackEmail = (thread.recipientEmail || thread.senderEmail || "").toLowerCase().trim();
+    const fallbackId = (thread.recipientId || thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+
+    partner = {
+      name: fallbackName,
+      avatar: fallbackAvatar,
+      email: fallbackEmail,
+      id: fallbackId,
+      handle: ((thread as any).recipientHandle || (thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
       isBusiness: Boolean(thread.isBusiness)
     };
   }
 
-  // 4. Clean Fallback: Use thread recipient/sender/place fields without hardcoded persona overrides
-  const fallbackName = (thread.recipientName && thread.recipientName !== uName)
-    ? thread.recipientName
-    : (tSenderName && tSenderName !== uName)
-    ? tSenderName
-    : thread.placeName || "Business / Member";
+  // Final check: if partner is a business or place
+  const pNameLower = (partner.name || "").toLowerCase().trim();
+  const pIdLower = (partner.id || "").toLowerCase().trim();
 
-  const fallbackAvatar = thread.recipientAvatar || thread.senderAvatar || "";
-  const fallbackEmail = (thread.recipientEmail || tSenderEmail || "").toLowerCase().trim();
-  const fallbackId = (thread.recipientId || tSenderId || "").toLowerCase().trim().replace(/^@/, "");
+  if (isCurUserBusiness) {
+    // When current logged-in user IS a business, the partner is the CUSTOMER (or another business)
+    const isOtherBiz = Boolean(
+      (pNameLower === "yoouz" && uPlaceId !== "yoouz.com" && uPlaceId !== "yoouz") ||
+      (pIdLower === "yoouz.com" && uPlaceId !== "yoouz.com") ||
+      pIdLower.startsWith("place_") ||
+      pIdLower.startsWith("place-") ||
+      (thread.placeId && thread.placeId.toLowerCase() !== uPlaceId) ||
+      (thread.senderId && thread.senderId.toLowerCase() !== uPlaceId && (thread.senderId.toLowerCase().startsWith("place_") || thread.senderId.toLowerCase().startsWith("place-"))) ||
+      (pIdLower.includes(".") && !pIdLower.includes("@"))
+    );
+    partner.isBusiness = isOtherBiz;
+  } else {
+    // When current logged-in user is a regular customer/user
+    if (pNameLower === "yoouz" || pIdLower === "yoouz" || pIdLower === "yoouz.com" || partner.email === "info@yoouz.com" || thread.placeId === "yoouz.com") {
+      partner.isBusiness = true;
+      partner.name = "Yoouz";
+      partner.id = "yoouz.com";
+      if (!partner.avatar && thread.recipientAvatar) {
+        partner.avatar = thread.recipientAvatar;
+      }
+    } else if (thread.placeId || (thread.isBusiness && !pIdLower.includes("@")) || (pIdLower.includes(".") && !pIdLower.includes("@")) || pIdLower.startsWith("place-") || pIdLower.startsWith("place_")) {
+      partner.isBusiness = true;
+      if (thread.placeName && (!partner.name || partner.name === "Member" || partner.name === "User")) {
+        partner.name = thread.placeName;
+      }
+      if (thread.placeId && !partner.id) {
+        partner.id = thread.placeId;
+      }
+    }
+  }
 
-  return {
-    name: fallbackName,
-    avatar: fallbackAvatar,
-    email: fallbackEmail,
-    id: fallbackId,
-    handle: ((thread as any).recipientHandle || (thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
-    isBusiness: Boolean(thread.isBusiness)
-  };
+  return partner;
 }
 
 export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
@@ -1011,6 +1070,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       return true;
     }
 
+    // Business identity match if current user is acting as business
+    const isCurBiz = Boolean((currentUser as any)?.isBusiness || (currentUser as any)?.placeId || userId.startsWith("place_") || userId.includes("."));
+    const curPlaceId = (((currentUser as any)?.placeId || (isCurBiz ? userId : "")) as string).toLowerCase().trim();
+    if (isCurBiz) {
+      if (curPlaceId && (msgSenderId === curPlaceId || msgSenderEmail === curPlaceId)) return true;
+      if (curPlaceId === "yoouz.com" && (msgSenderName === "yoouz" || msgSenderId === "yoouz" || msgSenderId === "yoouz.com" || msgSenderEmail.includes("info@yoouz.com"))) return true;
+    }
+
     // Persona checks
     const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
     const isBenViewing = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
@@ -1177,20 +1244,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     onUpdateMessages(updated);
     setDraftThread(null);
 
-    const targetRecipientEmail =
-      activeThread.recipientEmail ||
-      activeThread.senderEmail ||
-      (activeThread.senderId && activeThread.senderId.includes("@") ? activeThread.senderId : undefined);
+    const realRecipientId = partnerDetails.id || partnerDetails.email || activeThread.recipientId || activeThread.senderId;
+    const realRecipientName = partnerDetails.name || activeThread.recipientName || activeThread.senderName || "Member";
+    const realRecipientAvatar = partnerDetails.avatar || activeThread.recipientAvatar || activeThread.senderAvatar || "";
+    const realRecipientEmail = partnerDetails.email || activeThread.recipientEmail || activeThread.senderEmail || (realRecipientId.includes("@") ? realRecipientId : undefined);
 
     if (onSendMessage) {
       await onSendMessage(
         activeThread.id,
         text.trim(),
         {
-          id: activeThread.senderId,
-          name: activeThread.senderName,
-          avatar: activeThread.senderAvatar,
-          email: targetRecipientEmail
+          id: realRecipientId,
+          name: realRecipientName,
+          avatar: realRecipientAvatar,
+          email: realRecipientEmail
         },
         sanitizedThumb,
         customVideoId,
@@ -1543,8 +1610,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const cleanName = (name || "").toLowerCase().trim();
     const cleanExplicit = (explicitPlaceId || "").toLowerCase().trim();
 
-    // STRICT GUARD: If cleanId contains '@', starts with 'usr_'/'user_', or is NOT a business, ALWAYS open creator drawer!
-    if (cleanId.includes("@") || cleanId.startsWith("usr_") || cleanId.startsWith("user_") || isBiz === false) {
+    // If explicitly marked as NOT a business, directly open creator drawer
+    if (isBiz === false) {
       const author = resolveAuthor(name, id, avatar);
       if (author && onOpenCreator) {
         onOpenCreator(author);
@@ -1568,43 +1635,42 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       }
     }
 
-    // 2. ONLY if explicitly a business account (e.g. isBiz === true AND id/explicitPlaceId is a place/domain format)
-    const isExplicitBusiness = isBiz === true && !cleanId.includes("@") && (cleanId.includes(".") || cleanId.startsWith("place-") || cleanExplicit.length > 0);
-    if (isExplicitBusiness) {
-      const matchingPlace = (places || []).find((p) => {
-        const pId = (p.id || "").toLowerCase().trim();
-        const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
-          .toLowerCase()
-          .replace(/^https?:\/\//, "")
-          .replace(/^www\./, "")
-          .split("/")[0]
-          .trim();
-        return (
-          pId === cleanId ||
-          pDomain === cleanId ||
-          pId === `${cleanId}.com` ||
-          pDomain === `${cleanId}.com` ||
-          (cleanExplicit && (pId === cleanExplicit || pDomain === cleanExplicit))
-        );
-      });
+    // 2. Check if clicking any registered business from places directory
+    const matchingPlace = (places || []).find((p) => {
+      const pId = (p.id || "").toLowerCase().trim();
+      const pName = (p.name || "").toLowerCase().trim();
+      const pDomain = (p.website || (p as any).brandDomain || (p as any).domain || p.id || "")
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .split("/")[0]
+        .trim();
 
-      if (matchingPlace && onSelectPlace) {
-        onSelectPlace(matchingPlace.id);
-        return;
-      }
+      if (cleanExplicit && (pId === cleanExplicit || pDomain === cleanExplicit)) return true;
+      if (cleanId && (pId === cleanId || pDomain === cleanId)) return true;
+      if (isBiz === true && cleanName && cleanName.length >= 2 && pName === cleanName) return true;
+      return false;
+    });
 
-      if (cleanExplicit && onSelectPlace) {
-        onSelectPlace(cleanExplicit);
-        return;
-      }
+    if (matchingPlace && onSelectPlace) {
+      onSelectPlace(matchingPlace.id);
+      return;
+    }
 
-      if (!cleanId.includes("@") && (cleanId.includes(".") || cleanId.startsWith("place-")) && onSelectPlace) {
-        onSelectPlace(cleanId);
+    if (cleanExplicit && onSelectPlace) {
+      onSelectPlace(cleanExplicit);
+      return;
+    }
+
+    if (isBiz === true && onSelectPlace) {
+      const targetId = cleanId.includes("@") ? (matchingPlace?.id || cleanName) : cleanId;
+      if (targetId) {
+        onSelectPlace(targetId);
         return;
       }
     }
 
-    // 3. For all human users/creators (e.g. Ben Blue, Samet, etc.), resolve their author profile and open creator drawer!
+    // 3. For human users / reviewers / creators, open creator drawer!
     const author = resolveAuthor(name, id, avatar);
     if (author && onOpenCreator) {
       onOpenCreator(author);

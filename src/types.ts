@@ -344,7 +344,9 @@ export interface CopoMessage {
   recipientAvatar?: string;
   isBusiness?: boolean;
   placeId?: string;
+  placeName?: string;
   participants?: string[];
+  participantProfiles?: Record<string, any>;
   lastMessage: string;
   timestamp: string;
   createdAtMs?: number;

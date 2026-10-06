@@ -13022,21 +13022,39 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     if (!bunnyDb) return;
 
     try {
-      let senderName = params.senderName || "Yoouz Member";
+      let senderName = params.senderName && params.senderName !== "Yoouz Member" ? params.senderName : (params.senderName || "Yoouz Member");
       let senderAvatar = params.senderAvatar || "";
       let senderEmail = params.senderUserId;
 
-      const senderRows = await bunnyDb.execute({
-        sql: "SELECT * FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1",
-        args: [params.senderUserId, params.senderUserId, params.senderName || params.senderUserId]
-      });
-      if (senderRows && senderRows.rows && senderRows.rows.length > 0) {
-        const row: any = senderRows.rows[0];
-        let pData: any = {};
-        try { pData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-        senderName = params.senderName || row.name || pData.name || senderName;
-        senderAvatar = params.senderAvatar || row.avatar || pData.avatar || senderAvatar;
-        senderEmail = row.email || pData.email || senderEmail;
+      // Only query users table if sender name or avatar wasn't already explicitly provided
+      if (!params.senderAvatar || senderName === "Yoouz Member") {
+        const senderRows = await bunnyDb.execute({
+          sql: "SELECT * FROM users WHERE id = ? OR email = ? OR name = ? LIMIT 1",
+          args: [params.senderUserId, params.senderUserId, params.senderName || params.senderUserId]
+        });
+        if (senderRows && senderRows.rows && senderRows.rows.length > 0) {
+          const row: any = senderRows.rows[0];
+          let pData: any = {};
+          try { pData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+          senderName = params.senderName && params.senderName !== "Yoouz Member" ? params.senderName : (row.name || pData.name || senderName);
+          senderAvatar = senderAvatar || row.avatar || pData.avatar || "";
+          senderEmail = row.email || pData.email || senderEmail;
+        }
+
+        // Check places table if sender might be a business/place
+        if (!senderAvatar || senderName === "Yoouz Member") {
+          try {
+            const placeRows = await bunnyDb.execute({
+              sql: "SELECT id, name, logoUrl FROM places WHERE id = ? OR name = ? LIMIT 1",
+              args: [params.senderUserId, params.senderName || params.senderUserId]
+            });
+            if (placeRows && placeRows.rows && placeRows.rows.length > 0) {
+              const pRow: any = placeRows.rows[0];
+              senderName = params.senderName && params.senderName !== "Yoouz Member" ? params.senderName : (pRow.name || senderName);
+              senderAvatar = senderAvatar || pRow.logoUrl || "";
+            }
+          } catch(e) {}
+        }
       }
 
       if (!senderAvatar) {
@@ -13134,8 +13152,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (lowerTargets.some(t => t.includes("aouisesmee") || t.includes("aouisemee") || t.includes("aouisesme") || t.includes("aouiseme"))) {
         targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
       }
-      if (lowerTargets.some(t => t.includes("yoouz") || t.includes("biz") || t === "place-custom-yoouz-com")) {
-        targets.push("yoouz", "place-custom-yoouz-com", "biz_yoouz@business.yoouz.com");
+      if (lowerTargets.some(t => t.includes("yoouz") || t.includes("biz") || t === "place-custom-yoouz-com" || t === "info@yoouz.com" || t === "yoouz.com")) {
+        targets.push("info@yoouz.com", "yoouz.com", "yoouz", "place-custom-yoouz-com", "biz_yoouz@business.yoouz.com");
       }
 
       broadcastSseEvent({
@@ -14956,17 +14974,71 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme"))) {
         targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
       }
+      if (targets.some((t: string) => (t || "").toLowerCase().includes("yoouz") || (t || "").toLowerCase() === "info@yoouz.com" || (t || "").toLowerCase() === "yoouz.com" || (t || "").toLowerCase() === "place-custom-yoouz-com")) {
+        targets.push("info@yoouz.com", "yoouz.com", "yoouz", "place-custom-yoouz-com", "biz_yoouz@business.yoouz.com");
+      }
 
-      // Send backend notification for message if recipient exists
+      // Send backend notification for message to the real recipient
       try {
-        const senderId = message?.senderEmail || message?.senderId || threadData?.senderEmail || "";
-        const recipientEmail = (finalThreadData.participants || []).find((p: string) => p && p !== senderId) || finalThreadData.recipientEmail || "";
-        if (recipientEmail && (message?.text || message?.videoId)) {
+        const senderId = (message?.senderEmail || message?.senderId || threadData?.senderEmail || threadData?.senderId || "").trim();
+        const senderName = (message?.senderName || threadData?.senderName || "Member").trim();
+        const senderAvatar = message?.senderAvatar || threadData?.senderAvatar || "";
+
+        let recEmail = (message?.recipientEmail || threadData?.recipientEmail || "").trim();
+        let recId = (message?.recipientId || threadData?.recipientId || "").trim();
+        let recHandle = (message?.recipientName || threadData?.recipientName || "").trim();
+
+        const sIdLower = senderId.toLowerCase();
+        if (!recEmail || recEmail.toLowerCase() === sIdLower) {
+          const tSenderE = (finalThreadData.senderEmail || "").toLowerCase().trim();
+          const tRecipE = (finalThreadData.recipientEmail || "").toLowerCase().trim();
+          if (tSenderE && tSenderE !== sIdLower) {
+            recEmail = finalThreadData.senderEmail;
+            recId = finalThreadData.senderId || recEmail;
+            recHandle = finalThreadData.senderName || recEmail;
+          } else if (tRecipE && tRecipE !== sIdLower) {
+            recEmail = finalThreadData.recipientEmail;
+            recId = finalThreadData.recipientId || recEmail;
+            recHandle = finalThreadData.recipientName || recEmail;
+          } else {
+            const otherP = (finalThreadData.participants || []).find((p: string) => {
+              const pl = (p || "").toLowerCase().trim();
+              return pl && pl !== sIdLower && !pl.includes(sIdLower) && pl.includes("@");
+            });
+            if (otherP) {
+              recEmail = otherP;
+              recId = otherP;
+              recHandle = otherP;
+            }
+          }
+        }
+
+        if (recId === "yoouz.com" || recId === "yoouz") {
+          recEmail = "info@yoouz.com";
+        }
+
+        if ((!recEmail || !recEmail.includes("@")) && bunnyDb && recId) {
+          try {
+            const pRow = await bunnyDb.execute({
+              sql: "SELECT id, claimedByEmail, website FROM places WHERE id = ? LIMIT 1",
+              args: [recId]
+            });
+            if (pRow && pRow.rows && pRow.rows.length > 0) {
+              const r: any = pRow.rows[0];
+              if (r.claimedByEmail) recEmail = r.claimedByEmail;
+            }
+          } catch (pe) {}
+        }
+
+        if ((recEmail || recId) && (message?.text || message?.videoId)) {
+          const effectiveTarget = recEmail || recId;
           await createAndBroadcastBackendNotification({
             senderUserId: senderId,
-            recipientEmail: recipientEmail,
-            recipientId: recipientEmail,
-            recipientHandle: message?.senderName || "Member",
+            senderName: senderName,
+            senderAvatar: senderAvatar,
+            recipientEmail: effectiveTarget,
+            recipientId: recId || effectiveTarget,
+            recipientHandle: recHandle || recId || effectiveTarget,
             type: "message",
             text: "sent you a message",
             customId: `notif_msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`

@@ -22,7 +22,7 @@ import { CopoBusinessDashboardView } from "./components/CopoBusinessDashboardVie
 import { CopoMoreView } from "./components/CopoMoreView";
 import { CopoBookmarksView } from "./components/CopoBookmarksView";
 import { CopoNotificationsView } from "./components/CopoNotificationsView";
-import { CopoMessagesView } from "./components/CopoMessagesView";
+import { CopoMessagesView, getThreadPartnerDetails } from "./components/CopoMessagesView";
 import { CopoFollowingView } from "./components/CopoFollowingView";
 import { CopoDiscoverView } from "./components/CopoDiscoverView";
 import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
@@ -2343,8 +2343,9 @@ export function App() {
               }
               if (prefs?.enabled === false || prefs?.messages === false) return;
 
-              const toastSenderName = (t.senderName && !t.senderName.startsWith("Member") ? t.senderName : lastMsg.senderName) || "Member";
-              const toastSenderAvatar = t.senderAvatar || lastMsg.senderAvatar;
+              const partner = getThreadPartnerDetails(t, effectiveMessagingUser);
+              const toastSenderName = lastMsg.senderName || partner.name || "Member";
+              const toastSenderAvatar = lastMsg.senderAvatar || partner.avatar;
 
               setInAppToast({
                 id: `chat_${t.id}_${lastMsg.id || Date.now()}`,
@@ -2995,6 +2996,33 @@ export function App() {
 
     let targetEmail = senderId && senderId.includes("@") ? senderId : undefined;
     const sName = (senderName || "").toLowerCase().trim();
+    const sIdClean = (senderId || "").toLowerCase().trim().replace(/^@/, "");
+
+    // Dynamically match target against all registered users
+    const matchedUser = (allRegisteredUsers || []).find((u: any) => {
+      const uId = (u.userId || u.id || "").toLowerCase().trim().replace(/^@/, "");
+      const uHandle = (u.handle || "").toLowerCase().trim().replace(/^@/, "");
+      const uName = (u.name || "").toLowerCase().trim();
+      const uEmail = (u.email || "").toLowerCase().trim();
+      return (
+        (uEmail && (sIdClean === uEmail || sIdClean.includes(uEmail))) ||
+        (uId && (sIdClean === uId || uId.includes(sIdClean))) ||
+        (uHandle && (sIdClean === uHandle || uHandle.includes(sIdClean))) ||
+        (uName && sName && (uName === sName || uName.includes(sName)))
+      );
+    });
+
+    if (!targetEmail && matchedUser?.email) {
+      targetEmail = matchedUser.email;
+    }
+
+    if (!senderAvatar && matchedUser?.avatar) {
+      senderAvatar = matchedUser.avatar;
+    }
+    if (!senderAvatar && matchingPlace?.logoUrl) {
+      senderAvatar = matchingPlace.logoUrl;
+    }
+
     if (!targetEmail) {
       if (matchingPlace?.claimedByEmail) {
         targetEmail = matchingPlace.claimedByEmail;
@@ -3019,16 +3047,55 @@ export function App() {
       recipientEmail: targetEmail
     }, effUser);
 
-    const existingThread = messages.find(
-      (m) =>
-        m.id === senderId ||
-        (targetPartnerKey && getThreadPartnerKey(m, effUser) === targetPartnerKey) ||
-        m.senderId === senderId ||
-        (m as any).recipientId === senderId ||
-        (targetEmail && (m.senderId === targetEmail || m.senderEmail === targetEmail || (m as any).recipientEmail === targetEmail)) ||
-        (m.senderName && senderName && m.senderName.toLowerCase() === senderName.toLowerCase()) ||
-        ((m as any).recipientName && senderName && (m as any).recipientName.toLowerCase() === senderName.toLowerCase())
-    );
+    const userEmail = (effUser?.email || "").toLowerCase().trim();
+    const userHandle = (effUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+    const userId = (effUser?.userId || (effUser as any)?.id || "").toLowerCase().trim();
+    const curName = (effUser?.name || "").trim();
+
+    const targetEmailClean = (targetEmail || "").toLowerCase().trim();
+    const targetIdClean = (senderId || "").toLowerCase().trim();
+    const targetNameClean = (senderName || "").toLowerCase().trim();
+
+    const isPartyMe = (pId?: string, pEmail?: string, pName?: string) => {
+      const cleanId = (pId || "").toLowerCase().trim().replace(/^@/, "");
+      const cleanEmail = (pEmail || "").toLowerCase().trim();
+      const cleanName = (pName || "").toLowerCase().trim();
+      if (userEmail && (cleanEmail === userEmail || cleanId === userEmail)) return true;
+      if (userId && (cleanId === userId || cleanEmail === userId)) return true;
+      if (curName && curName.toLowerCase() !== "user" && curName.toLowerCase() !== "member" && cleanName === curName.toLowerCase()) return true;
+      return false;
+    };
+
+    const isPartyTarget = (pId?: string, pEmail?: string, pName?: string) => {
+      const cleanId = (pId || "").toLowerCase().trim().replace(/^@/, "");
+      const cleanEmail = (pEmail || "").toLowerCase().trim();
+      const cleanName = (pName || "").toLowerCase().trim();
+      if (targetEmailClean && (cleanEmail === targetEmailClean || cleanId === targetEmailClean)) return true;
+      if (targetIdClean && (cleanId === targetIdClean || cleanEmail === targetIdClean)) return true;
+      if (matchingPlace?.id && (cleanId === matchingPlace.id.toLowerCase() || cleanEmail === matchingPlace.id.toLowerCase())) return true;
+      if (targetNameClean && targetNameClean !== "user" && cleanName === targetNameClean) return true;
+      return false;
+    };
+
+    const existingThread = messages.find((m) => {
+      if (!m) return false;
+      const sId = (m.senderId || "").toLowerCase().trim();
+      const sEmail = (m.senderEmail || "").toLowerCase().trim();
+      const sName = (m.senderName || "").toLowerCase().trim();
+      const rId = ((m as any).recipientId || "").toLowerCase().trim();
+      const rEmail = ((m as any).recipientEmail || "").toLowerCase().trim();
+      const rName = ((m as any).recipientName || "").toLowerCase().trim();
+
+      const caseA = isPartyMe(sId, sEmail, sName) && isPartyTarget(rId, rEmail, rName);
+      const caseB = isPartyTarget(sId, sEmail, sName) && isPartyMe(rId, rEmail, rName);
+      if (caseA || caseB) return true;
+
+      const pKey = getThreadPartnerKey(m, effUser);
+      if (targetPartnerKey && pKey === targetPartnerKey) {
+        return isPartyMe(sId, sEmail, sName) || isPartyMe(rId, rEmail, rName);
+      }
+      return false;
+    });
 
     setActiveSection("messages");
     setSelectedPlaceIdForDrawer(null);
@@ -3038,10 +3105,6 @@ export function App() {
       setActiveThreadId(existingThread.id);
       return;
     }
-
-    const userEmail = (effUser?.email || "").toLowerCase().trim();
-    const userHandle = (effUser?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
-    const curName = (effUser?.name || "").trim();
 
     const participants = Array.from(
       new Set([
@@ -3066,14 +3129,17 @@ export function App() {
     const newThreadId = `thread_${nowMs}`;
     const newThread: CopoMessage = {
       id: newThreadId,
-      senderId,
-      senderName,
-      senderAvatar,
-      senderEmail: targetEmail,
-      recipientId: effUser?.userId || userEmail || "user",
-      recipientName: curName || "User",
-      recipientEmail: userEmail,
-      recipientAvatar: currentUser?.avatar || "",
+      senderId: effUser?.userId || userEmail || "user",
+      senderName: curName || "User",
+      senderAvatar: effUser?.avatar || currentUser?.avatar || "",
+      senderEmail: userEmail,
+      recipientId: senderId,
+      recipientName: senderName,
+      recipientAvatar: senderAvatar,
+      recipientEmail: targetEmail,
+      placeId: matchingPlace?.id || (senderId.includes(".") ? senderId : undefined),
+      placeName: matchingPlace?.name || senderName,
+      isBusiness: Boolean(matchingPlace),
       participants,
       lastMessage: "",
       timestamp: new Date(nowMs).toISOString(),
@@ -7177,17 +7243,18 @@ export function App() {
                   setActiveSection("messages");
                   if (targetKey) {
                     const normTarget = String(targetKey).toLowerCase().trim();
-                    const match = messages.find(
-                      (m) =>
-                        m.id === targetKey ||
-                        (m.senderId && m.senderId.toLowerCase().trim() === normTarget) ||
-                        (m.senderEmail && m.senderEmail.toLowerCase().trim() === normTarget) ||
-                        (m.senderName && m.senderName.toLowerCase().trim() === normTarget) ||
-                        (m.recipientEmail && m.recipientEmail.toLowerCase().trim() === normTarget) ||
-                        (m.recipientName && m.recipientName.toLowerCase().trim() === normTarget) ||
-                        (normTarget.includes("ben") && ((m.senderName || "").toLowerCase().includes("ben") || (m.senderEmail || "").toLowerCase().includes("aouisesmee"))) ||
-                        (normTarget.includes("steven") && ((m.senderName || "").toLowerCase().includes("steven") || (m.senderEmail || "").toLowerCase().includes("avr6566gd")))
-                    );
+                    const msgUser = effectiveMessagingUser || currentUser;
+                    const match = messages.find((m) => {
+                      if (!m) return false;
+                      if (m.id === targetKey) return true;
+                      const partner = getThreadPartnerDetails(m, msgUser);
+                      const pName = (partner.name || "").toLowerCase().trim();
+                      const pEmail = (partner.email || "").toLowerCase().trim();
+                      const pId = (partner.id || "").toLowerCase().trim();
+                      if (normTarget && (pEmail === normTarget || pId === normTarget || pName === normTarget)) return true;
+                      if (normTarget.includes("@") && (m.senderEmail?.toLowerCase() === normTarget || m.recipientEmail?.toLowerCase() === normTarget)) return true;
+                      return false;
+                    });
                     if (match) {
                       setActiveThreadId(match.id);
                     }
@@ -7269,11 +7336,12 @@ export function App() {
                   }));
                 }}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt, cardData) => {
-                  if (currentUser) {
+                  const msgUser = effectiveMessagingUser || currentUser;
+                  if (msgUser) {
                     await sendChatMessageToBunnyDB(
                       threadId,
                       text,
-                      currentUser,
+                      msgUser,
                       recipient,
                       videoUrl,
                       customVideoId,
@@ -7408,14 +7476,17 @@ export function App() {
                       const session = JSON.parse(saved);
                       if (session && session.placeId) {
                         const matchingPlace = places.find(p => p.id === session.placeId);
+                        const bEmail = session.businessEmail || (matchingPlace as any)?.claimedByEmail || (session.placeId === 'yoouz.com' ? 'info@yoouz.com' : 'business@yoouz.com');
                         effectiveSender = {
                           id: session.placeId,
                           uid: session.placeId,
+                          placeId: session.placeId,
                           name: session.placeName || matchingPlace?.name || 'Business Manager',
-                          email: session.businessEmail || 'business@yoouz.com',
+                          email: bEmail,
                           avatar: matchingPlace?.logoUrl || session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
                           handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
-                          isVerified: true
+                          isVerified: true,
+                          isBusiness: true
                         };
                       }
                     }
