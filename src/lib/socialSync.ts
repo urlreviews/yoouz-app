@@ -1143,7 +1143,35 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
   const map = new Map<string, number>();
   if (typeof window === "undefined") return map;
   try {
+    // Determine all identifiers belonging to currentUser that should NEVER be treated as a deleted partner key
+    const selfAliases = new Set<string>();
+    if (currentUser) {
+      const email = (currentUser.email || "").toLowerCase().trim();
+      const id = (currentUser.userId || currentUser.id || (currentUser as any).uid || "").toLowerCase().trim().replace(/^@/, '');
+      const name = (currentUser.name || "").toLowerCase().trim();
+      const handle = (currentUser.handle || "").toLowerCase().trim().replace(/^@/, '');
+      const placeId = (((currentUser as any).placeId || "") as string).toLowerCase().trim();
+      if (email) selfAliases.add(email);
+      if (id) selfAliases.add(id);
+      if (name) selfAliases.add(name);
+      if (handle) selfAliases.add(handle);
+      if (placeId) {
+        selfAliases.add(placeId);
+        if (placeId === "yoouz.com" || placeId === "yoouz") {
+          selfAliases.add("yoouz");
+          selfAliases.add("yoouz.com");
+          selfAliases.add("info@yoouz.com");
+        }
+      }
+      if (name === "yoouz" || email.includes("info@yoouz.com")) {
+        selfAliases.add("yoouz");
+        selfAliases.add("yoouz.com");
+        selfAliases.add("info@yoouz.com");
+      }
+    }
+
     const keys = getAllDeletedThreadsKeys(currentUser);
+    let modified = false;
     for (const userDelKey of keys) {
       const raw = localStorage.getItem(userDelKey);
       if (raw) {
@@ -1151,19 +1179,37 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
         if (Array.isArray(parsed)) {
           for (const item of parsed) {
             if (typeof item === "string" && item.trim()) {
+              const k = item.trim().toLowerCase();
+              if (selfAliases.has(k)) {
+                modified = true;
+                continue;
+              }
               map.set(item.trim(), 1);
             } else if (item && typeof item === "object" && item.id) {
+              const k = String(item.id).trim().toLowerCase();
+              if (selfAliases.has(k)) {
+                modified = true;
+                continue;
+              }
               const val = Number(item.deletedAt);
               map.set(String(item.id).trim(), !isNaN(val) && val > 0 ? val : 1);
             }
           }
         } else if (parsed && typeof parsed === "object") {
           for (const [k, v] of Object.entries(parsed)) {
+            const keyLower = k.trim().toLowerCase();
+            if (selfAliases.has(keyLower)) {
+              modified = true;
+              continue;
+            }
             const val = Number(v);
             map.set(k.trim(), !isNaN(val) && val > 0 ? val : 1);
           }
         }
       }
+    }
+    if (modified && currentUser) {
+      saveDeletedThreadsMap(map, currentUser);
     }
   } catch (e) {}
   return map;
@@ -1268,18 +1314,15 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientEmail = (data.recipientEmail || "").toLowerCase().trim();
     const recipientId = (data.recipientId || "").toLowerCase().trim().replace(/^@/, "");
     const recipientName = (data.recipientName || "").toLowerCase().trim();
-    const partnerKey = getThreadPartnerKey(data, currentUser);
+    const partnerInfo = getThreadPartnerIdentifiers(data, currentUser);
+    const partnerKey = partnerInfo.partnerKey || getThreadPartnerKey(data, currentUser);
 
-    // Check if user explicitly deleted this thread locally by threadId, partnerKey, or participant aliases
+    // Check if user explicitly deleted this thread locally by threadId, partnerKey, or partner-specific identifiers
     const deletedTimestamp = 
       deletedThreadsMap.get(threadId) ?? 
       (partnerKey ? deletedThreadsMap.get(partnerKey) : undefined) ??
-      (senderId ? deletedThreadsMap.get(senderId) : undefined) ??
-      (recipientId ? deletedThreadsMap.get(recipientId) : undefined) ??
-      (senderEmail ? deletedThreadsMap.get(senderEmail) : undefined) ??
-      (recipientEmail ? deletedThreadsMap.get(recipientEmail) : undefined) ??
-      (senderName ? deletedThreadsMap.get(senderName) : undefined) ??
-      (recipientName ? deletedThreadsMap.get(recipientName) : undefined);
+      (partnerInfo.partnerId ? deletedThreadsMap.get(partnerInfo.partnerId) : undefined) ??
+      (partnerInfo.partnerEmail ? deletedThreadsMap.get(partnerInfo.partnerEmail) : undefined);
 
     if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
       const rawHistory = Array.isArray(data.history) ? data.history : [];
@@ -1290,12 +1333,8 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       if (latestMsgTime > deletedTimestamp + 500) {
         deletedThreadsMap.delete(threadId);
         if (partnerKey) deletedThreadsMap.delete(partnerKey);
-        if (senderId) deletedThreadsMap.delete(senderId);
-        if (recipientId) deletedThreadsMap.delete(recipientId);
-        if (senderEmail) deletedThreadsMap.delete(senderEmail);
-        if (recipientEmail) deletedThreadsMap.delete(recipientEmail);
-        if (senderName) deletedThreadsMap.delete(senderName);
-        if (recipientName) deletedThreadsMap.delete(recipientName);
+        if (partnerInfo.partnerId) deletedThreadsMap.delete(partnerInfo.partnerId);
+        if (partnerInfo.partnerEmail) deletedThreadsMap.delete(partnerInfo.partnerEmail);
         deletedThreadsModified = true;
       } else {
         continue;
@@ -1905,6 +1944,96 @@ export function getThreadPartnerKey(thread: any, currentUserOverride?: UserProfi
   const rKey = getCanonicalUserKey({ email: rEmail, name: rName, handle: rId, id: rId }) || rEmail || rId || rName || "user2";
   const pair = [sKey, rKey].sort();
   return `pair_${pair[0]}_${pair[1]}`.replace(/[^a-z0-9_]/g, "_");
+}
+
+/**
+ * Resolves the other participant's identifiers (the conversation partner) relative to currentUser.
+ * This guarantees that currentUser's own identity is NEVER confused with the partner.
+ */
+export function getThreadPartnerIdentifiers(thread: any, currentUserOverride?: UserProfile | null): {
+  partnerKey: string;
+  partnerId: string;
+  partnerEmail: string;
+  partnerName: string;
+  partnerHandle: string;
+} {
+  if (!thread) {
+    return { partnerKey: "", partnerId: "", partnerEmail: "", partnerName: "", partnerHandle: "" };
+  }
+
+  const user = currentUserOverride || activeCurrentUser;
+  const userEmail = (user?.email || "").toLowerCase().trim();
+  const userName = (user?.name || "").toLowerCase().trim();
+  const userHandle = (user?.handle || user?.name || "").toLowerCase().replace(/^@/, "").replace(/\s+/g, "");
+  const userId = (user?.userId || (user as any)?.id || "").toLowerCase().trim();
+  const isUserBusiness = Boolean((user as any)?.isBusiness || (user as any)?.placeId || userId.startsWith("place_"));
+  const userPlaceId = (((user as any)?.placeId || userId || "") as string).toLowerCase().trim();
+  const userDomain = (userPlaceId.includes(".") ? userPlaceId : "").toLowerCase().trim();
+  const isUserYoouz = userPlaceId === "yoouz.com" || userPlaceId === "yoouz" || userName === "yoouz" || userEmail.includes("info@yoouz.com") || userEmail.endsWith("@yoouz.com");
+
+  const sName = (thread.senderName || "").toLowerCase().trim();
+  const sId = (thread.senderId || "").toLowerCase().trim().replace(/^@/, "");
+  const sEmail = (thread.senderEmail || "").toLowerCase().trim();
+
+  const rName = (thread.recipientName || "").toLowerCase().trim();
+  const rId = (thread.recipientId || "").toLowerCase().trim().replace(/^@/, "");
+  const rEmail = (thread.recipientEmail || "").toLowerCase().trim();
+
+  const isMe = (name?: string, email?: string, id?: string) => {
+    if (!user) return false;
+    const cleanE = (email || "").toLowerCase().trim();
+    const cleanId = (id || "").toLowerCase().trim().replace(/^@/, "");
+    const cleanN = (name || "").toLowerCase().trim();
+
+    if (userEmail && (cleanE === userEmail || cleanId === userEmail)) return true;
+    if (userId && (cleanId === userId || cleanE === userId)) return true;
+    if (userHandle && userHandle.length >= 3 && (cleanId === userHandle || cleanN === userHandle)) return true;
+    if (userName && userName !== "user" && userName !== "member" && userName !== "reviewer" && cleanN === userName) return true;
+
+    if (isUserBusiness) {
+      if (userPlaceId && (cleanId === userPlaceId || cleanE === userPlaceId)) return true;
+      if (userDomain && (cleanId === userDomain || cleanE.includes(userDomain))) return true;
+      if (isUserYoouz && (cleanN === "yoouz" || cleanId === "yoouz" || cleanId === "yoouz.com" || cleanE.includes("info@yoouz.com"))) return true;
+    }
+
+    const myCluster = getCanonicalUserKey({ email: userEmail, name: userName, handle: userHandle, id: userId });
+    const theirCluster = getCanonicalUserKey({ email: cleanE, name: cleanN, handle: cleanId, id: cleanId });
+    if (myCluster && theirCluster && myCluster === theirCluster) return true;
+
+    return false;
+  };
+
+  const isSenderMe = isMe(sName, sEmail, sId);
+  const isRecipientMe = isMe(rName, rEmail, rId);
+  const partnerKey = getThreadPartnerKey(thread, currentUserOverride);
+
+  if (isSenderMe && !isRecipientMe) {
+    return {
+      partnerKey,
+      partnerId: rId,
+      partnerEmail: rEmail,
+      partnerName: rName,
+      partnerHandle: rId
+    };
+  }
+
+  if (isRecipientMe && !isSenderMe) {
+    return {
+      partnerKey,
+      partnerId: sId,
+      partnerEmail: sEmail,
+      partnerName: sName,
+      partnerHandle: sId
+    };
+  }
+
+  return {
+    partnerKey,
+    partnerId: "",
+    partnerEmail: "",
+    partnerName: "",
+    partnerHandle: ""
+  };
 }
 
 /**
@@ -2733,39 +2862,24 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
     ? partnerKeyOrTarget 
     : (partnerKeyOrTarget ? getThreadPartnerKey(partnerKeyOrTarget, currentUser) : "");
 
-  let targetSenderName = "";
-  let targetSenderId = "";
-  let targetSenderEmail = "";
-  let targetRecipientName = "";
-  let targetRecipientId = "";
-  let targetRecipientEmail = "";
-  if (partnerKeyOrTarget && typeof partnerKeyOrTarget === "object") {
-    targetSenderName = (partnerKeyOrTarget.senderName || "").toLowerCase().trim();
-    targetSenderId = (partnerKeyOrTarget.senderId || "").toLowerCase().trim().replace(/^@/, '');
-    targetSenderEmail = (partnerKeyOrTarget.senderEmail || partnerKeyOrTarget.lastSenderEmail || "").toLowerCase().trim();
-    targetRecipientName = ((partnerKeyOrTarget.recipientName || "") as string).toLowerCase().trim();
-    targetRecipientId = (((partnerKeyOrTarget as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-    targetRecipientEmail = (((partnerKeyOrTarget as any).recipientEmail || "") as string).toLowerCase().trim();
-  }
+  const partnerInfo = partnerKeyOrTarget && typeof partnerKeyOrTarget === "object"
+    ? getThreadPartnerIdentifiers(partnerKeyOrTarget, currentUser)
+    : { partnerKey: targetPartnerKey, partnerId: "", partnerEmail: "", partnerName: "", partnerHandle: "" };
 
-  // 0. Add to persistent deleted threads map with current timestamp for this specific user/business
+  // 0. Add ONLY threadId and partner's identifiers to persistent deleted threads map
   try {
     const map = getDeletedThreadsMap(currentUser);
     const now = Date.now();
     if (threadId) map.set(threadId, now);
     if (targetPartnerKey) map.set(targetPartnerKey, now);
-    if (targetSenderName) map.set(targetSenderName, now);
-    if (targetSenderId) map.set(targetSenderId, now);
-    if (targetSenderEmail) map.set(targetSenderEmail, now);
-    if (targetRecipientName) map.set(targetRecipientName, now);
-    if (targetRecipientId) map.set(targetRecipientId, now);
-    if (targetRecipientEmail) map.set(targetRecipientEmail, now);
+    if (partnerInfo.partnerKey) map.set(partnerInfo.partnerKey, now);
+    if (partnerInfo.partnerId) map.set(partnerInfo.partnerId, now);
+    if (partnerInfo.partnerEmail) map.set(partnerInfo.partnerEmail, now);
     saveDeletedThreadsMap(map, currentUser);
   } catch (e) {}
   
-  // 1. Remove from local storage chat cache for this user/business profile
+  // 1. Remove ONLY this thread or partner conversation from local storage chat cache
   try {
-    const allKeys = getAllDeletedThreadsKeys(currentUser);
     const cacheKeys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i) || "").filter(k => k.startsWith('copo_cached_chats_'));
 
     for (const key of cacheKeys) {
@@ -2780,19 +2894,10 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
             if (threadId && tId === threadId) return false;
             const pKey = getThreadPartnerKey(t, currentUser);
             if (targetPartnerKey && pKey === targetPartnerKey) return false;
-            const sName = (t.senderName || "").toLowerCase().trim();
-            const sId = (t.senderId || "").toLowerCase().trim().replace(/^@/, '');
-            const sEmail = (t.senderEmail || t.lastSenderEmail || "").toLowerCase().trim();
-            const rName = ((t.recipientName || "") as string).toLowerCase().trim();
-            const rId = (((t as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-            const rEmail = (((t as any).recipientEmail || "") as string).toLowerCase().trim();
-
-            if (targetSenderName && (sName === targetSenderName || rName === targetSenderName)) return false;
-            if (targetSenderId && (sId === targetSenderId || rId === targetSenderId)) return false;
-            if (targetSenderEmail && (sEmail === targetSenderEmail || rEmail === targetSenderEmail)) return false;
-            if (targetRecipientName && (sName === targetRecipientName || rName === targetRecipientName)) return false;
-            if (targetRecipientId && (sId === targetRecipientId || rId === targetRecipientId)) return false;
-            if (targetRecipientEmail && (sEmail === targetRecipientEmail || rEmail === targetRecipientEmail)) return false;
+            if (partnerInfo.partnerKey && pKey === partnerInfo.partnerKey) return false;
+            const tPartnerInfo = getThreadPartnerIdentifiers(t, currentUser);
+            if (partnerInfo.partnerId && tPartnerInfo.partnerId && tPartnerInfo.partnerId === partnerInfo.partnerId) return false;
+            if (partnerInfo.partnerEmail && tPartnerInfo.partnerEmail && tPartnerInfo.partnerEmail === partnerInfo.partnerEmail) return false;
             return true;
           });
           localStorage.setItem(key, JSON.stringify(filtered));
@@ -2837,17 +2942,12 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
           if (!item || !item.id) continue;
           const iId = String(item.id).trim();
           const pKey = getThreadPartnerKey(item, currentUser);
-          const iSenderName = (item.senderName || item.lastSenderName || "").toLowerCase().trim();
-          const iSenderId = (item.senderId || "").toLowerCase().trim().replace(/^@/, '');
-          const iRecipientName = ((item.recipientName || "") as string).toLowerCase().trim();
-          const iRecipientId = (((item as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-          
+          const iPartnerInfo = getThreadPartnerIdentifiers(item, currentUser);
           const isMatch = (threadId && iId === threadId) ||
                           (targetPartnerKey && pKey === targetPartnerKey) ||
-                          (targetSenderName && (iSenderName === targetSenderName || iRecipientName === targetSenderName)) ||
-                          (targetSenderId && (iSenderId === targetSenderId || iRecipientId === targetSenderId)) ||
-                          (targetRecipientName && (iSenderName === targetRecipientName || iRecipientName === targetRecipientName)) ||
-                          (targetRecipientId && (iSenderId === targetRecipientId || iRecipientId === targetRecipientId));
+                          (partnerInfo.partnerKey && pKey === partnerInfo.partnerKey) ||
+                          (partnerInfo.partnerId && iPartnerInfo.partnerId && iPartnerInfo.partnerId === partnerInfo.partnerId) ||
+                          (partnerInfo.partnerEmail && iPartnerInfo.partnerEmail && iPartnerInfo.partnerEmail === partnerInfo.partnerEmail);
 
           if (isMatch) {
             const deletedForUsers = Array.isArray(item.deletedForUsers) ? [...item.deletedForUsers] : [];

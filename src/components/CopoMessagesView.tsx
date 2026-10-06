@@ -38,7 +38,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
-import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread } from "../lib/socialSync";
+import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, getThreadPartnerIdentifiers, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
@@ -320,23 +320,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (!m) return true;
     const map = getDeletedThreadsMap(currentUser);
     const mId = String(m.id || "").trim();
-    const pKey = getThreadPartnerKey(m, currentUser);
-    const sName = (m.senderName || "").toLowerCase().trim();
-    const sId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
-    const sEmail = (m.senderEmail || "").toLowerCase().trim();
-    const rName = ((m as any).recipientName || "").toLowerCase().trim();
-    const rId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-    const rEmail = ((m as any).recipientEmail || "").toLowerCase().trim();
+    const partnerInfo = getThreadPartnerIdentifiers(m, currentUser);
+    const pKey = partnerInfo.partnerKey || getThreadPartnerKey(m, currentUser);
 
     const delTime = 
       map.get(mId) ?? 
       (pKey ? map.get(pKey) : undefined) ??
-      (sId ? map.get(sId) : undefined) ??
-      (rId ? map.get(rId) : undefined) ??
-      (sEmail ? map.get(sEmail) : undefined) ??
-      (rEmail ? map.get(rEmail) : undefined) ??
-      (sName ? map.get(sName) : undefined) ??
-      (rName ? map.get(rName) : undefined);
+      (partnerInfo.partnerId ? map.get(partnerInfo.partnerId) : undefined) ??
+      (partnerInfo.partnerEmail ? map.get(partnerInfo.partnerEmail) : undefined);
 
     if (delTime === undefined) return false;
     if (delTime <= 1) return true;
@@ -1401,26 +1392,17 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const target = targetOverride || targetActionThread;
     if (!target) return;
     
-    const partnerKey = getThreadPartnerKey(target, currentUser);
+    const partnerInfo = getThreadPartnerIdentifiers(target, currentUser);
+    const partnerKey = partnerInfo.partnerKey || getThreadPartnerKey(target, currentUser);
     const tId = String(target.id || "").trim();
-    const sName = (target.senderName || "").toLowerCase().trim();
-    const sId = (target.senderId || "").toLowerCase().trim().replace(/^@/, '');
-    const sEmail = (target.senderEmail || target.lastSenderEmail || "").toLowerCase().trim();
-    const rName = ((target.recipientName || "") as string).toLowerCase().trim();
-    const rId = (((target as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-    const rEmail = (((target as any).recipientEmail || "") as string).toLowerCase().trim();
 
     // 0. Mark as deleted in local set for INSTANT 0ms DOM removal and collapse animation
     setDeletedThreadKeys((prev) => {
       const next = new Set(prev);
       if (tId) next.add(tId);
       if (partnerKey) next.add(partnerKey);
-      if (sName) next.add(sName);
-      if (sId) next.add(sId);
-      if (sEmail) next.add(sEmail);
-      if (rName) next.add(rName);
-      if (rId) next.add(rId);
-      if (rEmail) next.add(rEmail);
+      if (partnerInfo.partnerId) next.add(partnerInfo.partnerId);
+      if (partnerInfo.partnerEmail) next.add(partnerInfo.partnerEmail);
       return next;
     });
 
@@ -1430,34 +1412,21 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const now = Date.now();
       if (tId) map.set(tId, now);
       if (partnerKey) map.set(partnerKey, now);
-      if (sName) map.set(sName, now);
-      if (sId) map.set(sId, now);
-      if (sEmail) map.set(sEmail, now);
-      if (rName) map.set(rName, now);
-      if (rId) map.set(rId, now);
-      if (rEmail) map.set(rEmail, now);
+      if (partnerInfo.partnerId) map.set(partnerInfo.partnerId, now);
+      if (partnerInfo.partnerEmail) map.set(partnerInfo.partnerEmail, now);
       saveDeletedThreadsMap(map, currentUser);
     } catch (e) {}
 
     // 1. Instantly filter messages in local state for 0ms visual feedback
     const remaining = messages.filter((m) => {
+      if (!m) return false;
       const mId = String(m.id || "").trim();
-      const mPartnerKey = getThreadPartnerKey(m, currentUser);
-      const mSName = (m.senderName || "").toLowerCase().trim();
-      const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
-      const mSEmail = (m.senderEmail || m.lastSenderEmail || "").toLowerCase().trim();
-      const mRName = ((m as any).recipientName || "").toLowerCase().trim();
-      const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-      const mREmail = (((m as any).recipientEmail || "") as string).toLowerCase().trim();
-
       if (tId && mId === tId) return false;
+      const mPartnerKey = getThreadPartnerKey(m, currentUser);
       if (partnerKey && mPartnerKey === partnerKey) return false;
-      if (sName && (mSName === sName || mRName === sName)) return false;
-      if (sId && (mSId === sId || mRId === sId)) return false;
-      if (sEmail && (mSEmail === sEmail || mREmail === sEmail)) return false;
-      if (rName && (mSName === rName || mRName === rName)) return false;
-      if (rId && (mSId === rId || mRId === rId)) return false;
-      if (rEmail && (mSEmail === rEmail || mREmail === rEmail)) return false;
+      const mPartnerInfo = getThreadPartnerIdentifiers(m, currentUser);
+      if (partnerInfo.partnerId && mPartnerInfo.partnerId && mPartnerInfo.partnerId === partnerInfo.partnerId) return false;
+      if (partnerInfo.partnerEmail && mPartnerInfo.partnerEmail && mPartnerInfo.partnerEmail === partnerInfo.partnerEmail) return false;
       return true;
     });
     onUpdateMessages(remaining);

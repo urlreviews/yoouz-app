@@ -113,7 +113,7 @@ import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
 import { useLanguage } from '../i18n/LanguageContext';
 import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
-import { getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread, getThreadPartnerKey, deleteChatThreadFromBunnyDB } from '../lib/socialSync';
+import { getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread, getThreadPartnerKey, getThreadPartnerIdentifiers, deleteChatThreadFromBunnyDB } from '../lib/socialSync';
 
 interface CopoBusinessDashboardViewProps {
   onNavigate: (section: NavSection) => void;
@@ -1511,23 +1511,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return messages.filter(m => {
       if (!m) return false;
       const tId = String(m.id || '').trim();
-      const pKey = getThreadPartnerKey(m, effectiveUser);
-      const sName = (m.senderName || (m as any).lastSenderName || '').toLowerCase().trim();
-      const sId = (m.senderId || '').toLowerCase().trim().replace(/^@/, '');
-      const sEmail = (m.senderEmail || (m as any).lastSenderEmail || '').toLowerCase().trim();
-      const rName = ((m.recipientName || '') as string).toLowerCase().trim();
-      const rId = (((m as any).recipientId || '') as string).toLowerCase().trim().replace(/^@/, '');
-      const rEmail = (((m as any).recipientEmail || '') as string).toLowerCase().trim();
+      const partnerInfo = getThreadPartnerIdentifiers(m, effectiveUser);
+      const pKey = partnerInfo.partnerKey || getThreadPartnerKey(m, effectiveUser);
 
       const deletedTimestamp = 
         deletedMap.get(tId) ?? 
         (pKey ? deletedMap.get(pKey) : undefined) ??
-        (sId ? deletedMap.get(sId) : undefined) ??
-        (rId ? deletedMap.get(rId) : undefined) ??
-        (sEmail ? deletedMap.get(sEmail) : undefined) ??
-        (rEmail ? deletedMap.get(rEmail) : undefined) ??
-        (sName ? deletedMap.get(sName) : undefined) ??
-        (rName ? deletedMap.get(rName) : undefined);
+        (partnerInfo.partnerId ? deletedMap.get(partnerInfo.partnerId) : undefined) ??
+        (partnerInfo.partnerEmail ? deletedMap.get(partnerInfo.partnerEmail) : undefined);
 
       if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
         const rawHistory = Array.isArray(m.history) ? m.history : [];
@@ -1537,12 +1528,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         if (latestMsgTime > deletedTimestamp + 500) {
           deletedMap.delete(tId);
           if (pKey) deletedMap.delete(pKey);
-          if (sId) deletedMap.delete(sId);
-          if (rId) deletedMap.delete(rId);
-          if (sEmail) deletedMap.delete(sEmail);
-          if (rEmail) deletedMap.delete(rEmail);
-          if (sName) deletedMap.delete(sName);
-          if (rName) deletedMap.delete(rName);
+          if (partnerInfo.partnerId) deletedMap.delete(partnerInfo.partnerId);
+          if (partnerInfo.partnerEmail) deletedMap.delete(partnerInfo.partnerEmail);
           saveDeletedThreadsMap(deletedMap, effectiveUser);
         } else {
           return false;

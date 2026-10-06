@@ -62,6 +62,7 @@ import {
   deleteChatThreadFromBunnyDB,
   deduplicateChatHistory,
   getThreadPartnerKey,
+  getThreadPartnerIdentifiers,
   deduplicateChatThreads
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
@@ -7331,23 +7332,18 @@ export function App() {
                 onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId, targetPartnerKey) => {
                   const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey, currentUser) : "");
-                  const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
-                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
-                  const rName = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientName || "") as string).toLowerCase().trim() : "");
-                  const rId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
+                  const targetPartnerInfo = targetPartnerKey && typeof targetPartnerKey === "object" ? getThreadPartnerIdentifiers(targetPartnerKey, currentUser) : null;
                   deleteChatThreadFromBunnyDB(threadId, currentUser, targetPartnerKey);
                   setMessages((prev) => prev.filter((m) => {
                     if (!m) return false;
                     if (threadId && m.id === threadId) return false;
-                    if (pKey && getThreadPartnerKey(m, currentUser) === pKey) return false;
-                    const mSName = (m.senderName || "").toLowerCase().trim();
-                    const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
-                    const mRName = ((m as any).recipientName || "").toLowerCase().trim();
-                    const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-                    if (sName && (mSName === sName || mRName === sName)) return false;
-                    if (sId && (mSId === sId || mRId === sId)) return false;
-                    if (rName && (mSName === rName || mRName === rName)) return false;
-                    if (rId && (mSId === rId || mRId === rId)) return false;
+                    const mPKey = getThreadPartnerKey(m, currentUser);
+                    if (pKey && mPKey === pKey) return false;
+                    if (targetPartnerInfo) {
+                      const mPartnerInfo = getThreadPartnerIdentifiers(m, currentUser);
+                      if (targetPartnerInfo.partnerId && mPartnerInfo.partnerId && mPartnerInfo.partnerId === targetPartnerInfo.partnerId) return false;
+                      if (targetPartnerInfo.partnerEmail && mPartnerInfo.partnerEmail && mPartnerInfo.partnerEmail === targetPartnerInfo.partnerEmail) return false;
+                    }
                     return true;
                   }));
                 }}
@@ -7535,23 +7531,18 @@ export function App() {
                 onDeleteThread={(threadId, targetPartnerKey) => {
                   const effUser = effectiveMessagingUser || currentUser;
                   const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey, effUser) : "");
-                  const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
-                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
-                  const rName = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientName || "") as string).toLowerCase().trim() : "");
-                  const rId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
+                  const targetPartnerInfo = targetPartnerKey && typeof targetPartnerKey === "object" ? getThreadPartnerIdentifiers(targetPartnerKey, effUser) : null;
                   deleteChatThreadFromBunnyDB(threadId, effUser as any, targetPartnerKey);
                   setMessages((prev) => prev.filter((m) => {
                     if (!m) return false;
                     if (threadId && m.id === threadId) return false;
-                    if (pKey && getThreadPartnerKey(m, effUser) === pKey) return false;
-                    const mSName = (m.senderName || "").toLowerCase().trim();
-                    const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
-                    const mRName = ((m as any).recipientName || "").toLowerCase().trim();
-                    const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
-                    if (sName && (mSName === sName || mRName === sName)) return false;
-                    if (sId && (mSId === sId || mRId === sId)) return false;
-                    if (rName && (mSName === rName || mRName === rName)) return false;
-                    if (rId && (mSId === rId || mRId === rId)) return false;
+                    const mPKey = getThreadPartnerKey(m, effUser);
+                    if (pKey && mPKey === pKey) return false;
+                    if (targetPartnerInfo) {
+                      const mPartnerInfo = getThreadPartnerIdentifiers(m, effUser);
+                      if (targetPartnerInfo.partnerId && mPartnerInfo.partnerId && mPartnerInfo.partnerId === targetPartnerInfo.partnerId) return false;
+                      if (targetPartnerInfo.partnerEmail && mPartnerInfo.partnerEmail && mPartnerInfo.partnerEmail === targetPartnerInfo.partnerEmail) return false;
+                    }
                     return true;
                   }));
                 }}
