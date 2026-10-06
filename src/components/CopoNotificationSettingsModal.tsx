@@ -279,8 +279,8 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400 group-hover:text-amber-300 transition-colors shadow-inner">
-                      <Star className="w-4 h-4 fill-amber-400" />
+                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                      <Star className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
