@@ -193,34 +193,23 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
     };
   }
 
-  // 4. Fallback for test personas (Steven Akan vs Ben Blue)
-  if (isBenViewing) {
-    return {
-      name: "Steven Akan",
-      avatar: thread.recipientAvatar || thread.senderAvatar || "",
-      email: "avr6566gd@gmail.com",
-      id: "stevenakan",
-      handle: "stevenakan",
-      isBusiness: false
-    };
-  }
-  if (isStevenViewing) {
-    return {
-      name: "Ben Blue",
-      avatar: thread.recipientAvatar || thread.senderAvatar || "",
-      email: "aouisesmee@gmail.com",
-      id: "benblue",
-      handle: "benblue",
-      isBusiness: false
-    };
-  }
+  // 4. Clean Fallback: Use thread recipient/sender/place fields without hardcoded persona overrides
+  const fallbackName = (thread.recipientName && thread.recipientName !== uName)
+    ? thread.recipientName
+    : (tSenderName && tSenderName !== uName)
+    ? tSenderName
+    : thread.placeName || "Business / Member";
+
+  const fallbackAvatar = thread.recipientAvatar || thread.senderAvatar || "";
+  const fallbackEmail = (thread.recipientEmail || tSenderEmail || "").toLowerCase().trim();
+  const fallbackId = (thread.recipientId || tSenderId || "").toLowerCase().trim().replace(/^@/, "");
 
   return {
-    name: tSenderName || thread.recipientName || "Member",
-    avatar: thread.senderAvatar || thread.recipientAvatar || "",
-    email: tSenderEmail || (thread.recipientEmail || "").toLowerCase().trim(),
-    id: tSenderId || (thread.recipientId || "").toLowerCase().trim().replace(/^@/, ""),
-    handle: ((thread as any).senderHandle || (thread as any).recipientHandle || "").toLowerCase().trim().replace(/^@/, ""),
+    name: fallbackName,
+    avatar: fallbackAvatar,
+    email: fallbackEmail,
+    id: fallbackId,
+    handle: ((thread as any).recipientHandle || (thread as any).senderHandle || "").toLowerCase().trim().replace(/^@/, ""),
     isBusiness: Boolean(thread.isBusiness)
   };
 }
@@ -841,10 +830,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const nowMs = Date.now();
     const newThread: CopoMessage = {
       id: newId,
-      senderId: recipient.id || finalEmail || `usr_${nowMs}`,
-      senderName: recipient.name,
-      senderAvatar: recipient.avatar,
-      senderEmail: finalEmail,
+      senderId: currentUser?.userId || userEmail || `usr_${nowMs}`,
+      senderName: userName || "You",
+      senderAvatar: currentUser?.avatar || "",
+      senderEmail: userEmail,
       recipientId: recipient.id,
       recipientName: recipient.name,
       recipientAvatar: recipient.avatar,
@@ -852,6 +841,20 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       isBusiness: isBizRecipient,
       placeId: isBizRecipient && recipient.id !== "yoouz" && recipient.id !== "yoouz.com" ? (recipient.id as any) : undefined,
       participants,
+      participantProfiles: {
+        [userEmail || userHandle || "sender"]: {
+          name: userName || "User",
+          avatar: currentUser?.avatar || "",
+          email: userEmail
+        },
+        [finalEmail || recipient.id || "recipient"]: {
+          name: recipient.name,
+          avatar: recipient.avatar,
+          email: finalEmail,
+          id: recipient.id,
+          isBusiness: isBizRecipient
+        }
+      },
       lastMessage: "",
       timestamp: new Date(nowMs).toISOString(),
       createdAtMs: nowMs,
