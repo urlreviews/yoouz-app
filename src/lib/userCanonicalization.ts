@@ -74,6 +74,10 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
   if (
     name === "steven akan" ||
     name.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
+    name.includes("steven") ||
+    handle.includes("steven") ||
+    name.includes("sten") ||
+    handle.includes("sten") ||
     handle === "stevenakan" ||
     handle.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
     id === "steven_akan" ||

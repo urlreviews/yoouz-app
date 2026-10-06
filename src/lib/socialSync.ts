@@ -1283,10 +1283,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
       const rawHistory = Array.isArray(data.history) ? data.history : [];
-      const latestMsgTime = Math.max(
-        Number(data.updatedAt || data.createdAt || 0),
-        ...(rawHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
-      );
+      const historyTimestamps = rawHistory.map((m: any) => resolveMessageTimestampMs(m, m?.createdAtMs || m?.createdAt || m?.created_at));
+      const threadTime = resolveMessageTimestampMs(data, data.updatedAt || data.createdAt || data.createdAtMs);
+      const latestMsgTime = Math.max(threadTime, ...historyTimestamps, 0);
 
       if (latestMsgTime > deletedTimestamp + 500) {
         deletedThreadsMap.delete(threadId);
@@ -1679,10 +1678,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         partnerKey ? getReadThreadTimestamp(partnerKey, currentUser) : 0
       );
       if (readTimestamp > 0) {
-        const latestMsgTime = Math.max(
-          Number(data.updatedAt || data.createdAt || data.createdAtMs || 0),
-          ...(rawHistForUnread.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
-        );
+        const threadTime = resolveMessageTimestampMs(data, data.updatedAt || data.createdAt || data.createdAtMs);
+        const historyTimes = rawHistForUnread.map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0));
+        const latestMsgTime = Math.max(threadTime, ...historyTimes, 0);
         if (latestMsgTime <= readTimestamp + 5000) {
           unreadCount = 0;
         }
@@ -1924,7 +1922,7 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
     const cleanHist = deduplicateChatHistory(rawHist).filter((m: any) => {
       const t = (m.text || "").trim();
       if (t === "Conversation started" || t === "Direct conversation") return false;
-      return Boolean(t || m.videoThumbnail || m.videoId);
+      return Boolean(t || m.videoThumbnail || m.videoId || m.placeId || m.placeName);
     });
 
     const cleanRawMsg = (raw.lastMessage && raw.lastMessage !== "Conversation started" && raw.lastMessage !== "Direct conversation") ? raw.lastMessage.trim() : "";
@@ -1939,9 +1937,10 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
       const finalLastMsg = mergedLastHistText || effectiveLastMsg || existingCleanMsg;
 
       const newestTime = Math.max(
-        Number(existing.createdAtMs || (existing as any).updatedAt || 0),
-        Number(raw.createdAtMs || (raw as any).updatedAt || 0),
-        ...(mergedHist.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+        resolveMessageTimestampMs(existing, existing.createdAtMs || (existing as any).updatedAt || (existing as any).createdAt),
+        resolveMessageTimestampMs(raw, raw.createdAtMs || (raw as any).updatedAt || (raw as any).createdAt),
+        ...(mergedHist.map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0))),
+        0
       );
 
       const lastMergedMsg = mergedHist.length > 0 ? mergedHist[mergedHist.length - 1] : null;
@@ -1999,8 +1998,9 @@ export function deduplicateChatThreads(threads: CopoMessage[], currentUserOverri
         partnerKey ? getReadThreadTimestamp(partnerKey, currentUserOverride) : 0
       );
       const rawMsgTime = Math.max(
-        Number(raw.createdAtMs || (raw as any).updatedAt || 0),
-        ...(cleanHist.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
+        resolveMessageTimestampMs(raw, raw.createdAtMs || (raw as any).updatedAt || (raw as any).createdAt),
+        ...(cleanHist.map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0))),
+        0
       );
       if (readTimestamp > 0 && rawMsgTime <= readTimestamp + 5000) {
         newUnread = 0;
@@ -2135,12 +2135,27 @@ export function subscribeToChats(
           if (!t) return false;
           const tId = String(t.id || "").trim();
           const pKey = getThreadPartnerKey(t, currentUser);
-          const delTime = deletedMap.get(tId) ?? (pKey ? deletedMap.get(pKey) : undefined);
-          if (delTime !== undefined) {
-            const latestMsg = Math.max(
-              Number(t.createdAtMs || t.updatedAt || 0),
-              ...(Array.isArray(t.history) ? t.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
-            );
+          const sId = (t.senderId || "").toLowerCase().trim().replace(/^@/, '');
+          const rId = (((t as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+          const sEmail = (t.senderEmail || "").toLowerCase().trim();
+          const rEmail = ((t as any).recipientEmail || "").toLowerCase().trim();
+          const sName = (t.senderName || "").toLowerCase().trim();
+          const rName = ((t as any).recipientName || "").toLowerCase().trim();
+
+          const delTime = 
+            deletedMap.get(tId) ?? 
+            (pKey ? deletedMap.get(pKey) : undefined) ??
+            (sId ? deletedMap.get(sId) : undefined) ??
+            (rId ? deletedMap.get(rId) : undefined) ??
+            (sEmail ? deletedMap.get(sEmail) : undefined) ??
+            (rEmail ? deletedMap.get(rEmail) : undefined) ??
+            (sName ? deletedMap.get(sName) : undefined) ??
+            (rName ? deletedMap.get(rName) : undefined);
+
+          if (delTime !== undefined && delTime > 1) {
+            const threadTime = resolveMessageTimestampMs(t, t.createdAtMs || (t as any).updatedAt || (t as any).createdAt);
+            const historyTimes = (Array.isArray(t.history) ? t.history : []).map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0));
+            const latestMsg = Math.max(threadTime, ...historyTimes, 0);
             return latestMsg > delTime + 500;
           }
           return true;

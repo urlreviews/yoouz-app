@@ -314,6 +314,43 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   useEffect(() => {
     const map = getDeletedThreadsMap(currentUser);
     setDeletedThreadKeys(new Set(map.keys()));
+  }, [currentUser, messages]);
+
+  const isThreadDeleted = useCallback((m: CopoMessage | null | undefined): boolean => {
+    if (!m) return true;
+    const map = getDeletedThreadsMap(currentUser);
+    const mId = String(m.id || "").trim();
+    const pKey = getThreadPartnerKey(m, currentUser);
+    const sName = (m.senderName || "").toLowerCase().trim();
+    const sId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
+    const sEmail = (m.senderEmail || "").toLowerCase().trim();
+    const rName = ((m as any).recipientName || "").toLowerCase().trim();
+    const rId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+    const rEmail = ((m as any).recipientEmail || "").toLowerCase().trim();
+
+    const delTime = 
+      map.get(mId) ?? 
+      (pKey ? map.get(pKey) : undefined) ??
+      (sId ? map.get(sId) : undefined) ??
+      (rId ? map.get(rId) : undefined) ??
+      (sEmail ? map.get(sEmail) : undefined) ??
+      (rEmail ? map.get(rEmail) : undefined) ??
+      (sName ? map.get(sName) : undefined) ??
+      (rName ? map.get(rName) : undefined);
+
+    if (delTime === undefined) return false;
+    if (delTime <= 1) return true;
+
+    // Check if thread has new messages after delTime
+    const rawHistory = Array.isArray(m.history) ? m.history : [];
+    const threadTime = resolveMessageTimestampMs(m, m.createdAtMs || (m as any).updatedAt || (m as any).createdAt);
+    const historyTimestamps = rawHistory.map((h: any) => resolveMessageTimestampMs(h, h?.createdAtMs || h?.createdAt || h?.created_at));
+    const latestMsgTime = Math.max(threadTime, ...historyTimestamps, 0);
+
+    if (latestMsgTime > delTime + 500) {
+      return false;
+    }
+    return true;
   }, [currentUser]);
   const [swipedThreadId, setSwipedThreadId] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
@@ -850,14 +887,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const rIdLower = (recipient.id || "").toLowerCase().trim().replace(/^@/, '');
     const rEmailLower = (finalEmail || recipient.email || "").toLowerCase().trim();
 
-    const isThreadDeleted = (m: CopoMessage) => {
-      const mId = String(m.id || "").trim();
-      const pKey = getThreadPartnerKey(m, currentUser);
-      if (deletedThreadKeys.has(mId) || (pKey && deletedThreadKeys.has(pKey))) return true;
-      if (deletedMap.has(mId) || (pKey && deletedMap.has(pKey))) return true;
-      return false;
-    };
-
     const existing = messages.find(
       (m) =>
         (m.id === recipient.id ||
@@ -1009,11 +1038,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const deduped = deduplicateChatThreads(messages, currentUser);
     const visible = deduped.filter((m) => {
       if (!m) return false;
-      const mId = String(m.id || "").trim();
-      const mPartnerKey = getThreadPartnerKey(m, currentUser);
-      if (deletedThreadKeys.has(mId)) return false;
-      if (mPartnerKey && deletedThreadKeys.has(mPartnerKey)) return false;
-      return true;
+      return !isThreadDeleted(m);
     });
 
     if (!searchTerm.trim()) return visible;
@@ -1022,7 +1047,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       m.senderName.toLowerCase().includes(q) ||
       (m.lastMessage && m.lastMessage !== "Conversation started" && m.lastMessage.toLowerCase().includes(q))
     );
-  }, [messages, searchTerm, deletedThreadKeys, currentUser]);
+  }, [messages, searchTerm, currentUser, isThreadDeleted]);
 
   const activeThread = useMemo(() => {
     if (draftThread) {
@@ -1035,16 +1060,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId);
       if (foundInFiltered) return foundInFiltered;
       const found = messages.find((m) => {
-        const mId = String(m.id || "").trim();
+        if (isThreadDeleted(m)) return false;
         const pKey = getThreadPartnerKey(m, currentUser);
-        if (deletedThreadKeys.has(mId) || (pKey && deletedThreadKeys.has(pKey))) return false;
         return m.id === selectedThreadId || pKey === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId;
       });
       if (found) return found;
     }
     if (draftThread) return draftThread;
-    return filteredThreads[0] || messages.find(m => !deletedThreadKeys.has(m.id)) || draftThread;
-  }, [messages, filteredThreads, selectedThreadId, draftThread, currentUser, deletedThreadKeys]);
+    return filteredThreads[0] || messages.find(m => !isThreadDeleted(m)) || draftThread;
+  }, [messages, filteredThreads, selectedThreadId, draftThread, currentUser, isThreadDeleted]);
 
   const isSenderBlocked = useMemo(() => {
     if (!activeThread) return false;

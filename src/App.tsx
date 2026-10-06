@@ -65,6 +65,7 @@ import {
   deduplicateChatThreads
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
+import { resolveMessageTimestampMs } from "./utils/dateUtils";
 
 export function App() {
   // 0. Cache-Busting & Smart Sync Logic
@@ -2170,10 +2171,9 @@ export function App() {
         pKey ? getReadThreadTimestamp(pKey, user) : 0
       );
       if (readTimestamp > 0) {
-        const latestTime = Math.max(
-          Number(m.createdAtMs || (m as any).updatedAt || 0),
-          ...(hist.map((msg: any) => Number(msg?.createdAt || msg?.createdAtMs || 0)))
-        );
+        const threadTime = resolveMessageTimestampMs(m, m.createdAtMs || (m as any).updatedAt || (m as any).createdAt);
+        const historyTimes = hist.map((msg: any) => resolveMessageTimestampMs(msg, msg?.createdAt || msg?.createdAtMs || 0));
+        const latestTime = Math.max(threadTime, ...historyTimes, 0);
         if (latestTime <= readTimestamp + 5000) {
           return acc;
         }
@@ -2217,10 +2217,9 @@ export function App() {
           );
 
           if (!prevThread) {
-            const latestTime = Math.max(
-              Number(thread.createdAtMs || (thread as any).updatedAt || 0),
-              ...(Array.isArray(thread.history) ? thread.history.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)) : [])
-            );
+            const threadTime = resolveMessageTimestampMs(thread, thread.createdAtMs || (thread as any).updatedAt || (thread as any).createdAt);
+            const historyTimes = (Array.isArray(thread.history) ? thread.history : []).map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0));
+            const latestTime = Math.max(threadTime, ...historyTimes, 0);
             if (readTimestamp > 0 && latestTime <= readTimestamp + 5000) {
               return { ...thread, unreadCount: 0 };
             }
@@ -2236,10 +2235,9 @@ export function App() {
           const histLastMsg = (mergedHistory[mergedHistory.length - 1]?.text) || "";
           const prevCleanMsg = (prevThread.lastMessage && prevThread.lastMessage !== "Conversation started" && prevThread.lastMessage !== "Direct conversation") ? prevThread.lastMessage : "";
 
-          const latestTime = Math.max(
-            Number(thread.createdAtMs || (thread as any).updatedAt || 0),
-            ...(mergedHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
-          );
+          const threadTime = resolveMessageTimestampMs(thread, thread.createdAtMs || (thread as any).updatedAt || (thread as any).createdAt);
+          const historyTimes = mergedHistory.map((m: any) => resolveMessageTimestampMs(m, m?.createdAt || m?.createdAtMs || 0));
+          const latestTime = Math.max(threadTime, ...historyTimes, 0);
           const isThreadRead = (readTimestamp > 0 && latestTime <= readTimestamp + 5000);
 
           return {
