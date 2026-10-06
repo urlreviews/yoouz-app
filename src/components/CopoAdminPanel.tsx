@@ -6496,7 +6496,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     { name: "users", label: "User Profiles", count: liveStats?.totals?.users ?? uniqueUsers.length, icon: "👤" },
                     { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, icon: "💬" },
                     { name: "likes", label: "Likes & Reactions", count: liveStats?.totals?.likes ?? metrics.totalLikes, icon: "❤️" },
-                    { name: "shares", label: "Shares & Reposts", count: liveStats?.totals?.shares ?? metrics.totalShares, icon: "↗️" },
+                    { name: "shares", label: "Shares & Recommendations", count: liveStats?.totals?.shares ?? metrics.totalShares, icon: "↗️" },
                     { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? metrics.totalBookmarks, icon: "🔖" },
                     { name: "chats", label: "Direct Messages", count: liveStats?.totals?.chats ?? adminChats.length, icon: "✉️" },
                     { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, icon: "🔔" },

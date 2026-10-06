@@ -8,6 +8,7 @@ import {
   UserPlus,
   Bookmark,
   Repeat2,
+  Share2,
   Star,
   X,
   Check,
@@ -448,14 +449,14 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
                     <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
-                      <Repeat2 className="w-4 h-4" />
+                      <Share2 className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
-                        Shares & Reposts
+                        Shares & Recommendations
                       </p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        When viewers share or repost your authentic video reviews
+                        When viewers share your authentic video reviews or recommend places
                       </p>
                     </div>
                   </div>

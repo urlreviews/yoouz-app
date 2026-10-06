@@ -1807,23 +1807,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       <span>{t("video.shareVideoReview", "Share Video Review")}</span>
                     </button>
 
-                    {onToggleRepost && (
-                      <button
-                        id="btn-more-option-repost"
-                        onClick={() => {
-                          const v = moreMenuVideo;
-                          setMoreMenuVideo(null);
-                          if (v) onToggleRepost(v.id);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                      >
-                        <Repeat className={`w-4 h-4 ${(moreMenuVideo as any)?.isReposted ? "text-emerald-400" : "text-zinc-200"}`} />
-                        <span className={(moreMenuVideo as any)?.isReposted ? "text-emerald-400 font-semibold" : ""}>
-                          {(moreMenuVideo as any)?.isReposted ? t("video.removeRepost", "Undo Repost") : t("video.repostReview", "Repost Video Review")}
-                        </span>
-                      </button>
-                    )}
-
                     {/* Verified Business Owner Only: Download for Social & Ads */}
                     {isVerifiedOwnerOfThisPlace && (
                       <button
@@ -1879,21 +1862,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     )}
 
                     <div className="my-2 border-t border-zinc-800" />
-
-                    {onHideVideo && (
-                      <button
-                        id="btn-more-option-hide"
-                        onClick={() => {
-                          const vidId = moreMenuVideo.id;
-                          setMoreMenuVideo(null);
-                          if (vidId) onHideVideo(vidId);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
-                      >
-                        <EyeOff className="w-4 h-4 text-zinc-200" />
-                        <span>{t("video.notInterested", "Not interested in this video")}</span>
-                      </button>
-                    )}
 
                     {onOpenReport && (
                       <button
