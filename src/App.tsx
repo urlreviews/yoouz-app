@@ -1946,13 +1946,14 @@ export function App() {
         if (saved) {
           const session = JSON.parse(saved);
           if (session && session.placeId) {
+            const isYoouz = session.placeId === 'yoouz.com' || session.placeId === 'yoouz' || (session.placeName || '').toLowerCase() === 'yoouz';
             effective = {
               id: session.placeId,
               uid: session.placeId,
               userId: session.placeId,
               placeId: session.placeId,
               name: session.placeName || 'Business Manager',
-              email: session.businessEmail || `biz_${session.placeId}@business.yoouz.com`,
+              email: session.businessEmail || (isYoouz ? 'info@yoouz.com' : `biz_${session.placeId}@business.yoouz.com`),
               avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
               handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
               isVerified: true,
@@ -2027,6 +2028,7 @@ export function App() {
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
         if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
         if ((newIncoming.type === "repost" || newIncoming.type === "share") && (prefs?.shares === false || (prefs?.shares === undefined && prefs?.bookmarks === false))) return;
+        if ((newIncoming.type === "message" || (newIncoming.type as any) === "chat") && prefs?.messages === false) return;
 
         let title = "1 new notification";
         if (newIncoming.type === "like") title = "1 new like";
@@ -2034,21 +2036,31 @@ export function App() {
         else if (newIncoming.type === "follow") title = "1 new follower";
         else if (newIncoming.type === "bookmark") title = "1 new save";
         else if (newIncoming.type === "repost" || newIncoming.type === "share") title = "1 new share";
+        else if (newIncoming.type === "message" || (newIncoming.type as any) === "chat") title = `1 new message from ${newIncoming.user?.name || 'Yoouz'}`;
 
         const targetThreadId = (newIncoming as any).threadId || (newIncoming as any).chatId;
 
         setInAppToast({
           id: newIncoming.id,
-          type: "notification",
+          type: (newIncoming.type === "message" || (newIncoming.type as any) === "chat") ? "message" : "notification",
           actionType: newIncoming.type,
           title: title,
-          subtitle: newIncoming.text ? `${newIncoming.user.name}: ${newIncoming.text}` : `${newIncoming.user.name} interacted with you`,
+          subtitle: newIncoming.text ? `${newIncoming.user.name}: ${newIncoming.text}` : `${newIncoming.user.name} sent you a message`,
           avatar: newIncoming.user.avatar,
           userName: newIncoming.user.name,
           threadId: targetThreadId,
           onAction: () => {
             markNotificationAsRead(newIncoming.id, effectiveMessagingUser);
-            if (newIncoming.videoId) {
+            if (newIncoming.type === "message" || (newIncoming.type as any) === "chat" || targetThreadId) {
+              if (activeSection === "business") {
+                // Business dashboard already in view
+              } else {
+                setActiveSection("messages");
+                if (targetThreadId) {
+                  setActiveThreadId(targetThreadId);
+                }
+              }
+            } else if (newIncoming.videoId) {
               handleSelectVideoById(newIncoming.videoId);
             } else {
               setActiveSection("notifications");

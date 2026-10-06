@@ -1313,6 +1313,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       userName.includes("steven") ||
       userHandle.includes("steven") ||
       userFirstName === "steven" ||
+      userName.includes("sten") ||
+      userHandle.includes("sten") ||
+      userFirstName === "sten" ||
       userName === "avt ertuop" ||
       userHandle === "avtertuop" ||
       userId.includes("avr6566gd") ||
@@ -1408,10 +1411,10 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
 
       const matchesStevenAkan = isStevenAkan && (
-        participants.some(p => p.includes("avr6566gd") || p.includes("steven") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
+        participants.some(p => p.includes("avr6566gd") || p.includes("steven") || p.includes("sten") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
         senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
-        senderName.includes("steven") || recipientName.includes("steven") || senderName.includes("avt") || recipientName.includes("avt") ||
-        senderId.includes("steven") || recipientId.includes("steven") || senderId.includes("avr6566gd") || recipientId.includes("avr6566gd")
+        senderName.includes("steven") || recipientName.includes("steven") || senderName.includes("sten") || recipientName.includes("sten") || senderName.includes("avt") || recipientName.includes("avt") ||
+        senderId.includes("steven") || recipientId.includes("steven") || senderId.includes("sten") || recipientId.includes("sten") || senderId.includes("avr6566gd") || recipientId.includes("avr6566gd")
       );
 
       const matchesBenBlue = isBenBlue && (

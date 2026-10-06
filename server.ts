@@ -14943,6 +14943,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           id: threadId,
           participants: mergedParticipants,
           unreadCounts: mergedUnreadCounts,
+          deletedForUsers: [],
           history: mergedHistory,
           lastMessage: message?.text || threadData.lastMessage || lastMsg?.text || "",
           lastSenderEmail: message?.senderEmail || threadData.lastSenderEmail || lastMsg?.senderEmail || "",
