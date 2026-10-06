@@ -187,6 +187,33 @@ export function AEOBlock() {
           </div>
 
           <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+            <h3 itemProp="name">How do video testimonials improve Google search rankings and generate Video Rich Snippets?</h3>
+            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+              <p itemProp="text">
+                Video content generates significantly higher dwell time and lower bounce rates. Every Yoouz video review is structured with Schema.org/VideoObject and Review metadata, allowing Google to display rich video thumbnails, star badges, and timestamps in search engine results.
+              </p>
+            </div>
+          </div>
+
+          <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+            <h3 itemProp="name">Why are authentic customer video reviews 9.8x more trusted than paid influencer endorsements?</h3>
+            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+              <p itemProp="text">
+                Everyday customer video reviews carry authentic social proof because reviewers have no financial incentive to flatter brands. Unscripted 60-second video testimonials recorded live on Yoouz provide nearly 10x higher credibility than sponsored influencer promotions.
+              </p>
+            </div>
+          </div>
+
+          <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+            <h3 itemProp="name">How does live video review capture protect businesses from competitor smear campaigns and review extortion?</h3>
+            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+              <p itemProp="text">
+                Yoouz enforces Proof of Presence™ by requiring real people to record reviews live on camera. This completely prevents anonymous fake accounts, competitor smear attacks, bot networks, and review extortion seen on legacy text review platforms.
+              </p>
+            </div>
+          </div>
+
+          <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
             <h3 itemProp="name">Does Yoouz support reviewing online websites and e-commerce stores?</h3>
             <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
               <p itemProp="text">
