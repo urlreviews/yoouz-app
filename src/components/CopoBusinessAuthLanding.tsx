@@ -29,6 +29,8 @@ interface CopoBusinessAuthLandingProps {
   onCancelSelectedPlace?: () => void;
   currentUser?: UserProfile | null;
   videos?: VideoReview[];
+  hasActiveSession?: boolean;
+  onReturnToDashboard?: () => void;
 }
 
 export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = ({
@@ -39,9 +41,20 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   initialMode = 'signin',
   onCancelSelectedPlace,
   currentUser = null,
-  videos = []
+  videos = [],
+  hasActiveSession = false,
+  onReturnToDashboard
 }) => {
   const { t } = useLanguage();
+
+  const handleExitOrBack = () => {
+    if (onCancelSelectedPlace) onCancelSelectedPlace();
+    if (hasActiveSession && onReturnToDashboard) {
+      onReturnToDashboard();
+    } else {
+      onNavigate('home');
+    }
+  };
 
   // State
   const [email, setEmail] = useState('');
@@ -356,10 +369,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
       {/* 1. Refined Minimal Header */}
       <header className="relative w-full h-16 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-8 flex items-center justify-between shrink-0 z-30">
         <div 
-          onClick={() => {
-            if (onCancelSelectedPlace) onCancelSelectedPlace();
-            onNavigate('home');
-          }}
+          onClick={handleExitOrBack}
           className="flex items-center gap-2.5 cursor-pointer group"
           id="btn-business-logo-exit"
         >
@@ -378,14 +388,11 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
 
         <button
           id="btn-business-exit-nav"
-          onClick={() => {
-            if (onCancelSelectedPlace) onCancelSelectedPlace();
-            onNavigate('home');
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 text-xs font-medium transition-colors cursor-pointer"
+          onClick={handleExitOrBack}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{t("common.exit", "Exit")}</span>
+          <span>{hasActiveSession ? t("business.backToDashboard", "Back to Business Dashboard") : t("common.exit", "Exit")}</span>
         </button>
       </header>
 
