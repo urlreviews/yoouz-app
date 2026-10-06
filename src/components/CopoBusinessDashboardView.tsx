@@ -102,7 +102,7 @@ import { CopoMobileBottomNav } from './CopoMobileBottomNav';
 import { CopoCommentsDrawer } from './CopoCommentsDrawer';
 import { GoogleOwnerReplyModal } from './GoogleOwnerReplyModal';
 import { CopoBrandedAdExportModal } from './CopoBrandedAdExportModal';
-import { formatRecordedDate } from '../utils/dateUtils';
+import { formatRecordedDate, resolveMessageTimestampMs } from '../utils/dateUtils';
 import { CountrySelector } from './CountrySelector';
 import { CountryDialCodeSelector } from './CountryDialCodeSelector';
 import { BusinessHoursManager, DaySchedule } from './BusinessHoursManager';
@@ -1531,10 +1531,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
       if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
         const rawHistory = Array.isArray(m.history) ? m.history : [];
-        const latestMsgTime = Math.max(
-          Number((m as any).updatedAt || (m as any).createdAt || m.createdAtMs || 0),
-          ...(rawHistory.map((h: any) => Number(h?.createdAt || h?.createdAtMs || 0)))
-        );
+        const threadTime = resolveMessageTimestampMs(m, (m as any).updatedAt || (m as any).createdAt || m.createdAtMs);
+        const historyTimes = rawHistory.map((h: any) => resolveMessageTimestampMs(h, h?.createdAt || h?.createdAtMs || 0));
+        const latestMsgTime = Math.max(threadTime, ...historyTimes, 0);
         if (latestMsgTime > deletedTimestamp + 500) {
           deletedMap.delete(tId);
           if (pKey) deletedMap.delete(pKey);

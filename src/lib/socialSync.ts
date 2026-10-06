@@ -1408,6 +1408,13 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       isParticipant = true;
     } else {
       const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
+      const myCanonicalKey = getCanonicalUserKey(currentUser);
+      const dataSenderCanonical = getCanonicalUserKey({ email: senderEmail, name: senderName, handle: senderId, id: senderId });
+      const dataRecipientCanonical = getCanonicalUserKey({ email: recipientEmail, name: recipientName, handle: recipientId, id: recipientId });
+
+      const matchesCanonical = Boolean(
+        myCanonicalKey && (myCanonicalKey === dataSenderCanonical || myCanonicalKey === dataRecipientCanonical)
+      );
 
       const matchesStevenAkan = isStevenAkan && (
         participants.some(p => p.includes("avr6566gd") || p.includes("steven") || p.includes("sten") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
@@ -1434,14 +1441,16 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         const mSE = (m.senderEmail || "").toLowerCase().trim();
         const mSI = (m.senderId || "").toLowerCase().trim().replace(/^@/, "");
         const mSN = (m.senderName || "").toLowerCase().trim();
+        const mCanon = getCanonicalUserKey({ email: mSE, name: mSN, handle: mSI, id: mSI });
         return (
+          (myCanonicalKey && mCanon && myCanonicalKey === mCanon) ||
           (userEmail && (mSE === userEmail || mSI === userEmail || mSE.includes(userEmail))) ||
           (emailPrefix && emailPrefix.length >= 3 && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
           (userHandle && userHandle.length >= 3 && (mSI === userHandle || mSN === userHandle)) ||
           (!isGenericName && (mSN === userName || (userFirstName.length >= 3 && mSN.includes(userFirstName)))) ||
           (userId && (mSI === userId || mSE === userId)) ||
           (isBenBlue && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSN.includes("ben") || mSI.includes("ben"))) ||
-          (isStevenAkan && (mSE.includes("avr6566gd") || mSN.includes("steven") || mSN.includes("avt") || mSI.includes("steven") || mSI.includes("avt"))) ||
+          (isStevenAkan && (mSE.includes("avr6566gd") || mSN.includes("steven") || mSN.includes("avt") || mSI.includes("steven") || mSI.includes("avt") || mSN.includes("sten") || mSI.includes("sten"))) ||
           (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
         );
       });
@@ -1452,13 +1461,14 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         (emailPrefix && emailPrefix.length >= 3 && threadIdStr.includes(emailPrefix)) ||
         (userHandle && userHandle.length >= 3 && threadIdStr.includes(userHandle)) ||
         (isBenBlue && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("ben"))) ||
-        (isStevenAkan && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("steven") || threadIdStr.includes("avt"))) ||
+        (isStevenAkan && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("steven") || threadIdStr.includes("avt") || threadIdStr.includes("sten"))) ||
         (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
       );
 
       const first3 = userFirstName.length >= 3 ? userFirstName : "";
 
       isParticipant = Boolean(
+        matchesCanonical ||
         matchesStevenAkan ||
         matchesBenBlue ||
         matchesBizRiv ||
@@ -1475,27 +1485,32 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     if (isParticipant) {
       const isGenericName = !userName || userName === "reviewer" || userName === "user" || userName === "local guide" || userName === "guest";
+      const myCanonicalKey = getCanonicalUserKey(currentUser);
+      const dataSenderCanonical = getCanonicalUserKey({ email: senderEmail, name: senderName, handle: senderId, id: senderId });
+      const dataRecipientCanonical = getCanonicalUserKey({ email: recipientEmail, name: recipientName, handle: recipientId, id: recipientId });
 
       // Determine whether the current user is the sender, recipient, or participant
       const isSenderMe = Boolean(
+        (myCanonicalKey && dataSenderCanonical && myCanonicalKey === dataSenderCanonical) ||
         (userEmail && (senderEmail === userEmail || senderId === userEmail)) ||
         (emailPrefix && emailPrefix.length >= 3 && (senderEmail.startsWith(emailPrefix) || senderId === emailPrefix)) ||
         (userHandle && userHandle.length >= 3 && (senderId === userHandle || senderName === userHandle)) ||
         (!isGenericName && userName && (senderName === userName || (userFirstName.length >= 3 && senderName.includes(userFirstName)))) ||
         (userId && (senderId === userId || senderEmail === userId)) ||
         (isBenBlue && (senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderName.includes("ben") || senderId.includes("ben"))) ||
-        (isStevenAkan && (senderEmail.includes("avr6566gd") || senderName.includes("steven") || senderName.includes("avt") || senderId.includes("steven") || senderId.includes("avt"))) ||
+        (isStevenAkan && (senderEmail.includes("avr6566gd") || senderName.includes("steven") || senderName.includes("avt") || senderId.includes("steven") || senderId.includes("avt") || senderName.includes("sten") || senderId.includes("sten"))) ||
         (isBizRiv && (senderEmail.includes("louis42111") || senderName.includes("biz") || senderId.includes("biz")))
       );
 
       const isRecipientMe = Boolean(
+        (myCanonicalKey && dataRecipientCanonical && myCanonicalKey === dataRecipientCanonical) ||
         (userEmail && (recipientEmail === userEmail || recipientId === userEmail)) ||
         (emailPrefix && emailPrefix.length >= 3 && (recipientEmail.startsWith(emailPrefix) || recipientId === emailPrefix)) ||
         (userHandle && userHandle.length >= 3 && (recipientId === userHandle || recipientName === userHandle)) ||
         (!isGenericName && userName && (recipientName === userName || (userFirstName.length >= 3 && recipientName.includes(userFirstName)))) ||
         (userId && (recipientId === userId || recipientEmail === userId)) ||
         (isBenBlue && (recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientName.includes("ben") || recipientId.includes("ben"))) ||
-        (isStevenAkan && (recipientEmail.includes("avr6566gd") || recipientName.includes("steven") || recipientName.includes("avt") || recipientId.includes("steven") || recipientId.includes("avt"))) ||
+        (isStevenAkan && (recipientEmail.includes("avr6566gd") || recipientName.includes("steven") || recipientName.includes("avt") || recipientId.includes("steven") || recipientId.includes("avt") || recipientName.includes("sten") || recipientId.includes("sten"))) ||
         (isBizRiv && (recipientEmail.includes("louis42111") || recipientName.includes("biz") || recipientId.includes("biz")))
       );
 
@@ -1508,6 +1523,9 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       if (data.participantProfiles && typeof data.participantProfiles === "object") {
         const otherKey = Object.keys(data.participantProfiles).find((k) => {
           const normK = k.toLowerCase().replace(/^@/, "").trim();
+          const profile = data.participantProfiles[k];
+          const profCanonical = getCanonicalUserKey({ email: profile?.email || normK, name: profile?.name, handle: normK, id: normK });
+          if (myCanonicalKey && profCanonical && myCanonicalKey === profCanonical) return false;
           const isKeyMe = (
             normK === userEmail ||
             normK === emailPrefix ||
@@ -1520,7 +1538,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
               (isYoouzBiz && (normK === "info@yoouz.com" || normK === "yoouz.com" || normK === "yoouz"))
             )) ||
             (isBenBlue && (normK.includes("aouisesmee") || normK.includes("ben"))) ||
-            (isStevenAkan && (normK.includes("avr6566gd") || normK.includes("steven") || normK.includes("avt"))) ||
+            (isStevenAkan && (normK.includes("avr6566gd") || normK.includes("steven") || normK.includes("avt") || normK.includes("sten"))) ||
             (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
           );
           return !isKeyMe;
@@ -1551,13 +1569,15 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
       // 3. If otherName is still matching current user or empty, inspect chat history
       const normOther = (otherName || "").toLowerCase().trim();
-      const isOtherActuallyMe = (
+      const otherCanonical = getCanonicalUserKey({ email: otherEmail, name: otherName, handle: otherId, id: otherId });
+      const isOtherActuallyMe = Boolean(
         !normOther ||
+        (myCanonicalKey && otherCanonical && myCanonicalKey === otherCanonical) ||
         (userEmail && normOther === userEmail) ||
         (userName && normOther === userName) ||
         (userHandle && normOther === userHandle) ||
         (isBenBlue && (normOther.includes("ben") || normOther.includes("aouisesmee"))) ||
-        (isStevenAkan && (normOther.includes("steven") || normOther.includes("avt") || normOther.includes("avr6566gd"))) ||
+        (isStevenAkan && (normOther.includes("steven") || normOther.includes("avt") || normOther.includes("avr6566gd") || normOther.includes("sten"))) ||
         (isBizRiv && (normOther.includes("biz") || normOther.includes("louis42111")))
       );
 
