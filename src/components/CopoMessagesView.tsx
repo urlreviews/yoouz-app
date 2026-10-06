@@ -38,7 +38,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
-import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap } from "../lib/socialSync";
+import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
@@ -826,7 +826,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         finalEmail = rId;
       } else if (rName === "yoouz" || rId === "yoouz.com" || rId === "yoouz") {
         finalEmail = "info@yoouz.com";
-      } else if (rName === "avt ertuop" || rId.includes("avtertuop") || rId.includes("avr6566gd")) {
+      } else if (rName.includes("steven") || rName.includes("sten") || rId.includes("steven") || rId.includes("sten") || rName === "avt ertuop" || rId.includes("avtertuop") || rId.includes("avr6566gd")) {
         finalEmail = "avr6566gd@gmail.com";
       } else if (rName === "biz riv" || rId.includes("bizriv") || rId.includes("louis42111")) {
         finalEmail = "louis42111@gmail.com";
@@ -855,9 +855,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       const pKey = getThreadPartnerKey(m, currentUser);
       if (deletedThreadKeys.has(mId) || (pKey && deletedThreadKeys.has(pKey))) return true;
       if (deletedMap.has(mId) || (pKey && deletedMap.has(pKey))) return true;
-      if (rNameLower && (deletedThreadKeys.has(rNameLower) || deletedMap.has(rNameLower))) return true;
-      if (rIdLower && (deletedThreadKeys.has(rIdLower) || deletedMap.has(rIdLower))) return true;
-      if (rEmailLower && (deletedThreadKeys.has(rEmailLower) || deletedMap.has(rEmailLower))) return true;
       return false;
     };
 
@@ -874,18 +871,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     );
 
     if (existing) {
+      unmarkDeletedThread(existing, currentUser);
+      unmarkDeletedThread(recipient, currentUser);
+      if (targetPartnerKey) unmarkDeletedThread(targetPartnerKey, currentUser);
       setSelectedThreadId(existing.id);
       setIsMobileThreadViewOpen(true);
       setShowNewChatModal(false);
       return;
     }
 
-    // Clean deleted keys for this specific recipient so a new message starts fresh
+    // Clean deleted keys completely so starting a fresh chat is always unblocked
+    unmarkDeletedThread(recipient, currentUser);
+    if (targetPartnerKey) unmarkDeletedThread(targetPartnerKey, currentUser);
+
     setDeletedThreadKeys((prev) => {
       const next = new Set(prev);
       if (rNameLower) next.delete(rNameLower);
       if (rIdLower) next.delete(rIdLower);
       if (rEmailLower) next.delete(rEmailLower);
+      if (recipient.id) next.delete(recipient.id);
       if (targetPartnerKey) next.delete(targetPartnerKey);
       return next;
     });
@@ -1269,17 +1273,31 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
           ...messages
         ];
 
+    unmarkDeletedThread(activeThread, currentUser);
+    if (activePartnerKey) unmarkDeletedThread(activePartnerKey, currentUser);
+    unmarkDeletedThread(partnerDetails, currentUser);
+
     setDeletedThreadKeys((prev) => {
       if (prev.size === 0) return prev;
       const next = new Set(prev);
-      if (activeThread.id) next.delete(activeThread.id);
-      if (activePartnerKey) next.delete(activePartnerKey);
-      if (activeThread.senderName) next.delete(activeThread.senderName.toLowerCase().trim());
-      if (activeThread.senderId) next.delete(activeThread.senderId.toLowerCase().trim());
+      const toDelete = [
+        activeThread.id,
+        activePartnerKey,
+        activeThread.senderName?.toLowerCase().trim(),
+        activeThread.senderId?.toLowerCase().trim(),
+        activeThread.recipientName?.toLowerCase().trim(),
+        activeThread.recipientId?.toLowerCase().trim(),
+        activeThread.recipientEmail?.toLowerCase().trim(),
+        partnerDetails.id?.toLowerCase().trim(),
+        partnerDetails.name?.toLowerCase().trim(),
+        partnerDetails.email?.toLowerCase().trim()
+      ].filter(Boolean) as string[];
+      toDelete.forEach((k) => next.delete(k));
       return next;
     });
 
     onUpdateMessages(updated);
+    setSelectedThreadId(activeThread.id);
     setDraftThread(null);
 
     const realRecipientId = partnerDetails.id || partnerDetails.email || activeThread.recipientId || activeThread.senderId;
@@ -2501,8 +2519,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder={
                       isSenderBlocked
-                        ? `You have blocked ${activeThread.senderName}`
-                        : `Message ${activeThread.senderName}...`
+                        ? `You have blocked ${partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user"}`
+                        : `Message ${partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user"}...`
                     }
                     className="flex-1 bg-zinc-900 sm:bg-zinc-800 disabled:bg-zinc-900 disabled:text-zinc-200 text-white placeholder-zinc-500 text-[16px] sm:text-sm px-4 py-2.5 min-h-[44px] sm:min-h-[40px] rounded-full border border-zinc-700/80 sm:border-zinc-700 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 transition-all font-medium"
                   />

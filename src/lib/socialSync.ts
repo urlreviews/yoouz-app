@@ -1288,9 +1288,15 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         ...(rawHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
       );
 
-      if (latestMsgTime > deletedTimestamp + 1000) {
+      if (latestMsgTime > deletedTimestamp + 500) {
         deletedThreadsMap.delete(threadId);
         if (partnerKey) deletedThreadsMap.delete(partnerKey);
+        if (senderId) deletedThreadsMap.delete(senderId);
+        if (recipientId) deletedThreadsMap.delete(recipientId);
+        if (senderEmail) deletedThreadsMap.delete(senderEmail);
+        if (recipientEmail) deletedThreadsMap.delete(recipientEmail);
+        if (senderName) deletedThreadsMap.delete(senderName);
+        if (recipientName) deletedThreadsMap.delete(recipientName);
         deletedThreadsModified = true;
       } else {
         continue;
@@ -2844,3 +2850,47 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
 // Aliases for seamless backward compatibility
 export const sendChatMessageToBunnyDB = sendChatMessage;
 export const deleteChatThreadFromBunnyDB = deleteChatThread;
+
+/**
+ * Completely clears any local deletion markers for a partner, user, or thread so fresh chats and messages are always visible.
+ */
+export function unmarkDeletedThread(partnerOrThread: any, currentUser?: UserProfile | null): void {
+  try {
+    const map = getDeletedThreadsMap(currentUser);
+    let modified = false;
+    const keysToRemove: string[] = [];
+    if (typeof partnerOrThread === "string") {
+      const s = partnerOrThread.toLowerCase().trim();
+      if (s) keysToRemove.push(s, s.replace(/^@/, ''));
+    } else if (partnerOrThread && typeof partnerOrThread === "object") {
+      if (partnerOrThread.id) {
+        keysToRemove.push(String(partnerOrThread.id).trim(), String(partnerOrThread.id).toLowerCase().trim());
+      }
+      const pKey = getThreadPartnerKey(partnerOrThread, currentUser);
+      if (pKey) keysToRemove.push(pKey);
+      if (partnerOrThread.name) keysToRemove.push(partnerOrThread.name.toLowerCase().trim());
+      if (partnerOrThread.senderName) keysToRemove.push(partnerOrThread.senderName.toLowerCase().trim());
+      if (partnerOrThread.recipientName) keysToRemove.push(partnerOrThread.recipientName.toLowerCase().trim());
+      if (partnerOrThread.senderId) {
+        const sid = String(partnerOrThread.senderId).toLowerCase().trim();
+        keysToRemove.push(sid, sid.replace(/^@/, ''));
+      }
+      if (partnerOrThread.recipientId) {
+        const rid = String(partnerOrThread.recipientId).toLowerCase().trim();
+        keysToRemove.push(rid, rid.replace(/^@/, ''));
+      }
+      if (partnerOrThread.email) keysToRemove.push(partnerOrThread.email.toLowerCase().trim());
+      if (partnerOrThread.senderEmail) keysToRemove.push(partnerOrThread.senderEmail.toLowerCase().trim());
+      if (partnerOrThread.recipientEmail) keysToRemove.push(partnerOrThread.recipientEmail.toLowerCase().trim());
+    }
+    for (const k of keysToRemove) {
+      if (k && map.has(k)) {
+        map.delete(k);
+        modified = true;
+      }
+    }
+    if (modified) {
+      saveDeletedThreadsMap(map, currentUser);
+    }
+  } catch (e) {}
+}
