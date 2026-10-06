@@ -3144,22 +3144,39 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                               {/* Owner Reply Input Box */}
                               {isReplying && (
                                 <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 space-y-3 animate-in fade-in">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-white">Reply as {currentPlace.name}</span>
-                                    <div className="flex items-center gap-1.5">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="font-bold text-white">Reply as {currentPlace.name}</span>
+                                      <span className="text-[10.5px] text-zinc-400 font-medium hidden sm:inline">Quick Response Templates:</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                       <button
                                         type="button"
-                                        onClick={() => setReplyText("Thank you so much for the wonderful review! We're glad you enjoyed your experience.")}
-                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-200 hover:text-white hover:border-zinc-500 cursor-pointer"
+                                        onClick={() => setReplyText("Thank you so much for visiting us and sharing your kind review! We're thrilled you had a great experience.")}
+                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
                                       >
-                                        + Thank diner
+                                        + Thank Guest
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => setReplyText("Thanks for visiting! Hope to welcome you back again very soon.")}
-                                        className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-[10.5px] text-zinc-200 hover:text-white hover:border-zinc-500 cursor-pointer"
+                                        onClick={() => setReplyText("Thanks for visiting! We look forward to welcoming you back again very soon.")}
+                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
                                       >
-                                        + Invite back
+                                        + Invite Back
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setReplyText(`We sincerely apologize that your experience fell short of our standards. Please contact us directly at ${displayOwnerEmail} so we can address your concerns and make things right for you.`)}
+                                        className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      >
+                                        + Apologize & Resolve
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setReplyText("Thank you for your constructive feedback! Our team is constantly striving to improve and we hope to make your next visit even better.")}
+                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                      >
+                                        + Value Feedback
                                       </button>
                                     </div>
                                   </div>
