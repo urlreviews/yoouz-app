@@ -113,6 +113,7 @@ import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
 import { useLanguage } from '../i18n/LanguageContext';
 import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
+import { getDeletedThreadsMap, getThreadPartnerKey, deleteChatThreadFromBunnyDB } from '../lib/socialSync';
 
 interface CopoBusinessDashboardViewProps {
   onNavigate: (section: NavSection) => void;
@@ -1498,6 +1499,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Business Messages strictly scoped to this business entity (placeId, business email, or business handle)
   const businessMessages = useMemo(() => {
     if (!messages || messages.length === 0) return [];
+    const deletedMap = getDeletedThreadsMap(effectiveUser);
     const bizPlaceId = (currentPlace?.id || (effectiveUser as any)?.placeId || (effectiveUser as any)?.id || '').toLowerCase().trim();
     const bizDomain = (bizPlaceId.includes('.') ? bizPlaceId : (currentPlace?.website || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')).trim();
     const bizEmail = (effectiveUser?.email || '').toLowerCase().trim();
@@ -1508,6 +1510,34 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     return messages.filter(m => {
       if (!m) return false;
+      const tId = String(m.id || '').trim();
+      const pKey = getThreadPartnerKey(m, effectiveUser);
+      if (deletedMap.has(tId) || (pKey && deletedMap.has(pKey))) {
+        return false;
+      }
+
+      const sName = (m.senderName || (m as any).lastSenderName || '').toLowerCase().trim();
+      const sId = (m.senderId || '').toLowerCase().trim().replace(/^@/, '');
+      const sEmail = (m.senderEmail || (m as any).lastSenderEmail || '').toLowerCase().trim();
+      const rName = ((m.recipientName || '') as string).toLowerCase().trim();
+      const rId = (((m as any).recipientId || '') as string).toLowerCase().trim().replace(/^@/, '');
+      const rEmail = (((m as any).recipientEmail || '') as string).toLowerCase().trim();
+
+      if (sName && deletedMap.has(sName)) return false;
+      if (sId && deletedMap.has(sId)) return false;
+      if (sEmail && deletedMap.has(sEmail)) return false;
+      if (rName && deletedMap.has(rName)) return false;
+      if (rId && deletedMap.has(rId)) return false;
+      if (rEmail && deletedMap.has(rEmail)) return false;
+
+      const deletedForUsers = Array.isArray((m as any).deletedForUsers)
+        ? (m as any).deletedForUsers.map((u: string) => (u || '').toLowerCase().trim().replace(/^@/, ''))
+        : [];
+      if (bizEmail && deletedForUsers.includes(bizEmail)) return false;
+      if (bizPlaceId && deletedForUsers.includes(bizPlaceId)) return false;
+      if (bizHandle && deletedForUsers.includes(bizHandle)) return false;
+      if (bizName && deletedForUsers.includes(bizName)) return false;
+
       const participants = Array.isArray(m.participants)
         ? m.participants.map(p => (p || '').toLowerCase().trim().replace(/^@/, ''))
         : [];
@@ -3280,9 +3310,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   allVideos={videos}
                   allUsers={allUsers}
                   onSendMessage={onSendMessage}
-                  onDeleteThread={onDeleteThread}
+                  onDeleteThread={(threadId, targetPartnerKey) => {
+                    deleteChatThreadFromBunnyDB(threadId, effectiveUser, targetPartnerKey);
+                    if (onDeleteThread) {
+                      onDeleteThread(threadId, targetPartnerKey);
+                    }
+                  }}
                   onMarkThreadRead={onMarkThreadRead}
-                  onUpdateMessages={onUpdateMessages}
+                  onUpdateMessages={(updatedBizMessages) => {
+                    if (onUpdateMessages) {
+                      const bizIds = new Set(businessMessages.map(m => m.id));
+                      const nonBizMessages = (messages || []).filter(m => !bizIds.has(m.id));
+                      onUpdateMessages([...updatedBizMessages, ...nonBizMessages]);
+                    }
+                  }}
                   onSelectVideo={onSelectVideo}
                   onSelectPlace={onOpenPlaceDrawer}
                   onOpenCreator={onOpenCreator}

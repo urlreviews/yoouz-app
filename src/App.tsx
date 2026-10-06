@@ -7320,18 +7320,24 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onDeleteThread={(threadId, targetPartnerKey) => {
-                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey) : "");
+                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey, currentUser) : "");
                   const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
-                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderId || "").toLowerCase().trim() : "");
+                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
+                  const rName = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientName || "") as string).toLowerCase().trim() : "");
+                  const rId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
                   deleteChatThreadFromBunnyDB(threadId, currentUser, targetPartnerKey);
                   setMessages((prev) => prev.filter((m) => {
                     if (!m) return false;
                     if (threadId && m.id === threadId) return false;
-                    if (pKey && getThreadPartnerKey(m) === pKey) return false;
-                    const mName = (m.senderName || "").toLowerCase().trim();
-                    const mId = (m.senderId || "").toLowerCase().trim();
-                    if (sName && mName === sName) return false;
-                    if (sId && mId === sId) return false;
+                    if (pKey && getThreadPartnerKey(m, currentUser) === pKey) return false;
+                    const mSName = (m.senderName || "").toLowerCase().trim();
+                    const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
+                    const mRName = ((m as any).recipientName || "").toLowerCase().trim();
+                    const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+                    if (sName && (mSName === sName || mRName === sName)) return false;
+                    if (sId && (mSId === sId || mRId === sId)) return false;
+                    if (rName && (mSName === rName || mRName === rName)) return false;
+                    if (rId && (mSId === rId || mRId === rId)) return false;
                     return true;
                   }));
                 }}
@@ -7517,18 +7523,25 @@ export function App() {
                   );
                 }}
                 onDeleteThread={(threadId, targetPartnerKey) => {
-                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey) : "");
+                  const effUser = effectiveMessagingUser || currentUser;
+                  const pKey = typeof targetPartnerKey === "string" ? targetPartnerKey : (targetPartnerKey ? getThreadPartnerKey(targetPartnerKey, effUser) : "");
                   const sName = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderName || "").toLowerCase().trim() : "");
-                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? ((targetPartnerKey as any).senderId || "").toLowerCase().trim() : "");
-                  deleteChatThreadFromBunnyDB(threadId, effectiveMessagingUser as any, targetPartnerKey);
+                  const sId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).senderId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
+                  const rName = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientName || "") as string).toLowerCase().trim() : "");
+                  const rId = (targetPartnerKey && typeof targetPartnerKey === "object" ? (((targetPartnerKey as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '') : "");
+                  deleteChatThreadFromBunnyDB(threadId, effUser as any, targetPartnerKey);
                   setMessages((prev) => prev.filter((m) => {
                     if (!m) return false;
                     if (threadId && m.id === threadId) return false;
-                    if (pKey && getThreadPartnerKey(m) === pKey) return false;
-                    const mName = (m.senderName || "").toLowerCase().trim();
-                    const mId = (m.senderId || "").toLowerCase().trim();
-                    if (sName && mName === sName) return false;
-                    if (sId && mId === sId) return false;
+                    if (pKey && getThreadPartnerKey(m, effUser) === pKey) return false;
+                    const mSName = (m.senderName || "").toLowerCase().trim();
+                    const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
+                    const mRName = ((m as any).recipientName || "").toLowerCase().trim();
+                    const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+                    if (sName && (mSName === sName || mRName === sName)) return false;
+                    if (sId && (mSId === sId || mRId === sId)) return false;
+                    if (rName && (mSName === rName || mRName === rName)) return false;
+                    if (rId && (mSId === rId || mRId === rId)) return false;
                     return true;
                   }));
                 }}

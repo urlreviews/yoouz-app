@@ -38,7 +38,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
-import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp } from "../lib/socialSync";
+import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap } from "../lib/socialSync";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
@@ -306,7 +306,15 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const [isMobileThreadViewOpen, setIsMobileThreadViewOpen] = useState(false);
   const [draftThread, setDraftThread] = useState<CopoMessage | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [deletedThreadKeys, setDeletedThreadKeys] = useState<Set<string>>(() => new Set());
+  const [deletedThreadKeys, setDeletedThreadKeys] = useState<Set<string>>(() => {
+    const map = getDeletedThreadsMap(currentUser);
+    return new Set(map.keys());
+  });
+
+  useEffect(() => {
+    const map = getDeletedThreadsMap(currentUser);
+    setDeletedThreadKeys(new Set(map.keys()));
+  }, [currentUser]);
   const [swipedThreadId, setSwipedThreadId] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
 
@@ -837,15 +845,32 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       recipientEmail: finalEmail || recipient.email
     }, currentUser);
 
+    const deletedMap = getDeletedThreadsMap(currentUser);
+    const rNameLower = (recipient.name || "").toLowerCase().trim();
+    const rIdLower = (recipient.id || "").toLowerCase().trim().replace(/^@/, '');
+    const rEmailLower = (finalEmail || recipient.email || "").toLowerCase().trim();
+
+    const isThreadDeleted = (m: CopoMessage) => {
+      const mId = String(m.id || "").trim();
+      const pKey = getThreadPartnerKey(m, currentUser);
+      if (deletedThreadKeys.has(mId) || (pKey && deletedThreadKeys.has(pKey))) return true;
+      if (deletedMap.has(mId) || (pKey && deletedMap.has(pKey))) return true;
+      if (rNameLower && (deletedThreadKeys.has(rNameLower) || deletedMap.has(rNameLower))) return true;
+      if (rIdLower && (deletedThreadKeys.has(rIdLower) || deletedMap.has(rIdLower))) return true;
+      if (rEmailLower && (deletedThreadKeys.has(rEmailLower) || deletedMap.has(rEmailLower))) return true;
+      return false;
+    };
+
     const existing = messages.find(
       (m) =>
-        m.id === recipient.id ||
+        (m.id === recipient.id ||
         (targetPartnerKey && getThreadPartnerKey(m, currentUser) === targetPartnerKey) ||
         m.senderId === recipient.id ||
         (m as any).recipientId === recipient.id ||
         (finalEmail && (m.senderId === finalEmail || m.senderEmail === finalEmail || (m as any).recipientEmail === finalEmail)) ||
         (m.senderName && recipient.name && m.senderName.toLowerCase() === recipient.name.toLowerCase()) ||
-        ((m as any).recipientName && recipient.name && (m as any).recipientName.toLowerCase() === recipient.name.toLowerCase())
+        ((m as any).recipientName && recipient.name && (m as any).recipientName.toLowerCase() === recipient.name.toLowerCase())) &&
+        !isThreadDeleted(m)
     );
 
     if (existing) {
@@ -854,6 +879,16 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       setShowNewChatModal(false);
       return;
     }
+
+    // Clean deleted keys for this specific recipient so a new message starts fresh
+    setDeletedThreadKeys((prev) => {
+      const next = new Set(prev);
+      if (rNameLower) next.delete(rNameLower);
+      if (rIdLower) next.delete(rIdLower);
+      if (rEmailLower) next.delete(rEmailLower);
+      if (targetPartnerKey) next.delete(targetPartnerKey);
+      return next;
+    });
 
     const newId = `thread_${Date.now()}`;
     const isBizRecipient = Boolean(
@@ -989,20 +1024,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (draftThread) {
       const draftKey = getThreadPartnerKey(draftThread, currentUser);
       if (draftThread.id === selectedThreadId || draftThread.senderId === selectedThreadId || (draftKey && draftKey === selectedThreadId)) {
-        return filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId) ||
-               messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId) ||
-               draftThread;
+        return draftThread;
       }
     }
     if (selectedThreadId) {
       const foundInFiltered = filteredThreads.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId);
       if (foundInFiltered) return foundInFiltered;
-      const found = messages.find((m) => m.id === selectedThreadId || getThreadPartnerKey(m, currentUser) === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId);
+      const found = messages.find((m) => {
+        const mId = String(m.id || "").trim();
+        const pKey = getThreadPartnerKey(m, currentUser);
+        if (deletedThreadKeys.has(mId) || (pKey && deletedThreadKeys.has(pKey))) return false;
+        return m.id === selectedThreadId || pKey === selectedThreadId || m.senderId === selectedThreadId || m.recipientId === selectedThreadId || m.senderEmail === selectedThreadId || m.recipientEmail === selectedThreadId;
+      });
       if (found) return found;
     }
     if (draftThread) return draftThread;
-    return filteredThreads[0] || messages[0];
-  }, [messages, filteredThreads, selectedThreadId, draftThread, currentUser]);
+    return filteredThreads[0] || messages.find(m => !deletedThreadKeys.has(m.id)) || draftThread;
+  }, [messages, filteredThreads, selectedThreadId, draftThread, currentUser, deletedThreadKeys]);
 
   const isSenderBlocked = useMemo(() => {
     if (!activeThread) return false;
@@ -1321,11 +1359,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const target = targetOverride || targetActionThread;
     if (!target) return;
     
-    const partnerKey = getThreadPartnerKey(target);
+    const partnerKey = getThreadPartnerKey(target, currentUser);
     const tId = String(target.id || "").trim();
     const sName = (target.senderName || "").toLowerCase().trim();
-    const sId = (target.senderId || "").toLowerCase().trim();
+    const sId = (target.senderId || "").toLowerCase().trim().replace(/^@/, '');
     const sEmail = (target.senderEmail || target.lastSenderEmail || "").toLowerCase().trim();
+    const rName = ((target.recipientName || "") as string).toLowerCase().trim();
+    const rId = (((target as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+    const rEmail = (((target as any).recipientEmail || "") as string).toLowerCase().trim();
 
     // 0. Mark as deleted in local set for INSTANT 0ms DOM removal and collapse animation
     setDeletedThreadKeys((prev) => {
@@ -1335,19 +1376,46 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       if (sName) next.add(sName);
       if (sId) next.add(sId);
       if (sEmail) next.add(sEmail);
+      if (rName) next.add(rName);
+      if (rId) next.add(rId);
+      if (rEmail) next.add(rEmail);
       return next;
     });
+
+    // Save to persistent deleted threads map for current user/business
+    try {
+      const map = getDeletedThreadsMap(currentUser);
+      const now = Date.now();
+      if (tId) map.set(tId, now);
+      if (partnerKey) map.set(partnerKey, now);
+      if (sName) map.set(sName, now);
+      if (sId) map.set(sId, now);
+      if (sEmail) map.set(sEmail, now);
+      if (rName) map.set(rName, now);
+      if (rId) map.set(rId, now);
+      if (rEmail) map.set(rEmail, now);
+      saveDeletedThreadsMap(map, currentUser);
+    } catch (e) {}
 
     // 1. Instantly filter messages in local state for 0ms visual feedback
     const remaining = messages.filter((m) => {
       const mId = String(m.id || "").trim();
-      const mPartnerKey = getThreadPartnerKey(m);
-      const mName = (m.senderName || "").toLowerCase().trim();
-      const mIdKey = (m.senderId || "").toLowerCase().trim();
+      const mPartnerKey = getThreadPartnerKey(m, currentUser);
+      const mSName = (m.senderName || "").toLowerCase().trim();
+      const mSId = (m.senderId || "").toLowerCase().trim().replace(/^@/, '');
+      const mSEmail = (m.senderEmail || m.lastSenderEmail || "").toLowerCase().trim();
+      const mRName = ((m as any).recipientName || "").toLowerCase().trim();
+      const mRId = (((m as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+      const mREmail = (((m as any).recipientEmail || "") as string).toLowerCase().trim();
+
       if (tId && mId === tId) return false;
       if (partnerKey && mPartnerKey === partnerKey) return false;
-      if (sName && mName === sName) return false;
-      if (sId && mIdKey === sId) return false;
+      if (sName && (mSName === sName || mRName === sName)) return false;
+      if (sId && (mSId === sId || mRId === sId)) return false;
+      if (sEmail && (mSEmail === sEmail || mREmail === sEmail)) return false;
+      if (rName && (mSName === rName || mRName === rName)) return false;
+      if (rId && (mSId === rId || mRId === rId)) return false;
+      if (rEmail && (mSEmail === rEmail || mREmail === rEmail)) return false;
       return true;
     });
     onUpdateMessages(remaining);

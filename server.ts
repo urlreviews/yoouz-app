@@ -6503,10 +6503,15 @@ function mergeDeep(target: any, source: any): any {
   return output;
 }
 
-app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req, res) => {
+const handleSaveNoSqlDoc = async (req: any, res: any) => {
   try {
     const { collection: colName, id } = req.params;
-    const { data, merge } = req.body;
+    let data = req.body?.data;
+    let merge = req.body?.merge;
+    if (data === undefined && req.body && typeof req.body === 'object') {
+      data = req.body;
+      if (merge === undefined) merge = true;
+    }
 
     if (colName === 'videoReviews' || colName === 'videos') {
       const deletedIds = readDeletedReviewsIndex();
@@ -6941,7 +6946,10 @@ app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), async (req
 
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
-});
+};
+
+app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), handleSaveNoSqlDoc);
+app.put('/api/nosql/:collection/:id', express.json({limit: '50mb'}), handleSaveNoSqlDoc);
 
 app.post('/api/admin/users/delete', express.json(), async (req, res) => {
   try {
@@ -7386,6 +7394,13 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       if (table) {
         await db.delete(table).where(eq(table.id, id));
       }
+    }
+
+    if (colName === 'chats') {
+      broadcastSseEvent({
+        type: "chat_deleted",
+        threadId: id
+      });
     }
 
     res.json({ success: true });
@@ -15126,6 +15141,63 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }, targets);
 
       res.json({ success: true, readReceipts: finalThreadData?.readReceipts });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/interactions/chat/delete", async (req, res) => {
+    try {
+      const { threadId, userId, userEmail, placeId, allAliases } = req.body || {};
+      if (!threadId) return res.status(400).json({ error: "Missing threadId" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const row = await bunnyDb.execute({
+            sql: "SELECT data, participants FROM chats WHERE id = ? LIMIT 1",
+            args: [threadId]
+          });
+          if (row && row.rows && row.rows.length > 0) {
+            const raw = (row.rows[0] as any).data;
+            const chatData = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+            const deletedForUsers: string[] = Array.isArray(chatData.deletedForUsers) ? [...chatData.deletedForUsers] : [];
+            const aliasesToAdd = [
+              userId,
+              userEmail,
+              placeId,
+              ...(Array.isArray(allAliases) ? allAliases : [])
+            ].filter(Boolean).map((s: string) => String(s).toLowerCase().trim().replace(/^@/, ''));
+
+            let modified = false;
+            for (const a of aliasesToAdd) {
+              if (a && !deletedForUsers.includes(a)) {
+                deletedForUsers.push(a);
+                modified = true;
+              }
+            }
+            if (modified) {
+              chatData.deletedForUsers = deletedForUsers;
+              await bunnyDb.execute({
+                sql: "UPDATE chats SET data = ? WHERE id = ?",
+                args: [JSON.stringify(chatData), threadId]
+              });
+            }
+          }
+        } catch (dbErr) {
+          console.warn("Notice updating chat deletedForUsers in db:", dbErr);
+        }
+      }
+
+      broadcastSseEvent({
+        type: "chat_deleted",
+        threadId,
+        userId,
+        userEmail,
+        placeId
+      });
+
+      res.json({ success: true, threadId });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

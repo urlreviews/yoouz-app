@@ -1114,9 +1114,28 @@ export function getCanonicalDirectChatThreadId(userAKey: string, userBKey: strin
   return `thread_dm_${sorted}`;
 }
 
+export function getAllDeletedThreadsKeys(currentUser?: UserProfile | null): string[] {
+  const keys = new Set<string>();
+  keys.add("yoouz_deleted_threads");
+  if (currentUser) {
+    const list = [
+      currentUser.userId,
+      currentUser.id,
+      (currentUser as any).uid,
+      (currentUser as any).placeId,
+      currentUser.email,
+      currentUser.handle
+    ].filter(Boolean).map(s => String(s).toLowerCase().trim().replace(/^@/, ''));
+    for (const item of list) {
+      if (item) keys.add(`yoouz_deleted_threads_${item}`);
+    }
+  }
+  return Array.from(keys);
+}
+
 export function getDeletedThreadsKey(currentUser?: UserProfile | null): string {
   if (!currentUser) return "yoouz_deleted_threads";
-  const id = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim();
+  const id = (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim().replace(/^@/, '');
   return id ? `yoouz_deleted_threads_${id}` : "yoouz_deleted_threads";
 }
 
@@ -1124,24 +1143,25 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
   const map = new Map<string, number>();
   if (typeof window === "undefined") return map;
   try {
-    const userDelKey = getDeletedThreadsKey(currentUser);
-    const raw = localStorage.getItem(userDelKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        for (const item of parsed) {
-          if (typeof item === "string" && item.trim()) {
-            // Do NOT default to Date.now() on every execution for legacy string arrays
-            map.set(item.trim(), 1);
-          } else if (item && typeof item === "object" && item.id) {
-            const val = Number(item.deletedAt);
-            map.set(String(item.id).trim(), !isNaN(val) && val > 0 ? val : 1);
+    const keys = getAllDeletedThreadsKeys(currentUser);
+    for (const userDelKey of keys) {
+      const raw = localStorage.getItem(userDelKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (typeof item === "string" && item.trim()) {
+              map.set(item.trim(), 1);
+            } else if (item && typeof item === "object" && item.id) {
+              const val = Number(item.deletedAt);
+              map.set(String(item.id).trim(), !isNaN(val) && val > 0 ? val : 1);
+            }
           }
-        }
-      } else if (parsed && typeof parsed === "object") {
-        for (const [k, v] of Object.entries(parsed)) {
-          const val = Number(v);
-          map.set(k.trim(), !isNaN(val) && val > 0 ? val : 1);
+        } else if (parsed && typeof parsed === "object") {
+          for (const [k, v] of Object.entries(parsed)) {
+            const val = Number(v);
+            map.set(k.trim(), !isNaN(val) && val > 0 ? val : 1);
+          }
         }
       }
     }
@@ -1152,12 +1172,15 @@ export function getDeletedThreadsMap(currentUser?: UserProfile | null): Map<stri
 export function saveDeletedThreadsMap(map: Map<string, number>, currentUser?: UserProfile | null): void {
   if (typeof window === "undefined") return;
   try {
-    const userDelKey = getDeletedThreadsKey(currentUser);
+    const keys = getAllDeletedThreadsKeys(currentUser);
     const obj: Record<string, number> = {};
     for (const [k, v] of map.entries()) {
       obj[k] = v;
     }
-    localStorage.setItem(userDelKey, JSON.stringify(obj));
+    const serialized = JSON.stringify(obj);
+    for (const userDelKey of keys) {
+      localStorage.setItem(userDelKey, serialized);
+    }
   } catch (e) {}
 }
 
@@ -1223,12 +1246,19 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
     // Check if deleted specifically on the server record
     const deletedForUsers = Array.isArray(data.deletedForUsers)
-      ? data.deletedForUsers.map((u: string) => (u || "").toLowerCase().trim())
+      ? data.deletedForUsers.map((u: string) => (u || "").toLowerCase().trim().replace(/^@/, ''))
       : [];
-    if (userEmail && deletedForUsers.includes(userEmail)) {
-      continue;
-    }
-    if (userId && deletedForUsers.includes(userId)) {
+    const myAliases = [
+      userEmail,
+      userId,
+      userHandle,
+      userName,
+      (currentUser as any).placeId,
+      (currentUser as any).uid,
+      (currentUser as any).id
+    ].filter(Boolean).map(s => String(s).toLowerCase().trim().replace(/^@/, ''));
+
+    if (deletedForUsers.some(del => myAliases.includes(del))) {
       continue;
     }
 
@@ -1240,8 +1270,16 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const recipientName = (data.recipientName || "").toLowerCase().trim();
     const partnerKey = getThreadPartnerKey(data, currentUser);
 
-    // Check if user explicitly deleted this thread locally by threadId or partnerKey
-    const deletedTimestamp = deletedThreadsMap.get(threadId) ?? (partnerKey ? deletedThreadsMap.get(partnerKey) : undefined);
+    // Check if user explicitly deleted this thread locally by threadId, partnerKey, or participant aliases
+    const deletedTimestamp = 
+      deletedThreadsMap.get(threadId) ?? 
+      (partnerKey ? deletedThreadsMap.get(partnerKey) : undefined) ??
+      (senderId ? deletedThreadsMap.get(senderId) : undefined) ??
+      (recipientId ? deletedThreadsMap.get(recipientId) : undefined) ??
+      (senderEmail ? deletedThreadsMap.get(senderEmail) : undefined) ??
+      (recipientEmail ? deletedThreadsMap.get(recipientEmail) : undefined) ??
+      (senderName ? deletedThreadsMap.get(senderName) : undefined) ??
+      (recipientName ? deletedThreadsMap.get(recipientName) : undefined);
 
     if (deletedTimestamp !== undefined && deletedTimestamp > 1) {
       const rawHistory = Array.isArray(data.history) ? data.history : [];
@@ -1250,7 +1288,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         ...(rawHistory.map((m: any) => Number(m?.createdAt || m?.createdAtMs || 0)))
       );
 
-      if (latestMsgTime > deletedTimestamp) {
+      if (latestMsgTime > deletedTimestamp + 1000) {
         deletedThreadsMap.delete(threadId);
         if (partnerKey) deletedThreadsMap.delete(partnerKey);
         deletedThreadsModified = true;
@@ -2649,15 +2687,21 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
 
   const targetPartnerKey = typeof partnerKeyOrTarget === "string" 
     ? partnerKeyOrTarget 
-    : (partnerKeyOrTarget ? getThreadPartnerKey(partnerKeyOrTarget) : "");
+    : (partnerKeyOrTarget ? getThreadPartnerKey(partnerKeyOrTarget, currentUser) : "");
 
   let targetSenderName = "";
   let targetSenderId = "";
   let targetSenderEmail = "";
+  let targetRecipientName = "";
+  let targetRecipientId = "";
+  let targetRecipientEmail = "";
   if (partnerKeyOrTarget && typeof partnerKeyOrTarget === "object") {
     targetSenderName = (partnerKeyOrTarget.senderName || "").toLowerCase().trim();
-    targetSenderId = (partnerKeyOrTarget.senderId || "").toLowerCase().trim();
+    targetSenderId = (partnerKeyOrTarget.senderId || "").toLowerCase().trim().replace(/^@/, '');
     targetSenderEmail = (partnerKeyOrTarget.senderEmail || partnerKeyOrTarget.lastSenderEmail || "").toLowerCase().trim();
+    targetRecipientName = ((partnerKeyOrTarget.recipientName || "") as string).toLowerCase().trim();
+    targetRecipientId = (((partnerKeyOrTarget as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+    targetRecipientEmail = (((partnerKeyOrTarget as any).recipientEmail || "") as string).toLowerCase().trim();
   }
 
   // 0. Add to persistent deleted threads map with current timestamp for this specific user/business
@@ -2669,17 +2713,16 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
     if (targetSenderName) map.set(targetSenderName, now);
     if (targetSenderId) map.set(targetSenderId, now);
     if (targetSenderEmail) map.set(targetSenderEmail, now);
+    if (targetRecipientName) map.set(targetRecipientName, now);
+    if (targetRecipientId) map.set(targetRecipientId, now);
+    if (targetRecipientEmail) map.set(targetRecipientEmail, now);
     saveDeletedThreadsMap(map, currentUser);
   } catch (e) {}
   
   // 1. Remove from local storage chat cache for this user/business profile
   try {
-    const uKey = currentUser
-      ? (currentUser.userId || currentUser.id || (currentUser as any).uid || (currentUser as any).placeId || currentUser.email || "").toLowerCase().trim()
-      : null;
-    const cacheKeys = uKey
-      ? [`copo_cached_chats_${uKey}`]
-      : Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i) || "").filter(k => k.startsWith('copo_cached_chats_'));
+    const allKeys = getAllDeletedThreadsKeys(currentUser);
+    const cacheKeys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i) || "").filter(k => k.startsWith('copo_cached_chats_'));
 
     for (const key of cacheKeys) {
       if (!key) continue;
@@ -2689,12 +2732,23 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
         if (Array.isArray(parsed)) {
           const filtered = parsed.filter((t: any) => {
             if (!t) return false;
-            if (threadId && t.id === threadId) return false;
-            if (targetPartnerKey && getThreadPartnerKey(t) === targetPartnerKey) return false;
+            const tId = String(t.id || "").trim();
+            if (threadId && tId === threadId) return false;
+            const pKey = getThreadPartnerKey(t, currentUser);
+            if (targetPartnerKey && pKey === targetPartnerKey) return false;
             const sName = (t.senderName || "").toLowerCase().trim();
-            const sId = (t.senderId || "").toLowerCase().trim();
-            if (targetSenderName && sName === targetSenderName) return false;
-            if (targetSenderId && sId === targetSenderId) return false;
+            const sId = (t.senderId || "").toLowerCase().trim().replace(/^@/, '');
+            const sEmail = (t.senderEmail || t.lastSenderEmail || "").toLowerCase().trim();
+            const rName = ((t.recipientName || "") as string).toLowerCase().trim();
+            const rId = (((t as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
+            const rEmail = (((t as any).recipientEmail || "") as string).toLowerCase().trim();
+
+            if (targetSenderName && (sName === targetSenderName || rName === targetSenderName)) return false;
+            if (targetSenderId && (sId === targetSenderId || rId === targetSenderId)) return false;
+            if (targetSenderEmail && (sEmail === targetSenderEmail || rEmail === targetSenderEmail)) return false;
+            if (targetRecipientName && (sName === targetRecipientName || rName === targetRecipientName)) return false;
+            if (targetRecipientId && (sId === targetRecipientId || rId === targetRecipientId)) return false;
+            if (targetRecipientEmail && (sEmail === targetRecipientEmail || rEmail === targetRecipientEmail)) return false;
             return true;
           });
           localStorage.setItem(key, JSON.stringify(filtered));
@@ -2703,18 +2757,33 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
     }
   } catch (e) {}
 
-  // 2. Soft delete on BunnyDB by adding user's identifiers to deletedForUsers array
-  if (currentUser) {
-    const allMyAliases = [
-      currentUser.email,
-      currentUser.userId,
-      currentUser.id,
-      (currentUser as any).uid,
-      (currentUser as any).placeId,
-      currentUser.name,
-      currentUser.handle
-    ].filter(Boolean).map(s => String(s).toLowerCase().trim().replace(/^@/, ''));
+  // 2. Notify backend of deletion and soft delete on BunnyDB by adding user's identifiers to deletedForUsers array
+  const allMyAliases = currentUser ? [
+    currentUser.email,
+    currentUser.userId,
+    currentUser.id,
+    (currentUser as any).uid,
+    (currentUser as any).placeId,
+    currentUser.name,
+    currentUser.handle
+  ].filter(Boolean).map(s => String(s).toLowerCase().trim().replace(/^@/, '')) : [];
 
+  if (threadId) {
+    // Call server-side chat delete interaction
+    fetch("/api/interactions/chat/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        threadId,
+        userId: currentUser?.userId || (currentUser as any)?.id,
+        userEmail: currentUser?.email,
+        placeId: (currentUser as any)?.placeId,
+        allAliases: allMyAliases
+      })
+    }).catch(() => {});
+  }
+
+  if (currentUser) {
     try {
       const res = await fetch(`/api/nosql/chats?_t=${Date.now()}`);
       if (res.ok) {
@@ -2723,31 +2792,38 @@ export async function deleteChatThread(threadId: string, currentUser?: UserProfi
         for (const item of items) {
           if (!item || !item.id) continue;
           const iId = String(item.id).trim();
-          const pKey = getThreadPartnerKey(item);
+          const pKey = getThreadPartnerKey(item, currentUser);
           const iSenderName = (item.senderName || item.lastSenderName || "").toLowerCase().trim();
           const iSenderId = (item.senderId || "").toLowerCase().trim().replace(/^@/, '');
+          const iRecipientName = ((item.recipientName || "") as string).toLowerCase().trim();
+          const iRecipientId = (((item as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
           
           const isMatch = (threadId && iId === threadId) ||
                           (targetPartnerKey && pKey === targetPartnerKey) ||
-                          (targetSenderName && iSenderName === targetSenderName) ||
-                          (targetSenderId && iSenderId === targetSenderId);
+                          (targetSenderName && (iSenderName === targetSenderName || iRecipientName === targetSenderName)) ||
+                          (targetSenderId && (iSenderId === targetSenderId || iRecipientId === targetSenderId)) ||
+                          (targetRecipientName && (iSenderName === targetRecipientName || iRecipientName === targetRecipientName)) ||
+                          (targetRecipientId && (iSenderId === targetRecipientId || iRecipientId === targetRecipientId));
 
           if (isMatch) {
             const deletedForUsers = Array.isArray(item.deletedForUsers) ? [...item.deletedForUsers] : [];
             let modified = false;
             for (const alias of allMyAliases) {
-              if (!deletedForUsers.includes(alias)) {
+              if (alias && !deletedForUsers.includes(alias)) {
                 deletedForUsers.push(alias);
                 modified = true;
               }
             }
             if (modified) {
               await fetch(`/api/nosql/chats/${iId}`, {
-                method: "PUT",
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  ...item,
-                  deletedForUsers
+                  data: {
+                    ...item,
+                    deletedForUsers
+                  },
+                  merge: true
                 })
               }).catch(() => {});
             }
