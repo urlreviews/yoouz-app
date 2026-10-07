@@ -1298,11 +1298,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const handleWheel = (e: WheelEvent) => {
       const targetEl = e.target as HTMLElement | null;
+      // Do not intercept if cursor is inside interactive inputs, modals, or dropdowns
       if (
-        document.body.style.overflow === "hidden" ||
         moreMenuVideo !== null ||
         targetEl?.closest?.(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer, textarea, input, select, [contenteditable='true']"
+          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, #copo-create-review-modal, #copo-auth-modal, textarea, input, select, [contenteditable='true']"
         ) !== null
       ) {
         return;
@@ -1357,30 +1357,36 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [handleNext, handlePrev, handleTogglePlayPause]);
 
-  // Keyboard navigation: Space/K (Stop/Play), ArrowDown/ArrowUp, PageDown/PageUp, Mute
+  // Desktop Keyboard navigation: ArrowDown / ArrowUp, PageDown / PageUp, Space, Mute, J / K
+  // Fully active across Homepage, Business Domain pages, and User Profile pages
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      // Never intercept when user is actively typing in any input, textarea, contenteditable, or search/comments
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
+        e.target instanceof HTMLSelectElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl instanceof HTMLSelectElement ||
+        (activeEl instanceof HTMLElement && activeEl.isContentEditable)
       ) {
         return;
       }
 
       if (
-        document.body.style.overflow === "hidden" ||
+        (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay")) ||
+        (activeEl instanceof HTMLElement && activeEl.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay"))
+      ) {
+        return;
+      }
+
+      // Ignore when full-screen modal overlays (like video recording modal or report modal) are active
+      if (
         moreMenuVideo !== null ||
-        document.querySelector(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, [role='dialog'], [id*='modal'], [id*='dialog'], #google-maps-business-panel, #google-maps-creator-panel, #copo-comments-drawer"
-        ) !== null
-      ) {
-        return;
-      }
-
-      if (
-        e.target instanceof HTMLElement &&
-        e.target.closest("[role='dialog'], .fixed, [id*='modal'], [id*='drawer']")
+        document.querySelector("#copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay, #yoouz-share-modal-overlay") !== null
       ) {
         return;
       }
@@ -1391,9 +1397,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       } else if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
         handleNext();
-      } else if (e.key === " " || e.key === "Spacebar" || e.key === "k" || e.key === "K") {
+      } else if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
         handleTogglePlayPause();
+      } else if (e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        handleTogglePlayPause();
+      } else if (e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        handleNext();
       } else if (e.key === "m" || e.key === "M") {
         toggleMute();
       }

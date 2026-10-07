@@ -151,10 +151,30 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl instanceof HTMLSelectElement ||
+        (activeEl instanceof HTMLElement && activeEl.isContentEditable)
+      ) {
+        return;
+      }
+
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowUp") handlePrev();
-      if (e.key === "ArrowDown") handleNext();
-      if (e.key === " ") {
+      if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        handlePrev();
+      }
+      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        handleNext();
+      }
+      if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
         togglePlay();
       } else if (e.key.toLowerCase() === "m") {
