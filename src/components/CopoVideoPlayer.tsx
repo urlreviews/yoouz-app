@@ -1574,7 +1574,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return (
             <div
               id="copo-floating-nav-buttons"
-              className="hidden md:flex flex-col gap-2.5 z-50 select-none fixed right-4 lg:right-8 top-1/2 -translate-y-1/2"
+              className={`hidden md:flex flex-col gap-2.5 z-50 select-none fixed top-1/2 -translate-y-1/2 md:transition-all md:duration-200 ${
+                commentsOpen ? "right-[456px] lg:right-[464px]" : "right-4 lg:right-8"
+              }`}
             >
               {/* Up arrow to scroll to previous video (disabled/dimmed when at first video) */}
               <button
