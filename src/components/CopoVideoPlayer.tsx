@@ -1216,10 +1216,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(prevIdx, "smooth");
-    } else if (videos.length >= 1) {
-      scrollToCard(displayItems.length - 1, "smooth");
     }
-  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+    // Strict top boundary: Never wrap or scroll up when at index 0 (first video)
+  }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Toggle Play / Pause (Stop / Resume) for the active video
   const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
@@ -1311,19 +1310,24 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       e.preventDefault();
       if (isWheeling) return;
 
-      if (Math.abs(e.deltaY) >= 15) {
-        isWheeling = true;
-
+      if (Math.abs(e.deltaY) >= 12) {
         if (e.deltaY > 0) {
+          isWheeling = true;
           handleNext();
-        } else {
+        } else if (activeCardIndexRef.current > 0) {
+          isWheeling = true;
           handlePrev();
+        } else {
+          // Top boundary: At first video (index 0), keep top locked at 0
+          if (containerRef.current) {
+            containerRef.current.scrollTop = 0;
+          }
         }
 
         if (wheelTimeout) clearTimeout(wheelTimeout);
         wheelTimeout = setTimeout(() => {
           isWheeling = false;
-        }, 520);
+        }, 500);
       }
     };
 
@@ -1333,6 +1337,48 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (wheelTimeout) clearTimeout(wheelTimeout);
     };
   }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
+
+  // Strict Top Boundary Lock Listener for Touch Drag & Scroll Containers
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (activeCardIndexRef.current === 0 && container.scrollTop < 0) {
+        container.scrollTop = 0;
+      }
+    };
+
+    let startY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && activeCardIndexRef.current === 0) {
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - startY; // positive = pulling down (scrolling up above first video)
+        if (deltaY > 0 && container.scrollTop <= 0) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+          container.scrollTop = 0;
+        }
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, []);
 
   // MediaSession Next/Prev Skip and Play/Pause Action Handlers
   useEffect(() => {
@@ -1595,12 +1641,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-scroll-prev-video"
                 onClick={handlePrev}
                 disabled={isAtFirstVideo}
+                aria-disabled={isAtFirstVideo}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtFirstVideo
-                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
+                    ? "bg-zinc-800/20 border-zinc-800/40 text-zinc-600/50 cursor-not-allowed pointer-events-none opacity-30"
                     : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
-                title={isAtFirstVideo ? "First Video" : "Previous Video (Up Arrow)"}
+                title={isAtFirstVideo ? "First Video (Top)" : "Previous Video (Up Arrow)"}
                 aria-label="Previous Video"
               >
                 <ChevronUp className="w-6 h-6 stroke-[2.5]" />

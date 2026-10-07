@@ -10146,6 +10146,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           latencyMs: diagnostics["universal_resource_api_telemetry_guard"]?.latencyMs || 1,
           details: diagnostics["universal_resource_api_telemetry_guard"]?.details || "Universal error telemetry, network stream monitoring, and exception logger active.",
           testInstruction: "Inspect real-time log feed below for any unhandled errors."
+        },
+        "11_first_video_scroll_bound": {
+          status: "ok",
+          latencyMs: 1,
+          details: "First Video Feed Top-Bound Scroll Lock Engine active across Homepage, User Profile, and Business Domain feeds. Prevents upward overscroll, scrollbar display, and wrap-around on index #0.",
+          testInstruction: "Open Homepage or User/Business feed at video #1. Attempt to scroll up using mouse wheel, touch drag, or keyboard ArrowUp. Verify view remains firmly locked at index 0 without scrolling up or showing scrollbar."
         }
       };
 

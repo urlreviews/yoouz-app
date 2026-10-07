@@ -2982,7 +2982,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
                       "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
                       "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
-                      "10_error_telemetry": "10. Universal Application & Error Telemetry"
+                      "10_error_telemetry": "10. Universal Application & Error Telemetry",
+                      "11_first_video_scroll_bound": "11. First Video Feed Top-Bound Scroll Lock & Prevent Upward Overscroll"
                     };
 
                     const title = masterTitles[key] || key;
@@ -2992,7 +2993,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     if (subsystemCategory === "database") {
                       if (!["2_database_bunny_cloud"].includes(key)) return false;
                     } else if (subsystemCategory === "media") {
-                      if (!["1_video_engine_cdn", "6_front_camera_recording"].includes(key)) return false;
+                      if (!["1_video_engine_cdn", "6_front_camera_recording", "11_first_video_scroll_bound"].includes(key)) return false;
                     } else if (subsystemCategory === "security") {
                       if (!["3_business_claims_auth", "7_ai_moderation"].includes(key)) return false;
                     } else if (subsystemCategory === "realtime") {
@@ -3020,7 +3021,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
                       "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
                       "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
-                      "10_error_telemetry": "10. Universal Application & Error Telemetry"
+                      "10_error_telemetry": "10. Universal Application & Error Telemetry",
+                      "11_first_video_scroll_bound": "11. First Video Feed Top-Bound Scroll Lock & Prevent Upward Overscroll"
                     };
 
                     const icons: Record<string, string> = {
@@ -3033,7 +3035,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       "7_ai_moderation": "✨",
                       "8_user_profiles": "👥",
                       "9_i18n_translation": "🌐",
-                      "10_error_telemetry": "📡"
+                      "10_error_telemetry": "📡",
+                      "11_first_video_scroll_bound": "🔒"
                     };
 
                     const title = masterTitles[key] || key;
