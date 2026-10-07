@@ -1242,6 +1242,31 @@ function readReviewsIndex(): any[] {
             }
             return r;
           });
+
+        // Dynamically bind comments from comments_index.json / NoSQL comments collection
+        let allComments: any[] = [];
+        try {
+          const commentsPath = path.join(globalUploadsDir, "comments_index.json");
+          if (fs.existsSync(commentsPath)) {
+            allComments = JSON.parse(fs.readFileSync(commentsPath, "utf8"));
+          }
+        } catch (e) {}
+
+        if (Array.isArray(allComments) && allComments.length > 0) {
+          processed.forEach((r: any) => {
+            const vComments = allComments.filter((c: any) => c && c.videoId === r.id && !deletedCommentsSet.has(String(c.id)));
+            if (vComments.length > 0) {
+              if (!Array.isArray(r.comments)) r.comments = [];
+              const existingIds = new Set((r.comments || []).map((c: any) => String(c.id)));
+              const newComments = vComments.filter((c: any) => !existingIds.has(String(c.id)));
+              r.comments = [...r.comments, ...newComments];
+              r.commentsCount = r.comments.length;
+            } else if (Array.isArray(r.comments)) {
+              r.commentsCount = r.comments.length;
+            }
+          });
+        }
+
         if (dirty) {
           try {
             fs.writeFileSync(reviewsIndexPath, JSON.stringify(processed, null, 2), "utf8");
@@ -6870,6 +6895,42 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           list.unshift({ id, ...data });
         }
         writeReviewsIndex(list);
+      } catch (e) {}
+    }
+
+    // 2a. If comments, update comments_index.json and update parent video review
+    if (colName === 'comments' && data) {
+      try {
+        const commentsPath = path.join(globalUploadsDir, "comments_index.json");
+        let commList: any[] = [];
+        if (fs.existsSync(commentsPath)) {
+          commList = JSON.parse(fs.readFileSync(commentsPath, "utf8"));
+        }
+        const commIdx = commList.findIndex((item: any) => item.id === id);
+        const commentObj = { id, ...data };
+        if (commIdx !== -1) {
+          commList[commIdx] = { ...commList[commIdx], ...data };
+        } else {
+          commList.unshift(commentObj);
+        }
+        fs.writeFileSync(commentsPath, JSON.stringify(commList, null, 2), "utf8");
+
+        const vId = data.videoId || data.video_id;
+        if (vId) {
+          const revList = readReviewsIndex();
+          const targetRev = revList.find((r: any) => r && r.id === vId);
+          if (targetRev) {
+            if (!Array.isArray(targetRev.comments)) targetRev.comments = [];
+            const existingCommIdx = targetRev.comments.findIndex((c: any) => c && c.id === id);
+            if (existingCommIdx !== -1) {
+              targetRev.comments[existingCommIdx] = { ...targetRev.comments[existingCommIdx], ...data };
+            } else {
+              targetRev.comments.push(commentObj);
+            }
+            targetRev.commentsCount = targetRev.comments.length;
+            writeReviewsIndex(revList);
+          }
+        }
       } catch (e) {}
     }
 

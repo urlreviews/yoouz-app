@@ -1,0 +1,64 @@
+[
+  {
+    "id": "comm-101",
+    "videoId": "rev-1791023009708-0qszq",
+    "userId": "aouisesmee@gmail.com",
+    "userName": "Ben Blue",
+    "userHandle": "@benblue",
+    "userAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "text": "Super authentic video review! Very clear and helpful.",
+    "createdAt": "2026-10-05T14:20:00.000Z",
+    "createdAtMs": 1791123600000,
+    "likesCount": 1
+  },
+  {
+    "id": "comm-102",
+    "videoId": "rev-1791023009708-0qszq",
+    "userId": "avr6566gd@gmail.com",
+    "userName": "Steven Akan",
+    "userHandle": "@stevenakan",
+    "userAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "text": "Thanks Ben! Glad you liked the review.",
+    "createdAt": "2026-10-05T15:10:00.000Z",
+    "createdAtMs": 1791126600000,
+    "replyToId": "comm-101",
+    "likesCount": 1
+  },
+  {
+    "id": "comm-201",
+    "videoId": "rev-1789577075627-3488d",
+    "userId": "aouisesmee@gmail.com",
+    "userName": "Ben Blue",
+    "userHandle": "@benblue",
+    "userAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "text": "Great presentation of the Yoouz video review platform!",
+    "createdAt": "2026-10-06T09:15:00.000Z",
+    "createdAtMs": 1791191700000,
+    "likesCount": 1
+  },
+  {
+    "id": "comm-202",
+    "videoId": "rev-1789577075627-3488d",
+    "userId": "avr6566gd@gmail.com",
+    "userName": "Steven Akan",
+    "userHandle": "@stevenakan",
+    "userAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "text": "Appreciate the feedback! We are building the future of local business video reviews.",
+    "createdAt": "2026-10-06T10:00:00.000Z",
+    "createdAtMs": 1791194400000,
+    "replyToId": "comm-201",
+    "likesCount": 1
+  },
+  {
+    "id": "comm-301",
+    "videoId": "rev-1789841701519-2l6x8",
+    "userId": "avr6566gd@gmail.com",
+    "userName": "Steven Akan",
+    "userHandle": "@stevenakan",
+    "userAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "text": "Awesome review Ben! The platform is looking incredible.",
+    "createdAt": "2026-10-06T11:20:00.000Z",
+    "createdAtMs": 1791199200000,
+    "likesCount": 1
+  }
+]
