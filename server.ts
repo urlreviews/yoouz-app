@@ -7366,6 +7366,11 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       return res.json({ success: true, id, message: "Video permanently purged live." });
     }
 
+    if (colName === 'videoReviews' || colName === 'videos' || colName === 'video_reviews') {
+      const purgeResult = await purgeVideoFromAllStores(id);
+      return res.json({ success: true, id, message: "Video review permanently purged live across all stores.", ...purgeResult });
+    }
+
     if (colName === 'places') {
       const purgeResult = await purgePlaceFromAllStores(id);
       return res.json({ success: true, id, message: "Place permanently purged live.", ...purgeResult });
