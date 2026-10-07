@@ -202,6 +202,19 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
   }, [replyingTo]);
 
+  // Prevent background scroll and iOS viewport auto-scroll offset
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   // Mobile virtual keyboard handling for physical app feel
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   useEffect(() => {
@@ -210,6 +223,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       if (window.visualViewport) {
         const offset = window.innerHeight - window.visualViewport.height;
         setKeyboardHeight(offset > 50 ? offset : 0);
+        // Keep window locked to top
+        window.scrollTo(0, 0);
       }
     };
     if (window.visualViewport) {
@@ -674,7 +689,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-end md:items-stretch justify-center md:justify-end bg-black/25 md:bg-transparent pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default overscroll-contain animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end md:items-stretch justify-center md:justify-end bg-black/40 md:bg-transparent pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default overscroll-contain overflow-hidden animate-in fade-in duration-200"
     >
       <div
         id="copo-comments-panel"
@@ -684,11 +699,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           ...(dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
-          ...(keyboardHeight > 0 && window.visualViewport ? { height: `${window.visualViewport.height}px`, maxHeight: `${window.visualViewport.height}px` } : {})
+          ...(keyboardHeight > 0 && typeof window !== "undefined" && window.visualViewport ? { height: `${window.visualViewport.height}px`, maxHeight: `${window.visualViewport.height}px` } : {})
         }}
         className={`w-full md:w-[440px] ${
-          keyboardHeight > 0 ? "" : (sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]")
-        } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
+          keyboardHeight > 0 ? "h-full max-h-full" : (sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]")
+        } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-150 ease-out cursor-default overscroll-contain overflow-hidden relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
       >
         {/* Mobile Pull Handle Indicator */}
         <div 
@@ -1290,6 +1305,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     type="text"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
+                    onFocus={() => {
+                      if (typeof window !== "undefined") {
+                        window.scrollTo(0, 0);
+                        setTimeout(() => window.scrollTo(0, 0), 50);
+                      }
+                    }}
                     maxLength={300}
                     placeholder={
                       replyingTo
@@ -1302,7 +1323,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
                         : t("comments.addCommentPlaceholder", "Add a comment...")
                     }
-                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm px-4 py-2.5 rounded-full border transition-all ${
+                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-4 py-2.5 rounded-full border transition-all ${
                       postAsOwner
                         ? "border-zinc-700 focus:border-white focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                         : "border-zinc-800 focus:border-white/50 focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
