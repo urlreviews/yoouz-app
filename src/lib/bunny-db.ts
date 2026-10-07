@@ -1,14 +1,90 @@
-import { createClient, type Client } from "@libsql/client";
+import { createClient, type Client, type InStatement, type ResultSet, type TransactionMode } from "@libsql/client";
 import path from "path";
 import fs from "fs";
 
 let bunnyDbClient: Client | null = null;
 let isInitialized = false;
+let hasLoggedFallback = false;
+
+function createLocalClient(): Client {
+  const uploadsDir = path.resolve(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
+  }
+  const dbPath = path.resolve(uploadsDir, "bunny_edge.db");
+  return createClient({
+    url: `file:${dbPath}`
+  });
+}
+
+function createResilientClient(remoteClient: Client | null, localClient: Client): Client {
+  let activeClient: Client = remoteClient || localClient;
+  let remoteFailing = !remoteClient;
+
+  const handleExecute = async (stmt: InStatement): Promise<ResultSet> => {
+    if (!remoteFailing && remoteClient) {
+      try {
+        return await remoteClient.execute(stmt);
+      } catch (err: any) {
+        if (!hasLoggedFallback) {
+          hasLoggedFallback = true;
+          console.warn("🐰 [BunnyDB] Remote endpoint unreachable, falling back to local persistent edge database");
+        }
+        remoteFailing = true;
+        activeClient = localClient;
+        return await localClient.execute(stmt);
+      }
+    }
+    return await localClient.execute(stmt);
+  };
+
+  const handleBatch = async (stmts: InStatement[], mode?: TransactionMode): Promise<ResultSet[]> => {
+    if (!remoteFailing && remoteClient) {
+      try {
+        return await remoteClient.batch(stmts, mode);
+      } catch (err: any) {
+        if (!hasLoggedFallback) {
+          hasLoggedFallback = true;
+          console.warn("🐰 [BunnyDB] Remote endpoint unreachable, falling back to local persistent edge database");
+        }
+        remoteFailing = true;
+        activeClient = localClient;
+        return await localClient.batch(stmts, mode);
+      }
+    }
+    return await localClient.batch(stmts, mode);
+  };
+
+  return {
+    get protocol() {
+      return activeClient.protocol;
+    },
+    execute(stmt: InStatement) {
+      return handleExecute(stmt);
+    },
+    batch(stmts: InStatement[], mode?: TransactionMode) {
+      return handleBatch(stmts, mode);
+    },
+    transaction(mode?: TransactionMode) {
+      return activeClient.transaction(mode);
+    },
+    executeMultiple(sql: string) {
+      return activeClient.executeMultiple(sql);
+    },
+    sync() {
+      return activeClient.sync();
+    },
+    close() {
+      if (remoteClient) try { remoteClient.close(); } catch (e) {}
+      try { localClient.close(); } catch (e) {}
+    }
+  } as Client;
+}
 
 /**
  * Initializes and returns the Bunny Database (libSQL) connection.
  * Reads BUNNY_DATABASE_URL and BUNNY_DATABASE_AUTH_TOKEN from environment if set,
- * or seamlessly defaults to persistent local libSQL database storage.
+ * or seamlessly defaults to persistent local libSQL database storage with auto-failover.
  */
 export function getBunnyDb(): Client | null {
   const rawUrl = process.env.BUNNY_DATABASE_URL || process.env.LIBSQL_URL;
@@ -19,24 +95,22 @@ export function getBunnyDb(): Client | null {
 
   if (!bunnyDbClient) {
     try {
+      const localClient = createLocalClient();
+      let remoteClient: Client | null = null;
+
       if (url && authToken) {
-        bunnyDbClient = createClient({
-          url,
-          authToken
-        });
-        console.log("🐰 [BunnyDB] Connected to remote Bunny Cloud Database.");
-      } else {
-        // Ensure uploads directory exists
-        const uploadsDir = path.resolve(process.cwd(), "uploads");
-        if (!fs.existsSync(uploadsDir)) {
-          try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
+        try {
+          remoteClient = createClient({
+            url,
+            authToken
+          });
+          console.log("🐰 [BunnyDB] Connected to remote Bunny Cloud Database.");
+        } catch (e) {
+          remoteClient = null;
         }
-        const dbPath = path.resolve(uploadsDir, "bunny_edge.db");
-        bunnyDbClient = createClient({
-          url: `file:${dbPath}`
-        });
-        console.log("🐰 [BunnyDB] Initialized persistent edge libSQL database at", dbPath);
       }
+
+      bunnyDbClient = createResilientClient(remoteClient, localClient);
     } catch (err: any) {
       console.error("❌ [BunnyDB] Error initializing database client:", err?.message || err);
       return null;

@@ -1392,22 +1392,25 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     } focus:outline-none`}
                     style={{ minHeight: "38px", maxHeight: "120px" }}
                   />
+
+                  {/* Subtle Character Counter (Only visible when nearing limit or on desktop hover) */}
+                  {commentText.length >= 220 && (
+                    <span
+                      id="comment-char-counter"
+                      className={`absolute right-2.5 bottom-1.5 text-[10px] font-mono tracking-tight pointer-events-none px-1 rounded bg-zinc-950/80 backdrop-blur-xs transition-all ${
+                        commentText.length >= 300
+                          ? "text-red-400 font-bold"
+                          : commentText.length >= 260
+                          ? "text-amber-400 font-semibold"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      {commentText.length}/300
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 pb-1">
-                  <span
-                    id="comment-char-counter"
-                    className={`text-[11px] font-mono tracking-tight select-none transition-colors ${
-                      commentText.length >= 300
-                        ? "text-red-400 font-bold"
-                        : commentText.length >= 260
-                        ? "text-amber-400 font-medium"
-                        : "text-zinc-400"
-                    }`}
-                  >
-                    {commentText.length}/300
-                  </span>
-
+                <div className="shrink-0 pb-1">
                   <button
                     type="button"
                     onClick={handleSubmit}
