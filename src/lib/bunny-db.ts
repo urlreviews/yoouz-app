@@ -6,15 +6,159 @@ let bunnyDbClient: Client | null = null;
 let isInitialized = false;
 let hasLoggedFallback = false;
 
+const ALL_TABLE_SCHEMAS = [
+  `CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE,
+    name TEXT,
+    firstName TEXT,
+    lastName TEXT,
+    avatar TEXT,
+    bio TEXT,
+    role TEXT DEFAULT 'user',
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS places (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    address TEXT,
+    category TEXT,
+    city TEXT,
+    country TEXT,
+    latitude REAL,
+    longitude REAL,
+    logoUrl TEXT,
+    bannerUrl TEXT,
+    brandDomain TEXT,
+    website TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS videoReviews (
+    id TEXT PRIMARY KEY,
+    placeId TEXT,
+    placeName TEXT,
+    authorName TEXT,
+    authorAvatar TEXT,
+    userId TEXT,
+    rating REAL,
+    videoUrl TEXT,
+    thumbnailUrl TEXT,
+    duration REAL,
+    likesCount INTEGER DEFAULT 0,
+    bookmarksCount INTEGER DEFAULT 0,
+    sharesCount INTEGER DEFAULT 0,
+    commentsCount INTEGER DEFAULT 0,
+    viewsCount INTEGER DEFAULT 0,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS comments (
+    id TEXT PRIMARY KEY,
+    videoId TEXT,
+    userId TEXT,
+    userName TEXT,
+    userAvatar TEXT,
+    text TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS bookmarks (
+    id TEXT PRIMARY KEY,
+    userId TEXT,
+    placeId TEXT,
+    videoId TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS chats (
+    id TEXT PRIMARY KEY,
+    participants TEXT,
+    lastMessage TEXT,
+    lastSenderEmail TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    recipientEmail TEXT,
+    type TEXT,
+    text TEXT,
+    isRead INTEGER DEFAULT 0,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS businessClaims (
+    id TEXT PRIMARY KEY,
+    placeId TEXT,
+    placeName TEXT,
+    userEmail TEXT,
+    status TEXT DEFAULT 'pending',
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS follows (
+    id TEXT PRIMARY KEY,
+    followerId TEXT,
+    followingId TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS likes (
+    id TEXT PRIMARY KEY,
+    userId TEXT,
+    videoId TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS shares (
+    id TEXT PRIMARY KEY,
+    userId TEXT,
+    videoId TEXT,
+    platform TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS contact_requests (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    email TEXT,
+    category TEXT,
+    domain TEXT,
+    message TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`
+];
+
 function createLocalClient(): Client {
   const uploadsDir = path.resolve(process.cwd(), "uploads");
   if (!fs.existsSync(uploadsDir)) {
     try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch (e) {}
   }
   const dbPath = path.resolve(uploadsDir, "bunny_edge.db");
-  return createClient({
+  const local = createClient({
     url: `file:${dbPath}`
   });
+  // Auto-bootstrap schema in local edge db
+  try {
+    for (const sql of ALL_TABLE_SCHEMAS) {
+      local.execute(sql).catch(() => {});
+    }
+  } catch (e) {}
+  return local;
 }
 
 function createResilientClient(remoteClient: Client | null, localClient: Client): Client {

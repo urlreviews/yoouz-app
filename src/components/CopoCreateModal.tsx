@@ -809,7 +809,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         handle: resolvedAuthor.handle || "@reviewer",
         avatar: resolvedAuthor.avatar || getSafeAvatarUrl(currentUser?.avatar, resolvedAuthor.name),
         isLocalGuide: true,
-        localGuideLevel: 7,
         videoReviewCount: 1,
         photosCount: 0,
         isVerified: true

@@ -173,7 +173,6 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         country: u.country || existing?.country,
         isVerified: u.isVerified || existing?.isVerified || false,
         isLocalGuide: u.isLocalGuide ?? existing?.isLocalGuide ?? false,
-        localGuideLevel: u.localGuideLevel ?? existing?.localGuideLevel ?? 1,
         isFollowed,
         followersCount: Math.max(followersCount, existing?.followersCount || 0),
         videoReviewCount: existing?.videoReviewCount || 0

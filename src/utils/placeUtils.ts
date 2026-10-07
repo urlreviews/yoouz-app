@@ -2422,7 +2422,6 @@ export function resolveSafeAuthor(
     avatar: finalAvatar,
     isVerified: isVerifiedUser,
     isLocalGuide: authorObj.isLocalGuide !== undefined ? authorObj.isLocalGuide : (reviewCount > 0),
-    localGuideLevel: authorObj.localGuideLevel ?? (reviewCount > 0 ? 7 : 1),
     videoReviewCount: reviewCount,
     photosCount: authorObj.photosCount ?? 0,
     isFollowed: authorObj.isFollowed ?? false,

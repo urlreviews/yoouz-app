@@ -1,5 +1,22 @@
 [
   {
+    "id": "yoouz.com",
+    "name": "Yoouz",
+    "address": "Worldwide",
+    "category": "Software & Technology",
+    "city": "Online",
+    "country": "United States",
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "logoUrl": "https://www.yoouz.com/favicon.svg",
+    "bannerUrl": "https://www.yoouz.com/api/og-banner/brand.png?title=Yoouz&subtitle=Authentic+60-Second+Video+Reviews&path=yoouz.com%2F&v=25",
+    "website": "https://yoouz.com",
+    "rating": 5,
+    "reviewCount": 1,
+    "verified": true,
+    "claimed": true
+  },
+  {
     "id": "adelaidecitydentalcare.com.au",
     "name": "adelaide city dental care",
     "category": "Dentist & Dental Clinic",

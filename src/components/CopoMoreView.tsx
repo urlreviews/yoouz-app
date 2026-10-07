@@ -486,10 +486,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "trust-7",
       category: "trust",
-      question: "What are Local Guide and Top Reviewer badges?",
+      question: "What are Verified Reviewer and Top Reviewer badges?",
       answer:
-        "Active reviewers who regularly contribute high-quality video reviews across local venues and domains automatically earn 'Local Guide' and 'Top Reviewer' badges, highlighting their standing in the community.",
-      tags: ["local guide", "top reviewer", "badges", "reputation"]
+        "Active reviewers who regularly contribute high-quality video reviews across local venues and domains automatically earn 'Verified Reviewer' and 'Top Reviewer' badges, highlighting their standing in the community.",
+      tags: ["verified reviewer", "top reviewer", "badges", "reputation"]
     },
 
     // --- Technical & Navigation FAQs ---
