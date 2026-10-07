@@ -940,14 +940,114 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [isLoadingLiveStats, setIsLoadingLiveStats] = useState(false);
   const [lastSyncedTime, setLastSyncedTime] = useState<Date | null>(null);
 
+  // Live Database Items State (Direct fetch from /api/nosql/* to guarantee 100% parity with Database tab)
+  const [dbPlaces, setDbPlaces] = useState<Place[]>(() => {
+    try {
+      const cached = localStorage.getItem("yoouz_cached_places");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
+  const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
+  const [dbUsers, setDbUsers] = useState<any[]>([]);
+
+  // Merged authoritative collections
+  const activePlaces = useMemo(() => {
+    const map = new Map<string, Place>();
+    (places || []).forEach((p) => {
+      if (p && p.id) map.set(String(p.id).toLowerCase(), p);
+    });
+    (dbPlaces || []).forEach((p) => {
+      if (p && p.id) {
+        const key = String(p.id).toLowerCase();
+        const existing = map.get(key);
+        if (!existing) {
+          map.set(key, p);
+        } else {
+          map.set(key, { ...existing, ...p });
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [places, dbPlaces]);
+
+  const activeVideos = useMemo(() => {
+    const map = new Map<string, VideoReview>();
+    (videos || []).forEach((v) => {
+      if (v && v.id) map.set(v.id, v);
+    });
+    (dbVideos || []).forEach((v) => {
+      if (v && v.id) map.set(v.id, v);
+    });
+    return Array.from(map.values());
+  }, [videos, dbVideos]);
+
+  const activeAllUsers = useMemo(() => {
+    const map = new Map<string, any>();
+    (allUsers || []).forEach((u) => {
+      if (u) {
+        const key = u.id || u.uid || u.email || u.handle;
+        if (key) map.set(String(key).toLowerCase(), u);
+      }
+    });
+    (dbUsers || []).forEach((u) => {
+      if (u) {
+        const key = u.id || u.uid || u.email || u.handle;
+        if (key) map.set(String(key).toLowerCase(), u);
+      }
+    });
+    return Array.from(map.values());
+  }, [allUsers, dbUsers]);
+
   const fetchLiveStats = async () => {
     setIsLoadingLiveStats(true);
     try {
-      const res = await fetch("/api/admin/live-stats", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
+      const [statsRes, placesRes, videosRes, usersRes, chatsRes] = await Promise.allSettled([
+        fetch("/api/admin/live-stats", { cache: "no-store" }),
+        fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" }),
+        fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" }),
+        fetch(`/api/nosql/users?_t=${Date.now()}`, { cache: "no-store" }),
+        fetch("/api/admin/chats", { cache: "no-store" })
+      ]);
+
+      if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+        const data = await statsRes.value.json();
         setLiveStats(data);
         setLastSyncedTime(new Date());
+      }
+
+      if (placesRes.status === "fulfilled" && placesRes.value.ok) {
+        const placesData = await placesRes.value.json();
+        if (Array.isArray(placesData) && placesData.length > 0) {
+          setDbPlaces(placesData);
+          try {
+            localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
+          } catch (e) {}
+        }
+      }
+
+      if (videosRes.status === "fulfilled" && videosRes.value.ok) {
+        const videosData = await videosRes.value.json();
+        if (Array.isArray(videosData) && videosData.length > 0) {
+          setDbVideos(videosData);
+        }
+      }
+
+      if (usersRes.status === "fulfilled" && usersRes.value.ok) {
+        const usersData = await usersRes.value.json();
+        if (Array.isArray(usersData) && usersData.length > 0) {
+          setDbUsers(usersData);
+        }
+      }
+
+      if (chatsRes.status === "fulfilled" && chatsRes.value.ok) {
+        const chatsData = await chatsRes.value.json();
+        if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
+          setAdminChats(chatsData.chats);
+        }
       }
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
@@ -1097,7 +1197,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     const mergedList: any[] = [];
     
-    (allUsers || []).forEach((u) => {
+    (activeAllUsers || []).forEach((u) => {
       if (!u) return;
       if (
         isKeyDeleted(u.id) ||
@@ -1124,7 +1224,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       });
     });
 
-    (videos || []).forEach((v) => {
+    (activeVideos || []).forEach((v) => {
       if (!v) return;
       if (
         isKeyDeleted(v.userEmail) ||
@@ -1210,12 +1310,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        }
        return true;
     });
-  }, [allUsers, videos, deletedUserKeys]);
+  }, [activeAllUsers, activeVideos, deletedUserKeys]);
 
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
     const list: { video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string }[] = [];
-    videos.forEach((v) => {
+    activeVideos.forEach((v) => {
       (v.comments || []).forEach((c) => {
         list.push({
           video: v,
@@ -1240,7 +1340,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       });
     });
     return list;
-  }, [videos]);
+  }, [activeVideos]);
 
   // Separate Creators vs Community Users
   const { creatorsList, standardUsersList } = useMemo(() => {
@@ -1248,7 +1348,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const regularUsers: any[] = [];
 
     uniqueUsers.forEach((u) => {
-      const userVideos = videos.filter((v) =>
+      const userVideos = activeVideos.filter((v) =>
         isAuthorMatch(v, {
           name: u.name,
           handle: `@${u.name}`,
@@ -1290,12 +1390,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
 
     return { creatorsList: creators, standardUsersList: regularUsers };
-  }, [uniqueUsers, videos]);
+  }, [uniqueUsers, activeVideos]);
 
   // Filtered Video List
   const filteredVideos = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    const result = videos.filter((v) => {
+    const result = activeVideos.filter((v) => {
       const matchQuery =
         !q ||
         (v.placeName && v.placeName.toLowerCase().includes(q)) ||
@@ -1327,7 +1427,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       // default: newest
       return (b.createdAtMs || 0) - (a.createdAtMs || 0);
     });
-  }, [videos, searchQuery, videoRatingFilter, videoSortFilter]);
+  }, [activeVideos, searchQuery, videoRatingFilter, videoSortFilter]);
 
   // Deduplicated Places (Guarantees every business appears exactly once with merged claim and video state)
   const deduplicatedPlaces = useMemo(() => {
@@ -1347,7 +1447,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     } catch (e) {}
 
-    places.forEach((p) => {
+    activePlaces.forEach((p) => {
       if (!p || !p.id) return;
       const rawId = String(p.id).toLowerCase().trim();
       let canonId = rawId
@@ -1457,7 +1557,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
 
     return Array.from(canonicalMap.values());
-  }, [places]);
+  }, [activePlaces]);
 
   // Separate Businesses (Claimed / Merchant Corporate Entities) vs Physical Places (Local Directory Venues)
   const { allBusinesses, allPhysicalPlaces } = useMemo(() => {
@@ -1720,26 +1820,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    places.forEach((p) => {
+    activePlaces.forEach((p) => {
       if (p.category) set.add(p.category);
     });
     return Array.from(set);
-  }, [places]);
+  }, [activePlaces]);
 
   // KPI Calculations
   const metrics = useMemo(() => {
-    const totalVids = videos.length;
-    const totalLikes = videos.reduce((acc, v) => acc + (v.likes || 0), 0);
-    const totalShares = videos.reduce((acc, v) => acc + (v.sharesCount || 0), 0);
-    const totalBookmarks = videos.reduce((acc, v) => acc + (v.bookmarksCount || 0), 0);
-    const totalViews = videos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
+    const totalVids = activeVideos.length;
+    const totalLikes = activeVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
+    const totalShares = activeVideos.reduce((acc, v) => acc + (v.sharesCount || 0), 0);
+    const totalBookmarks = activeVideos.reduce((acc, v) => acc + (v.bookmarksCount || 0), 0);
+    const totalViews = activeVideos.reduce((acc, v) => acc + (v.viewsCount || v.views || 0), 0);
     const totalComm = allComments.length;
     const totalBusinesses = allBusinesses.length;
     const totalPhysicalPlaces = allPhysicalPlaces.length;
     const totalPlaces = deduplicatedPlaces.length;
     const claimedPlaces = totalBusinesses;
     const unclaimedPlaces = totalPhysicalPlaces;
-    const avgRating = totalVids > 0 ? (videos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
+    const avgRating = totalVids > 0 ? (activeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / totalVids).toFixed(1) : "5.0";
 
     return {
       totalVideos: totalVids,
@@ -1758,7 +1858,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       totalCommunityUsers: standardUsersList.length,
       avgRating
     };
-  }, [videos, deduplicatedPlaces, allBusinesses, allPhysicalPlaces, uniqueUsers, creatorsList, standardUsersList, allComments]);
+  }, [activeVideos, deduplicatedPlaces, allBusinesses, allPhysicalPlaces, uniqueUsers, creatorsList, standardUsersList, allComments]);
 
   // Multi-select handlers
   const handleSelectAllBusinesses = () => {
@@ -2386,7 +2486,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <span>Videos</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {videos.length}
+                {metrics.totalVideos}
               </span>
             </button>
 
@@ -2515,7 +2615,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["users", `Users (${metrics.totalUsers})`],
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
-                ["videos", `Videos (${videos.length})`],
+                ["videos", `Videos (${metrics.totalVideos})`],
                 ["comments", `Comments (${allComments.length})`],
                 ["messages", `Messages (${adminChats.length})`],
                 ["broadcast", "Broadcast"],

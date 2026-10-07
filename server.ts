@@ -7793,17 +7793,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         counts[tbl] = 0;
       }
     }
-    // Match admin dashboard active physical places count (28)
-    counts['places'] = 28;
-
-    // Use authoritative BunnyDB videoReviews count directly (only augment with local index if BunnyDB count is 0)
+    // Ensure accurate row counts for all tables
     try {
       if (!counts.videoReviews || counts.videoReviews === 0) {
         counts.videoReviews = readReviewsIndex().length;
       }
     } catch (e) {}
 
-    // Use authoritative BunnyDB users count directly
     try {
       if (!counts.users || counts.users === 0) {
         const uRes = await bunnyDb.execute("SELECT COUNT(*) as c FROM users");
@@ -7831,19 +7827,35 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     for (const tbl of tables) {
       counts[tbl] = 0;
     }
-    try {
-      const dbInstance = getDb();
-      if (dbInstance) {
-        for (const tbl of tables) {
-          const table = getNoSqlTable(tbl);
-          if (table) {
-            const rows = await dbInstance.select().from(table);
-            counts[tbl] = rows.length;
-          }
+  }
+
+  // Check local database instance to ensure any fallback/seeded records are included in counts
+  try {
+    const dbInstance = getDb();
+    if (dbInstance) {
+      for (const tbl of tables) {
+        const table = getNoSqlTable(tbl);
+        if (table) {
+          const rows = await dbInstance.select().from(table);
+          counts[tbl] = Math.max(Number(counts[tbl] || 0), rows.length);
         }
       }
-    } catch(e) {}
-  }
+    }
+  } catch (e) {}
+
+  try {
+    const localPlaces = readPlacesIndex();
+    if (localPlaces && localPlaces.length > 0) {
+      counts.places = Math.max(Number(counts.places || 0), localPlaces.length);
+    }
+  } catch (e) {}
+
+  try {
+    const localReviews = readReviewsIndex();
+    if (localReviews && localReviews.length > 0) {
+      counts.videoReviews = Math.max(Number(counts.videoReviews || 0), localReviews.length);
+    }
+  } catch (e) {}
 
   // Calculate interaction sums
   let totalLikesSum = counts.likes || 0;

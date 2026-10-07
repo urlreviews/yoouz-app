@@ -3370,7 +3370,11 @@ export function App() {
                     totalReviews: 1
                   });
                 }
-                return Array.from(map.values());
+                const finalPlacesList = Array.from(map.values());
+                try {
+                  localStorage.setItem("yoouz_cached_places", JSON.stringify(finalPlacesList));
+                } catch (e) {}
+                return finalPlacesList;
               });
             }
           }
