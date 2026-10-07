@@ -103,9 +103,18 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const commentsListRef = useRef<HTMLDivElement>(null);
   const likingPendingRef = useRef<Set<string>>(new Set());
+
+  // Auto-resize textarea as comment wraps across multiple lines (Facebook / TikTok / YouTube style)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const targetHeight = Math.min(Math.max(el.scrollHeight, 38), 120);
+    el.style.height = `${targetHeight}px`;
+  }, [commentText]);
 
   const handleCommentLikeClick = (commentId: string, replyId?: string) => {
     const targetId = replyId || commentId;
@@ -1298,41 +1307,44 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </div>
               )}
 
-              {/* Input Action Bar (Standalone Clean Div - No Form to prevent iOS Safari navigation toolbar) */}
-              <div className="flex items-center gap-2.5">
-                {/* Author Avatar (Uses Business Logo when posting as owner) */}
-                {(isUserOwner || postAsOwner) ? (
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-0.5">
-                    <CopoBrandLogo
-                      domain={video?.placeWebsite}
-                      name={placeName || video?.placeName}
-                      website={video?.placeWebsite}
-                      logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
-                      className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                      imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="text-[10px] font-black text-zinc-950"
+              {/* Input Action Bar (Standalone Clean Div with Auto-Expanding Multiline Textarea) */}
+              <div className="flex items-end gap-2.5">
+                {/* Author Avatar */}
+                <div className="pb-1 shrink-0">
+                  {(isUserOwner || postAsOwner) ? (
+                    <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center p-0.5">
+                      <CopoBrandLogo
+                        domain={video?.placeWebsite}
+                        name={placeName || video?.placeName}
+                        website={video?.placeWebsite}
+                        logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
+                        className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                        imageClassName="w-full h-full object-contain"
+                        fallbackTextClassName="text-[10px] font-black text-zinc-950"
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={getAuthorAvatar(
+                        currentUser?.name || "You",
+                        currentUser?.email?.split("@")[0],
+                        currentUser?.avatar,
+                        false
+                      )}
+                      alt={currentUser?.name || "You"}
+                      className="w-8 h-8 rounded-full object-cover border border-zinc-800"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = generateGoogleLetterAvatarSvg(currentUser?.name || "You");
+                      }}
                     />
-                  </div>
-                ) : (
-                  <img
-                    src={getAuthorAvatar(
-                      currentUser?.name || "You",
-                      currentUser?.email?.split("@")[0],
-                      currentUser?.avatar,
-                      false
-                    )}
-                    alt={currentUser?.name || "You"}
-                    className="w-8 h-8 rounded-full object-cover shrink-0 border border-zinc-800"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = generateGoogleLetterAvatarSvg(currentUser?.name || "You");
-                    }}
-                  />
-                )}
-                <div className="relative flex-1">
-                  <input
+                  )}
+                </div>
+
+                <div className="relative flex-1 min-w-0">
+                  <textarea
                     ref={inputRef}
-                    type="text"
+                    rows={1}
                     name="comment_text"
                     id="comment_text"
                     inputMode="text"
@@ -1347,9 +1359,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && commentText.trim() && commentText.length <= 300) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        handleSubmit(e);
+                        if (commentText.trim() && commentText.length <= 300) {
+                          handleSubmit(e);
+                        }
                       }
                     }}
                     onFocus={() => {
@@ -1371,15 +1385,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
                         : t("comments.addCommentPlaceholder", "Add a comment...")
                     }
-                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-4 py-2.5 rounded-full border transition-all ${
+                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-4 py-2 rounded-2xl border transition-all resize-none leading-relaxed overflow-y-auto block ${
                       postAsOwner
                         ? "border-zinc-700 focus:border-white focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                         : "border-zinc-800 focus:border-white/50 focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                     } focus:outline-none`}
+                    style={{ minHeight: "38px", maxHeight: "120px" }}
                   />
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 pb-1">
                   <span
                     id="comment-char-counter"
                     className={`text-[11px] font-mono tracking-tight select-none transition-colors ${
@@ -1387,7 +1402,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? "text-red-400 font-bold"
                         : commentText.length >= 260
                         ? "text-amber-400 font-medium"
-                        : "text-zinc-200"
+                        : "text-zinc-400"
                     }`}
                   >
                     {commentText.length}/300
