@@ -7682,37 +7682,39 @@ export function App() {
       </div>
 
       {/* Video Comments Drawer */}
-      <CopoCommentsDrawer
-        video={activeCommentVideo}
-        currentUser={currentUser}
-        allUsers={allRegisteredUsers}
-        onClose={() => setActiveCommentVideo(null)}
-        onRequireAuth={() => {
-          setAuthIntent("general");
-          setIsAuthModalOpen(true);
-        }}
-        onAddComment={handleAddComment}
-        onToggleCommentLike={handleToggleCommentLike}
-        onToggleCreatorHeart={handleToggleCreatorHeart}
-        onDeleteComment={handleDeleteComment}
-        onAddOwnerResponse={handleSaveOwnerResponse}
-        onDeleteOwnerResponse={handleDeleteOwnerResponse}
-        isUserOwner={isUserOwnerOfCommentPlace}
-        placeName={activeCommentPlaceName}
-        placeLogoUrl={activeCommentPlaceLogo}
-        onSelectAuthor={(handle, name, avatar) => {
-          setActiveCommentVideo(null); // Close the drawer first
-          
-          // Then open the creator profile
-          handleOpenCreatorDrawer({
-            name: name || handle,
-            //handle: handle,
-            avatar: getSafeAvatarUrl(avatar, name || handle, handle || name),
-            isVerified: false,
-            isFollowed: false
-          });
-        }}
-      />
+      {activeCommentVideo && (
+        <CopoCommentsDrawer
+          video={activeCommentVideo}
+          currentUser={currentUser}
+          allUsers={allRegisteredUsers}
+          onClose={() => setActiveCommentVideo(null)}
+          onRequireAuth={() => {
+            setAuthIntent("general");
+            setIsAuthModalOpen(true);
+          }}
+          onAddComment={handleAddComment}
+          onToggleCommentLike={handleToggleCommentLike}
+          onToggleCreatorHeart={handleToggleCreatorHeart}
+          onDeleteComment={handleDeleteComment}
+          onAddOwnerResponse={handleSaveOwnerResponse}
+          onDeleteOwnerResponse={handleDeleteOwnerResponse}
+          isUserOwner={isUserOwnerOfCommentPlace}
+          placeName={activeCommentPlaceName}
+          placeLogoUrl={activeCommentPlaceLogo}
+          onSelectAuthor={(handle, name, avatar) => {
+            setActiveCommentVideo(null); // Close the drawer first
+            
+            // Then open the creator profile
+            handleOpenCreatorDrawer({
+              name: name || handle,
+              //handle: handle,
+              avatar: getSafeAvatarUrl(avatar, name || handle, handle || name),
+              isVerified: false,
+              isFollowed: false
+            });
+          }}
+        />
+      )}
 
       {/* Share Video Modal */}
       <CopoShareModal

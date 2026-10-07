@@ -332,7 +332,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
   // 1. Root Scroll & Touch Chaining Lock
   useEffect(() => {
-    if (typeof document === "undefined") return;
+    if (typeof document === "undefined" || !video) return;
     const originalOverflow = document.body.style.overflow;
     const originalTouchAction = document.body.style.touchAction;
     
@@ -355,10 +355,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       document.body.style.touchAction = originalTouchAction;
       document.removeEventListener("touchmove", handleNativeTouchMove);
     };
-  }, []);
+  }, [Boolean(video)]);
 
   // 1b. Prevent overscroll scroll-chaining on comments list boundary
   useEffect(() => {
+    if (!video) return;
     const el = commentsListRef.current;
     if (!el) return;
 
