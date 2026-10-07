@@ -662,7 +662,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onKeyDown={(e) => e.stopPropagation()}
         style={dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
         className={`w-full md:w-[440px] ${
-          sheetHeight === "expanded" ? "h-[88dvh]" : "h-[65dvh]"
+          sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]"
         } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
       >
         {/* Mobile Pull Handle Indicator */}
@@ -740,7 +740,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
         {/* Comments Scrollable Feed */}
         <div
-          className="flex-1 overflow-y-auto px-5 py-4 space-y-4 overscroll-contain bg-zinc-950 md:bg-zinc-900"
+          className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4 overscroll-contain bg-zinc-950 md:bg-zinc-900"
           onWheel={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
@@ -1265,7 +1265,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     type="text"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
-                    onFocus={() => setSheetHeight("expanded")}
                     maxLength={300}
                     placeholder={
                       replyingTo
