@@ -40,6 +40,10 @@ export interface ReviewComment {
   id: string;
   videoId?: string;
   userId?: string;
+  userName?: string;
+  userHandle?: string;
+  userAvatar?: string;
+  authorEmail?: string;
   authorName: string;
   authorHandle?: string;
   authorAvatar: string;

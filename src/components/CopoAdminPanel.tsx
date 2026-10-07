@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { VideoReview, Place, ReviewComment, UserProfile } from "../types";
 import {
   Shield,
@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   Edit,
+  Edit3,
   Check,
   X,
   Play,
@@ -308,6 +309,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmDeleteChatId, setConfirmDeleteChatId] = useState<string | null>(null);
   const [adminReplyText, setAdminReplyText] = useState("");
   const [isSendingAdminReply, setIsSendingAdminReply] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState("");
 
   // Business Name & Compound Word Integrity Center State
   const [brandTestInput, setBrandTestInput] = useState("lassustandartsen.nl");
@@ -570,30 +573,72 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handleDeleteMessageFromThread = async (msgIdOrIndex: string | number) => {
     if (!inspectChatModal) return;
-    const updatedHistory = (inspectChatModal.history || []).filter((m: any, idx: number) => {
-      if (typeof msgIdOrIndex === "string") return m.id !== msgIdOrIndex;
-      return idx !== msgIdOrIndex;
-    });
-    const lastM = updatedHistory.length > 0 ? (updatedHistory[updatedHistory.length - 1].text || "Shared a video") : "No messages yet";
-    const updatedChat = {
-      ...inspectChatModal,
-      history: updatedHistory,
-      lastMessage: lastM
-    };
     try {
-      await fetch(`/api/nosql/chats/${inspectChatModal.id}`, {
+      const res = await fetch("/api/admin/chats/delete-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          data: updatedChat,
-          merge: true
+          chatId: inspectChatModal.id,
+          messageId: msgIdOrIndex
         })
       });
-      setInspectChatModal(updatedChat);
-      setAdminChats((prev) => prev.map((c) => (c.id === updatedChat.id ? updatedChat : c)));
-      showToast("Message deleted from thread.");
+      const data = await res.json();
+      if (data && data.success && data.chat) {
+        setInspectChatModal(data.chat);
+        setAdminChats((prev) => prev.map((c) => (c.id === inspectChatModal.id ? { ...c, ...data.chat } : c)));
+        showToast("Message deleted permanently.");
+      } else {
+        const updatedHistory = (inspectChatModal.history || []).filter((m: any, idx: number) => {
+          if (typeof msgIdOrIndex === "string") return m.id !== msgIdOrIndex;
+          return idx !== msgIdOrIndex;
+        });
+        const lastM = updatedHistory.length > 0 ? (updatedHistory[updatedHistory.length - 1].text || "Shared a video") : "No messages yet";
+        const updatedChat = { ...inspectChatModal, history: updatedHistory, lastMessage: lastM };
+        setInspectChatModal(updatedChat);
+        setAdminChats((prev) => prev.map((c) => (c.id === updatedChat.id ? updatedChat : c)));
+        showToast("Message removed from thread.");
+      }
     } catch (e) {
       showToast("Failed to delete message.");
+    }
+  };
+
+  const handleEditMessageInThread = async (msgIdOrIndex: string | number) => {
+    if (!inspectChatModal || !editingMessageText.trim()) return;
+    try {
+      const res = await fetch("/api/admin/chats/edit-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: inspectChatModal.id,
+          messageId: msgIdOrIndex,
+          newText: editingMessageText.trim()
+        })
+      });
+      const data = await res.json();
+      if (data && data.success && data.chat) {
+        setInspectChatModal(data.chat);
+        setAdminChats((prev) => prev.map((c) => (c.id === inspectChatModal.id ? { ...c, ...data.chat } : c)));
+        setEditingMessageId(null);
+        setEditingMessageText("");
+        showToast("Message edited successfully.");
+      } else {
+        const updatedHistory = (inspectChatModal.history || []).map((m: any, idx: number) => {
+          if (String(m.id || idx) === String(msgIdOrIndex)) {
+            return { ...m, text: editingMessageText.trim(), editedByAdminAt: new Date().toISOString() };
+          }
+          return m;
+        });
+        const lastM = updatedHistory.length > 0 ? (updatedHistory[updatedHistory.length - 1].text || "Shared a video") : "No messages yet";
+        const updatedChat = { ...inspectChatModal, history: updatedHistory, lastMessage: lastM };
+        setInspectChatModal(updatedChat);
+        setAdminChats((prev) => prev.map((c) => (c.id === updatedChat.id ? updatedChat : c)));
+        setEditingMessageId(null);
+        setEditingMessageText("");
+        showToast("Message updated locally.");
+      }
+    } catch (e) {
+      showToast("Failed to edit message.");
     }
   };
 
@@ -1359,6 +1404,60 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
   }, [activeAllUsers, activeVideos, deletedUserKeys]);
 
+  // Helper to normalize comment details with full user resolution for Admin View
+  const resolveCommentUserMeta = useCallback((c: ReviewComment): ReviewComment => {
+    const rawUserId = c.userId || (c as any).userEmail || (c as any).authorEmail || "";
+    const rawName = c.authorName || (c as any).userName || "";
+    const rawHandle = c.authorHandle || (c as any).userHandle || "";
+    const rawAvatar = c.authorAvatar || (c as any).userAvatar || "";
+
+    // Search for matching registered user account in uniqueUsers
+    const matchedUser = uniqueUsers.find((u) => {
+      if (rawUserId && u.email && u.email.toLowerCase() === rawUserId.toLowerCase()) return true;
+      if (rawName && u.name && u.name.toLowerCase().trim() === rawName.toLowerCase().trim()) return true;
+      if (rawHandle && u.handle && u.handle.toLowerCase().replace(/^@/,'') === rawHandle.toLowerCase().replace(/^@/,'')) return true;
+      return false;
+    });
+
+    let resolvedName = matchedUser?.name || rawName;
+    if (!resolvedName || resolvedName === "User" || resolvedName === "Verified Reviewer") {
+      if (rawUserId.includes("@")) {
+        const prefix = rawUserId.split("@")[0];
+        resolvedName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+      } else {
+        resolvedName = "Community Member";
+      }
+    }
+
+    let resolvedHandle = matchedUser?.handle || rawHandle;
+    if (!resolvedHandle) {
+      resolvedHandle = `@${resolvedName.toLowerCase().replace(/\s+/g, '')}`;
+    }
+
+    let resolvedAvatar = matchedUser?.avatar || rawAvatar;
+    if (!resolvedAvatar || resolvedAvatar.includes("ui-avatars")) {
+      resolvedAvatar = getSafeAvatarUrl("", resolvedName, resolvedHandle);
+    } else {
+      resolvedAvatar = getSafeAvatarUrl(resolvedAvatar, resolvedName, resolvedHandle);
+    }
+
+    const resolvedEmail = matchedUser?.email || rawUserId;
+
+    return {
+      ...c,
+      authorName: resolvedName,
+      userName: resolvedName,
+      authorHandle: resolvedHandle,
+      userHandle: resolvedHandle,
+      authorAvatar: resolvedAvatar,
+      userAvatar: resolvedAvatar,
+      userId: resolvedEmail,
+      authorEmail: resolvedEmail,
+      isCreator: matchedUser?.role === "Creator" || c.isCreator,
+      isOwner: matchedUser?.role === "Business" || c.isOwner
+    } as any;
+  }, [uniqueUsers]);
+
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
     const list: { video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string }[] = [];
@@ -1366,19 +1465,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       (v.comments || []).forEach((c) => {
         list.push({
           video: v,
-          comment: {
-            ...c,
-            authorAvatar: getSafeAvatarUrl(c.authorAvatar, c.authorName, c.authorHandle)
-          }
+          comment: resolveCommentUserMeta(c)
         });
         if (Array.isArray(c.replies)) {
           c.replies.forEach((r) => {
             list.push({
               video: v,
-              comment: {
-                ...r,
-                authorAvatar: getSafeAvatarUrl(r.authorAvatar, r.authorName, r.authorHandle)
-              },
+              comment: resolveCommentUserMeta(r),
               isReply: true,
               parentCommentId: c.id
             });
@@ -1387,7 +1480,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       });
     });
     return list;
-  }, [activeVideos]);
+  }, [activeVideos, resolveCommentUserMeta]);
 
   // Separate Creators vs Community Users
   const { creatorsList, standardUsersList } = useMemo(() => {
@@ -5726,9 +5819,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-zinc-950 text-zinc-300 border border-zinc-800">
                                   {chat.id}
                                 </span>
-                                <span className="text-sm font-black text-white">
-                                  {p1Name} <span className="text-zinc-500 font-normal">↔</span> {p2Name}
-                                </span>
+                                <div className="text-sm font-black text-white flex items-center gap-1.5 flex-wrap">
+                                  <span>{p1Name}</span>
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-950 text-blue-400 font-mono border border-zinc-800">
+                                    {chat.senderRole || "User"}
+                                  </span>
+                                  <span className="text-zinc-500 font-normal">↔</span>
+                                  <span>{p2Name}</span>
+                                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono border ${
+                                    chat.recipientRole === "Business" || chat.recipientIsBusiness
+                                      ? "bg-purple-950 text-purple-300 border-purple-800/60"
+                                      : "bg-zinc-950 text-indigo-400 border-zinc-800"
+                                  }`}>
+                                    {chat.recipientRole || "User"}
+                                  </span>
+                                </div>
                                 <span
                                   className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
                                     historyCount > 0
@@ -5807,7 +5912,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="bg-zinc-900 rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-150 overflow-hidden">
                     {/* Modal Header */}
                     <div className="p-5 border-b border-zinc-800 flex items-center justify-between gap-3 bg-zinc-950">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3.5 min-w-0">
                         <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
                           <MessageSquare className="w-5 h-5" />
                         </div>
@@ -5820,14 +5925,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               {Array.isArray(inspectChatModal.history) ? inspectChatModal.history.length : 0} messages
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-400 truncate mt-0.5">
-                            {inspectChatModal.senderName || inspectChatModal.senderEmail} ↔ {inspectChatModal.recipientName || inspectChatModal.recipientEmail}
-                          </p>
+                          <div className="flex items-center gap-2 text-xs text-zinc-300 mt-0.5 truncate">
+                            <span className="font-bold text-white flex items-center gap-1">
+                              {inspectChatModal.senderName || "User 1"}
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
+                                {inspectChatModal.senderRole || "User"}
+                              </span>
+                            </span>
+                            <span className="text-zinc-500">↔</span>
+                            <span className="font-bold text-white flex items-center gap-1">
+                              {inspectChatModal.recipientName || "User 2"}
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
+                                {inspectChatModal.recipientRole || "User"}
+                              </span>
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       <button
-                        onClick={() => setInspectChatModal(null)}
+                        onClick={() => {
+                          setInspectChatModal(null);
+                          setEditingMessageId(null);
+                        }}
                         className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
                       >
                         <X className="w-4 h-4" />
@@ -5845,11 +5965,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       ) : (
                         inspectChatModal.history.map((msg: any, idx: number) => {
                           const isYoouzAdmin = msg.senderEmail === "admin@yoouz.com" || msg.senderName === "Yoouz Admin";
-                          const senderAvatar = getSafeAvatarUrl(msg.senderAvatar, msg.senderName, msg.senderHandle || msg.senderEmail);
+                          const msgId = msg.id || String(idx);
+                          const isEditingThis = editingMessageId === msgId;
+                          const senderAvatar = getSafeAvatarUrl(msg.senderAvatar, msg.senderName || "User", msg.senderHandle || msg.senderEmail);
 
                           return (
                             <div
-                              key={msg.id || idx}
+                              key={msgId}
                               className={`flex items-start gap-3 group animate-in fade-in ${
                                 isYoouzAdmin ? "justify-end" : ""
                               }`}
@@ -5858,7 +5980,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <img
                                   src={senderAvatar}
                                   alt=""
-                                  className="w-8 h-8 rounded-full object-cover border border-zinc-700 shrink-0 mt-0.5"
+                                  className="w-8 h-8 rounded-full object-cover border border-zinc-700 shrink-0 mt-0.5 shadow-sm"
                                   onError={(e) => {
                                     (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(msg.senderName || "User", 128);
                                   }}
@@ -5870,48 +5992,101 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   <span className={`text-xs font-bold ${isYoouzAdmin ? "text-blue-400" : "text-white"}`}>
                                     {msg.senderName || msg.senderEmail || "User"}
                                   </span>
-                                  {isYoouzAdmin && (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-950 text-blue-300 border border-blue-800 font-bold">
-                                      Admin
+                                  {msg.senderRole && (
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                                      isYoouzAdmin
+                                        ? "bg-blue-950 text-blue-300 border border-blue-800"
+                                        : msg.senderRole === "Business"
+                                        ? "bg-purple-950/80 text-purple-300 border border-purple-800/60"
+                                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                                    }`}>
+                                      {isYoouzAdmin ? "Admin" : msg.senderRole}
                                     </span>
                                   )}
                                   <span className="text-[10px] text-zinc-400 font-mono">
                                     {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : msg.timestamp || ""}
                                   </span>
-                                  <button
-                                    onClick={() => handleDeleteMessageFromThread(msg.id || idx)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 rounded transition-opacity cursor-pointer"
-                                    title="Delete this message"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
 
-                                <div
-                                  className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-sm ${
-                                    isYoouzAdmin
-                                      ? "bg-blue-600 text-white rounded-tr-none"
-                                      : "bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-tl-none"
-                                  }`}
-                                >
-                                  {msg.text || "(Media Attachment)"}
-
-                                  {msg.videoThumbnail && (
-                                    <div className="mt-2.5 rounded-xl overflow-hidden border border-zinc-800/80 max-w-xs relative group/vid">
-                                      <img src={msg.videoThumbnail} alt="Attached video" className="w-full h-32 object-cover" />
-                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                        <div className="w-9 h-9 rounded-full bg-white/90 text-zinc-900 flex items-center justify-center shadow-lg">
-                                          <Play className="w-4 h-4 ml-0.5 fill-current" />
-                                        </div>
-                                      </div>
-                                      {msg.placeName && (
-                                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/90 to-transparent text-[11px] font-bold text-white truncate">
-                                          📍 {msg.placeName}
-                                        </div>
-                                      )}
+                                  {!isEditingThis && (
+                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                                      <button
+                                        onClick={() => {
+                                          setEditingMessageId(msgId);
+                                          setEditingMessageText(msg.text || "");
+                                        }}
+                                        className="p-1 text-zinc-400 hover:text-blue-400 rounded cursor-pointer"
+                                        title="Edit message text"
+                                      >
+                                        <Edit3 className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteMessageFromThread(msgId)}
+                                        className="p-1 text-zinc-400 hover:text-red-400 rounded cursor-pointer"
+                                        title="Delete this message"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
                                     </div>
                                   )}
                                 </div>
+
+                                {isEditingThis ? (
+                                  <div className="p-3 bg-zinc-950 border border-blue-500/50 rounded-2xl space-y-2">
+                                    <textarea
+                                      value={editingMessageText}
+                                      onChange={(e) => setEditingMessageText(e.target.value)}
+                                      rows={2}
+                                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                                    />
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => setEditingMessageId(null)}
+                                        className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 hover:text-white rounded-lg bg-zinc-850 cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() => handleEditMessageInThread(msgId)}
+                                        className="px-3 py-1 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg cursor-pointer flex items-center gap-1 shadow-sm"
+                                      >
+                                        <Check className="w-3 h-3" />
+                                        Save
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div
+                                    className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-sm ${
+                                      isYoouzAdmin
+                                        ? "bg-blue-600 text-white rounded-tr-none"
+                                        : "bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-tl-none"
+                                    }`}
+                                  >
+                                    {msg.text || "(Media Attachment)"}
+
+                                    {msg.editedByAdminAt && (
+                                      <span className="block mt-1 text-[10px] text-zinc-400 italic">
+                                        (Edited by Admin)
+                                      </span>
+                                    )}
+
+                                    {msg.videoThumbnail && (
+                                      <div className="mt-2.5 rounded-xl overflow-hidden border border-zinc-800/80 max-w-xs relative group/vid">
+                                        <img src={msg.videoThumbnail} alt="Attached video" className="w-full h-32 object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                          <div className="w-9 h-9 rounded-full bg-white/90 text-zinc-900 flex items-center justify-center shadow-lg">
+                                            <Play className="w-4 h-4 ml-0.5 fill-current" />
+                                          </div>
+                                        </div>
+                                        {msg.placeName && (
+                                          <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/90 to-transparent text-[11px] font-bold text-white truncate">
+                                            📍 {msg.placeName}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
 
                               {isYoouzAdmin && (
