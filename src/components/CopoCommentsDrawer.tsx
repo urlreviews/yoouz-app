@@ -689,6 +689,15 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
+      style={
+        keyboardHeight > 0 && typeof window !== "undefined" && window.visualViewport
+          ? {
+              top: `${window.visualViewport.offsetTop}px`,
+              height: `${window.visualViewport.height}px`,
+              bottom: "auto"
+            }
+          : undefined
+      }
       className="fixed inset-0 z-50 flex items-end md:items-stretch justify-center md:justify-end bg-black/40 md:bg-transparent pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default overscroll-contain overflow-hidden animate-in fade-in duration-200"
     >
       <div
@@ -697,10 +706,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        style={{
-          ...(dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
-          ...(keyboardHeight > 0 && typeof window !== "undefined" && window.visualViewport ? { height: `${window.visualViewport.height}px`, maxHeight: `${window.visualViewport.height}px` } : {})
-        }}
+        style={dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
         className={`w-full md:w-[440px] ${
           keyboardHeight > 0 ? "h-full max-h-full" : (sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]")
         } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-150 ease-out cursor-default overscroll-contain overflow-hidden relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
@@ -1188,7 +1194,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         </div>
 
         {/* Input & Action Bar Footer */}
-        <div className="border-t border-zinc-800 bg-zinc-950 md:bg-zinc-900 p-3.5 space-y-2.5 shrink-0 shadow-lg" style={{ paddingBottom: 'calc(0.875rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="border-t border-zinc-800 bg-zinc-950 md:bg-zinc-900 p-3.5 space-y-2.5 shrink-0 shadow-lg" style={{ paddingBottom: keyboardHeight > 0 ? '0.75rem' : 'calc(0.875rem + env(safe-area-inset-bottom, 0px))' }}>
           {!currentUser ? (
             <div
               onClick={() => onRequireAuth?.()}
