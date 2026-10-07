@@ -7818,6 +7818,16 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
   }
 
+  // Calculate claimed places & business claims count accurately
+  let claimedPlacesCount = 0;
+  try {
+    const placesItems = await getNoSqlCollectionItems('places');
+    claimedPlacesCount = placesItems.filter((p: any) => Boolean(p && (p.isClaimed || p.claimedByEmail || p.claimed || p.ownerId))).length;
+  } catch (e) {}
+
+  const totalBusinessClaims = Math.max(counts.businessClaims || 0, claimedPlacesCount);
+  counts.businessClaims = totalBusinessClaims;
+
   // Calculate interaction sums
   let totalLikesSum = counts.likes || 0;
   let totalSharesSum = counts.shares || 0;

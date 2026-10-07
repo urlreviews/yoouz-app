@@ -38,6 +38,7 @@ import {
   LayoutGrid,
   List,
   Pin,
+  Code,
   FileText,
   BadgeCheck,
   UserCheck,
@@ -249,6 +250,50 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [isPingingEdge, setIsPingingEdge] = useState(false);
   const [pingEdgeResult, setPingEdgeResult] = useState<{ latencyMs: number; timestamp: string } | null>(null);
   const [inspectTableModal, setInspectTableModal] = useState<string | null>(null);
+  const [tableDataItems, setTableDataItems] = useState<any[]>([]);
+  const [isLoadingTableData, setIsLoadingTableData] = useState(false);
+  const [tableDataQuery, setTableDataQuery] = useState("");
+  const [selectedItemJsonModal, setSelectedItemJsonModal] = useState<any | null>(null);
+
+  const fetchTableData = async (tableName: string) => {
+    setIsLoadingTableData(true);
+    try {
+      let endpoint = `/api/nosql/${tableName}?_t=${Date.now()}`;
+      if (tableName === "notifications") {
+        endpoint = `/api/admin/notifications?_t=${Date.now()}`;
+      } else if (tableName === "chats") {
+        endpoint = `/api/admin/chats?_t=${Date.now()}`;
+      }
+      const res = await fetch(endpoint, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTableDataItems(data);
+        } else if (data && Array.isArray(data.items)) {
+          setTableDataItems(data.items);
+        } else if (data && Array.isArray(data.notifications)) {
+          setTableDataItems(data.notifications);
+        } else if (data && Array.isArray(data.chats)) {
+          setTableDataItems(data.chats);
+        } else {
+          setTableDataItems([]);
+        }
+      } else {
+        setTableDataItems([]);
+      }
+    } catch (e) {
+      setTableDataItems([]);
+    } finally {
+      setIsLoadingTableData(false);
+    }
+  };
+
+  useEffect(() => {
+    if (inspectTableModal) {
+      setTableDataQuery("");
+      fetchTableData(inspectTableModal);
+    }
+  }, [inspectTableModal]);
 
   // Admin Direct Messages & Chats State
   const [adminChats, setAdminChats] = useState<any[]>([]);
@@ -6592,54 +6637,265 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* MODAL: Inspect Table Details */}
+              {/* MODAL: Full Database Table Data Inspector & Explorer */}
               {inspectTableModal && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-4 shadow-2xl">
-                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <Database className="w-5 h-5 text-emerald-400" />
-                        <h3 className="text-base font-bold text-white font-mono">Table: {inspectTableModal}</h3>
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+                  <div className="bg-zinc-900 rounded-3xl p-5 sm:p-6 max-w-4xl w-full max-h-[90vh] flex flex-col border border-zinc-800 shadow-2xl space-y-4">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800 shrink-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                          {inspectTableModal === "videoReviews" ? "🎥" :
+                           inspectTableModal === "places" ? "📍" :
+                           inspectTableModal === "users" ? "👤" :
+                           inspectTableModal === "comments" ? "💬" :
+                           inspectTableModal === "likes" ? "❤️" :
+                           inspectTableModal === "shares" ? "↗️" :
+                           inspectTableModal === "bookmarks" ? "🔖" :
+                           inspectTableModal === "chats" ? "✉️" :
+                           inspectTableModal === "notifications" ? "🔔" :
+                           inspectTableModal === "businessClaims" ? "🏢" : "📊"}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-black text-white font-mono">{inspectTableModal}</h3>
+                            <span className="text-[11px] px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold">
+                              {tableDataItems.length} rows
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-400">Live Bunny.net libSQL database table inspector</p>
+                        </div>
                       </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => fetchTableData(inspectTableModal)}
+                          disabled={isLoadingTableData}
+                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isLoadingTableData ? "animate-spin" : ""}`} />
+                          <span>Sync</span>
+                        </button>
+
+                        {/* Quick Jump to Main Tab if Available */}
+                        {["videoReviews", "videos", "places", "users", "comments", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
+                          <button
+                            onClick={() => {
+                              const targetTab = inspectTableModal === "videoReviews" ? "videos" :
+                                                inspectTableModal === "chats" ? "messages" :
+                                                inspectTableModal === "notifications" ? "broadcast" :
+                                                inspectTableModal === "businessClaims" ? "businesses" : inspectTableModal;
+                              setActiveTab(targetTab as any);
+                              setInspectTableModal(null);
+                            }}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span>Open {inspectTableModal} View →</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setInspectTableModal(null)}
+                          className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-zinc-400 hover:text-white cursor-pointer"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="shrink-0 flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={tableDataQuery}
+                          onChange={(e) => setTableDataQuery(e.target.value)}
+                          placeholder={`Filter ${inspectTableModal} by ID, user, text, email...`}
+                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      {tableDataQuery && (
+                        <button
+                          onClick={() => setTableDataQuery("")}
+                          className="px-2.5 py-2 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Data List Container */}
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[280px]">
+                      {isLoadingTableData ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-zinc-400 space-y-3">
+                          <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+                          <p className="text-xs font-medium">Fetching live rows from Bunny libSQL database...</p>
+                        </div>
+                      ) : (() => {
+                        const filtered = tableDataItems.filter((item) => {
+                          if (!tableDataQuery.trim()) return true;
+                          const q = tableDataQuery.toLowerCase().trim();
+                          const str = JSON.stringify(item).toLowerCase();
+                          return str.includes(q);
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="flex flex-col items-center justify-center py-16 text-zinc-500 space-y-2 bg-zinc-950/60 rounded-2xl border border-zinc-800/80">
+                              <span className="text-3xl">📭</span>
+                              <p className="text-sm font-bold text-zinc-300">
+                                {tableDataQuery ? "No matching records found" : `0 Active Rows in ${inspectTableModal}`}
+                              </p>
+                              <p className="text-xs text-zinc-500 text-center max-w-sm px-4">
+                                {tableDataQuery ? "Try a different search query." : "This table currently has 0 rows in the live database. Any user action will write here dynamically."}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((item, idx) => {
+                          const itemId = String(item.id || item.uid || item._id || item.commentId || item.claimId || `row-${idx}`);
+                          const createdAt = item.createdAt || item.timestamp || item.sentAt || item.claimedAt || item.date;
+
+                          return (
+                            <div
+                              key={itemId + idx}
+                              className="p-3.5 bg-zinc-950 hover:bg-zinc-900/90 rounded-2xl border border-zinc-800/90 space-y-2 transition-all"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-mono px-2 py-0.5 bg-zinc-800 text-emerald-400 rounded-md font-bold">
+                                    #{idx + 1}
+                                  </span>
+                                  <span className="text-xs font-mono font-bold text-white truncate max-w-[200px]">
+                                    {itemId}
+                                  </span>
+                                  {createdAt && (
+                                    <span className="text-[10px] text-zinc-500">
+                                      • {new Date(createdAt).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => setSelectedItemJsonModal({ tableName: inspectTableModal, item })}
+                                    className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-bold rounded-lg cursor-pointer flex items-center gap-1 border border-zinc-700"
+                                  >
+                                    <span>Raw JSON</span>
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (!confirm(`Are you sure you want to delete row ${itemId} from ${inspectTableModal}?`)) return;
+                                      try {
+                                        const res = await fetch(`/api/nosql/${inspectTableModal}/${itemId}`, { method: "DELETE" });
+                                        if (res.ok) {
+                                          showToast(`Deleted row ${itemId}`);
+                                          fetchTableData(inspectTableModal);
+                                          fetchLiveStats();
+                                        } else {
+                                          showToast("Failed to delete row");
+                                        }
+                                      } catch (e) {
+                                        showToast("Error deleting row");
+                                      }
+                                    }}
+                                    className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-lg cursor-pointer transition-colors"
+                                    title="Delete Row"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Summary info based on item fields */}
+                              <div className="text-xs text-zinc-300 space-y-1 pt-1 border-t border-zinc-900">
+                                {item.userName || item.name || item.userEmail || item.email ? (
+                                  <div className="flex items-center gap-2 text-zinc-300">
+                                    <span className="text-zinc-500 font-medium">Author/User:</span>
+                                    <span className="font-bold text-white">{item.userName || item.name || "Anonymous"}</span>
+                                    {(item.userEmail || item.email) && (
+                                      <span className="text-zinc-500 font-mono text-[11px]">({item.userEmail || item.email})</span>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {item.text || item.comment || item.message || item.body || item.title ? (
+                                  <div className="text-zinc-200 bg-zinc-900/80 p-2 rounded-xl border border-zinc-800/50 italic">
+                                    "{item.text || item.comment || item.message || item.body || item.title}"
+                                  </div>
+                                ) : null}
+
+                                {item.videoId || item.placeId || item.businessId ? (
+                                  <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                                    {item.videoId && <span>Target Video: <strong className="text-zinc-200 font-mono">{item.videoId}</strong></span>}
+                                    {item.placeId && <span>Place ID: <strong className="text-zinc-200 font-mono">{item.placeId}</strong></span>}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800 shrink-0 text-xs">
+                      <span className="text-zinc-500">
+                        Showing {tableDataItems.length} live records in <strong className="text-zinc-300 font-mono">{inspectTableModal}</strong>
+                      </span>
                       <button
                         onClick={() => setInspectTableModal(null)}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl cursor-pointer"
+                      >
+                        Close Inspector
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SUB-MODAL: Raw JSON Viewer */}
+              {selectedItemJsonModal && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col border border-zinc-800 shadow-2xl space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <Code className="w-5 h-5 text-emerald-400" />
+                        <h3 className="text-base font-bold text-white font-mono">
+                          Raw JSON Data: {selectedItemJsonModal.tableName}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setSelectedItemJsonModal(null)}
                         className="p-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer"
                       >
                         <X className="w-5 h-5" />
                       </button>
                     </div>
 
-                    <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 space-y-2 text-xs">
-                      <div className="flex justify-between text-zinc-400">
-                        <span>Database Driver:</span>
-                        <span className="font-mono text-zinc-200 font-bold">libSQL / Bunny Edge</span>
-                      </div>
-                      <div className="flex justify-between text-zinc-400">
-                        <span>Active Rows:</span>
-                        <span className="font-mono text-emerald-400 font-bold">
-                          {inspectTableModal === "videoReviews" ? (liveStats?.totals?.videoReviews ?? metrics.totalVideos) :
-                           inspectTableModal === "places" ? (liveStats?.totals?.places ?? metrics.totalPhysicalPlaces) :
-                           inspectTableModal === "users" ? (liveStats?.totals?.users ?? metrics.totalUsers) :
-                           inspectTableModal === "comments" ? (liveStats?.totals?.comments ?? allComments.length) :
-                           inspectTableModal === "chats" ? (liveStats?.totals?.chats ?? adminChats.length) : "Online"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-zinc-400">
-                        <span>Replication:</span>
-                        <span className="text-zinc-200">Global multi-region edge sync</span>
-                      </div>
-                      <div className="flex justify-between text-zinc-400">
-                        <span>Integrity Check:</span>
-                        <span className="text-emerald-400 font-bold">✓ Passed</span>
-                      </div>
+                    <div className="flex-1 overflow-y-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
+                      <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed select-all">
+                        {JSON.stringify(selectedItemJsonModal.item, null, 2)}
+                      </pre>
                     </div>
 
-                    <div className="flex justify-end pt-2">
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs">
                       <button
-                        onClick={() => setInspectTableModal(null)}
-                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(selectedItemJsonModal.item, null, 2));
+                          showToast("JSON copied to clipboard!");
+                        }}
+                        className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
                       >
-                        Close
+                        <span>Copy JSON</span>
+                      </button>
+                      <button
+                        onClick={() => setSelectedItemJsonModal(null)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer"
+                      >
+                        Done
                       </button>
                     </div>
                   </div>
