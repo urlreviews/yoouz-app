@@ -1189,7 +1189,6 @@ function readReviewsIndex(): any[] {
                   text: "Thanks Ben! Glad you liked the review.",
                   createdAt: "2026-10-05T15:10:00.000Z",
                   createdAtMs: 1791126600000,
-                  replyToId: "comm-101",
                   likesCount: 1,
                   authorName: "Steven Akan",
                   authorHandle: "@stevenakan",

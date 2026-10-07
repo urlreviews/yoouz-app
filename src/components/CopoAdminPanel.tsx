@@ -1462,20 +1462,34 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // All Comments aggregation for Moderation
   const allComments = useMemo(() => {
     const list: { video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string }[] = [];
+    const seenCommentKeys = new Set<string>();
+
     activeVideos.forEach((v) => {
+      if (!v || !v.id) return;
       (v.comments || []).forEach((c) => {
-        list.push({
-          video: v,
-          comment: resolveCommentUserMeta(c)
-        });
+        if (!c || !c.id) return;
+        const key = `${v.id}_${c.id}`;
+        if (!seenCommentKeys.has(key)) {
+          seenCommentKeys.add(key);
+          list.push({
+            video: v,
+            comment: resolveCommentUserMeta(c)
+          });
+        }
+
         if (Array.isArray(c.replies)) {
           c.replies.forEach((r) => {
-            list.push({
-              video: v,
-              comment: resolveCommentUserMeta(r),
-              isReply: true,
-              parentCommentId: c.id
-            });
+            if (!r || !r.id) return;
+            const rKey = `${v.id}_${r.id}`;
+            if (!seenCommentKeys.has(rKey)) {
+              seenCommentKeys.add(rKey);
+              list.push({
+                video: v,
+                comment: resolveCommentUserMeta(r),
+                isReply: true,
+                parentCommentId: c.id
+              });
+            }
           });
         }
       });
@@ -8205,59 +8219,110 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
 
             {/* User Profile Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 shadow-inner">
-              <div className="flex items-center gap-3.5">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border-2 border-amber-400/40 overflow-hidden shrink-0 shadow-lg">
-                  <img
-                    src={getSafeAvatarUrl(
-                      selectedCommentDetailModal.comment.authorAvatar || (selectedCommentDetailModal.comment as any).userAvatar,
-                      selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName,
-                      selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle
-                    )}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = generateGoogleLetterAvatarSvg(
-                        selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User",
-                        128,
-                        selectedCommentDetailModal.comment.authorHandle || selectedCommentDetailModal.comment.authorName
-                      );
-                    }}
-                  />
-                </div>
+            {(() => {
+              const email = (selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail || "").toLowerCase().trim();
+              const handle = (selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle || "").toLowerCase().replace(/^@/, '').trim();
+              const name = (selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "").toLowerCase().trim();
+              
+              const resolvedUser = activeAllUsers.find((u) => {
+                const uEmail = (u.email || "").toLowerCase().trim();
+                const uHandle = (u.handle || "").toLowerCase().replace(/^@/, '').trim();
+                const uName = (u.name || "").toLowerCase().trim();
+                return (email && uEmail === email) || (handle && uHandle === handle) || (name && uName === name);
+              });
 
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-black text-white truncate">
-                      {selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User"}
-                    </h4>
-                    {selectedCommentDetailModal.comment.isOwner && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold">
-                        Business Owner
-                      </span>
-                    )}
-                    {selectedCommentDetailModal.comment.isCreator && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/80 font-bold">
-                        Creator
-                      </span>
-                    )}
+              return (
+                <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4 shadow-inner">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-full bg-zinc-900 border-2 border-amber-400/40 overflow-hidden shrink-0 shadow-lg">
+                      <img
+                        src={getSafeAvatarUrl(
+                          selectedCommentDetailModal.comment.authorAvatar || (selectedCommentDetailModal.comment as any).userAvatar,
+                          selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName,
+                          selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle
+                        )}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.src = generateGoogleLetterAvatarSvg(
+                            selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User",
+                            128,
+                            selectedCommentDetailModal.comment.authorHandle || selectedCommentDetailModal.comment.authorName
+                          );
+                        }}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base font-black text-white truncate">
+                          {selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User"}
+                        </h4>
+                        {selectedCommentDetailModal.comment.isOwner && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold">
+                            Business Owner
+                          </span>
+                        )}
+                        {selectedCommentDetailModal.comment.isCreator && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/80 font-bold">
+                            Creator
+                          </span>
+                        )}
+                      </div>
+
+                      {(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle) && (
+                        <p className="text-xs text-amber-400 font-mono font-semibold">
+                          @{String(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle).replace(/^@/, '')}
+                        </p>
+                      )}
+
+                      {(selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail) && (
+                        <p className="text-xs text-zinc-400 font-mono truncate">
+                          {selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle) && (
-                    <p className="text-xs text-amber-400 font-mono font-semibold">
-                      @{String(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle).replace(/^@/, '')}
-                    </p>
-                  )}
-
-                  {(selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail) && (
-                    <p className="text-xs text-zinc-400 font-mono">
-                      {selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail}
-                    </p>
-                  )}
+                  {/* High-Fidelity Profile Details Grid */}
+                  <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-zinc-400">
+                    <div>
+                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Account Role</span>
+                      <span className="text-white font-bold">{resolvedUser?.role || (selectedCommentDetailModal.comment.isOwner ? "Business" : selectedCommentDetailModal.comment.isCreator ? "Creator" : "Standard User")}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Location</span>
+                      <span className="text-white font-bold">{resolvedUser?.location || resolvedUser?.city || "Online"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Video Reviews</span>
+                      <span className="text-white font-bold font-mono">{resolvedUser?.videoReviewCount || 0} reviews</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Social Engagement</span>
+                      <span className="text-white font-bold font-mono">
+                        {resolvedUser?.followersCount || 0} followers · {resolvedUser?.followingCount || 0} following
+                      </span>
+                    </div>
+                    {resolvedUser?.memberSince && (
+                      <div className="col-span-2">
+                        <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Member Since</span>
+                        <span className="text-white font-bold">{resolvedUser.memberSince}</span>
+                      </div>
+                    )}
+                    {resolvedUser?.bio && (
+                      <div className="col-span-2 pt-1">
+                        <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">About Author</span>
+                        <p className="text-zinc-300 font-medium italic mt-0.5 leading-relaxed bg-zinc-900/30 p-2 rounded-lg border border-zinc-900/50">
+                          "{resolvedUser.bio}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Comment Content Bubble */}
             <div className="space-y-1.5">
