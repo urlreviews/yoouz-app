@@ -1059,8 +1059,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   useEffect(() => {
     if (isAuthenticated) {
       fetchLiveStats();
+      const interval = setInterval(() => {
+        fetchLiveStats();
+      }, 15000);
+      return () => clearInterval(interval);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeTab]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
