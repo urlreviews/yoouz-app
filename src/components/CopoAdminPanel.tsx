@@ -1059,8 +1059,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   useEffect(() => {
     if (isAuthenticated) {
       fetchLiveStats();
-      const interval = setInterval(fetchLiveStats, 8000);
-      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
@@ -2330,7 +2328,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
             title="Click to refresh live stats directly from BunnyDB & CDN Storage"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
             <span className="hidden xl:inline text-zinc-400">Edge:</span>
             <span className="text-emerald-400 font-mono font-bold">
               {liveStats ? `${liveStats.latencyMs}ms` : "Live"}
@@ -2581,25 +2579,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <Plus className="w-5 h-5 stroke-[2.5]" />
               <span>New Business</span>
             </button>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setActiveTab("broadcast")}
-                className="py-2.5 px-3 bg-zinc-900 hover:bg-zinc-850 text-white text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1.5 border border-zinc-800 hover:border-zinc-700 cursor-pointer"
-                title="Compose Broadcast Notification"
-              >
-                <Bell className="w-3.5 h-3.5 text-amber-400" />
-                <span>Broadcast</span>
-              </button>
-              <button
-                onClick={fetchLiveStats}
-                disabled={isLoadingLiveStats}
-                className="py-2.5 px-3 bg-zinc-900 hover:bg-zinc-850 disabled:opacity-50 text-white text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1.5 border border-zinc-800 hover:border-zinc-700 cursor-pointer"
-                title="Sync Database & CDN"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isLoadingLiveStats ? "animate-spin" : ""}`} />
-                <span>Sync DB</span>
-              </button>
-            </div>
           </div>
         </aside>
 
@@ -2675,7 +2654,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: SYSTEM HEALTH & BUG MONITOR */}
           {activeTab === "health" && (
-            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-8">
               {/* Header Title */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -2686,7 +2665,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                     }`}>
-                      <span className={`w-2 h-2 rounded-full ${healthData?.overallStatus === 'healthy' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400 animate-ping'}`} />
+                      <span className={`w-2 h-2 rounded-full ${healthData?.overallStatus === 'healthy' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
                       {healthData?.overallStatus === 'healthy' ? 'ALL SYSTEMS GREEN 🟢' : 'ATTENTION REQUIRED 🔴'}
                     </span>
                   </div>
@@ -3170,14 +3149,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 1: OVERVIEW & KPIS */}
           {activeTab === "overview" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Header Title & Quick Action Bar */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-zinc-900/80 p-5 rounded-3xl border border-zinc-800 shadow-xl backdrop-blur-md">
                 <div>
                   <div className="flex items-center gap-3">
                     <h2 className="text-2xl font-black text-white tracking-tight">Platform Command Center</h2>
                     <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-mono">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                       BunnyDB {liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "12ms"}
                     </span>
                   </div>
@@ -3373,54 +3352,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-fuchsia-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
                     <span>Comments & Likes</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bunny.net Real-Time Edge Cloud Strip */}
-              <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">
-                    🐰
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-white">BunnyDB & CDN Storage Authoritative Counters</span>
-                    <span className="text-[11px] text-zinc-400 block">Edge tables verified across all storage zones</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 shrink-0">
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Videos</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.videoReviews ?? metrics.totalVideos}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Claims</span>
-                    <span className="text-xs font-black text-white font-mono">{metrics.totalBusinesses}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Places</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.places ?? metrics.totalPhysicalPlaces}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Users</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.users ?? uniqueUsers.length}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Comments</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.comments ?? allComments.length}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Likes</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.likes ?? metrics.totalLikes}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">Shares</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.shares ?? metrics.totalShares}</span>
-                  </div>
-                  <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
-                    <span className="text-[10px] text-zinc-400 block">CDN CDN</span>
-                    <span className="text-xs font-black text-emerald-400 font-mono">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
                   </div>
                 </div>
               </div>
@@ -3652,7 +3583,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 2: VIDEOS MANAGEMENT */}
           {activeTab === "videos" && (
-            <div className="max-w-7xl mx-auto space-y-5 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-5">
               {/* Action Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/90 backdrop-blur-md p-4 rounded-2xl border border-zinc-800 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -4037,7 +3968,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: REGISTERED & CLAIMED BUSINESSES */}
           {activeTab === "businesses" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Action Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
@@ -4343,7 +4274,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: PLACES & VENUES DIRECTORY */}
           {activeTab === "places" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Action Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
@@ -4634,7 +4565,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: CREATORS & REVIEWERS */}
           {activeTab === "creators" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -4794,7 +4725,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: USERS & COMMUNITY MEMBERS */}
           {activeTab === "users" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -4945,7 +4876,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 5: COMMENTS & MODERATION */}
           {activeTab === "comments" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Header & KPI Summary Ribbon */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3.5">
@@ -5421,7 +5352,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: DIRECT MESSAGES & MODERATION */}
           {activeTab === "messages" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
                 <div>
@@ -6092,7 +6023,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 6: BROADCAST ALERTS */}
           {activeTab === "broadcast" && (
-            <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-6xl mx-auto space-y-6">
               {/* Executive Header & KPI Ribbon */}
               <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-md">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -6111,7 +6042,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                       Push Dispatcher Active
                     </span>
                   </div>
@@ -6121,17 +6052,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Total Platform Reach</span>
-                    <span className="font-mono text-lg font-bold text-white">{uniqueUsers.length} users</span>
+                    <span className="font-mono text-lg font-bold text-white">{uniqueUsers.length} {uniqueUsers.length === 1 ? 'user' : 'users'}</span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5">All registered accounts</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Verified Creators</span>
-                    <span className="font-mono text-lg font-bold text-amber-400">{metrics.totalCreators} reviewers</span>
+                    <span className="font-mono text-lg font-bold text-amber-400">{metrics.totalCreators} {metrics.totalCreators === 1 ? 'reviewer' : 'reviewers'}</span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5">Active video publishers</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Business Accounts</span>
-                    <span className="font-mono text-lg font-bold text-blue-400">{metrics.totalBusinesses} places</span>
+                    <span className="font-mono text-lg font-bold text-blue-400">{metrics.totalBusinesses} {metrics.totalBusinesses === 1 ? 'business' : 'businesses'}</span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5">Claimed & registered</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
@@ -6229,9 +6160,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </label>
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { id: "all", label: "👥 All Users", desc: `${uniqueUsers.length} accounts` },
-                          { id: "creators", label: "👑 Creators", desc: `${metrics.totalCreators} reviewers` },
-                          { id: "businesses", label: "🏢 Businesses", desc: `${metrics.totalBusinesses} places` }
+                          { id: "all", label: "👥 All Users", desc: `${uniqueUsers.length} ${uniqueUsers.length === 1 ? 'account' : 'accounts'}` },
+                          { id: "creators", label: "👑 Creators", desc: `${metrics.totalCreators} ${metrics.totalCreators === 1 ? 'reviewer' : 'reviewers'}` },
+                          { id: "businesses", label: "🏢 Businesses", desc: `${metrics.totalBusinesses} ${metrics.totalBusinesses === 1 ? 'business' : 'businesses'}` }
                         ].map((aud) => (
                           <button
                             key={aud.id}
@@ -6498,7 +6429,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 7: DATABASE & CLOUD SUITE */}
           {activeTab === "database" && (
-            <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-5xl mx-auto space-y-6">
               {/* Connectivity & Edge Cluster Ribbon */}
               <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-md">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -6535,41 +6466,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </button>
 
                     <span className="text-xs font-mono bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 text-emerald-400 font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                       {liveStats ? `CONNECTED (${liveStats.latencyMs}ms)` : pingEdgeResult ? `CONNECTED (${pingEdgeResult.latencyMs}ms)` : "CONNECTED"}
                     </span>
-                  </div>
-                </div>
-
-                {/* Primary DB Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs pt-1">
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Live Videos in DB</span>
-                    <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos} rows
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: videoReviews</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Live Places in DB</span>
-                    <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.places ?? metrics.totalPhysicalPlaces} rows
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: places</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Registered Users</span>
-                    <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.users ?? metrics.totalUsers} rows
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: users</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">CDN Video Storage</span>
-                    <span className="font-mono text-lg font-bold text-emerald-400">
-                      {liveStats?.storage?.filesCount ?? 0} files ({liveStats?.storage?.formattedSize || "0.00 MB"})
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">path: rev1/videos/</span>
                   </div>
                 </div>
               </div>
@@ -6780,7 +6679,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: SEARCH INTELLIGENCE & SCRAPER MONITORING */}
           {activeTab === "search" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in">
+            <div className="max-w-7xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
