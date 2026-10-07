@@ -43,10 +43,15 @@ jobs:
         run: |
           # Sanitize repo name to strictly lowercase for Docker / GHCR compliance
           IMAGE_NAME="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
-          echo "🔨 Building Docker image: $IMAGE_NAME:latest..."
-          docker build -t "$IMAGE_NAME:latest" .
-          echo "🚀 Pushing image to GHCR..."
-          docker push "$IMAGE_NAME:latest"
+          echo "🔨 Building and pushing Docker image: $IMAGE_NAME:latest..."
+          
+          # Enable BuildKit to push layers atomically and disable provenance attestations to prevent GHCR 'unknown blob' error
+          export DOCKER_BUILDKIT=1
+          docker buildx build \
+            --provenance=false \
+            --push \
+            -t "$IMAGE_NAME:latest" \
+            .
 
       - name: Trigger Bunny Magic Containers Auto-Deploy (API / Webhook)
         env:
