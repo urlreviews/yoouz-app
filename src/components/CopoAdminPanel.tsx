@@ -974,6 +974,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmPurgeAllComments, setConfirmPurgeAllComments] = useState(false);
   const [editCommentModal, setEditCommentModal] = useState<{ video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string } | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [selectedCommentDetailModal, setSelectedCommentDetailModal] = useState<{ comment: ReviewComment; video?: VideoReview; isReply?: boolean; parentCommentId?: string } | null>(null);
 
   // Business Tab Specific State
   const [selectedBusinessIds, setSelectedBusinessIds] = useState<string[]>([]);
@@ -5294,7 +5295,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         />
 
                         {/* Author Avatar */}
-                        <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 ring-2 ring-zinc-800/80">
+                        <div
+                          onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
+                          className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 ring-2 ring-zinc-800/80 cursor-pointer hover:scale-105 transition-all"
+                          title="Click to view Author Details & Comment"
+                        >
                           <img
                             src={getSafeAvatarUrl(
                               item.comment.authorAvatar,
@@ -5319,7 +5324,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           {/* Top row: Author, badge, timestamp, parent venue info */}
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-bold text-white text-sm hover:underline cursor-pointer">
+                              <span
+                                onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
+                                className="font-bold text-white text-sm hover:underline cursor-pointer hover:text-amber-400 transition-colors"
+                                title="Click to view Author Details & Comment"
+                              >
                                 {item.comment.authorName}
                               </span>
                               {item.comment.authorHandle && (
@@ -6988,8 +6997,75 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               </div>
 
                               {/* Summary info based on item fields */}
-                              <div className="text-xs text-zinc-300 space-y-1 pt-1 border-t border-zinc-900">
-                                {item.userName || item.name || item.userEmail || item.email ? (
+                              <div className="text-xs text-zinc-300 space-y-2 pt-2 border-t border-zinc-900">
+                                {inspectTableModal === "comments" || item.userName || item.authorName ? (
+                                  <div
+                                    onClick={() => {
+                                      const matchedVid = activeVideos.find((v) => v.id === item.videoId);
+                                      setSelectedCommentDetailModal({
+                                        comment: {
+                                          id: item.id || item.commentId || "comm",
+                                          videoId: item.videoId || "",
+                                          text: item.text || item.comment || "",
+                                          authorName: item.userName || item.authorName || item.name || "User",
+                                          authorHandle: item.userHandle || item.authorHandle || "@user",
+                                          authorAvatar: item.userAvatar || item.authorAvatar || "",
+                                          authorEmail: item.userEmail || item.authorEmail || item.email,
+                                          createdAt: item.createdAt || new Date().toISOString(),
+                                          likesCount: item.likesCount || 0
+                                        },
+                                        video: matchedVid
+                                      });
+                                    }}
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-800/80 transition-all group"
+                                    title="Click to view full Author & Comment modal"
+                                  >
+                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-zinc-800 group-hover:ring-amber-400 transition-all">
+                                      <img
+                                        src={getSafeAvatarUrl(
+                                          item.userAvatar || item.authorAvatar,
+                                          item.userName || item.authorName || item.name,
+                                          item.userHandle || item.authorHandle
+                                        )}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = generateGoogleLetterAvatarSvg(
+                                            item.userName || item.authorName || item.name || "User",
+                                            128,
+                                            item.userHandle || item.userName
+                                          );
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-white text-xs group-hover:text-amber-400 transition-colors truncate">
+                                          {item.userName || item.authorName || item.name || "User"}
+                                        </span>
+                                        {(item.userHandle || item.authorHandle) && (
+                                          <span className="text-[11px] text-zinc-400 font-mono">
+                                            @{String(item.userHandle || item.authorHandle).replace(/^@/, '')}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {(item.userEmail || item.authorEmail || item.email) && (
+                                        <p className="text-[10px] text-zinc-500 font-mono truncate">
+                                          {item.userEmail || item.authorEmail || item.email}
+                                        </p>
+                                      )}
+                                      {(item.text || item.comment || item.message || item.body || item.title) && (
+                                        <p className="text-xs text-zinc-200 line-clamp-2 pt-0.5 font-medium italic">
+                                          "{item.text || item.comment || item.message || item.body || item.title}"
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold shrink-0 group-hover:bg-amber-400 group-hover:text-zinc-950 transition-all">
+                                      Inspect →
+                                    </span>
+                                  </div>
+                                ) : item.userName || item.name || item.userEmail || item.email ? (
                                   <div className="flex items-center gap-2 text-zinc-300">
                                     <span className="text-zinc-500 font-medium">Author/User:</span>
                                     <span className="font-bold text-white">{item.userName || item.name || "Anonymous"}</span>
@@ -6999,7 +7075,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   </div>
                                 ) : null}
 
-                                {item.text || item.comment || item.message || item.body || item.title ? (
+                                {inspectTableModal !== "comments" && !item.userName && !item.authorName && (item.text || item.comment || item.message || item.body || item.title) ? (
                                   <div className="text-zinc-200 bg-zinc-900/80 p-2 rounded-xl border border-zinc-800/50 italic">
                                     "{item.text || item.comment || item.message || item.body || item.title}"
                                   </div>
@@ -8102,6 +8178,136 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   Save Changes
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* COMMENT & USER PROFILE DETAIL MODAL */}
+      {/* ========================================================================= */}
+      {selectedCommentDetailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                  💬
+                </div>
+                <h3 className="text-lg font-black text-white">Comment Author Profile</h3>
+              </div>
+              <button
+                onClick={() => setSelectedCommentDetailModal(null)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 shadow-inner">
+              <div className="flex items-center gap-3.5">
+                <div className="w-14 h-14 rounded-full bg-zinc-900 border-2 border-amber-400/40 overflow-hidden shrink-0 shadow-lg">
+                  <img
+                    src={getSafeAvatarUrl(
+                      selectedCommentDetailModal.comment.authorAvatar || (selectedCommentDetailModal.comment as any).userAvatar,
+                      selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName,
+                      selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle
+                    )}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = generateGoogleLetterAvatarSvg(
+                        selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User",
+                        128,
+                        selectedCommentDetailModal.comment.authorHandle || selectedCommentDetailModal.comment.authorName
+                      );
+                    }}
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-base font-black text-white truncate">
+                      {selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User"}
+                    </h4>
+                    {selectedCommentDetailModal.comment.isOwner && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold">
+                        Business Owner
+                      </span>
+                    )}
+                    {selectedCommentDetailModal.comment.isCreator && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/80 font-bold">
+                        Creator
+                      </span>
+                    )}
+                  </div>
+
+                  {(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle) && (
+                    <p className="text-xs text-amber-400 font-mono font-semibold">
+                      @{String(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle).replace(/^@/, '')}
+                    </p>
+                  )}
+
+                  {(selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail) && (
+                    <p className="text-xs text-zinc-400 font-mono">
+                      {selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Comment Content Bubble */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Comment Text</label>
+              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800/90 text-white text-sm leading-relaxed whitespace-pre-wrap break-words">
+                "{selectedCommentDetailModal.comment.text}"
+              </div>
+            </div>
+
+            {/* Target Video & Metadata */}
+            <div className="p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+              {selectedCommentDetailModal.video && (
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-zinc-400" />
+                  <span className="text-zinc-300 font-semibold">{selectedCommentDetailModal.video.placeName || "Review Video"}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 text-zinc-500 font-mono ml-auto">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{new Date(selectedCommentDetailModal.comment.createdAt || Date.now()).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Action Footer */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  const targetVid = selectedCommentDetailModal.video || activeVideos.find(v => v.id === selectedCommentDetailModal.comment.videoId) || activeVideos[0];
+                  const item = {
+                    video: targetVid,
+                    comment: selectedCommentDetailModal.comment,
+                    isReply: selectedCommentDetailModal.isReply,
+                    parentCommentId: selectedCommentDetailModal.parentCommentId
+                  };
+                  setSelectedCommentDetailModal(null);
+                  if (targetVid) {
+                    setEditCommentModal(item as any);
+                    setEditCommentText(selectedCommentDetailModal.comment.text || "");
+                  }
+                }}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Edit className="w-3.5 h-3.5" /> Edit Text
+              </button>
+              <button
+                onClick={() => setSelectedCommentDetailModal(null)}
+                className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-xl text-xs cursor-pointer shadow-lg transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
