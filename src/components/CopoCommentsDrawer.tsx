@@ -427,14 +427,22 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     const list = [...combinedComments];
     if (sortBy === "top") {
       return list.sort((a, b) => {
-        // Pinned creator comments first, then by likes
+        // Pinned creator comments first, then by likes, then by newest
         if (a.isCreator && !b.isCreator) return -1;
         if (!a.isCreator && b.isCreator) return 1;
-        return (b.likesCount || 0) - (a.likesCount || 0);
+        if ((b.likesCount || 0) !== (a.likesCount || 0)) {
+          return (b.likesCount || 0) - (a.likesCount || 0);
+        }
+        return (b.createdAtMs || 0) - (a.createdAtMs || 0);
       });
     } else {
-      // Newest first
-      return list;
+      // Newest first (highest createdAtMs / newest at the top)
+      return list.sort((a, b) => {
+        const timeA = a.createdAtMs || 0;
+        const timeB = b.createdAtMs || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return String(b.id || "").localeCompare(String(a.id || ""));
+      });
     }
   }, [combinedComments, sortBy]);
 
@@ -644,7 +652,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       onWheel={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:justify-end bg-black/25 md:bg-black/60 pointer-events-auto cursor-pointer overscroll-contain animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end md:items-stretch justify-center md:justify-end bg-black/25 md:bg-transparent pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default overscroll-contain animate-in fade-in duration-200"
     >
       <div
         id="copo-comments-panel"
@@ -653,9 +661,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`w-full md:w-[460px] ${
+        className={`w-full md:w-[440px] ${
           sheetHeight === "expanded" ? "h-[88dvh]" : "h-[65dvh]"
-        } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative`}
+        } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
       >
         {/* Mobile Pull Handle Indicator */}
         <div 

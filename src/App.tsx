@@ -6960,6 +6960,7 @@ export function App() {
         {/* If in Feed View (Home) or Place / Creator drawer views: Display center video player */}
         {(isPlaceView || isCreatorView || activeSection === "home") && (
             <CopoVideoPlayer
+              commentsOpen={Boolean(activeCommentVideo)}
               isPaused={Boolean(
                 isCreateModalOpen || 
                 isAuthModalOpen || 
