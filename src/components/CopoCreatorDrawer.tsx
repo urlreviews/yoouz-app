@@ -1295,21 +1295,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     </span>
                   </div>
                 </div>
-
-                <div className="pt-2 flex items-center gap-2 text-zinc-300">
-                  <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
-                    {isVerifiedReviewer ? (
-                      <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                    ) : (
-                      <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                    )}
-                  </div>
-                  <span className="text-xs font-bold text-zinc-300">
-                    {isVerifiedReviewer
-                      ? t("profile.verifiedTopContributor", "Yoouz Verified Top Contributor")
-                      : t("profile.communityMemberStatus", "Yoouz Community Member")}
-                  </span>
-                </div>
               </div>
 
               {/* Video Reviews Preview Section */}

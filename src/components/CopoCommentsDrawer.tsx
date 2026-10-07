@@ -1265,6 +1265,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     type="text"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
+                    onFocus={() => setSheetHeight("expanded")}
                     maxLength={300}
                     placeholder={
                       replyingTo

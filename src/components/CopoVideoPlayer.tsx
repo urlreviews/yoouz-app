@@ -396,7 +396,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
 
     const activeVideo = currentCard.video;
-    const nextCard = displayItems[activeCardIndex + 1] || (videos.length > 1 ? displayItems[0] : null);
+    const nextCard = displayItems[activeCardIndex + 1] || (shouldLoop && videos.length > 1 ? displayItems[0] : null);
     const nextVideo = nextCard?.video || null;
     const prevCard = activeCardIndex > 0 ? displayItems[activeCardIndex - 1] : null;
     const prevVideo = prevCard?.video || null;
@@ -1689,7 +1689,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       <div className="flex-1">
                         <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating & Review")}</div>
                         <div className="text-xs text-zinc-200 font-normal">
-                          {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★) {t("video.placeRating", "& place rating")}
+                          {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★)
                         </div>
                       </div>
                     </button>
@@ -1764,7 +1764,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
                       <MapPin className="w-4 h-4 text-zinc-200" />
-                      <span>{t("video.viewBusinessInfo", "View Business Info & All Reviews")}</span>
+                      <span>{t("video.viewBusinessInfo", "View Business Info")}</span>
                     </button>
 
                     <div className="my-2 border-t border-zinc-800" />
