@@ -223,7 +223,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       if (window.visualViewport) {
         const offset = window.innerHeight - window.visualViewport.height;
         setKeyboardHeight(offset > 50 ? offset : 0);
-        // Keep window locked to top
         window.scrollTo(0, 0);
       }
     };
@@ -238,6 +237,21 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       }
     };
   }, []);
+
+  // Firmly lock scroll to y = 0 while the virtual keyboard is open on mobile to prevent Safari jumps
+  useEffect(() => {
+    if (typeof window === "undefined" || keyboardHeight === 0) return;
+    const forceLockScroll = () => {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener("scroll", forceLockScroll, { passive: true });
+    window.scrollTo(0, 0);
+    return () => {
+      window.removeEventListener("scroll", forceLockScroll);
+    };
+  }, [keyboardHeight]);
 
   const [remoteComments, setRemoteComments] = useState<ReviewComment[]>([]);
   const [hasRemoteFetched, setHasRemoteFetched] = useState(false);
