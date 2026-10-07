@@ -134,7 +134,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "messages" | "broadcast" | "database" | "search";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "messages" | "broadcast" | "database" | "search";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -312,6 +312,74 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingMessageText, setEditingMessageText] = useState("");
 
+  // Admin Likes & Reactions Audit Feed State
+  const [adminLikes, setAdminLikes] = useState<any[]>([]);
+  const [isLoadingLikes, setIsLoadingLikes] = useState(false);
+  const [likesSearchQuery, setLikesSearchQuery] = useState("");
+  const [likesSort, setLikesSort] = useState<"newest" | "oldest">("newest");
+  const [previewLikeVideoModal, setPreviewLikeVideoModal] = useState<any | null>(null);
+  const [selectedLikeDetailModal, setSelectedLikeDetailModal] = useState<any | null>(null);
+  const [confirmDeleteLikeId, setConfirmDeleteLikeId] = useState<string | null>(null);
+  const [confirmPurgeAllLikes, setConfirmPurgeAllLikes] = useState(false);
+  const [isDeletingLikeId, setIsDeletingLikeId] = useState<string | null>(null);
+
+  const fetchAdminLikes = useCallback(async () => {
+    setIsLoadingLikes(true);
+    try {
+      const res = await fetch(`/api/admin/likes?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminLikes(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch admin likes:", e);
+    } finally {
+      setIsLoadingLikes(false);
+    }
+  }, []);
+
+  const handleDeleteLike = async (likeId: string) => {
+    setIsDeletingLikeId(likeId);
+    try {
+      const res = await fetch(`/api/admin/likes/${likeId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Like removed successfully");
+        setAdminLikes((prev) => prev.filter((l) => l.id !== likeId));
+        setConfirmDeleteLikeId(null);
+        if (selectedLikeDetailModal?.id === likeId) {
+          setSelectedLikeDetailModal(null);
+        }
+        if (typeof fetchLiveStats === "function") {
+          fetchLiveStats();
+        }
+      } else {
+        showToast("Failed to delete like");
+      }
+    } catch (e) {
+      showToast("Error deleting like");
+    } finally {
+      setIsDeletingLikeId(null);
+    }
+  };
+
+  const handlePurgeAllLikes = async () => {
+    try {
+      const res = await fetch("/api/admin/likes/purge-all", { method: "POST" });
+      if (res.ok) {
+        showToast("All likes purged successfully");
+        setAdminLikes([]);
+        setConfirmPurgeAllLikes(false);
+        if (typeof fetchLiveStats === "function") {
+          fetchLiveStats();
+        }
+      } else {
+        showToast("Failed to purge likes");
+      }
+    } catch (e) {
+      showToast("Error purging likes");
+    }
+  };
+
   // Business Name & Compound Word Integrity Center State
   const [brandTestInput, setBrandTestInput] = useState("lassustandartsen.nl");
   const [brandTestResult, setBrandTestResult] = useState<any>(null);
@@ -442,7 +510,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     if (activeTab === "messages") {
       fetchAdminChats();
     }
-  }, [activeTab]);
+    if (activeTab === "likes" || activeTab === "overview") {
+      fetchAdminLikes();
+    }
+  }, [activeTab, fetchAdminLikes]);
 
   const handleDeduplicateChats = async () => {
     setIsDeduplicatingChats(true);
@@ -1956,6 +2027,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return list;
   }, [allComments, searchQuery, commentTypeFilter, commentPlaceFilter, commentSortFilter]);
 
+  // Filtered and Sorted Likes List
+  const filteredLikes = useMemo(() => {
+    let list = [...adminLikes];
+    if (likesSearchQuery.trim()) {
+      const q = likesSearchQuery.toLowerCase().trim();
+      list = list.filter((l) => {
+        const uName = String(l.userName || "").toLowerCase();
+        const uHandle = String(l.userHandle || "").toLowerCase();
+        const pName = String(l.placeName || "").toLowerCase();
+        const vId = String(l.videoId || "").toLowerCase();
+        const lId = String(l.id || "").toLowerCase();
+        return uName.includes(q) || uHandle.includes(q) || pName.includes(q) || vId.includes(q) || lId.includes(q);
+      });
+    }
+
+    if (likesSort === "oldest") {
+      list.sort((a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+    } else {
+      list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    }
+    return list;
+  }, [adminLikes, likesSearchQuery, likesSort]);
+
   // Categories list
   const uniqueBusinessCategories = useMemo(() => {
     const set = new Set<string>();
@@ -2663,6 +2757,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </span>
             </button>
 
+            {/* 9. Likes */}
+            <button
+              onClick={() => setActiveTab("likes")}
+              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                activeTab === "likes"
+                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
+              }`}
+            >
+              <div className="flex items-center gap-3.5">
+                <Heart className="w-5 h-5 shrink-0 text-rose-400" />
+                <span>Likes</span>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-rose-400 border border-zinc-800">
+                {liveStats?.totals?.likes ?? adminLikes.length}
+              </span>
+            </button>
+
             {/* 9. Messages */}
             <button
               onClick={() => setActiveTab("messages")}
@@ -2753,6 +2865,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["videos", `Videos (${metrics.totalVideos})`],
                 ["comments", `Comments (${allComments.length})`],
+                ["likes", `Likes (${liveStats?.totals?.likes ?? adminLikes.length})`],
                 ["messages", `Messages (${adminChats.length})`],
                 ["broadcast", "Broadcast"],
                 ["database", "Database"]
@@ -3492,13 +3605,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 {/* 6. Interactions */}
                 <div
-                  onClick={() => setActiveTab("comments")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-fuchsia-500/50 shadow-md hover:shadow-fuchsia-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-fuchsia-500/50 shadow-md hover:shadow-fuchsia-500/10 transition-all flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-400">Interactions</span>
                     <div className="p-1.5 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 group-hover:bg-fuchsia-500/20 transition-colors">
-                      <Heart className="w-4 h-4" />
+                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
                     </div>
                   </div>
                   <div className="my-2.5">
@@ -3509,9 +3621,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {liveStats?.totals?.likes ?? metrics.totalLikes} Likes • {liveStats?.totals?.comments ?? metrics.totalComments} Comments
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-fuchsia-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>Comments & Likes</span>
-                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                  <div className="flex items-center gap-2 pt-2 border-t border-zinc-800/80 text-[10px] font-semibold">
+                    <button
+                      onClick={() => setActiveTab("likes")}
+                      className="flex-1 py-1 px-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
+                      <span>Likes Feed →</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("comments")}
+                      className="flex-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <MessageSquare className="w-3 h-3 text-zinc-400" />
+                      <span>Comments →</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -5518,6 +5642,292 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
+          {/* TAB: LIKES & REACTIONS AUDIT FEED */}
+          {activeTab === "likes" && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
+                      <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                        Likes & Reactions Audit Feed
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-bold">
+                          {adminLikes.length} Recorded
+                        </span>
+                      </h2>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        Live real-time activity log tracking each user identity, video review, and interaction timestamp
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    onClick={fetchAdminLikes}
+                    disabled={isLoadingLikes}
+                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isLoadingLikes ? "animate-spin" : ""}`} />
+                    <span>Sync Feed</span>
+                  </button>
+
+                  {adminLikes.length > 0 && (
+                    <button
+                      onClick={() => setConfirmPurgeAllLikes(true)}
+                      className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Purge All</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Metrics Summary Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Total Likes</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">{adminLikes.length}</div>
+                    <span className="text-[11px] text-zinc-500">Live persisted interactions</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                    <Heart className="w-5 h-5 fill-rose-500" />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Active Likers</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">
+                      {new Set(adminLikes.map((l) => l.userId || l.userEmail || l.userName)).size}
+                    </div>
+                    <span className="text-[11px] text-zinc-500">Unique user accounts</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Liked Videos</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">
+                      {new Set(adminLikes.map((l) => l.videoId)).size}
+                    </div>
+                    <span className="text-[11px] text-zinc-500">Target review videos</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Video className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Sort Controls */}
+              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={likesSearchQuery}
+                    onChange={(e) => setLikesSearchQuery(e.target.value)}
+                    placeholder="Filter likes by user name, handle, place, or video ID..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500"
+                  />
+                  {likesSearchQuery && (
+                    <button
+                      onClick={() => setLikesSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-white"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+                  <select
+                    value={likesSort}
+                    onChange={(e) => setLikesSort(e.target.value as any)}
+                    className="bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-rose-500 cursor-pointer"
+                  >
+                    <option value="newest">Newest Likes First</option>
+                    <option value="oldest">Oldest Likes First</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Likes List */}
+              <div className="space-y-3">
+                {isLoadingLikes ? (
+                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
+                    <RefreshCw className="w-8 h-8 text-rose-500 animate-spin mx-auto" />
+                    <p className="text-xs text-zinc-400 font-medium">Fetching real-time likes audit from Bunny libSQL database...</p>
+                  </div>
+                ) : filteredLikes.length === 0 ? (
+                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl mx-auto">
+                      ❤️
+                    </div>
+                    <h3 className="text-base font-bold text-white">No Likes Recorded Yet</h3>
+                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                      {likesSearchQuery ? "No likes matching your search query. Try clearing your filter." : "When community members tap the like heart on review videos, their full profile and liked video details will appear here."}
+                    </p>
+                  </div>
+                ) : (
+                  filteredLikes.map((like, idx) => {
+                    const matchedVid = activeVideos.find((v) => v.id === like.videoId);
+                    const videoThumb = like.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                    const videoUrl = like.videoUrl || matchedVid?.videoUrl || "";
+                    const placeName = like.placeName || matchedVid?.placeName || "Review Video";
+                    const rating = like.videoRating || matchedVid?.rating;
+
+                    return (
+                      <div
+                        key={like.id || `like-${idx}`}
+                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-850/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                      >
+                        {/* User Identity Column */}
+                        <div className="flex items-center gap-3.5 min-w-[240px]">
+                          <div className="relative shrink-0">
+                            <div className="w-11 h-11 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden ring-2 ring-rose-500/20 group-hover:ring-rose-500/50 transition-all">
+                              <img
+                                src={getSafeAvatarUrl(like.userAvatar, like.userName, like.userHandle)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.src = generateGoogleLetterAvatarSvg(like.userName || "User", 128, like.userHandle || like.userName);
+                                }}
+                              />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rose-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] text-white">
+                              ❤️
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm truncate group-hover:text-rose-400 transition-colors">
+                                {like.userName || "Community User"}
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-md font-mono bg-zinc-800 text-zinc-400 font-bold">
+                                {like.userHandle || `@${String(like.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                              <Clock className="w-3 h-3 text-zinc-500" />
+                              <span>{like.timestamp || "Recently"}</span>
+                              {like.createdAt && (
+                                <span className="text-[10px] text-zinc-600 font-mono">
+                                  • {new Date(like.createdAt).toLocaleDateString()} {new Date(like.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Liked Video & Place Information */}
+                        <div className="flex items-center gap-3.5 flex-1 min-w-0 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                          {/* Video Thumbnail */}
+                          <div
+                            onClick={() => {
+                              if (videoUrl || matchedVid) {
+                                setPreviewLikeVideoModal({
+                                  videoUrl: videoUrl || matchedVid?.videoUrl,
+                                  thumbnailUrl: videoThumb,
+                                  placeName,
+                                  authorName: like.videoAuthor || matchedVid?.authorName || "Reviewer",
+                                  rating
+                                });
+                              }
+                            }}
+                            className="relative w-16 h-16 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 cursor-pointer group/thumb"
+                            title="Click to play video"
+                          >
+                            {videoThumb ? (
+                              <img src={videoThumb} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                                <Video className="w-6 h-6" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 group-hover/thumb:bg-black/20 flex items-center justify-center transition-colors">
+                              <div className="w-6 h-6 rounded-full bg-rose-600/90 flex items-center justify-center text-white shadow-sm">
+                                <Play className="w-3 h-3 fill-white ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs text-white truncate">
+                                {placeName}
+                              </span>
+                              {rating !== undefined && rating !== null && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-1">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400" /> {rating}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-zinc-400 flex items-center gap-2 truncate">
+                              <span>Reviewed by: <strong className="text-zinc-200">{like.videoAuthor || matchedVid?.authorName || "Creator"}</strong></span>
+                              <span className="text-zinc-600">•</span>
+                              <span className="font-mono text-[10px] text-zinc-500 truncate">ID: {like.videoId}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                          {(videoUrl || matchedVid) && (
+                            <button
+                              onClick={() => {
+                                setPreviewLikeVideoModal({
+                                  videoUrl: videoUrl || matchedVid?.videoUrl,
+                                  thumbnailUrl: videoThumb,
+                                  placeName,
+                                  authorName: like.videoAuthor || matchedVid?.authorName || "Reviewer",
+                                  rating
+                                });
+                              }}
+                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
+                              title="Play Video"
+                            >
+                              <Play className="w-3 h-3 fill-current text-rose-400" />
+                              <span>Play</span>
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => setSelectedLikeDetailModal(like)}
+                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
+                            title="View Raw JSON Details"
+                          >
+                            <Code className="w-3 h-3 text-zinc-400" />
+                            <span>Audit</span>
+                          </button>
+
+                          <button
+                            onClick={() => setConfirmDeleteLikeId(like.id)}
+                            className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl cursor-pointer transition-colors"
+                            title="Remove this like"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB: DIRECT MESSAGES & MODERATION */}
           {activeTab === "messages" && (
             <div className="max-w-7xl mx-auto space-y-6">
@@ -6879,7 +7289,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </button>
 
                         {/* Quick Jump to Main Tab if Available */}
-                        {["videoReviews", "videos", "places", "users", "comments", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
+                        {["videoReviews", "videos", "places", "users", "comments", "likes", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
                           <button
                             onClick={() => {
                               const targetTab = inspectTableModal === "videoReviews" ? "videos" :
@@ -8372,6 +8782,228 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-xl text-xs cursor-pointer shadow-lg transition-all"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PREVIEW LIKE TARGET VIDEO MODAL */}
+      {/* ========================================================================= */}
+      {previewLikeVideoModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
+                  ❤️
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm">{previewLikeVideoModal.placeName}</h3>
+                  <p className="text-[11px] text-zinc-400">Reviewed by {previewLikeVideoModal.authorName}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewLikeVideoModal(null)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 bg-black flex items-center justify-center">
+              {previewLikeVideoModal.videoUrl ? (
+                <video
+                  src={previewLikeVideoModal.videoUrl}
+                  poster={previewLikeVideoModal.thumbnailUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[60vh] w-full rounded-2xl object-contain bg-black"
+                />
+              ) : (
+                <div className="py-16 text-center text-zinc-500">
+                  <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-xs">Video stream unavailable</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between">
+              {previewLikeVideoModal.rating && (
+                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold font-mono flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-amber-400" /> {previewLikeVideoModal.rating} Stars
+                </span>
+              )}
+              <button
+                onClick={() => setPreviewLikeVideoModal(null)}
+                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer ml-auto"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* LIKE RECORD AUDIT & DETAIL MODAL */}
+      {/* ========================================================================= */}
+      {selectedLikeDetailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
+                  ❤️
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Like Event Audit</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedLikeDetailModal.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLikeDetailModal(null)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">User Identity</span>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0">
+                  <img
+                    src={getSafeAvatarUrl(selectedLikeDetailModal.userAvatar, selectedLikeDetailModal.userName, selectedLikeDetailModal.userHandle)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = generateGoogleLetterAvatarSvg(selectedLikeDetailModal.userName || "User", 128);
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">{selectedLikeDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono">{selectedLikeDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedLikeDetailModal.userId || selectedLikeDetailModal.userEmail}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Video Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Video Review</span>
+              <div className="flex items-center gap-3">
+                {selectedLikeDetailModal.videoThumbnail && (
+                  <img
+                    src={selectedLikeDetailModal.videoThumbnail}
+                    alt=""
+                    className="w-14 h-14 rounded-xl object-cover border border-zinc-800 shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h4 className="font-bold text-white text-sm truncate">{selectedLikeDetailModal.placeName || "Target Place"}</h4>
+                  <p className="text-xs text-zinc-400">Reviewed by {selectedLikeDetailModal.videoAuthor || "Reviewer"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Video ID: {selectedLikeDetailModal.videoId}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Raw JSON */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+                {JSON.stringify(selectedLikeDetailModal, null, 2)}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  setConfirmDeleteLikeId(selectedLikeDetailModal.id);
+                  setSelectedLikeDetailModal(null);
+                }}
+                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Remove Like
+              </button>
+
+              <button
+                onClick={() => setSelectedLikeDetailModal(null)}
+                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Close Audit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM DELETE INDIVIDUAL LIKE MODAL */}
+      {/* ========================================================================= */}
+      {confirmDeleteLikeId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
+              🗑️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Delete Like Record?</h3>
+              <p className="text-xs text-zinc-400">
+                Are you sure you want to remove this like from the database? The video's like counter will automatically update.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmDeleteLikeId(null)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteLike(confirmDeleteLikeId)}
+                disabled={isDeletingLikeId === confirmDeleteLikeId}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+              >
+                {isDeletingLikeId === confirmDeleteLikeId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM PURGE ALL LIKES MODAL */}
+      {/* ========================================================================= */}
+      {confirmPurgeAllLikes && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Purge All Likes?</h3>
+              <p className="text-xs text-zinc-400">
+                This will delete ALL like records from the database and reset like counts on all videos to 0. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmPurgeAllLikes(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePurgeAllLikes}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
+              >
+                Purge All
               </button>
             </div>
           </div>

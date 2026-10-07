@@ -5682,6 +5682,148 @@ function normalizeCommentServer(c: any): any {
   };
 }
 
+function normalizeLikeServer(like: any, row: any = {}): any {
+  if (!like || typeof like !== 'object') return like;
+  const id = String(row.id || like.id || `like_${Date.now()}`);
+  const videoId = String(row.videoId || like.videoId || '');
+  const userId = String(row.userId || like.userId || like.userEmail || like.email || '');
+
+  let rawName = like.userName || like.authorName || '';
+  let userEmail = (like.userEmail || like.email || (userId.includes('@') ? userId : '')).toLowerCase().trim();
+
+  if (userEmail === 'aouisesmee@gmail.com' || userId.includes('aouisesmee') || rawName.toLowerCase() === 'ben blue') {
+    rawName = 'Ben Blue';
+    userEmail = 'aouisesmee@gmail.com';
+  } else if (userEmail === 'avr6566gd@gmail.com' || userId.includes('avr6566gd') || rawName.toLowerCase() === 'steven akan' || rawName.toLowerCase() === 'avt ertuop') {
+    rawName = 'Steven Akan';
+    userEmail = 'avr6566gd@gmail.com';
+  } else if (userEmail === 'louis42111@gmail.com' || userId.includes('louis42111') || rawName.toLowerCase() === 'biz riv') {
+    rawName = 'Biz Riv';
+    userEmail = 'louis42111@gmail.com';
+  }
+
+  let userName = rawName;
+  if (!userName || userName === 'User' || userName === 'Verified Reviewer') {
+    if (userEmail && userEmail.includes('@')) {
+      const prefix = userEmail.split('@')[0];
+      userName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    } else if (userId) {
+      userName = userId.replace(/^usr_|^user_/, '');
+    } else {
+      userName = 'Community Member';
+    }
+  }
+
+  let userHandle = like.userHandle || like.authorHandle || `@${String(userName).toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  if (!userHandle.startsWith('@')) userHandle = `@${userHandle}`;
+
+  let userAvatar = like.userAvatar || like.authorAvatar || '';
+  if (!userAvatar && userName) {
+    userAvatar = `/api/avatar?name=${encodeURIComponent(userName)}&background=27272a&color=fff&bold=true&size=128`;
+  }
+
+  let videoThumbnail = like.videoThumbnail || like.thumbnailUrl || '';
+  let videoUrl = like.videoUrl || '';
+  let placeName = like.placeName || '';
+  let placeId = like.placeId || '';
+  let videoAuthor = like.videoAuthor || like.authorName || '';
+  let videoRating = Number(like.videoRating || like.rating || 5);
+
+  try {
+    const list = readReviewsIndex();
+    const vid = list.find((v: any) => v && (v.id === videoId || v._id === videoId));
+    if (vid) {
+      if (!videoThumbnail) videoThumbnail = vid.thumbnailUrl || '';
+      if (!videoUrl) videoUrl = vid.videoUrl || '';
+      if (!placeName) placeName = vid.placeName || '';
+      if (!placeId) placeId = vid.placeId || '';
+      if (!videoAuthor) videoAuthor = vid.authorName || vid.author?.name || '';
+      if (vid.rating) videoRating = Number(vid.rating);
+    }
+  } catch (e) {}
+
+  let rawCreated = like.createdAt || row.createdAt || row.updatedAt || new Date().toISOString();
+  let createdAtMs = Date.parse(rawCreated);
+  if (isNaN(createdAtMs)) {
+    if (typeof rawCreated === 'string' && rawCreated.includes(' ')) {
+      createdAtMs = Date.parse(rawCreated.replace(' ', 'T') + 'Z');
+    }
+    if (isNaN(createdAtMs)) createdAtMs = Date.now();
+  }
+  const isoCreatedAt = new Date(createdAtMs).toISOString();
+
+  const diffMs = Date.now() - createdAtMs;
+  let timestamp = 'Just now';
+  if (diffMs > 45000) {
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 60) {
+      timestamp = `${Math.max(1, diffMin)}m ago`;
+    } else {
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) {
+        timestamp = `${diffHr}h ago`;
+      } else {
+        const diffDays = Math.floor(diffHr / 24);
+        if (diffDays === 1) timestamp = 'Yesterday';
+        else if (diffDays < 7) timestamp = `${diffDays} days ago`;
+        else timestamp = new Date(createdAtMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+    }
+  }
+
+  return {
+    ...like,
+    id,
+    userId,
+    videoId,
+    userName,
+    authorName: userName,
+    userHandle,
+    authorHandle: userHandle,
+    userAvatar,
+    authorAvatar: userAvatar,
+    userEmail: userEmail || userId,
+    placeName,
+    placeId,
+    videoThumbnail,
+    videoUrl,
+    videoAuthor,
+    videoRating,
+    createdAt: isoCreatedAt,
+    createdAtMs,
+    timestamp,
+    isLiked: true
+  };
+}
+
+async function enrichLikeItemServer(like: any): Promise<any> {
+  if (!like || typeof like !== 'object') return like;
+  const normalized = normalizeLikeServer(like);
+
+  // If avatar is generic or name is missing, lookup profile
+  if ((!normalized.userAvatar || normalized.userAvatar.includes('/api/avatar?')) && normalized.userId) {
+    try {
+      const profile = await resolveUserProfileFromAnySource(normalized.userId);
+      if (profile) {
+        if (profile.avatar) {
+          normalized.userAvatar = profile.avatar;
+          normalized.authorAvatar = profile.avatar;
+        }
+        if (profile.name) {
+          normalized.userName = profile.name;
+          normalized.authorName = profile.name;
+        }
+        if (profile.handle) {
+          normalized.userHandle = profile.handle;
+          normalized.authorHandle = profile.handle;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return normalized;
+}
+
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
     const itemMap = new Map<string, any>();
@@ -5697,18 +5839,24 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications ORDER BY createdAt DESC`
               : (colName === 'comments'
                   ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments ORDER BY updatedAt DESC`
-                  : `SELECT id, data, created_at FROM ${colName} ORDER BY updatedAt DESC`),
+                  : (colName === 'likes'
+                      ? `SELECT id, userId, videoId, data, createdAt, updatedAt FROM likes ORDER BY createdAt DESC`
+                      : (colName === 'shares'
+                          ? `SELECT id, userId, videoId, platform, data, createdAt, updatedAt FROM shares ORDER BY createdAt DESC`
+                          : (colName === 'bookmarks'
+                              ? `SELECT id, userId, placeId, videoId, data, createdAt, updatedAt FROM bookmarks ORDER BY createdAt DESC`
+                              : (colName === 'follows'
+                                  ? `SELECT id, followerId, followingId, data, createdAt, updatedAt FROM follows ORDER BY createdAt DESC`
+                                  : `SELECT * FROM ${colName}`))))),
             args: []
           });
         } catch (e) {
-          rs = await bunnyDb.execute({
-            sql: colName === 'notifications'
-              ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications`
-              : (colName === 'comments'
-                  ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments`
-                  : `SELECT id, data, created_at FROM ${colName}`),
-            args: []
-          });
+          try {
+            rs = await bunnyDb.execute({
+              sql: `SELECT * FROM ${colName}`,
+              args: []
+            });
+          } catch (e2) {}
         }
         if (rs && rs.rows) {
           rs.rows.forEach((row: any) => {
@@ -5717,8 +5865,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               try {
                 parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
               } catch (e) {}
-              if (row.created_at) {
-                parsedData.createdAt = row.created_at;
+              if (row.createdAt || row.created_at) {
+                parsedData.createdAt = row.createdAt || row.created_at;
               }
               if (colName === 'notifications') {
                 const isReadVal = row.isRead !== undefined 
@@ -5845,6 +5993,15 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 }
                 parsedData = normalizeCommentServer(parsedData);
               }
+              if (colName === 'likes') {
+                if (!parsedData.videoId && row.videoId) {
+                  parsedData.videoId = String(row.videoId);
+                }
+                if (!parsedData.userId && row.userId) {
+                  parsedData.userId = String(row.userId);
+                }
+                parsedData = normalizeLikeServer(parsedData, row);
+              }
               if (colName === 'chats') {
                 if (Array.isArray(parsedData.history)) {
                   parsedData.history.forEach((m: any) => {
@@ -5959,6 +6116,10 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
 
     let items = Array.from(itemMap.values());
+
+    if (colName === 'likes') {
+      items = await Promise.all(items.map(enrichLikeItemServer));
+    }
 
     // For 'users' collection, aggregate and consolidate from all sources by unique canonical identity
     if (colName === 'users') {
@@ -8250,6 +8411,79 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
       } catch (e) {}
     }
     broadcastSseEvent({ type: "comments_purged" });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Likes Endpoint (Enriched feed of all likes)
+app.get('/api/admin/likes', async (_req, res) => {
+  try {
+    const items = await getNoSqlCollectionItems('likes');
+    items.sort((a: any, b: any) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Delete Individual Like
+app.delete('/api/admin/likes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    // Lookup like before delete to adjust video likesCount
+    let videoId = "";
+    try {
+      const existing = await bunnyDb.execute({
+        sql: "SELECT videoId, data FROM likes WHERE id = ? LIMIT 1",
+        args: [id]
+      });
+      if (existing.rows?.length > 0) {
+        const row: any = existing.rows[0];
+        videoId = row.videoId;
+        if (!videoId && row.data) {
+          try { videoId = JSON.parse(row.data).videoId; } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    await bunnyDb.execute({
+      sql: "DELETE FROM likes WHERE id = ?",
+      args: [id]
+    });
+
+    if (videoId) {
+      const countRes = await bunnyDb.execute({
+        sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?",
+        args: [videoId]
+      });
+      const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+      await bunnyDb.execute({
+        sql: "UPDATE videoReviews SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        args: [dbLikes, videoId]
+      });
+    }
+
+    broadcastSseEvent({ type: "like_deleted", likeId: id, videoId });
+    res.json({ success: true, id, videoId });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Purge All Likes
+app.post('/api/admin/likes/purge-all', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute("DELETE FROM likes");
+      await bunnyDb.execute("UPDATE videoReviews SET likesCount = 0");
+    }
+    broadcastSseEvent({ type: "likes_purged" });
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -14483,7 +14717,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   // Toggle Video Like (persisted to Bunny.net likes table)
   app.post("/api/interactions/like", async (req, res) => {
     try {
-      const { videoId, userId, isLiked } = req.body;
+      const { videoId, userId, isLiked, userName, userAvatar, userHandle, userEmail } = req.body;
       if (!videoId) return res.status(400).json({ error: "Missing videoId" });
 
       const bunnyDb = getBunnyDb();
@@ -14505,9 +14739,36 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         }
 
         if (effectiveIsLiked) {
+          let effName = userName || "";
+          let effAvatar = userAvatar || "";
+          let effHandle = userHandle || "";
+          let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
+
+          try {
+            const prof = await resolveUserProfileFromAnySource(userId || effEmail);
+            if (prof) {
+              if (!effName || effName === "User") effName = prof.name;
+              if (!effAvatar) effAvatar = prof.avatar;
+              if (!effHandle) effHandle = prof.handle;
+              if (!effEmail) effEmail = prof.email;
+            }
+          } catch (e) {}
+
+          const likeData = {
+            id: likeId,
+            videoId,
+            userId: userId || "",
+            userEmail: effEmail,
+            userName: effName || "Community Member",
+            userAvatar: effAvatar,
+            userHandle: effHandle || `@${(effName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            isLiked: true,
+            createdAt: new Date().toISOString()
+          };
+
           await bunnyDb.execute({
-            sql: "INSERT OR REPLACE INTO likes (id, userId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
-            args: [likeId, userId || "", videoId, JSON.stringify({ videoId, userId, isLiked: true })]
+            sql: "INSERT OR REPLACE INTO likes (id, userId, videoId, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+            args: [likeId, userId || "", videoId, JSON.stringify(likeData)]
           });
         } else {
           await bunnyDb.execute({

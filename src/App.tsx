@@ -4664,7 +4664,16 @@ export function App() {
       fetch("/api/interactions/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, isLiked: nextIsLiked, likesCount: nextLikes, userId: effectiveUserId })
+        body: JSON.stringify({
+          videoId,
+          isLiked: nextIsLiked,
+          likesCount: nextLikes,
+          userId: effectiveUserId,
+          userName: currentUser?.name || (currentUser as any)?.displayName,
+          userAvatar: currentUser?.avatar || (currentUser as any)?.photoURL,
+          userHandle: currentUser?.handle,
+          userEmail: currentUser?.email
+        })
       })
       .then(res => res.json())
       .then(data => {
