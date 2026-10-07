@@ -12025,8 +12025,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         amenities: ["Verified Directory", "Global Rankings"],
         topDishes: [],
         brandDomain: "legal500.com",
-        isClaimed: true,
-        isVerified: true
+        isClaimed: false,
+        isVerified: false
       };
       await bunnyDb.execute({
         sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
@@ -12068,8 +12068,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         amenities: ["Smart Offices", "Commercial Center", "High Speed Fiber"],
         topDishes: [],
         brandDomain: "digitalpark.ae",
-        isClaimed: true,
-        isVerified: true
+        isClaimed: false,
+        isVerified: false
       };
       await bunnyDb.execute({
         sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
@@ -12194,6 +12194,18 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               parsedData.ogImage = "";
               parsedData.photos = [];
             }
+            await bunnyDb.execute({
+              sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(parsedData), String(pRow.id)]
+            }).catch(() => {});
+          }
+
+          // Ensure only genuinely claimed businesses (with claimedByEmail) or official Yoouz have isClaimed true
+          const isOfficialYoouz = String(pRow.id) === 'yoouz.com' || parsedData.brandDomain === 'yoouz.com' || (parsedData.name && String(parsedData.name).toLowerCase() === 'yoouz');
+          const hasRealClaim = Boolean(parsedData.claimedByEmail && String(parsedData.claimedByEmail).trim());
+          if (!isOfficialYoouz && !hasRealClaim && (parsedData.isClaimed || parsedData.isVerified)) {
+            parsedData.isClaimed = false;
+            parsedData.isVerified = false;
             await bunnyDb.execute({
               sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
               args: [JSON.stringify(parsedData), String(pRow.id)]

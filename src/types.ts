@@ -153,6 +153,7 @@ export interface VideoReview {
     state?: string;
     country?: string;
     isLocalGuide?: boolean;
+    localGuideLevel?: number;
     videoReviewCount?: number;
     photosCount?: number;
     isVerified?: boolean;
