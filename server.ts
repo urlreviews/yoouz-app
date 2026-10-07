@@ -5727,7 +5727,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications ORDER BY createdAt DESC`
               : (colName === 'comments'
                   ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments ORDER BY updatedAt DESC`
-                  : `SELECT id, data FROM ${colName} ORDER BY updatedAt DESC`),
+                  : `SELECT id, data, created_at FROM ${colName} ORDER BY updatedAt DESC`),
             args: []
           });
         } catch (e) {
@@ -5736,7 +5736,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               ? `SELECT id, recipientEmail, type, text, isRead, data, createdAt, updatedAt FROM notifications`
               : (colName === 'comments'
                   ? `SELECT id, videoId, userId, userName, userAvatar, text, data, updatedAt FROM comments`
-                  : `SELECT id, data FROM ${colName}`),
+                  : `SELECT id, data, created_at FROM ${colName}`),
             args: []
           });
         }
@@ -5747,6 +5747,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               try {
                 parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
               } catch (e) {}
+              if (row.created_at) {
+                parsedData.createdAt = row.created_at;
+              }
               if (colName === 'notifications') {
                 const isReadVal = row.isRead !== undefined 
                   ? Boolean(row.isRead === 1 || row.isRead === '1' || row.isRead === true) 

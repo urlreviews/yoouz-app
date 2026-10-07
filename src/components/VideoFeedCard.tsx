@@ -774,14 +774,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               if (delRaw) delSet = new Set(JSON.parse(delRaw));
             } catch (e) {}
 
+            const videoFromAll = allVideos?.find(v => v.id === video.id);
             const rawList = (Array.isArray(video.comments) && video.comments.length > 0
               ? video.comments
-              : (video.id === "rev-1791023009708-0qszq"
-                  ? [
-                      { id: "comm-101", replies: [] },
-                      { id: "comm-102", replies: [] }
-                    ]
-                  : [])) as any[];
+              : (Array.isArray(videoFromAll?.comments) && videoFromAll.comments.length > 0 
+                 ? videoFromAll.comments 
+                 : [])) as any[];
             const list = rawList.filter((c) => c && c.id && !delSet.has(String(c.id)));
             let computedCount = 0;
             list.forEach((c) => {

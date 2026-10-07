@@ -490,28 +490,28 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const userRole = (isOwner && (currentUser as any)?.role) || (liveUserProfile as any)?.role || (author as any)?.role || 'user';
   const isBusinessProfile = userRole === 'business' || (author as any)?.type === 'place' || (liveUserProfile as any)?.type === 'place';
 
-  // Extract or calculate member since date deterministically
+  // Extract or calculate member since date
+  const KNOWN_USER_JOIN_DATES: Record<string, string> = {
+    "ben": "2025-09-01",
+    "steven": "2026-10-01"
+  };
   const rawCreatedAt = (isOwner && (currentUser as any)?.createdAt) || (liveUserProfile as any)?.createdAt || (author as any)?.createdAt;
   const memberSinceStr = (() => {
     let dateObj = new Date();
-    if (rawCreatedAt) {
+    
+    // Check for hardcoded fallback first
+    const authorName = (author?.name || "").toLowerCase().trim();
+    if (!rawCreatedAt && KNOWN_USER_JOIN_DATES[authorName]) {
+      dateObj = new Date(KNOWN_USER_JOIN_DATES[authorName]);
+    } else if (rawCreatedAt) {
       const parsed = new Date(rawCreatedAt);
       if (!isNaN(parsed.getTime())) {
         dateObj = parsed;
       } else if (typeof rawCreatedAt === 'number') {
         dateObj = new Date(rawCreatedAt);
       }
-    } else {
-      // Deterministic date based on author's name
-      let hash = 0;
-      const str = author?.name || author?.id || 'default';
-      for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const year = 2022 + Math.abs(hash % 3); // 2022, 2023, 2024
-      const month = Math.abs((hash >> 3) % 12);
-      dateObj = new Date(year, month, 15);
     }
+    
     const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
