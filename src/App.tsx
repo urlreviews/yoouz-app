@@ -6613,6 +6613,7 @@ export function App() {
           <CopoCommentsDrawer
             video={activeCommentVideo}
             currentUser={currentUser}
+            allUsers={allRegisteredUsers}
             onClose={() => setActiveCommentVideo(null)}
             onRequireAuth={() => {
               setAuthIntent('comment');
@@ -7678,6 +7679,7 @@ export function App() {
       <CopoCommentsDrawer
         video={activeCommentVideo}
         currentUser={currentUser}
+        allUsers={allRegisteredUsers}
         onClose={() => setActiveCommentVideo(null)}
         onRequireAuth={() => {
           setAuthIntent("general");

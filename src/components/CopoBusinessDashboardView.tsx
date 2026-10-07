@@ -4716,6 +4716,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         <CopoCommentsDrawer
           video={activeCommentVideo}
           currentUser={currentUser || effectiveUser}
+          allUsers={allUsers}
           isUserOwner={true}
           placeName={currentPlace.name}
           placeLogoUrl={profileLogoUrl || currentPlace.logoUrl}

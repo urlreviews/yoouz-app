@@ -767,7 +767,19 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           <MessageCircle className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[2]" />
         </button>
         <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
-          {typeof video.commentsCount === 'number' ? video.commentsCount : ((video.comments?.length || 0) + (video.ownerResponse && !(video.comments || []).some(c => c.isOwner || c.id?.startsWith("owner_comm_")) ? 1 : 0))}
+          {(() => {
+            const list = Array.isArray(video.comments) ? video.comments : [];
+            let computedCount = 0;
+            list.forEach((c) => {
+              computedCount += 1;
+              if (Array.isArray(c.replies)) computedCount += c.replies.length;
+            });
+            if (video.ownerResponse && !list.some((c) => c.isOwner || c.id?.startsWith("owner_comm_"))) {
+              computedCount += 1;
+            }
+            const explicitCount = typeof video.commentsCount === 'number' ? video.commentsCount : 0;
+            return Math.max(explicitCount, computedCount);
+          })()}
         </span>
       </div>
 
