@@ -936,7 +936,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onWheel={(e) => e.stopPropagation()}
         style={{
           ...(dragOffsetY !== 0 && !isKeyboardOpen ? { transform: `translateY(${dragOffsetY}px)` } : {}),
-          transition: isKeyboardOpen || dragOffsetY !== 0 ? 'none' : undefined,
           ...(typeof window !== "undefined" && window.innerWidth < 768 ? {
             position: 'fixed',
             left: 0,
@@ -949,7 +948,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
             borderRadius: isKeyboardOpen ? '16px 16px 0 0' : '26px 26px 0 0',
           } : {})
         }}
-        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl ${isKeyboardOpen ? '' : 'transition-all duration-150 ease-out'} cursor-default overflow-hidden fixed bottom-0 left-0 right-0 md:top-0 md:right-0 md:left-auto md:bottom-auto md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto z-[10000]`}
+        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overflow-hidden fixed bottom-0 left-0 right-0 md:top-0 md:right-0 md:left-auto md:bottom-auto md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto z-[10000]`}
       >
         {/* Mobile Pull Handle Indicator */}
         <div 
