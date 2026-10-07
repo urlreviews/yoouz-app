@@ -202,6 +202,28 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
   }, [replyingTo]);
 
+  // Mobile virtual keyboard handling for physical app feel
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateViewport = () => {
+      if (window.visualViewport) {
+        const offset = window.innerHeight - window.visualViewport.height;
+        setKeyboardHeight(offset > 50 ? offset : 0);
+      }
+    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateViewport);
+      window.visualViewport.addEventListener("scroll", updateViewport);
+    }
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updateViewport);
+        window.visualViewport.removeEventListener("scroll", updateViewport);
+      }
+    };
+  }, []);
+
   const [remoteComments, setRemoteComments] = useState<ReviewComment[]>([]);
   const [hasRemoteFetched, setHasRemoteFetched] = useState(false);
   const [localDeletedCommentIds, setLocalDeletedCommentIds] = useState<string[]>(() => {
@@ -660,9 +682,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        style={dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
+        style={{
+          ...(dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
+          ...(keyboardHeight > 0 && window.visualViewport ? { height: `${window.visualViewport.height}px`, maxHeight: `${window.visualViewport.height}px` } : {})
+        }}
         className={`w-full md:w-[440px] ${
-          sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]"
+          keyboardHeight > 0 ? "" : (sheetHeight === "expanded" ? "h-[90dvh]" : "h-[80dvh]")
         } md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overscroll-contain relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
       >
         {/* Mobile Pull Handle Indicator */}
