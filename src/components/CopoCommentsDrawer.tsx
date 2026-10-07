@@ -218,31 +218,39 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     };
   }, []);
 
-  // 2. Visual Viewport State (Calculated for precise docking)
+  // 2. Visual Viewport State (Calculated for precise docking across iOS & Android)
   const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.visualViewport) return;
+    if (typeof window === "undefined") return;
 
     const handleViewport = () => {
-      const vv = window.visualViewport!;
-      setViewportHeight(vv.height);
-      setIsKeyboardOpen(vv.height < window.innerHeight * 0.85);
+      const vv = window.visualViewport;
+      const currentHeight = vv ? vv.height : window.innerHeight;
+      setViewportHeight(currentHeight);
+      const keyboardActive = currentHeight < (window.screen?.height || window.innerHeight) * 0.82;
+      setIsKeyboardOpen(keyboardActive);
       
       // Keep background anchored
-      if (vv.height < window.innerHeight * 0.85) {
+      if (keyboardActive) {
         window.scrollTo(0, 0);
       }
     };
 
-    window.visualViewport.addEventListener("resize", handleViewport);
-    window.visualViewport.addEventListener("scroll", handleViewport);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleViewport);
+      window.visualViewport.addEventListener("scroll", handleViewport);
+    }
+    window.addEventListener("resize", handleViewport);
     handleViewport();
 
     return () => {
-      window.visualViewport?.removeEventListener("resize", handleViewport);
-      window.visualViewport?.removeEventListener("scroll", handleViewport);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleViewport);
+        window.visualViewport.removeEventListener("scroll", handleViewport);
+      }
+      window.removeEventListener("resize", handleViewport);
     };
   }, []);
 
@@ -702,9 +710,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         style={{
           ...(dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
           ...(typeof window !== "undefined" && window.innerWidth < 768 ? {
-            height: `${viewportHeight}px`,
-            maxHeight: `${viewportHeight}px`,
-            bottom: isKeyboardOpen ? "0" : "0",
+            height: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
+            maxHeight: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
+            bottom: isKeyboardOpen && window.visualViewport ? "auto" : "0px",
             top: isKeyboardOpen && window.visualViewport ? `${window.visualViewport.offsetTop}px` : "auto"
           } : {})
         }}
@@ -1273,8 +1281,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </div>
               )}
 
-              {/* Input Form */}
-              <form onSubmit={handleSubmit} className="flex items-center gap-2.5">
+              {/* Input Action Bar (Standalone Clean Div - No Form to prevent iOS Safari navigation toolbar) */}
+              <div className="flex items-center gap-2.5">
                 {/* Author Avatar (Uses Business Logo when posting as owner) */}
                 {(isUserOwner || postAsOwner) ? (
                   <div className="w-8 h-8 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center shrink-0 p-0.5">
@@ -1308,8 +1316,19 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   <input
                     ref={inputRef}
                     type="text"
+                    inputMode="text"
+                    enterKeyHint="send"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey && commentText.trim() && commentText.length <= 300) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
                     onFocus={() => {
                       if (typeof window !== "undefined") {
                         window.scrollTo(0, 0);
@@ -1351,7 +1370,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   </span>
 
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     id="btn-send-comment"
                     disabled={!commentText.trim() || commentText.length > 300}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
@@ -1364,7 +1384,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
-              </form>
+              </div>
             </>
           )}
         </div>
