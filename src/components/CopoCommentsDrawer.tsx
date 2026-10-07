@@ -104,6 +104,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const commentsListRef = useRef<HTMLDivElement>(null);
   const likingPendingRef = useRef<Set<string>>(new Set());
 
   const handleCommentLikeClick = (commentId: string, replyId?: string) => {
@@ -219,7 +220,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   }, []);
 
   // 2. Visual Viewport State (Calculated for precise docking across iOS & Android)
-  const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 0);
+  const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? (window.visualViewport?.height || window.innerHeight) : 0);
+  const [viewportTop, setViewportTop] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
@@ -228,14 +230,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     const handleViewport = () => {
       const vv = window.visualViewport;
       const currentHeight = vv ? vv.height : window.innerHeight;
+      const currentTop = vv ? vv.offsetTop : 0;
       setViewportHeight(currentHeight);
-      const keyboardActive = currentHeight < (window.screen?.height || window.innerHeight) * 0.82;
+      setViewportTop(currentTop);
+      const isMobile = window.innerWidth < 768;
+      const keyboardActive = isMobile && currentHeight < (window.screen?.height || window.innerHeight) * 0.82;
       setIsKeyboardOpen(keyboardActive);
-      
-      // Keep background anchored
-      if (keyboardActive) {
-        window.scrollTo(0, 0);
-      }
     };
 
     if (window.visualViewport) {
@@ -696,27 +696,35 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const content = (
     <div
       id="copo-comments-modal-root"
-      className="fixed inset-0 z-[9999] flex items-end md:items-stretch justify-center md:justify-end pointer-events-auto md:pointer-events-none overscroll-none"
+      className="fixed inset-0 z-[9999] pointer-events-auto md:pointer-events-none overscroll-none"
     >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 md:bg-transparent pointer-events-auto md:hidden animate-in fade-in duration-200"
-        onClick={onClose}
+        className="fixed inset-0 bg-black/60 md:bg-transparent pointer-events-auto md:hidden animate-in fade-in duration-200"
+        onClick={() => {
+          if (inputRef.current) inputRef.current.blur();
+          onClose();
+        }}
       />
 
       <div
         id="copo-comments-panel"
         onClick={(e) => e.stopPropagation()}
         style={{
-          ...(dragOffsetY !== 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
+          ...(dragOffsetY !== 0 && !isKeyboardOpen ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : {}),
           ...(typeof window !== "undefined" && window.innerWidth < 768 ? {
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            width: '100%',
             height: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
             maxHeight: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
-            bottom: isKeyboardOpen && window.visualViewport ? "auto" : "0px",
-            top: isKeyboardOpen && window.visualViewport ? `${window.visualViewport.offsetTop}px` : "auto"
+            top: isKeyboardOpen ? `${viewportTop}px` : 'auto',
+            bottom: isKeyboardOpen ? 'auto' : '0px',
+            borderRadius: isKeyboardOpen ? '16px 16px 0 0' : '26px 26px 0 0',
           } : {})
         }}
-        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-150 ease-out cursor-default overflow-hidden relative md:fixed md:top-0 md:right-0 md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto`}
+        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-150 ease-out cursor-default overflow-hidden fixed bottom-0 left-0 right-0 md:top-0 md:right-0 md:left-auto md:bottom-auto md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto z-[10000]`}
       >
         {/* Mobile Pull Handle Indicator */}
         <div 
@@ -793,6 +801,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
         {/* Comments Scrollable Feed */}
         <div
+          ref={commentsListRef}
           className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4 overscroll-contain bg-zinc-950 md:bg-zinc-900"
           onWheel={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
@@ -1316,11 +1325,17 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   <input
                     ref={inputRef}
                     type="text"
+                    name="yoouz_comment_message"
+                    id="yoouz_comment_message"
                     inputMode="text"
                     enterKeyHint="send"
                     autoComplete="off"
                     autoCorrect="off"
+                    autoCapitalize="sentences"
                     spellCheck="false"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
                     onKeyDown={(e) => {
@@ -1330,9 +1345,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       }
                     }}
                     onFocus={() => {
-                      if (typeof window !== "undefined") {
-                        window.scrollTo(0, 0);
-                        setTimeout(() => window.scrollTo(0, 0), 50);
+                      setIsKeyboardOpen(true);
+                      if (typeof window !== "undefined" && window.visualViewport) {
+                        setViewportHeight(window.visualViewport.height);
+                        setViewportTop(window.visualViewport.offsetTop);
                       }
                     }}
                     maxLength={300}
