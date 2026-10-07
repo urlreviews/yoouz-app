@@ -3392,7 +3392,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 shrink-0">
                   <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
                     <span className="text-[10px] text-zinc-400 block">Videos</span>
-                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.videoReviews ?? videos.length}</span>
+                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.videoReviews ?? metrics.totalVideos}</span>
                   </div>
                   <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
                     <span className="text-[10px] text-zinc-400 block">Claims</span>
@@ -3400,7 +3400,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
                     <span className="text-[10px] text-zinc-400 block">Places</span>
-                    <span className="text-xs font-black text-white font-mono">{places.length}</span>
+                    <span className="text-xs font-black text-white font-mono">{liveStats?.totals?.places ?? metrics.totalPhysicalPlaces}</span>
                   </div>
                   <div className="px-2.5 py-1.5 bg-zinc-950 rounded-xl border border-zinc-800 text-center">
                     <span className="text-[10px] text-zinc-400 block">Users</span>
@@ -3439,7 +3439,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {/* Filter Chips */}
                       <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
                         {[
-                          { id: "all", label: `All (${videos.length})` },
+                          { id: "all", label: `All (${activeVideos.length})` },
                           { id: "5stars", label: "5 Stars" },
                           { id: "4plus", label: "4+ Stars" }
                         ].map((chip) => (
@@ -3459,7 +3459,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
 
                     <div className="space-y-2.5 mt-3">
-                      {videos
+                      {activeVideos
                         .filter((v) => {
                           if (overviewVideoFilter === "5stars") return v.rating === 5;
                           if (overviewVideoFilter === "4plus") return v.rating >= 4;
@@ -3520,7 +3520,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             </div>
                           </div>
                         ))}
-                      {videos.length === 0 && (
+                      {activeVideos.length === 0 && (
                         <div className="py-8 text-center text-zinc-400 text-xs">No video reviews in database yet.</div>
                       )}
                     </div>
@@ -3528,13 +3528,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                   <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
                     <span className="text-xs text-zinc-400 font-mono">
-                      Showing up to 5 of {videos.length} reviews
+                      Showing up to 5 of {activeVideos.length} reviews
                     </span>
                     <button
                       onClick={() => setActiveTab("videos")}
                       className="text-xs font-bold text-rose-400 hover:text-rose-300 cursor-pointer flex items-center gap-1 transition-colors"
                     >
-                      <span>View All Reviews ({videos.length})</span>
+                      <span>View All Reviews ({activeVideos.length})</span>
                       <span>→</span>
                     </button>
                   </div>
@@ -3552,9 +3552,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {/* Filter Chips */}
                       <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
                         {[
-                          { id: "all", label: `All (${places.length})` },
-                          { id: "claimed", label: `Claimed (${places.filter(p => p.isClaimed || p.claimedByEmail).length})` },
-                          { id: "unclaimed", label: `Unclaimed (${places.filter(p => !p.isClaimed && !p.claimedByEmail).length})` }
+                          { id: "all", label: `All (${activePlaces.length})` },
+                          { id: "claimed", label: `Claimed (${activePlaces.filter(p => p.isClaimed || p.claimedByEmail).length})` },
+                          { id: "unclaimed", label: `Unclaimed (${activePlaces.filter(p => !p.isClaimed && !p.claimedByEmail).length})` }
                         ].map((chip) => (
                           <button
                             key={chip.id}
@@ -3572,7 +3572,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
 
                     <div className="space-y-2.5 mt-3">
-                      {places
+                      {activePlaces
                         .filter((p) => {
                           const isClaimed = p.isClaimed || p.claimedByEmail;
                           if (overviewPlaceFilter === "claimed") return isClaimed;
@@ -3627,7 +3627,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             </div>
                           );
                         })}
-                      {places.length === 0 && (
+                      {activePlaces.length === 0 && (
                         <div className="py-8 text-center text-zinc-400 text-xs">No business places recorded yet.</div>
                       )}
                     </div>
@@ -3635,13 +3635,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                   <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
                     <span className="text-xs text-zinc-400 font-mono">
-                      Showing up to 5 of {places.length} businesses
+                      Showing up to 5 of {activePlaces.length} businesses
                     </span>
                     <button
                       onClick={() => setActiveTab("places")}
                       className="text-xs font-bold text-sky-400 hover:text-sky-300 cursor-pointer flex items-center gap-1 transition-colors"
                     >
-                      <span>View All Places ({places.length})</span>
+                      <span>View All Places ({activePlaces.length})</span>
                       <span>→</span>
                     </button>
                   </div>
@@ -6546,21 +6546,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Live Videos in DB</span>
                     <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.videoReviews ?? videos.length} rows
+                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos} rows
                     </span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: videoReviews</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Live Places in DB</span>
                     <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.places ?? places.length} rows
+                      {liveStats?.totals?.places ?? metrics.totalPhysicalPlaces} rows
                     </span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: places</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Registered Users</span>
                     <span className="font-mono text-lg font-bold text-white">
-                      {liveStats?.totals?.users ?? uniqueUsers.length} rows
+                      {liveStats?.totals?.users ?? metrics.totalUsers} rows
                     </span>
                     <span className="text-[10px] text-zinc-500 block mt-0.5 font-mono">table: users</span>
                   </div>
@@ -6591,9 +6591,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-1">
                   {[
-                    { name: "videoReviews", label: "Video Reviews", count: liveStats?.totals?.videoReviews ?? videos.length, icon: "🎥" },
-                    { name: "places", label: "Places Directory", count: liveStats?.totals?.places ?? places.length, icon: "📍" },
-                    { name: "users", label: "User Profiles", count: liveStats?.totals?.users ?? uniqueUsers.length, icon: "👤" },
+                    { name: "videoReviews", label: "Video Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, icon: "🎥" },
+                    { name: "places", label: "Places Directory", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, icon: "📍" },
+                    { name: "users", label: "User Profiles", count: liveStats?.totals?.users ?? metrics.totalUsers, icon: "👤" },
                     { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, icon: "💬" },
                     { name: "likes", label: "Likes & Reactions", count: liveStats?.totals?.likes ?? metrics.totalLikes, icon: "❤️" },
                     { name: "shares", label: "Shares & Recommendations", count: liveStats?.totals?.shares ?? metrics.totalShares, icon: "↗️" },
@@ -6714,9 +6714,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <div className="flex justify-between text-zinc-400">
                         <span>Active Rows:</span>
                         <span className="font-mono text-emerald-400 font-bold">
-                          {inspectTableModal === "videoReviews" ? (liveStats?.totals?.videoReviews ?? videos.length) :
-                           inspectTableModal === "places" ? (liveStats?.totals?.places ?? places.length) :
-                           inspectTableModal === "users" ? (liveStats?.totals?.users ?? uniqueUsers.length) :
+                          {inspectTableModal === "videoReviews" ? (liveStats?.totals?.videoReviews ?? metrics.totalVideos) :
+                           inspectTableModal === "places" ? (liveStats?.totals?.places ?? metrics.totalPhysicalPlaces) :
+                           inspectTableModal === "users" ? (liveStats?.totals?.users ?? metrics.totalUsers) :
                            inspectTableModal === "comments" ? (liveStats?.totals?.comments ?? allComments.length) :
                            inspectTableModal === "chats" ? (liveStats?.totals?.chats ?? adminChats.length) : "Online"}
                         </span>

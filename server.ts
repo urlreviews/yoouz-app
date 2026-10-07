@@ -5518,9 +5518,8 @@ async function isNotificationAllowedForRecipient(recipientIdentifier: string, no
   return true;
 }
 
-app.get('/api/nosql/:collection', async (req, res) => {
+async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
-    const colName = req.params.collection;
     const itemMap = new Map<string, any>();
 
     // 1. Query Bunny Database (Cloud libSQL) if configured
@@ -6166,20 +6165,20 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
     if (colName === 'notifications') {
       ensureWelcomeNotificationsForAllUsers().catch(() => {});
-      const reqUser = String(req.query.user || req.query.email || req.query.userId || '').trim().toLowerCase();
-      if (reqUser) {
+      const targetUser = String(reqUser || '').trim().toLowerCase();
+      if (targetUser) {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           try {
-            let primaryEmail = reqUser;
-            if (reqUser.includes("avr6566gd") || reqUser.includes("avtertuop") || reqUser === "avt ertuop" || reqUser === "avt") {
+            let primaryEmail = targetUser;
+            if (targetUser.includes("avr6566gd") || targetUser.includes("avtertuop") || targetUser === "avt ertuop" || targetUser === "avt") {
               primaryEmail = "avr6566gd@gmail.com";
-            } else if (reqUser.includes("aouisesmee") || reqUser.includes("aouisemee") || reqUser.includes("aouisesme") || reqUser.includes("aouiseme") || reqUser === "ben blue") {
+            } else if (targetUser.includes("aouisesmee") || targetUser.includes("aouisemee") || targetUser.includes("aouisesme") || targetUser.includes("aouiseme") || targetUser === "ben blue") {
               primaryEmail = "aouisesmee@gmail.com";
-            } else if (reqUser.includes("louis42111") || reqUser.includes("bizriv") || reqUser === "biz riv") {
+            } else if (targetUser.includes("louis42111") || targetUser.includes("bizriv") || targetUser === "biz riv") {
               primaryEmail = "louis42111@gmail.com";
             }
-            const cleanHandle = reqUser.replace(/^@/, '');
+            const cleanHandle = targetUser.replace(/^@/, '');
             const uRes = await bunnyDb.execute({
               sql: `SELECT data FROM users 
                     WHERE id = ? 
@@ -6188,7 +6187,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
                        OR json_extract(data, '$.email') = ?
                        OR json_extract(data, '$.handle') = ?
                     LIMIT 1`,
-              args: [primaryEmail, primaryEmail, reqUser, primaryEmail, `@${cleanHandle}`]
+              args: [primaryEmail, primaryEmail, targetUser, primaryEmail, `@${cleanHandle}`]
             });
             if (uRes && uRes.rows && uRes.rows.length > 0) {
               let uData: any = {};
@@ -6196,7 +6195,7 @@ app.get('/api/nosql/:collection', async (req, res) => {
               const prefs = uData.notificationSettings;
               if (prefs && typeof prefs === 'object') {
                 if (prefs.enabled === false) {
-                  return res.json([]);
+                  return [];
                 }
                 items = items.filter((n: any) => {
                   const t = (n.type || '').toLowerCase().trim();
@@ -6215,8 +6214,22 @@ app.get('/api/nosql/:collection', async (req, res) => {
       }
     }
 
+    return items;
+  } catch (err: any) {
+    console.warn(`Error in getNoSqlCollectionItems for ${colName}:`, err);
+    return [];
+  }
+}
+
+app.get('/api/nosql/:collection', async (req, res) => {
+  try {
+    const colName = req.params.collection;
+    const reqUser = String(req.query.user || req.query.email || req.query.userId || '').trim().toLowerCase();
+    const items = await getNoSqlCollectionItems(colName, reqUser);
     res.json(items);
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/nosql/:collection/:id', async (req, res) => {
@@ -7785,28 +7798,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   const counts: Record<string, number> = {};
 
   if (bunnyDb) {
-    for (const tbl of tables) {
-      try {
-        const queryRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM ${tbl}`);
-        counts[tbl] = Number(queryRes.rows?.[0]?.c || 0);
-      } catch (err) {
-        counts[tbl] = 0;
-      }
-    }
-    // Ensure accurate row counts for all tables
-    try {
-      if (!counts.videoReviews || counts.videoReviews === 0) {
-        counts.videoReviews = readReviewsIndex().length;
-      }
-    } catch (e) {}
-
-    try {
-      if (!counts.users || counts.users === 0) {
-        const uRes = await bunnyDb.execute("SELECT COUNT(*) as c FROM users");
-        counts.users = Number(uRes.rows?.[0]?.c || 0);
-      }
-    } catch (e) {}
-
     // Auto-purge orphaned interaction records (comments, likes, shares, bookmarks, notifications) whose parent video no longer exists
     try {
       await bunnyDb.execute(`DELETE FROM comments WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
@@ -7814,48 +7805,18 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       await bunnyDb.execute(`DELETE FROM shares WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
       await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
       await bunnyDb.execute(`DELETE FROM notifications WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-
-      // Re-query accurate row counts for all tables after orphan cleanup
-      for (const tbl of tables) {
-        try {
-          const queryRes = await bunnyDb.execute(`SELECT COUNT(*) as c FROM ${tbl}`);
-          counts[tbl] = Number(queryRes.rows?.[0]?.c || 0);
-        } catch (err) {}
-      }
     } catch (e) {}
-  } else {
-    for (const tbl of tables) {
+  }
+
+  // Authoritative collection counts matching /api/nosql/:table results 100%
+  for (const tbl of tables) {
+    try {
+      const items = await getNoSqlCollectionItems(tbl);
+      counts[tbl] = items.length;
+    } catch (err) {
       counts[tbl] = 0;
     }
   }
-
-  // Check local database instance to ensure any fallback/seeded records are included in counts
-  try {
-    const dbInstance = getDb();
-    if (dbInstance) {
-      for (const tbl of tables) {
-        const table = getNoSqlTable(tbl);
-        if (table) {
-          const rows = await dbInstance.select().from(table);
-          counts[tbl] = Math.max(Number(counts[tbl] || 0), rows.length);
-        }
-      }
-    }
-  } catch (e) {}
-
-  try {
-    const localPlaces = readPlacesIndex();
-    if (localPlaces && localPlaces.length > 0) {
-      counts.places = Math.max(Number(counts.places || 0), localPlaces.length);
-    }
-  } catch (e) {}
-
-  try {
-    const localReviews = readReviewsIndex();
-    if (localReviews && localReviews.length > 0) {
-      counts.videoReviews = Math.max(Number(counts.videoReviews || 0), localReviews.length);
-    }
-  } catch (e) {}
 
   // Calculate interaction sums
   let totalLikesSum = counts.likes || 0;
