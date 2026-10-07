@@ -1534,14 +1534,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full overflow-y-auto snap-y snap-mandatory touch-pan-y overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
+          className={`w-full h-full ${
+            commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-auto touch-pan-y"
+          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
             isEmbed
               ? "gap-3 p-1 justify-center"
               : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(93vh,860px)] md:w-auto md:gap-4"
           }`}
           style={{
             WebkitOverflowScrolling: "touch",
-            scrollSnapType: "y mandatory",
+            scrollSnapType: commentsOpen ? "none" : "y mandatory",
             overscrollBehaviorY: "contain",
             scrollbarWidth: "none",
             msOverflowStyle: "none",

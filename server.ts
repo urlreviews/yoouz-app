@@ -1045,6 +1045,108 @@ function recordDeletedCommentId(id: string): void {
   } catch (e) {}
 }
 
+// Canonical Comment Tree Builder: De-duplicates comments, places replies inside parent's replies, eliminates duplicate top-level entries, and computes exact total count
+function buildCommentTree(rawComments: any[]): { comments: any[]; count: number } {
+  if (!Array.isArray(rawComments) || rawComments.length === 0) {
+    return { comments: [], count: 0 };
+  }
+
+  const deletedSet = new Set(readDeletedCommentsIndex());
+  const allMap = new Map<string, any>();
+
+  // 1. Flatten and index all non-deleted comments and nested replies by ID
+  rawComments.forEach((c) => {
+    if (c && c.id && !deletedSet.has(String(c.id))) {
+      const existing = allMap.get(c.id);
+      const validReplies = Array.isArray(c.replies)
+        ? c.replies.filter((r: any) => r && r.id && !deletedSet.has(String(r.id)))
+        : [];
+
+      if (existing) {
+        allMap.set(c.id, {
+          ...existing,
+          ...c,
+          replies: [...(existing.replies || []), ...validReplies]
+        });
+      } else {
+        allMap.set(c.id, {
+          ...c,
+          replies: validReplies
+        });
+      }
+
+      if (Array.isArray(c.replies)) {
+        c.replies.forEach((r: any) => {
+          if (r && r.id && !deletedSet.has(String(r.id))) {
+            const existingReply = allMap.get(r.id);
+            const parentId = r.replyToId || c.id;
+            if (existingReply) {
+              allMap.set(r.id, { ...existingReply, ...r, replyToId: parentId });
+            } else {
+              allMap.set(r.id, { ...r, replyToId: parentId, replies: [] });
+            }
+          }
+        });
+      }
+    }
+  });
+
+  const topLevel: any[] = [];
+  const replies: any[] = [];
+
+  // 2. Separate into top-level comments vs replies based on replyToId
+  allMap.forEach((c) => {
+    if (c.replyToId) {
+      replies.push(c);
+    } else {
+      topLevel.push({ ...c, replies: [] });
+    }
+  });
+
+  // 3. Attach replies to their parent comments
+  replies.forEach((reply) => {
+    const parent = topLevel.find((p) => p.id === reply.replyToId);
+    if (parent) {
+      if (!Array.isArray(parent.replies)) parent.replies = [];
+      if (!parent.replies.some((r: any) => r.id === reply.id)) {
+        parent.replies.push(reply);
+      }
+    } else {
+      let placed = false;
+      for (const p of topLevel) {
+        if (Array.isArray(p.replies) && p.replies.some((r: any) => r.id === reply.replyToId)) {
+          if (!p.replies.some((r: any) => r.id === reply.id)) {
+            p.replies.push(reply);
+          }
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        topLevel.push(reply);
+      }
+    }
+  });
+
+  // Sort top-level by createdAtMs / createdAt desc or keep order
+  topLevel.sort((a, b) => {
+    const aTime = a.createdAtMs || (a.id && a.id.startsWith('comm-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
+    const bTime = b.createdAtMs || (b.id && b.id.startsWith('comm-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
+    return bTime - aTime;
+  });
+
+  // 4. Calculate exact canonical count: top-level + all replies
+  let totalCount = 0;
+  topLevel.forEach((c) => {
+    totalCount += 1;
+    if (Array.isArray(c.replies)) {
+      totalCount += c.replies.length;
+    }
+  });
+
+  return { comments: topLevel, count: totalCount };
+}
+
 function readReviewsIndex(): any[] {
   const deletedSet = new Set(readDeletedReviewsIndex());
   const deletedCommentsSet = new Set(readDeletedCommentsIndex());
@@ -1060,12 +1162,12 @@ function readReviewsIndex(): any[] {
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet))
           .map((r: any) => {
             if (Array.isArray(r.comments) && r.comments.length > 0) {
-              const prevLen = r.comments.length;
-              r.comments = r.comments.filter((c: any) => c && c.id && !deletedCommentsSet.has(String(c.id)));
-              if (r.comments.length !== prevLen) {
+              const tree = buildCommentTree(r.comments);
+              if (r.comments.length !== tree.comments.length || r.commentsCount !== tree.count) {
                 dirty = true;
               }
-              r.commentsCount = r.comments.length;
+              r.comments = tree.comments;
+              r.commentsCount = tree.count;
             }
             if (!r.createdAtMs && r.id && typeof r.id === "string" && r.id.startsWith("rev-")) {
               const ts = parseInt(r.id.split("-")[1], 10);
@@ -11904,103 +12006,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
     return cleanResult;
   };
-
-  // Canonical Comment Tree Builder: De-duplicates comments, places replies inside parent's replies, eliminates duplicate top-level entries, and computes exact total count
-  function buildCommentTree(rawComments: any[]): { comments: any[]; count: number } {
-    if (!Array.isArray(rawComments) || rawComments.length === 0) {
-      return { comments: [], count: 0 };
-    }
-
-    const allMap = new Map<string, any>();
-
-    // 1. Flatten and index all comments and nested replies by ID
-    rawComments.forEach((c) => {
-      if (c && c.id) {
-        const existing = allMap.get(c.id);
-        if (existing) {
-          allMap.set(c.id, {
-            ...existing,
-            ...c,
-            replies: [...(existing.replies || []), ...(c.replies || [])]
-          });
-        } else {
-          allMap.set(c.id, {
-            ...c,
-            replies: Array.isArray(c.replies) ? [...c.replies] : []
-          });
-        }
-
-        if (Array.isArray(c.replies)) {
-          c.replies.forEach((r: any) => {
-            if (r && r.id) {
-              const existingReply = allMap.get(r.id);
-              const parentId = r.replyToId || c.id;
-              if (existingReply) {
-                allMap.set(r.id, { ...existingReply, ...r, replyToId: parentId });
-              } else {
-                allMap.set(r.id, { ...r, replyToId: parentId, replies: [] });
-              }
-            }
-          });
-        }
-      }
-    });
-
-    const topLevel: any[] = [];
-    const replies: any[] = [];
-
-    // 2. Separate into top-level comments vs replies based on replyToId
-    allMap.forEach((c) => {
-      if (c.replyToId) {
-        replies.push(c);
-      } else {
-        topLevel.push({ ...c, replies: [] });
-      }
-    });
-
-    // 3. Attach replies to their parent comments
-    replies.forEach((reply) => {
-      const parent = topLevel.find((p) => p.id === reply.replyToId);
-      if (parent) {
-        if (!Array.isArray(parent.replies)) parent.replies = [];
-        if (!parent.replies.some((r: any) => r.id === reply.id)) {
-          parent.replies.push(reply);
-        }
-      } else {
-        let placed = false;
-        for (const p of topLevel) {
-          if (Array.isArray(p.replies) && p.replies.some((r: any) => r.id === reply.replyToId)) {
-            if (!p.replies.some((r: any) => r.id === reply.id)) {
-              p.replies.push(reply);
-            }
-            placed = true;
-            break;
-          }
-        }
-        if (!placed) {
-          topLevel.push(reply);
-        }
-      }
-    });
-
-    // Sort top-level by createdAtMs / createdAt desc or keep order
-    topLevel.sort((a, b) => {
-      const aTime = a.createdAtMs || (a.id && a.id.startsWith('comm-') ? parseInt(a.id.split('-')[1]) : 0) || 0;
-      const bTime = b.createdAtMs || (b.id && b.id.startsWith('comm-') ? parseInt(b.id.split('-')[1]) : 0) || 0;
-      return bTime - aTime;
-    });
-
-    // 4. Calculate exact canonical count: top-level + all replies
-    let totalCount = 0;
-    topLevel.forEach((c) => {
-      totalCount += 1;
-      if (Array.isArray(c.replies)) {
-        totalCount += c.replies.length;
-      }
-    });
-
-    return { comments: topLevel, count: totalCount };
-  }
 
   // Authoritative Feed Synchronizer: Syncs directly from Bunny Cloud Database with exact live interaction counts
   async function syncAndWarmFeedFromBunnyDb() {

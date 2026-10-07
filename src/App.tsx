@@ -5816,6 +5816,12 @@ export function App() {
           userId: currentUser?.email || auth.currentUser?.uid
         })
       }).catch(() => {});
+
+      window.dispatchEvent(
+        new CustomEvent("copo-delete-comment", {
+          detail: { videoId, commentId, replyId, comments: updatedComments, commentsCount: totalCount }
+        })
+      );
     } catch (err) {
       console.warn("delete comment sync warning:", err);
     }

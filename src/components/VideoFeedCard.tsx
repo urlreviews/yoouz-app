@@ -768,17 +768,28 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </button>
         <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {(() => {
-            const list = Array.isArray(video.comments) ? video.comments : [];
+            let delSet = new Set<string>();
+            try {
+              const delRaw = typeof localStorage !== 'undefined' ? localStorage.getItem("copo_deleted_comments") : null;
+              if (delRaw) delSet = new Set(JSON.parse(delRaw));
+            } catch (e) {}
+
+            const rawList = Array.isArray(video.comments) ? video.comments : [];
+            const list = rawList.filter((c) => c && c.id && !delSet.has(String(c.id)));
             let computedCount = 0;
             list.forEach((c) => {
               computedCount += 1;
-              if (Array.isArray(c.replies)) computedCount += c.replies.length;
+              if (Array.isArray(c.replies)) {
+                computedCount += c.replies.filter((r) => r && r.id && !delSet.has(String(r.id))).length;
+              }
             });
             if (video.ownerResponse && !list.some((c) => c.isOwner || c.id?.startsWith("owner_comm_"))) {
               computedCount += 1;
             }
-            const explicitCount = typeof video.commentsCount === 'number' ? video.commentsCount : 0;
-            return Math.max(explicitCount, computedCount);
+            if (typeof video.commentsCount === 'number') {
+              return Math.min(video.commentsCount, computedCount > 0 ? computedCount : video.commentsCount);
+            }
+            return computedCount;
           })()}
         </span>
       </div>
