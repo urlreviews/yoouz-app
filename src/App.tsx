@@ -4822,9 +4822,18 @@ export function App() {
         body: JSON.stringify({
           videoId,
           placeId: (targetVid as any)?.placeId || "",
+          placeName: (targetVid as any)?.placeName || (targetVid as any)?.name || "",
           isBookmarked: nextBookmarked,
           bookmarksCount: nextCount,
-          userId: currentUser?.email || auth.currentUser?.uid
+          userId: currentUser?.email || auth.currentUser?.uid,
+          userName: currentUser?.name || (currentUser as any)?.displayName,
+          userHandle: currentUser?.handle,
+          userAvatar: currentUser?.avatar || (currentUser as any)?.photoURL,
+          userEmail: currentUser?.email,
+          videoThumbnail: (targetVid as any)?.thumbnailUrl || (targetVid as any)?.posterUrl,
+          videoAuthor: (targetVid as any)?.author?.name || (targetVid as any)?.authorName,
+          videoRating: (targetVid as any)?.rating || 5,
+          videoUrl: (targetVid as any)?.videoUrl
         })
       })
       .then(res => res.json())

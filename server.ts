@@ -5824,6 +5824,192 @@ async function enrichLikeItemServer(like: any): Promise<any> {
   return normalized;
 }
 
+function normalizeBookmarkServer(bm: any, row: any = {}): any {
+  if (!bm || typeof bm !== 'object') return bm;
+  const id = String(bm.id || row.id || `bm_${Date.now()}`);
+  let rawUserId = String(bm.userId || bm.userEmail || bm.authorEmail || row.userId || '').trim();
+  let rawPlaceId = String(bm.placeId || row.placeId || '').trim();
+  let rawVideoId = String(bm.videoId || row.videoId || '').trim();
+
+  let userEmail = rawUserId.includes('@') ? rawUserId : '';
+  let userId = rawUserId;
+
+  let rawName = bm.userName || bm.authorName || bm.name || '';
+  if (!userEmail && (rawUserId.includes('aouisesmee') || rawUserId.includes('ben blue') || rawName.toLowerCase() === 'ben blue')) {
+    userEmail = 'aouisesmee@gmail.com';
+    rawName = 'Ben Blue';
+  } else if (!userEmail && (rawUserId.includes('avr6566gd') || rawUserId.includes('steven akan') || rawName.toLowerCase() === 'steven akan')) {
+    userEmail = 'avr6566gd@gmail.com';
+    rawName = 'Steven Akan';
+  } else if (!userEmail && (rawUserId.includes('louis42111') || rawUserId.includes('biz riv') || rawName.toLowerCase() === 'biz riv')) {
+    userEmail = 'louis42111@gmail.com';
+    rawName = 'Biz Riv';
+  }
+
+  if (userEmail === 'aouisesmee@gmail.com' || userId.includes('aouisesmee') || rawName.toLowerCase() === 'ben blue') {
+    rawName = 'Ben Blue';
+    userEmail = 'aouisesmee@gmail.com';
+  } else if (userEmail === 'avr6566gd@gmail.com' || userId.includes('avr6566gd') || rawName.toLowerCase() === 'steven akan') {
+    rawName = 'Steven Akan';
+    userEmail = 'avr6566gd@gmail.com';
+  } else if (userEmail === 'louis42111@gmail.com' || userId.includes('louis42111') || rawName.toLowerCase() === 'biz riv') {
+    rawName = 'Biz Riv';
+    userEmail = 'louis42111@gmail.com';
+  }
+
+  let userName = rawName;
+  if (!userName || userName === 'User' || userName === 'Anonymous' || userName === 'Verified Reviewer') {
+    if (userEmail && userEmail.includes('@')) {
+      const prefix = userEmail.split('@')[0];
+      userName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    } else if (userId) {
+      userName = userId.replace(/^usr_|^user_/, '');
+    } else {
+      userName = 'Community Member';
+    }
+  }
+
+  let userHandle = bm.userHandle || bm.authorHandle || `@${String(userName).toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+  if (!userHandle.startsWith('@')) userHandle = `@${userHandle}`;
+
+  let userAvatar = bm.userAvatar || bm.authorAvatar || '';
+  if (!userAvatar && userName) {
+    userAvatar = `/api/avatar?name=${encodeURIComponent(userName)}&background=27272a&color=fff&bold=true&size=128`;
+  }
+
+  let placeName = bm.placeName || '';
+  let placeCategory = bm.placeCategory || '';
+  let placeLogo = bm.placeLogo || '';
+  let videoThumbnail = bm.videoThumbnail || bm.thumbnailUrl || '';
+  let videoUrl = bm.videoUrl || '';
+  let videoAuthor = bm.videoAuthor || bm.authorName || '';
+  let videoRating = Number(bm.videoRating || bm.rating || 5);
+
+  // Link place info
+  if (rawPlaceId) {
+    try {
+      const pIndex = path.resolve('uploads/places_index.json');
+      if (fs.existsSync(pIndex)) {
+        const places = JSON.parse(fs.readFileSync(pIndex, 'utf8'));
+        const p = places.find((x: any) => x && (x.id === rawPlaceId || x.brandDomain === rawPlaceId || x.website?.includes(rawPlaceId) || x.name?.toLowerCase() === rawPlaceId.toLowerCase()));
+        if (p) {
+          if (!placeName) placeName = p.name || '';
+          if (!placeCategory) placeCategory = p.category || '';
+          if (!placeLogo) placeLogo = p.logoUrl || p.avatarUrl || '';
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Link video info
+  try {
+    const list = readReviewsIndex();
+    let vid: any = null;
+    if (rawVideoId) {
+      vid = list.find((v: any) => v && (v.id === rawVideoId || v._id === rawVideoId));
+    }
+    if (!vid && rawPlaceId) {
+      vid = list.find((v: any) => v && (v.placeId === rawPlaceId || v.placeName?.toLowerCase() === placeName.toLowerCase()));
+    }
+    if (vid) {
+      if (!rawVideoId) rawVideoId = vid.id;
+      if (!placeName) placeName = vid.placeName || '';
+      if (!videoThumbnail) videoThumbnail = vid.thumbnailUrl || vid.posterUrl || '';
+      if (!videoUrl) videoUrl = vid.videoUrl || '';
+      if (!videoAuthor) videoAuthor = vid.authorName || vid.author?.name || '';
+      if (vid.rating) videoRating = Number(vid.rating);
+    }
+  } catch (e) {}
+
+  if (!placeName) {
+    if (rawPlaceId === 'yoouz.com') placeName = 'Yoouz';
+    else if (rawPlaceId === 'izci.be') placeName = 'Bosch Car Service Izci';
+    else placeName = rawPlaceId || 'Saved Place';
+  }
+
+  let rawCreated = bm.createdAt || row.createdAt || row.updatedAt || new Date().toISOString();
+  let createdAtMs = Date.parse(rawCreated);
+  if (isNaN(createdAtMs)) {
+    if (typeof rawCreated === 'string' && rawCreated.includes(' ')) {
+      createdAtMs = Date.parse(rawCreated.replace(' ', 'T') + 'Z');
+    }
+    if (isNaN(createdAtMs)) createdAtMs = Date.now();
+  }
+  const isoCreatedAt = new Date(createdAtMs).toISOString();
+
+  const diffMs = Date.now() - createdAtMs;
+  let timestamp = 'Just now';
+  if (diffMs > 45000) {
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 60) {
+      timestamp = `${Math.max(1, diffMin)}m ago`;
+    } else {
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) {
+        timestamp = `${diffHr}h ago`;
+      } else {
+        const diffDays = Math.floor(diffHr / 24);
+        if (diffDays === 1) timestamp = 'Yesterday';
+        else if (diffDays < 7) timestamp = `${diffDays} days ago`;
+        else timestamp = new Date(createdAtMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+    }
+  }
+
+  return {
+    ...bm,
+    id,
+    userId,
+    placeId: rawPlaceId,
+    placeName,
+    placeCategory,
+    placeLogo,
+    videoId: rawVideoId,
+    videoThumbnail,
+    videoUrl,
+    videoAuthor,
+    videoRating,
+    userName,
+    authorName: userName,
+    userHandle,
+    authorHandle: userHandle,
+    userAvatar,
+    authorAvatar: userAvatar,
+    userEmail: userEmail || userId,
+    createdAt: isoCreatedAt,
+    createdAtMs,
+    timestamp,
+    isBookmarked: true
+  };
+}
+
+async function enrichBookmarkItemServer(bm: any): Promise<any> {
+  if (!bm || typeof bm !== 'object') return bm;
+  const normalized = normalizeBookmarkServer(bm);
+
+  if ((!normalized.userAvatar || normalized.userAvatar.includes('/api/avatar?')) && normalized.userId) {
+    try {
+      const profile = await resolveUserProfileFromAnySource(normalized.userId);
+      if (profile) {
+        if (profile.avatar) {
+          normalized.userAvatar = profile.avatar;
+          normalized.authorAvatar = profile.avatar;
+        }
+        if (profile.name) {
+          normalized.userName = profile.name;
+          normalized.authorName = profile.name;
+        }
+        if (profile.handle) {
+          normalized.userHandle = profile.handle;
+          normalized.authorHandle = profile.handle;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return normalized;
+}
+
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
     const itemMap = new Map<string, any>();
@@ -6002,6 +6188,18 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 }
                 parsedData = normalizeLikeServer(parsedData, row);
               }
+              if (colName === 'bookmarks') {
+                if (!parsedData.videoId && row.videoId) {
+                  parsedData.videoId = String(row.videoId);
+                }
+                if (!parsedData.placeId && row.placeId) {
+                  parsedData.placeId = String(row.placeId);
+                }
+                if (!parsedData.userId && row.userId) {
+                  parsedData.userId = String(row.userId);
+                }
+                parsedData = normalizeBookmarkServer(parsedData, row);
+              }
               if (colName === 'chats') {
                 if (Array.isArray(parsedData.history)) {
                   parsedData.history.forEach((m: any) => {
@@ -6119,6 +6317,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
     if (colName === 'likes') {
       items = await Promise.all(items.map(enrichLikeItemServer));
+    }
+    if (colName === 'bookmarks') {
+      items = await Promise.all(items.map(enrichBookmarkItemServer));
     }
 
     // For 'users' collection, aggregate and consolidate from all sources by unique canonical identity
@@ -8484,6 +8685,79 @@ app.post('/api/admin/likes/purge-all', express.json(), async (_req, res) => {
       await bunnyDb.execute("UPDATE videoReviews SET likesCount = 0");
     }
     broadcastSseEvent({ type: "likes_purged" });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Bookmarks Endpoint (Enriched feed of all saved bookmarks)
+app.get('/api/admin/bookmarks', async (_req, res) => {
+  try {
+    const items = await getNoSqlCollectionItems('bookmarks');
+    items.sort((a: any, b: any) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Delete Individual Bookmark
+app.delete('/api/admin/bookmarks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    // Lookup bookmark before delete to adjust video bookmarksCount if linked
+    let videoId = "";
+    try {
+      const existing = await bunnyDb.execute({
+        sql: "SELECT videoId, data FROM bookmarks WHERE id = ? LIMIT 1",
+        args: [id]
+      });
+      if (existing.rows?.length > 0) {
+        const row: any = existing.rows[0];
+        videoId = row.videoId;
+        if (!videoId && row.data) {
+          try { videoId = JSON.parse(row.data).videoId; } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    await bunnyDb.execute({
+      sql: "DELETE FROM bookmarks WHERE id = ?",
+      args: [id]
+    });
+
+    if (videoId) {
+      const countRes = await bunnyDb.execute({
+        sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?",
+        args: [videoId]
+      });
+      const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+      await bunnyDb.execute({
+        sql: "UPDATE videoReviews SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        args: [dbBookmarks, videoId]
+      });
+    }
+
+    broadcastSseEvent({ type: "bookmark_deleted", bookmarkId: id, videoId });
+    res.json({ success: true, id, videoId });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Purge All Bookmarks
+app.post('/api/admin/bookmarks/purge-all', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute("DELETE FROM bookmarks");
+      await bunnyDb.execute("UPDATE videoReviews SET bookmarksCount = 0");
+    }
+    broadcastSseEvent({ type: "bookmarks_purged" });
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -14954,7 +15228,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   // Toggle Video Bookmark (persisted to Bunny.net bookmarks table and BunnyDB)
   app.post("/api/interactions/bookmark", async (req, res) => {
     try {
-      const { videoId, placeId, userId, isBookmarked } = req.body;
+      const { videoId, placeId, userId, isBookmarked, userName, userAvatar, userHandle, userEmail, placeName, videoThumbnail, videoAuthor, videoRating, videoUrl } = req.body;
       if (!videoId) return res.status(400).json({ error: "Missing videoId" });
 
       const bunnyDb = getBunnyDb();
@@ -14962,9 +15236,72 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       if (bunnyDb) {
         const bmId = `bm_${userId || 'anon'}_${videoId}`;
         if (isBookmarked) {
+          let effName = userName || "";
+          let effAvatar = userAvatar || "";
+          let effHandle = userHandle || "";
+          let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
+          let effPlaceName = placeName || "";
+          let effPlaceId = placeId || "";
+          let effThumb = videoThumbnail || "";
+          let effAuthor = videoAuthor || "";
+          let effRating = videoRating || 5;
+          let effVideoUrl = videoUrl || "";
+
+          try {
+            const prof = await resolveUserProfileFromAnySource(userId || effEmail);
+            if (prof) {
+              if (!effName || effName === "User") effName = prof.name;
+              if (!effAvatar) effAvatar = prof.avatar;
+              if (!effHandle) effHandle = prof.handle;
+              if (!effEmail) effEmail = prof.email;
+            }
+          } catch (e) {}
+
+          try {
+            const list = readReviewsIndex();
+            const curVid = list.find((v: any) => v && (v.id === videoId || v._id === videoId));
+            if (curVid) {
+              if (!effPlaceName) effPlaceName = curVid.placeName || "";
+              if (!effPlaceId) effPlaceId = curVid.placeId || "";
+              if (!effThumb) effThumb = curVid.thumbnailUrl || curVid.posterUrl || "";
+              if (!effAuthor) effAuthor = curVid.author?.name || curVid.authorName || "";
+              if (!effRating && curVid.rating) effRating = Number(curVid.rating);
+              if (!effVideoUrl) effVideoUrl = curVid.videoUrl || "";
+            }
+          } catch (e) {}
+
+          if (!effPlaceName && effPlaceId) {
+            try {
+              const pIndex = path.resolve('uploads/places_index.json');
+              if (fs.existsSync(pIndex)) {
+                const places = JSON.parse(fs.readFileSync(pIndex, 'utf8'));
+                const p = places.find((x: any) => x && (x.id === effPlaceId || x.brandDomain === effPlaceId || x.website?.includes(effPlaceId)));
+                if (p) effPlaceName = p.name || effPlaceId;
+              }
+            } catch (e) {}
+          }
+
+          const bmData = {
+            id: bmId,
+            videoId,
+            placeId: effPlaceId,
+            placeName: effPlaceName || "Saved Place",
+            userId: userId || "",
+            userEmail: effEmail,
+            userName: effName || "Community Member",
+            userAvatar: effAvatar,
+            userHandle: effHandle || `@${(effName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            videoThumbnail: effThumb,
+            videoAuthor: effAuthor,
+            videoRating: effRating,
+            videoUrl: effVideoUrl,
+            isBookmarked: true,
+            createdAt: new Date().toISOString()
+          };
+
           await bunnyDb.execute({
             sql: "INSERT OR REPLACE INTO bookmarks (id, userId, placeId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-            args: [bmId, userId || "", placeId || "", videoId, JSON.stringify({ videoId, placeId, userId, isBookmarked: true })]
+            args: [bmId, userId || "", effPlaceId, videoId, JSON.stringify(bmData)]
           });
         } else {
           await bunnyDb.execute({

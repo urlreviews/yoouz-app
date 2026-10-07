@@ -134,7 +134,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "messages" | "broadcast" | "database" | "search";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "bookmarks" | "messages" | "broadcast" | "database" | "search";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -266,6 +266,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         endpoint = `/api/admin/chats?_t=${Date.now()}`;
       } else if (tableName === "likes") {
         endpoint = `/api/admin/likes?_t=${Date.now()}`;
+      } else if (tableName === "bookmarks") {
+        endpoint = `/api/admin/bookmarks?_t=${Date.now()}`;
       }
       const res = await fetch(endpoint, { cache: "no-store" });
       if (res.ok) {
@@ -379,6 +381,73 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     } catch (e) {
       showToast("Error purging likes");
+    }
+  };
+
+  // Admin Bookmarks & Saved Reviews Audit Feed State
+  const [adminBookmarks, setAdminBookmarks] = useState<any[]>([]);
+  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
+  const [bookmarksSearchQuery, setBookmarksSearchQuery] = useState("");
+  const [bookmarksSort, setBookmarksSort] = useState<"newest" | "oldest">("newest");
+  const [selectedBookmarkDetailModal, setSelectedBookmarkDetailModal] = useState<any | null>(null);
+  const [confirmDeleteBookmarkId, setConfirmDeleteBookmarkId] = useState<string | null>(null);
+  const [confirmPurgeAllBookmarks, setConfirmPurgeAllBookmarks] = useState(false);
+  const [isDeletingBookmarkId, setIsDeletingBookmarkId] = useState<string | null>(null);
+
+  const fetchAdminBookmarks = useCallback(async () => {
+    setIsLoadingBookmarks(true);
+    try {
+      const res = await fetch(`/api/admin/bookmarks?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminBookmarks(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch admin bookmarks:", e);
+    } finally {
+      setIsLoadingBookmarks(false);
+    }
+  }, []);
+
+  const handleDeleteBookmark = async (bookmarkId: string) => {
+    setIsDeletingBookmarkId(bookmarkId);
+    try {
+      const res = await fetch(`/api/admin/bookmarks/${bookmarkId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Bookmark removed successfully");
+        setAdminBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
+        setConfirmDeleteBookmarkId(null);
+        if (selectedBookmarkDetailModal?.id === bookmarkId) {
+          setSelectedBookmarkDetailModal(null);
+        }
+        if (typeof fetchLiveStats === "function") {
+          fetchLiveStats();
+        }
+      } else {
+        showToast("Failed to delete bookmark");
+      }
+    } catch (e) {
+      showToast("Error deleting bookmark");
+    } finally {
+      setIsDeletingBookmarkId(null);
+    }
+  };
+
+  const handlePurgeAllBookmarks = async () => {
+    try {
+      const res = await fetch("/api/admin/bookmarks/purge-all", { method: "POST" });
+      if (res.ok) {
+        showToast("All bookmarks purged successfully");
+        setAdminBookmarks([]);
+        setConfirmPurgeAllBookmarks(false);
+        if (typeof fetchLiveStats === "function") {
+          fetchLiveStats();
+        }
+      } else {
+        showToast("Failed to purge bookmarks");
+      }
+    } catch (e) {
+      showToast("Error purging bookmarks");
     }
   };
 
@@ -515,7 +584,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     if (activeTab === "likes" || activeTab === "overview") {
       fetchAdminLikes();
     }
-  }, [activeTab, fetchAdminLikes]);
+    if (activeTab === "bookmarks" || activeTab === "overview") {
+      fetchAdminBookmarks();
+    }
+  }, [activeTab, fetchAdminLikes, fetchAdminBookmarks]);
 
   const handleDeduplicateChats = async () => {
     setIsDeduplicatingChats(true);
@@ -1224,15 +1296,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     if (isAuthenticated) {
       fetchLiveStats();
       fetchAdminLikes();
+      fetchAdminBookmarks();
       const interval = setInterval(() => {
         fetchLiveStats();
         if (activeTab === "likes" || activeTab === "overview") {
           fetchAdminLikes();
         }
+        if (activeTab === "bookmarks" || activeTab === "overview") {
+          fetchAdminBookmarks();
+        }
       }, 15000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, activeTab, fetchAdminLikes]);
+  }, [isAuthenticated, activeTab, fetchAdminLikes, fetchAdminBookmarks]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -2056,6 +2132,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return list;
   }, [adminLikes, likesSearchQuery, likesSort]);
 
+  // Filtered and Sorted Bookmarks List
+  const filteredBookmarks = useMemo(() => {
+    let list = [...adminBookmarks];
+    if (bookmarksSearchQuery.trim()) {
+      const q = bookmarksSearchQuery.toLowerCase().trim();
+      list = list.filter((b) => {
+        const uName = String(b.userName || "").toLowerCase();
+        const uHandle = String(b.userHandle || "").toLowerCase();
+        const pName = String(b.placeName || "").toLowerCase();
+        const pId = String(b.placeId || "").toLowerCase();
+        const vId = String(b.videoId || "").toLowerCase();
+        const bId = String(b.id || "").toLowerCase();
+        return uName.includes(q) || uHandle.includes(q) || pName.includes(q) || pId.includes(q) || vId.includes(q) || bId.includes(q);
+      });
+    }
+
+    if (bookmarksSort === "oldest") {
+      list.sort((a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+    } else {
+      list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    }
+    return list;
+  }, [adminBookmarks, bookmarksSearchQuery, bookmarksSort]);
+
   // Categories list
   const uniqueBusinessCategories = useMemo(() => {
     const set = new Set<string>();
@@ -2781,6 +2881,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </span>
             </button>
 
+            {/* 10. Bookmarks */}
+            <button
+              onClick={() => setActiveTab("bookmarks")}
+              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                activeTab === "bookmarks"
+                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
+              }`}
+            >
+              <div className="flex items-center gap-3.5">
+                <Bookmark className="w-5 h-5 shrink-0 text-amber-400" />
+                <span>Bookmarks</span>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-amber-400 border border-zinc-800">
+                {liveStats?.totals?.bookmarks ?? adminBookmarks.length}
+              </span>
+            </button>
+
             {/* 9. Messages */}
             <button
               onClick={() => setActiveTab("messages")}
@@ -2872,6 +2990,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["videos", `Videos (${metrics.totalVideos})`],
                 ["comments", `Comments (${allComments.length})`],
                 ["likes", `Likes (${liveStats?.totals?.likes ?? adminLikes.length})`],
+                ["bookmarks", `Bookmarks (${liveStats?.totals?.bookmarks ?? adminBookmarks.length})`],
                 ["messages", `Messages (${adminChats.length})`],
                 ["broadcast", "Broadcast"],
                 ["database", "Database"]
@@ -3622,23 +3741,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-2.5">
                     <div className="text-3xl font-black text-white tracking-tight font-mono">
-                      {(liveStats?.totals?.likes ?? metrics.totalLikes) + (liveStats?.totals?.comments ?? metrics.totalComments) + (liveStats?.totals?.shares ?? metrics.totalShares)}
+                      {(liveStats?.totals?.likes ?? metrics.totalLikes) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? metrics.totalComments) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      {liveStats?.totals?.likes ?? metrics.totalLikes} Likes • {liveStats?.totals?.comments ?? metrics.totalComments} Comments
+                      {liveStats?.totals?.likes ?? metrics.totalLikes} Likes • {liveStats?.totals?.bookmarks ?? adminBookmarks.length} Saved • {liveStats?.totals?.comments ?? metrics.totalComments} Comments
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-zinc-800/80 text-[10px] font-semibold">
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-zinc-800/80 text-[10px] font-semibold">
                     <button
-                      onClick={() => setActiveTab("likes")}
-                      className="flex-1 py-1 px-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      onClick={(e) => { e.stopPropagation(); setActiveTab("likes"); }}
+                      className="flex-1 py-1 px-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
                     >
                       <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
-                      <span>Likes Feed →</span>
+                      <span>Likes →</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab("comments")}
-                      className="flex-1 py-1 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      onClick={(e) => { e.stopPropagation(); setActiveTab("bookmarks"); }}
+                      className="flex-1 py-1 px-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400" />
+                      <span>Saved →</span>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveTab("comments"); }}
+                      className="flex-1 py-1 px-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
                     >
                       <MessageSquare className="w-3 h-3 text-zinc-400" />
                       <span>Comments →</span>
@@ -3994,6 +4120,136 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Row 4: Live Community Bookmarks & Saved Reviews Activity Stream */}
+              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                      <Bookmark className="w-4 h-4 fill-amber-500 text-amber-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                        Live Community Saved & Bookmarked Reviews Activity
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
+                          {adminBookmarks.length} Saved
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-zinc-400">
+                        Real-time audit stream showing each member who saved/bookmarked reviews and places
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={fetchAdminBookmarks}
+                      disabled={isLoadingBookmarks}
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isLoadingBookmarks ? "animate-spin" : ""}`} />
+                      <span>Sync</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("bookmarks")}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
+                    >
+                      <span>Full Bookmarks Feed ({adminBookmarks.length}) →</span>
+                    </button>
+                  </div>
+                </div>
+
+                {isLoadingBookmarks ? (
+                  <div className="py-8 text-center text-zinc-400 space-y-2">
+                    <RefreshCw className="w-6 h-6 text-amber-500 animate-spin mx-auto" />
+                    <p className="text-xs">Loading recorded bookmarks...</p>
+                  </div>
+                ) : adminBookmarks.length === 0 ? (
+                  <div className="py-8 text-center text-zinc-400 space-y-2">
+                    <Bookmark className="w-8 h-8 text-zinc-600 mx-auto" />
+                    <p className="text-xs font-medium text-zinc-300">No bookmarks recorded yet.</p>
+                    <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
+                      When community members bookmark places or video reviews, their full identity and saved review details will instantly appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {adminBookmarks.slice(0, 6).map((bm, idx) => {
+                      const matchedVid = activeVideos.find((v) => v.id === bm.videoId);
+                      const matchedPlace = activePlaces.find((p) => p.id === bm.placeId || p.brandDomain === bm.placeId);
+                      const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                      const placeName = bm.placeName || matchedPlace?.name || matchedVid?.placeName || "Saved Place";
+                      const videoRating = bm.videoRating || matchedVid?.rating;
+
+                      return (
+                        <div
+                          key={bm.id || `ov-bm-${idx}`}
+                          onClick={() => setSelectedBookmarkDetailModal(bm)}
+                          className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800/90 hover:border-amber-500/50 hover:bg-zinc-900/60 transition-all cursor-pointer group flex items-center justify-between gap-3 shadow-xs"
+                          title="Click to view full bookmark audit details"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {/* User Avatar */}
+                            <div className="relative shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden ring-1 ring-amber-500/20 group-hover:ring-amber-500/60 transition-all">
+                                <img
+                                  src={getSafeAvatarUrl(bm.userAvatar, bm.userName, bm.userHandle)}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
+                                  }}
+                                />
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-600 border border-zinc-900 flex items-center justify-center text-[8px] text-white">
+                                🔖
+                              </div>
+                            </div>
+
+                            {/* User & Bookmarked Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs text-white truncate group-hover:text-amber-400 transition-colors">
+                                  {bm.userName || "Community User"}
+                                </span>
+                                <span className="text-[10px] px-1 rounded font-mono bg-zinc-800 text-zinc-400">
+                                  {bm.userHandle || "@user"}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+                                Saved <strong className="text-zinc-200">{placeName}</strong>
+                              </p>
+                              <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
+                                <span>{bm.timestamp || "Recently"}</span>
+                                {videoRating && (
+                                  <span className="flex items-center gap-0.5 text-amber-400 font-mono font-bold">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400" /> {videoRating}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Video Thumbnail / Logo */}
+                          {videoThumb ? (
+                            <div className="w-11 h-11 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 relative">
+                              <img src={videoThumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                <Play className="w-2.5 h-2.5 fill-white text-white ml-0.5" />
+                              </div>
+                            </div>
+                          ) : bm.placeLogo || matchedPlace?.logoUrl ? (
+                            <div className="w-11 h-11 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 p-1">
+                              <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain" />
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -4199,6 +4455,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <Heart className="w-3.5 h-3.5 text-rose-500/70 group-hover/likes:fill-rose-500 group-hover/likes:text-rose-500" />
                             <span>{video.likes || 0}</span>
                           </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveTab("bookmarks");
+                              setBookmarksSearchQuery(video.id || video.placeId || "");
+                            }}
+                            className="flex items-center gap-1 font-mono hover:text-amber-400 transition-colors cursor-pointer group/bkmk"
+                            title={`Click to view users who saved ${video.placeName}`}
+                          >
+                            <Bookmark className="w-3.5 h-3.5 text-amber-500/70 group-hover/bkmk:fill-amber-500 group-hover/bkmk:text-amber-500" />
+                            <span>{video.bookmarksCount || (video as any).bookmarks || 0}</span>
+                          </button>
                           <span className="flex items-center gap-1 font-mono">
                             <MessageSquare className="w-3.5 h-3.5 text-zinc-500" /> {video.commentsCount || (video.comments || []).length}
                           </span>
@@ -4334,6 +4602,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 >
                                   <Heart className="w-3 h-3 text-rose-500/70 group-hover/likes:fill-rose-500 group-hover/likes:text-rose-500" />
                                   <span>{v.likes || 0}</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTab("bookmarks");
+                                    setBookmarksSearchQuery(v.id || v.placeId || "");
+                                  }}
+                                  className="flex items-center gap-1 hover:text-amber-400 transition-colors cursor-pointer group/bkmk"
+                                  title={`Click to view users who saved ${v.placeName}`}
+                                >
+                                  <Bookmark className="w-3 h-3 text-amber-500/70 group-hover/bkmk:fill-amber-500" />
+                                  <span>{v.bookmarksCount || (v as any).bookmarks || 0}</span>
                                 </button>
                                 <span className="flex items-center gap-1">
                                   <MessageSquare className="w-3 h-3 text-zinc-500" /> {v.commentsCount || (v.comments || []).length}
@@ -6078,6 +6358,308 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
+          {/* TAB: BOOKMARKS & SAVED REVIEWS AUDIT FEED */}
+          {activeTab === "bookmarks" && (
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+                      <Bookmark className="w-5 h-5 fill-amber-500 text-amber-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                        Bookmarks & Saved Reviews Audit Feed
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
+                          {adminBookmarks.length} Saved
+                        </span>
+                      </h2>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        Live real-time activity log tracking each community member who saved/bookmarked reviews and places
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    onClick={fetchAdminBookmarks}
+                    disabled={isLoadingBookmarks}
+                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isLoadingBookmarks ? "animate-spin" : ""}`} />
+                    <span>Sync Feed</span>
+                  </button>
+
+                  {adminBookmarks.length > 0 && (
+                    <button
+                      onClick={() => setConfirmPurgeAllBookmarks(true)}
+                      className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Purge All</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Metrics Summary Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Total Bookmarks</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">{adminBookmarks.length}</div>
+                    <span className="text-[11px] text-zinc-500">Live saved items in BunnyDB</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Bookmark className="w-5 h-5 fill-amber-500" />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Active Savers</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">
+                      {new Set(adminBookmarks.map((b) => b.userId || b.userEmail || b.userName)).size}
+                    </div>
+                    <span className="text-[11px] text-zinc-500">Unique user accounts</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Saved Places & Reviews</span>
+                    <div className="text-2xl font-black text-white font-mono mt-1">
+                      {new Set(adminBookmarks.map((b) => b.placeId || b.videoId)).size}
+                    </div>
+                    <span className="text-[11px] text-zinc-500">Target saved entities</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Sort Controls */}
+              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between">
+                <div className="relative flex-1 w-full">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={bookmarksSearchQuery}
+                    onChange={(e) => setBookmarksSearchQuery(e.target.value)}
+                    placeholder="Filter bookmarks by user name, handle, place name, or place ID..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+                  />
+                  {bookmarksSearchQuery && (
+                    <button
+                      onClick={() => setBookmarksSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-white"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+                  <select
+                    value={bookmarksSort}
+                    onChange={(e) => setBookmarksSort(e.target.value as any)}
+                    className="bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  >
+                    <option value="newest">Newest Bookmarks First</option>
+                    <option value="oldest">Oldest Bookmarks First</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bookmarks List */}
+              <div className="space-y-3">
+                {isLoadingBookmarks ? (
+                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
+                    <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
+                    <p className="text-xs text-zinc-400 font-medium">Fetching real-time bookmarks audit from Bunny libSQL database...</p>
+                  </div>
+                ) : filteredBookmarks.length === 0 ? (
+                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl mx-auto">
+                      🔖
+                    </div>
+                    <h3 className="text-base font-bold text-white">No Bookmarks Recorded Yet</h3>
+                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                      {bookmarksSearchQuery ? "No bookmarks matching your search query. Try clearing your filter." : "When community members tap the bookmark button on places or video reviews, their full identity and saved review details will appear here."}
+                    </p>
+                  </div>
+                ) : (
+                  filteredBookmarks.map((bm, idx) => {
+                    const matchedVid = activeVideos.find((v) => v.id === bm.videoId);
+                    const matchedPlace = activePlaces.find((p) => p.id === bm.placeId || p.brandDomain === bm.placeId);
+                    const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                    const videoUrl = bm.videoUrl || matchedVid?.videoUrl || "";
+                    const placeName = bm.placeName || matchedPlace?.name || matchedVid?.placeName || "Saved Place";
+                    const rating = bm.videoRating || matchedVid?.rating || matchedPlace?.rating;
+
+                    return (
+                      <div
+                        key={bm.id || `bm-${idx}`}
+                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-850/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                      >
+                        {/* User Identity Column */}
+                        <div className="flex items-center gap-3.5 min-w-[240px]">
+                          <div className="relative shrink-0">
+                            <div className="w-11 h-11 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden ring-2 ring-amber-500/20 group-hover:ring-amber-500/50 transition-all">
+                              <img
+                                src={getSafeAvatarUrl(bm.userAvatar, bm.userName, bm.userHandle)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
+                                }}
+                              />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] text-white">
+                              🔖
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm truncate group-hover:text-amber-400 transition-colors">
+                                {bm.userName || "Community User"}
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-md font-mono bg-zinc-800 text-zinc-400 font-bold">
+                                {bm.userHandle || `@${String(bm.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                              <Clock className="w-3 h-3 text-zinc-500" />
+                              <span>{bm.timestamp || "Recently"}</span>
+                              {bm.createdAt && (
+                                <span className="text-[10px] text-zinc-600 font-mono">
+                                  • {new Date(bm.createdAt).toLocaleDateString()} {new Date(bm.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Saved Review / Place Information */}
+                        <div className="flex items-center gap-3.5 flex-1 min-w-0 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+                          {/* Thumbnail / Logo */}
+                          <div
+                            onClick={() => {
+                              if (videoUrl || matchedVid) {
+                                setPreviewLikeVideoModal({
+                                  videoUrl: videoUrl || matchedVid?.videoUrl,
+                                  thumbnailUrl: videoThumb,
+                                  placeName,
+                                  authorName: bm.videoAuthor || matchedVid?.authorName || "Reviewer",
+                                  rating
+                                });
+                              } else if (matchedPlace) {
+                                setEditPlaceModal(matchedPlace);
+                              }
+                            }}
+                            className="relative w-16 h-16 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 cursor-pointer group/thumb"
+                            title={videoUrl || matchedVid ? "Click to play review video" : "Click to view place details"}
+                          >
+                            {videoThumb ? (
+                              <img src={videoThumb} alt="" className="w-full h-full object-cover" />
+                            ) : bm.placeLogo || matchedPlace?.logoUrl ? (
+                              <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain p-2" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                                <Building2 className="w-6 h-6" />
+                              </div>
+                            )}
+                            {(videoUrl || matchedVid) && (
+                              <div className="absolute inset-0 bg-black/40 group-hover/thumb:bg-black/20 flex items-center justify-center transition-colors">
+                                <div className="w-6 h-6 rounded-full bg-amber-600/90 flex items-center justify-center text-white shadow-sm">
+                                  <Play className="w-3 h-3 fill-white ml-0.5" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs text-white truncate">
+                                {placeName}
+                              </span>
+                              {bm.placeCategory && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 font-semibold truncate">
+                                  {bm.placeCategory}
+                                </span>
+                              )}
+                              {rating !== undefined && rating !== null && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-1">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400" /> {rating}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-zinc-400 flex items-center gap-2 truncate">
+                              <span>Target: <strong className="text-zinc-200">{bm.placeId || bm.videoId || "Venue"}</strong></span>
+                              {bm.videoAuthor && (
+                                <>
+                                  <span className="text-zinc-600">•</span>
+                                  <span>Reviewed by: <strong className="text-zinc-200">{bm.videoAuthor}</strong></span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                          {(videoUrl || matchedVid) && (
+                            <button
+                              onClick={() => {
+                                setPreviewLikeVideoModal({
+                                  videoUrl: videoUrl || matchedVid?.videoUrl,
+                                  thumbnailUrl: videoThumb,
+                                  placeName,
+                                  authorName: bm.videoAuthor || matchedVid?.authorName || "Reviewer",
+                                  rating
+                                });
+                              }}
+                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
+                              title="Play Video"
+                            >
+                              <Play className="w-3 h-3 fill-current text-amber-400" />
+                              <span>Play</span>
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => setSelectedBookmarkDetailModal(bm)}
+                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
+                            title="View Raw JSON Details"
+                          >
+                            <Code className="w-3 h-3 text-zinc-400" />
+                            <span>Audit</span>
+                          </button>
+
+                          <button
+                            onClick={() => setConfirmDeleteBookmarkId(bm.id)}
+                            className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl cursor-pointer transition-colors"
+                            title="Remove this bookmark"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB: DIRECT MESSAGES & MODERATION */}
           {activeTab === "messages" && (
             <div className="max-w-7xl mx-auto space-y-6">
@@ -7439,7 +8021,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </button>
 
                         {/* Quick Jump to Main Tab if Available */}
-                        {["videoReviews", "videos", "places", "users", "comments", "likes", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
+                        {["videoReviews", "videos", "places", "users", "comments", "likes", "bookmarks", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
                           <button
                             onClick={() => {
                               const targetTab = inspectTableModal === "videoReviews" ? "videos" :
@@ -7608,6 +8190,45 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     </div>
                                     <span className="text-[10px] px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg font-bold shrink-0 group-hover:bg-rose-500 group-hover:text-white transition-all">
                                       Inspect Like →
+                                    </span>
+                                  </div>
+                                ) : inspectTableModal === "bookmarks" ? (
+                                  <div
+                                    onClick={() => setSelectedBookmarkDetailModal(item)}
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-850 transition-all group"
+                                    title="Click to view full Bookmark Audit modal"
+                                  >
+                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-amber-500/20 group-hover:ring-amber-500 transition-all">
+                                      <img
+                                        src={getSafeAvatarUrl(item.userAvatar || item.authorAvatar, item.userName || item.name, item.userHandle)}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = generateGoogleLetterAvatarSvg(item.userName || "User", 128, item.userHandle || item.userName);
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-white text-xs group-hover:text-amber-400 transition-colors truncate">
+                                          {item.userName || "Community User"}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
+                                          {item.userHandle || "@user"}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                          🔖 Saved Review / Place
+                                        </span>
+                                      </div>
+                                      <div className="text-[11px] text-zinc-400 truncate flex items-center gap-2">
+                                        <span>Target: <strong className="text-zinc-200">{item.placeName || item.placeId || item.videoId}</strong></span>
+                                        {item.videoAuthor && <span className="text-zinc-500">• Review by {item.videoAuthor}</span>}
+                                        {item.userEmail && <span className="text-zinc-600 font-mono text-[10px]">({item.userEmail})</span>}
+                                      </div>
+                                    </div>
+                                    <span className="text-[10px] px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold shrink-0 group-hover:bg-amber-500 group-hover:text-zinc-950 transition-all">
+                                      Inspect Bookmark →
                                     </span>
                                   </div>
                                 ) : inspectTableModal === "comments" || item.userName || item.authorName ? (
@@ -9189,6 +9810,240 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </button>
               <button
                 onClick={handlePurgeAllLikes}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
+              >
+                Purge All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* BOOKMARK RECORD AUDIT & DETAIL MODAL */}
+      {/* ========================================================================= */}
+      {selectedBookmarkDetailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                  🔖
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Bookmark & Saved Record Audit</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedBookmarkDetailModal.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedBookmarkDetailModal(null)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Member Identity</span>
+                <button
+                  onClick={() => {
+                    const uTarget = selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail || selectedBookmarkDetailModal.userName;
+                    if (uTarget) {
+                      setActiveTab("users");
+                      setSearchQuery(uTarget);
+                      setSelectedBookmarkDetailModal(null);
+                    }
+                  }}
+                  className="text-[11px] text-amber-400 hover:text-amber-300 font-bold hover:underline cursor-pointer"
+                >
+                  Inspect in Users Tab &rarr;
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-amber-500/20">
+                  <img
+                    src={getSafeAvatarUrl(selectedBookmarkDetailModal.userAvatar, selectedBookmarkDetailModal.userName, selectedBookmarkDetailModal.userHandle)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = generateGoogleLetterAvatarSvg(selectedBookmarkDetailModal.userName || "User", 128);
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">{selectedBookmarkDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono">{selectedBookmarkDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Saved Entity / Video Review Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Saved Entity</span>
+              <div className="flex items-center gap-3">
+                {selectedBookmarkDetailModal.videoThumbnail ? (
+                  <div
+                    onClick={() => {
+                      if (selectedBookmarkDetailModal.videoUrl) {
+                        setPreviewLikeVideoModal({
+                          videoUrl: selectedBookmarkDetailModal.videoUrl,
+                          thumbnailUrl: selectedBookmarkDetailModal.videoThumbnail,
+                          placeName: selectedBookmarkDetailModal.placeName || "Saved Review",
+                          authorName: selectedBookmarkDetailModal.videoAuthor || "Reviewer",
+                          rating: selectedBookmarkDetailModal.videoRating || 5
+                        });
+                      }
+                    }}
+                    className="relative w-14 h-14 rounded-xl overflow-hidden border border-zinc-800 shrink-0 cursor-pointer group"
+                    title="Click to play video"
+                  >
+                    <img
+                      src={selectedBookmarkDetailModal.videoThumbnail}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                    </div>
+                  </div>
+                ) : selectedBookmarkDetailModal.placeLogo ? (
+                  <img
+                    src={selectedBookmarkDetailModal.placeLogo}
+                    alt=""
+                    className="w-14 h-14 rounded-xl object-contain p-1 border border-zinc-800 shrink-0 bg-zinc-900"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-white text-sm truncate">{selectedBookmarkDetailModal.placeName || "Target Place"}</h4>
+                    {selectedBookmarkDetailModal.videoRating && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-0.5">
+                        <Star className="w-2.5 h-2.5 fill-amber-400" /> {selectedBookmarkDetailModal.videoRating}
+                      </span>
+                    )}
+                  </div>
+                  {selectedBookmarkDetailModal.videoAuthor && (
+                    <p className="text-xs text-zinc-400">Review authored by {selectedBookmarkDetailModal.videoAuthor}</p>
+                  )}
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
+                    Target: {selectedBookmarkDetailModal.placeId || selectedBookmarkDetailModal.videoId || "Venue"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Audit Metadata */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Saved Timestamp</span>
+                <p className="text-zinc-300 font-mono text-[11px]">
+                  {selectedBookmarkDetailModal.createdAt ? new Date(selectedBookmarkDetailModal.createdAt).toLocaleString() : selectedBookmarkDetailModal.timestamp || "Recently"}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Storage Engine</span>
+                <p className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
+                  <span>⚡ Bunny libSQL Edge</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Raw JSON */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+                {JSON.stringify(selectedBookmarkDetailModal, null, 2)}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  setConfirmDeleteBookmarkId(selectedBookmarkDetailModal.id);
+                  setSelectedBookmarkDetailModal(null);
+                }}
+                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Remove Bookmark
+              </button>
+
+              <button
+                onClick={() => setSelectedBookmarkDetailModal(null)}
+                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Close Audit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM DELETE INDIVIDUAL BOOKMARK MODAL */}
+      {/* ========================================================================= */}
+      {confirmDeleteBookmarkId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl mx-auto">
+              🔖
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Delete Bookmark Record?</h3>
+              <p className="text-xs text-zinc-400">
+                Are you sure you want to remove this bookmark from the database? The review's bookmark counter will automatically update.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmDeleteBookmarkId(null)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteBookmark(confirmDeleteBookmarkId)}
+                disabled={isDeletingBookmarkId === confirmDeleteBookmarkId}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+              >
+                {isDeletingBookmarkId === confirmDeleteBookmarkId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM PURGE ALL BOOKMARKS MODAL */}
+      {/* ========================================================================= */}
+      {confirmPurgeAllBookmarks && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Purge All Bookmarks?</h3>
+              <p className="text-xs text-zinc-400">
+                This will delete ALL bookmark records from the database and reset saved counts on all videos to 0. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmPurgeAllBookmarks(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePurgeAllBookmarks}
                 className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
               >
                 Purge All
