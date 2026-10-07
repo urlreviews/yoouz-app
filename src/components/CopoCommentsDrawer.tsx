@@ -217,10 +217,19 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const commentsListRef = useRef<HTMLDivElement>(null);
   const likingPendingRef = useRef<Set<string>>(new Set());
 
-  // Auto-resize textarea as comment wraps across multiple lines (Facebook / TikTok / YouTube style)
+  // Auto-resize textarea as comment wraps across multiple lines (without micro-reflows or typing jitter)
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
+    if (!commentText.trim()) {
+      el.style.height = "38px";
+      return;
+    }
+    // For single-line comments under standard length, stay at 38px without layout thrashing
+    if (!commentText.includes("\n") && commentText.length < 34) {
+      if (el.style.height !== "38px") el.style.height = "38px";
+      return;
+    }
     el.style.height = "auto";
     const targetHeight = Math.min(Math.max(el.scrollHeight, 38), 120);
     el.style.height = `${targetHeight}px`;
@@ -592,44 +601,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
   // Combined comments from props and remote database with canonical tree hierarchy & strict deduplication
   const combinedComments = useMemo(() => {
-    const propList = Array.isArray(video?.comments) && video.comments.length > 0
+    const propList = (Array.isArray(video?.comments) && video.comments.length > 0
       ? video.comments
-      : (video?.id === "rev-1791023009708-0qszq"
-          ? [
-              {
-                id: "comm-101",
-                videoId: "rev-1791023009708-0qszq",
-                userId: "aouisesmee@gmail.com",
-                userName: "Ben Blue",
-                userHandle: "@benblue",
-                userAvatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                text: "Super authentic video review! Very clear and helpful.",
-                createdAt: "2026-10-05T14:20:00.000Z",
-                createdAtMs: 1791123600000,
-                likesCount: 1,
-                authorName: "Ben Blue",
-                authorHandle: "@benblue",
-                authorAvatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                authorEmail: "aouisesmee@gmail.com"
-              },
-              {
-                id: "comm-102",
-                videoId: "rev-1791023009708-0qszq",
-                userId: "avr6566gd@gmail.com",
-                userName: "Steven Akan",
-                userHandle: "@stevenakan",
-                userAvatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                text: "Thanks Ben! Glad you liked the review.",
-                createdAt: "2026-10-05T15:10:00.000Z",
-                createdAtMs: 1791126600000,
-                likesCount: 1,
-                authorName: "Steven Akan",
-                authorHandle: "@stevenakan",
-                authorAvatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                authorEmail: "avr6566gd@gmail.com"
-              }
-            ]
-          : []);
+      : []).filter((c: any) => c && c.id !== "comm-101" && c.id !== "comm-102");
     // If remote comments have been loaded, they are the authoritative source from the database.
     // Prop list may contain stale, cached deleted comments from a previous device session.
     const baseList = hasRemoteFetched
@@ -645,15 +619,15 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       list = list.filter((c) => !c.id?.startsWith("owner_comm_"));
     }
 
-    // Filter out any locally or remotely deleted comment IDs across the whole thread
+    // Filter out any locally or remotely deleted comment IDs or legacy mock comments across the whole thread
     const deletedSet = new Set(localDeletedCommentIds);
     list = list
-      .filter((c) => c && c.id && !deletedSet.has(String(c.id)))
+      .filter((c) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedSet.has(String(c.id)))
       .map((c) => {
         if (Array.isArray(c.replies)) {
           return {
             ...c,
-            replies: c.replies.filter((r) => r && r.id && !deletedSet.has(String(r.id)))
+            replies: c.replies.filter((r) => r && r.id && r.id !== "comm-101" && r.id !== "comm-102" && !deletedSet.has(String(r.id)))
           };
         }
         return c;
@@ -912,6 +886,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       id="copo-comments-modal-root"
       className="fixed inset-0 z-[9999] pointer-events-auto md:pointer-events-none overscroll-none"
     >
+      {/* Solid background mask on mobile to guarantee zero video bleed-through when drawer is open */}
+      <div className="fixed inset-0 bg-black/80 md:hidden pointer-events-none -z-10" />
+
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/60 md:bg-transparent pointer-events-auto md:hidden animate-in fade-in duration-200 touch-none"
@@ -940,16 +917,18 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
             position: 'fixed',
             left: 0,
             right: 0,
+            bottom: '0px',
+            top: 'auto',
             width: '100%',
             height: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
             maxHeight: isKeyboardOpen ? `${viewportHeight}px` : (sheetHeight === "expanded" ? "88dvh" : "70dvh"),
-            top: isKeyboardOpen ? `${viewportTop}px` : 'auto',
-            bottom: isKeyboardOpen ? 'auto' : '0px',
             borderRadius: isKeyboardOpen ? '16px 16px 0 0' : '26px 26px 0 0',
           } : {})
         }}
-        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl transition-all duration-200 ease-out cursor-default overflow-hidden fixed bottom-0 left-0 right-0 md:top-0 md:right-0 md:left-auto md:bottom-auto md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto z-[10000]`}
+        className={`w-full md:w-[440px] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white rounded-t-[26px] md:rounded-none border-t border-zinc-800 md:border-l md:border-t-0 flex flex-col justify-between shadow-2xl ${isKeyboardOpen ? '' : 'transition-[height,transform,border-radius] duration-200 ease-out'} cursor-default overflow-hidden fixed bottom-0 left-0 right-0 md:top-0 md:right-0 md:left-auto md:bottom-auto md:animate-in md:slide-in-from-right md:duration-200 pointer-events-auto z-[10000]`}
       >
+        {/* Extended bottom bleed shield: extends 400px below bottom:0 so video underneath is NEVER visible during OS rubberband or keyboard transitions */}
+        <div className="absolute top-full left-0 right-0 h-96 bg-zinc-950 pointer-events-none" />
         {/* Mobile Pull Handle Indicator */}
         <div 
           onTouchStart={handleHeaderTouchStart}
@@ -1560,7 +1539,19 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     data-1p-ignore="true"
                     data-form-type="other"
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value.slice(0, 300))}
+                    onChange={(e) => {
+                      const val = e.target.value.slice(0, 300);
+                      setCommentText(val);
+                      const el = e.target;
+                      if (el) {
+                        if (!val.trim() || (!val.includes("\n") && val.length < 34)) {
+                          if (el.style.height !== "38px") el.style.height = "38px";
+                        } else {
+                          el.style.height = "auto";
+                          el.style.height = `${Math.min(Math.max(el.scrollHeight, 38), 120)}px`;
+                        }
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -1570,11 +1561,22 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       }
                     }}
                     onFocus={() => {
-                      setIsKeyboardOpen(true);
                       if (typeof window !== "undefined" && window.visualViewport) {
-                        setViewportHeight(window.visualViewport.height);
-                        setViewportTop(window.visualViewport.offsetTop);
+                        const vv = window.visualViewport;
+                        const currentHeight = vv ? vv.height : window.innerHeight;
+                        const isMobile = window.innerWidth < 768;
+                        if (isMobile && currentHeight < (window.screen?.height || window.innerHeight) * 0.88) {
+                          setIsKeyboardOpen(true);
+                          setViewportHeight(currentHeight);
+                        }
                       }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        if (document.activeElement?.tagName !== "TEXTAREA" && document.activeElement?.tagName !== "INPUT") {
+                          setIsKeyboardOpen(false);
+                        }
+                      }, 120);
                     }}
                     maxLength={300}
                     placeholder={
