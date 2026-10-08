@@ -1591,7 +1591,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
   const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
   const formattedName = formatBusinessName(video.placeName || domain) || "Business";
-  const initialCategory = (video.placeCategory && video.placeCategory !== "Establishment" && video.placeCategory !== "Local Business" && video.placeCategory !== "Business") ? video.placeCategory : "";
+  const initialCategory = video.placeCategory || "Establishment";
   const initialCity = isYoouz ? "" : (video.placeCity || "");
   const initialCountry = isYoouz ? "" : (video.placeCountry || "");
   
@@ -3220,7 +3220,11 @@ export function getGoogleMapsQuery(place?: Partial<Place> | null, customDisplayN
     return `${name}, ${rawCountry}`;
   }
 
-  return name;
+  if (place?.lat && place?.lng && (typeof place.lat === 'number' || typeof place.lat === 'string') && (typeof place.lng === 'number' || typeof place.lng === 'string')) {
+    return `${name}, ${place.lat},${place.lng}`;
+  }
+
+  return `${name} business`;
 }
 
 /**

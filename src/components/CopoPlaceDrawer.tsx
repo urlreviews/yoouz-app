@@ -400,9 +400,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasPhysicalLocation = !isYoouz && Boolean(
     (currentDisplayAddress && currentDisplayAddress.trim() !== "") ||
     (displayAddress && displayAddress.trim() !== "") ||
+    (place.address && place.address.trim() !== "") ||
     (place.city && 
      place.city.trim() !== "" && 
-     !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim()))
+     !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim())) ||
+    (place.country && place.country.trim() !== "" && !["global", "worldwide"].includes(place.country.toLowerCase().trim())) ||
+    (place.lat && place.lng) ||
+    place.name
   );
 
   // Compute dynamic stats based on actual video reviews
@@ -2157,6 +2161,28 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                        <p className="text-xs text-zinc-200 font-medium leading-relaxed">{currentDisplayAddress || displayAddress}</p>
                      </div>
                   )}
+
+                  {/* Google Maps Live Interactive Preview Map Card */}
+                  <div
+                    className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
+                    onClick={handleOpenDirections}
+                  >
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                      <div className="bg-zinc-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                        <ExternalLink className="w-3 h-3 text-white" />
+                        {t("place.openInMaps", "Open in Google Maps")}
+                      </div>
+                    </div>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0, pointerEvents: "none" }}
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
+                      title="Google Maps Location Preview"
+                    />
+                  </div>
 
                   {/* Multi-Branch Directory in About Tab */}
                   {availableLocations.length > 1 && (

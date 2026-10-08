@@ -144,19 +144,8 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             emptyColorClass="text-[#dadce0] fill-[#dadce0]"
           />
           <span>({(placeVideoReviews.length > 0 ? placeVideoReviews.length : (place.totalReviews || 0)).toLocaleString()})</span>
-          {place.category && 
-           place.category.toLowerCase() !== "local business" && 
-           place.category.toLowerCase() !== "business" && 
-           place.category.toLowerCase() !== "establishment" && 
-           place.category.toLowerCase() !== "general" && 
-           place.category.toLowerCase() !== "website" && 
-           place.category.toLowerCase() !== "venue" && 
-           place.category.toLowerCase() !== "verified business" && (
-            <>
-              <span>•</span>
-              <span>{place.category}</span>
-            </>
-          )}
+          <span>•</span>
+          <span>{place.category}</span>
         </div>
 
         {/* Quick Action Buttons: Directions, Save, Nearby, Share */}
@@ -534,6 +523,50 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
               <p className="text-[13px] text-zinc-200 leading-relaxed font-normal">
                 {getEffectivePlaceDescription(place)}
               </p>
+            </div>
+
+            {/* Location & Address with Live Map Preview */}
+            <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-[13px] text-zinc-100 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-zinc-300" />
+                  <span>Location & Address</span>
+                </h4>
+                <button
+                  onClick={onOpenDirections}
+                  className="text-xs text-blue-400 hover:text-blue-300 font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Get Directions</span>
+                </button>
+              </div>
+
+              {place.address && (
+                <p className="text-xs text-zinc-300 font-medium leading-relaxed bg-zinc-950/60 p-2.5 rounded-lg border border-zinc-800/80">
+                  {place.address}
+                </p>
+              )}
+
+              <div
+                className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 cursor-pointer relative group shadow-inner"
+                onClick={onOpenDirections}
+              >
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                  <div className="bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                    <Navigation className="w-3 h-3 text-blue-400" />
+                    <span>Open in Google Maps</span>
+                  </div>
+                </div>
+                <iframe
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  style={{ border: 0, pointerEvents: "none" }}
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={getGoogleMapsEmbedUrl(place, formatBusinessName(place.name))}
+                  title="Google Maps Location Preview"
+                />
+              </div>
             </div>
 
             <h3 className="font-medium text-[15px] font-['Google_Sans',Roboto,sans-serif] pt-1">
