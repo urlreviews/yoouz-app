@@ -3785,83 +3785,136 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   </div>
                 ) : (
                   /* FULL UNLOCKED STATE WHEN >= 1 VIDEO REVIEW EXISTS */
-                  <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-7 shadow-xl space-y-5 sm:space-y-6">
+                  <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-7 shadow-xl space-y-6">
                     {/* Clean Dark Title Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b border-zinc-800 pb-4 sm:pb-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
                       <div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                          Website Embed
-                        </h2>
+                        <div className="flex items-center gap-2.5">
+                          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                            Website Embed
+                          </h2>
+                          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Live Stream</span>
+                          </div>
+                        </div>
                         <p className="text-xs text-zinc-400 mt-1">
-                          Embed authentic video reviews directly on your website or reservation page.
+                          Display verified video reviews on your website, reservation widget, or booking page.
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 self-start sm:self-auto">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Live Stream Active ({placeVideos.length} {placeVideos.length === 1 ? 'Review' : 'Reviews'})</span>
-                      </div>
-                    </div>
 
-                    {/* HTML iFrame & SEO Code Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-                          Embed Snippet
-                        </span>
-                        {isCodeCopied && (
-                          <span className="text-xs font-bold text-zinc-200 flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5 stroke-[2.5]" /> Copied!
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-[11.5px] text-zinc-400 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 flex items-center gap-2">
-                        <Star className="w-3.5 h-3.5 fill-zinc-300 text-zinc-300 shrink-0" />
-                        <span>
-                          <strong className="text-zinc-200">Google SEO Star Snippet Enabled:</strong> Automatic Schema.org JSON-LD is included natively to display golden review stars on Google Search automatically.
-                        </span>
-                      </div>
-
-                      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 sm:p-3.5 font-mono text-xs max-h-48 overflow-y-auto">
-                        <pre className="text-[10.5px] sm:text-[11px] text-zinc-300 whitespace-pre-wrap break-all leading-relaxed">
-                          {getEmbedCode()}
-                        </pre>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setShowEmbedTester(true)}
-                          className="text-xs font-semibold text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer bg-transparent border-none p-0"
-                        >
-                          <span>Open Live Embed Tester</span>
-                        </button>
-
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
                         <button
                           type="button"
                           onClick={copyEmbedCode}
-                          className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                          className="px-4 py-2 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md active:scale-95"
                         >
-                          {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950" /> : <Copy className="w-3.5 h-3.5 text-zinc-950" />}
-                          <span>{isCodeCopied ? 'Copied' : 'Copy Embed Snippet'}</span>
+                          {isCodeCopied ? <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-4 h-4 text-zinc-950" />}
+                          <span>{isCodeCopied ? 'Copied Code!' : 'Copy Embed Code'}</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* 3. Official Single-Video Widget Preview Card */}
-                    <div className="pt-4 border-t border-zinc-800 space-y-3">
+                    {/* Quick Install Bar & SEO Badge */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                            <Globe className="w-4 h-4 text-zinc-300" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-white truncate">Works on Any Website</div>
+                            <div className="text-[10px] text-zinc-400 truncate">WordPress · Shopify · Wix · Webflow · Squarespace · HTML</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <span>Google Rich Snippets Included</span>
+                            <span className="text-[9px] uppercase px-1.5 py-0.2 bg-zinc-800 text-zinc-300 rounded font-mono font-bold">SEO</span>
+                          </div>
+                          <div className="text-[10px] text-zinc-400 truncate">Displays golden review stars on Google Search automatically</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Technical Code Inspector (Clean Minimal Pill) */}
+                    <div className="bg-zinc-950/90 border border-zinc-800/90 rounded-2xl overflow-hidden transition-all">
+                      <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 font-mono text-[11px] text-zinc-400">
+                          <div className="w-6 h-6 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                            <Code className="w-3.5 h-3.5 text-zinc-400" />
+                          </div>
+                          <span className="text-zinc-500 select-none">&lt;iframe&gt;</span>
+                          <span className="text-zinc-300 font-semibold truncate select-none">yoouz.com/embed/{getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setShowAdvanceEmbedCode(!showAdvanceEmbedCode)}
+                            className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
+                          >
+                            <span>{showAdvanceEmbedCode ? 'Hide Code' : 'View Code'}</span>
+                            {showAdvanceEmbedCode ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={copyEmbedCode}
+                            className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1 px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition cursor-pointer active:scale-95"
+                          >
+                            {isCodeCopied ? <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5" />}
+                            <span>{isCodeCopied ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expandable Code Block */}
+                      {showAdvanceEmbedCode && (
+                        <div className="border-t border-zinc-800/80 p-3.5 bg-black/50 space-y-2">
+                          <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+                            <span>Ready to paste HTML + Schema.org JSON-LD</span>
+                            <button
+                              type="button"
+                              onClick={() => setShowEmbedTester(true)}
+                              className="text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <span>Open Live Embed Tester</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <pre className="text-[10px] sm:text-[11px] text-zinc-300 font-mono whitespace-pre-wrap break-all leading-relaxed p-3 rounded-xl bg-zinc-950 border border-zinc-850 max-h-48 overflow-y-auto">
+                            {getEmbedCode()}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hero Interactive Widget Preview */}
+                    <div className="pt-2 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
-                          Preview
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white uppercase tracking-wider">
+                            Live Widget Preview
+                          </span>
+                          <span className="text-[11px] text-zinc-400">
+                            • Exactly how it appears on your website
+                          </span>
+                        </div>
                         {displayableWidgetVideos.length > 1 && (
-                          <span className="text-xs text-zinc-400 font-medium">
-                            Swipe or click arrows to view reviews ({displayableWidgetVideos.length} total)
+                          <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline-block">
+                            Interactive player ({displayableWidgetVideos.length} reviews)
                           </span>
                         )}
                       </div>
 
-                      <div className="relative w-full max-w-[390px] h-[520px] mx-auto bg-black border border-white/10 rounded-[24px] overflow-hidden shadow-2xl flex flex-col group/embed select-none">
+                      <div className="relative w-full max-w-[390px] h-[520px] mx-auto bg-black border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col group/embed select-none ring-1 ring-white/10">
                         <iframe
                           src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`}
                           title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
