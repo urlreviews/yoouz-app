@@ -128,16 +128,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
           const trimmed = item.trim();
           if (trimmed.length < 3) continue; // Instantly discard single-letter searches like "n", "k"
 
-          // Check if it matches a known place name, ID, or domain
+          // Check if it matches a known place name, ID, or domain currently in places
           const matched = places.find(p => 
             p.name.toLowerCase() === trimmed.toLowerCase() ||
             p.id.toLowerCase() === trimmed.toLowerCase() ||
             p.brandDomain?.toLowerCase() === trimmed.toLowerCase()
           );
 
-          const cleanDomain = getCleanDomainUrl(matched || trimmed);
-          if (isValidDomainUrl(cleanDomain) && !cleaned.includes(cleanDomain)) {
-            cleaned.push(cleanDomain);
+          if (matched) {
+            const cleanDomain = getCleanDomainUrl(matched);
+            if (isValidDomainUrl(cleanDomain) && !cleaned.includes(cleanDomain)) {
+              cleaned.push(cleanDomain);
+            }
           }
         }
         setRecentSearches(cleaned);
@@ -150,64 +152,6 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       businessInputRef.current?.focus();
     }, 100);
   }, [places]);
-
-  // Pre-fetch metadata in the background for any recent search item not already in places
-  // so the database in BunnyDB/bunnydb keeps the banner and logo immediately
-  useEffect(() => {
-    if (!onAddPlace) return;
-    recentSearches.forEach(async (term) => {
-      const cleanDom = getCleanDomainUrl(term);
-      if (!isValidDomainUrl(cleanDom)) return;
-      const alreadySaved = places.some(p => {
-        const pDom = getCleanDomainUrl(p);
-        return pDom === cleanDom;
-      });
-      if (!alreadySaved) {
-        try {
-          const resp = await fetch(`/api/url-metadata?url=${encodeURIComponent(cleanDom)}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data.title || data.domain) {
-              const fetchedLogo = data.logo || getCleanLogoUrl(null, data.domain) || "";
-              const fetchedBanner = data.image || "";
-              const newPlace: Place = {
-                id: (data.domain || cleanDom).toLowerCase(),
-                name: formatBusinessName(data.siteName || data.title, data.domain || cleanDom) || formatBusinessName(cleanDom) || cleanDom,
-                category: data.category || "Website",
-                categoryType: "all",
-                address: data.address || "",
-                city: data.city || "Online",
-                country: data.country || "",
-                lat: data.lat || 0,
-                lng: data.lng || 0,
-                rating: 5,
-                totalReviews: 1,
-                ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                avatarUrl: fetchedLogo,
-                logoUrl: fetchedLogo,
-                bannerUrl: fetchedBanner,
-                ogImage: fetchedBanner,
-                photos: fetchedBanner ? [fetchedBanner] : [],
-                openingHours: data.openingHours || "",
-                isOpen: true,
-                phone: data.phone || "",
-                email: data.email || "",
-                website: data.url || `https://${cleanDom}`,
-                priceRange: "N/A",
-                plusCode: "",
-                description: data.description || "",
-                popularKeywords: [],
-                amenities: [],
-                topDishes: [],
-                brandDomain: data.domain || cleanDom
-              };
-              onAddPlace(newPlace);
-            }
-          }
-        } catch (err) {}
-      }
-    });
-  }, [recentSearches, places, onAddPlace]);
 
   const findMatchingPlace = (term: string, preferredName?: string): Place | undefined => {
     const base = (preferredName || term).trim();

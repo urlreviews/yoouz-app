@@ -24872,10 +24872,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       const qLower = q.toLowerCase();
       const cacheKey = qLower;
-      const cached = searchSuggestCache.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
-        return res.json({ suggestions: cached.data, query: q, cached: true });
-      }
+      // Clear in-memory cache to guarantee real-time accurate information
+      searchSuggestCache.clear();
 
       const suggestions: Array<{
         id?: string;
@@ -24900,8 +24898,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
         if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
 
-        let dom = (item.domain || "").toLowerCase().replace(/^www\./, "").trim();
+        let dom = (item.domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").trim();
         const normTitle = item.title.toLowerCase().trim();
+
+        // If domain is empty but title looks like a domain name (e.g. "example.com")
+        if (!dom && normTitle.includes(".") && !normTitle.includes(" ") && normTitle.length > 3) {
+          dom = normTitle;
+        }
 
         const key = dom ? `${dom}:${normTitle}` : normTitle;
         if (seenKeys.has(normTitle) && !dom) return;
@@ -24910,13 +24913,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (key !== normTitle) seenKeys.add(key);
 
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
-        const logo = item.logoUrl || (hasValidDomain ? `/api/favicon?domain=${dom}` : "");
+        
+        // Ensure every suggestion has a valid logo
+        let logo = item.logoUrl || "";
+        if (!logo && hasValidDomain) {
+          logo = KNOWN_BRAND_LOGOS[dom] || `/api/favicon?domain=${dom}`;
+        }
+        if (!logo && item.id && item.id.includes(".")) {
+          logo = `/api/favicon?domain=${item.id}`;
+        }
+
+        // Only keep suggestions with complete information (valid logo or valid domain)
+        if (!logo && !hasValidDomain && item.source !== "database") return;
 
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
           title: item.title,
           domain: hasValidDomain ? dom : "",
-          logoUrl: logo,
+          logoUrl: logo || `/api/favicon?domain=${encodeURIComponent(normTitle.replace(/[^a-z0-9]/gi, '') + '.com')}`,
           category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
           address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
           source: item.source
@@ -24924,7 +24938,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       };
 
       // 1. Search local DB places (Instant Database Index)
-      const activeDb = (global as any).bunnyDb || db;
+      const activeDb = getBunnyDb();
       if (activeDb) {
         try {
           const dbRes = await activeDb.execute({
