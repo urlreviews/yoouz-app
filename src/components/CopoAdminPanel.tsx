@@ -1183,11 +1183,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          if (parsed.length > 50) {
-            const cleaned = parsed.slice(0, 28);
-            localStorage.setItem("yoouz_cached_places", JSON.stringify(cleaned));
-            return cleaned;
-          }
           return parsed;
         }
       }
