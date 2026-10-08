@@ -4851,6 +4851,13 @@ async function purgeVideoFromAllStores(videoId: string) {
   } catch (e) {}
 
   // 4. Delete from Bunny Cloud Database (libSQL)
+  try {
+    await db.delete(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
+  } catch (e) {}
+  try {
+    await db.delete(reviews).where(eq(reviews.id, videoId));
+  } catch (e) {}
+
   const bunnyClient = getBunnyDb();
   if (bunnyClient) {
     try {

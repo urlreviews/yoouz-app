@@ -1076,11 +1076,6 @@ export function App() {
     } catch (e) {
       console.warn("Server delete API notice:", e);
     }
-
-    // 8. Delete directly from BunnyDB
-    try {
-
-    } catch (err) {}
   };
 
   const handleAdminBulkDeleteVideos = async (ids: string[]) => {
