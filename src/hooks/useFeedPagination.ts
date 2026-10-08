@@ -130,6 +130,15 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   if (!id || id.length < 3) return true;
   if (HARD_DELETED_IDS.includes(id)) return true;
 
+  // If global video purge was executed, purge all previous videos
+  if (typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true") {
+    const purgeTime = Number(localStorage.getItem("copo_all_videos_purged_time") || 0);
+    const itemTime = v.createdAtMs || 0;
+    if (!purgeTime || itemTime <= purgeTime) {
+      return true;
+    }
+  }
+
   // Check client blacklist copo_deleted_videos / yoouz_deleted_videos from localStorage (ignore empty/short strings)
   try {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || localStorage.getItem("yoouz_deleted_videos") || "[]";
@@ -151,7 +160,6 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   const uHandle = (v.author?.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
   const isProtectedCreator = PROTECTED_FEED_CREATORS.has(uId) || PROTECTED_FEED_CREATORS.has(uEmail) || PROTECTED_FEED_CREATORS.has(uName) || PROTECTED_FEED_CREATORS.has(uHandle);
-  if (isProtectedCreator) return false;
 
   const pId = (v.placeId || "").toLowerCase().trim();
   const pName = (v.placeName || "").toLowerCase().trim();
@@ -260,12 +268,15 @@ export function useFeedPagination() {
         } catch (e) {}
       }
 
-      // 3. Initial fresh seed baseline (only fill missing items)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-        if (v && v.id && !combinedMap.has(String(v.id))) {
-          combinedMap.set(String(v.id), v);
-        }
-      });
+      // 3. Initial fresh seed baseline (only fill missing items if not globally purged)
+      const isAllVideosPurged = typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true";
+      if (!isAllVideosPurged) {
+        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+          if (v && v.id && !combinedMap.has(String(v.id))) {
+            combinedMap.set(String(v.id), v);
+          }
+        });
+      }
 
       // 4. Local published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
@@ -283,6 +294,8 @@ export function useFeedPagination() {
       return result;
     } catch (e) {}
     // Instant fallback to injected server videos or seed videos
+    const isAllVideosPurged = typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true";
+    if (isAllVideosPurged) return [];
     const fallbackSource = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
       : INITIAL_SEED_VIDEOS;
@@ -563,6 +576,13 @@ export function useFeedPagination() {
               recordClientDeletedId(targetId);
               setVideos((prev) => prev.filter((v) => v.id !== targetId));
               window.dispatchEvent(new CustomEvent("copo-video-deleted", { detail: { videoId: targetId } }));
+            } else if (payload.type === "videos_purged" || payload.type === "purge_all_videos") {
+              setVideos([]);
+              if (typeof localStorage !== "undefined") {
+                localStorage.setItem("copo_all_videos_purged", "true");
+                localStorage.setItem("copo_all_videos_purged_time", String(Date.now()));
+              }
+              window.dispatchEvent(new CustomEvent("copo-videos-purged"));
             } else if (payload.type === "place_deleted" && (payload.placeId || payload.variants)) {
               const vars = Array.isArray(payload.variants) ? payload.variants : [payload.placeId];
               window.dispatchEvent(new CustomEvent("copo-place-deleted", { detail: { placeId: payload.placeId, variants: vars } }));

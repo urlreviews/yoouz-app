@@ -64,6 +64,7 @@ interface CopoVideoPlayerProps {
   currentUser?: any;
   allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
+  onPurgeAllVideos?: () => void;
   onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[] }) => void;
   isPaused?: boolean;
   initialAutoplayPaused?: boolean;
@@ -115,6 +116,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   currentUser,
   allUsers,
   onDeleteVideo,
+  onPurgeAllVideos,
   onUpdateVideoReview,
   isPaused = false,
   initialAutoplayPaused = false,
@@ -132,10 +134,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const { t } = useLanguage();
   // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
   const effectiveVideos = useMemo(() => {
+    if (typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true") {
+      return (videos && videos.length > 0) ? videos.filter(v => !isPurgedItem(v)) : [];
+    }
     const fallbackList = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
       : INITIAL_SEED_VIDEOS;
-    const base = (videos && videos.length > 0)
+    const base = Array.isArray(videos)
       ? videos.filter(v => !isPurgedItem(v))
       : (feedContextTitle ? [] : fallbackList.filter((v: any) => !isPurgedItem(v)).map(normalizeReview));
     return [...base].sort((a, b) => getReviewTime(b) - getReviewTime(a));
@@ -143,6 +148,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
+  const [showConfirmPurgeAllModal, setShowConfirmPurgeAllModal] = useState<boolean>(false);
 
   // Disable automatic feed looping so home page stops at the last video matching business and user profiles
   const shouldLoop = false;
@@ -1462,7 +1468,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [handleNext, handlePrev, handleTogglePlayPause, toggleMute, moreMenuVideo]);
 
   if (!currentVideo) {
-    if (isLoading || !showEmptyState || !feedContextTitle) {
+    if (isLoading) {
       return (
         <main
           id="copo-loading-feed-container"
@@ -1952,9 +1958,42 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         <span>{t("video.reportReview", "Report Video Review")}</span>
                       </button>
                     )}
+
+                    {onDeleteVideo && (
+                      <button
+                        id="btn-more-option-delete-viewer"
+                        onClick={() => {
+                          const v = moreMenuVideo;
+                          setMoreMenuVideo(null);
+                          if (v) {
+                            setVideoConfirmDelete(v);
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
+                      </button>
+                    )}
                   </>
                 );
               })()}
+
+              {onPurgeAllVideos && (
+                <div className="pt-2 mt-2 border-t border-zinc-800/80">
+                  <button
+                    id="btn-more-option-purge-all-videos"
+                    onClick={() => {
+                      setMoreMenuVideo(null);
+                      setShowConfirmPurgeAllModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left font-semibold text-xs cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>{t("video.deleteAllVideos", "Delete All Videos (Instant Wipe)")}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2190,6 +2229,46 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
               >
                 {t("common.delete", "Delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purge All Videos Confirmation Modal */}
+      {showConfirmPurgeAllModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-bold text-white tracking-tight">Delete All Videos?</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                This will permanently delete all video reviews from all feeds, databases, and cloud storage immediately.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                id="btn-cancel-purge-all-videos"
+                onClick={() => setShowConfirmPurgeAllModal(false)}
+                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm transition-colors cursor-pointer"
+              >
+                {t("common.cancel", "Cancel")}
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-purge-all-videos"
+                onClick={() => {
+                  setShowConfirmPurgeAllModal(false);
+                  if (onPurgeAllVideos) {
+                    onPurgeAllVideos();
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+              >
+                Delete All
               </button>
             </div>
           </div>

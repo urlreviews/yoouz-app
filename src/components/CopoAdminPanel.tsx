@@ -1257,7 +1257,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       if (placesRes.status === "fulfilled" && placesRes.value.ok) {
         const placesData = await placesRes.value.json();
-        if (Array.isArray(placesData) && placesData.length > 0) {
+        if (Array.isArray(placesData)) {
           setDbPlaces(placesData);
           try {
             localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
@@ -1267,14 +1267,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       if (videosRes.status === "fulfilled" && videosRes.value.ok) {
         const videosData = await videosRes.value.json();
-        if (Array.isArray(videosData) && videosData.length > 0) {
+        if (Array.isArray(videosData)) {
           setDbVideos(videosData);
         }
       }
 
       if (usersRes.status === "fulfilled" && usersRes.value.ok) {
         const usersData = await usersRes.value.json();
-        if (Array.isArray(usersData) && usersData.length > 0) {
+        if (Array.isArray(usersData)) {
           setDbUsers(usersData);
         }
       }
@@ -1291,6 +1291,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       setIsLoadingLiveStats(false);
     }
   };
+
+  // Cross-component deletion reactivity
+  useEffect(() => {
+    const handleDeleted = (e: any) => {
+      const vidId = e?.detail?.videoId;
+      if (vidId) {
+        setDbVideos((prev) => prev.filter((v) => String(v.id) !== String(vidId)));
+        setSelectedVideoIds((prev) => prev.filter((id) => String(id) !== String(vidId)));
+      }
+    };
+    const handlePurged = () => {
+      setDbVideos([]);
+      setSelectedVideoIds([]);
+    };
+    window.addEventListener("copo-video-deleted", handleDeleted);
+    window.addEventListener("copo-videos-purged", handlePurged);
+    return () => {
+      window.removeEventListener("copo-video-deleted", handleDeleted);
+      window.removeEventListener("copo-videos-purged", handlePurged);
+    };
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -2254,38 +2275,100 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   // Execution Handlers
-  const executeDeleteVideo = (id: string) => {
-    onDeleteVideo(id);
-    setSelectedVideoIds((prev) => prev.filter((vId) => vId !== id));
+  const executeDeleteVideo = async (id: string) => {
+    if (!id) return;
+    const strId = String(id);
+
+    // 1. Immediately remove from internal dbVideos and active selection
+    setDbVideos((prev) => prev.filter((v) => String(v.id) !== strId));
+    setSelectedVideoIds((prev) => prev.filter((vId) => String(vId) !== strId));
     setConfirmDeleteVideoId(null);
-    if (previewVideo?.id === id) setPreviewVideo(null);
+    if (previewVideo?.id === strId) setPreviewVideo(null);
+
+    // 2. Call parent onDeleteVideo prop (updates App.tsx state & client storage)
+    onDeleteVideo(strId);
+
+    // 3. Show instant feedback
     showToast("Video review removed permanently from feed and database.");
-    setTimeout(fetchLiveStats, 400);
+
+    // 4. Guarantee backend deletion across all endpoints
+    try {
+      await Promise.allSettled([
+        fetch("/api/admin/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: strId })
+        }),
+        fetch("/api/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: strId })
+        }),
+        fetch(`/api/nosql/videoReviews/${encodeURIComponent(strId)}`, { method: "DELETE" })
+      ]);
+    } catch (e) {}
+
+    setTimeout(fetchLiveStats, 300);
   };
 
-  const executeBulkDeleteVideos = () => {
+  const executeBulkDeleteVideos = async () => {
     if (selectedVideoIds.length === 0) return;
-    const count = selectedVideoIds.length;
-    if (onBulkDeleteVideos) {
-      onBulkDeleteVideos(selectedVideoIds);
-    } else {
-      selectedVideoIds.forEach((id) => onDeleteVideo(id));
-    }
+    const idsToDelete = selectedVideoIds.map(String);
+    const count = idsToDelete.length;
+    const idSet = new Set(idsToDelete);
+
+    // 1. Instantly remove from internal dbVideos
+    setDbVideos((prev) => prev.filter((v) => !idSet.has(String(v.id))));
     setSelectedVideoIds([]);
     setConfirmBulkDeleteVideos(false);
+    if (previewVideo && idSet.has(String(previewVideo.id))) setPreviewVideo(null);
+
+    // 2. Call parent prop
+    if (onBulkDeleteVideos) {
+      onBulkDeleteVideos(idsToDelete);
+    } else {
+      idsToDelete.forEach((id) => onDeleteVideo(id));
+    }
+
     showToast(`Deleted ${count} selected video reviews.`);
-    setTimeout(fetchLiveStats, 400);
+
+    // 3. Direct backend endpoints
+    try {
+      await Promise.allSettled([
+        fetch("/api/admin/videos/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoIds: idsToDelete })
+        }),
+        ...idsToDelete.map((id) =>
+          fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
+        )
+      ]);
+    } catch (e) {}
+
+    setTimeout(fetchLiveStats, 300);
   };
 
-  const executePurgeAllVideos = () => {
-    if (onPurgeAllVideos) {
-      onPurgeAllVideos();
-    }
+  const executePurgeAllVideos = async () => {
+    // 1. Instantly wipe internal state
+    setDbVideos([]);
     setSelectedVideoIds([]);
     setConfirmPurgeAllVideos(false);
     setPreviewVideo(null);
+
+    // 2. Call parent prop
+    if (onPurgeAllVideos) {
+      onPurgeAllVideos();
+    }
+
     showToast("All video reviews purged completely from storage and database.");
-    setTimeout(fetchLiveStats, 400);
+
+    // 3. Direct backend call
+    try {
+      await fetch("/api/admin/videos/purge-all", { method: "POST" });
+    } catch (e) {}
+
+    setTimeout(fetchLiveStats, 300);
   };
 
   const executeDeletePlace = (id: string) => {
@@ -4321,7 +4404,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* Bulk Actions & Total Counter */}
                 <div className="flex items-center gap-2.5">
                   <span className="text-xs text-zinc-400 font-mono hidden sm:inline-block">
-                    Showing <span className="text-white font-bold">{filteredVideos.length}</span> of {videos.length} reviews
+                    Showing <span className="text-white font-bold">{filteredVideos.length}</span> of {activeVideos.length} reviews
                   </span>
 
                   {selectedVideoIds.length > 0 && (
@@ -4488,13 +4571,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <div className="flex items-center gap-1 animate-in fade-in">
                               <button
                                 onClick={() => executeDeleteVideo(video.id)}
-                                className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[11px] font-bold cursor-pointer"
+                                className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[11px] font-black cursor-pointer shadow-sm flex items-center gap-1"
                               >
-                                Delete
+                                <Trash2 className="w-3 h-3" /> Confirm
                               </button>
                               <button
                                 onClick={() => setConfirmDeleteVideoId(null)}
                                 className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                                title="Cancel"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -4642,22 +4726,23 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   <div className="flex items-center gap-1 animate-in fade-in">
                                     <button
                                       onClick={() => executeDeleteVideo(v.id)}
-                                      className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[11px] font-bold cursor-pointer"
+                                      className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-black cursor-pointer shadow-sm flex items-center gap-1 whitespace-nowrap"
                                     >
-                                      Delete
+                                      <Trash2 className="w-3 h-3" /> Confirm Delete
                                     </button>
                                     <button
                                       onClick={() => setConfirmDeleteVideoId(null)}
                                       className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                                      title="Cancel"
                                     >
-                                      <X className="w-3 h-3" />
+                                      <X className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 ) : (
                                   <button
                                     onClick={() => setConfirmDeleteVideoId(v.id)}
-                                    className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/50 cursor-pointer"
-                                    title="Delete"
+                                    className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/50 cursor-pointer transition-colors"
+                                    title="Delete Video"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>

@@ -969,6 +969,7 @@ export function App() {
     // 1. Instantly remove from local videos state
     const remainingVideos = videos.filter(v => String(v.id) !== targetId);
     setVideos(remainingVideos);
+    setCurrentVideoIndex(prev => Math.max(0, Math.min(prev, Math.max(0, remainingVideos.length - 1))));
 
     // Update all registered users and creators video review counts dynamically
     setAllRegisteredUsers(prev => prev.map(u => {
@@ -1183,37 +1184,45 @@ export function App() {
   };
 
   const handleAdminPurgeAllVideos = async () => {
-    // 1. Instantly clear local videos state
+    // 1. Collect all existing video IDs for persistent blacklist
+    const allVidIds = videos.map(v => String(v.id)).filter(Boolean);
+
+    // 2. Instantly clear local videos state
     setVideos([]);
-    setPlaces(prev => prev.map(p => ({ ...p, reviews: [], totalReviews: 0 })));
+    setPlaces(prev => prev.map(p => ({ ...p, reviews: [], totalReviews: 0, videoReviewCount: 0 })));
+    setCurrentVideoIndex(0);
     setActiveCommentVideo(null);
     setActiveShareVideo(null);
 
     try {
+      localStorage.setItem("copo_all_videos_purged", "true");
+      localStorage.setItem("copo_all_videos_purged_time", String(Date.now()));
+      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+      let deletedList: string[] = [];
+      try { deletedList = JSON.parse(deletedStr); } catch (e) {}
+      allVidIds.forEach(id => {
+        if (!deletedList.includes(id)) deletedList.push(id);
+      });
+      localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedList));
       localStorage.removeItem("copo_videos");
-      localStorage.removeItem("copo_deleted_videos");
       localStorage.removeItem(YOOUZ_VIDEOS_CACHE_KEY);
-      localStorage.removeItem("yoouz_cached_videos_v28");
-      localStorage.removeItem("yoouz_cached_videos_v27");
-      localStorage.removeItem("yoouz_cached_videos_v26");
-      localStorage.removeItem("yoouz_cached_videos_v25");
+      localStorage.removeItem("yoouz_local_created_reviews");
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("yoouz_cached_videos") || k === "copo_videos")) {
+          localStorage.removeItem(k);
+        }
+      }
     } catch (e) {}
 
     clearAllVideoBlobsFromIndexedDB().catch(() => {});
 
     window.dispatchEvent(new CustomEvent("copo-videos-purged"));
 
-    // 2. Clear backend uploads on server
+    // 3. Clear backend uploads and database on server
     try {
-      fetch("/api/admin/videos/purge-all", { method: "POST" }).catch(() => {});
+      await fetch("/api/admin/videos/purge-all", { method: "POST" });
     } catch (e) {}
-
-    // 3. Purge all videoReviews and videos from BunnyDB
-    try {
-
-    } catch (err) {
-      console.warn("Failed to purge video reviews from BunnyDB:", err);
-    }
   };
 
   const handleAdminDeletePlace = (id: string) => {
@@ -7019,6 +7028,7 @@ export function App() {
               currentUser={currentUser}
               allUsers={allRegisteredUsers}
               onDeleteVideo={handleDeleteUserVideo}
+              onPurgeAllVideos={handleAdminPurgeAllVideos}
               onUpdateVideoReview={handleUpdateVideoReview}
               onHideVideo={(vidId) => {
                 const targetVid = activeFeedVideos.find((v) => v.id === vidId);

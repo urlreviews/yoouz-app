@@ -6455,6 +6455,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           console.warn("Failed to enrich admin videoReviews with comments & counts:", e);
         }
       }
+
+      const deletedSet = new Set(readDeletedReviewsIndex());
+      items = items.filter((v: any) => v && v.id && !deletedSet.has(String(v.id)));
     }
 
     if (colName === 'likes') {
@@ -19793,10 +19796,21 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       // 1. Clear reviews index
       try { writeReviewsIndex([]); } catch(e) {}
 
+      // Overwrite static seedReviews.ts file on disk so seed videos do not respawn
+      try {
+        const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+        if (fs.existsSync(seedReviewsPath)) {
+          const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = [];\n';
+          fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
+        }
+      } catch (sErr) {}
+
       // 2. Clear tables in Bunny Database (libSQL)
       if (bunnyClient) {
         try {
           await bunnyClient.execute("DELETE FROM videoReviews");
+          await bunnyClient.execute("DELETE FROM video_reviews");
+          await bunnyClient.execute("DELETE FROM videos");
           await bunnyClient.execute("DELETE FROM comments");
           await bunnyClient.execute("DELETE FROM likes");
           await bunnyClient.execute("DELETE FROM bookmarks");

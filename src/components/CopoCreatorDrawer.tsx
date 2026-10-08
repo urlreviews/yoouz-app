@@ -1430,7 +1430,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                           <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                         </div>
-                        {isOwner && onDeleteVideo && (
+                        {onDeleteVideo && (
                           <button
                             type="button"
                             onClick={(e) => {

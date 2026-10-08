@@ -68,7 +68,8 @@
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq",
     "reviewsCount": 3,
     "reviewCount": 3,
-    "totalReviews": 3
+    "totalReviews": 3,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg"
   },
   {
     "id": "rev-1791021692476-auirn",
@@ -139,7 +140,8 @@
     "comments": [],
     "reviewsCount": 3,
     "reviewCount": 3,
-    "totalReviews": 3
+    "totalReviews": 3,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg"
   },
   {
     "id": "rev-1790368898192-sw74n",
@@ -210,7 +212,8 @@
     "comments": [],
     "reviewsCount": 3,
     "reviewCount": 3,
-    "totalReviews": 3
+    "totalReviews": 3,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg"
   },
   {
     "id": "rev-1790363378621-w65oy",
@@ -281,7 +284,8 @@
     "comments": [],
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1
+    "totalReviews": 1,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fautowerkplaatsbrugge.be%2Fassets%2Fimg%2FAutoWerkplaatsBrugge_Garage.png"
   },
   {
     "id": "rev-1790353801035-1rlp8",
@@ -352,7 +356,8 @@
     "comments": [],
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1
+    "totalReviews": 1,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg"
   },
   {
     "id": "rev-1789841701519-2l6x8",
@@ -365,7 +370,7 @@
     "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placeWebsite": "https://yoouz.com",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fyoouz.com%2Ffavicon.ico",
+    "placeLogoUrl": "https://yoouz.com/favicon.ico",
     "caption": "Video review for yoouz.com",
     "dishOrItem": "Yoouz Video Platform",
     "businessName": "Yoouz",
@@ -414,7 +419,17 @@
         "likesCount": 1,
         "replies": []
       }
-    ]
+    ],
+    "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "bannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "fallbackVideoUrls": [
+      "https://rev1.b-cdn.net/videos/rev-1789841701519-2l6x8.mp4"
+    ],
+    "ogImage": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "placePhone": "",
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2
   },
   {
     "id": "rev-1789577075627-3488d",
@@ -427,7 +442,7 @@
     "placeCity": "Online",
     "placeCountry": "United States",
     "placeWebsite": "https://yoouz.com",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fyoouz.com%2Ffavicon.ico",
+    "placeLogoUrl": "https://yoouz.com/favicon.ico",
     "caption": "Video review for yoouz.com",
     "dishOrItem": "Yoouz Video Platform",
     "businessName": "Yoouz",
@@ -491,6 +506,16 @@
           }
         ]
       }
-    ]
+    ],
+    "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "bannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "fallbackVideoUrls": [
+      "https://rev1.b-cdn.net/videos/rev-1789577075627-3488d.mp4"
+    ],
+    "ogImage": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
+    "placePhone": "",
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2
   }
 ]
