@@ -24922,15 +24922,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (!logo && item.id && item.id.includes(".")) {
           logo = `/api/favicon?domain=${item.id}`;
         }
-
-        // Only keep suggestions with complete information (valid logo or valid domain)
-        if (!logo && !hasValidDomain && item.source !== "database") return;
+        if (!logo) {
+          const domGuess = dom || (normTitle.replace(/[^a-z0-9]/gi, '') + '.com');
+          logo = `/api/favicon?domain=${encodeURIComponent(domGuess)}`;
+        }
 
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
           title: item.title,
           domain: hasValidDomain ? dom : "",
-          logoUrl: logo || `/api/favicon?domain=${encodeURIComponent(normTitle.replace(/[^a-z0-9]/gi, '') + '.com')}`,
+          logoUrl: logo,
           category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
           address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
           source: item.source

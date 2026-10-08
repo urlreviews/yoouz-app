@@ -115,7 +115,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     return () => clearTimeout(timer);
   }, [query]);
   
-  // Recent searches (stored as clean domain URLs e.g. "uber.com", "bhol.co.il")
+  // Recent searches (stored in localStorage)
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
   useEffect(() => {
@@ -126,20 +126,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         for (const item of rawSaved) {
           if (!item || typeof item !== "string") continue;
           const trimmed = item.trim();
-          if (trimmed.length < 3) continue; // Instantly discard single-letter searches like "n", "k"
-
-          // Check if it matches a known place name, ID, or domain currently in places
-          const matched = places.find(p => 
-            p.name.toLowerCase() === trimmed.toLowerCase() ||
-            p.id.toLowerCase() === trimmed.toLowerCase() ||
-            p.brandDomain?.toLowerCase() === trimmed.toLowerCase()
-          );
-
-          if (matched) {
-            const cleanDomain = getCleanDomainUrl(matched);
-            if (isValidDomainUrl(cleanDomain) && !cleaned.includes(cleanDomain)) {
-              cleaned.push(cleanDomain);
-            }
+          if (trimmed.length < 2) continue; // Purge single-letter or invalid items
+          if (!cleaned.includes(trimmed)) {
+            cleaned.push(trimmed);
           }
         }
         setRecentSearches(cleaned);
@@ -151,7 +140,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     setTimeout(() => {
       businessInputRef.current?.focus();
     }, 100);
-  }, [places]);
+  }, []);
 
   const findMatchingPlace = (term: string, preferredName?: string): Place | undefined => {
     const base = (preferredName || term).trim();
@@ -768,18 +757,11 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                       className="flex items-center gap-3.5 p-3.5 text-left cursor-pointer hover:bg-zinc-900/90 active:bg-zinc-850 transition-colors w-full group border-b border-zinc-900/80 last:border-0"
                     >
                       {(() => {
-                        const cleanD = (targetDomain || "").replace(/^www\./, "").toLowerCase().trim();
-                        const hasAuthenticLogo = Boolean(
-                          cleanD === "yoouz.com" || cleanD === "yoouz" || (title && title.toLowerCase() === "yoouz") ||
-                          (cleanD && KNOWN_BRAND_LOGOS[cleanD]) ||
-                          (itemLogo && !isFaviconUrl(itemLogo) && !isGenericOrPlaceholderLogo(itemLogo))
-                        );
-
-                        if (hasDomain && hasAuthenticLogo) {
+                        if (itemLogo) {
                           return (
                             <div className="w-9 h-9 rounded-xl bg-white shadow-xs border border-zinc-200/80 flex items-center justify-center shrink-0 p-1 overflow-hidden">
                               <CopoBrandLogo 
-                                domain={targetDomain}
+                                domain={targetDomain || title}
                                 name={title}
                                 logoUrl={itemLogo}
                                 className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"

@@ -272,9 +272,9 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }}
                 className="w-full px-4 py-3 flex items-center gap-3.5 hover:bg-zinc-900 active:bg-zinc-850 transition-colors text-left cursor-pointer group"
               >
-                {hasDomain ? (
+                {item.logoUrl || hasDomain ? (
                   <CopoBrandLogo
-                    domain={targetDomain}
+                    domain={targetDomain || item.title}
                     name={item.title}
                     logoUrl={item.logoUrl}
                     className="w-8 h-8 rounded-lg border border-zinc-800 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
