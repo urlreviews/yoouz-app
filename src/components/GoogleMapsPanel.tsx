@@ -144,8 +144,17 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             emptyColorClass="text-[#dadce0] fill-[#dadce0]"
           />
           <span>({(placeVideoReviews.length > 0 ? placeVideoReviews.length : (place.totalReviews || 0)).toLocaleString()})</span>
-          <span>•</span>
-          <span>{place.category}</span>
+          {place.category && 
+           place.category.toLowerCase() !== "local business" && 
+           place.category.toLowerCase() !== "business" && 
+           place.category.toLowerCase() !== "general" && 
+           place.category.toLowerCase() !== "website" && 
+           place.category.toLowerCase() !== "venue" && (
+            <>
+              <span>•</span>
+              <span>{place.category}</span>
+            </>
+          )}
         </div>
 
         {/* Quick Action Buttons: Directions, Save, Nearby, Share */}

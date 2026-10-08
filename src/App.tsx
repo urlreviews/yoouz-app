@@ -3784,7 +3784,7 @@ export function App() {
             id: searchId,
             name: isRealDomain ? formatBusinessName(domain) : searchId,
             brandDomain: domain || undefined,
-            category: isRealDomain ? "Verified Business" : "Local Business",
+            category: isRealDomain ? "Verified Business" : "",
             categoryType: "all",
             address: "",
             city: "",

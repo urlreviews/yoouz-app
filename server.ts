@@ -8963,6 +8963,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
     try {
       feedCache.lastFetched = 0;
       feedCache.videos = [];
+      searchSuggestCache.clear();
     } catch (e) {}
 
     broadcastSseEvent({ type: "system_reset" });
@@ -25086,6 +25087,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       const qLower = q.toLowerCase();
+      if (isMasterResetActive()) {
+        const matchYoouz = "yoouz".includes(qLower) || "yoouz.com".includes(qLower);
+        const resList = matchYoouz ? [{
+          id: "yoouz.com",
+          title: "Yoouz",
+          domain: "yoouz.com",
+          logoUrl: "https://www.yoouz.com/favicon.svg",
+          category: "Video Reviews & Discovery Platform",
+          source: "database"
+        }] : [];
+        return res.json({ suggestions: resList, query: q });
+      }
       const cacheKey = qLower;
       const cached = searchSuggestCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
