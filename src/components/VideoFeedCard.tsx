@@ -155,6 +155,21 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 }) => {
   const { t } = useLanguage();
 
+  const [computedCommentsCount, setComputedCommentsCount] = useState<number>(Number(video.commentsCount || 0));
+
+  useEffect(() => {
+    if (video.id) {
+      fetch(`/api/interactions/comments?videoId=${video.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.commentsCount === 'number') {
+            setComputedCommentsCount(data.commentsCount);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [video.id]);
+
   const { effectiveReviewCount, effectiveRating } = React.useMemo(() => {
     let count = 1;
     let ratingVal = Number(video.rating) || 5.0;
@@ -181,7 +196,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
 
     // 2. Fall back to video's own review count / matched place info
-    const vCount = Number((video as any).reviewsCount || (video as any).reviewCount || (video as any).totalReviews || 0);
+    const vCount = Number(computedCommentsCount || (video as any).reviewsCount || (video as any).reviewCount || (video as any).totalReviews || 0);
     if (vCount > 0) count = vCount;
 
     if (places && places.length > 0) {
@@ -197,7 +212,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       effectiveReviewCount: count,
       effectiveRating: ratingVal.toFixed(1)
     };
-  }, [video, places, allVideos]);
+  }, [video, places, allVideos, computedCommentsCount]);
   const [showHeartAnimation, setShowHeartAnimation] = useState<boolean>(false);
   const [heartCoords, setHeartCoords] = useState<{ x: number; y: number } | null>(null);
   const lastTapTimeRef = useRef<number>(0);
