@@ -735,7 +735,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                 {mergedSuggestions.map((item, idx) => {
                   const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
                   let targetDomain = getCleanDomainUrl(item) || (isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "");
-                  const title = item.title || item.name || (targetDomain ? formatBusinessName(targetDomain) : query);
+                  const rawTitle = item.title || item.name || (targetDomain ? targetDomain : query);
+                  const title = formatBusinessName(rawTitle, targetDomain) || rawTitle;
                   const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain));
                   const itemLogo = item.logoUrl || (hasDomain ? getItemLogoUrl(targetDomain, item) : null);
 

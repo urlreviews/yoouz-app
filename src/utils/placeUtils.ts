@@ -852,31 +852,29 @@ export function isCorruptedBusinessName(name?: string | null): boolean {
  */
 export function splitCompoundWords(str: string): string {
   let s = str.trim();
-  // If already a clean capitalized word (e.g. "Proximus", "Multipharma"), do not split
-  if (/^[A-Z][a-z0-9]+$/.test(s)) {
+  // If already a clean capitalized multi-word string with spaces, preserve word order
+  if (s.includes(" ") && /^[0-9\p{L}\s&'’\.,\-]+$/u.test(s)) {
     return s;
   }
-  // 1. Split camelCase/PascalCase
-  s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
+  // 1. Split camelCase/PascalCase (e.g., FirstStrikeElectrical -> First Strike Electrical)
+  s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
   // 2. Split letter-number and number-letter
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
-  // 3. Known brand/locational prefixes (Note: do NOT split "pro", "all", "my", "top" to prevent breaking Proximus, Profile, Alliance, etc.)
-  s = s.replace(/^(the|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{4,})/i, "$1 ");
+  
+  // 3. Known brand/locational prefixes
+  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital|best|top|pro)(?=[a-z]{3,})/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
-  
-  // 4. Known compound word boundaries & suffixes (Longer/plural terms ordered before shorter prefixes)
-  // Note: Avoid short sub-words like 'and' that cause false splits in words like 'tandis' or 'standard'
-  const commonWords = /(photo|video|autowerkplaats|werkplaats|carrosserie|garagejv|garageas|autobedrijf|autohandel|autowas|autocentrum|herstelplaats|werkplek|brugge|gent|antwerpen|brussel|leuven|hasselt|kortrijk|oostende|mechelen|sint|optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|secondary|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|garages|garage|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
-  
-  // Apply word splitting if no spaces yet
-  const parts = s.split(" ").map(p => {
-    if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
-      return p.replace(commonWords, " $1 ");
-    }
-    return p;
+
+  // 4. Lookbehind compound word splitters for concatenated terms (e.g., firststrikeelectrical, thebookstore)
+  s = s.replace(/(?<=[a-z]{2,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|net|web|online|express|prime|select|choice|smart|master|star|stars)/gi, " $1 ");
+
+  // 5. Clean up any multiple spaces and format each word cleanly with title case
+  const words = s.split(/[-_ ]+/).filter(Boolean).map(w => {
+    if (/^[A-Z0-9]+$/.test(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   });
-  s = parts.join(" ").replace(/\s+/g, " ").trim();
-  return s;
+  
+  return words.join(" ");
 }
 
 /**

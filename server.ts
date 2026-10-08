@@ -34,7 +34,7 @@ import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/a
 import { db, getDb } from "./src/db/index.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 
 dotenv.config();
@@ -24920,13 +24920,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || "";
         }
 
+        const cleanTitle = formatBusinessName(item.title, dom) || item.title;
+
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
-          title: item.title,
+          title: cleanTitle,
           domain: hasValidDomain ? dom : "",
           logoUrl: logo,
           category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
-          address: (item.address && !item.address.toLowerCase().includes("verified") && !item.address.toLowerCase().includes("google")) ? item.address : "",
+          address: "",
           source: item.source
         });
       };
@@ -29397,191 +29399,7 @@ function cleanDomainName(urlStr: any) {
   }
 }
 
-function splitCompoundWords(str: string): string {
-  let s = str.trim();
-  // If already a clean capitalized word (e.g. "Proximus", "Multipharma"), do not split
-  if (/^[A-Z][a-z0-9]+$/.test(s)) {
-    return s;
-  }
-  s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
-  s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
-  // Known brand/locational prefixes (Note: do NOT split "pro", "all", "my", "top" to prevent breaking Proximus, Profile, Alliance, etc.)
-  s = s.replace(/^(the|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital)(?=[a-z]{4,})/i, "$1 ");
-  s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
-  
-  const commonWords = /(photo|video|autowerkplaats|werkplaats|carrosserie|garagejv|garageas|autobedrijf|autohandel|autowas|autocentrum|herstelplaats|werkplek|brugge|gent|antwerpen|brussel|leuven|hasselt|kortrijk|oostende|mechelen|sint|optiekzaken|optiekzaak|opticiens|opticien|opticians|optician|optometrie|optometrist|optometry|optiek|eyewear|eyecare|kidseyewear|brillen|tandartspraktijk|tandheelkunde|tandartsen|tandarts|tandzorg|dentistes|dentiste|dentistry|dentists|dentist|dental|orthodontics|zahnarztpraxis|zahnarzte|zahnarzt|rechtsanwälte|rechtsanwalt|advocatenkantoor|advocaten|advocaat|lawyers|lawyer|attorneys|attorney|lawfirm|notarissen|notaris|notaires|notaire|plomberie|plombier|loodgieters|loodgieter|bäckerei|bakkerij|boulangerie|apotheke|apotheek|pharmacie|pharmacy|clinics|clinic|clinique|kliniek|klinik|hospital|hospitals|hopital|makelaars|makelaar|immobilier|immobilien|realestate|realty|properties|consulting|solutions|services|service|group|partners|agency|studios|studio|technologies|technology|tech|lerner|rowe|benson|bingham|injury|accident|centers|center|centres|centre|parks|park|hotels|hotel|avenue|valley|therapy|groups|media|news|travel|cafes|cafe|coffee|bars|bar|suites|suite|stores|store|shops|shop|markets|market|clubs|club|fitness|gym|labs|lab|care|health|spas|spa|salons|salon|resorts|resort|villas|villa|restaurants|restaurant|kitchen|bakery|grill|bistro|plumbers|cancellations|cancellation|motors|motor|autos|auto|rentals|rental|logistics|express|trusted|trust|capital|associates|associate|law|firm|wellness|massage|towers|tower|plaza|square|malls|mall|hubs|hub|holdings|globals|global|international|world|networks|network|systems|system|software|security|design|creative|productions|production|interactive|marketing|defense|aviation|shipping|cargo|freight|courier)/gi;
-  
-  const parts = s.split(" ").map(p => {
-    if (p.length > 4 && !p.includes("-") && !p.includes("_")) {
-      return p.replace(commonWords, " $1 ");
-    }
-    return p;
-  });
-  s = parts.join(" ").replace(/\s+/g, " ").trim();
-  return s;
-}
-function formatBusinessName(name?: string | null, domain?: string | null, queryContextParam?: string | null): string {
-  const cleanDom = domain ? cleanDomainName(domain) : "";
-  const domRoot = cleanDom ? cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] : "";
 
-  if (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) {
-    return KNOWN_OFFICIAL_NAMES[cleanDom];
-  }
-  if (domRoot && KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()]) {
-    return KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()];
-  }
-
-  // Reject corrupted or contact fragment titles (e.g. "Kruis Tel")
-  if (name && isCorruptedBusinessNameServer(name)) {
-    if (cleanDom) return formatBusinessName(cleanDom);
-    return "";
-  }
-
-  if (!name && cleanDom) {
-    return formatBusinessName(cleanDom);
-  }
-  if (!name) return "";
-  let trimmed = name.trim();
-
-  // Guard against known agency/CMS/boilerplate titles leaking into business names
-  const lowerTrimmedCheck = trimmed.toLowerCase();
-  if (cleanDom && (
-    lowerTrimmedCheck === "vaibe" ||
-    lowerTrimmedCheck === "webflow" ||
-    lowerTrimmedCheck === "wix" ||
-    lowerTrimmedCheck === "squarespace" ||
-    lowerTrimmedCheck === "wordpress" ||
-    lowerTrimmedCheck === "elementor" ||
-    lowerTrimmedCheck === "shopify" ||
-    lowerTrimmedCheck === "vite" ||
-    lowerTrimmedCheck === "react" ||
-    lowerTrimmedCheck === "vue" ||
-    lowerTrimmedCheck === "nextjs" ||
-    lowerTrimmedCheck === "website" ||
-    lowerTrimmedCheck === "untitled" ||
-    lowerTrimmedCheck === "hostinger" ||
-    lowerTrimmedCheck === "drupal"
-  )) {
-    return formatBusinessName(cleanDom);
-  }
-
-  // Guard against review IDs or raw ID strings leaking into business names (e.g. rev17895770756273488d)
-  if (trimmed.startsWith("rev") && (/^rev\d+/i.test(trimmed) || /^rev[0-9a-f]{8,}/i.test(trimmed) || trimmed.includes("rev17895"))) {
-    return "Yoouz";
-  }
-  
-  // 0. If it looks like a multi-word human name (Hebrew/English), preserve EXACT order!
-  // This prevents flipping "נועה הבית לאירועים" -> "לאירועים נועה הבית"
-  if (trimmed.includes(" ") && trimmed.length < 60 && !trimmed.includes("|") && !trimmed.includes("- ")) {
-    return trimmed;
-  }
-
-  const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");
-  if (KNOWN_OFFICIAL_NAMES[normalizedKey]) {
-    return KNOWN_OFFICIAL_NAMES[normalizedKey];
-  }
-  const cleanKey = normalizedKey.replace(/[^a-z0-9]/g, "");
-  if (KNOWN_OFFICIAL_NAMES[cleanKey]) {
-    return KNOWN_OFFICIAL_NAMES[cleanKey];
-  }
-
-  // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
-  trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
-  trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
-  
-  // 2. Strip standard SEO abbreviations like "L500 | Legal 500" -> "Legal 500"
-  if (/^L500\s*[|\-–—:]\s*/i.test(trimmed)) {
-    trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
-  }
-
-  // 3. Clean up scraped SEO titles (e.g., "Home | Van Law Firm : Nevada's Premiere...")
-  const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
-  if (rawParts.length > 1) {
-    const nonGenericParts = rawParts.filter(p => !isGenericPlaceNameServer(p));
-    if (nonGenericParts.length > 0) {
-      const validCandidates = nonGenericParts.filter(p => p.length >= 2 && p.length <= 45);
-      if (validCandidates.length > 0) {
-        const best = validCandidates.find(p => !/^(the best|official site|welcome to|premiere|leading|top rated|personal injury|attorneys at law)/i.test(p)) || validCandidates[0];
-        trimmed = best;
-      } else {
-        trimmed = nonGenericParts[0];
-      }
-    } else {
-      trimmed = "";
-    }
-  }
-
-  // If the resulting trimmed string is generic (e.g. "Home"), clear it
-  if (isGenericPlaceNameServer(trimmed)) {
-    trimmed = "";
-  }
-
-  const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (strippedKey && KNOWN_OFFICIAL_NAMES[strippedKey]) {
-    return KNOWN_OFFICIAL_NAMES[strippedKey];
-  }
-
-  // 4. If it is an explicit URL or domain
-  const isDomainLike = 
-    trimmed.includes("://") || 
-    trimmed.toLowerCase().startsWith("www.") || 
-    trimmed.toLowerCase().startsWith("www-") ||
-    trimmed.toLowerCase().startsWith("http:") ||
-    trimmed.toLowerCase().startsWith("https:") ||
-    /\.[a-z]{2,}(?:\/|$|\?|#)/i.test(trimmed) ||
-    /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
-    /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
-
-  // 3c. If the string is already a clean capitalized business name from metadata, preserve directly
-  if (!isDomainLike && trimmed && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(trimmed) && trimmed.length <= 50) {
-    return trimmed;
-  }
-
-  let rawName = trimmed;
-  if (isDomainLike) {
-    const domainStr = cleanDomainName(trimmed);
-    rawName = domainStr.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] || domainStr;
-  }
-
-  rawName = rawName
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www[\.\-\/]/i, '')
-    .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
-
-  // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma"), preserve directly
-  if (/^[A-Z][a-z0-9]+$/.test(rawName)) {
-    return rawName;
-  }
-
-  let spaced = splitCompoundWords(rawName);
-
-  if (/^jb(?=[a-z])/i.test(spaced)) {
-    spaced = spaced.replace(/^jb/i, "JB ");
-  }
-  if (/^brettlevy$/i.test(spaced)) {
-    spaced = "Brett Levy";
-  }
-
-  const acronyms = new Set(["bh", "usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae", "lm", "jb", "sf"]);
-  const lowerCaseWords = new Set(["of", "and", "in", "at", "de", "et", "du", "des"]);
-
-  const words = spaced
-    .split(/[-_ ]+/)
-    .map((word, idx) => {
-      if (!word) return "";
-      const lower = word.toLowerCase();
-      if (acronyms.has(lower)) return lower.toUpperCase();
-      if (lowerCaseWords.has(lower) && idx > 0) return lower;
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .filter(Boolean);
-
-  const result = words.join(' ');
-  if (result.length > 0 && !result.includes(" ")) {
-    return result.charAt(0).toUpperCase() + result.slice(1);
-  }
-  return result || trimmed;
-}
 
 function injectOpenGraphTags(html: string, meta: any) {
     const safeTitle = escapeHtml(meta.title);

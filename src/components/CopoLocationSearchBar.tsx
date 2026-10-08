@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, X, Loader2, CheckCircle } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { extractCleanDomain, isValidDomainUrl } from "../utils/placeUtils";
+import { extractCleanDomain, isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 export interface CopoLocationSearchBarProps {
   onSearch: (
@@ -253,6 +253,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           {suggestions.map((item, idx) => {
             const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
             let targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";
+            const formattedTitle = formatBusinessName(item.title || targetDomain || businessName, targetDomain) || item.title || targetDomain;
             const hasDomain = Boolean(targetDomain && targetDomain.includes('.') && isValidDomainUrl(targetDomain));
 
             return (
@@ -264,9 +265,9 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (onSelectSuggestion) onSelectSuggestion(item);
+                  if (onSelectSuggestion) onSelectSuggestion({ ...item, title: formattedTitle });
                   else {
-                    setBusinessName(item.title || targetDomain || businessName);
+                    setBusinessName(formattedTitle);
                     handleSubmit();
                   }
                 }}
@@ -274,8 +275,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               >
                 {item.logoUrl || hasDomain ? (
                   <CopoBrandLogo
-                    domain={targetDomain || item.title}
-                    name={item.title}
+                    domain={targetDomain || formattedTitle}
+                    name={formattedTitle}
                     logoUrl={item.logoUrl}
                     className="w-8 h-8 rounded-lg border border-zinc-800 bg-white shadow-xs flex items-center justify-center overflow-hidden shrink-0 p-0.5"
                     imageClassName="w-full h-full object-contain"
@@ -288,19 +289,19 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 overflow-hidden" dir="auto">
                     <span className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
-                      {item.title}
+                      {formattedTitle}
                     </span>
                     {item.source === "database" && (
                       <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                     )}
                   </div>
-                  {item.address ? (
-                    <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium" dir="auto">
-                      {item.address}
-                    </div>
-                  ) : hasDomain ? (
+                  {hasDomain ? (
                     <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
                       {targetDomain.toLowerCase()}
+                    </div>
+                  ) : item.domain ? (
+                    <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
+                      {item.domain.toLowerCase()}
                     </div>
                   ) : null}
                 </div>

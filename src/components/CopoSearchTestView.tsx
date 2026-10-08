@@ -325,7 +325,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center min-w-0">
                       <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 flex-wrap" dir="auto">
-                        <bdi dir="auto">{item.title || ""}</bdi>
+                        <bdi dir="auto">{formatBusinessName(item.title, item.domain) || item.title || ""}</bdi>
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
                       </div>
                     </div>
