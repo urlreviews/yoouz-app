@@ -8849,7 +8849,7 @@ app.post('/api/admin/notifications/deduplicate', express.json(), async (_req, re
 // Master System Reset: Wipe all databases, tables, and uploads from scratch
 app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => {
   try {
-    console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables and files from scratch...");
+    console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables, index files, and caches from scratch...");
     const bunnyDb = getBunnyDb();
     const tables = [
       'users', 'places', 'videoReviews', 'comments', 'likes', 
@@ -8863,7 +8863,9 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
         try {
           await bunnyDb.execute(`DELETE FROM ${tbl}`);
         } catch (e) {
-          // Table might not exist yet, safe to ignore
+          try {
+            await bunnyDb.execute(`DROP TABLE IF EXISTS ${tbl}`);
+          } catch (e2) {}
         }
       }
     }
@@ -8894,6 +8896,23 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
       }
     } catch (e) {}
 
+    // Aggressively overwrite all review index files with empty arrays []
+    const indexPaths = [
+      path.join(globalUploadsDir, "reviews_index.json"),
+      path.join(process.cwd(), "uploads", "reviews_index.json"),
+      path.join(process.cwd(), "public", "reviews_index.json"),
+      path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
+      path.join(process.cwd(), "dist", "reviews_index.json"),
+      path.join(process.cwd(), "uploads", "deleted_reviews_index.json"),
+      path.join(process.cwd(), "public", "deleted_reviews_index.json")
+    ];
+
+    for (const p of indexPaths) {
+      try {
+        fs.writeFileSync(p, JSON.stringify([], null, 2), "utf8");
+      } catch (e) {}
+    }
+
     // Reset memory cache
     try {
       feedCache.lastFetched = 0;
@@ -8901,7 +8920,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
     } catch (e) {}
 
     broadcastSseEvent({ type: "system_reset" });
-    console.log("✨ [Server] Master system reset complete. All databases and files wiped clean from scratch.");
+    console.log("✨ [Server] Master system reset complete. All databases, index files, and files wiped clean from scratch.");
     res.json({ success: true, message: "System master reset complete. All databases and files wiped clean from scratch." });
   } catch (err: any) {
     console.error("Master reset error:", err);
