@@ -45,7 +45,7 @@ interface CopoNotificationsViewProps {
   onOpenCreator?: (author: any) => void;
 }
 
-type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "shares" | "people" | "bookmarks" | "reviews";
+type FilterType = "all" | "unread" | "messages" | "likes" | "comments" | "shares" | "people" | "bookmarks";
 
 export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   notifications,
@@ -172,7 +172,6 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       }
 
       if (activeFilter === "unread") return !n.isRead;
-      if (activeFilter === "reviews") return n.type === "review";
       if (activeFilter === "messages") return n.type === "message";
       if (activeFilter === "likes") return n.type === "like";
       if (activeFilter === "comments") return n.type === "comment";
@@ -193,7 +192,6 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   const filterPills: { label: string; value: FilterType; count?: number }[] = [
     { label: "All", value: "all" },
     { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined },
-    { label: "Reviews", value: "reviews" },
     { label: "Messages", value: "messages" },
     { label: "Likes", value: "likes" },
     { label: "Comments", value: "comments" },
