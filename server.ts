@@ -600,13 +600,25 @@ function writePlacesIndex(list: any[]): void {
 
 const inMemoryDeletedReviewsSet = new Set<string>();
 
+const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
+  "rev-1791485919882-l8av6",
+  "rev-1790368898192-sw74n",
+  "rev-1790363378621-w65oy",
+  "rev-1790353801035-1rlp8"
+]);
+
 function readDeletedReviewsIndex(): string[] {
   try {
     if (fs.existsSync(deletedReviewsIndexPath)) {
       const raw = fs.readFileSync(deletedReviewsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        parsed.forEach((id) => inMemoryDeletedReviewsSet.add(String(id)));
+        parsed.forEach((id) => {
+          const strId = String(id);
+          if (!AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) {
+            inMemoryDeletedReviewsSet.add(strId);
+          }
+        });
         return Array.from(inMemoryDeletedReviewsSet);
       }
     }
@@ -616,8 +628,9 @@ function readDeletedReviewsIndex(): string[] {
 
 function recordDeletedReviewId(id: string): void {
   if (!id) return;
+  const strId = String(id);
+  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) return;
   try {
-    const strId = String(id);
     inMemoryDeletedReviewsSet.add(strId);
     const list = Array.from(inMemoryDeletedReviewsSet);
     try {
@@ -4720,6 +4733,11 @@ const getNoSqlTable = (col: string) => {
 
 async function purgeVideoFromAllStores(videoId: string) {
   if (!videoId) return { success: false, error: "Missing videoId" };
+  const strId = String(videoId);
+  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) {
+    console.warn(`🛡️ [Server] Attempt to delete authentic canonical review ${strId} was rejected.`);
+    return { success: false, error: "Authentic canonical review cannot be deleted" };
+  }
 
   console.log(`🗑️ [Server] Live purging video review ${videoId} from all databases and storage...`);
 

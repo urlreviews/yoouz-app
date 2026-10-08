@@ -125,6 +125,7 @@ const PROTECTED_FEED_CREATORS = new Set([
 ]);
 
 export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
+  "rev-1791485919882-l8av6",
   "rev-1790368898192-sw74n",
   "rev-1790363378621-w65oy",
   "rev-1790353801035-1rlp8",
@@ -633,12 +634,6 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-user-reactivated", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
             } else if (payload.type === "users_purged") {
               window.dispatchEvent(new CustomEvent("copo-users-purged"));
-            } else if (payload.type === "system_reset") {
-              setVideos([]);
-              try {
-                localStorage.clear();
-              } catch (e) {}
-              window.location.reload();
             } else if (payload.type === "init") {
               if (Array.isArray(payload.deletedIds) && payload.deletedIds.length > 0) {
                 const serverDelSet = new Set(payload.deletedIds.map(String));

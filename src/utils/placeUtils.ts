@@ -3462,6 +3462,13 @@ export function formatPhoneNumber(raw?: string | null, countryOrDomainContext?: 
   return clean;
 }
 
+export const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
+  "rev-1791485919882-l8av6",
+  "rev-1790368898192-sw74n",
+  "rev-1790363378621-w65oy",
+  "rev-1790353801035-1rlp8"
+]);
+
 /**
  * Comprehensive client-side storage scrubber for deleted video reviews.
  * Eradicates all traces from localStorage, likes, bookmarks, saves, comments, and caches.
@@ -3469,6 +3476,7 @@ export function formatPhoneNumber(raw?: string | null, countryOrDomainContext?: 
 export function purgeVideoIdFromClientStorage(videoId: string): void {
   if (!videoId || typeof window === "undefined" || !window.localStorage) return;
   const strId = String(videoId);
+  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) return;
 
   // 1. Add to permanent client blacklist copo_deleted_videos
   try {
