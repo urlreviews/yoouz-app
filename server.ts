@@ -13038,8 +13038,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               parsedData.placeId = "legal500.com";
               parsedData.placeName = "The Legal 500";
               parsedData.placeWebsite = "https://www.legal500.com";
-              parsedData.placeLogoUrl = legal500Logo;
-              parsedData.placeBannerUrl = legal500Banner;
+              parsedData.placeLogoUrl = parsedData.placeLogoUrl || "https://www.google.com/s2/favicons?domain=legal500.com&sz=128";
+              parsedData.placeBannerUrl = parsedData.placeBannerUrl || undefined;
               updated = true;
             }
           }
@@ -13052,8 +13052,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
               parsedData.placeId = "digitalpark.ae";
               parsedData.placeName = "Digital Park";
               parsedData.placeWebsite = "https://digitalpark.ae";
-              parsedData.placeLogoUrl = digitalParkLogo;
-              parsedData.placeBannerUrl = digitalParkBanner;
+              parsedData.placeLogoUrl = parsedData.placeLogoUrl || "https://www.google.com/s2/favicons?domain=digitalpark.ae&sz=128";
+              parsedData.placeBannerUrl = parsedData.placeBannerUrl || undefined;
               updated = true;
             }
           }

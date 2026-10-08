@@ -280,6 +280,11 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "harveynichols": "Harvey Nichols",
   "harveynichols.com": "Harvey Nichols",
   "www.harveynichols.com": "Harvey Nichols",
+  "first strike electrical": "First Strike Electrical",
+  "first strike electricals": "First Strike Electrical",
+  "firststrikeelectrical": "First Strike Electrical",
+  "firststrikeelectrical.co.uk": "First Strike Electrical",
+  "www.firststrikeelectrical.co.uk": "First Strike Electrical",
   "tk maxx": "TK Maxx",
   "tkmaxx": "TK Maxx",
   "tkmaxx.com": "TK Maxx",
@@ -955,24 +960,18 @@ export function isGenericPlaceName(name?: string | null): boolean {
 
 export function toTitleCase(str: string): string {
   if (!str) return "";
+  const acronyms = new Set(["LLC", "INC", "PC", "USA", "UK", "BMW", "IBM", "SEO", "CMS", "AEO", "PWA", "UAE", "NY", "LA"]);
   return str.split(/(\s+)/).map(word => {
     if (/^\s+$/.test(word)) return word;
-    
-    const match = word.match(/^([a-zA-Z\u00C0-\u017F\u0590-\u05FF]+)([.\-,]*)$/);
-    if (match) {
-      const alpha = match[1];
-      const punc = match[2];
-      const upperWord = alpha.toUpperCase();
-      if (["LLC", "INC", "PC", "USA", "UK", "BMW", "IBM", "SEO", "CMS", "AEO", "PWA"].includes(upperWord)) {
-        return upperWord + punc;
-      }
-      return alpha.charAt(0).toUpperCase() + alpha.slice(1).toLowerCase() + punc;
-    }
     
     if (word.includes("-") && /^[a-zA-Z\u00C0-\u017F\u0590-\u05FF\-]+$/.test(word)) {
       return word.split("-").map(p => toTitleCase(p)).join("-");
     }
-    return word;
+
+    return word.replace(/([a-zA-Z\u00C0-\u017F]+)/g, (m) => {
+      if (acronyms.has(m.toUpperCase())) return m.toUpperCase();
+      return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+    });
   }).join("");
 }
 
@@ -1054,7 +1053,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   // 0. If it looks like a multi-word human name (Hebrew/English), preserve EXACT order!
   // This prevents flipping "נועה הבית לאירועים" -> "לאירועים נועה הבית"
   if (trimmed.includes(" ") && trimmed.length < 60 && !trimmed.includes("|") && !trimmed.includes("- ")) {
-    return trimmed;
+    return toTitleCase(trimmed);
   }
   
   // Quick lookup of trimmed normalized key
@@ -1083,11 +1082,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       const cleanQ = queryContext.trim();
       if (cleanQ.length >= 3 && !cleanQ.includes('.') && !isGenericPlaceName(cleanQ)) {
         if (cleanQ.toLowerCase().includes(trimmed.toLowerCase()) || trimmed.toLowerCase().includes(cleanQ.toLowerCase())) {
-          return cleanQ.length >= trimmed.length ? cleanQ : trimmed;
+          return toTitleCase(cleanQ.length >= trimmed.length ? cleanQ : trimmed);
         }
       }
     }
-    return trimmed;
+    return toTitleCase(trimmed);
   }
 
   // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
