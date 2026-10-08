@@ -6384,18 +6384,16 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     if (colName === 'places' || colName === 'business_profiles') {
       const canonicalPlacesMap = new Map<string, any>();
       items.forEach((p: any) => {
-        if (!p) return;
-        const slugKey = resolveCanonicalPlaceSlug(p, String(p.id || ''));
-        if (slugKey && isValidPlaceDomainSlug(slugKey)) {
-          const existing = canonicalPlacesMap.get(slugKey) || {};
-          canonicalPlacesMap.set(slugKey, {
-            ...existing,
-            ...p,
-            id: slugKey,
-            isClaimed: Boolean(p.isClaimed || existing.isClaimed || slugKey === 'yoouz.com'),
-            isVerified: Boolean(p.isVerified || existing.isVerified || slugKey === 'yoouz.com')
-          });
-        }
+        if (!p || !p.id) return;
+        const slugKey = String(p.id).toLowerCase().trim();
+        const existing = canonicalPlacesMap.get(slugKey) || {};
+        canonicalPlacesMap.set(slugKey, {
+          ...existing,
+          ...p,
+          id: slugKey,
+          isClaimed: Boolean(p.isClaimed || existing.isClaimed || slugKey === 'yoouz.com'),
+          isVerified: Boolean(p.isVerified || existing.isVerified || slugKey === 'yoouz.com')
+        });
       });
       items = Array.from(canonicalPlacesMap.values());
     }
