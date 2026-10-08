@@ -4787,7 +4787,10 @@ async function purgeVideoFromAllStores(videoId: string) {
     await db.delete(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
   } catch (e) {}
   try {
-    await db.delete(reviews).where(eq(reviews.id, videoId));
+    const numericVideoId = Number(videoId);
+    if (!isNaN(numericVideoId)) {
+      await db.delete(reviews).where(eq(reviews.id, numericVideoId));
+    }
   } catch (e) {}
 
   const bunnyClient = getBunnyDb();
@@ -13463,6 +13466,33 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           }
         }
       } catch (e) {}
+
+      // PostgreSQL (Cloud SQL) Synchronization & Legacy Purging
+      try {
+        const postgresDb = getDb();
+        if (postgresDb) {
+          console.log("🚀 [PostgreSQL Sync] Syncing canonical places to PostgreSQL bunnydb_places table...");
+          const localPlacesList = readPlacesIndex();
+          if (localPlacesList.length > 0) {
+            // Delete legacy places in PostgreSQL to purge any outdated keys/mock data
+            await postgresDb.delete(BunnyDB_places).catch(() => {});
+            
+            // Re-insert canonical 536 places
+            for (const p of localPlacesList) {
+              await postgresDb.insert(BunnyDB_places)
+                .values({
+                  id: p.id,
+                  data: p,
+                  createdAt: p.createdAt ? new Date(p.createdAt) : new Date()
+                })
+                .catch((e: any) => console.warn(`[PostgreSQL Sync] Error inserting place ${p.id}:`, e?.message));
+            }
+            console.log("✅ [PostgreSQL Sync] Completed canonical places sync & legacy purge!");
+          }
+        }
+      } catch (pgSyncErr: any) {
+        console.warn("[PostgreSQL Sync] Warning during place sync:", pgSyncErr?.message || pgSyncErr);
+      }
 
       console.log(`✅ [Migration] Completed business place canonicalization & video review sync!`);
     } catch (err: any) {
