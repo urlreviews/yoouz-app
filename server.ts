@@ -560,8 +560,18 @@ const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.j
 const deactivatedUsersIndexPath = path.join(globalUploadsDir, "deactivated_users_index.json");
 const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
 const commentsIndexPath = path.join(globalUploadsDir, "comments_index.json");
+const masterResetLockPath = path.join(globalUploadsDir, "master_reset.lock");
+
+function isMasterResetActive(): boolean {
+  try {
+    return fs.existsSync(masterResetLockPath);
+  } catch (e) {
+    return false;
+  }
+}
 
 function readPlacesIndex(): any[] {
+  if (isMasterResetActive()) return [];
   const deletedSet = new Set(readDeletedPlacesIndex());
   try {
     if (fs.existsSync(placesIndexPath)) {
@@ -1184,6 +1194,7 @@ function buildCommentTree(rawComments: any[]): { comments: any[]; count: number 
 }
 
 function readReviewsIndex(): any[] {
+  if (isMasterResetActive()) return [];
   const deletedSet = new Set(readDeletedReviewsIndex());
   const deletedCommentsSet = new Set(readDeletedCommentsIndex());
   const deactivatedSet = new Set(readDeactivatedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
@@ -1425,6 +1436,11 @@ function readReviewsIndex(): any[] {
 }
 
 function writeReviewsIndex(list: any[]): void {
+  try {
+    if (fs.existsSync(masterResetLockPath)) {
+      fs.unlinkSync(masterResetLockPath);
+    }
+  } catch (e) {}
   try {
     const deletedSet = new Set(readDeletedReviewsIndex());
     const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
@@ -8912,6 +8928,10 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
         fs.writeFileSync(p, JSON.stringify([], null, 2), "utf8");
       } catch (e) {}
     }
+
+    try {
+      fs.writeFileSync(masterResetLockPath, Date.now().toString(), "utf8");
+    } catch (e) {}
 
     // Reset memory cache
     try {
