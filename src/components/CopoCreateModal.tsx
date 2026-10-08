@@ -1455,40 +1455,40 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </video>
 
                 {/* Top Overlay: Place Badge & Close */}
-                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between z-30 pointer-events-none gap-2.5">
-                  <div className="flex items-center gap-2 pointer-events-auto min-w-0 flex-1 sm:flex-initial">
-                    <div className="px-3.5 sm:px-4.5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center gap-2 sm:gap-3 shadow-2xl max-w-[calc(100vw-80px)] sm:max-w-none">
-                      <div className="flex items-center gap-2 border-r border-white/20 pr-2.5 sm:pr-3 shrink-0">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="absolute top-3.5 left-3.5 right-3.5 md:top-5 md:left-5 md:right-5 flex items-center justify-between z-30 pointer-events-none gap-2">
+                  <div className="flex items-center pointer-events-auto min-w-0 flex-1">
+                    <div className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-black/65 backdrop-blur-xl border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center gap-2 sm:gap-2.5 shadow-2xl min-w-0 max-w-full">
+                      <div className="flex items-center gap-1.5 sm:gap-2 border-r border-white/20 pr-2 sm:pr-2.5 shrink-0">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                         <CopoBrandLogo
                           domain={selectedPlace?.brandDomain || extractCleanDomain(selectedPlace?.website || selectedPlace?.id || selectedPlace?.name)}
                           name={selectedPlace?.name}
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
                           bannerUrl={selectedPlace?.bannerUrl || selectedPlace?.ogImage}
-                          className="w-7 h-7 rounded-lg bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-md ring-1 ring-white/10"
+                          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-md ring-1 ring-white/10"
                           imageClassName="w-full h-full object-contain rounded-[4px]"
                           fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                         />
                       </div>
-                      <span className="font-extrabold text-white text-xs sm:text-sm tracking-normal truncate max-w-[200px] sm:max-w-[340px] md:max-w-[500px]">
+                      <span className="font-extrabold text-white text-xs sm:text-sm tracking-normal truncate min-w-0 flex-1">
                         {formatBusinessName(selectedPlace?.name, selectedPlace?.brandDomain || selectedPlace?.website, selectedPlace?.id)}
                       </span>
-                      <div className="flex items-center gap-1 bg-amber-400/20 px-2.5 py-1 rounded-full border border-amber-400/40 shrink-0">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-amber-400/40 shrink-0 ml-auto sm:ml-0">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
                         <span className="text-amber-400 font-black text-xs sm:text-sm">{rating}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pointer-events-auto shrink-0">
+                  <div className="flex items-center pointer-events-auto shrink-0 z-30 ml-2">
                     <button
                       type="button"
                       onClick={handleAttemptClose}
-                      className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer active:scale-95 shadow-xl shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-black transition-all cursor-pointer active:scale-95 shadow-2xl shrink-0"
                       title="Close"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
                     </button>
                   </div>
                 </div>
@@ -1633,43 +1633,43 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 />
 
                 {/* Top Control Bar Over Camera */}
-                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between z-30 pointer-events-none gap-2.5">
+                <div className="absolute top-3.5 left-3.5 right-3.5 md:top-5 md:left-5 md:right-5 flex items-center justify-between z-30 pointer-events-none gap-2">
                   {/* Left: Place Info Pill - Clean Premium */}
-                  <div className="flex items-center gap-2 pointer-events-auto min-w-0 flex-1 sm:flex-initial">
-                    <div className="px-3.5 sm:px-4.5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center gap-2 sm:gap-3 shadow-2xl max-w-[calc(100vw-80px)] sm:max-w-none">
-                      <div className="flex items-center gap-2 border-r border-white/20 pr-2.5 sm:pr-3 shrink-0">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                  <div className="flex items-center pointer-events-auto min-w-0 flex-1">
+                    <div className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-black/65 backdrop-blur-xl border border-white/20 text-white font-bold text-xs sm:text-sm flex items-center gap-2 sm:gap-2.5 shadow-2xl min-w-0 max-w-full">
+                      <div className="flex items-center gap-1.5 sm:gap-2 border-r border-white/20 pr-2 sm:pr-2.5 shrink-0">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
                         <CopoBrandLogo
                           domain={selectedPlace?.brandDomain || extractCleanDomain(selectedPlace?.website || selectedPlace?.id || selectedPlace?.name)}
                           name={selectedPlace?.name}
                           website={selectedPlace?.website}
                           logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
                           bannerUrl={selectedPlace?.bannerUrl || selectedPlace?.ogImage}
-                          className="w-7 h-7 rounded-lg bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-md ring-1 ring-white/10"
+                          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white border border-white/20 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-md ring-1 ring-white/10"
                           imageClassName="w-full h-full object-contain rounded-[4px]"
                           fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                         />
-                        <span className="uppercase tracking-wider text-[10px] font-black text-red-400">Live</span>
+                        <span className="uppercase tracking-wider text-[10px] font-black text-red-400 hidden xs:inline-block">Live</span>
                       </div>
-                      <span className="font-extrabold text-white text-xs sm:text-sm tracking-normal truncate max-w-[200px] sm:max-w-[340px] md:max-w-[500px]">
+                      <span className="font-extrabold text-white text-xs sm:text-sm tracking-normal truncate min-w-0 flex-1">
                         {formatBusinessName(selectedPlace?.name, selectedPlace?.brandDomain || selectedPlace?.website, selectedPlace?.id)}
                       </span>
-                      <div className="flex items-center gap-1 bg-amber-400/20 px-2.5 py-1 rounded-full border border-amber-400/40 shrink-0">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <div className="flex items-center gap-1 bg-amber-400/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-amber-400/40 shrink-0 ml-auto sm:ml-0">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
                         <span className="text-amber-400 font-black text-xs sm:text-sm">{rating}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Close Only */}
-                  <div className="flex items-center gap-2 pointer-events-auto shrink-0">
+                  <div className="flex items-center pointer-events-auto shrink-0 z-30 ml-2">
                     <button
                       type="button"
                       onClick={handleAttemptClose}
-                      className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center hover:bg-black/80 transition-all cursor-pointer shadow-xl active:scale-95 shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/65 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center hover:bg-black/90 transition-all cursor-pointer shadow-2xl active:scale-95 shrink-0"
                       title="Close"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
                     </button>
                   </div>
                 </div>
