@@ -8681,11 +8681,63 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {previewVideo.transcript && (
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-200 uppercase">AI Spoken Transcript</label>
-                    <p className="text-xs text-zinc-200 bg-zinc-950 p-3 rounded-xl border border-zinc-800 max-h-28 overflow-y-auto">
+                    <p className="text-xs text-zinc-200 bg-zinc-950 p-3 rounded-xl border border-zinc-800 max-h-24 overflow-y-auto">
                       {previewVideo.transcript}
                     </p>
                   </div>
                 )}
+
+                {/* Comments Section */}
+                <div className="space-y-2 pt-2 border-t border-zinc-800/50">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-zinc-200 uppercase flex items-center gap-1.5">
+                      <MessageSquare className="w-3 h-3 text-zinc-400" /> 
+                      Comments ({previewVideo.commentsCount || (previewVideo.comments || []).length})
+                    </label>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {(!previewVideo.comments || previewVideo.comments.length === 0) ? (
+                      <p className="text-[11px] text-zinc-500 italic py-2">No comments yet on this review.</p>
+                    ) : (
+                      previewVideo.comments.map((c: any) => (
+                        <div key={c.id || Math.random()} className="p-2 rounded-xl bg-zinc-950/80 border border-zinc-800/50 text-[11px] group/comment">
+                          <div className="flex items-center gap-2 mb-1">
+                            <img 
+                              src={getSafeAvatarUrl(c.authorAvatar || c.userAvatar, c.authorName || c.userName)} 
+                              className="w-4 h-4 rounded-full border border-white/10" 
+                              alt="" 
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(c.authorName || c.userName || "User", 32);
+                              }}
+                            />
+                            <span className="font-bold text-zinc-300">{c.authorName || c.userName}</span>
+                            <span className="text-zinc-600 hidden sm:inline">@{c.authorHandle || c.userHandle || "user"}</span>
+                            <span className="ml-auto text-[9px] text-zinc-600">
+                              {c.createdAtMs ? new Date(c.createdAtMs).toLocaleDateString() : (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "")}
+                            </span>
+                          </div>
+                          <p className="text-zinc-400 leading-relaxed pl-6">{c.text}</p>
+                          {/* Display replies if any */}
+                          {Array.isArray(c.replies) && c.replies.length > 0 && (
+                            <div className="mt-2 ml-6 space-y-1.5 border-l-2 border-zinc-800 pl-3">
+                              {c.replies.map((r: any) => (
+                                <div key={r.id || Math.random()} className="text-[10px]">
+                                  <div className="flex items-center gap-1.5 mb-0.5">
+                                    <img src={getSafeAvatarUrl(r.authorAvatar || r.userAvatar, r.authorName || r.userName)} className="w-3 h-3 rounded-full" alt="" />
+                                    <span className="font-bold text-zinc-400">{r.authorName || r.userName}</span>
+                                    {r.isOwner && <span className="px-1 py-0 rounded bg-zinc-800 text-zinc-300 text-[8px] font-bold">OWNER</span>}
+                                  </div>
+                                  <p className="text-zinc-500">{r.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-4 border-t border-zinc-800">

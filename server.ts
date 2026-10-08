@@ -6350,6 +6350,81 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
     let items = Array.from(itemMap.values());
 
+    if (colName === 'videoReviews') {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const videoCommentsMap = new Map<string, any[]>();
+          const videoBookmarksCountMap = new Map<string, number>();
+          const videoLikesCountMap = new Map<string, number>();
+          const videoSharesCountMap = new Map<string, number>();
+
+          const [cRows, bRows, lRows, sRows] = await Promise.all([
+            bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC"),
+            bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId"),
+            bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId"),
+            bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM shares GROUP BY videoId")
+          ]);
+
+          if (cRows && cRows.rows) {
+            cRows.rows.forEach((row: any) => {
+              if (row.videoId) {
+                let parsed: any = {};
+                try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+                if (parsed && parsed.id) {
+                  const list = videoCommentsMap.get(String(row.videoId)) || [];
+                  if (!list.some(c => c.id === parsed.id)) list.push(parsed);
+                  videoCommentsMap.set(String(row.videoId), list);
+                }
+              }
+            });
+          }
+
+          if (bRows && bRows.rows) {
+            bRows.rows.forEach((row: any) => { if (row.videoId) videoBookmarksCountMap.set(String(row.videoId), Number(row.total) || 0); });
+          }
+          if (lRows && lRows.rows) {
+            lRows.rows.forEach((row: any) => { if (row.videoId) videoLikesCountMap.set(String(row.videoId), Number(row.total) || 0); });
+          }
+          if (sRows && sRows.rows) {
+            sRows.rows.forEach((row: any) => { if (row.videoId) videoSharesCountMap.set(String(row.videoId), Number(row.total) || 0); });
+          }
+
+          items = items.map((r: any) => {
+            const separateComments = videoCommentsMap.get(String(r.id)) || [];
+            const existingComments = Array.isArray(r.comments) ? r.comments : [];
+            const tree = buildCommentTree([...existingComments, ...separateComments]);
+            
+            const realBookmarks = videoBookmarksCountMap.has(String(r.id)) 
+              ? Math.max(videoBookmarksCountMap.get(String(r.id))!, typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof r.bookmarks === 'number' ? r.bookmarks : 0))
+              : (typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof r.bookmarks === 'number' ? r.bookmarks : 0));
+            
+            const realLikes = videoLikesCountMap.has(String(r.id))
+              ? Math.max(videoLikesCountMap.get(String(r.id))!, typeof r.likesCount === 'number' ? r.likesCount : (typeof r.likes === 'number' ? r.likes : 0))
+              : (typeof r.likesCount === 'number' ? r.likesCount : (typeof r.likes === 'number' ? r.likes : 0));
+
+            const realShares = videoSharesCountMap.has(String(r.id))
+              ? Math.max(videoSharesCountMap.get(String(r.id))!, typeof r.sharesCount === 'number' ? r.sharesCount : (typeof r.shares === 'number' ? r.shares : 0))
+              : (typeof r.sharesCount === 'number' ? r.sharesCount : (typeof r.shares === 'number' ? r.shares : 0));
+
+            return {
+              ...r,
+              comments: tree.comments,
+              commentsCount: tree.count,
+              likes: realLikes,
+              likesCount: realLikes,
+              bookmarks: realBookmarks,
+              bookmarksCount: realBookmarks,
+              shares: realShares,
+              sharesCount: realShares
+            };
+          });
+        } catch (e) {
+          console.warn("Failed to enrich admin videoReviews with comments & counts:", e);
+        }
+      }
+    }
+
     if (colName === 'likes') {
       items = await Promise.all(items.map(enrichLikeItemServer));
     }
@@ -6886,6 +6961,38 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             if (isYoouzRev) {
               parsedData.placeAddress = "";
               parsedData.placeCity = "";
+            }
+
+            // Enrich with live comments and counts
+            try {
+              const [cRows, bRows, lRows, sRows] = await Promise.all([
+                bunnyDb.execute({ sql: "SELECT data FROM comments WHERE videoId = ? ORDER BY createdAt ASC", args: [row.id] }),
+                bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?", args: [row.id] }),
+                bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?", args: [row.id] }),
+                bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM shares WHERE videoId = ?", args: [row.id] })
+              ]);
+
+              const separateComments = (cRows?.rows || []).map((cr: any) => {
+                try { return typeof cr.data === 'string' ? JSON.parse(cr.data) : (cr.data || {}); } catch(e){ return null; }
+              }).filter(Boolean);
+              
+              const existingComments = Array.isArray(parsedData.comments) ? parsedData.comments : [];
+              const tree = buildCommentTree([...existingComments, ...separateComments]);
+              
+              const realBookmarks = Number((bRows?.rows?.[0] as any)?.total || 0);
+              const realLikes = Number((lRows?.rows?.[0] as any)?.total || 0);
+              const realShares = Number((sRows?.rows?.[0] as any)?.total || 0);
+
+              parsedData.comments = tree.comments;
+              parsedData.commentsCount = tree.count;
+              parsedData.likes = Math.max(realLikes, typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (typeof parsedData.likes === 'number' ? parsedData.likes : 0));
+              parsedData.likesCount = parsedData.likes;
+              parsedData.bookmarks = Math.max(realBookmarks, typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (typeof parsedData.bookmarks === 'number' ? parsedData.bookmarks : 0));
+              parsedData.bookmarksCount = parsedData.bookmarks;
+              parsedData.shares = Math.max(realShares, typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (typeof parsedData.shares === 'number' ? parsedData.shares : 0));
+              parsedData.sharesCount = parsedData.shares;
+            } catch (e) {
+              console.warn("Failed to enrich single videoReview with live counts:", e);
             }
           }
           if (colName === 'comments') {
