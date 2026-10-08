@@ -310,7 +310,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
-  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "Local Business") : "Authentic 60s Video Review");
+  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");
 
   const resolvedTouchIcon = isVideoMode && video
     ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=9`

@@ -1221,75 +1221,7 @@ function readReviewsIndex(): any[] {
               r.videoUrl = fallbackUrl;
               dirty = true;
             }
-            // 1. Steven Akan's authentic video review for yoouz.com
-            if (r.id === "rev-1789577075627-3488d") {
-              const needsUpdate =
-                r.placeId !== "yoouz.com" ||
-                r.placeName !== "Yoouz" ||
-                r.authorName !== "Steven Akan" ||
-                r.userId !== "avr6566gd@gmail.com" ||
-                !r.author?.location ||
-                !r.author?.country;
 
-              if (needsUpdate) {
-                r.placeId = "yoouz.com";
-                r.placeName = "Yoouz";
-                r.placeWebsite = "https://yoouz.com";
-                r.caption = "Video review for yoouz.com";
-                r.authorName = "Steven Akan";
-                r.userId = "avr6566gd@gmail.com";
-                r.userEmail = "avr6566gd@gmail.com";
-                r.author = {
-                  name: "Steven Akan",
-                  handle: "@stevenakan",
-                  avatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                  isLocalGuide: true,
-                  localGuideLevel: 7,
-                  videoReviewCount: 2,
-                  photosCount: 0,
-                  isVerified: true,
-                  location: "Miami Beach, Florida, United States",
-                  city: "Miami Beach",
-                  state: "Florida",
-                  country: "United States"
-                };
-                dirty = true;
-              }
-            } else if (r.id === "rev-1789841701519-2l6x8") {
-              // 2. Ben Blue's authentic video review for yoouz.com
-              const needsUpdate =
-                r.placeId !== "yoouz.com" ||
-                r.placeName !== "Yoouz" ||
-                r.authorName !== "Ben Blue" ||
-                r.author?.handle !== "@benblue" ||
-                r.userId !== "aouisesmee@gmail.com" ||
-                !r.author?.location;
-
-              if (needsUpdate) {
-                r.placeId = "yoouz.com";
-                r.placeName = "Yoouz";
-                r.placeWebsite = "https://yoouz.com";
-                r.caption = "Video review for yoouz.com";
-                r.authorName = "Ben Blue";
-                r.userId = "aouisesmee@gmail.com";
-                r.userEmail = "aouisesmee@gmail.com";
-                r.author = {
-                  name: "Ben Blue",
-                  handle: "@benblue",
-                  avatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-                  isLocalGuide: true,
-                  localGuideLevel: 7,
-                  videoReviewCount: 4,
-                  photosCount: 0,
-                  isVerified: true,
-                  location: r.author?.location || "London, City of London, United Kingdom",
-                  city: r.author?.city || "London",
-                  state: r.author?.state || "City of London",
-                  country: r.author?.country || "United Kingdom"
-                };
-                dirty = true;
-              }
-            }
 
             // Ensure Garage As business name is cleanly formatted with proper two-word casing and authoritative metadata
             if (
