@@ -6274,17 +6274,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 }
               }
 
-              const itemKey = (colName === 'places' || colName === 'business_profiles')
-                ? resolveCanonicalPlaceSlug(parsedData, String(row.id))
-                : String(row.id);
-
-              if (colName === 'places' || colName === 'business_profiles') {
-                if (itemKey && isValidPlaceDomainSlug(itemKey)) {
-                  itemMap.set(itemKey, { id: itemKey, ...parsedData });
-                }
-              } else {
-                itemMap.set(itemKey, { id: itemKey, ...parsedData });
-              }
+              const itemKey = String(row.id).toLowerCase().trim();
+              itemMap.set(itemKey, { id: itemKey, ...parsedData });
             }
           });
         }
@@ -6331,15 +6322,13 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         const localPlaces = readPlacesIndex();
         localPlaces.forEach((p: any) => {
           if (p && p.id) {
-            const itemKey = resolveCanonicalPlaceSlug(p, String(p.id));
-            if (itemKey && isValidPlaceDomainSlug(itemKey)) {
-              const existing = itemMap.get(itemKey) || {};
-              itemMap.set(itemKey, {
-                ...p,
-                ...existing,
-                id: itemKey
-              });
-            }
+            const itemKey = String(p.id).toLowerCase().trim();
+            const existing = itemMap.get(itemKey) || {};
+            itemMap.set(itemKey, {
+              ...p,
+              ...existing,
+              id: itemKey
+            });
           }
         });
       } catch (e) {}

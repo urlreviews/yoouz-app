@@ -3244,30 +3244,9 @@ export function App() {
                 filtered.forEach((p: any) => {
                   if (!p || !p.id) return;
                   const rawId = String(p.id).toLowerCase().trim();
-                  let canonId = rawId
-                    .replace(/^place-custom-/, '')
-                    .replace(/^www-/, '')
-                    .replace(/^www\./, '')
-                    .replace(/-co-nz$/, '.co.nz')
-                    .replace(/-co-uk$/, '.co.uk')
-                    .replace(/-com$/, '.com')
-                    .replace(/-org$/, '.org')
-                    .replace(/-net$/, '.net')
-                    .replace(/-io$/, '.io')
-                    .replace(/-ai$/, '.ai')
-                    .replace(/-ae$/, '.ae')
-                    .replace(/-de$/, '.de')
-                    .replace(/-fr$/, '.fr')
-                    .replace(/-nl$/, '.nl')
-                    .replace(/-us$/, '.us');
-
-                  if (!canonId.includes('.') && canonId.includes('-')) {
-                    const parts = canonId.split('-');
-                    if (parts.length >= 2) canonId = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
-                  }
-
+                  const key = rawId;
+                  const canonId = rawId;
                   const domain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
-                  const key = domain || canonId;
 
                   const isFollowed = followedPlaces.includes(p.id) || followedPlaces.includes(canonId);
                   const isClaimedLocally = claimedPlaces.includes(p.id) || claimedPlaces.includes(canonId) || claimedPlaces.includes(domain) ||
@@ -3285,7 +3264,7 @@ export function App() {
 
                   const placeObj: Place = {
                     ...p,
-                    id: canonId.includes('.') ? canonId : p.id,
+                    id: p.id,
                     name: isYoouz ? "Yoouz" : p.name,
                     rating,
                     totalReviews,
