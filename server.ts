@@ -6360,7 +6360,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           const videoSharesCountMap = new Map<string, number>();
 
           const [cRows, bRows, lRows, sRows] = await Promise.all([
-            bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC"),
+            bunnyDb.execute("SELECT id, videoId, data FROM comments ORDER BY createdAt ASC"),
             bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId"),
             bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId"),
             bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM shares GROUP BY videoId")
@@ -6371,9 +6371,11 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               if (row.videoId) {
                 let parsed: any = {};
                 try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-                if (parsed && parsed.id) {
+                const commentId = String(parsed.id || row.id || "");
+                if (commentId) {
+                  const commentObj = { ...parsed, id: commentId, videoId: String(row.videoId) };
                   const list = videoCommentsMap.get(String(row.videoId)) || [];
-                  if (!list.some(c => c.id === parsed.id)) list.push(parsed);
+                  if (!list.some(c => c.id === commentId)) list.push(commentObj);
                   videoCommentsMap.set(String(row.videoId), list);
                 }
               }
@@ -6966,14 +6968,18 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             // Enrich with live comments and counts
             try {
               const [cRows, bRows, lRows, sRows] = await Promise.all([
-                bunnyDb.execute({ sql: "SELECT data FROM comments WHERE videoId = ? ORDER BY createdAt ASC", args: [row.id] }),
+                bunnyDb.execute({ sql: "SELECT id, data FROM comments WHERE videoId = ? ORDER BY createdAt ASC", args: [row.id] }),
                 bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?", args: [row.id] }),
                 bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?", args: [row.id] }),
                 bunnyDb.execute({ sql: "SELECT COUNT(*) as total FROM shares WHERE videoId = ?", args: [row.id] })
               ]);
 
               const separateComments = (cRows?.rows || []).map((cr: any) => {
-                try { return typeof cr.data === 'string' ? JSON.parse(cr.data) : (cr.data || {}); } catch(e){ return null; }
+                try { 
+                  let parsed = typeof cr.data === 'string' ? JSON.parse(cr.data) : (cr.data || {});
+                  if (!parsed.id) parsed.id = String(cr.id);
+                  return parsed;
+                } catch(e){ return null; }
               }).filter(Boolean);
               
               const existingComments = Array.isArray(parsedData.comments) ? parsedData.comments : [];
@@ -13874,7 +13880,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           }
         } catch(pErr) {}
         try {
-          const commentsRows = await bunnyDb.execute("SELECT videoId, data FROM comments ORDER BY createdAt ASC");
+          const commentsRows = await bunnyDb.execute("SELECT id, videoId, data FROM comments ORDER BY createdAt ASC");
           if (commentsRows && commentsRows.rows) {
             commentsRows.rows.forEach((row: any) => {
               if (row.videoId) {
@@ -13882,10 +13888,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                 try {
                   parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
                 } catch(e){}
-                if (parsed && parsed.id) {
+                const commentId = String(parsed.id || row.id || "");
+                if (commentId) {
+                  const commentObj = { ...parsed, id: commentId, videoId: String(row.videoId) };
                   const list = videoCommentsMap.get(String(row.videoId)) || [];
-                  if (!list.some(c => c.id === parsed.id)) {
-                    list.push(parsed);
+                  if (!list.some(c => c.id === commentId)) {
+                    list.push(commentObj);
                   }
                   videoCommentsMap.set(String(row.videoId), list);
                 }
@@ -14474,14 +14482,15 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   app.get("/api/interactions/comments", async (req, res) => {
     try {
       const videoId = typeof req.query.videoId === 'string' ? req.query.videoId : '';
+
       if (!videoId) return res.json({ comments: [], count: 0, commentsCount: 0 });
       const bunnyDb = getBunnyDb();
 
       if (bunnyDb) {
         try {
           const result = await bunnyDb.execute({
-            sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
-            args: [videoId]
+            sql: "SELECT * FROM comments WHERE LOWER(videoId) = LOWER(?) ORDER BY createdAt ASC",
+            args: [videoId.trim()]
           });
           const allComments = (result.rows || []).map((row: any) => {
             let parsed: any = {};

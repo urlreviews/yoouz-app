@@ -170,6 +170,11 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
       try {
         return await remoteClient.execute(stmt);
       } catch (err: any) {
+        const isSqlError = err.message?.includes("SQLITE_") || err.message?.includes("SQLite error") || err.code?.startsWith("SQLITE_");
+        if (isSqlError) {
+          throw err; // Re-throw SQL errors so they can be caught by the caller without triggering a fallback
+        }
+
         if (!hasLoggedFallback) {
           hasLoggedFallback = true;
           console.warn("🐰 [BunnyDB] Remote endpoint unreachable, falling back to local persistent edge database");
@@ -249,9 +254,11 @@ export function getBunnyDb(): Client | null {
             authToken
           });
           console.log("🐰 [BunnyDB] Connected to remote Bunny Cloud Database.");
-        } catch (e) {
+        } catch (e: any) {
           remoteClient = null;
         }
+      } else {
+        console.log("🐰 [BunnyDB] No remote credentials found, using local persistent edge database.");
       }
 
       bunnyDbClient = createResilientClient(remoteClient, localClient);

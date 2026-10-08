@@ -806,7 +806,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             if (video.ownerResponse && !list.some((c) => c.isOwner || c.id?.startsWith("owner_comm_"))) {
               computedCount += 1;
             }
-            return Math.max(video.commentsCount || 0, computedCount);
+            return Math.max(video.commentsCount || 0, computedCommentsCount, computedCount);
           })()}
         </span>
       </div>
