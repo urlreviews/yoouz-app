@@ -7316,7 +7316,20 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             notification: { id, ...finalDataObj }
           }, targets);
         } else if (colName === 'chats') {
-          const participantsStr = JSON.stringify(finalDataObj.participants || []);
+          const participants = finalDataObj.participants || [];
+          const participantsStr = JSON.stringify(participants);
+          
+          // Policy: Users cannot chat with each other. At least one participant must be a Business or Official Platform.
+          const hasBusinessParticipant = participants.some((p: string) => {
+            const low = String(p || "").toLowerCase();
+            return low.startsWith("place_") || low.includes(".") || low === "yoouz" || low === "yoouz.com" || low.includes("info@yoouz.com");
+          });
+
+          if (!hasBusinessParticipant && participants.length > 0) {
+            console.warn(`[Policy Violation] User-to-user chat attempt blocked: ${participantsStr}`);
+            return res.status(403).json({ error: "Direct user-to-user messaging is disabled. You can only message verified businesses or the official platform." });
+          }
+
           const lastMessage = finalDataObj.lastMessage || "";
           const lastSenderEmail = finalDataObj.lastSenderEmail || "";
           await bunnyDb.execute({
@@ -8209,278 +8222,80 @@ app.get('/api/admin/chats', async (_req, res) => {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
 
-    // Seed default conversations if database has fewer than 4 chat threads
-    try {
-      const existingCountRes = await bunnyDb.execute("SELECT id FROM chats");
-      const currentCnt = existingCountRes.rows ? existingCountRes.rows.length : 0;
-      if (currentCnt < 4) {
-        const seedThreads = [
-          {
-            id: "chat-ben-steven",
-            participants: ["aouisesmee@gmail.com", "avr6566gd@gmail.com"],
-            lastMessage: "Awesome review video, Steven!",
-            lastSenderEmail: "aouisesmee@gmail.com",
-            data: {
-              id: "chat-ben-steven",
-              participants: ["aouisesmee@gmail.com", "avr6566gd@gmail.com"],
-              senderName: "Ben Blue",
-              senderEmail: "aouisesmee@gmail.com",
-              senderHandle: "@benblue",
-              senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-              senderRole: "User",
-              recipientName: "Steven Akan",
-              recipientEmail: "avr6566gd@gmail.com",
-              recipientHandle: "@stevenakan",
-              recipientAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
-              recipientRole: "User",
-              lastMessage: "Awesome review video, Steven!",
-              updatedAt: new Date(Date.now() - 3600000).toISOString(),
-              history: [
-                {
-                  id: "msg-101",
-                  senderEmail: "aouisesmee@gmail.com",
-                  senderName: "Ben Blue",
-                  senderHandle: "@benblue",
-                  senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "Awesome review video of Bosch Car Service, Steven!",
-                  createdAt: new Date(Date.now() - 7200000).toISOString()
-                },
-                {
-                  id: "msg-102",
-                  senderEmail: "avr6566gd@gmail.com",
-                  senderName: "Steven Akan",
-                  senderHandle: "@stevenakan",
-                  senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "Thanks Ben! Glad you liked it.",
-                  createdAt: new Date(Date.now() - 3600000).toISOString()
-                }
-              ]
-            }
-          },
-          {
-            id: "chat-ben-bosch",
-            participants: ["aouisesmee@gmail.com", "info@boschcarservice.com"],
-            lastMessage: "10:00 AM works perfectly. Thanks!",
-            lastSenderEmail: "aouisesmee@gmail.com",
-            data: {
-              id: "chat-ben-bosch",
-              participants: ["aouisesmee@gmail.com", "info@boschcarservice.com"],
-              senderName: "Ben Blue",
-              senderEmail: "aouisesmee@gmail.com",
-              senderHandle: "@benblue",
-              senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-              senderRole: "User",
-              recipientName: "Bosch Car Service Izci",
-              recipientEmail: "info@boschcarservice.com",
-              recipientHandle: "@boschcar_izci",
-              recipientAvatar: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=250",
-              recipientRole: "Business",
-              recipientIsBusiness: true,
-              lastMessage: "10:00 AM works perfectly. Thanks!",
-              updatedAt: new Date(Date.now() - 1800000).toISOString(),
-              history: [
-                {
-                  id: "msg-201",
-                  senderEmail: "aouisesmee@gmail.com",
-                  senderName: "Ben Blue",
-                  senderHandle: "@benblue",
-                  senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "Hi! Do you have availability for full vehicle inspection this Friday?",
-                  createdAt: new Date(Date.now() - 5400000).toISOString()
-                },
-                {
-                  id: "msg-202",
-                  senderEmail: "info@boschcarservice.com",
-                  senderName: "Bosch Car Service Izci",
-                  senderHandle: "@boschcar_izci",
-                  senderAvatar: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "Business",
-                  text: "Hello Ben! Yes, we have openings at 10:00 AM and 2:00 PM. Would you like to reserve 10:00 AM?",
-                  createdAt: new Date(Date.now() - 3600000).toISOString()
-                },
-                {
-                  id: "msg-203",
-                  senderEmail: "aouisesmee@gmail.com",
-                  senderName: "Ben Blue",
-                  senderHandle: "@benblue",
-                  senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "10:00 AM works perfectly. Thanks!",
-                  createdAt: new Date(Date.now() - 1800000).toISOString()
-                }
-              ]
-            }
-          },
-          {
-            id: "chat-steven-yoouz",
-            participants: ["avr6566gd@gmail.com", "info@yoouz.com"],
-            lastMessage: "Verified video reviews with high engagement automatically get pushed to the Live Edge feed.",
-            lastSenderEmail: "info@yoouz.com",
-            data: {
-              id: "chat-steven-yoouz",
-              participants: ["avr6566gd@gmail.com", "info@yoouz.com"],
-              senderName: "Steven Akan",
-              senderEmail: "avr6566gd@gmail.com",
-              senderHandle: "@stevenakan",
-              senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
-              senderRole: "User",
-              recipientName: "Yoouz Official Platform",
-              recipientEmail: "info@yoouz.com",
-              recipientHandle: "@yoouz_official",
-              recipientAvatar: "/favicon.svg",
-              recipientRole: "Official Platform",
-              recipientIsBusiness: true,
-              lastMessage: "Verified video reviews with high engagement automatically get pushed to the Live Edge feed.",
-              updatedAt: new Date(Date.now() - 900000).toISOString(),
-              history: [
-                {
-                  id: "msg-301",
-                  senderEmail: "avr6566gd@gmail.com",
-                  senderName: "Steven Akan",
-                  senderHandle: "@stevenakan",
-                  senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "Hi Yoouz Team! Is there an option to feature my restaurant review on the main feed?",
-                  createdAt: new Date(Date.now() - 2700000).toISOString()
-                },
-                {
-                  id: "msg-302",
-                  senderEmail: "info@yoouz.com",
-                  senderName: "Yoouz Official Platform",
-                  senderHandle: "@yoouz_official",
-                  senderAvatar: "/favicon.svg",
-                  senderRole: "Official Platform",
-                  text: "Hello Steven! Verified video reviews with high engagement automatically get pushed to the Live Edge feed.",
-                  createdAt: new Date(Date.now() - 900000).toISOString()
-                }
-              ]
-            }
-          },
-          {
-            id: "chat-ben-legal500",
-            participants: ["aouisesmee@gmail.com", "info@legal500.com"],
-            lastMessage: "Thank you for reaching out! Our client advisor will share the directory catalog.",
-            lastSenderEmail: "info@legal500.com",
-            data: {
-              id: "chat-ben-legal500",
-              participants: ["aouisesmee@gmail.com", "info@legal500.com"],
-              senderName: "Ben Blue",
-              senderEmail: "aouisesmee@gmail.com",
-              senderHandle: "@benblue",
-              senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-              senderRole: "User",
-              recipientName: "The Legal 500 Directory",
-              recipientEmail: "info@legal500.com",
-              recipientHandle: "@legal500",
-              recipientAvatar: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=250",
-              recipientRole: "Business",
-              recipientIsBusiness: true,
-              lastMessage: "Thank you for reaching out! Our client advisor will share the directory catalog.",
-              updatedAt: new Date(Date.now() - 400000).toISOString(),
-              history: [
-                {
-                  id: "msg-401",
-                  senderEmail: "aouisesmee@gmail.com",
-                  senderName: "Ben Blue",
-                  senderHandle: "@benblue",
-                  senderAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "User",
-                  text: "Inquiring about legal consultation packages listed on your business profile.",
-                  createdAt: new Date(Date.now() - 1200000).toISOString()
-                },
-                {
-                  id: "msg-402",
-                  senderEmail: "info@legal500.com",
-                  senderName: "The Legal 500 Directory",
-                  senderHandle: "@legal500",
-                  senderAvatar: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=250",
-                  senderRole: "Business",
-                  text: "Thank you for reaching out! Our client advisor will share the directory catalog.",
-                  createdAt: new Date(Date.now() - 400000).toISOString()
-                }
-              ]
-            }
-          }
-        ];
-
-        for (const st of seedThreads) {
-          try {
-            await bunnyDb.execute({ sql: "DELETE FROM chats WHERE id = ?", args: [st.id] });
-            await bunnyDb.execute({
-              sql: "INSERT INTO chats (id, participants, lastMessage, lastSenderEmail, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-              args: [
-                st.id,
-                JSON.stringify(st.participants),
-                st.lastMessage,
-                st.lastSenderEmail,
-                JSON.stringify(st.data)
-              ]
-            });
-          } catch (e) {
-            console.error("❌ Error inserting seed thread:", st.id, e);
-          }
-        }
-      }
-    } catch (e) {
-      console.error("❌ Error checking existing chats count:", e);
-    }
-
+    // Fetch all chats
     const result = await bunnyDb.execute("SELECT id, participants, lastMessage, lastSenderEmail, data, updatedAt FROM chats ORDER BY rowid DESC");
+    
+    // Fetch all users and places for enrichment
+    const usersRs = await bunnyDb.execute("SELECT id, email, name, avatar, role, data FROM users");
+    const placesRs = await bunnyDb.execute("SELECT id, name, logoUrl, data FROM places");
+
+    const userMap = new Map();
+    usersRs.rows.forEach((u: any) => {
+      let d: any = {};
+      try { d = typeof u.data === 'string' ? JSON.parse(u.data) : (u.data || {}); } catch(e){}
+      const userId = String(u.id || "").toLowerCase().trim();
+      const userEmail = String(u.email || d.email || "").toLowerCase().trim();
+      if (userId) userMap.set(userId, { ...u, ...d });
+      if (userEmail) userMap.set(userEmail, { ...u, ...d });
+    });
+
+    const placeMap = new Map();
+    placesRs.rows.forEach((p: any) => {
+      let d: any = {};
+      try { d = typeof p.data === 'string' ? JSON.parse(p.data) : (p.data || {}); } catch(e){}
+      const placeId = String(p.id || "").toLowerCase().trim();
+      if (placeId) placeMap.set(placeId, { ...p, ...d });
+    });
+
     const chats = result.rows.map(r => {
       let d: any = {};
       try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
       
-      const p1Email = d.senderEmail || (Array.isArray(d.participants) ? d.participants[0] : "") || "";
-      const p2Email = d.recipientEmail || (Array.isArray(d.participants) ? d.participants[1] : "") || "";
+      const participants = Array.isArray(d.participants) ? d.participants : [];
+      const p1Id = String(participants[0] || d.senderEmail || d.senderId || "").toLowerCase().trim();
+      const p2Id = String(participants[1] || d.recipientEmail || d.recipientId || "").toLowerCase().trim();
 
-      const p1Details = d.participantDetails?.[p1Email] || {};
-      const p2Details = d.participantDetails?.[p2Email] || {};
+      // Resolve Partner 1 (usually Sender)
+      const p1User = userMap.get(p1Id);
+      const p1Place = placeMap.get(p1Id);
+      
+      const p1Name = p1Place?.name || p1User?.name || d.senderName || (p1Id.includes('@') ? p1Id.split('@')[0] : "User");
+      const p1Avatar = p1Place?.logoUrl || p1User?.avatar || d.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p1Name)}&background=18181b&color=38bdf8`;
+      const p1Role = p1Place ? "Business" : (p1User?.role || "User");
 
-      const p1Name = d.senderName || p1Details.name || d.lastSenderName || (p1Email ? p1Email.split('@')[0] : "User 1");
-      const p1Handle = d.senderHandle || p1Details.handle || (p1Email ? `@${p1Email.split('@')[0]}` : `@${p1Name.toLowerCase().replace(/\s+/g, "")}`);
-      let p1Avatar = d.senderAvatar || p1Details.avatar || (p1Name.toLowerCase().includes("ben") ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250" : `https://ui-avatars.com/api/?name=${encodeURIComponent(p1Name)}&background=18181b&color=38bdf8`);
+      // Resolve Partner 2 (usually Recipient)
+      const p2User = userMap.get(p2Id);
+      const p2Place = placeMap.get(p2Id);
 
-      const p2Name = d.recipientName || p2Details.name || (p2Email ? p2Email.split('@')[0] : (d.lastRecipientName || "User 2"));
-      const p2Handle = d.recipientHandle || p2Details.handle || (p2Email ? `@${p2Email.split('@')[0]}` : `@${p2Name.toLowerCase().replace(/\s+/g, "")}`);
-      let p2Avatar = d.recipientAvatar || p2Details.avatar || (p2Name.toLowerCase().includes("steven") ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250" : p2Name.toLowerCase().includes("bosch") ? "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=250" : `https://ui-avatars.com/api/?name=${encodeURIComponent(p2Name)}&background=18181b&color=a855f7`);
-
-      // Determine roles
-      const p1Role = d.senderRole || (p1Name.toLowerCase().includes("bosch") || p1Name.toLowerCase().includes("legal") || p1Name.toLowerCase().includes("digital") ? "Business" : "User");
-      const p2Role = d.recipientRole || (p2Name.toLowerCase().includes("bosch") || p2Name.toLowerCase().includes("legal") || p2Name.toLowerCase().includes("digital") ? "Business" : p2Name.toLowerCase().includes("yoouz") ? "Official Platform" : "User");
+      const p2Name = p2Place?.name || p2User?.name || d.recipientName || (p2Id.includes('@') ? p2Id.split('@')[0] : "User");
+      const p2Avatar = p2Place?.logoUrl || p2User?.avatar || d.recipientAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p2Name)}&background=18181b&color=a855f7`;
+      const p2Role = p2Place ? "Business" : (p2User?.role || (p2Id === 'yoouz' || p2Id === 'yoouz.com' ? "Official Platform" : "User"));
 
       // Enrich history
       let history = Array.isArray(d.history) ? d.history : [];
       history = history.map((m: any) => {
         if (!m) return m;
-        const isP1 = (m.senderEmail && m.senderEmail === d.senderEmail) || (m.senderName && m.senderName === p1Name);
-        const mSenderName = m.senderName || (isP1 ? p1Name : p2Name);
-        const mSenderHandle = m.senderHandle || (isP1 ? p1Handle : p2Handle);
-        const mSenderAvatar = m.senderAvatar || (isP1 ? p1Avatar : p2Avatar);
-        const mSenderRole = m.senderRole || (isP1 ? p1Role : p2Role);
+        const mSenderId = String(m.senderId || m.senderEmail || "").toLowerCase().trim();
+        const isP1 = mSenderId === p1Id || m.senderName === p1Name;
+        
         return {
           ...m,
-          senderName: mSenderName,
-          senderHandle: mSenderHandle,
-          senderAvatar: mSenderAvatar,
-          senderRole: mSenderRole,
+          senderName: isP1 ? p1Name : p2Name,
+          senderAvatar: isP1 ? p1Avatar : p2Avatar,
+          senderRole: isP1 ? p1Role : p2Role,
           createdAt: m.createdAt || m.timestamp || new Date().toISOString()
         };
       });
 
       return {
         id: r.id || d.id,
-        participants: r.participants || d.participants || [],
+        participants,
         lastMessage: r.lastMessage || d.lastMessage || (history.length > 0 ? history[history.length - 1].text : "Conversation started"),
         lastSenderEmail: r.lastSenderEmail || d.lastSenderEmail || "",
         senderName: p1Name,
-        senderHandle: p1Handle,
         senderAvatar: p1Avatar,
         senderRole: p1Role,
         recipientName: p2Name,
-        recipientHandle: p2Handle,
         recipientAvatar: p2Avatar,
         recipientRole: p2Role,
         updatedAt: r.updatedAt || d.updatedAt || new Date().toISOString(),

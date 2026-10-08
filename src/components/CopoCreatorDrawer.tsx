@@ -1225,24 +1225,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="divide-y divide-zinc-800">
               {/* Action Buttons Row */}
               <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
-                {onStartChat ? (
-                  <button
-                    id="btn-chat-creator"
-                    onClick={() => {
-                      triggerHaptic("light");
-                      const targetChatId = author.handle ? author.handle.replace(/^@+/, '') : (author.id || author.name);
-                      onStartChat(targetChatId, author.name, effectiveAvatar);
-                    }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
-                    title={`${t("profile.chatWith", "Chat with")} ${author.name}`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                      <MessageSquare className="w-5 h-5 text-zinc-200" />
-                    </div>
-                    <span className="font-semibold text-[11px] text-zinc-200">{t("profile.chat", "Chat")}</span>
-                  </button>
-                ) : null}
-
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}

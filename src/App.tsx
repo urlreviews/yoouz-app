@@ -3043,12 +3043,6 @@ export function App() {
         targetEmail = matchingPlace.claimedByEmail;
       } else if (senderId === "yoouz.com" || senderId === "yoouz" || sName === "yoouz") {
         targetEmail = "info@yoouz.com";
-      } else if (sName === "avt ertuop" || senderId.includes("avtertuop") || senderId.includes("avr6566gd")) {
-        targetEmail = "avr6566gd@gmail.com";
-      } else if (sName === "biz riv" || senderId.includes("bizriv") || senderId.includes("louis42111")) {
-        targetEmail = "louis42111@gmail.com";
-      } else if (sName.includes("aouisesmee") || senderId.includes("aouisesmee")) {
-        targetEmail = "aouisesmee@gmail.com";
       }
     }
 
