@@ -5987,6 +5987,22 @@ async function enrichBookmarkItemServer(bm: any): Promise<any> {
   return normalized;
 }
 
+const VALID_PLACE_TLDS = new Set([
+  'com', 'org', 'net', 'io', 'ai', 'ae', 'de', 'fr', 'nl', 'us', 'nz', 'uk', 'store', 'online', 'edu', 'gov', 'info', 'biz', 'co', 'ca', 'au', 'in', 'ch', 'se', 'es', 'it', 'me', 'app', 'dev', 'tech', 'agency'
+]);
+
+function isValidPlaceDomainSlug(slug: string): boolean {
+  if (!slug) return false;
+  const s = slug.toLowerCase().trim();
+  if (s === 'yoouz.com' || s === 'yoouz') return true;
+  if (!s.includes('.')) return false;
+  if (s.startsWith('place-') || s.startsWith('business-') || s.startsWith('custom-') || s.startsWith('user-')) return false;
+  const parts = s.split('.');
+  const tld = parts[parts.length - 1];
+  if (!tld || /^\d+$/.test(tld)) return false;
+  return VALID_PLACE_TLDS.has(tld) || (tld.length >= 2 && tld.length <= 6 && !/^\d+$/.test(tld));
+}
+
 function resolveCanonicalPlaceSlug(item: any, rawFallbackId?: string): string {
   if (!item) return String(rawFallbackId || '').toLowerCase().trim();
   let pData: any = {};
@@ -6015,9 +6031,16 @@ function resolveCanonicalPlaceSlug(item: any, rawFallbackId?: string): string {
     .replace(/-us$/, '.us');
   if (!canon.includes('.') && canon.includes('-')) {
     const parts = canon.split('-');
-    if (parts.length >= 2) canon = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+    if (parts.length >= 2) {
+      const candidate = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+      if (isValidPlaceDomainSlug(candidate)) {
+        canon = candidate;
+      }
+    }
   }
-  return canon || raw;
+  if (isValidPlaceDomainSlug(canon)) return canon;
+  if (isValidPlaceDomainSlug(raw)) return raw;
+  return '';
 }
 
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
@@ -6256,7 +6279,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 : String(row.id);
 
               if (colName === 'places' || colName === 'business_profiles') {
-                if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+                if (itemKey && isValidPlaceDomainSlug(itemKey)) {
                   itemMap.set(itemKey, { id: itemKey, ...parsedData });
                 }
               } else {
@@ -6309,7 +6332,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         localPlaces.forEach((p: any) => {
           if (p && p.id) {
             const itemKey = resolveCanonicalPlaceSlug(p, String(p.id));
-            if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+            if (itemKey && isValidPlaceDomainSlug(itemKey)) {
               const existing = itemMap.get(itemKey) || {};
               itemMap.set(itemKey, {
                 ...p,
@@ -6354,7 +6377,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 : String(r.id);
 
               if (colName === 'places' || colName === 'business_profiles') {
-                if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+                if (itemKey && isValidPlaceDomainSlug(itemKey)) {
                   const existing = itemMap.get(itemKey) || {};
                   itemMap.set(itemKey, { ...existing, ...pObj, id: itemKey });
                 }
@@ -6374,7 +6397,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       items.forEach((p: any) => {
         if (!p) return;
         const slugKey = resolveCanonicalPlaceSlug(p, String(p.id || ''));
-        if (slugKey && (slugKey.includes('.') || slugKey === 'yoouz.com' || slugKey === 'yoouz')) {
+        if (slugKey && isValidPlaceDomainSlug(slugKey)) {
           const existing = canonicalPlacesMap.get(slugKey) || {};
           canonicalPlacesMap.set(slugKey, {
             ...existing,

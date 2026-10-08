@@ -1195,6 +1195,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Merged authoritative collections
   const activePlaces = useMemo(() => {
     const map = new Map<string, Place>();
+    const validTlds = new Set(['com', 'org', 'net', 'io', 'ai', 'ae', 'de', 'fr', 'nl', 'us', 'nz', 'uk', 'store', 'online', 'edu', 'gov', 'info', 'biz', 'co', 'ca', 'au', 'in', 'ch', 'se', 'es', 'it', 'me', 'app', 'dev', 'tech', 'agency']);
+    const isValidSlug = (slug: string): boolean => {
+      if (!slug) return false;
+      const s = slug.toLowerCase().trim();
+      if (s === 'yoouz.com' || s === 'yoouz') return true;
+      if (!s.includes('.')) return false;
+      if (s.startsWith('place-') || s.startsWith('business-') || s.startsWith('custom-') || s.startsWith('user-')) return false;
+      const parts = s.split('.');
+      const tld = parts[parts.length - 1];
+      if (!tld || /^\d+$/.test(tld)) return false;
+      return validTlds.has(tld) || (tld.length >= 2 && tld.length <= 6 && !/^\d+$/.test(tld));
+    };
+
     const getSlug = (p: any) => {
       if (!p) return '';
       const raw = String(p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || p.id || '').toLowerCase().trim();
@@ -1210,15 +1223,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         .replace(/-ae$/, '.ae');
       if (!canon.includes('.') && canon.includes('-')) {
         const parts = canon.split('-');
-        if (parts.length >= 2) canon = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+        if (parts.length >= 2) {
+          const cand = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+          if (isValidSlug(cand)) canon = cand;
+        }
       }
-      return canon || raw;
+      if (isValidSlug(canon)) return canon;
+      if (isValidSlug(raw)) return raw;
+      return '';
     };
 
     const processItem = (p: Place) => {
       if (!p || !p.id) return;
       const key = getSlug(p);
-      if (!key || (!key.includes('.') && key !== 'yoouz.com' && key !== 'yoouz')) return;
+      if (!key || !isValidSlug(key)) return;
       const existing = map.get(key);
       if (!existing) {
         map.set(key, { ...p, id: key });
