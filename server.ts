@@ -5987,6 +5987,39 @@ async function enrichBookmarkItemServer(bm: any): Promise<any> {
   return normalized;
 }
 
+function resolveCanonicalPlaceSlug(item: any, rawFallbackId?: string): string {
+  if (!item) return String(rawFallbackId || '').toLowerCase().trim();
+  let pData: any = {};
+  try {
+    pData = typeof item.data === 'object' && item.data ? item.data : (typeof item.data === 'string' ? JSON.parse(item.data) : item);
+  } catch (e) {
+    pData = item || {};
+  }
+  const raw = String(pData.id || pData.brandDomain || item.id || rawFallbackId || '').toLowerCase().trim();
+  let canon = raw
+    .replace(/^place-custom-/, '')
+    .replace(/^www-/, '')
+    .replace(/^www\./, '');
+  canon = canon
+    .replace(/-co-nz$/, '.co.nz')
+    .replace(/-co-uk$/, '.co.uk')
+    .replace(/-com$/, '.com')
+    .replace(/-org$/, '.org')
+    .replace(/-net$/, '.net')
+    .replace(/-io$/, '.io')
+    .replace(/-ai$/, '.ai')
+    .replace(/-ae$/, '.ae')
+    .replace(/-de$/, '.de')
+    .replace(/-fr$/, '.fr')
+    .replace(/-nl$/, '.nl')
+    .replace(/-us$/, '.us');
+  if (!canon.includes('.') && canon.includes('-')) {
+    const parts = canon.split('-');
+    if (parts.length >= 2) canon = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
+  }
+  return canon || raw;
+}
+
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
     const itemMap = new Map<string, any>();
@@ -6217,7 +6250,18 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                   }
                 }
               }
-              itemMap.set(String(row.id), { id: String(row.id), ...parsedData });
+
+              const itemKey = (colName === 'places' || colName === 'business_profiles')
+                ? resolveCanonicalPlaceSlug(parsedData, String(row.id))
+                : String(row.id);
+
+              if (colName === 'places' || colName === 'business_profiles') {
+                if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+                  itemMap.set(itemKey, { id: itemKey, ...parsedData });
+                }
+              } else {
+                itemMap.set(itemKey, { id: itemKey, ...parsedData });
+              }
             }
           });
         }
@@ -6264,12 +6308,15 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         const localPlaces = readPlacesIndex();
         localPlaces.forEach((p: any) => {
           if (p && p.id) {
-            const existing = itemMap.get(p.id) || {};
-            itemMap.set(p.id, {
-              ...p,
-              ...existing,
-              id: p.id
-            });
+            const itemKey = resolveCanonicalPlaceSlug(p, String(p.id));
+            if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+              const existing = itemMap.get(itemKey) || {};
+              itemMap.set(itemKey, {
+                ...p,
+                ...existing,
+                id: itemKey
+              });
+            }
           }
         });
       } catch (e) {}
@@ -6300,7 +6347,20 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           const records = await db.select().from(table).orderBy(desc(table.createdAt));
           records.forEach((r: any) => {
             if (r && r.id) {
-              itemMap.set(r.id, { id: r.id, ...r.data });
+              const pData = typeof r.data === 'object' && r.data ? r.data : (typeof r.data === 'string' ? (() => { try { return JSON.parse(r.data); } catch(e){ return {}; } })() : {});
+              const pObj = { id: r.id, ...pData };
+              const itemKey = (colName === 'places' || colName === 'business_profiles')
+                ? resolveCanonicalPlaceSlug(pObj, String(r.id))
+                : String(r.id);
+
+              if (colName === 'places' || colName === 'business_profiles') {
+                if (itemKey && (itemKey.includes('.') || itemKey === 'yoouz.com' || itemKey === 'yoouz')) {
+                  const existing = itemMap.get(itemKey) || {};
+                  itemMap.set(itemKey, { ...existing, ...pObj, id: itemKey });
+                }
+              } else {
+                itemMap.set(itemKey, pObj);
+              }
             }
           });
         }
@@ -6308,6 +6368,25 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
 
     let items = Array.from(itemMap.values());
+
+    if (colName === 'places' || colName === 'business_profiles') {
+      const canonicalPlacesMap = new Map<string, any>();
+      items.forEach((p: any) => {
+        if (!p) return;
+        const slugKey = resolveCanonicalPlaceSlug(p, String(p.id || ''));
+        if (slugKey && (slugKey.includes('.') || slugKey === 'yoouz.com' || slugKey === 'yoouz')) {
+          const existing = canonicalPlacesMap.get(slugKey) || {};
+          canonicalPlacesMap.set(slugKey, {
+            ...existing,
+            ...p,
+            id: slugKey,
+            isClaimed: Boolean(p.isClaimed || existing.isClaimed || slugKey === 'yoouz.com'),
+            isVerified: Boolean(p.isVerified || existing.isVerified || slugKey === 'yoouz.com')
+          });
+        }
+      });
+      items = Array.from(canonicalPlacesMap.values());
+    }
 
     if (colName === 'videoReviews') {
       const bunnyDb = getBunnyDb();

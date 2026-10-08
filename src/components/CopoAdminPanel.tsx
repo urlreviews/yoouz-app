@@ -1195,20 +1195,40 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Merged authoritative collections
   const activePlaces = useMemo(() => {
     const map = new Map<string, Place>();
-    (places || []).forEach((p) => {
-      if (p && p.id) map.set(String(p.id).toLowerCase(), p);
-    });
-    (dbPlaces || []).forEach((p) => {
-      if (p && p.id) {
-        const key = String(p.id).toLowerCase();
-        const existing = map.get(key);
-        if (!existing) {
-          map.set(key, p);
-        } else {
-          map.set(key, { ...existing, ...p });
-        }
+    const getSlug = (p: any) => {
+      if (!p) return '';
+      const raw = String(p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || p.id || '').toLowerCase().trim();
+      let canon = raw.replace(/^place-custom-/, '').replace(/^www-/, '').replace(/^www\./, '');
+      canon = canon
+        .replace(/-co-nz$/, '.co.nz')
+        .replace(/-co-uk$/, '.co.uk')
+        .replace(/-com$/, '.com')
+        .replace(/-org$/, '.org')
+        .replace(/-net$/, '.net')
+        .replace(/-io$/, '.io')
+        .replace(/-ai$/, '.ai')
+        .replace(/-ae$/, '.ae');
+      if (!canon.includes('.') && canon.includes('-')) {
+        const parts = canon.split('-');
+        if (parts.length >= 2) canon = parts.slice(0, -1).join('-') + '.' + parts[parts.length - 1];
       }
-    });
+      return canon || raw;
+    };
+
+    const processItem = (p: Place) => {
+      if (!p || !p.id) return;
+      const key = getSlug(p);
+      if (!key || (!key.includes('.') && key !== 'yoouz.com' && key !== 'yoouz')) return;
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...p, id: key });
+      } else {
+        map.set(key, { ...existing, ...p, id: key });
+      }
+    };
+
+    (places || []).forEach(processItem);
+    (dbPlaces || []).forEach(processItem);
     return Array.from(map.values());
   }, [places, dbPlaces]);
 
