@@ -559,6 +559,7 @@ const deletedPlacesIndexPath = path.join(globalUploadsDir, "deleted_places_index
 const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.json");
 const deactivatedUsersIndexPath = path.join(globalUploadsDir, "deactivated_users_index.json");
 const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
+const commentsIndexPath = path.join(globalUploadsDir, "comments_index.json");
 
 function readPlacesIndex(): any[] {
   const deletedSet = new Set(readDeletedPlacesIndex());
@@ -1045,6 +1046,41 @@ function recordDeletedCommentId(id: string): void {
   } catch (e) {}
 }
 
+function readCommentsIndex(): any[] {
+  const deletedSet = new Set(readDeletedCommentsIndex());
+  try {
+    if (fs.existsSync(commentsIndexPath)) {
+      const raw = fs.readFileSync(commentsIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+      }
+    }
+    const publicFallback = path.join(process.cwd(), "public", "comments_index.json");
+    if (fs.existsSync(publicFallback)) {
+      const raw = fs.readFileSync(publicFallback, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+
+function writeCommentsIndex(list: any[]): void {
+  try {
+    const deletedSet = new Set(readDeletedCommentsIndex());
+    const sanitized = (Array.isArray(list) ? list : []).filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(commentsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
+    const publicPath = path.join(process.cwd(), "public", "comments_index.json");
+    try { fs.writeFileSync(publicPath, JSON.stringify(sanitized, null, 2), "utf8"); } catch (e) {}
+  } catch (e) {}
+}
+
 // Canonical Comment Tree Builder: De-duplicates comments, places replies inside parent's replies, eliminates duplicate top-level entries, and computes exact total count
 function buildCommentTree(rawComments: any[]): { comments: any[]; count: number } {
   if (!Array.isArray(rawComments) || rawComments.length === 0) {
@@ -1353,13 +1389,7 @@ function readReviewsIndex(): any[] {
           });
 
         // Dynamically bind comments from comments_index.json / NoSQL comments collection
-        let allComments: any[] = [];
-        try {
-          const commentsPath = path.join(globalUploadsDir, "comments_index.json");
-          if (fs.existsSync(commentsPath)) {
-            allComments = JSON.parse(fs.readFileSync(commentsPath, "utf8"));
-          }
-        } catch (e) {}
+        let allComments = readCommentsIndex();
 
         if (Array.isArray(allComments) && allComments.length > 0) {
           processed.forEach((r: any) => {
@@ -1368,8 +1398,13 @@ function readReviewsIndex(): any[] {
               if (!Array.isArray(r.comments)) r.comments = [];
               const existingIds = new Set((r.comments || []).map((c: any) => String(c.id)));
               const newComments = vComments.filter((c: any) => !existingIds.has(String(c.id)));
-              r.comments = [...r.comments, ...newComments];
-              r.commentsCount = r.comments.length;
+              if (newComments.length > 0) {
+                r.comments = [...r.comments, ...newComments];
+                dirty = true;
+              }
+              const tree = buildCommentTree(r.comments);
+              r.comments = tree.comments;
+              r.commentsCount = tree.count;
             } else if (Array.isArray(r.comments)) {
               r.commentsCount = r.comments.length;
             }
@@ -14334,7 +14369,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const videoId = typeof req.query.videoId === 'string' ? req.query.videoId : '';
       if (!videoId) return res.json({ comments: [], count: 0, commentsCount: 0 });
       const bunnyDb = getBunnyDb();
-      const commentMap = new Map<string, any>();
 
       if (bunnyDb) {
         try {
@@ -14342,81 +14376,36 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
             args: [videoId]
           });
-          if (result && result.rows && result.rows.length > 0) {
-            result.rows.forEach((row: any) => {
-              let parsed: any = {};
-              try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-              const cObj = {
-                ...parsed,
-                id: String(row.id),
-                videoId: String(row.videoId),
-                userId: row.userId || parsed.userId || '',
-                authorName: row.userName || parsed.authorName || 'Guest',
-                authorAvatar: row.userAvatar || parsed.authorAvatar,
-                text: row.text || parsed.text || '',
-                createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
-              };
-              if (cObj.id) commentMap.set(cObj.id, cObj);
-            });
-          }
-
-          // Also check videoReviews table row in BunnyDB
-          const vidRow = await bunnyDb.execute({
-            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
-            args: [videoId]
+          const allComments = (result.rows || []).map((row: any) => {
+            let parsed: any = {};
+            try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
+            return {
+              ...parsed,
+              id: String(row.id),
+              videoId: String(row.videoId),
+              userId: row.userId || parsed.userId || '',
+              authorName: row.userName || parsed.authorName || 'Guest',
+              authorAvatar: row.userAvatar || parsed.authorAvatar,
+              text: row.text || parsed.text || '',
+              createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+            };
           });
-          if (vidRow && vidRow.rows && vidRow.rows.length > 0) {
-            const d = JSON.parse((vidRow.rows[0] as any).data || '{}');
-            if (Array.isArray(d.comments)) {
-              d.comments.forEach((c: any) => {
-                if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
-                if (c && Array.isArray(c.replies)) {
-                  c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
-                }
-              });
-            }
-          }
+
+          // Build canonical hierarchical tree and count
+          const treeResult = buildCommentTree(allComments);
+          return res.json({
+            comments: treeResult.comments,
+            count: treeResult.count,
+            commentsCount: treeResult.count
+          });
         } catch (dbErr) {
-          console.warn("BunnyDB comments read warning:", dbErr);
+          console.error("BunnyDB comments fetch error:", dbErr);
+          return res.status(500).json({ error: "Failed to fetch comments" });
         }
       }
-
-      // Merge from memory feedCache
-      const cachedVideo = feedCache.videos.find((v: any) => v && v.id === videoId);
-      if (cachedVideo && Array.isArray(cachedVideo.comments)) {
-        cachedVideo.comments.forEach((c: any) => {
-          if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
-          if (c && Array.isArray(c.replies)) {
-            c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
-          }
-        });
-      }
-
-      // Merge from local reviews index
-      const localList = readReviewsIndex();
-      const localVid = localList.find((v: any) => v && v.id === videoId);
-      if (localVid && Array.isArray(localVid.comments)) {
-        localVid.comments.forEach((c: any) => {
-          if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
-          if (c && Array.isArray(c.replies)) {
-            c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
-          }
-        });
-      }
-
-      const deletedCommentsSet = new Set(readDeletedCommentsIndex());
-      const allComments = Array.from(commentMap.values())
-        .filter((c: any) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedCommentsSet.has(String(c.id)))
-        .map((c: any) => {
-          if (c.isOwner && (!c.authorAvatar || c.authorAvatar.trim() === "" || c.authorAvatar.startsWith("data:;"))) {
-            return { ...c, authorAvatar: "/favicon.svg" };
-          }
-          return c;
-        });
-      const { comments, count } = buildCommentTree(allComments);
-      return res.json({ comments, count, commentsCount: count });
-    } catch (err: any) {
       return res.json({ comments: [], count: 0, commentsCount: 0 });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
   });
   
@@ -14448,11 +14437,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           sql: "SELECT * FROM comments WHERE videoId = ? ORDER BY createdAt ASC",
           args: [videoId]
         });
-        const commentMap = new Map<string, any>();
-        (allCommentsRes.rows || []).forEach((row: any) => {
+        const allComments = (allCommentsRes.rows || []).map((row: any) => {
           let parsed: any = {};
           try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
-          const cObj = {
+          return {
             ...parsed,
             id: String(row.id),
             videoId: String(row.videoId),
@@ -14462,43 +14450,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             text: row.text || parsed.text || '',
             createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
           };
-          if (cObj.id) commentMap.set(cObj.id, cObj);
         });
-
-        // Also check if videoReviews table row has previous comments
-        try {
-          const vRow = await bunnyDb.execute({
-            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
-            args: [videoId]
-          });
-          if (vRow && vRow.rows && vRow.rows.length > 0) {
-            const vData = JSON.parse((vRow.rows[0] as any).data || '{}');
-            if (Array.isArray(vData.comments)) {
-              vData.comments.forEach((c: any) => {
-                if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
-                if (c && Array.isArray(c.replies)) {
-                  c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
-                }
-              });
-            }
-          }
-        } catch (e) {}
-
-        const cachedVideo = feedCache.videos.find((v: any) => v && v.id === videoId);
-        if (cachedVideo && Array.isArray(cachedVideo.comments)) {
-          cachedVideo.comments.forEach((c: any) => {
-            if (c && c.id && !commentMap.has(c.id)) commentMap.set(c.id, c);
-            if (c && Array.isArray(c.replies)) {
-              c.replies.forEach((r: any) => { if (r && r.id && !commentMap.has(r.id)) commentMap.set(r.id, r); });
-            }
-          });
-        }
-
-        // Ensure incoming comment is present in the list
-        commentMap.set(comment.id, comment);
-
-        // Build canonical hierarchical tree and exact count
-        treeResult = buildCommentTree(Array.from(commentMap.values()));
+        treeResult = buildCommentTree(allComments);
 
         // 3. Update videoReviews table in BunnyDB
         try {
