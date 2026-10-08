@@ -1802,7 +1802,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     {t("nav.messages", "Messages")}
                   </h1>
                   {unreadCount > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-rose-500 text-white flex items-center justify-center shadow-xs">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-white text-zinc-950 flex items-center justify-center shadow-xs">
                       {unreadCount}
                     </span>
                   )}
@@ -2062,7 +2062,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           {/* Right side controls: Unread badge & action buttons */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isUnread && (
-                              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white font-black text-[10px] flex items-center justify-center shrink-0 shadow-xs ring-2 ring-zinc-950">
+                              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-white text-zinc-950 font-black text-[10px] flex items-center justify-center shrink-0 shadow-xs ring-2 ring-zinc-950">
                                 {thread.unreadCount > 99 ? "99+" : (thread.unreadCount || 1)}
                               </span>
                             )}

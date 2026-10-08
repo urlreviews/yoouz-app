@@ -95,37 +95,37 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
 
   // Determine badge styling based on actionType
   const actionType = toast.actionType || (toast.type === "message" ? "message" : undefined);
-  let badgeBg = "bg-white text-zinc-950";
+  let badgeBg = "bg-zinc-900 border border-zinc-700/80 text-white";
   let progressBg = "bg-white";
   let ActionIcon = Bell;
 
   if (actionType === "message") {
-    badgeBg = "bg-emerald-400 text-zinc-950";
-    progressBg = "bg-emerald-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-blue-400";
+    progressBg = "bg-white";
     ActionIcon = Mail;
   } else if (actionType === "like") {
-    badgeBg = "bg-white text-zinc-950";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-rose-400";
     progressBg = "bg-white";
     ActionIcon = Heart;
   } else if (actionType === "comment") {
-    badgeBg = "bg-sky-400 text-zinc-950";
-    progressBg = "bg-sky-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-emerald-400";
+    progressBg = "bg-white";
     ActionIcon = MessageSquare;
   } else if (actionType === "follow") {
-    badgeBg = "bg-violet-400 text-zinc-950";
-    progressBg = "bg-violet-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-sky-400";
+    progressBg = "bg-white";
     ActionIcon = UserPlus;
   } else if (actionType === "bookmark") {
-    badgeBg = "bg-amber-400 text-zinc-950";
-    progressBg = "bg-amber-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-amber-400";
+    progressBg = "bg-white";
     ActionIcon = Bookmark;
   } else if (actionType === "review") {
-    badgeBg = "bg-amber-400 text-zinc-950";
-    progressBg = "bg-amber-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-amber-400";
+    progressBg = "bg-white";
     ActionIcon = Star;
   } else if (actionType === "repost" || actionType === "share") {
-    badgeBg = "bg-blue-400 text-zinc-950";
-    progressBg = "bg-blue-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-indigo-400";
+    progressBg = "bg-white";
     ActionIcon = Repeat2;
   }
 
