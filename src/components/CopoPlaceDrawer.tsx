@@ -1164,13 +1164,32 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
       <aside
         id="google-maps-business-panel"
+        tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] bg-zinc-950 md:bg-zinc-900 rounded-none text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden animate-in slide-in-from-bottom md:slide-in-from-left duration-200 select-none overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
-        onWheel={(e) => e.stopPropagation()}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-zinc-950 md:bg-zinc-900 rounded-none text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
+        onWheel={(e) => {
+          e.stopPropagation();
+          if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
+            contentRef.current.scrollTop += e.deltaY;
+          }
+        }}
         onTouchMove={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (contentRef.current) {
+            if (e.key === 'ArrowDown') {
+              contentRef.current.scrollTop += 60;
+            } else if (e.key === 'ArrowUp') {
+              contentRef.current.scrollTop -= 60;
+            } else if (e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
+              contentRef.current.scrollTop += 300;
+            } else if (e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
+              contentRef.current.scrollTop -= 300;
+            }
+          }
+        }}
       >
-        <div className="flex flex-col h-full w-full">
+        <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
         {/* Mobile Pull Handle Indicator */}
         <div 
           {...swipeProps}
@@ -1471,7 +1490,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
         {/* Main Content Area */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto bg-zinc-950 space-y-4 p-4" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div 
+          ref={contentRef} 
+          tabIndex={0}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-zinc-950 space-y-4 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent" 
+          style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+        >
           {copiedNotification && (
             <div className="px-4 py-2 bg-zinc-800 text-white text-xs font-semibold text-center rounded-xl border border-zinc-700 animate-in fade-in">
               {copiedNotification}
