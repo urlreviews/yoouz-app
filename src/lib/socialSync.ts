@@ -2331,9 +2331,13 @@ export function subscribeToChats(
         const items = Array.isArray(json) ? json : (json.items || json.data || []);
         if (Array.isArray(items) && !isDisposed) {
           const processed = processChatThreadsForUser(items, currentUser);
-          const serverPartnerKeys = new Set(processed.map((t) => getThreadPartnerKey(t, currentUser)));
-          const serverThreadIds = new Set(processed.map((t) => t.id));
-          const pendingThreads = cachedThreads.filter((t) => t && !serverThreadIds.has(t.id) && !serverPartnerKeys.has(getThreadPartnerKey(t, currentUser)));
+          // Only keep pending threads if they are genuinely fresh local outbound messages waiting for network response (< 10 seconds old)
+          const now = Date.now();
+          const pendingThreads = cachedThreads.filter((t: any) => {
+            if (!t || !t._pendingSync) return false;
+            const created = Number(t.createdAtMs || t.updatedAt || 0);
+            return (now - created) < 10000;
+          });
           const merged = deduplicateChatThreads([...pendingThreads, ...processed], currentUser);
           updateThreads(merged);
         }
@@ -2347,6 +2351,19 @@ export function subscribeToChats(
 
   // 2. Real-Time Instant SSE Event Listener (<100ms response time)
   const unregisterSse = registerRealtimeListener(currentUser, (evt) => {
+    if (evt.type === "chats_purged" || evt.type === "system_reset") {
+      cachedThreads = [];
+      try {
+        localStorage.removeItem(cacheKey);
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith("copo_cached_chats_")) {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch (e) {}
+      onUpdate([]);
+      return;
+    }
     if (evt.type === "chat_message") {
       const threadData = evt.data || evt.threadData;
       if (threadData) {

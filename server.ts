@@ -6333,6 +6333,23 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       } catch (e) {}
     }
 
+    // 2c. For comments, aggregate with local comments_index.json
+    if (colName === 'comments') {
+      try {
+        const localComments = readCommentsIndex();
+        localComments.forEach((c: any) => {
+          if (c && c.id) {
+            const existing = itemMap.get(c.id) || {};
+            itemMap.set(c.id, {
+              ...c,
+              ...existing,
+              id: c.id
+            });
+          }
+        });
+      } catch (e) {}
+    }
+
     // 3. If PostgreSQL is active, optionally fetch from Drizzle
     if (getDb()) {
       try {
@@ -6381,6 +6398,19 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               }
             });
           }
+
+          try {
+            const localComms = readCommentsIndex();
+            if (Array.isArray(localComms)) {
+              localComms.forEach((c: any) => {
+                if (c && c.videoId && c.id) {
+                  const list = videoCommentsMap.get(String(c.videoId)) || [];
+                  if (!list.some(existing => existing.id === c.id)) list.push(c);
+                  videoCommentsMap.set(String(c.videoId), list);
+                }
+              });
+            }
+          } catch(lcErr) {}
 
           if (bRows && bRows.rows) {
             bRows.rows.forEach((row: any) => { if (row.videoId) videoBookmarksCountMap.set(String(row.videoId), Number(row.total) || 0); });
@@ -8193,6 +8223,38 @@ app.post('/api/admin/places/purge-all', express.json(), async (_req, res) => {
   }
 });
 
+app.get('/api/admin/debug-chats', async (_req, res) => {
+  try {
+    const results: any = { bunnyDb: [], postgres: [] };
+    
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const rs = await bunnyDb.execute("SELECT * FROM chats");
+        results.bunnyDb = rs.rows;
+      } catch (e: any) {
+        results.bunnyDbError = e.message;
+      }
+    }
+
+    const dbInstance = getDb();
+    if (dbInstance) {
+      try {
+        const table = getNoSqlTable('chats');
+        if (table) {
+          results.postgres = await dbInstance.select().from(table);
+        }
+      } catch (e: any) {
+        results.postgresError = e.message;
+      }
+    }
+
+    res.json(results);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/chats/purge-all', express.json(), async (_req, res) => {
   try {
     const bunnyDb = getBunnyDb();
@@ -8844,17 +8906,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   const startTime = Date.now();
   const tables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
   const counts: Record<string, number> = {};
-
-  if (bunnyDb) {
-    // Auto-purge orphaned interaction records (comments, likes, shares, bookmarks, notifications) whose parent video no longer exists
-    try {
-      await bunnyDb.execute(`DELETE FROM comments WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-      await bunnyDb.execute(`DELETE FROM likes WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-      await bunnyDb.execute(`DELETE FROM shares WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-      await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-      await bunnyDb.execute(`DELETE FROM notifications WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)`);
-    } catch (e) {}
-  }
 
   // Authoritative collection counts matching /api/nosql/:table results 100%
   for (const tbl of tables) {
