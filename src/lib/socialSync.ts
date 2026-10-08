@@ -2354,11 +2354,6 @@ export function subscribeToChats(
     if (evt.type === "chats_purged" || evt.type === "system_reset") {
       cachedThreads = [];
       try {
-        if (evt.type === "system_reset") {
-          localStorage.clear();
-          window.location.reload();
-          return;
-        }
         localStorage.removeItem(cacheKey);
         Object.keys(localStorage).forEach((k) => {
           if (k.startsWith("copo_cached_chats_")) {

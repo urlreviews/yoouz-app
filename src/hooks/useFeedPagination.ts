@@ -633,12 +633,6 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-user-reactivated", { detail: { userIds: uIds, email: payload.email, name: payload.name, handle: payload.handle } }));
             } else if (payload.type === "users_purged") {
               window.dispatchEvent(new CustomEvent("copo-users-purged"));
-            } else if (payload.type === "system_reset") {
-              setVideos([]);
-              try {
-                localStorage.clear();
-              } catch (e) {}
-              window.location.reload();
             } else if (payload.type === "init") {
               if (Array.isArray(payload.deletedIds) && payload.deletedIds.length > 0) {
                 const serverDelSet = new Set(payload.deletedIds.map(String));

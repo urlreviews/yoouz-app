@@ -560,44 +560,8 @@ const deletedUsersIndexPath = path.join(globalUploadsDir, "deleted_users_index.j
 const deactivatedUsersIndexPath = path.join(globalUploadsDir, "deactivated_users_index.json");
 const deletedCommentsIndexPath = path.join(globalUploadsDir, "deleted_comments_index.json");
 const commentsIndexPath = path.join(globalUploadsDir, "comments_index.json");
-const masterResetLockPath = path.join(globalUploadsDir, "master_reset.lock");
-
-function isMasterResetActive(): boolean {
-  try {
-    return fs.existsSync(masterResetLockPath);
-  } catch (e) {
-    return false;
-  }
-}
 
 function readPlacesIndex(): any[] {
-  if (isMasterResetActive()) {
-    return [{
-      id: 'yoouz.com',
-      name: 'Yoouz',
-      category: 'Video Reviews & Discovery Platform',
-      categoryType: 'business',
-      address: '',
-      city: '',
-      country: '',
-      rating: 5.0,
-      totalReviews: 0,
-      videoReviewCount: 0,
-      website: 'https://yoouz.com',
-      brandDomain: 'yoouz.com',
-      logoUrl: 'https://www.yoouz.com/favicon.svg',
-      avatarUrl: 'https://www.yoouz.com/favicon.svg',
-      bannerUrl: '',
-      ogImage: '',
-      photos: [],
-      openingHours: 'Available 24/7',
-      isOpen: true,
-      description: 'Official claimed business profile for Yoouz. Real people, authentic 60-second video reviews.',
-      isClaimed: true,
-      isVerified: true,
-      claimedByEmail: 'info@yoouz.com'
-    }];
-  }
   const deletedSet = new Set(readDeletedPlacesIndex());
   try {
     if (fs.existsSync(placesIndexPath)) {
@@ -1220,7 +1184,6 @@ function buildCommentTree(rawComments: any[]): { comments: any[]; count: number 
 }
 
 function readReviewsIndex(): any[] {
-  if (isMasterResetActive()) return [];
   const deletedSet = new Set(readDeletedReviewsIndex());
   const deletedCommentsSet = new Set(readDeletedCommentsIndex());
   const deactivatedSet = new Set(readDeactivatedUsersIndex().map(s => s.toLowerCase().trim()).filter(Boolean));
@@ -8886,7 +8849,7 @@ app.post('/api/admin/notifications/deduplicate', express.json(), async (_req, re
 // Master System Reset: Wipe all databases, tables, and uploads from scratch
 app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => {
   try {
-    console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables, index files, and caches from scratch...");
+    console.log("🔥 [Server] EXECUTING MASTER SYSTEM RESET: Wiping all tables and files from scratch...");
     const bunnyDb = getBunnyDb();
     const tables = [
       'users', 'places', 'videoReviews', 'comments', 'likes', 
@@ -8900,9 +8863,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
         try {
           await bunnyDb.execute(`DELETE FROM ${tbl}`);
         } catch (e) {
-          try {
-            await bunnyDb.execute(`DROP TABLE IF EXISTS ${tbl}`);
-          } catch (e2) {}
+          // Table might not exist yet, safe to ignore
         }
       }
     }
@@ -8933,36 +8894,14 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
       }
     } catch (e) {}
 
-    // Aggressively overwrite all review index files with empty arrays []
-    const indexPaths = [
-      path.join(globalUploadsDir, "reviews_index.json"),
-      path.join(process.cwd(), "uploads", "reviews_index.json"),
-      path.join(process.cwd(), "public", "reviews_index.json"),
-      path.join(process.cwd(), "public", "seeds", "reviews_index.json"),
-      path.join(process.cwd(), "dist", "reviews_index.json"),
-      path.join(process.cwd(), "uploads", "deleted_reviews_index.json"),
-      path.join(process.cwd(), "public", "deleted_reviews_index.json")
-    ];
-
-    for (const p of indexPaths) {
-      try {
-        fs.writeFileSync(p, JSON.stringify([], null, 2), "utf8");
-      } catch (e) {}
-    }
-
-    try {
-      fs.writeFileSync(masterResetLockPath, Date.now().toString(), "utf8");
-    } catch (e) {}
-
     // Reset memory cache
     try {
       feedCache.lastFetched = 0;
       feedCache.videos = [];
-      searchSuggestCache.clear();
     } catch (e) {}
 
     broadcastSseEvent({ type: "system_reset" });
-    console.log("✨ [Server] Master system reset complete. All databases, index files, and files wiped clean from scratch.");
+    console.log("✨ [Server] Master system reset complete. All databases and files wiped clean from scratch.");
     res.json({ success: true, message: "System master reset complete. All databases and files wiped clean from scratch." });
   } catch (err: any) {
     console.error("Master reset error:", err);
@@ -10788,10 +10727,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       const videoSubKeys = ["video_feed_engine", "video_streaming_cdn", "video_playback_controls", "video_cascade_deletion", "video_sharing_deep_links", "video_review_feed_retention", "video_recording_upload_anti_stall_guard", "video_cross_device_instant_live_sync_guard", "video_review_metadata_sharing_social_preview_guard"];
       const videoErrKey = videoSubKeys.find(k => diagnostics[k]?.status === "error");
       const videoDegKey = videoSubKeys.find(k => diagnostics[k]?.status === "degraded");
-      const videoMasterStatus: "ok" | "degraded" | "error" = storedReviews.length === 0 ? "ok" : (videoErrKey ? "error" : videoDegKey ? "degraded" : "ok");
-      const videoMasterDetails = storedReviews.length === 0
-        ? "PASSED: System is fresh and active following master reset. Ready for new 60s video reviews."
-        : (videoErrKey ? diagnostics[videoErrKey]?.details : videoDegKey ? diagnostics[videoDegKey]?.details : (diagnostics["video_review_feed_retention"]?.details || `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses are 100% verified.`));
+      const videoMasterStatus: "ok" | "degraded" | "error" = videoErrKey ? "error" : videoDegKey ? "degraded" : "ok";
+      const videoMasterDetails = videoErrKey ? diagnostics[videoErrKey]?.details : videoDegKey ? diagnostics[videoDegKey]?.details : (diagnostics["video_review_feed_retention"]?.details || `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses are 100% verified.`);
 
       const masterDiagnostics: Record<string, { status: "ok" | "degraded" | "error"; latencyMs: number; details: string; testInstruction: string }> = {
         "1_video_engine_cdn": {
@@ -12794,14 +12731,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
     const deletedPlaceIds = new Set(readDeletedPlacesIndex().map(p => p.toLowerCase()));
 
-    const KNOWN_PREVIOUS_SEARCHES = isMasterResetActive() ? [
-      {
-        domain: "yoouz.com",
-        title: "Yoouz",
-        description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
-        banner: ""
-      }
-    ] : [
+    const KNOWN_PREVIOUS_SEARCHES = [
       {
         domain: "yoouz.com",
         title: "Yoouz",
@@ -20521,12 +20451,6 @@ Respond ONLY with a JSON object:
       const qTrim = query.trim();
       const qLower = qTrim.toLowerCase();
 
-      if (isMasterResetActive()) {
-        if (!qLower.includes("yoouz")) {
-          return res.json({ places: [], source: "master_reset" });
-        }
-      }
-
       // Check if input is a URL or domain
       const isUrlPattern = /^(https?:\/\/|www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/i.test(qTrim);
 
@@ -25095,18 +25019,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       const qLower = q.toLowerCase();
-      if (isMasterResetActive()) {
-        const matchYoouz = "yoouz".includes(qLower) || "yoouz.com".includes(qLower);
-        const resList = matchYoouz ? [{
-          id: "yoouz.com",
-          title: "Yoouz",
-          domain: "yoouz.com",
-          logoUrl: "https://www.yoouz.com/favicon.svg",
-          category: "Video Reviews & Discovery Platform",
-          source: "database"
-        }] : [];
-        return res.json({ suggestions: resList, query: q });
-      }
       const cacheKey = qLower;
       const cached = searchSuggestCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {

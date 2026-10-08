@@ -1591,7 +1591,7 @@ export function synthesizePlaceFromReview(video: VideoReview, existingPlaces: Pl
   const isYoouz = cleanId === 'yoouz.com' || cleanId.includes('yoouz') || domain === 'yoouz.com' || (video.placeName && video.placeName.toLowerCase() === 'yoouz');
   const cleanReviewAddr = (video.placeAddress && !video.placeAddress.startsWith("http") && video.placeAddress !== "Verified Location") ? video.placeAddress : "";
   const formattedName = formatBusinessName(video.placeName || domain) || "Business";
-  const initialCategory = (video.placeCategory && video.placeCategory !== "Establishment" && video.placeCategory !== "Local Business" && video.placeCategory !== "Business") ? video.placeCategory : "";
+  const initialCategory = video.placeCategory || "Establishment";
   const initialCity = isYoouz ? "" : (video.placeCity || "");
   const initialCountry = isYoouz ? "" : (video.placeCountry || "");
   
