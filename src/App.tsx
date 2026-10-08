@@ -1058,7 +1058,7 @@ export function App() {
     
     // 7. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
     try {
-      await Promise.all([
+      await Promise.allSettled([
         fetch("/api/videos/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1154,7 +1154,7 @@ export function App() {
     
     // 7. Call backend admin API & video delete endpoints
     try {
-      await Promise.all([
+      await Promise.allSettled([
         fetch("/api/admin/videos/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
