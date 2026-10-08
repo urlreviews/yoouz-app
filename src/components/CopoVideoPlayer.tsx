@@ -1725,18 +1725,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               onTouchMove={(e) => e.stopPropagation()}
             >
               {(() => {
-                // Approach A: Business owner tools (e.g. Download for Ads) are strictly scoped to the Business Suite (isBusinessOwnerView).
-                // They never leak into the consumer feed when browsing as a normal user.
                 const isVerifiedOwnerOfThisPlace = Boolean(isBusinessOwnerView);
-
-                return Boolean(
+                const isMyVideo = Boolean(
                   moreMenuVideo &&
                     currentUser &&
                     (isAuthorMatch(moreMenuVideo, currentUser) ||
                       (currentUser.email && (moreMenuVideo?.userId === currentUser.email || (moreMenuVideo as any)?.userEmail === currentUser.email)) ||
                       moreMenuVideo.author?.name === "me" ||
                       moreMenuVideo.userId === "me")
-                ) ? (
+                );
+
+                return isMyVideo ? (
                   /* OWNER ACTIONS: Edit Star Rating & Review, Share, View Place, Delete */
                   <>
                     <button
@@ -1850,7 +1849,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     </button>
                   </>
                 ) : (
-                  /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report, Not Interested */
+                  /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report (if not author) */
                   <>
                     <button
                       id="btn-more-option-bookmark-viewer"
@@ -1950,48 +1949,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                           setMoreMenuVideo(null);
                           if (v) onOpenReport(v);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800/80 hover:text-red-400 text-zinc-200 transition-colors text-left font-medium text-sm cursor-pointer group"
                       >
-                        <Flag className="w-4 h-4 text-red-400" />
+                        <Flag className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
                         <span>{t("video.reportReview", "Report Video Review")}</span>
-                      </button>
-                    )}
-
-                    {onDeleteVideo && (
-                      <button
-                        id="btn-more-option-delete-viewer"
-                        onClick={() => {
-                          const v = moreMenuVideo;
-                          setMoreMenuVideo(null);
-                          if (v) {
-                            setVideoConfirmDelete(v);
-                          }
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                        <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
                       </button>
                     )}
                   </>
                 );
               })()}
-
-              {onPurgeAllVideos && (
-                <div className="pt-2 mt-2 border-t border-zinc-800/80">
-                  <button
-                    id="btn-more-option-purge-all-videos"
-                    onClick={() => {
-                      setMoreMenuVideo(null);
-                      setShowConfirmPurgeAllModal(true);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-left font-semibold text-xs cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400 shrink-0" />
-                    <span>{t("video.deleteAllVideos", "Delete All Videos (Instant Wipe)")}</span>
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

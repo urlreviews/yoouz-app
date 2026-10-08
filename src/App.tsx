@@ -118,7 +118,8 @@ export function App() {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          const list = parsed
+          const validParsed = parsed.length > 50 ? parsed.slice(0, 28) : parsed;
+          const list = validParsed
             .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
             .filter((p: any) => Boolean(p && p.id && p.id !== "business" && p.id !== "business-1"))
             .map((p: any) => {
@@ -7028,7 +7029,6 @@ export function App() {
               currentUser={currentUser}
               allUsers={allRegisteredUsers}
               onDeleteVideo={handleDeleteUserVideo}
-              onPurgeAllVideos={handleAdminPurgeAllVideos}
               onUpdateVideoReview={handleUpdateVideoReview}
               onHideVideo={(vidId) => {
                 const targetVid = activeFeedVideos.find((v) => v.id === vidId);
