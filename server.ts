@@ -6458,17 +6458,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             const existingComments = Array.isArray(r.comments) ? r.comments : [];
             const tree = buildCommentTree([...existingComments, ...separateComments]);
             
-            const realBookmarks = videoBookmarksCountMap.has(String(r.id)) 
-              ? Math.max(videoBookmarksCountMap.get(String(r.id))!, typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof r.bookmarks === 'number' ? r.bookmarks : 0))
-              : (typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof r.bookmarks === 'number' ? r.bookmarks : 0));
-            
-            const realLikes = videoLikesCountMap.has(String(r.id))
-              ? Math.max(videoLikesCountMap.get(String(r.id))!, typeof r.likesCount === 'number' ? r.likesCount : (typeof r.likes === 'number' ? r.likes : 0))
-              : (typeof r.likesCount === 'number' ? r.likesCount : (typeof r.likes === 'number' ? r.likes : 0));
-
-            const realShares = videoSharesCountMap.has(String(r.id))
-              ? Math.max(videoSharesCountMap.get(String(r.id))!, typeof r.sharesCount === 'number' ? r.sharesCount : (typeof r.shares === 'number' ? r.shares : 0))
-              : (typeof r.sharesCount === 'number' ? r.sharesCount : (typeof r.shares === 'number' ? r.shares : 0));
+            const realBookmarks = videoBookmarksCountMap.get(String(r.id)) || 0;
+            const realLikes = videoLikesCountMap.get(String(r.id)) || 0;
+            const realShares = videoSharesCountMap.get(String(r.id)) || 0;
 
             return {
               ...r,
@@ -7055,12 +7047,12 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
 
               parsedData.comments = tree.comments;
               parsedData.commentsCount = tree.count;
-              parsedData.likes = Math.max(realLikes, typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (typeof parsedData.likes === 'number' ? parsedData.likes : 0));
-              parsedData.likesCount = parsedData.likes;
-              parsedData.bookmarks = Math.max(realBookmarks, typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (typeof parsedData.bookmarks === 'number' ? parsedData.bookmarks : 0));
-              parsedData.bookmarksCount = parsedData.bookmarks;
-              parsedData.shares = Math.max(realShares, typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (typeof parsedData.shares === 'number' ? parsedData.shares : 0));
-              parsedData.sharesCount = parsedData.shares;
+              parsedData.likes = realLikes;
+              parsedData.likesCount = realLikes;
+              parsedData.bookmarks = realBookmarks;
+              parsedData.bookmarksCount = realBookmarks;
+              parsedData.shares = realShares;
+              parsedData.sharesCount = realShares;
             } catch (e) {
               console.warn("Failed to enrich single videoReview with live counts:", e);
             }
@@ -8961,31 +8953,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   const totalBusinessClaims = Math.max(counts.businessClaims || 0, claimedPlacesCount);
   counts.businessClaims = totalBusinessClaims;
 
-  // Calculate interaction sums
-  let totalLikesSum = counts.likes || 0;
-  let totalSharesSum = counts.shares || 0;
-  let totalCommentsSum = counts.comments || 0;
-  let totalBookmarksSum = counts.bookmarks || 0;
-
-  if (bunnyDb) {
-    try {
-      const sumRes = await bunnyDb.execute(`
-        SELECT 
-          SUM(COALESCE(likesCount, 0)) as likesSum,
-          SUM(COALESCE(sharesCount, 0)) as sharesSum,
-          SUM(COALESCE(commentsCount, 0)) as commentsSum,
-          SUM(COALESCE(bookmarksCount, 0)) as bookmarksSum
-        FROM videoReviews
-      `);
-      if (sumRes.rows?.[0]) {
-        const row: any = sumRes.rows[0];
-        totalLikesSum = Math.max(totalLikesSum, Number(row.likesSum || 0));
-        totalSharesSum = Math.max(totalSharesSum, Number(row.sharesSum || 0));
-        totalCommentsSum = Math.max(totalCommentsSum, Number(row.commentsSum || 0));
-        totalBookmarksSum = Math.max(totalBookmarksSum, Number(row.bookmarksSum || 0));
-      }
-    } catch (e) {}
-  }
+  // Calculate interaction sums from live database tables
+  const totalLikesSum = Number(counts.likes || 0);
+  const totalSharesSum = Number(counts.shares || 0);
+  const totalCommentsSum = Number(counts.comments || 0);
+  const totalBookmarksSum = Number(counts.bookmarks || 0);
 
   // Storage Stats from Bunny CDN Storage API
   const storageStats = {
@@ -12647,20 +12619,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           ? Math.max(dbCommCount, tree.count)
           : Math.max(tree.count, typeof r.commentsCount === 'number' ? r.commentsCount : (existing.commentsCount || 0));
 
-        const dbBookmarks = bmMap.get(String(r.id));
-        const realBookmarks = typeof dbBookmarks === 'number'
-          ? Math.max(dbBookmarks, typeof r.bookmarksCount === 'number' ? r.bookmarksCount : 0)
-          : (typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (existing.bookmarksCount || 0)));
-
-        const dbLikes = likeMap.get(String(r.id));
-        const realLikes = typeof dbLikes === 'number'
-          ? Math.max(dbLikes, typeof r.likesCount === 'number' ? r.likesCount : 0)
-          : (typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (existing.likesCount || 0)));
-
-        const dbShares = shareMap.get(String(r.id));
-        const realShares = typeof dbShares === 'number'
-          ? Math.max(dbShares, typeof r.sharesCount === 'number' ? r.sharesCount : 0)
-          : (typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (existing.sharesCount || 0)));
+        const realBookmarks = bmMap.get(String(r.id)) || 0;
+        const realLikes = likeMap.get(String(r.id)) || 0;
+        const realShares = shareMap.get(String(r.id)) || 0;
 
         const mergedAuthor = {
           ...(typeof existing.author === 'object' ? existing.author : {}),
@@ -12709,14 +12670,9 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         const dbCommCount = commCountMap.get(String(existing.id));
         const realCommentsCount = typeof dbCommCount === 'number' ? Math.max(dbCommCount, tree.count) : Math.max(tree.count, existing.commentsCount || 0);
 
-        const dbBookmarks = bmMap.get(String(existing.id));
-        const realBookmarks = typeof dbBookmarks === 'number' ? Math.max(dbBookmarks, existing.bookmarksCount || 0) : (existing.bookmarksCount || 0);
-
-        const dbLikes = likeMap.get(String(existing.id));
-        const realLikes = typeof dbLikes === 'number' ? Math.max(dbLikes, existing.likesCount || 0) : (existing.likesCount || 0);
-
-        const dbShares = shareMap.get(String(existing.id));
-        const realShares = typeof dbShares === 'number' ? Math.max(dbShares, existing.sharesCount || 0) : (existing.sharesCount || 0);
+        const realBookmarks = bmMap.get(String(existing.id)) || 0;
+        const realLikes = likeMap.get(String(existing.id)) || 0;
+        const realShares = shareMap.get(String(existing.id)) || 0;
 
         const vidObj = {
           ...existing,
@@ -12827,6 +12783,15 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
     try {
       console.log(`🚀 [Migration] Checking & migrating place records and video review links in BunnyDB...`);
+
+      // 0. Ensure videoReviews interaction counts strictly match live database table rows
+      await bunnyDb.execute(`
+        UPDATE videoReviews 
+        SET likesCount = COALESCE((SELECT COUNT(*) FROM likes WHERE likes.videoId = videoReviews.id), 0),
+            bookmarksCount = COALESCE((SELECT COUNT(*) FROM bookmarks WHERE bookmarks.videoId = videoReviews.id), 0),
+            sharesCount = COALESCE((SELECT COUNT(*) FROM shares WHERE shares.videoId = videoReviews.id), 0),
+            commentsCount = COALESCE((SELECT COUNT(*) FROM comments WHERE comments.videoId = videoReviews.id), 0)
+      `).catch(() => {});
 
       // 1. Ensure Yoouz place exists with canonical ID 'yoouz.com' and rich metadata
       const yoouzDoc = {
@@ -14816,7 +14781,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           args: [videoId]
         });
         const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
-        updatedLikesCount = effectiveIsLiked ? Math.max(1, dbLikes) : Math.max(0, dbLikes);
+        updatedLikesCount = dbLikes;
 
         const vRow = await bunnyDb.execute({
           sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
