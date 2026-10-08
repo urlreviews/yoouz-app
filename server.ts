@@ -571,7 +571,33 @@ function isMasterResetActive(): boolean {
 }
 
 function readPlacesIndex(): any[] {
-  if (isMasterResetActive()) return [];
+  if (isMasterResetActive()) {
+    return [{
+      id: 'yoouz.com',
+      name: 'Yoouz',
+      category: 'Video Reviews & Discovery Platform',
+      categoryType: 'business',
+      address: '',
+      city: '',
+      country: '',
+      rating: 5.0,
+      totalReviews: 0,
+      videoReviewCount: 0,
+      website: 'https://yoouz.com',
+      brandDomain: 'yoouz.com',
+      logoUrl: 'https://www.yoouz.com/favicon.svg',
+      avatarUrl: 'https://www.yoouz.com/favicon.svg',
+      bannerUrl: '',
+      ogImage: '',
+      photos: [],
+      openingHours: 'Available 24/7',
+      isOpen: true,
+      description: 'Official claimed business profile for Yoouz. Real people, authentic 60-second video reviews.',
+      isClaimed: true,
+      isVerified: true,
+      claimedByEmail: 'info@yoouz.com'
+    }];
+  }
   const deletedSet = new Set(readDeletedPlacesIndex());
   try {
     if (fs.existsSync(placesIndexPath)) {
@@ -1437,7 +1463,7 @@ function readReviewsIndex(): any[] {
 
 function writeReviewsIndex(list: any[]): void {
   try {
-    if (fs.existsSync(masterResetLockPath)) {
+    if (Array.isArray(list) && list.length > 0 && fs.existsSync(masterResetLockPath)) {
       fs.unlinkSync(masterResetLockPath);
     }
   } catch (e) {}

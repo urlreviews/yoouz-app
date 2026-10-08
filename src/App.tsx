@@ -113,49 +113,14 @@ export function App() {
     } as Place;
 
     try {
-      const deletedPlaceIds = getDeletedPlaceIds();
       const cached = localStorage.getItem("yoouz_cached_places");
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          const validParsed = parsed.length > 50 ? parsed.slice(0, 28) : parsed;
-          const list = validParsed
-            .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
-            .filter((p: any) => Boolean(p && p.id && p.id !== "business" && p.id !== "business-1"))
-            .map((p: any) => {
-              // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
-              if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {
-                p.bannerUrl = "";
-              }
-              if (p.ogImage && (p.ogImage.includes('unsplash.com') || p.ogImage.includes('placeholder') || p.ogImage.includes('mock'))) {
-                p.ogImage = "";
-              }
-              const isYoouz = p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz') || p.brandDomain === 'yoouz.com';
-              let finalWebsite = p.website || '';
-              if (finalWebsite.includes('g.com') && p.id && p.id !== 'g.com') {
-                finalWebsite = p.id.includes('.') ? `https://${p.id}` : '';
-              }
-              return {
-                ...p,
-                logoUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.logoUrl,
-                avatarUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.avatarUrl,
-                address: isYoouz ? "" : (p.address?.includes("1111 Lincoln") ? "" : p.address),
-                city: isYoouz ? "" : (p.city?.includes("Miami Beach") ? "" : p.city),
-                country: isYoouz ? "" : p.country,
-                lat: isYoouz ? 0 : p.lat,
-                lng: isYoouz ? 0 : p.lng,
-                isClaimed: isYoouz ? true : Boolean(p.isClaimed),
-                isVerified: isYoouz ? true : Boolean(p.isVerified),
-                claimedByEmail: isYoouz ? 'info@yoouz.com' : p.claimedByEmail,
-                rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
-                totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0),
-                website: finalWebsite
-              };
-            });
-          if (!list.some(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'))) {
-            list.unshift(defaultYoouzPlace);
+          const validYoouz = parsed.filter((p: any) => p && (p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz') || p.brandDomain === 'yoouz.com'));
+          if (validYoouz.length > 0) {
+            return [defaultYoouzPlace];
           }
-          return list;
         }
       }
     } catch(e){}
@@ -1465,12 +1430,14 @@ export function App() {
         const isCurrentlyVideo = window.location.pathname.startsWith("/v/") || window.location.pathname.includes("/video/");
         const isGoingToVideo = path.startsWith("/v/") || path.includes("/video/");
         
-        if (isCurrentlyVideo && isGoingToVideo) {
-          // Use replaceState while scrolling feed to avoid filling up the history stack
+        try {
+          if (isCurrentlyVideo && isGoingToVideo || window.self !== window.top) {
+            window.history.replaceState({}, "", path);
+          } else {
+            window.history.pushState({}, "", path);
+          }
+        } catch (e) {
           window.history.replaceState({}, "", path);
-        } else {
-          // Use pushState for actual navigation between different types of views (e.g., Profile -> Video)
-          window.history.pushState({}, "", path);
         }
       }
     } catch (err) {
