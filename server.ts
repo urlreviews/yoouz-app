@@ -1463,11 +1463,6 @@ function readReviewsIndex(): any[] {
 
 function writeReviewsIndex(list: any[]): void {
   try {
-    if (Array.isArray(list) && list.length > 0 && fs.existsSync(masterResetLockPath)) {
-      fs.unlinkSync(masterResetLockPath);
-    }
-  } catch (e) {}
-  try {
     const deletedSet = new Set(readDeletedReviewsIndex());
     const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
     if (!fs.existsSync(globalUploadsDir)) {
@@ -12799,7 +12794,14 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     }
     const deletedPlaceIds = new Set(readDeletedPlacesIndex().map(p => p.toLowerCase()));
 
-    const KNOWN_PREVIOUS_SEARCHES = [
+    const KNOWN_PREVIOUS_SEARCHES = isMasterResetActive() ? [
+      {
+        domain: "yoouz.com",
+        title: "Yoouz",
+        description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
+        banner: ""
+      }
+    ] : [
       {
         domain: "yoouz.com",
         title: "Yoouz",
@@ -20518,6 +20520,12 @@ Respond ONLY with a JSON object:
 
       const qTrim = query.trim();
       const qLower = qTrim.toLowerCase();
+
+      if (isMasterResetActive()) {
+        if (!qLower.includes("yoouz")) {
+          return res.json({ places: [], source: "master_reset" });
+        }
+      }
 
       // Check if input is a URL or domain
       const isUrlPattern = /^(https?:\/\/|www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/i.test(qTrim);

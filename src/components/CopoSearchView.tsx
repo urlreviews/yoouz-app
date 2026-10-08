@@ -742,6 +742,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                        searchedPlace.category.toLowerCase() !== "website" && 
                        searchedPlace.category.toLowerCase() !== "business" && 
                        searchedPlace.category.toLowerCase() !== "local business" && 
+                       searchedPlace.category.toLowerCase() !== "establishment" && 
                        searchedPlace.category.toLowerCase() !== "general" && 
                        searchedPlace.category.toLowerCase() !== "venue" && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
