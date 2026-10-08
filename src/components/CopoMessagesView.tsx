@@ -775,8 +775,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   const filteredRecipients = useMemo(() => {
     const q = newChatSearch.toLowerCase().trim().replace(/^@/, "");
 
-    // Strictly only allow messaging businesses, never other members
-    const pool = availableRecipients.filter((r) => r.isBusiness);
+    let pool = availableRecipients;
+    if (recipientFilterTab === "businesses") {
+      pool = availableRecipients.filter((r) => r.isBusiness);
+    } else if (recipientFilterTab === "members") {
+      pool = availableRecipients.filter((r) => !r.isBusiness);
+    }
 
     if (!q) {
       return pool.slice(0, 50);
@@ -2721,7 +2725,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-white">New Message</h3>
-                  <p className="text-[10px] text-zinc-400">Message official business profiles on Yoouz</p>
+                  <p className="text-[10px] text-zinc-400">
+                    {recipientFilterTab === "members"
+                      ? "Message community members & reviewers on Yoouz"
+                      : recipientFilterTab === "businesses"
+                      ? "Message official business profiles on Yoouz"
+                      : "Message members or business profiles on Yoouz"}
+                  </p>
                 </div>
               </div>
               <button
@@ -2733,12 +2743,57 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               </button>
             </div>
 
+            {/* Segmented Recipient Filter Tabs */}
+            <div className="flex items-center p-1 bg-zinc-950 rounded-xl border border-zinc-800/80 gap-1">
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("members")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  recipientFilterTab === "members"
+                    ? "bg-zinc-800 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Members</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("businesses")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  recipientFilterTab === "businesses"
+                    ? "bg-zinc-800 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Businesses</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipientFilterTab("all")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  recipientFilterTab === "all"
+                    ? "bg-zinc-800 text-white shadow-xs"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span>All</span>
+              </button>
+            </div>
+
             {/* Search input */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
-                placeholder="Search business by name, category, or city..."
+                placeholder={
+                  recipientFilterTab === "members"
+                    ? "Search member by name or handle..."
+                    : recipientFilterTab === "businesses"
+                    ? "Search business by name, category, or city..."
+                    : "Search members or businesses..."
+                }
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 autoFocus
