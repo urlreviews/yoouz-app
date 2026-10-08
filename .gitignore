@@ -12,3 +12,5 @@ coverage/
 .git-credentials
 .env*
 !.env.example
+*.db
+*.sqlite
