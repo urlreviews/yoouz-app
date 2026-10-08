@@ -488,43 +488,43 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
             <AnimatePresence initial={false}>
             {filteredNotifications.map((notif) => {
-              // Sleek, unified dark mode type-specific badge styles for notification avatar overlays
+              // Sleek, unified dark mode monochromatic badge styles for notification avatar overlays
               const badgeStyles = {
                 like: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Heart className="w-3 h-3 fill-current shrink-0 text-rose-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Heart className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
                 },
                 comment: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <MessageSquare className="w-3 h-3 fill-current shrink-0 text-emerald-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <MessageSquare className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
                 },
                 follow: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <UserPlus className="w-3 h-3 stroke-[2.5] shrink-0 text-sky-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <UserPlus className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
                 },
                 repost: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-indigo-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
                 },
                 share: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-indigo-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
                 },
                 bookmark: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Bookmark className="w-3 h-3 fill-current shrink-0 text-amber-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Bookmark className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
                 },
                 review: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Star className="w-3 h-3 fill-current shrink-0 text-amber-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Star className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
                 },
                 message: {
-                  bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                  icon: <Mail className="w-3 h-3 stroke-[2.5] shrink-0 text-blue-400" />
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Mail className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
                 }
               }[notif.type] || {
-                bg: "bg-zinc-900 border border-zinc-700/80 text-zinc-100 ring-2 ring-zinc-950 shadow-md",
-                icon: <Bell className="w-3 h-3 shrink-0 text-zinc-300" />
+                bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                icon: <Bell className="w-3 h-3 shrink-0 text-zinc-100" />
               };
 
               const resolvedThumbnail = resolveNotificationThumbnail(notif);

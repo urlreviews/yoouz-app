@@ -100,31 +100,31 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
   let ActionIcon = Bell;
 
   if (actionType === "message") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-blue-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = Mail;
   } else if (actionType === "like") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-rose-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = Heart;
   } else if (actionType === "comment") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-emerald-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = MessageSquare;
   } else if (actionType === "follow") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-sky-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = UserPlus;
   } else if (actionType === "bookmark") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-amber-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = Bookmark;
   } else if (actionType === "review") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-amber-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = Star;
   } else if (actionType === "repost" || actionType === "share") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/80 text-indigo-400";
+    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
     progressBg = "bg-white";
     ActionIcon = Repeat2;
   }

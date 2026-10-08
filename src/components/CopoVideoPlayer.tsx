@@ -2186,9 +2186,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 type="button"
                 id="btn-confirm-delete-video"
                 onClick={() => {
-                  const id = videoConfirmDelete.id;
+                  const targetVid = videoConfirmDelete;
+                  const id = targetVid.id;
                   setVideoConfirmDelete(null);
-                  if (id && onDeleteVideo) {
+                  const isVideoAuthor = Boolean(
+                    targetVid &&
+                      currentUser &&
+                      (isAuthorMatch(targetVid, currentUser) ||
+                        (currentUser.email && (targetVid?.userId === currentUser.email || (targetVid as any)?.userEmail === currentUser.email)) ||
+                        targetVid.author?.name === "me" ||
+                        targetVid.userId === "me")
+                  );
+                  if (id && onDeleteVideo && isVideoAuthor) {
                     onDeleteVideo(id);
                   }
                 }}

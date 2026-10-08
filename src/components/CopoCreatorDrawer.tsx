@@ -1454,7 +1454,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                           <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                         </div>
-                        {onDeleteVideo && (
+                        {onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(v, currentUser))) && (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1935,9 +1935,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  const vidId = videoToDeleteInDrawer.id;
+                  const targetVid = videoToDeleteInDrawer;
+                  const vidId = targetVid.id;
                   setVideoToDeleteInDrawer(null);
-                  if (vidId && onDeleteVideo) {
+                  if (vidId && onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(targetVid, currentUser)))) {
                     onDeleteVideo(vidId);
                   }
                 }}
