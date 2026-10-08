@@ -24914,17 +24914,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         
-        // Ensure every suggestion has a valid logo
+        // Only assign logo if item has official logo or is a known verified brand
         let logo = item.logoUrl || "";
         if (!logo && hasValidDomain) {
-          logo = KNOWN_BRAND_LOGOS[dom] || `/api/favicon?domain=${dom}`;
-        }
-        if (!logo && item.id && item.id.includes(".")) {
-          logo = `/api/favicon?domain=${item.id}`;
-        }
-        if (!logo) {
-          const domGuess = dom || (normTitle.replace(/[^a-z0-9]/gi, '') + '.com');
-          logo = `/api/favicon?domain=${encodeURIComponent(domGuess)}`;
+          logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || "";
         }
 
         suggestions.push({
@@ -24945,7 +24938,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const dbRes = await activeDb.execute({
             sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website FROM places 
                   WHERE name LIKE ? OR id LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
-            args: [`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`]
+            args: [`${q}%`, `${q}%`, `${q}%`, `${q}%`, `${q}%`]
           });
           if (dbRes && dbRes.rows) {
             for (const row of dbRes.rows as any[]) {
@@ -24967,12 +24960,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       // 2. Search Curated Brand Knowledge Graph & Official Names Dictionary
+      const escapedQ = qLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const wordRegex = new RegExp(`(?:^|\\s|-|\\.)${escapedQ}`, 'i');
       for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
         const domLower = domKey.toLowerCase();
         const nameLower = officialName.toLowerCase();
-        if (domLower.includes(qLower) || nameLower.includes(qLower)) {
+        if (domLower.startsWith(qLower) || nameLower.startsWith(qLower) || wordRegex.test(domLower) || wordRegex.test(nameLower)) {
           const hasDot = domKey.includes(".");
-          const validDomain = hasDot ? domKey : (KNOWN_OFFICIAL_NAMES[domKey + ".com"] ? domKey + ".com" : "");
+          const validDomain = hasDot 
+            ? domKey 
+            : (KNOWN_BRAND_LOGOS[domKey + ".com"] ? domKey + ".com" : (KNOWN_OFFICIAL_NAMES[domKey + ".com"] ? domKey + ".com" : (KNOWN_BRAND_LOGOS[domKey] ? domKey : "")));
           addSuggestion({
             title: officialName,
             domain: validDomain,
@@ -28753,7 +28750,7 @@ const CLEANTON_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
   </g>
 </svg>`;
 
-const KNOWN_BRAND_LOGOS: Record<string, string> = {
+const serverBrandLogos: Record<string, string> = {
   "macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
   "www.macquariecentre.com.au": "https://www.macquariecentre.com.au/retailidentity/macquariecentre/apple-touch-icon-152x152-precomposed.png",
   "worldsquare.com.au": "https://worldsquare.com.au/wp-content/uploads/2021/07/WSQ_Ideogram_Positive_RedRGB-Copy-copy-300x300.png",

@@ -181,13 +181,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-300">
-          {displayName && displayName !== "Business" ? (
-            <span className={`font-black uppercase select-none ${fallbackTextClassName || "text-xs text-white"}`}>
-              {displayName.charAt(0)}
-            </span>
-          ) : (
-            <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400" />
-          )}
+          <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400" />
         </div>
       )}
     </div>
