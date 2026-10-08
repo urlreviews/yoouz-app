@@ -1352,7 +1352,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 href={effectiveWebsite || `https://${displayWebsiteClean}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 transition-colors cursor-pointer group"
+                className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 transition-colors cursor-pointer group no-underline"
               >
                 <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
                 <span className="truncate">{displayWebsiteClean}</span>

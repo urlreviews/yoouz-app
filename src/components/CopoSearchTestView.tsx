@@ -428,7 +428,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                     if (!dom || dom === "yoouz.com") return null;
                     const href = (web && web.startsWith("http")) ? web : `https://${dom}`;
                     return (
-                      <a href={href} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 text-xs font-medium mt-1 transition-colors group">
+                      <a href={href} target="_blank" rel="noreferrer" className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 text-xs font-medium mt-1 transition-colors group no-underline">
                         <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white" />
                         <span>{dom}</span>
                       </a>

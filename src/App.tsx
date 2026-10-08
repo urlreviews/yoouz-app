@@ -30,7 +30,6 @@ import { CopoAdminPanel } from "./components/CopoAdminPanel";
 import { CopoGoogleAuthModal, AuthIntent, CopoAuthPrompt } from "./components/CopoGoogleAuthModal";
 import { CopoLegalModal } from "./components/CopoLegalModal";
 import { CopoComparisonModal } from "./components/CopoComparisonModal";
-import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { InAppNotificationToast, InAppToastPayload } from "./components/InAppNotificationToast";
 import { CopoReportModal, ReportTarget } from "./components/CopoReportModal";
 import { CopoNotificationSettingsModal } from "./components/CopoNotificationSettingsModal";
@@ -8011,7 +8010,6 @@ export function App() {
       )}
 
       <GlobalUploadToast />
-      <PWAInstallPrompt />
 
       {deleteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white rounded-2xl px-5 py-4 border border-zinc-800 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">

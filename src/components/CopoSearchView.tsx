@@ -726,7 +726,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         href={effectiveWeb} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-zinc-300 hover:text-white hover:underline inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 mb-2 transition-colors cursor-pointer group"
+                        className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 mb-2 transition-colors cursor-pointer group no-underline"
                       >
                         <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
                         <span className="truncate">{cleanDisplay}</span>
@@ -740,11 +740,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       {searchedPlace.category && 
                        !searchedPlace.category.toLowerCase().includes("verified") && 
                        searchedPlace.category.toLowerCase() !== "website" && 
-                       searchedPlace.category.toLowerCase() !== "business" && 
-                       searchedPlace.category.toLowerCase() !== "local business" && 
-                       searchedPlace.category.toLowerCase() !== "establishment" && 
-                       searchedPlace.category.toLowerCase() !== "general" && 
-                       searchedPlace.category.toLowerCase() !== "venue" && (
+                       searchedPlace.category.toLowerCase() !== "business" && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200">
                           <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                           <span>{searchedPlace.category}</span>
