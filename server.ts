@@ -12761,156 +12761,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         title: "Yoouz",
         description: "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
         banner: ""
-      },
-      {
-        domain: "legal500.com",
-        title: "The Legal 500",
-        description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
-        banner: ""
-      },
-      {
-        domain: "reddit.com",
-        title: "Reddit",
-        description: "Reddit is a network of communities where people can dive into their interests, hobbies and passions.",
-        banner: ""
-      },
-      {
-        domain: "uber.com",
-        title: "Uber",
-        description: "Uber is finding you better ways to move, work, and succeed in thousands of cities around the world.",
-        banner: ""
-      },
-      {
-        domain: "spotify.com",
-        title: "Spotify",
-        description: "Spotify is a digital music, podcast, and video service that gives you access to millions of songs.",
-        banner: ""
-      },
-      {
-        domain: "usa.com",
-        title: "USA.com",
-        description: "USA.com provides local and national information, resources, and public data across the United States.",
-        banner: ""
-      },
-      {
-        domain: "facebook.com",
-        title: "Facebook",
-        description: "Connect with friends and the world around you on Facebook.",
-        banner: ""
-      },
-      {
-        domain: "meta.com",
-        title: "Meta",
-        description: "Meta builds technologies that help people connect, find communities, and grow businesses.",
-        banner: ""
-      },
-      {
-        domain: "digitalpark.ae",
-        title: "Digital Park UAE",
-        description: "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
-        banner: ""
-      },
-      {
-        domain: "digitalparkae.com",
-        title: "Digital Park UAE",
-        description: "Digital Park offers cutting-edge digital solutions, technology consulting, and enterprise software services.",
-        banner: ""
-      },
-      {
-        domain: "thecapitalavenue.com",
-        title: "The Capital Avenue",
-        description: "The Capital Avenue premier commercial and residential destinations and development.",
-        banner: "https://thecapitalavenue.com/wp-content/uploads/2026/06/Fay-Valley-33-1.webp"
-      },
-      {
-        domain: "districtuae.com",
-        title: "District UAE",
-        description: "District UAE luxury lifestyle, dining, and retail destinations across the Emirates.",
-        banner: "https://www.districtuae.com/og-default.jpeg"
-      },
-      {
-        domain: "aldhabidental.ae",
-        title: "Al Dhabi Dental Clinic",
-        description: "Premier dental clinic in the UAE delivering comprehensive oral healthcare, cosmetic dentistry, and dental implants.",
-        banner: ""
-      },
-      {
-        domain: "plomberiebruxelles24.be",
-        title: "Plomberie Bruxelles 24",
-        description: "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs.",
-        banner: ""
-      },
-      {
-        domain: "coventgardenmassage.co.uk",
-        title: "Covent Garden Massage",
-        description: "Specialist massage and wellness therapy treatments in central London Covent Garden.",
-        banner: ""
-      },
-      {
-        domain: "midtownwellness.co.uk",
-        title: "Midtown Wellness London",
-        description: "Holistic physiotherapy, massage therapy, and wellness center located in Midtown London.",
-        banner: ""
-      },
-      {
-        domain: "spaandmassage.co.uk",
-        title: "Spa & Massage London",
-        description: "Premium spa and relaxation massage experiences across premier London locations.",
-        banner: ""
-      },
-      {
-        domain: "mastercard.com",
-        title: "Mastercard",
-        description: "Mastercard global technology company in the payments industry connecting consumers, businesses, and banks.",
-        banner: ""
-      },
-      {
-        domain: "ibm.com",
-        title: "IBM",
-        description: "IBM produces computer hardware, middleware, and software, providing hosting and consulting services.",
-        banner: "https://www.ibm.com/content/adobe-cms/us/en/homepage/jcr:content/root/table_of_contents/tile_group_container/container/tile_card_copy_copy_/image.coreimg.png/1787908674336/ibm-bob-homepage-uso-r4u1.png"
-      },
-      {
-        domain: "ups.com",
-        title: "UPS",
-        description: "United Parcel Service provides global package delivery and supply chain management solutions.",
-        banner: ""
-      },
-      {
-        domain: "cnn.com",
-        title: "CNN",
-        description: "CNN delivers breaking news and analysis on politics, business, entertainment, and world affairs.",
-        banner: ""
-      },
-      {
-        domain: "kempinski.com",
-        title: "Kempinski Hotels",
-        description: "Europe's oldest luxury hotel group delivering timeless elegance and five-star hospitality worldwide.",
-        banner: "https://storage.kempinski.com/cdn-cgi/image/w=1920,f=auto,fit=scale-down,g=auto/ki-cms-prod/images/5/8/4/2/19522485-1-eng-GB/6a0ae1b79ed9-KISEZ1_Kayaking.jpg"
-      },
-      {
-        domain: "tajhotels.com",
-        title: "Taj Hotels",
-        description: "Iconic luxury hotels, palaces, and resorts renowned for world-class hospitality.",
-        banner: ""
-      },
-      {
-        domain: "timehotels.com",
-        title: "Time Hotels",
-        description: "Contemporary hospitality and hotel apartments designed for leisure and corporate travelers.",
-        banner: "https://image-tc.galaxy.tf/wipng-9v50hzcs0a5z2nwwpsh62mgel/home_og-image.png"
-      },
-      {
-        domain: "freecancellations.com",
-        title: "Free Cancellations",
-        description: "Guaranteed flexible bookings and free cancellations across hotels and accommodations worldwide.",
-        banner: "https://metasearch-cdn.azureedge.net/azure/seo-images/us/new-york-state/CDD5D4910706645C4CAD830CC6C07D52.jpg?quality=80&mode=crop&w=1200&h=800&scale=both&anchor=middlecenter"
-      },
-      {
-        domain: "londontrustedtherapy.com",
-        title: "London Trusted Therapy",
-        description: "Private psychology, therapy, and counseling services in Harley Street and central London.",
-        banner: "https://londontrustedtherapy.com/wp-content/uploads/2026/07/private-therapy-and-psychology-london-harley-street-holborn-2.webp"
       }
     ];
 
@@ -13049,92 +12899,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       // Clean up any legacy or duplicate yoouz aliases
       await bunnyDb.execute({
         sql: `DELETE FROM places WHERE id IN ('yoouz-com', 'place-custom-yoouz-com', 'yoouz', '@yoouz')`
-      }).catch(() => {});
-
-      // 2. Ensure Legal 500 place exists with canonical ID 'legal500.com' and rich metadata
-      const legal500Logo = "";
-      const legal500Banner = "";
-      const legal500Doc = {
-        id: "legal500.com",
-        name: "The Legal 500",
-        category: "Legal Directory & Law Firm Rankings",
-        categoryType: "all",
-        address: "legal500.com",
-        city: "London / Global",
-        country: "UK",
-        lat: 51.5074,
-        lng: -0.1278,
-        rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: legal500Logo,
-        logoUrl: legal500Logo,
-        bannerUrl: legal500Banner,
-        ogImage: legal500Banner,
-        photos: [legal500Banner],
-        openingHours: "Available 24/7",
-        isOpen: true,
-        phone: "",
-        website: "https://www.legal500.com",
-        priceRange: "$$$",
-        plusCode: "",
-        description: "The Legal 500 analyzes the capabilities of law firms across the world with a comprehensive research programme.",
-        popularKeywords: [{ tag: "Legal", count: 1 }, { tag: "Law Firms", count: 1 }],
-        amenities: ["Verified Directory", "Global Rankings"],
-        topDishes: [],
-        brandDomain: "legal500.com",
-        isClaimed: false,
-        isVerified: false
-      };
-      await bunnyDb.execute({
-        sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: ["legal500.com", "The Legal 500", "legal500.com", "Legal Directory & Law Firm Rankings", "London / Global", "UK", 51.5074, -0.1278, legal500Logo, JSON.stringify(legal500Doc),
-               "The Legal 500", "legal500.com", "Legal Directory & Law Firm Rankings", "London / Global", "UK", 51.5074, -0.1278, legal500Logo, JSON.stringify(legal500Doc)]
-      }).catch(() => {});
-
-      // 3. Ensure Digital Park place exists with canonical ID 'digitalpark.ae'
-      const digitalParkLogo = "";
-      const digitalParkBanner = "";
-      const digitalParkDoc = {
-        id: "digitalpark.ae",
-        name: "Digital Park",
-        category: "Smart Community & Technology Park",
-        categoryType: "all",
-        address: "digitalpark.ae",
-        city: "Dubai",
-        country: "United Arab Emirates",
-        lat: 25.1235,
-        lng: 55.3813,
-        rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-        avatarUrl: digitalParkLogo,
-        logoUrl: digitalParkLogo,
-        bannerUrl: digitalParkBanner,
-        ogImage: digitalParkBanner,
-        photos: [digitalParkBanner],
-        openingHours: "Mon-Sat: 8:00 AM - 8:00 PM",
-        isOpen: true,
-        phone: "+971 4 501 5555",
-        website: "https://digitalpark.ae",
-        priceRange: "$$$",
-        plusCode: "",
-        description: "Digital Park is Dubai Silicon Oasis's premier integrated smart community and technology business park.",
-        popularKeywords: [{ tag: "Technology", count: 1 }, { tag: "Dubai", count: 1 }],
-        amenities: ["Smart Offices", "Commercial Center", "High Speed Fiber"],
-        topDishes: [],
-        brandDomain: "digitalpark.ae",
-        isClaimed: false,
-        isVerified: false
-      };
-      await bunnyDb.execute({
-        sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: ["digitalpark.ae", "Digital Park", "digitalpark.ae", "Smart Community & Technology Park", "Dubai", "United Arab Emirates", 25.1235, 55.3813, digitalParkLogo, JSON.stringify(digitalParkDoc),
-               "Digital Park", "digitalpark.ae", "Smart Community & Technology Park", "Dubai", "United Arab Emirates", 25.1235, 55.3813, digitalParkLogo, JSON.stringify(digitalParkDoc)]
       }).catch(() => {});
 
       // 4. Automatically convert and ensure ALL existing database places have canonical dot domain IDs & purge hyphenated duplicates
@@ -20514,10 +20278,62 @@ Respond ONLY with a JSON object:
 
         try {
           const parsedUrl = new URL(targetUrl);
-          const domain = parsedUrl.hostname.replace(/^www\./, "");
+          const domain = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+          const siteId = `site-${domain.replace(/[^a-zA-Z0-9]/g, '-')}`;
           const siteTitle = domain.split('.')[0].toUpperCase();
 
-          // Try fetching page title / meta description
+          // 1. Check if place is already remembered in database (Cached)
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            try {
+              const existingRows = await bunnyDb.execute({
+                sql: `SELECT id, name, address, category, city, country, logoUrl, bannerUrl, brandDomain, website, data FROM places 
+                      WHERE LOWER(id) = ? OR LOWER(id) = ? OR LOWER(brandDomain) = ? OR LOWER(website) LIKE ? LIMIT 1`,
+                args: [domain, siteId, domain, `%${domain}%`]
+              });
+              if (existingRows && existingRows.rows && existingRows.rows.length > 0) {
+                const row: any = existingRows.rows[0];
+                let pData: any = {};
+                try {
+                  pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                } catch (e) {}
+
+                const cachedPlace = {
+                  id: row.id || siteId,
+                  name: row.name || pData.name || formatBusinessName(siteTitle, domain),
+                  category: row.category || pData.category || "Business & Professional Services",
+                  address: row.address || pData.address || "",
+                  city: row.city || pData.city || "Online",
+                  country: row.country || pData.country || "Worldwide",
+                  lat: Number(pData.lat) || 0,
+                  lng: Number(pData.lng) || 0,
+                  rating: Number(pData.rating) || 5.0,
+                  totalReviews: Number(pData.totalReviews) || 1,
+                  avatarUrl: row.logoUrl || pData.avatarUrl || pData.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+                  bannerUrl: row.bannerUrl || pData.bannerUrl || pData.ogImage || "",
+                  photos: pData.photos || (row.bannerUrl || pData.bannerUrl ? [row.bannerUrl || pData.bannerUrl] : []),
+                  openingHours: pData.openingHours || "Mon-Fri: 9:00 AM - 5:00 PM",
+                  isOpen: pData.isOpen !== undefined ? pData.isOpen : true,
+                  phone: pData.phone || "",
+                  email: pData.email || "",
+                  website: row.website || pData.website || targetUrl,
+                  brandDomain: domain,
+                  description: pData.description || `Official website of ${domain}`,
+                  amenities: pData.amenities || ["Official Website", "Online Service"],
+                  videoReviewCount: Number(pData.videoReviewCount) || 0,
+                  isClaimed: Boolean(pData.isClaimed || row.id === 'yoouz.com'),
+                  isVerified: Boolean(pData.isVerified || row.id === 'yoouz.com'),
+                  ...pData
+                };
+
+                return res.json({ places: [cachedPlace], isWebsiteUrl: true, source: "database_cached" });
+              }
+            } catch (dbFindErr) {
+              console.warn("[live-search] Error querying cached place:", dbFindErr);
+            }
+          }
+
+          // 2. Not in database: Fetch page title / meta description live
           let metaTitle = siteTitle;
           let metaDesc = `Official website of ${domain}`;
           let ogImage = "";
@@ -20569,12 +20385,11 @@ Respond ONLY with a JSON object:
           const finalCity = (typeof scrapedCity !== "undefined" && scrapedCity) ? scrapedCity : (matchedKnownLoc?.city || (finalAddress ? "" : "Online"));
           const finalCountry = (typeof scrapedCountry !== "undefined" && scrapedCountry) ? scrapedCountry : (matchedKnownLoc?.country || "Worldwide");
           const finalCategory = (typeof scrapedCategory !== "undefined" && scrapedCategory) ? scrapedCategory : (matchedKnownLoc?.category || "Business & Professional Services");
-          const finalPhone = metaPhone || matchedKnownLoc?.phone || "";
 
           const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
           const websitePlace = {
-            id: `site-${domain.replace(/[^a-zA-Z0-9]/g, '-')}`,
+            id: siteId,
             name: metaTitle,
             category: finalCategory,
             address: finalAddress,
@@ -20592,10 +20407,31 @@ Respond ONLY with a JSON object:
             phone: metaPhone,
             email: metaEmail,
             website: targetUrl,
+            brandDomain: domain,
             description: metaDesc,
             amenities: ["Official Website", "Online Service"],
-            videoReviewCount: 0
+            videoReviewCount: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           };
+
+          // 3. Save newly scraped place to DB so future searches remember logo, banner, and info instantly!
+          if (bunnyDb) {
+            try {
+              const jsonStr = JSON.stringify(websitePlace);
+              await bunnyDb.execute({
+                sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, logoUrl = ?, bannerUrl = ?, brandDomain = ?, website = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  siteId, metaTitle, finalAddress, finalCategory, finalCity, finalCountry, faviconUrl, ogImage || "", domain, targetUrl, jsonStr,
+                  metaTitle, finalAddress, finalCategory, finalCity, finalCountry, faviconUrl, ogImage || "", domain, targetUrl, jsonStr
+                ]
+              });
+            } catch (saveDbErr) {
+              console.warn("[live-search] Error saving newly searched place to DB:", saveDbErr);
+            }
+          }
 
           return res.json({ places: [websitePlace], isWebsiteUrl: true, source: "website_enrichment" });
         } catch (urlErr) {
