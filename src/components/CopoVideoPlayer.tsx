@@ -134,16 +134,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const { t } = useLanguage();
   // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
   const effectiveVideos = useMemo(() => {
-    if (typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true") {
-      return (videos && videos.length > 0) ? videos.filter(v => !isPurgedItem(v)) : [];
-    }
     const fallbackList = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
       : INITIAL_SEED_VIDEOS;
-    const base = Array.isArray(videos)
+    const base = Array.isArray(videos) && videos.length > 0
       ? videos.filter(v => !isPurgedItem(v))
       : (feedContextTitle ? [] : fallbackList.filter((v: any) => !isPurgedItem(v)).map(normalizeReview));
-    return [...base].sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    const finalBase = base.length > 0 ? base : INITIAL_SEED_VIDEOS.map(normalizeReview);
+    return [...finalBase].sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos, feedContextTitle]);
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();

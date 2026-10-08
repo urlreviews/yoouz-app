@@ -124,10 +124,19 @@ const PROTECTED_FEED_CREATORS = new Set([
   "yoouz"
 ]);
 
+export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
+  "rev-1790368898192-sw74n",
+  "rev-1790363378621-w65oy",
+  "rev-1790353801035-1rlp8",
+  "rev-1789841701519-2l6x8",
+  "rev-1789577075627-3488d"
+]);
+
 export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {
   if (!v || !v.id) return true;
   const id = String(v.id).trim();
   if (!id || id.length < 3) return true;
+  if (AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) return false;
   if (HARD_DELETED_IDS.includes(id)) return true;
 
   // If global video purge was executed, purge all previous videos
@@ -207,12 +216,29 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
 
 export function useFeedPagination() {
   const [videos, setVideos] = useState<VideoReview[]>(() => {
+    // Clear legacy purge flags and un-blacklist authentic reviews from localStorage
+    if (typeof localStorage !== "undefined") {
+      try {
+        localStorage.removeItem("copo_all_videos_purged");
+        localStorage.removeItem("copo_all_videos_purged_time");
+        const deletedRaw = localStorage.getItem("copo_deleted_videos");
+        if (deletedRaw) {
+          const parsed = JSON.parse(deletedRaw);
+          if (Array.isArray(parsed)) {
+            const cleaned = parsed.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(String(id)));
+            localStorage.setItem("copo_deleted_videos", JSON.stringify(cleaned));
+          }
+        }
+      } catch (e) {}
+    }
+
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     let deletedIds: string[] = [];
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
+    deletedIds = deletedIds.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id));
 
     HARD_DELETED_IDS.forEach(id => {
-      if (!deletedIds.includes(id)) deletedIds.push(id);
+      if (!deletedIds.includes(id) && !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) deletedIds.push(id);
     });
 
     try {
@@ -268,15 +294,12 @@ export function useFeedPagination() {
         } catch (e) {}
       }
 
-      // 3. Initial fresh seed baseline (only fill missing items if not globally purged)
-      const isAllVideosPurged = typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true";
-      if (!isAllVideosPurged) {
-        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-          if (v && v.id && !combinedMap.has(String(v.id))) {
-            combinedMap.set(String(v.id), v);
-          }
-        });
-      }
+      // 3. Initial fresh seed baseline (guarantees the 5 authentic reviews are always seeded instantly)
+      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+        if (v && v.id && !combinedMap.has(String(v.id))) {
+          combinedMap.set(String(v.id), v);
+        }
+      });
 
       // 4. Local published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
@@ -294,8 +317,6 @@ export function useFeedPagination() {
       return result;
     } catch (e) {}
     // Instant fallback to injected server videos or seed videos
-    const isAllVideosPurged = typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true";
-    if (isAllVideosPurged) return [];
     const fallbackSource = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
       : INITIAL_SEED_VIDEOS;
@@ -329,6 +350,7 @@ export function useFeedPagination() {
         const parsed = JSON.parse(deletedStr); 
         if (Array.isArray(parsed)) deletedIds = parsed;
       } catch (e) {}
+      deletedIds = deletedIds.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id));
 
       try {
         // 1. Fetch from Server API (with fresh cache-busting)
@@ -341,11 +363,14 @@ export function useFeedPagination() {
             "rev-1788294000000-avis"
           ];
           const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];
-          const allDeletedSet = new Set([...deletedIds, ...serverDeletedIds, ...hardBannedIds]);
+          const allDeletedSet = new Set(
+            [...deletedIds, ...serverDeletedIds, ...hardBannedIds].filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id))
+          );
 
           const isPurgedVideo = (v: any) => {
             if (!v || !v.id) return true;
             const id = String(v.id);
+            if (AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) return false;
             if (allDeletedSet.has(id)) return true;
             if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
             if (v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
