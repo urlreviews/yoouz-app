@@ -132,16 +132,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   commentsOpen = false
 }) => {
   const { t } = useLanguage();
-  // Fallback to static seed reviews if main home feed is hydrating to guarantee 0ms instant first-frame render
+  // Fallback to static seed reviews ONLY if main home feed is hydrating without explicit videos prop or context
   const effectiveVideos = useMemo(() => {
+    if (Array.isArray(videos)) {
+      return videos.filter(v => v && !isPurgedItem(v)).sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    }
+    if (feedContextTitle) {
+      return [];
+    }
     const fallbackList = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
       : INITIAL_SEED_VIDEOS;
-    const base = Array.isArray(videos) && videos.length > 0
-      ? videos.filter(v => !isPurgedItem(v))
-      : (feedContextTitle ? [] : fallbackList.filter((v: any) => !isPurgedItem(v)).map(normalizeReview));
-    const finalBase = base.length > 0 ? base : INITIAL_SEED_VIDEOS.map(normalizeReview);
-    return [...finalBase].sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    return fallbackList.filter((v: any) => v && !isPurgedItem(v)).map(normalizeReview).sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos, feedContextTitle]);
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
