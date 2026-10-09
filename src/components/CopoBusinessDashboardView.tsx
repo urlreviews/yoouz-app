@@ -2518,34 +2518,6 @@ ${jsonLd}
           </div>
         </div>
 
-        {/* Current Plan Widget Card in Sidebar */}
-        <div className="mx-2 my-2 p-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-white space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-amber-400">
-                <Zap className="w-3.5 h-3.5 fill-amber-400" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">{isPremium ? 'Premium Suite' : 'Free Plan'}</div>
-                <div className="text-[10px] text-zinc-400 font-medium">{isPremium ? 'Full access active' : 'Core tools active'}</div>
-              </div>
-            </div>
-          </div>
-          {!isPremium && (
-            <button
-              type="button"
-              onClick={() => {
-                setPremiumTriggerFeature('general');
-                setIsPremiumModalOpen(true);
-              }}
-              className="w-full py-1.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 text-xs font-black transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
-            >
-              <Zap className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
-              <span>Upgrade</span>
-            </button>
-          )}
-        </div>
-
         {/* Footer & Legal Links (Matching Homepage Sidebar) */}
         <div className="px-3 pt-3 pb-2 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
           <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
