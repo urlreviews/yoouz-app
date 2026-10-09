@@ -207,81 +207,72 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                 ? 'bg-zinc-900/90 border-2 border-zinc-700 shadow-xl' 
                 : 'bg-zinc-900/60 border border-zinc-800 opacity-90'
             }`}>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black tracking-wide ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase ${
                     !isPremium 
-                      ? 'bg-white text-zinc-950' 
-                      : 'bg-zinc-800 border border-zinc-700 text-zinc-300'
+                      ? 'bg-zinc-800 text-white border border-zinc-700' 
+                      : 'bg-zinc-800/80 text-zinc-400 border border-zinc-700/80'
                   }`}>
-                    {!isPremium ? 'YOUR CURRENT PLAN' : 'STANDARD TIER'}
+                    {!isPremium ? 'Active Plan' : 'Standard Tier'}
                   </span>
-                  <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">BASELINE</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-zinc-950 px-2.5 py-1 rounded-full border border-zinc-800">
+                    Baseline
+                  </span>
                 </div>
 
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">Free Standard Tier</h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 mt-1.5 leading-relaxed font-medium">
-                    Essential tools for verified place owners to respond and manage their listing.
+                  <h3 className="text-2xl font-black text-white tracking-tight">Free Standard Tier</h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 mt-2 leading-relaxed font-medium">
+                    Essential tools for verified local businesses to manage reviews and engage customers.
                   </p>
                 </div>
 
-                <div className="pt-2">
-                  <div className="text-3xl sm:text-4xl font-black text-white">$0</div>
-                  <div className="text-xs text-zinc-300 mt-1 font-semibold">Free forever — no credit card required</div>
+                <div className="pt-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">$0</span>
+                    <span className="text-xs sm:text-sm font-bold text-zinc-400">/ forever</span>
+                  </div>
+                  <div className="text-[11px] text-zinc-400 mt-1 font-medium">No credit card required</div>
                 </div>
 
-                <hr className="border-zinc-800" />
+                <div className="h-px bg-zinc-800/80 my-2" />
 
-                <div className="space-y-3.5 pt-1">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">Included Features in Free Tier:</p>
+                <div className="space-y-3.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400">Included in Free Tier:</p>
 
                   <div className="flex items-start gap-3">
-                    <BarChart3 className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                    <BarChart3 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Real-time Video Review Analytics</strong> & video watch impression tracking
+                      <strong className="text-white font-bold">Real-time Video Analytics</strong> & watch impression tracking
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                    <TrendingUp className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Interactive Performance Charts</strong> (7D, 30D, 90D & All Time watch metrics)
+                      <strong className="text-white font-bold">Interactive Performance Charts</strong> (7D, 30D, 90D & All Time)
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                    <MessageSquare className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Reply to customer video reviews</strong> & direct message feedback
+                      <strong className="text-white font-bold">Reply to Customer Reviews</strong> & direct chat feedback
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Update business profile</strong>, hours, description & venue photos
+                      <strong className="text-white font-bold">Update Business Profile</strong>, hours & location
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <QrCode className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
+                    <QrCode className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Custom Table QR Code generator</strong> for venue stands & counter displays
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Star className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Overall Star Rating Tracking</strong> & customer review counter
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Real-time Review Alerts</strong> & customer follower tracking
+                      <strong className="text-white font-bold">Custom Table QR Code Generator</strong> for table tents
                     </span>
                   </div>
                 </div>
@@ -290,54 +281,49 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
               <div className="pt-4">
                 <button
                   disabled
-                  className={`w-full py-4 rounded-2xl text-xs sm:text-sm font-black border text-center transition-all ${
+                  className={`w-full py-3.5 rounded-2xl text-xs sm:text-sm font-black border text-center transition-all ${
                     !isPremium 
-                      ? 'bg-zinc-800 text-white border-zinc-700 cursor-default' 
+                      ? 'bg-zinc-800 text-white border-zinc-700 cursor-default shadow-xs' 
                       : 'bg-zinc-900/80 text-zinc-500 border-zinc-800/80 cursor-not-allowed'
                   }`}
                 >
-                  {!isPremium ? 'Active Plan' : 'Included in Account'}
+                  {!isPremium ? 'Current Active Plan' : 'Included'}
                 </button>
               </div>
             </div>
 
             {/* PREMIUM PLAN CARD */}
-            <div className={`rounded-3xl p-5 sm:p-8 flex flex-col justify-between space-y-6 relative transition-all shadow-2xl ${
+            <div className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 relative transition-all shadow-2xl ${
               isPremium
                 ? 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-white ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-zinc-600 hover:border-zinc-400 shadow-[0_0_40px_rgba(255,255,255,0.08)]'
+                : 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-zinc-600 hover:border-zinc-400 shadow-[0_0_50px_rgba(255,255,255,0.06)]'
             }`}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 ${
-                    isPremium 
-                      ? 'bg-zinc-800 text-white border border-zinc-700' 
-                      : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
-                  }`}>
-                    <Shield className="w-3.5 h-3.5 text-white" />
-                    {isPremium ? 'CURRENT ACTIVE PLAN' : 'RECOMMENDED FOR GROWTH'}
-                  </span>
+              <div className="space-y-5">
+                {/* Clean, perfectly aligned top header bar */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-xs font-extrabold border border-zinc-700 tracking-wide uppercase">
+                    <Shield className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <span>Growth Suite</span>
+                  </div>
 
-                  <span className="px-3 py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1 bg-white text-zinc-950 shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-zinc-950 text-xs font-black uppercase tracking-wider shadow-sm">
                     <Sparkles className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
                     <span>Full Suite Access</span>
-                  </span>
+                  </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                    Premium Business Suite
-                  </h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 mt-1.5 leading-relaxed font-medium">
-                    Video embedding, HD downloads, direct chat messaging, and search indexing.
+                  <h3 className="text-2xl font-black text-white tracking-tight">Premium Business Suite</h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 mt-2 leading-relaxed font-medium">
+                    Website video embedding, HD ad downloads, Google SEO indexing, and smart review tools.
                   </p>
                 </div>
 
                 {/* PRICING DISPLAY SECTION */}
-                <div className="pt-2">
+                <div className="pt-1">
                   <div className="flex items-baseline gap-2">
                     <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">$149</span>
-                    <span className="text-sm sm:text-base font-extrabold text-zinc-300">/ month</span>
+                    <span className="text-xs sm:text-sm font-extrabold text-zinc-300">/ month</span>
                   </div>
                   
                   <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black">
@@ -346,16 +332,16 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   </div>
                 </div>
 
-                <hr className="border-zinc-800" />
+                <div className="h-px bg-zinc-800/80 my-2" />
 
                 {/* Premium Features List */}
-                <div className="space-y-3 pt-1">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-white">Everything in Free, plus:</p>
+                <div className="space-y-3.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-white">Everything in Free, plus:</p>
 
                   <div className="flex items-start gap-3">
                     <Code className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Embed Video Reviews</strong> on your website
+                      <strong className="text-white font-bold">Embed Video Reviews</strong> on your official website
                     </span>
                   </div>
 
