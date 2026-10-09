@@ -184,7 +184,7 @@ interface CopoBusinessDashboardViewProps {
   onRecordReview?: (place: Place) => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'more';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'plans' | 'more';
 
 
 export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps> = ({ 
@@ -2380,6 +2380,7 @@ ${jsonLd}
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
+    { id: 'plans' as BusinessTab, label: t('business.plansNav', 'Plans & Membership'), icon: Zap, isProBadge: !isPremium },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -2517,8 +2518,36 @@ ${jsonLd}
           </div>
         </div>
 
+        {/* Current Plan Widget Card in Sidebar */}
+        <div className="mx-2 my-2 p-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-white space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-amber-400">
+                <Zap className="w-3.5 h-3.5 fill-amber-400" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white">{isPremium ? 'Premium Suite' : 'Free Plan'}</div>
+                <div className="text-[10px] text-zinc-400 font-medium">{isPremium ? 'Full access active' : 'Core tools active'}</div>
+              </div>
+            </div>
+          </div>
+          {!isPremium && (
+            <button
+              type="button"
+              onClick={() => {
+                setPremiumTriggerFeature('general');
+                setIsPremiumModalOpen(true);
+              }}
+              className="w-full py-1.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 text-xs font-black transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+            >
+              <Zap className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
+              <span>Upgrade</span>
+            </button>
+          )}
+        </div>
+
         {/* Footer & Legal Links (Matching Homepage Sidebar) */}
-        <div className="px-3 pt-4 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
+        <div className="px-3 pt-3 pb-2 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
           <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
             <button
               type="button"
@@ -2580,9 +2609,10 @@ ${jsonLd}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {/* Header Plan Badge / Upgrade Trigger */}
               {isPremium ? (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 shadow-xs">
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 shadow-xs">
                   <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
-                  <span>Premium Partner</span>
+                  <span className="hidden sm:inline">Premium Partner</span>
+                  <span className="sm:hidden text-[10px] font-bold">PRO</span>
                 </div>
               ) : (
                 <button
@@ -2591,23 +2621,25 @@ ${jsonLd}
                     setPremiumTriggerFeature('general');
                     setIsPremiumModalOpen(true);
                   }}
-                  className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 font-bold rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
+                  className="h-8 sm:h-10 px-2.5 sm:px-4 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 font-bold rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
+                  title="View Plans & Membership"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-white text-white" />
-                  <span>Plans & Membership</span>
+                  <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                  <span className="hidden sm:inline">Plans & Membership</span>
+                  <span className="sm:hidden text-[11px] font-extrabold text-amber-400">Plans</span>
                 </button>
               )}
 
-              {/* Quick Merchant Support / Docs Button */}
+              {/* Quick Merchant Support / Docs Button (Hidden on mobile to save space) */}
               <button
                 type="button"
                 id="biz-header-help-trigger"
                 onClick={() => setShowHelpModal(true)}
-                className="h-9 sm:h-10 px-2.5 sm:px-3 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold shadow-xs"
+                className="hidden sm:flex h-9 sm:h-10 px-2.5 sm:px-3 items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold shadow-xs"
                 title={t("business.openGuideDocs", "Open Guide & Docs")}
               >
                 <HelpCircle className="w-4 h-4 text-zinc-400" />
-                <span className="hidden sm:inline">{t("business.support", "Support")}</span>
+                <span>{t("business.support", "Support")}</span>
               </button>
 
               {/* Profile / Account Control with Clean Google-Style Circular Avatar */}
@@ -2670,6 +2702,21 @@ ${jsonLd}
                       </div>
                       
                       {/* Core Essential Actions */}
+                      <button 
+                        onClick={() => {
+                          setShowAccountDropdown(false);
+                          setPremiumTriggerFeature('general');
+                          setIsPremiumModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                      >
+                        <Zap className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
+                        <span>{t("business.plansAndMembership", "Plans & Membership")}</span>
+                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          {isPremium ? 'PRO' : 'UPGRADE'}
+                        </span>
+                      </button>
+
                       <button 
                         onClick={() => {
                           setShowAccountDropdown(false);
@@ -2916,8 +2963,8 @@ ${jsonLd}
                             {selectedChartMetric === 'reviews' && 'Verified Video Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
-                          <span className="text-[10px] sm:text-[11px] font-bold text-zinc-300 bg-zinc-800/80 px-2.5 py-1 rounded-full border border-zinc-700 flex items-center gap-1">
-                            <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Real Video Impressions Live
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px] font-extrabold border border-zinc-800 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Metrics
                           </span>
                         </div>
                         <p className="text-[11px] sm:text-xs text-zinc-200 mt-0.5 font-medium">
@@ -3078,6 +3125,40 @@ ${jsonLd}
                       <span>Today</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Current Workspace Plan & Active Capabilities Card */}
+                <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="space-y-1.5 max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold uppercase tracking-wider">
+                        Active Workspace Plan
+                      </span>
+                      <span className="text-xs font-bold text-white">
+                        {isPremium ? 'Premium Partner Suite ($149/mo)' : 'Free Business Plan ($0/mo)'}
+                      </span>
+                    </div>
+                    <h4 className="text-base sm:text-lg font-black text-white tracking-tight">
+                      {isPremium ? 'All Executive Business Features Unlocked' : 'Unlock Website Video Embeds, SEO & Direct Booking CTAs'}
+                    </h4>
+                    <p className="text-xs text-zinc-300 font-medium">
+                      {isPremium 
+                        ? 'Your business profile enjoys full video embed widgets, Google SEO indexing, custom CTA action buttons, and priority support.'
+                        : 'Respond to customer reviews and update your profile for free. Upgrade to embed video reviews on your website and index video reviews on Google SEO.'}
+                    </p>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPremiumTriggerFeature('general');
+                      setIsPremiumModalOpen(true);
+                    }}
+                    className="w-full md:w-auto px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 active:scale-95 shadow-md"
+                  >
+                    <Zap className="w-4 h-4 fill-zinc-950 text-zinc-950" />
+                    <span>{isPremium ? 'View All Plan Details' : 'Upgrade to Premium — $149/mo'}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -4912,6 +4993,131 @@ ${jsonLd}
                   )}
                 </div>
 
+              </div>
+            )}
+
+            {/* TAB: PLANS & MEMBERSHIP */}
+            {activeTab === 'plans' && (
+              <div className="space-y-6 animate-in fade-in duration-200 w-full max-w-full overflow-hidden">
+                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-amber-400 border border-zinc-700 text-xs font-bold mb-2">
+                      <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>Yoouz Business Plans</span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Plans & Membership Suite</h2>
+                    <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-1">
+                      Manage your subscription plan, active video tools, and premium features.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPremiumTriggerFeature('general');
+                      setIsPremiumModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shrink-0"
+                  >
+                    <Zap className="w-4 h-4 fill-zinc-950 text-zinc-950" />
+                    <span>{isPremium ? 'View All Plan Details' : 'Upgrade to Premium — $149/mo'}</span>
+                  </button>
+                </div>
+
+                {/* Plan Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Free Plan Card */}
+                  <div className={`p-5 sm:p-6 rounded-3xl border ${!isPremium ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-800 bg-zinc-950/60'} text-white space-y-4 relative`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Basic Tier</span>
+                      {!isPremium && (
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-800 text-white text-[10px] font-extrabold border border-zinc-700">
+                          CURRENT ACTIVE PLAN
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Free Business Plan</h3>
+                      <div className="text-2xl font-black text-white mt-1">$0 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-zinc-300 font-medium border-t border-zinc-800/80 pt-4">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Claim & Verify Business Workspace</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Respond to Customer Video Reviews & Messages</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Update Profile Logo, Category, Hours & Location</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Print Custom QR Code Table Tents</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Premium Plan Card */}
+                  <div className={`p-5 sm:p-6 rounded-3xl border ${isPremium ? 'border-amber-500/80 bg-zinc-900 ring-1 ring-amber-500/50' : 'border-zinc-800 bg-zinc-900'} text-white space-y-4 relative`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 fill-amber-400" /> Executive Suite
+                      </span>
+                      {isPremium ? (
+                        <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold border border-amber-500/40">
+                          ACTIVE SUITE
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full bg-amber-400 text-zinc-950 text-[10px] font-black uppercase tracking-wider">
+                          RECOMMENDED
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Premium Business Suite</h3>
+                      <div className="text-2xl font-black text-white mt-1">$149 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-zinc-300 font-medium border-t border-zinc-800/80 pt-4">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span className="font-bold text-white">Everything in Free Plan, plus:</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Embed Video Reviews on your Website Widget</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Google 1st-Page Video SEO Indexing</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Custom Action Buttons (Book, Order, Reserve CTA)</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>Download High-Res Video File Exports for Ads</span>
+                      </li>
+                    </ul>
+
+                    {!isPremium && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPremiumTriggerFeature('general');
+                          setIsPremiumModalOpen(true);
+                        }}
+                        className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md mt-4"
+                      >
+                        <Zap className="w-4 h-4 fill-zinc-950 text-zinc-950" />
+                        <span>Upgrade to Premium — $149/mo</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

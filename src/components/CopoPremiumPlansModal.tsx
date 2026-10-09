@@ -116,35 +116,35 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 space-y-6">
         
         {/* Business Identifier & Plan Status Banner */}
-        <div className={`p-4 sm:p-5 rounded-3xl border transition-all ${
+        <div className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all ${
           isPremium 
-            ? 'bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border-zinc-600 shadow-xl' 
+            ? 'bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border-zinc-700 shadow-xl' 
             : 'bg-zinc-900/90 border-zinc-800'
         }`}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3">
               {currentPlace?.logoUrl ? (
                 <img 
                   src={currentPlace.logoUrl} 
                   alt={businessName} 
-                  className="w-12 h-12 rounded-2xl object-cover border border-zinc-700 shrink-0" 
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover border border-zinc-700 shrink-0" 
                 />
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-black shrink-0 text-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-black shrink-0 text-base sm:text-lg">
                   {(businessName || 'B').charAt(0).toUpperCase()}
                 </div>
               )}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400">Claimed Business Account</span>
-                  <CheckCircle2 className="w-4 h-4 text-white" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400">Claimed Business Workspace</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-black text-white">{businessName || 'Your Business Account'}</h3>
+                <h3 className="text-base sm:text-lg font-black text-white truncate">{businessName || 'Your Business Workspace'}</h3>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-zinc-950 border border-zinc-800 text-xs font-bold text-zinc-200 shrink-0">
-              <span className="text-zinc-400 font-medium">Current Status:</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl sm:rounded-2xl bg-zinc-950 border border-zinc-800 text-xs font-bold text-zinc-200 shrink-0 self-start sm:self-auto">
+              <span className="text-zinc-400 font-medium">Status:</span>
               {isPremium ? (
                 <span className="font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
@@ -152,49 +152,49 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                 </span>
               ) : (
                 <span className="font-black text-zinc-200 uppercase tracking-wider">
-                  Free Tier Active
+                  Free Plan Active
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Segmented Controller / View Switcher Tabs */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-zinc-900/90 border border-zinc-800/80">
+        {/* Segmented Controller / Native App Capsule Switcher */}
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-zinc-900/90 border border-zinc-800/80 shadow-inner">
           <button
             onClick={() => setActiveTab('plans')}
-            className={`flex-1 py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'plans'
-                ? 'bg-white text-zinc-950 shadow-md'
+                ? 'bg-white text-zinc-950 shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
             }`}
           >
-            <Zap className="w-4 h-4" />
-            <span>Plan Tiers</span>
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span>Plans</span>
           </button>
 
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`flex-1 py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'matrix'
-                ? 'bg-white text-zinc-950 shadow-md'
+                ? 'bg-white text-zinc-950 shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Full Comparison Matrix</span>
+            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span>Compare</span>
           </button>
 
           <button
             onClick={() => setActiveTab('faq')}
-            className={`flex-1 py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'faq'
-                ? 'bg-white text-zinc-950 shadow-md'
+                ? 'bg-white text-zinc-950 shadow-sm'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
             }`}
           >
-            <HelpCircle className="w-4 h-4" />
-            <span>FAQ & Support</span>
+            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span>FAQ</span>
           </button>
         </div>
 
@@ -302,26 +302,25 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
             </div>
 
             {/* PREMIUM PLAN CARD */}
-            <div className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 relative overflow-hidden transition-all shadow-2xl ${
+            <div className={`rounded-3xl p-5 sm:p-8 flex flex-col justify-between space-y-6 relative transition-all shadow-2xl ${
               isPremium
                 ? 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-white ring-1 ring-white/20'
                 : 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-zinc-600 hover:border-zinc-400 shadow-[0_0_40px_rgba(255,255,255,0.08)]'
             }`}>
-              {/* Badge Overlay */}
-              <div className="absolute top-0 right-0 bg-white text-zinc-950 px-4 py-1.5 rounded-bl-2xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1 shadow-lg">
-                <Sparkles className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
-                <span>Full Suite Access</span>
-              </div>
-
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 ${
                     isPremium 
-                      ? 'bg-white text-zinc-950' 
-                      : 'bg-white/10 border border-white/30 text-white'
+                      ? 'bg-zinc-800 text-white border border-zinc-700' 
+                      : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
                   }`}>
                     <Shield className="w-3.5 h-3.5 text-white" />
-                    {isPremium ? 'CURRENT ACTIVE PLAN ✨' : 'RECOMMENDED FOR GROWTH'}
+                    {isPremium ? 'CURRENT ACTIVE PLAN' : 'RECOMMENDED FOR GROWTH'}
+                  </span>
+
+                  <span className="px-3 py-1 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center gap-1 bg-white text-zinc-950 shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
+                    <span>Full Suite Access</span>
                   </span>
                 </div>
 
@@ -330,7 +329,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     Premium Business Suite
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 mt-1.5 leading-relaxed font-medium">
-                    Complete video embedding, high-res video downloads, and Google SEO indexing engine.
+                    Video embedding, HD downloads, direct chat messaging, and search indexing.
                   </p>
                 </div>
 
@@ -350,69 +349,69 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                 <hr className="border-zinc-800" />
 
                 {/* Premium Features List */}
-                <div className="space-y-3.5 pt-1">
+                <div className="space-y-3 pt-1">
                   <p className="text-xs font-extrabold uppercase tracking-wider text-white">Everything in Free, plus:</p>
 
                   <div className="flex items-start gap-3">
                     <Code className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Embed Video Reviews</strong> on your official website with interactive HTML widgets
+                      <strong className="text-white font-bold">Embed Video Reviews</strong> on your website
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Download className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Download High-Res Video Reviews</strong> for Instagram, TikTok & Facebook Ads
+                      <strong className="text-white font-bold">Download High-Res Videos</strong> for social ads & marketing
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Search className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Google SEO Indexing</strong> with Schema.org video rich snippets for search engine dominance
+                      <strong className="text-white font-bold">Google SEO Indexing</strong> with video rich snippets
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Smart Video Review Finder</strong> to aggregate web video reviews automatically
+                      <strong className="text-white font-bold">Smart Video Review Finder</strong> for web aggregation
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">AI Response Recommendations</strong> for instant review replies
+                      <strong className="text-white font-bold">AI Response Recommendations</strong> for instant replies
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <MessageSquare className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Reply to Comments & Direct Messages</strong> (User Chat)
+                      <strong className="text-white font-bold">Reply to Comments & Direct Messages</strong>
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Zap className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Custom Profile Action Buttons</strong> ("Book Now", "Order Now", "Reserve Table" direct links)
+                      <strong className="text-white font-bold">Custom Profile Action Buttons</strong>
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Star className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Priority Search Placement</strong> in local category listings
+                      <strong className="text-white font-bold">Priority Search Placement</strong> in category listings
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Shield className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Priority Business Support</strong> (direct response from support@yoouz.com)
+                      <strong className="text-white font-bold">Priority Business Support</strong>
                     </span>
                   </div>
                 </div>
@@ -426,7 +425,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                       <span>Premium Suite Active</span>
                     </div>
                     <p className="text-xs text-zinc-300 font-medium">
-                      Your business account is fully upgraded with active Premium Suite capabilities ($149/mo).
+                      Your account is fully upgraded ($149/mo).
                     </p>
                   </div>
                 ) : requestStatus === 'success' ? (
@@ -436,12 +435,12 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                       <span>Upgrade Request Sent!</span>
                     </div>
                     <p className="text-xs text-zinc-300 leading-relaxed font-medium">
-                      Our support team has been notified at <strong className="text-white">support@yoouz.com</strong>. Admin will activate your $149/mo Premium Suite shortly.
+                      Our support team has been notified. Admin will activate your Premium Suite shortly.
                     </p>
                   </div>
                 ) : requestStatus === 'error' ? (
                   <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center space-y-2 font-medium">
-                    <p>Failed to send request. Please try again or email support@yoouz.com directly.</p>
+                    <p>Failed to send request. Please try again.</p>
                     <button
                       onClick={handleUpgrade}
                       className="px-4 py-2 bg-white text-zinc-950 font-black rounded-lg text-xs hover:bg-zinc-200 cursor-pointer"
@@ -458,7 +457,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     {isSubmitting ? (
                       <span className="inline-flex items-center gap-2">
                         <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                        Sending Request to Support...
+                        Sending Request...
                       </span>
                     ) : (
                       <>
@@ -519,7 +518,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Custom Profile Action Buttons ("Book Now", "Order Now", "Reserve")</td>
+                    <td className="py-4 font-bold text-white">Custom Profile Action Buttons</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
@@ -569,8 +568,8 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Priority Business Support (support@yoouz.com)</td>
-                    <td className="py-4 text-center text-zinc-600">Standard Email</td>
+                    <td className="py-4 font-bold text-white">Priority Business Support</td>
+                    <td className="py-4 text-center text-zinc-600">Standard Support</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                 </tbody>
@@ -604,7 +603,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   How is the Premium upgrade activated?
                 </h4>
                 <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  When you click <strong className="text-white font-bold">Upgrade to Premium Suite</strong>, our team receives an instant notification at <strong className="text-white font-bold">support@yoouz.com</strong> with your business verification ID. Once verified, the admin team manually activates your account and unlocks all features immediately.
+                  When you click <strong className="text-white font-bold">Upgrade to Premium Suite</strong>, our team receives an instant notification with your place details. Once verified, the admin team activates your account and unlocks all features immediately.
                 </p>
               </div>
 
@@ -633,13 +632,14 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
               <p className="text-xs text-zinc-300 font-medium">
                 Need customized enterprise agreements or multi-location agency onboarding?
               </p>
-              <a
-                href="mailto:support@yoouz.com"
-                className="text-xs font-black text-white hover:underline inline-flex items-center gap-1.5"
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                className="text-xs font-black text-white hover:underline inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5" />
-                <span>Contact Direct Support: support@yoouz.com</span>
-              </a>
+                <span>Contact Business Support</span>
+              </button>
             </div>
           </div>
         )}
