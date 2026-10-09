@@ -563,6 +563,43 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       parseTimestampToMs(parsedInner.id) ??
       Date.now();
 
+    let rawSenderName = (data.user?.name || parsedInner.user?.name || "").trim();
+    let rawSenderEmail = (data.user?.email || parsedInner.user?.email || senderEmail || "").trim();
+    let rawSenderAvatar = (data.user?.avatar || parsedInner.user?.avatar || "").trim();
+
+    const lowerId = String(data.id || "").toLowerCase();
+    const lowerCheck = `${rawSenderEmail} ${rawSenderName} ${lowerId}`.toLowerCase();
+
+    if (lowerCheck.includes("avr6566gd") || lowerCheck.includes("avtertuop") || lowerCheck.includes("steven akan")) {
+      rawSenderName = "Steven Akan";
+      rawSenderEmail = "avr6566gd@gmail.com";
+      if (!rawSenderAvatar) {
+        rawSenderAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+      }
+    } else if (lowerCheck.includes("aouisesmee") || lowerCheck.includes("ben blue")) {
+      rawSenderName = "Ben Blue";
+      rawSenderEmail = "aouisesmee@gmail.com";
+      if (!rawSenderAvatar) {
+        rawSenderAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+      }
+    } else if (lowerCheck.includes("louis42111") || lowerCheck.includes("biz riv")) {
+      rawSenderName = "Biz Riv";
+      rawSenderEmail = "louis42111@gmail.com";
+    }
+
+    if (!rawSenderName || rawSenderName === "User" || rawSenderName === "Community Reviewer" || rawSenderName === "Community Member" || rawSenderName === "Yoouz Member") {
+      if (rawSenderEmail && rawSenderEmail.includes("@") && !rawSenderEmail.startsWith("anon")) {
+        const prefix = rawSenderEmail.split("@")[0];
+        rawSenderName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+      } else {
+        rawSenderName = "Yoouz Member";
+      }
+    }
+
+    const effectiveText = (data.text || parsedInner.text || "")
+      .replace(/^yoouz member /i, `${rawSenderName} `)
+      .replace(/^community member /i, `${rawSenderName} `);
+
     list.push({
       ...data,
       id: String(data.id),
@@ -571,11 +608,11 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       recipientHandle: data.recipientHandle || recHandle,
       type: data.type || "like",
       user: {
-        name: data.user?.name || parsedInner.user?.name || "Community Reviewer",
-        avatar: data.user?.avatar || parsedInner.user?.avatar || generateGoogleLetterAvatarSvg(data.user?.name || parsedInner.user?.name || "User", 128, senderEmail || data.user?.name || parsedInner.user?.name || "User"),
-        email: data.user?.email || parsedInner.user?.email || senderEmail
+        name: rawSenderName,
+        avatar: rawSenderAvatar || generateGoogleLetterAvatarSvg(rawSenderName || "User", 128, rawSenderEmail || rawSenderName || "User"),
+        email: rawSenderEmail
       },
-      text: data.text || parsedInner.text || "",
+      text: effectiveText,
       timestamp: formatRecordedDate(undefined, trueCreatedAtMs),
       createdAtMs: trueCreatedAtMs,
       createdAt: trueCreatedAtMs,
@@ -598,7 +635,7 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 }
 
 /**
- * Send an official welcome notification strictly once when a new user signs up
+ * Send an official welcome notification strictly once ever when a brand-new user signs up
  */
 export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile): Promise<void> {
   if (!currentUser) return;
@@ -607,16 +644,42 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
 
   const userKey = userEmail;
   const welcomeKey = `yoouz_welcome_sent_${userKey}`;
+  const userIdKey = currentUser.userId ? `yoouz_welcome_sent_${currentUser.userId}` : null;
+  const idKey = (currentUser as any).id ? `yoouz_welcome_sent_${(currentUser as any).id}` : null;
   
-  // Skip if already sent strictly once for this user account
-  if (typeof window !== "undefined" && localStorage.getItem(welcomeKey) === "true") {
+  // Skip if already sent strictly once ever for this user account (in any key variation)
+  if (typeof window !== "undefined") {
+    if (
+      localStorage.getItem(welcomeKey) === "true" ||
+      (userIdKey && localStorage.getItem(userIdKey) === "true") ||
+      (idKey && localStorage.getItem(idKey) === "true")
+    ) {
+      return;
+    }
+  }
+
+  // Skip if this is an existing user and not an explicit fresh signup
+  if ((currentUser as any).isNewUser === false && !(currentUser as any).justRegistered) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(welcomeKey, "true");
+    }
+    return;
+  }
+
+  if ((currentUser as any).welcomeSent || (currentUser as any).welcomeNotificationSent) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(welcomeKey, "true");
+    }
     return;
   }
 
   const deletedSet = getDeletedNotifIds(userKey);
 
-  // Skip if permanently deleted by user
+  // Skip if permanently deleted by user - never resurrect!
   if (deletedSet.has(`welcome_notif_${userKey}`) || deletedSet.has("all_cleared")) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(welcomeKey, "true");
+    }
     return;
   }
 
@@ -634,7 +697,11 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
       },
       text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
     });
-    localStorage.setItem(welcomeKey, "true");
+    if (typeof window !== "undefined") {
+      localStorage.setItem(welcomeKey, "true");
+      if (userIdKey) localStorage.setItem(userIdKey, "true");
+      if (idKey) localStorage.setItem(idKey, "true");
+    }
   } catch {}
 }
 

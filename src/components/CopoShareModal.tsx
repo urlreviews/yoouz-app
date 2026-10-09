@@ -28,7 +28,7 @@ import {
   MapPin,
   Star
 } from "lucide-react";
-import { VideoReview } from "../types";
+import { VideoReview, UserProfile } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
@@ -58,6 +58,7 @@ interface CopoShareModalProps {
 
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
+  currentUser?: UserProfile | null;
   onClose: () => void;
   onOpenReport?: (item?: any) => void;
   onShareIncrement?: (videoId: string, nextSharesCount?: number) => void;
@@ -80,6 +81,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   reviewsCount: propReviewsCount,
   reviewCount: propReviewCount,
   video,
+  currentUser,
   onClose,
   onOpenReport,
   onShareIncrement
@@ -377,6 +379,21 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   </script>
 </div>`;
 
+  // Resolve active logged-in user (from props or local storage)
+  const getActiveUser = (): any => {
+    if (currentUser) return currentUser;
+    try {
+      const stored = localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && (parsed.email || parsed.name || parsed.id || parsed.userId)) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return null;
+  };
+
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
     const targetVideoId = video?.id;
@@ -389,11 +406,23 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       // Optimistic local state update
       onShareIncrement?.(targetVideoId);
 
+      const activeUser = getActiveUser();
+      const userPayload = activeUser ? {
+        userId: activeUser.email || activeUser.userId || activeUser.id || "",
+        userName: activeUser.name || "",
+        userAvatar: activeUser.avatar || "",
+        userEmail: activeUser.email || ""
+      } : {};
+
       try {
         fetch("/api/interactions/share", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId: targetVideoId, platform })
+          body: JSON.stringify({
+            videoId: targetVideoId,
+            platform,
+            ...userPayload
+          })
         })
           .then((res) => res.json())
           .then((data) => {

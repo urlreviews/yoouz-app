@@ -2023,6 +2023,10 @@ export function App() {
 
       if (newIncoming && activeSectionRef.current !== "notifications") {
         if ((newIncoming.type as string) === "message") return; // Chat popups are uniquely handled by subscribeToUserChats
+        // Suppress in-app toast for welcome notification (the welcome notification sits quietly in the Notifications tab upon initial signup)
+        if (newIncoming.id?.startsWith("welcome_notif_") || newIncoming.text?.toLowerCase().includes("welcome to yoouz")) {
+          return;
+        }
         let prefs = currentUser?.notificationSettings;
         if (!prefs) {
           try {
@@ -6644,6 +6648,7 @@ export function App() {
         {/* Share Video Modal */}
         <CopoShareModal
           video={activeShareVideo}
+          currentUser={currentUser}
           onClose={() => setActiveShareVideo(null)}
           onOpenReport={(v) => {
             setActiveShareVideo(null);
@@ -7714,6 +7719,7 @@ export function App() {
       {/* Share Video Modal */}
       <CopoShareModal
         video={activeShareVideo}
+        currentUser={currentUser}
         onClose={() => setActiveShareVideo(null)}
         onOpenReport={(v) => {
           setActiveShareVideo(null);

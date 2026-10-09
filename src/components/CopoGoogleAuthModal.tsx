@@ -540,8 +540,11 @@ export const CopoAuthPrompt: React.FC<{
         // Use the server-returned user object if available, as it may have been normalized
         const finalUser = result.user || updatedUser;
 
-        // Send real one-time welcome notification for newly registered user
-        sendWelcomeNotificationForNewUser(finalUser);
+        // Send real one-time welcome notification ONLY for newly registered user on first signup
+        const wasNewUser = Boolean(tempUser?.isNewUser || (currentUser as any)?.isNewUser);
+        if (wasNewUser) {
+          sendWelcomeNotificationForNewUser({ ...finalUser, justRegistered: true });
+        }
         completeLogin(finalUser);
       } catch (fetchErr: any) {
         console.error("[Auth] Fetch error:", fetchErr);

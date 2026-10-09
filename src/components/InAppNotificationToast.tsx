@@ -153,14 +153,15 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
             {/* Avatar or Icon */}
             <div className="relative shrink-0">
               {(() => {
-                const isYoouz =
-                  (toast.title || "").toLowerCase().includes("yoouz") ||
-                  (toast.userName || "").toLowerCase().includes("yoouz") ||
-                  (toast.subtitle || "").toLowerCase().includes("yoouz member") ||
-                  (toast.avatar || "").includes("yoouz") ||
-                  (toast.avatar || "").includes("favicon");
+                const uName = (toast.userName || "").toLowerCase().trim();
+                const isYoouzOfficial =
+                  (uName === "yoouz" ||
+                   uName === "yoouz team" ||
+                   uName === "@yoouz" ||
+                   uName === "yoouz official") &&
+                  !uName.includes("member");
 
-                if (isYoouz) {
+                if (isYoouzOfficial) {
                   return (
                     <div className="w-10 h-10 rounded-[12px] bg-zinc-950 flex items-center justify-center border border-white/20 shadow-sm shrink-0 p-2">
                       <svg viewBox="0 0 24 24" className="w-full h-full fill-white">

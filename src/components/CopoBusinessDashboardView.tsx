@@ -1656,7 +1656,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       );
 
       if (isWelcome) {
-        return true;
+        const notifRecipient = ((n as any).recipientEmail || '').toLowerCase().trim();
+        const bizEmail = ((currentPlace as any)?.claimedByEmail || verifiedBusinessSession?.businessEmail || '').toLowerCase().trim();
+        return Boolean(bizEmail && notifRecipient && bizEmail === notifRecipient);
       }
 
       // 4. Venue or recipient email match: Must match this business place ID, Name, Video ID, or business owner email
