@@ -5512,33 +5512,6 @@ ${jsonLd}
 
 
             
-              <div className="text-center py-6 space-y-5 animate-in zoom-in-95">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-xl">
-                  <CheckCheck className="w-8 h-8 text-emerald-400" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white">Upgrade Request Submitted!</h3>
-                  <p className="text-sm text-zinc-300 max-w-md mx-auto">
-                    Your request for the <span className="text-white font-bold">Premium Partner Suite ($199/mo)</span> has been registered successfully.
-                  </p>
-                </div>
-                <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl text-left max-w-lg mx-auto text-xs space-y-2.5 text-zinc-300">
-                  <p className="font-bold text-white text-sm">Next Steps & Partner Activation:</p>
-                  <ul className="list-disc pl-4 space-y-2 text-zinc-400">
-                    <li>Our regional onboarding team and **Certified Marketing Partner Agency** in <strong className="text-white">{currentPlace?.country || "your area"}</strong> have been assigned to your venue.</li>
-                    <li>A dedicated partner specialist will contact you directly at <strong className="text-white">{(verifiedBusinessSession as any)?.businessEmail || currentUser?.email || 'your email'}</strong> within 24 hours.</li>
-                    <li>They will assist you with embedding your 60-second video review widget, setting up your Google 1st-Page SEO Code Package (JSON-LD schema), and activating your $199/mo suite.</li>
-                  </ul>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsPremiumModalOpen(false)}
-                  className="px-6 py-2.5 bg-white text-zinc-950 hover:bg-zinc-200 font-black rounded-xl text-xs transition cursor-pointer shadow-md"
-                >
-                  Return to Dashboard
-                </button>
-              </div>
-            {/* Modal removed for debugging */}
 
 
       </div>
