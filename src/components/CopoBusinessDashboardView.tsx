@@ -5509,17 +5509,7 @@ ${jsonLd}
         place={currentPlace}
       />
 
-      {/* PREMIUM UPGRADE & DIGITAL MARKETING AGENCY MATCHER MODAL */}
-      {isPremiumModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-2xl flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-zinc-950 border border-zinc-800 text-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative space-y-6 scrollbar-thin">
-            <button
-              type="button"
-              onClick={() => setIsPremiumModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition cursor-pointer border border-zinc-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
 
             
               <div className="text-center py-6 space-y-5 animate-in zoom-in-95">
