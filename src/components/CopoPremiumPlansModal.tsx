@@ -49,6 +49,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
   const [activeTab, setActiveTab] = useState<'plans' | 'matrix' | 'faq'>('plans');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestStatus, setRequestStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [cancelStatus, setCancelStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   if (!isOpen) return null;
 
@@ -75,6 +76,35 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
     } catch (error) {
       console.error('Error sending upgrade request:', error);
       setRequestStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setIsSubmitting(true);
+    setCancelStatus('idle');
+    try {
+      const response = await fetch('/api/upgrade-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cancel_subscription',
+          businessName: businessName || currentPlace?.name || 'Claimed Business',
+          ownerEmail: ownerEmail || currentPlace?.claimedByEmail || 'Owner',
+          placeId: placeId || currentPlace?.id || '',
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        setCancelStatus('success');
+      } else {
+        setCancelStatus('error');
+      }
+    } catch (error) {
+      console.error('Error sending cancellation request:', error);
+      setCancelStatus('error');
     } finally {
       setIsSubmitting(false);
     }
@@ -405,14 +435,30 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
 
               <div className="pt-4 space-y-3">
                 {isPremium ? (
-                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700 text-center space-y-1">
-                    <div className="inline-flex items-center gap-2 text-white font-black text-sm">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
-                      <span>Premium Suite Active</span>
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700 text-center space-y-1">
+                      <div className="inline-flex items-center gap-2 text-white font-black text-sm">
+                        <CheckCircle2 className="w-5 h-5 text-white" />
+                        <span>Premium Suite Active</span>
+                      </div>
+                      <p className="text-xs text-zinc-300 font-medium">
+                        Your account is fully upgraded ($149/mo).
+                      </p>
                     </div>
-                    <p className="text-xs text-zinc-300 font-medium">
-                      Your account is fully upgraded ($149/mo).
-                    </p>
+
+                    {cancelStatus === 'success' ? (
+                      <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center font-medium">
+                        Cancellation request sent to support. Your account will revert to the Free Plan upon review.
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={isSubmitting}
+                        className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer border border-zinc-700"
+                      >
+                        {isSubmitting ? 'Sending Request...' : 'Cancel Subscription & Downgrade to Free'}
+                      </button>
+                    )}
                   </div>
                 ) : requestStatus === 'success' ? (
                   <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-600 text-center space-y-1.5 animate-in fade-in">

@@ -184,7 +184,7 @@ interface CopoBusinessDashboardViewProps {
   onRecordReview?: (place: Place) => void;
 }
 
-type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'plans' | 'more';
+type BusinessTab = 'overview' | 'reviews' | 'inbox' | 'followers' | 'notifications' | 'embed' | 'qr_invites' | 'profile' | 'membership' | 'more';
 
 
 export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps> = ({ 
@@ -2380,7 +2380,7 @@ ${jsonLd}
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
     { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
-    { id: 'plans' as BusinessTab, label: t('business.plansNav', 'Plans & Membership'), icon: Zap, isProBadge: !isPremium },
+    { id: 'membership' as BusinessTab, label: t('business.membershipNav', 'Membership'), icon: Zap, isProBadge: !isPremium },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
@@ -2473,7 +2473,14 @@ ${jsonLd}
                   <button
                     key={item.id}
                     id={`biz-nav-btn-${item.id}`}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => {
+                      if (item.id === 'membership') {
+                        setPremiumTriggerFeature('general');
+                        setIsPremiumModalOpen(true);
+                      } else {
+                        setActiveTab(item.id as BusinessTab);
+                      }
+                    }}
                     className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
                       isActive 
                         ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
@@ -4968,130 +4975,7 @@ ${jsonLd}
               </div>
             )}
 
-            {/* TAB: PLANS & MEMBERSHIP */}
-            {activeTab === 'plans' && (
-              <div className="space-y-6 animate-in fade-in duration-200 w-full max-w-full overflow-hidden">
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-amber-400 border border-zinc-700 text-xs font-bold mb-2">
-                      <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>Yoouz Business Plans</span>
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Plans & Membership Suite</h2>
-                    <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-1">
-                      Manage your subscription plan, active video tools, and premium features.
-                    </p>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPremiumTriggerFeature('general');
-                      setIsPremiumModalOpen(true);
-                    }}
-                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-lg shrink-0"
-                  >
-                    <Zap className="w-4 h-4 fill-zinc-950 text-zinc-950" />
-                    <span>{isPremium ? 'View All Plan Details' : 'Upgrade to Premium — $149/mo'}</span>
-                  </button>
-                </div>
-
-                {/* Plan Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Free Plan Card */}
-                  <div className={`p-5 sm:p-6 rounded-3xl border ${!isPremium ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-800 bg-zinc-950/60'} text-white space-y-4 relative`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Basic Tier</span>
-                      {!isPremium && (
-                        <span className="px-2.5 py-1 rounded-full bg-zinc-800 text-white text-[10px] font-extrabold border border-zinc-700">
-                          CURRENT ACTIVE PLAN
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">Free Business Plan</h3>
-                      <div className="text-2xl font-black text-white mt-1">$0 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
-                    </div>
-                    <ul className="space-y-2.5 text-xs text-zinc-300 font-medium border-t border-zinc-800/80 pt-4">
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Claim & Verify Business Workspace</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Respond to Customer Video Reviews & Messages</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Update Profile Logo, Category, Hours & Location</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Print Custom QR Code Table Tents</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Premium Plan Card */}
-                  <div className={`p-5 sm:p-6 rounded-3xl border ${isPremium ? 'border-amber-500/80 bg-zinc-900 ring-1 ring-amber-500/50' : 'border-zinc-800 bg-zinc-900'} text-white space-y-4 relative`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 fill-amber-400" /> Executive Suite
-                      </span>
-                      {isPremium ? (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold border border-amber-500/40">
-                          ACTIVE SUITE
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-400 text-zinc-950 text-[10px] font-black uppercase tracking-wider">
-                          RECOMMENDED
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">Premium Business Suite</h3>
-                      <div className="text-2xl font-black text-white mt-1">$149 <span className="text-xs text-zinc-400 font-normal">/ month</span></div>
-                    </div>
-                    <ul className="space-y-2.5 text-xs text-zinc-300 font-medium border-t border-zinc-800/80 pt-4">
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span className="font-bold text-white">Everything in Free Plan, plus:</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Embed Video Reviews on your Website Widget</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Google 1st-Page Video SEO Indexing</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Custom Action Buttons (Book, Order, Reserve CTA)</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Download High-Res Video File Exports for Ads</span>
-                      </li>
-                    </ul>
-
-                    {!isPremium && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPremiumTriggerFeature('general');
-                          setIsPremiumModalOpen(true);
-                        }}
-                        className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shadow-md mt-4"
-                      >
-                        <Zap className="w-4 h-4 fill-zinc-950 text-zinc-950" />
-                        <span>Upgrade to Premium — $149/mo</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* TAB 7: MORE / KNOWLEDGE & TRUST CENTER */}
             {activeTab === 'more' && (
