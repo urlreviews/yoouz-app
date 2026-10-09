@@ -85,7 +85,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "repostsCount": 0,
     "views": 13,
     "viewsCount": 13,
-    "sharesCount": 0,
+    "sharesCount": 1,
     "tags": [
       "Website"
     ],
@@ -100,7 +100,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-08 18:58:43",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 0,
+    "shares": 1,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1
