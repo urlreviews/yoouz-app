@@ -4,7 +4,7 @@ import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock, Video, Sparkles } from "lucide-react";
+import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock, Video, Sparkles, Lock } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { CopoStarRating } from "./CopoStarRating";
 

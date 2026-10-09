@@ -70,6 +70,7 @@ import {
   Phone,
   FileText,
   Sparkles,
+  Zap,
   Share2,
   Heart,
   Bookmark,

@@ -6072,8 +6072,8 @@ export function App() {
         if (rawSession) {
           const parsed = JSON.parse(rawSession);
           if (parsed && (parsed.placeId === updatedPlace.id || parsed.domain === updatedPlace.id || parsed.domain === updatedPlace.brandDomain || (updatedPlace.id === 'yoouz.com' && parsed.domain?.includes('yoouz')))) {
-            parsed.isPremium = Boolean(updatedPlace.isPremium);
-            parsed.plan = updatedPlace.plan || (updatedPlace.isPremium ? "premium" : "free");
+            parsed.isPremium = Boolean((updatedPlace as any).isPremium);
+            parsed.plan = (updatedPlace as any).plan || ((updatedPlace as any).isPremium ? "premium" : "free");
             localStorage.setItem("copo_business_verified_session", JSON.stringify(parsed));
           }
         }
