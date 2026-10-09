@@ -273,36 +273,36 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
 
                   <div className="flex items-start gap-3">
                     <BarChart3 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Real-time Video Analytics</strong> & watch impression tracking
+                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
+                      Real-time Video Analytics & watch impression tracking
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <TrendingUp className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Interactive Performance Charts</strong> (7D, 30D, 90D & All Time)
+                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
+                      Interactive Performance Charts (7D, 30D, 90D & All Time)
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <MessageSquare className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Reply to Customer Reviews</strong> & direct chat feedback
+                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
+                      Reply to Customer Reviews & direct chat feedback
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Update Business Profile</strong>, hours & location
+                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
+                      Update Business Profile, hours & location
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <QrCode className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      <strong className="text-white font-bold">Custom Table QR Code Generator</strong> for table tents
+                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
+                      Custom Table QR Code Generator for table tents
                     </span>
                   </div>
                 </div>
@@ -370,64 +370,64 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
 
                   <div className="flex items-start gap-3">
                     <Code className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Embed Video Reviews</strong> on your official website
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Embed Video Reviews on your official website
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Download className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Download High-Res Videos</strong> for social ads & marketing
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Download High-Res Videos for social ads & marketing
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Search className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Google SEO Indexing</strong> with video rich snippets
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Google SEO Indexing with video rich snippets
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Smart Video Review Finder</strong> for web aggregation
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Smart Video Review Finder for web aggregation
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">AI Response Recommendations</strong> for instant replies
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      AI Response Recommendations for instant replies
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <MessageSquare className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Reply to Comments & Direct Messages</strong>
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Reply to Comments & Direct Messages
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Zap className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Custom Profile Action Buttons</strong>
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Custom Profile Action Buttons
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Star className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Priority Search Placement</strong> in category listings
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Priority Search Placement in category listings
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Shield className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">Priority Business Support</strong>
+                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                      Priority Business Support
                     </span>
                   </div>
                 </div>
