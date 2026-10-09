@@ -43,19 +43,8 @@
     "businessName": "Yoouz",
     "likes": 0,
     "isLiked": false,
-    "commentsCount": 1,
-    "comments": [
-      {
-        "id": "comm_test_1791536061015",
-        "text": "Great authentic platform review!",
-        "authorName": "Steven Akan",
-        "authorHandle": "@stevenakan",
-        "createdAt": "2026-10-09 08:54:21",
-        "videoId": "rev-1791495006783-jy6ld",
-        "userId": "avr6566gd@gmail.com",
-        "replies": []
-      }
-    ],
+    "commentsCount": 0,
+    "comments": [],
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
