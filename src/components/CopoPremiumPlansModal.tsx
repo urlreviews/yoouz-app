@@ -50,6 +50,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestStatus, setRequestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [cancelStatus, setCancelStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   if (!isOpen) return null;
 
@@ -436,27 +437,44 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
               <div className="pt-4 space-y-3">
                 {isPremium ? (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-700 text-center space-y-1">
-                      <div className="inline-flex items-center gap-2 text-white font-black text-sm">
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                        <span>Premium Suite Active</span>
-                      </div>
-                      <p className="text-xs text-zinc-300 font-medium">
-                        Your account is fully upgraded ($149/mo).
-                      </p>
-                    </div>
-
                     {cancelStatus === 'success' ? (
-                      <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center font-medium">
+                      <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center font-medium">
                         Cancellation request sent to support. Your account will revert to the Free Plan upon review.
+                      </div>
+                    ) : showCancelConfirm ? (
+                      <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-700 space-y-3 animate-in fade-in">
+                        <div className="text-xs font-bold text-white text-center">
+                          Are you sure you want to request subscription cancellation?
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowCancelConfirm(false)}
+                            className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition cursor-pointer"
+                          >
+                            Keep Plan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCancelConfirm(false);
+                              handleCancelSubscription();
+                            }}
+                            disabled={isSubmitting}
+                            className="flex-1 py-2 rounded-xl bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold transition cursor-pointer"
+                          >
+                            {isSubmitting ? 'Processing...' : 'Confirm Cancellation'}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <button
-                        onClick={handleCancelSubscription}
+                        type="button"
+                        onClick={() => setShowCancelConfirm(true)}
                         disabled={isSubmitting}
                         className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer border border-zinc-700"
                       >
-                        {isSubmitting ? 'Sending Request...' : 'Cancel Subscription & Downgrade to Free'}
+                        Cancel Subscription & Downgrade to Free
                       </button>
                     )}
                   </div>
