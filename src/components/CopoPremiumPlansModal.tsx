@@ -389,6 +389,20 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   </div>
 
                   <div className="flex items-start gap-3">
+                    <MessageSquare className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
+                      <strong className="text-white font-bold">Reply to Comments & Direct Messages</strong> (User Chat)
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Zap className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                    <span className="text-xs sm:text-sm text-zinc-100 font-medium">
+                      <strong className="text-white font-bold">Custom Profile Action Buttons</strong> ("Book Now", "Order Now", "Reserve Table" direct links)
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3">
                     <Star className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
                       <strong className="text-white font-bold">Priority Search Placement</strong> in local category listings
@@ -398,7 +412,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   <div className="flex items-start gap-3">
                     <Shield className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-100 font-medium">
-                      <strong className="text-white font-bold">1-on-1 Dedicated Support</strong> & account manager
+                      <strong className="text-white font-bold">Priority Business Support</strong> (direct response from support@yoouz.com)
                     </span>
                   </div>
                 </div>
@@ -500,8 +514,13 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Reply to Comments & Video Reviews</td>
+                    <td className="py-4 font-bold text-white">Reply to Customer Video Reviews, Comments & Direct Messages (User Chat)</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
+                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 font-bold text-white">Custom Profile Action Buttons ("Book Now", "Order Now", "Reserve")</td>
+                    <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
@@ -547,6 +566,11 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   <tr>
                     <td className="py-4 font-bold text-white">Priority Local Category Search Ranking</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
+                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 font-bold text-white">Priority Business Support (support@yoouz.com)</td>
+                    <td className="py-4 text-center text-zinc-600">Standard Email</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                 </tbody>
