@@ -73,6 +73,7 @@ import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted, getSafe
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI, getProxiedImageUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { formatRecordedDate, parseTimestampToMs } from "../utils/dateUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { subscribeAppHealth, resolveAllAppErrors, AppHealthSummary } from "../lib/errorMonitor";
 
@@ -4681,7 +4682,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 </span>
                               </div>
                             </td>
-                            <td className="p-4 text-xs text-zinc-400 font-mono">{v.recordedAt || "Recent"}</td>
+                            <td className="p-4 text-xs text-zinc-400 font-mono">{formatRecordedDate(v.recordedAt, v.createdAtMs || parseTimestampToMs(v.createdAt) || undefined)}</td>
                             <td className="p-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
@@ -8216,7 +8217,76 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                               {/* Summary info based on item fields */}
                               <div className="text-xs text-zinc-300 space-y-2 pt-2 border-t border-zinc-900">
-                                {inspectTableModal === "likes" ? (
+                                {inspectTableModal === "videoReviews" ? (
+                                  <div
+                                    onClick={() => {
+                                      const matchedVid = activeVideos.find((v) => v.id === item.id) || item;
+                                      setPreviewVideo(matchedVid);
+                                    }}
+                                    className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-850 transition-all group"
+                                    title="Click to preview video review"
+                                  >
+                                    <div className="w-14 h-20 rounded-xl bg-zinc-950 border border-zinc-700/80 overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-emerald-500 transition-all">
+                                      <img
+                                        src={item.thumbnailUrl || item.posterUrl || "https://rev1.b-cdn.net/sample-review.jpg"}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (e.currentTarget as HTMLImageElement).src = "https://rev1.b-cdn.net/sample-review.jpg";
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+                                        <Play className="w-4 h-4 text-white fill-white drop-shadow" />
+                                      </div>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1 space-y-1.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-white text-sm group-hover:text-emerald-400 transition-colors truncate">
+                                          {item.placeName || "Business"}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
+                                          ★ {item.rating || 5}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
+                                          🎥 Video Review
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 text-xs text-zinc-300">
+                                        <span className="text-zinc-500">Author:</span>
+                                        <span className="font-semibold text-zinc-200 truncate">{item.author?.name || item.authorName || "Reviewer"}</span>
+                                        {(item.author?.handle || item.authorHandle) && (
+                                          <span className="text-[11px] text-zinc-500 font-mono">
+                                            @{String(item.author?.handle || item.authorHandle).replace(/^@/, '')}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400 pt-0.5">
+                                        <span className="flex items-center gap-1 text-rose-400/90 font-mono">
+                                          ❤️ {item.likesCount || item.likes || 0}
+                                        </span>
+                                        <span className="flex items-center gap-1 text-sky-400/90 font-mono">
+                                          ↗️ {item.sharesCount || item.shares || 0}
+                                        </span>
+                                        <span className="flex items-center gap-1 text-amber-400/90 font-mono">
+                                          🔖 {item.bookmarksCount || item.bookmarks || 0}
+                                        </span>
+                                        <span className="flex items-center gap-1 text-emerald-400/90 font-mono">
+                                          💬 {item.commentsCount || (Array.isArray(item.comments) ? item.comments.length : 0)}
+                                        </span>
+                                        <span className="text-zinc-500">
+                                          • Recorded: <strong className="text-zinc-300">{formatRecordedDate(item.recordedAt, item.createdAtMs || parseTimestampToMs(item.createdAt) || undefined)}</strong>
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <span className="text-[10px] px-2.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl font-bold shrink-0 group-hover:bg-emerald-500 group-hover:text-zinc-950 transition-all">
+                                      Play Review →
+                                    </span>
+                                  </div>
+                                ) : inspectTableModal === "likes" ? (
                                   <div
                                     onClick={() => setSelectedLikeDetailModal(item)}
                                     className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-rose-500/50 hover:bg-zinc-850 transition-all group"

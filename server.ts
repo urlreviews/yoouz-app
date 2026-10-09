@@ -1276,9 +1276,42 @@ function readReviewsIndex(): any[] {
       if (Array.isArray(parsed)) {
         let dirty = false;
         const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-        const processed = parsed
-          .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet))
-          .map((r: any) => {
+        let processed = parsed
+          .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet));
+
+        // Ensure all 6 authentic protected reviews are always present and never dropped
+        const AUTHENTIC_PROTECTED_REVIEW_IDS = [
+          "rev-1791495006783-jy6ld",
+          "rev-1791494959785-27pap",
+          "rev-1791485919882-l8av6",
+          "rev-1790368898192-sw74n",
+          "rev-1790363378621-w65oy",
+          "rev-1790353801035-1rlp8"
+        ];
+        const existingIds = new Set(processed.map((r: any) => String(r.id)));
+        const missingProtected = AUTHENTIC_PROTECTED_REVIEW_IDS.filter(id => !existingIds.has(id));
+        if (missingProtected.length > 0) {
+          try {
+            const seedPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+            if (fs.existsSync(seedPath)) {
+              const seedCode = fs.readFileSync(seedPath, "utf8");
+              const eqIdx = seedCode.indexOf("= [");
+              const endIdx = seedCode.lastIndexOf("]");
+              if (eqIdx !== -1 && endIdx !== -1) {
+                const parsedSeeds = JSON.parse(seedCode.substring(eqIdx + 2, endIdx + 1));
+                parsedSeeds.forEach((s: any) => {
+                  if (s && s.id && missingProtected.includes(s.id) && !existingIds.has(s.id)) {
+                    processed.push(s);
+                    existingIds.add(s.id);
+                    dirty = true;
+                  }
+                });
+              }
+            }
+          } catch (seedErr) {}
+        }
+
+        processed = processed.map((r: any) => {
             if (Array.isArray(r.comments)) {
               const beforeLen = r.comments.length;
               r.comments = r.comments.filter((c: any) => c && c.id !== "comm-101" && c.id !== "comm-102");
@@ -1434,6 +1467,24 @@ function readReviewsIndex(): any[] {
       }
     }
   } catch (e) {}
+
+  // Fallback: seed from seedReviews.ts if reviews index is missing or corrupt
+  try {
+    const seedPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+    if (fs.existsSync(seedPath)) {
+      const seedCode = fs.readFileSync(seedPath, "utf8");
+      const eqIdx = seedCode.indexOf("= [");
+      const endIdx = seedCode.lastIndexOf("]");
+      if (eqIdx !== -1 && endIdx !== -1) {
+        const parsedSeeds = JSON.parse(seedCode.substring(eqIdx + 2, endIdx + 1));
+        if (!fs.existsSync(globalUploadsDir)) {
+          fs.mkdirSync(globalUploadsDir, { recursive: true });
+        }
+        fs.writeFileSync(reviewsIndexPath, JSON.stringify(parsedSeeds, null, 2), "utf8");
+        return parsedSeeds;
+      }
+    }
+  } catch (seedErr) {}
 
   return [];
 }
@@ -6200,7 +6251,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                 parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
               } catch (e) {}
               if (row.createdAt || row.created_at) {
-                parsedData.createdAt = row.createdAt || row.created_at;
+                if (colName !== 'videoReviews' || !parsedData.createdAt) {
+                  parsedData.createdAt = row.createdAt || row.created_at;
+                }
               }
               if (colName === 'notifications') {
                 const isReadVal = row.isRead !== undefined 
@@ -6220,10 +6273,14 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
                 // Resolve authentic creation timestamp
                 let effectiveCreatedAtMs: number | null = null;
-                if (typeof parsedData.createdAt === 'number' && parsedData.createdAt > 1700000000000) {
+                if (typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1700000000000) {
+                  effectiveCreatedAtMs = parsedData.createdAtMs;
+                } else if (typeof parsedData.createdAt === 'number' && parsedData.createdAt > 1700000000000) {
                   effectiveCreatedAtMs = parsedData.createdAt;
                 } else if (typeof parsedData.createdAt === 'string') {
-                  const p = Date.parse(parsedData.createdAt);
+                  const s = parsedData.createdAt.trim();
+                  const iso = s.includes("T") ? (s.endsWith("Z") ? s : s + "Z") : s.replace(" ", "T") + "Z";
+                  const p = Date.parse(iso);
                   if (!isNaN(p) && p > 1700000000000) effectiveCreatedAtMs = p;
                 }
 
@@ -6408,7 +6465,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         const localList = readReviewsIndex();
         localList.forEach((r: any) => {
           if (r && r.id) {
-            const existing = itemMap.get(r.id) || {};
+            const existing = itemMap.get(r.id) || itemMap.get(String(r.id).toLowerCase().trim()) || {};
             const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
             const localAuthor = (typeof r.author === 'object' && r.author) ? r.author : {};
             const mergedAuthor = {
@@ -6421,9 +6478,42 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               banner: existingAuthor.banner || localAuthor.banner,
               handle: existingAuthor.handle || localAuthor.handle
             };
+
+            const realCreatedAt = r.createdAt || (r.createdAtMs ? new Date(r.createdAtMs).toISOString() : existing.createdAt);
+            const realCreatedAtMs = r.createdAtMs || (r.createdAt ? new Date(r.createdAt).getTime() : existing.createdAtMs);
+            const mergedComments = (Array.isArray(existing.comments) && existing.comments.length > 0)
+              ? existing.comments
+              : (Array.isArray(r.comments) ? r.comments : []);
+            const mergedCommentsCount = Math.max(Number(existing.commentsCount) || 0, Number(r.commentsCount) || 0, mergedComments.length);
+            const mergedLikes = Math.max(Number(existing.likes) || 0, Number(existing.likesCount) || 0, Number(r.likesCount) || 0, Number(r.likes) || 0);
+            const mergedShares = Math.max(Number(existing.shares) || 0, Number(existing.sharesCount) || 0, Number(r.sharesCount) || 0, Number(r.shares) || 0);
+            const mergedBookmarks = Math.max(Number(existing.bookmarks) || 0, Number(existing.bookmarksCount) || 0, Number(r.bookmarksCount) || 0, Number(r.bookmarks) || 0);
+            const mergedViews = Math.max(Number(existing.views) || 0, Number(existing.viewsCount) || 0, Number(r.viewsCount) || 0, Number(r.views) || 0);
+
             itemMap.set(r.id, {
               ...r,
               ...existing,
+              id: r.id,
+              placeId: r.placeId || existing.placeId,
+              placeName: r.placeName || existing.placeName,
+              videoUrl: r.videoUrl || existing.videoUrl,
+              thumbnailUrl: r.thumbnailUrl || existing.thumbnailUrl,
+              rating: r.rating || existing.rating || 5,
+              duration: r.duration || existing.duration || 60,
+              createdAt: realCreatedAt,
+              createdAtMs: realCreatedAtMs,
+              recordedAt: r.recordedAt || existing.recordedAt || "Yesterday",
+              isLocalUpload: false,
+              comments: mergedComments,
+              commentsCount: mergedCommentsCount,
+              likes: mergedLikes,
+              likesCount: mergedLikes,
+              shares: mergedShares,
+              sharesCount: mergedShares,
+              bookmarks: mergedBookmarks,
+              bookmarksCount: mergedBookmarks,
+              views: mergedViews,
+              viewsCount: mergedViews,
               author: mergedAuthor
             });
           }
@@ -7388,6 +7478,15 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
     if (bunnyDb) {
       try {
         let finalDataObj = data || {};
+        if (colName === 'videoReviews' || colName === 'videos') {
+          try {
+            const localList = readReviewsIndex();
+            const existingLocal = localList.find((item: any) => item && (item.id === id || String(item.id).toLowerCase() === String(id).toLowerCase()));
+            if (existingLocal) {
+              finalDataObj = mergeDeep({ ...existingLocal }, finalDataObj);
+            }
+          } catch (e) {}
+        }
         if (merge !== false) {
           try {
             const existingRow = await bunnyDb.execute({
@@ -7397,7 +7496,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
               const curDataRaw = (existingRow.rows[0] as any).data;
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
-              finalDataObj = mergeDeep(curData, data || {});
+              finalDataObj = mergeDeep(curData, finalDataObj);
               if (colName === 'chats' || (data?.history && Array.isArray(data.history))) {
                 const existingHist = Array.isArray(curData.history) ? curData.history : [];
                 const incomingHist = Array.isArray(data?.history) ? data.history : [];
@@ -7622,11 +7721,26 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           });
         } else if (colName === 'videoReviews' || colName === 'videos') {
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
+          const revCreatedAt = finalDataObj.createdAt || (finalDataObj.createdAtMs ? new Date(finalDataObj.createdAtMs).toISOString() : new Date().toISOString());
           await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, data, createdAt, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, commentsCount, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET 
-                    placeId = ?, placeName = ?, authorName = ?, authorAvatar = ?, userId = ?, rating = ?, videoUrl = ?, thumbnailUrl = ?, duration = ?, likesCount = ?, viewsCount = ?, data = ?, createdAt = COALESCE(videoReviews.createdAt, CURRENT_TIMESTAMP), updatedAt = CURRENT_TIMESTAMP`,
+                    placeId = excluded.placeId,
+                    placeName = excluded.placeName,
+                    authorName = excluded.authorName,
+                    authorAvatar = excluded.authorAvatar,
+                    userId = excluded.userId,
+                    rating = excluded.rating,
+                    videoUrl = excluded.videoUrl,
+                    thumbnailUrl = excluded.thumbnailUrl,
+                    duration = excluded.duration,
+                    likesCount = excluded.likesCount,
+                    viewsCount = excluded.viewsCount,
+                    commentsCount = COALESCE(excluded.commentsCount, videoReviews.commentsCount),
+                    data = excluded.data,
+                    createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
+                    updatedAt = CURRENT_TIMESTAMP`,
             args: [
               id,
               rev.placeId || (rev.place && rev.place.id) || '',
@@ -7640,20 +7754,9 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               rev.duration || 60,
               rev.likesCount || rev.likes || 0,
               rev.viewsCount || rev.views || 0,
+              rev.commentsCount || (Array.isArray(rev.comments) ? rev.comments.length : 0),
               jsonStr,
-              // Update args
-              rev.placeId || (rev.place && rev.place.id) || '',
-              rev.placeName || (rev.place && rev.place.name) || '',
-              rev.authorName || (rev.author && rev.author.name) || '',
-              rev.authorAvatar || (rev.author && rev.author.avatar) || '',
-              rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
-              rev.rating || 5,
-              rev.videoUrl || '',
-              rev.thumbnailUrl || '',
-              rev.duration || 60,
-              rev.likesCount || rev.likes || 0,
-              rev.viewsCount || rev.views || 0,
-              jsonStr
+              revCreatedAt
             ]
           });
 
@@ -14384,20 +14487,45 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         // 3. Update videoReviews table in BunnyDB
         try {
           const vRow = await bunnyDb.execute({
-            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            sql: "SELECT * FROM videoReviews WHERE id = ? LIMIT 1",
             args: [videoId]
           });
           let vData: any = {};
+          let baseRow: any = null;
+          const list = readReviewsIndex();
+          const foundVid = list.find((v: any) => v && v.id === videoId);
+
           if (vRow && vRow.rows && vRow.rows.length > 0) {
-            try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+            baseRow = vRow.rows[0];
+            try { vData = JSON.parse((baseRow as any).data || '{}'); } catch(e){}
+          }
+          if (foundVid) {
+            vData = { ...foundVid, ...vData };
           }
           vData.comments = treeResult.comments;
           vData.commentsCount = treeResult.count;
           const jsonStr = JSON.stringify(vData);
+
+          const authorName = vData.author?.name || vData.authorName || baseRow?.authorName || "Reviewer";
+          const authorAvatar = vData.author?.avatar || vData.authorAvatar || baseRow?.authorAvatar || "";
+          const userId = vData.userId || vData.userEmail || baseRow?.userId || "";
+          const placeId = vData.placeId || baseRow?.placeId || "";
+          const placeName = vData.placeName || baseRow?.placeName || "";
+          const rating = Number(vData.rating || baseRow?.rating) || 5;
+          const videoUrl = vData.videoUrl || baseRow?.videoUrl || "";
+          const thumbnailUrl = vData.thumbnailUrl || baseRow?.thumbnailUrl || "";
+          const duration = Number(vData.durationSeconds || vData.duration || baseRow?.duration) || 60;
+          const createdAt = foundVid?.createdAt || (foundVid?.createdAtMs ? new Date(foundVid.createdAtMs).toISOString() : (vData.createdAt || baseRow?.createdAt || (vData.createdAtMs ? new Date(vData.createdAtMs).toISOString() : new Date().toISOString())));
+
           await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, data, commentsCount, updatedAt) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET data = ?, commentsCount = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [videoId, jsonStr, treeResult.count, jsonStr, treeResult.count]
+            sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, commentsCount, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET 
+                    data = excluded.data, 
+                    commentsCount = excluded.commentsCount, 
+                    createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
+                    updatedAt = CURRENT_TIMESTAMP`,
+            args: [videoId, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, treeResult.count, jsonStr, createdAt]
           });
         } catch (vErr) {
           console.warn("BunnyDB videoReviews update notice:", vErr);
@@ -14991,9 +15119,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             const seedVid = list.find((v: any) => v && v.id === videoId);
             if (seedVid) {
               const seedData = { ...seedVid, likesCount: updatedLikesCount, likes: updatedLikesCount };
+              const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                       ON CONFLICT(id) DO UPDATE SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
@@ -15005,12 +15134,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                   seedVid.rating || 5,
                   seedVid.videoUrl || "",
                   seedVid.thumbnailUrl || seedVid.posterUrl || "",
-                  seedVid.duration || 60,
+                  seedVid.durationSeconds || seedVid.duration || 60,
                   updatedLikesCount,
                   seedVid.bookmarksCount || 0,
                   seedVid.sharesCount || 0,
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
+                  seedCreatedAt,
                   updatedLikesCount,
                   JSON.stringify(seedData)
                 ]
@@ -15254,9 +15384,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             const seedVid = list.find((v: any) => v && v.id === videoId);
             if (seedVid) {
               const seedData = { ...seedVid, bookmarksCount: updatedBookmarksCount, bookmarks: updatedBookmarksCount };
+              const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                       ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
@@ -15268,12 +15399,13 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                   seedVid.rating || 5,
                   seedVid.videoUrl || "",
                   seedVid.thumbnailUrl || seedVid.posterUrl || "",
-                  seedVid.duration || 60,
+                  seedVid.durationSeconds || seedVid.duration || 60,
                   seedVid.likesCount || 0,
                   updatedBookmarksCount,
                   seedVid.sharesCount || 0,
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
+                  seedCreatedAt,
                   updatedBookmarksCount,
                   JSON.stringify(seedData)
                 ]
@@ -15589,6 +15721,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           nextShares = Math.max(1, dbShares, existingShares + 1);
           vData.shares = nextShares;
           vData.sharesCount = nextShares;
+          const list = readReviewsIndex();
+          const seedVid = list.find((v: any) => v && v.id === videoId);
+          if (seedVid) {
+            vData = { ...seedVid, ...vData };
+          }
           await bunnyDb.execute({
             sql: "UPDATE videoReviews SET sharesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
             args: [nextShares, JSON.stringify(vData), videoId]
@@ -15600,9 +15737,10 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             const seedVid = list.find((v: any) => v && v.id === videoId);
             if (seedVid) {
               const seedData = { ...seedVid, sharesCount: nextShares, shares: nextShares };
+              const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
               await bunnyDb.execute({
                 sql: `INSERT OR REPLACE INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.author?.id || "",
@@ -15618,7 +15756,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
                   seedVid.bookmarksCount || seedVid.bookmarks || 0,
                   nextShares,
                   seedVid.commentsCount || 0,
-                  JSON.stringify(seedData)
+                  JSON.stringify(seedData),
+                  seedCreatedAt
                 ]
               });
             }
@@ -31121,22 +31260,43 @@ function injectOpenGraphTags(html: string, meta: any) {
         const totalBm = finalBmRes.rows && finalBmRes.rows[0] ? Number(finalBmRes.rows[0].total) : targetBm;
         const totalShares = finalShareRes.rows && finalShareRes.rows[0] ? Number(finalShareRes.rows[0].total) : targetShares;
         const totalComm = finalCommRes.rows && finalCommRes.rows[0] ? Number(finalCommRes.rows[0].total) : (r.comments ? r.comments.length : 0);
+        const revCreatedAt = r.createdAt || (r.createdAtMs ? new Date(r.createdAtMs).toISOString() : "2026-10-08 21:30:00");
+        const revViews = Number(r.viewsCount || r.views || 0);
 
         const vData = {
           ...r,
+          isLocalUpload: false,
           likesCount: totalLikes,
           likes: totalLikes,
           bookmarksCount: totalBm,
           bookmarks: totalBm,
           sharesCount: totalShares,
           shares: totalShares,
-          commentsCount: totalComm
+          commentsCount: totalComm,
+          createdAt: revCreatedAt
         };
 
         await bunnyDb.execute({
-          sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET likesCount = ?, bookmarksCount = ?, sharesCount = ?, commentsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+          sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                  userId = excluded.userId,
+                  authorName = excluded.authorName,
+                  authorAvatar = excluded.authorAvatar,
+                  placeId = excluded.placeId,
+                  placeName = excluded.placeName,
+                  rating = excluded.rating,
+                  videoUrl = excluded.videoUrl,
+                  thumbnailUrl = excluded.thumbnailUrl,
+                  duration = excluded.duration,
+                  likesCount = excluded.likesCount,
+                  bookmarksCount = excluded.bookmarksCount,
+                  sharesCount = excluded.sharesCount,
+                  commentsCount = excluded.commentsCount,
+                  viewsCount = excluded.viewsCount,
+                  data = excluded.data,
+                  createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
+                  updatedAt = CURRENT_TIMESTAMP`,
           args: [
             r.id,
             r.userId || r.userEmail || "",
@@ -31147,17 +31307,14 @@ function injectOpenGraphTags(html: string, meta: any) {
             r.rating || 5,
             r.videoUrl || "",
             r.thumbnailUrl || r.posterUrl || "",
-            r.duration || 60,
+            r.durationSeconds || r.duration || 60,
             totalLikes,
             totalBm,
             totalShares,
             totalComm,
+            revViews,
             JSON.stringify(vData),
-            totalLikes,
-            totalBm,
-            totalShares,
-            totalComm,
-            JSON.stringify(vData)
+            revCreatedAt
           ]
         }).catch(() => {});
       }
@@ -31206,6 +31363,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   // Background initialization tasks
   syncAndMigrateBusinessPlaces().catch(() => {});
   syncExistingUsersWelcomeSentIndex().catch(() => {});
+  syncInitialVideoInteractionsToBunnyDb().catch(() => {});
 
   try {
     const bunnyDb = getBunnyDb();

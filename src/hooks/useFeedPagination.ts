@@ -125,12 +125,12 @@ const PROTECTED_FEED_CREATORS = new Set([
 ]);
 
 export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
+  "rev-1791495006783-jy6ld",
+  "rev-1791494959785-27pap",
   "rev-1791485919882-l8av6",
   "rev-1790368898192-sw74n",
   "rev-1790363378621-w65oy",
-  "rev-1790353801035-1rlp8",
-  "rev-1789841701519-2l6x8",
-  "rev-1789577075627-3488d"
+  "rev-1790353801035-1rlp8"
 ]);
 
 export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {

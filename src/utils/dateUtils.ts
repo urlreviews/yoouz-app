@@ -53,11 +53,21 @@ export function formatRecordedDate(recordedAt?: string, createdAtMs?: number): s
   if (targetMs && targetMs > 0) {
     const diffMs = Date.now() - targetMs;
     // Clock drift guard: if diffMs is negative (e.g. client is slightly behind server), treat as Just now
-    if (diffMs < 45000) return "Just now";
+    if (diffMs < 45000) {
+      if (recordedAt && (recordedAt.toLowerCase().includes("yesterday") || recordedAt.toLowerCase().includes("ago") || recordedAt.toLowerCase().includes("day"))) {
+        return recordedAt;
+      }
+      return "Just now";
+    }
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 60) return `${Math.max(1, diffMin)}m ago`;
     const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffHr < 24) {
+      if (recordedAt && (recordedAt.toLowerCase().includes("yesterday") || recordedAt.toLowerCase().includes("days ago"))) {
+        return recordedAt;
+      }
+      return `${diffHr}h ago`;
+    }
     const diffDays = Math.floor(diffHr / 24);
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
