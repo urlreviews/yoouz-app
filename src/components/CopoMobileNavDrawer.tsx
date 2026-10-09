@@ -223,7 +223,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               </button>
 
               {/* Legal Links Line */}
-              <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 px-1">
+              <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400 px-1">
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("privacy");
@@ -233,7 +233,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 >
                   {t("legal.privacy", "Privacy")}
                 </button>
-                <span>•</span>
+                <span className="text-zinc-600 text-[9px]">•</span>
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("terms");
@@ -243,7 +243,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 >
                   {t("legal.terms", "Terms")}
                 </button>
-                <span>•</span>
+                <span className="text-zinc-600 text-[9px]">•</span>
                 <button
                   onClick={() => handleNavClick("more")}
                   className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"

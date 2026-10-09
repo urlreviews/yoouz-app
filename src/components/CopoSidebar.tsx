@@ -215,21 +215,21 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             </button>
 
             {/* Legal Links Line */}
-            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 w-full px-1">
+            <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400 w-full px-1">
               <button
                 onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
                 className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
               >
                 {t("legal.privacy", "Privacy")}
               </button>
-              <span>•</span>
+              <span className="text-zinc-600 text-[9px]">•</span>
               <button
                 onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
                 className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
               >
                 {t("legal.terms", "Terms")}
               </button>
-              <span>•</span>
+              <span className="text-zinc-600 text-[9px]">•</span>
               <button
                 onClick={() => onSelectSection("more")}
                 className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
