@@ -205,60 +205,57 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             </button>
 
             {/* Legal & Copyright Footer (Divided line sits BELOW Video Review) */}
-            <div className="flex flex-col gap-3 pt-3 border-t border-zinc-900/80">
-              {/* Premium Yoouz for Business Standalone Card */}
+            <div className="flex flex-col gap-2.5 pt-3 border-t border-zinc-900/80">
+              {/* Yoouz for Business Clean Row */}
               <button
                 onClick={() => {
                   window.open("/business", "_blank", "noopener,noreferrer");
                   onClose();
                 }}
-                className="w-full p-3 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between gap-3 group cursor-pointer shadow-sm text-left"
+                className="w-full py-2 px-1 hover:bg-zinc-900/60 rounded-xl transition-all flex items-center gap-2.5 group cursor-pointer text-left"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 text-white">
-                    <Building2 className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-black text-white group-hover:text-zinc-200 tracking-tight flex items-center gap-1.5">
-                      <span>Yoouz for Business</span>
-                    </div>
-                    <div className="text-[10.5px] text-zinc-400 font-medium">Claim & scale your venue</div>
-                  </div>
+                <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-white">
+                  <Building2 className="w-3.5 h-3.5 text-white" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                <span className="text-xs font-bold text-zinc-200 group-hover:text-white transition-colors tracking-tight">
+                  Yoouz for Business
+                </span>
               </button>
 
-              {/* Legal Links */}
+              {/* Legal Links Line */}
               <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 px-1">
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("privacy");
                     else handleNavClick("more");
                   }}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
                 >
                   {t("legal.privacy", "Privacy")}
                 </button>
-                <span className="text-zinc-600 font-normal shrink-0">•</span>
+                <span>•</span>
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("terms");
                     else handleNavClick("more");
                   }}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
                 >
                   {t("legal.terms", "Terms")}
                 </button>
-                <span className="text-zinc-600 font-normal shrink-0">•</span>
+                <span>•</span>
                 <button
                   onClick={() => handleNavClick("more")}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
                 >
                   {t("legal.about", "About")}
                 </button>
-                <span className="text-zinc-600 font-normal shrink-0">•</span>
-                <span className="text-zinc-500 font-normal text-[10px]">© 2026</span>
               </div>
+
+              {/* Separate Line for Copyright */}
+              <p className="text-[10.5px] text-zinc-500 font-normal px-1">
+                {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+              </p>
             </div>
         </div>
       </div>
