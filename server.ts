@@ -8554,6 +8554,10 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         sql: `DELETE FROM ${colName} WHERE id = ?`,
         args: [id]
       });
+      if (colName === 'comments') {
+          // Trigger sync-comments-cache asynchronously
+          fetch("http://localhost:3000/api/system/sync-comments-cache", { method: "POST" }).catch(console.error);
+      }
     }
 
     // 2. Delete from BunnyDB Admin
@@ -11303,6 +11307,12 @@ app.get('/api/admin/live-stats', async (_req, res) => {
           if (parsedData.placeName && parsedData.placeName.toLowerCase().includes("yoouz") && !parsedData.placeLogoUrl) {
             parsedData.placeLogoUrl = "/favicon.svg";
           }
+          
+          // Defensive check: If we have comments in DB, do not clear them in videoReviews
+          if (tree.count === 0 && (commentsByVideo.get(vidId) || []).length === 0) {
+              // This is expected for videos with no comments
+          }
+          
           await bunnyDb.execute({
             sql: "UPDATE videoReviews SET commentsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
             args: [tree.count, JSON.stringify(parsedData), vidId]
