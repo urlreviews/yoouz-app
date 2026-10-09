@@ -42,9 +42,19 @@ export function normalizeReview(v: any): VideoReview {
     const sharesCountVal = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
 
     const rawComments = Array.isArray(v.comments) ? v.comments : [];
-    const commentsCountVal = typeof v.commentsCount === 'number' 
-      ? Math.max(v.commentsCount, rawComments.length) 
-      : rawComments.length;
+    let commentsCountVal = 0;
+    if (Array.isArray(v.comments)) {
+      let cnt = 0;
+      rawComments.forEach((c: any) => {
+        if (c && c.id) {
+          cnt += 1;
+          if (Array.isArray(c.replies)) cnt += c.replies.length;
+        }
+      });
+      commentsCountVal = cnt;
+    } else {
+      commentsCountVal = typeof v.commentsCount === 'number' ? v.commentsCount : 0;
+    }
 
     return {
       ...v,

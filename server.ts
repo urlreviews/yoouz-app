@@ -15276,6 +15276,21 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       let updatedLikesCount = 0;
       let effectiveIsLiked = isLiked;
 
+      let effName = userName || "";
+      let effAvatar = userAvatar || "";
+      let effHandle = userHandle || "";
+      let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
+
+      try {
+        const prof = await resolveUserProfileFromAnySource(userId || effEmail);
+        if (prof) {
+          if (!effName || effName === "User") effName = prof.name;
+          if (!effAvatar) effAvatar = prof.avatar;
+          if (!effHandle) effHandle = prof.handle;
+          if (!effEmail) effEmail = prof.email;
+        }
+      } catch (e) {}
+
       if (bunnyDb) {
         const likeId = `like_${userId || 'anon'}_${videoId}`;
         if (typeof effectiveIsLiked !== "boolean") {
@@ -15291,20 +15306,6 @@ app.get('/api/admin/live-stats', async (_req, res) => {
         }
 
         if (effectiveIsLiked) {
-          let effName = userName || "";
-          let effAvatar = userAvatar || "";
-          let effHandle = userHandle || "";
-          let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
-
-          try {
-            const prof = await resolveUserProfileFromAnySource(userId || effEmail);
-            if (prof) {
-              if (!effName || effName === "User") effName = prof.name;
-              if (!effAvatar) effAvatar = prof.avatar;
-              if (!effHandle) effHandle = prof.handle;
-              if (!effEmail) effEmail = prof.email;
-            }
-          } catch (e) {}
 
           const likeData = {
             id: likeId,
