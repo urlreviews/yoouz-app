@@ -4079,8 +4079,8 @@ ${jsonLd}
                       </div>
 
                       <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                          <Star className="w-4 h-4 text-zinc-300" />
                         </div>
                         <div className="min-w-0 space-y-0.5">
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -4160,14 +4160,9 @@ ${jsonLd}
                     {/* Hero Interactive Widget Preview */}
                     <div className="pt-2 space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            Live Widget Preview
-                          </span>
-                          <span className="text-[11px] text-zinc-400">
-                            • Exactly how it appears on your website
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                          Live Widget Preview
+                        </span>
                         {displayableWidgetVideos.length > 1 && (
                           <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline-block">
                             Interactive player ({displayableWidgetVideos.length} reviews)
