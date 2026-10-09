@@ -637,8 +637,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       ...biz,
       isPremium: !isCurrentlyPremium,
       plan: !isCurrentlyPremium ? "premium" : "free",
-      isPremiumPlan: !isCurrentlyPremium
-    };
+      isPremiumPlan: !isCurrentlyPremium,
+      subscriptionPlan: (!isCurrentlyPremium ? "premium" : "free") as "premium" | "free"
+    } as Place;
     if (onUpdatePlace) {
       onUpdatePlace(updated);
       showToast(`Business plan for ${biz.name} updated to ${!isCurrentlyPremium ? "PREMIUM" : "FREE"}.`);

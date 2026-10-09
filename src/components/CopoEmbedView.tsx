@@ -157,6 +157,22 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     } as Place;
   }, [places, cleanSlug, videos]);
 
+  // Check if we are in preview mode inside the dashboard
+  const isPreviewMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("preview") === "true";
+  }, []);
+
+  const isPlacePremium = useMemo(() => {
+    if (!targetPlace) return false;
+    return Boolean(
+      (targetPlace as any).isPremium ||
+      (targetPlace as any).plan === 'premium' ||
+      (targetPlace as any).isPremiumPlan
+    );
+  }, [targetPlace]);
+
   // Filter videos belonging strictly to this business / place
   const matchingVideos: VideoReview[] = useMemo(() => {
     const matched = videos.filter((v) => {
@@ -567,6 +583,43 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     },
     [onRecordReview, handleStopVideo, targetPlace, cleanSlug]
   );
+
+  if (!isPlacePremium && !isPreviewMode) {
+    return (
+      <div
+        id="copo-embed-widget-root"
+        className="w-full h-full min-h-0 bg-black text-white flex flex-col items-center justify-center p-0 select-none antialiased font-sans overflow-hidden"
+      >
+        <div
+          id="copo-embed-card"
+          className="relative w-full h-full max-w-[390px] max-h-[100%] bg-zinc-950 sm:rounded-[24px] overflow-hidden border border-white/10 shadow-2xl flex flex-col justify-center items-center p-6 text-center space-y-6"
+        >
+          {/* Lock/Sparkles Ring Icon */}
+          <div className="w-16 h-16 rounded-full bg-amber-400/5 border border-amber-400/20 text-amber-400 flex items-center justify-center animate-pulse shadow-lg">
+            <Sparkles className="w-8 h-8 animate-pulse" />
+          </div>
+
+          <div className="space-y-2 max-w-[280px]">
+            <h3 className="text-lg font-black text-white leading-tight uppercase tracking-wider">Yoouz Widget Paused</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This verified customer reviews widget requires <strong className="text-amber-400">Yoouz Premium Partner Plan</strong> activation to stream on external domains.
+            </p>
+          </div>
+
+          <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl text-[11px] text-zinc-300 max-w-[280px] leading-relaxed">
+            <p className="font-bold text-zinc-200 mb-1">How to Activate?</p>
+            Please contact <span className="text-amber-400 font-bold">support@yoouz.com</span> or reach out to your registered local digital marketing partner agency to toggle this venue active.
+          </div>
+
+          {/* Mini branded watermark */}
+          <div className="flex items-center gap-1.5 opacity-40">
+            <img src="/favicon.svg" alt="Yoouz Logo" className="w-4 h-4 shadow-sm" />
+            <span className="text-[10px] font-black tracking-widest text-white uppercase">Yoouz B2B Network</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

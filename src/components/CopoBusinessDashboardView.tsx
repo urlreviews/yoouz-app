@@ -402,8 +402,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     return Boolean(
       (currentPlace as any).isPremium ||
       (currentPlace as any).plan === 'premium' ||
-      (currentPlace as any).isPremiumPlan ||
-      currentPlace.id === 'yoouz.com'
+      (currentPlace as any).isPremiumPlan
     );
   }, [currentPlace]);
 
@@ -4116,7 +4115,7 @@ ${jsonLd}
 
                       <div className="relative w-full max-w-[390px] h-[520px] mx-auto bg-black border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col group/embed select-none ring-1 ring-white/10">
                         <iframe
-                          src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`}
+                          src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
                           title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
                           className="w-full h-full border-0 bg-transparent"
                           allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
@@ -4826,6 +4825,91 @@ ${jsonLd}
 
                 </div>
 
+                {/* Plan & Subscription Card */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-5 shadow-2xl backdrop-blur-xl mt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-400/10 text-amber-400 border border-amber-400/20 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-white">Subscription & Plan Tier</h3>
+                      <p className="text-[11px] text-zinc-400">View your active package status and unlocked features.</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-850 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider block">Current Plan</span>
+                      <span className="text-sm font-black text-white mt-1 block">
+                        {isPremium ? 'Premium Partner Plan' : 'Free Basic Plan'}
+                      </span>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      isPremium 
+                        ? 'bg-amber-400/10 text-amber-400 border border-amber-400/25' 
+                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                    }`}>
+                      {isPremium ? 'Active' : 'Basic Tier'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-zinc-300">Package Features</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-400">
+                      <div className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>Verified venue claimed badge</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>Core review dashboard & views</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <span>Reply to review comments (Free)</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
+                          Responsive website embeds
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
+                          Google 1st-Page SEO Code Package
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
+                          HD video downloads for Ads
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
+                          B2C Customer Direct Chat Messages
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {!isPremium && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPremiumTriggerFeature('general');
+                        setIsPremiumModalOpen(true);
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer shadow-lg active:scale-95"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Request Premium Upgrade
+                    </button>
+                  )}
+                </div>
+
               </div>
             )}
 
@@ -5442,17 +5526,17 @@ ${jsonLd}
                   <CheckCheck className="w-8 h-8" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white">Upgrade Request Registered!</h3>
+                  <h3 className="text-2xl font-black text-white">Upgrade Request Submitted!</h3>
                   <p className="text-sm text-zinc-300 max-w-md mx-auto">
-                    Yoouz has registered your inquiry and automatically contacted <strong className="text-white">{selectedUpgradeAgency?.name}</strong> at <span className="text-emerald-400 font-mono font-bold">{selectedUpgradeAgency?.email || 'partner@agency.com'}</span> (cc: support@yoouz.com) on your behalf.
+                    Your request has been successfully registered. Our team has been notified at <span className="text-emerald-400 font-mono font-bold">support@yoouz.com</span> on your behalf.
                   </p>
                 </div>
                 <div className="bg-zinc-950/80 border border-zinc-850 p-5 rounded-2xl text-left max-w-lg mx-auto text-xs space-y-2.5 text-zinc-400">
-                  <p className="font-bold text-zinc-200">What happens next?</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>A dedicated local partner agency representative will email you at <strong className="text-white">{verifiedBusinessSession?.businessEmail || currentUser?.email || 'your email'}</strong> to finalize billing, split payments, and activate your premium account.</li>
-                    <li>No online checkout or credit card is required on this platform. Everything is handled securely by your chosen local agency partners.</li>
-                    <li>Our team will manually toggle your Premium Plan active as soon as the agency authorizes the referral.</li>
+                  <p className="font-bold text-zinc-200">What happens next (How Setup Works):</p>
+                  <ul className="list-disc pl-4 space-y-1.5">
+                    <li>Your upgrade request has been registered and routed to our central team at <strong className="text-emerald-400">support@yoouz.com</strong>.</li>
+                    <li>We will forward your request directly to our **Certified Marketing Partner Agency** in <strong className="text-white">{currentPlace?.country || "your country"}</strong> within 24 hours.</li>
+                    <li>The designated localized agency partner will contact you directly at <strong className="text-white">{(verifiedBusinessSession as any)?.businessEmail || currentUser?.email || 'your email'}</strong> to coordinate your manual referral splits, integration details, and activate your high-speed SEO/HTML5 video widget.</li>
                   </ul>
                 </div>
                 <button
@@ -5470,8 +5554,8 @@ ${jsonLd}
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Yoouz Premium Partner Network</h3>
-                    <p className="text-xs text-zinc-400">Accredited Local Agencies • 1st-Page SEO Indexing • Zero Online Processing Fees</p>
+                    <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Yoouz Premium Activation Portal</h3>
+                    <p className="text-xs text-zinc-400">Manual Agency Referral splits • 1st-Page Google SEO Snippets • Zero Online Processing Fees</p>
                   </div>
                 </div>
 
@@ -5481,7 +5565,7 @@ ${jsonLd}
                       <Lock className="w-3.5 h-3.5" /> HTML Embed Snippet & SEO Package Locked
                     </p>
                     <p className="leading-relaxed">
-                      If you only use a standard iframe, Google search crawlers cannot index the reviews. To index reviews on the <strong>first page of Google search results</strong>, our Premium Plan automatically injects a high-speed SEO Code Package (JSON-LD aggregate schema and verified Google rich snippets) into your website's source code! Please contact a local agency partner below to upgrade.
+                      If you only use a standard iframe, Google search crawlers cannot index the reviews. To index reviews on the <strong>first page of Google search results</strong>, our Premium Plan automatically injects a high-speed SEO Code Package (JSON-LD aggregate schema and verified Google rich snippets) into your website's source code! Submit your upgrade request below.
                     </p>
                   </div>
                 )}
@@ -5492,7 +5576,7 @@ ${jsonLd}
                       <Lock className="w-3.5 h-3.5" /> Customer Direct Messaging Restricted
                     </p>
                     <p className="leading-relaxed">
-                      While reply comments on reviews are completely free, private B2C Direct Chat Messages are a premium tool that lets you send direct updates, discount codes, or private resolution inquiries straight to your customers' private mobile inbox. Select an agency below to activate.
+                      While reply comments on reviews are completely free, private B2C Direct Chat Messages are a premium tool that lets you send direct updates, discount codes, or private resolution inquiries straight to your customers' private mobile inbox. Submit your request below to activate.
                     </p>
                   </div>
                 )}
@@ -5503,12 +5587,12 @@ ${jsonLd}
                       <Lock className="w-3.5 h-3.5" /> Video Downloading Restricted
                     </p>
                     <p className="leading-relaxed">
-                      Premium venues can download original, raw 60-second video review files in full high-definition to embed on custom domains, run Google Video Ads, or post across social networks (TikTok, Instagram, Facebook). Upgrade to unlock unlimited file exports.
+                      Premium venues can download original, raw 60-second video review files in full high-definition to embed on custom domains, run Google Video Ads, or post across social networks (TikTok, Instagram, Facebook). Request activation to unlock file exports.
                     </p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Left Column: Plan Information */}
                   <div className="space-y-4">
                     <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Compare Plans</h4>
@@ -5531,108 +5615,101 @@ ${jsonLd}
                           <li>HD raw video review downloads for ads</li>
                           <li>Direct B2C Customer Private Messages (Inbox)</li>
                           <li>Printed table QR standees (PDF generation)</li>
-                          <li>Dedicated agency support & onboarding</li>
+                          <li>Dedicated support & onboarding referrals</li>
                         </ul>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column: Local Agency Matcher */}
+                  {/* Right Column: Simplified Request Form */}
                   <div className="space-y-4 flex flex-col justify-between">
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Accredited Agencies Directory</h4>
+                    <div className="space-y-4">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Merchant Request Form</h4>
                       
-                      {/* Country Selector inside Upgrade Modal */}
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-zinc-400 uppercase">Your Country</label>
-                        <select
-                          value={selectedUpgradeCountry}
-                          onChange={(e) => {
-                            setSelectedUpgradeCountry(e.target.value);
-                            fetchUpgradeAgencies(e.target.value);
-                            setSelectedUpgradeAgency(null);
-                          }}
-                          className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer"
-                        >
-                          <option value="">All Countries</option>
-                          <option value="Belgium">Belgium</option>
-                          <option value="United Kingdom">United Kingdom</option>
-                          <option value="United States">United States</option>
-                          <option value="Netherlands">Netherlands</option>
-                          <option value="France">France</option>
-                        </select>
+                      <div className="space-y-3 text-xs">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Venue Name</label>
+                          <input
+                            type="text"
+                            disabled
+                            value={currentPlace?.name || 'Your Business'}
+                            className="w-full px-3.5 py-2.5 bg-zinc-950/80 border border-zinc-800 rounded-xl text-zinc-400 font-semibold text-xs cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Registered Email</label>
+                          <input
+                            type="text"
+                            disabled
+                            value={(verifiedBusinessSession as any)?.businessEmail || currentUser?.email || 'owner@business.com'}
+                            className="w-full px-3.5 py-2.5 bg-zinc-950/80 border border-zinc-800 rounded-xl text-zinc-400 font-semibold text-xs cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Owner / Contact Name</label>
+                          <input
+                            type="text"
+                            disabled
+                            value={(verifiedBusinessSession as any)?.ownerName || currentUser?.name || 'Business Manager'}
+                            className="w-full px-3.5 py-2.5 bg-zinc-950/80 border border-zinc-800 rounded-xl text-zinc-400 font-semibold text-xs cursor-not-allowed"
+                          />
+                        </div>
                       </div>
 
-                      {/* Agencies List */}
-                      <div className="space-y-2 max-h-56 overflow-y-auto no-scrollbar pr-1">
-                        {isLoadingUpgradeAgencies ? (
-                          <div className="flex items-center justify-center py-6 text-zinc-400 text-xs gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                            <span>Finding local partners...</span>
-                          </div>
-                        ) : upgradeAgencies.length === 0 ? (
-                          <div className="text-center py-6 text-zinc-500 text-xs">
-                            No accredited agencies found for this country yet. Contact support@yoouz.com directly.
-                          </div>
-                        ) : (
-                          upgradeAgencies.map((agency) => {
-                            const isSelected = selectedUpgradeAgency?.id === agency.id;
-                            return (
-                              <div
-                                key={agency.id}
-                                onClick={() => setSelectedUpgradeAgency(agency)}
-                                className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                                  isSelected 
-                                    ? 'bg-amber-400/5 border-amber-400 shadow-lg shadow-amber-400/5' 
-                                    : 'bg-zinc-950/40 border-zinc-850 hover:border-zinc-800'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  {agency.logoUrl ? (
-                                    <img src={agency.logoUrl} alt={agency.name} className="w-8 h-8 rounded-lg object-cover bg-white" />
-                                  ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-[10px] text-zinc-300">
-                                      {agency.name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <h5 className="font-extrabold text-white text-xs leading-none truncate">{agency.name}</h5>
-                                    <p className="text-[10px] text-zinc-400 mt-1 truncate">{agency.city}, {agency.country}</p>
-                                  </div>
-                                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
+                      <div className="p-3 bg-zinc-950/60 border border-zinc-850 rounded-xl text-[11px] text-zinc-400 leading-relaxed space-y-1.5">
+                        <p className="font-bold text-amber-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Hiring a Certified Agency Partner
+                        </p>
+                        <p>Yoouz partners with leading, high-end certified digital marketing agencies in each country to provide personalized, professional setup and support.</p>
+                        <p>When you submit, this request goes to <strong className="text-white">support@yoouz.com</strong>. We will then forward your credentials to our top certified agency partner in <strong className="text-white">{currentPlace?.country || "your country"}</strong> to set up your Premium suite manually.</p>
                       </div>
                     </div>
 
                     <div className="pt-3 border-t border-zinc-850">
-                      {selectedUpgradeAgency ? (
-                        <button
-                          type="button"
-                          disabled={isSubmittingUpgradeInquiry}
-                          onClick={handleSendUpgradeInquiry}
-                          className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                        >
-                          {isSubmittingUpgradeInquiry ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                              <span>Submitting Inquiry...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-4 h-4 text-zinc-950" />
-                              <span>Request Premium Plan via {selectedUpgradeAgency.name}</span>
-                            </>
-                          )}
-                        </button>
-                      ) : (
-                        <div className="p-3 text-center text-[11px] text-zinc-400 font-medium bg-zinc-950/30 border border-dashed border-zinc-850 rounded-xl">
-                          Select a local Digital Marketing Agency from the list to request your Premium Plan upgrade.
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        disabled={isSubmittingUpgradeInquiry}
+                        onClick={async () => {
+                          setIsSubmittingUpgradeInquiry(true);
+                          try {
+                            const body = {
+                              placeId: currentPlace?.id,
+                              placeName: currentPlace?.name,
+                              userEmail: (verifiedBusinessSession as any)?.businessEmail || currentUser?.email || 'owner@business.com',
+                              userName: (verifiedBusinessSession as any)?.ownerName || currentUser?.name || 'Business Owner',
+                              agencyId: 'yoouz_direct',
+                              agencyName: 'Yoouz Support Team'
+                            };
+                            const res = await fetch('/api/agencies/request-upgrade', {
+                              body: JSON.stringify(body),
+                              headers: { 'Content-Type': 'application/json' },
+                              method: 'POST'
+                            });
+                            if (res.ok) {
+                              setUpgradeInquirySuccess(true);
+                            }
+                          } catch (e) {
+                            console.warn("Failed to request upgrade:", e);
+                          } finally {
+                            setIsSubmittingUpgradeInquiry(false);
+                          }
+                        }}
+                        className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                      >
+                        {isSubmittingUpgradeInquiry ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                            <span>Sending Inquiry...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 text-zinc-950" />
+                            <span>Request Premium Plan Activation</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
