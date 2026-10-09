@@ -135,7 +135,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "bookmarks" | "messages" | "broadcast" | "database" | "search";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "bookmarks" | "messages" | "broadcast" | "database" | "search" | "agencies";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,
@@ -628,6 +628,97 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       showToast("Network error repairing business names");
     } finally {
       setIsRepairingBrandNames(false);
+    }
+  };
+
+  const handleTogglePremium = async (biz: Place) => {
+    const isCurrentlyPremium = Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan);
+    const updated = {
+      ...biz,
+      isPremium: !isCurrentlyPremium,
+      plan: !isCurrentlyPremium ? "premium" : "free",
+      isPremiumPlan: !isCurrentlyPremium
+    };
+    if (onUpdatePlace) {
+      onUpdatePlace(updated);
+      showToast(`Business plan for ${biz.name} updated to ${!isCurrentlyPremium ? "PREMIUM" : "FREE"}.`);
+      setDbPlaces(prev => prev.map(p => p.id === biz.id ? updated : p));
+      setTimeout(fetchLiveStats, 400);
+    }
+  };
+
+  const fetchAdminAgencies = useCallback(async () => {
+    setIsLoadingAdminAgencies(true);
+    try {
+      const res = await fetch(`/api/admin/agencies?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminAgencies(Array.isArray(data.agencies) ? data.agencies : []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch admin agencies:", e);
+    } finally {
+      setIsLoadingAdminAgencies(false);
+    }
+  }, []);
+
+  const handleAddAgency = async () => {
+    if (!newAgency.name) return;
+    try {
+      const res = await fetch("/api/admin/agencies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAgency)
+      });
+      if (res.ok) {
+        showToast("Agency registered successfully!");
+        setIsAddAgencyOpen(false);
+        setNewAgency({
+          name: "",
+          logoUrl: "",
+          website: "",
+          phone: "",
+          email: "",
+          city: "",
+          country: "Belgium"
+        });
+        fetchAdminAgencies();
+      }
+    } catch (e) {
+      showToast("Error adding agency");
+    }
+  };
+
+  const handleUpdateAgency = async () => {
+    if (!editAgencyModal || !editAgencyModal.name) return;
+    try {
+      const res = await fetch(`/api/admin/agencies/${editAgencyModal.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editAgencyModal)
+      });
+      if (res.ok) {
+        showToast("Agency updated successfully!");
+        setEditAgencyModal(null);
+        fetchAdminAgencies();
+      }
+    } catch (e) {
+      showToast("Error updating agency");
+    }
+  };
+
+  const handleDeleteAgency = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this agency?")) return;
+    try {
+      const res = await fetch(`/api/admin/agencies/${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        showToast("Agency deleted successfully!");
+        fetchAdminAgencies();
+      }
+    } catch (e) {
+      showToast("Error deleting agency");
     }
   };
 
@@ -1260,6 +1351,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   });
   const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
   const [dbUsers, setDbUsers] = useState<any[]>([]);
+  const [dbComments, setDbComments] = useState<any[]>([]);
+
+  // Partner Agencies State
+  const [adminAgencies, setAdminAgencies] = useState<any[]>([]);
+  const [isLoadingAdminAgencies, setIsLoadingAdminAgencies] = useState(false);
+  const [agencySearchQuery, setAgencySearchQuery] = useState("");
+  const [agencyCountryFilter, setAgencyCountryFilter] = useState("all");
+  const [editAgencyModal, setEditAgencyModal] = useState<any | null>(null);
+  const [isAddAgencyOpen, setIsAddAgencyOpen] = useState(false);
+  const [newAgency, setNewAgency] = useState({
+    name: "",
+    logoUrl: "",
+    website: "",
+    phone: "",
+    email: "",
+    city: "",
+    country: "Belgium"
+  });
 
   // Merged authoritative collections
   const activePlaces = useMemo(() => {
@@ -1311,12 +1420,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchLiveStats = async () => {
     setIsLoadingLiveStats(true);
     try {
-      const [statsRes, placesRes, videosRes, usersRes, chatsRes] = await Promise.allSettled([
+      const [statsRes, placesRes, videosRes, usersRes, chatsRes, commentsRes] = await Promise.allSettled([
         fetch("/api/admin/live-stats", { cache: "no-store" }),
         fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" }),
         fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" }),
         fetch(`/api/nosql/users?_t=${Date.now()}`, { cache: "no-store" }),
-        fetch("/api/admin/chats", { cache: "no-store" })
+        fetch("/api/admin/chats", { cache: "no-store" }),
+        fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store" })
       ]);
 
       if (statsRes.status === "fulfilled" && statsRes.value.ok) {
@@ -1355,6 +1465,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           setAdminChats(chatsData.chats);
         }
       }
+
+      if (commentsRes.status === "fulfilled" && commentsRes.value.ok) {
+        const commentsData = await commentsRes.value.json();
+        if (Array.isArray(commentsData)) {
+          setDbComments(commentsData);
+        }
+      }
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
     } finally {
@@ -1388,6 +1505,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       fetchLiveStats();
       fetchAdminLikes();
       fetchAdminBookmarks();
+      if (activeTab === "agencies") {
+        fetchAdminAgencies();
+      }
       const interval = setInterval(() => {
         fetchLiveStats();
         if (activeTab === "likes" || activeTab === "overview") {
@@ -1396,10 +1516,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         if (activeTab === "bookmarks" || activeTab === "overview") {
           fetchAdminBookmarks();
         }
+        if (activeTab === "agencies") {
+          fetchAdminAgencies();
+        }
       }, 15000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, activeTab, fetchAdminLikes, fetchAdminBookmarks]);
+  }, [isAuthenticated, activeTab, fetchAdminLikes, fetchAdminBookmarks, fetchAdminAgencies]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -1708,38 +1831,30 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const list: { video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string }[] = [];
     const seenCommentKeys = new Set<string>();
 
-    activeVideos.forEach((v) => {
-      if (!v || !v.id) return;
-      (v.comments || []).forEach((c) => {
-        if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
-        const key = `${v.id}_${c.id}`;
-        if (!seenCommentKeys.has(key)) {
-          seenCommentKeys.add(key);
-          list.push({
-            video: v,
-            comment: resolveCommentUserMeta(c)
-          });
-        }
+    (dbComments || []).forEach((c) => {
+      if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
+      
+      const vId = c.videoId || "";
+      const video = activeVideos.find((v) => String(v.id) === String(vId)) || {
+        id: vId,
+        placeName: "Deleted/Unknown Video",
+        authorName: "Unknown User",
+        author: { name: "Unknown User" }
+      } as any;
 
-        if (Array.isArray(c.replies)) {
-          c.replies.forEach((r) => {
-            if (!r || !r.id || r.id === "comm-101" || r.id === "comm-102") return;
-            const rKey = `${v.id}_${r.id}`;
-            if (!seenCommentKeys.has(rKey)) {
-              seenCommentKeys.add(rKey);
-              list.push({
-                video: v,
-                comment: resolveCommentUserMeta(r),
-                isReply: true,
-                parentCommentId: c.id
-              });
-            }
-          });
-        }
-      });
+      const key = `${video.id}_${c.id}`;
+      if (!seenCommentKeys.has(key)) {
+        seenCommentKeys.add(key);
+        list.push({
+          video,
+          comment: resolveCommentUserMeta(c),
+          isReply: Boolean(c.isReply || c.parentId),
+          parentCommentId: c.parentId
+        });
+      }
     });
     return list;
-  }, [activeVideos, resolveCommentUserMeta]);
+  }, [dbComments, activeVideos, resolveCommentUserMeta]);
 
   // Separate Creators vs Community Users
   const { creatorsList, standardUsersList } = useMemo(() => {
@@ -2988,7 +3103,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <span>Comments</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {allComments.length}
+                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.comments ?? allComments.length)}
               </span>
             </button>
 
@@ -3006,7 +3121,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <span>Likes</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-rose-400 border border-zinc-800">
-                {liveStats?.totals?.likes ?? adminLikes.length}
+                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.likes ?? adminLikes.length)}
               </span>
             </button>
 
@@ -3024,7 +3139,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <span>Bookmarks</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-amber-400 border border-zinc-800">
-                {liveStats?.totals?.bookmarks ?? adminBookmarks.length}
+                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.bookmarks ?? adminBookmarks.length)}
               </span>
             </button>
 
@@ -3090,6 +3205,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <span>Search Intel</span>
               </div>
             </button>
+
+            {/* 13. Partner Agencies */}
+            <button
+              onClick={() => setActiveTab("agencies")}
+              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                activeTab === "agencies"
+                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
+                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
+              }`}
+            >
+              <div className="flex items-center gap-3.5">
+                <Briefcase className="w-5 h-5 shrink-0 text-white" />
+                <span>Partner Agencies</span>
+              </div>
+            </button>
           </div>
 
           {/* Quick System Badge & Actions */}
@@ -3117,12 +3247,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["videos", `Videos (${metrics.totalVideos})`],
-                ["comments", `Comments (${allComments.length})`],
-                ["likes", `Likes (${liveStats?.totals?.likes ?? adminLikes.length})`],
-                ["bookmarks", `Bookmarks (${liveStats?.totals?.bookmarks ?? adminBookmarks.length})`],
-                ["messages", `Messages (${adminChats.length})`],
+                ["comments", `Comments (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.comments ?? allComments.length)})`],
+                ["likes", `Likes (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.likes ?? adminLikes.length)})`],
+                ["bookmarks", `Bookmarks (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.bookmarks ?? adminBookmarks.length)})`],
+                ["messages", `Messages (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.chats ?? adminChats.length)})`],
                 ["broadcast", "Broadcast"],
-                ["database", "Database"]
+                ["database", "Database"],
+                ["agencies", "Agencies"]
               ] as const
             ).map(([tabKey, label]) => (
               <button
@@ -5051,6 +5182,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             )}
                           </div>
                         )}
+
+                        {/* Premium Plan Administration Toggle */}
+                        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/40 border border-zinc-800/80">
+                          <span className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            Plan: <strong className={Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "text-amber-400 font-extrabold" : "text-zinc-400"}>{Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "Premium" : "Free"}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePremium(biz)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide border cursor-pointer transition ${
+                              Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan)
+                                ? "bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border-amber-400/30"
+                                : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-700"
+                            }`}
+                          >
+                            {Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "Set Free" : "Set Premium"}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Card Actions */}
@@ -8036,7 +8186,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                       </div>
                       <div className="mt-2.5 flex items-baseline justify-between w-full">
-                        <span className="text-lg font-black text-white font-mono">{t.count}</span>
+                        {isLoadingLiveStats && !liveStats ? (
+                          <div className="h-6 w-12 bg-zinc-850 animate-pulse rounded-md mt-0.5" />
+                        ) : (
+                          <span className="text-lg font-black text-white font-mono">{t.count}</span>
+                        )}
                         <span className="text-[10px] text-zinc-500">rows</span>
                       </div>
                     </button>
@@ -8782,6 +8936,159 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: DIGITAL MARKETING PARTNER AGENCIES */}
+          {activeTab === "agencies" && (
+            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                    <Briefcase className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight font-sans">Accredited Partner Agencies</h2>
+                    <p className="text-xs text-zinc-400 mt-0.5 font-medium">
+                      Manage local B2B Digital Marketing Agencies. Claimed businesses must select an agency to request Premium.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={fetchAdminAgencies}
+                    disabled={isLoadingAdminAgencies}
+                    className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-zinc-800 cursor-pointer shadow-sm"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAdminAgencies ? "animate-spin" : ""}`} />
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddAgencyOpen(true)}
+                    className="px-4 py-2 bg-white text-zinc-950 hover:bg-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Register Agency</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Filters Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={agencySearchQuery}
+                    onChange={(e) => setAgencySearchQuery(e.target.value)}
+                    placeholder="Search agency by name, city, email, or website..."
+                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+                  />
+                </div>
+
+                <select
+                  value={agencyCountryFilter}
+                  onChange={(e) => setAgencyCountryFilter(e.target.value)}
+                  className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
+                >
+                  <option value="all">All Countries</option>
+                  <option value="Belgium">Belgium</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="United States">United States</option>
+                  <option value="Netherlands">Netherlands</option>
+                  <option value="France">France</option>
+                </select>
+              </div>
+
+              {/* Agencies Grid */}
+              {isLoadingAdminAgencies ? (
+                <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+                  <span className="text-sm font-medium">Loading partner agencies directory...</span>
+                </div>
+              ) : adminAgencies.length === 0 ? (
+                <div className="text-center py-20 bg-zinc-900 rounded-3xl border border-zinc-800 text-zinc-500 font-bold">
+                  No agencies registered. Click "Register Agency" to add one manually.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(adminAgencies || [])
+                    .filter(a => {
+                      if (agencyCountryFilter !== "all" && a.country !== agencyCountryFilter) return false;
+                      if (agencySearchQuery.trim()) {
+                        const q = agencySearchQuery.toLowerCase().trim();
+                        return (
+                          a.name?.toLowerCase().includes(q) ||
+                          a.city?.toLowerCase().includes(q) ||
+                          a.email?.toLowerCase().includes(q) ||
+                          a.phone?.includes(q) ||
+                          a.website?.toLowerCase().includes(q)
+                        );
+                      }
+                      return true;
+                    })
+                    .map((agency) => (
+                      <div key={agency.id} className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between space-y-4">
+                        <div className="space-y-3.5">
+                          <div className="flex items-center gap-3">
+                            {agency.logoUrl ? (
+                              <img src={agency.logoUrl} alt={agency.name} className="w-10 h-10 rounded-xl object-cover bg-white p-1 ring-1 ring-zinc-800" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-center font-bold text-xs text-zinc-300">
+                                {agency.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-extrabold text-white text-base leading-snug truncate">{agency.name}</h3>
+                              <p className="text-xs text-zinc-400 truncate">{agency.city}, {agency.country}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs text-zinc-300 font-medium">
+                            {agency.website && (
+                              <div className="flex items-center gap-2 truncate">
+                                <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline truncate">{agency.website}</a>
+                              </div>
+                            )}
+                            {agency.phone && (
+                              <div className="flex items-center gap-2 truncate">
+                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="font-mono text-zinc-300">{agency.phone}</span>
+                              </div>
+                            )}
+                            {agency.email && (
+                              <div className="flex items-center gap-2 truncate">
+                                <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="text-zinc-300">{agency.email}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                          <button
+                            type="button"
+                            onClick={() => setEditAgencyModal(agency)}
+                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-zinc-700/60 cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAgency(agency.id)}
+                            className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           )}
         </main>

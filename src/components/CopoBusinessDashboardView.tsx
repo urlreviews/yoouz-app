@@ -230,6 +230,35 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
+  // Premium Upgrade State & Marketing Agency Matcher
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [premiumTriggerFeature, setPremiumTriggerFeature] = useState<'embed' | 'direct_messages' | 'download_video' | 'general'>('general');
+  const [selectedUpgradeCountry, setSelectedUpgradeCountry] = useState<string>('');
+  const [upgradeAgencies, setUpgradeAgencies] = useState<any[]>([]);
+  const [isLoadingUpgradeAgencies, setIsLoadingUpgradeAgencies] = useState(false);
+  const [selectedUpgradeAgency, setSelectedUpgradeAgency] = useState<any | null>(null);
+  const [isSubmittingUpgradeInquiry, setIsSubmittingUpgradeInquiry] = useState(false);
+  const [upgradeInquirySuccess, setUpgradeInquirySuccess] = useState(false);
+
+  // Fetch agencies for upgrade modal
+  const fetchUpgradeAgencies = useCallback(async (countryName: string) => {
+    setIsLoadingUpgradeAgencies(true);
+    try {
+      const endpoint = countryName 
+        ? `/api/agencies?country=${encodeURIComponent(countryName)}` 
+        : '/api/agencies';
+      const res = await fetch(endpoint);
+      if (res.ok) {
+        const data = await res.json();
+        setUpgradeAgencies(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch upgrade agencies:", e);
+    } finally {
+      setIsLoadingUpgradeAgencies(false);
+    }
+  }, []);
+
   // Automatically scroll main content area back to top when switching tabs
   useEffect(() => {
     setShowEmbedTester(false);
@@ -366,6 +395,28 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     if (places.length > 0) return places[0];
     return derivePlaceFromEmailOrDomain('yoouz.com', places) as unknown as Place & { hours?: string; phone?: string; website?: string; description?: string; coverImage?: string; claimedByEmail?: string };
   }, [places, selectedPlaceId, initialPlace, verifiedBusinessSession]);
+
+  // Premium tier check
+  const isPremium = useMemo(() => {
+    if (!currentPlace) return false;
+    return Boolean(
+      (currentPlace as any).isPremium ||
+      (currentPlace as any).plan === 'premium' ||
+      (currentPlace as any).isPremiumPlan ||
+      currentPlace.id === 'yoouz.com'
+    );
+  }, [currentPlace]);
+
+  // Sync upgrade country selection on modal trigger
+  useEffect(() => {
+    if (isPremiumModalOpen) {
+      const defaultCountry = currentPlace?.country || 'Belgium';
+      setSelectedUpgradeCountry(defaultCountry);
+      fetchUpgradeAgencies(defaultCountry);
+      setUpgradeInquirySuccess(false);
+      setSelectedUpgradeAgency(null);
+    }
+  }, [isPremiumModalOpen, currentPlace, fetchUpgradeAgencies]);
 
   // Claiming Flow State (for onboarding new business)
   const [isClaiming, setIsClaiming] = useState(initialMode === 'claim');
@@ -2109,6 +2160,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const handleDownloadVideoForAds = (video: VideoReview) => {
+    if (!isPremium) {
+      setPremiumTriggerFeature('download_video');
+      setIsPremiumModalOpen(true);
+      return;
+    }
     setAdExportVideo(video);
   };
 
@@ -2119,34 +2175,116 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const placeRating = Number(currentPlace?.rating || 5).toFixed(1);
     const reviewCount = Math.max(1, placeVideos.length);
 
-    return `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
+    // High-speed Google SEO Code Package with aggregate rating and video object metadata graphs
+    const graphItems = [
+      {
+        "@type": "LocalBusiness",
+        "@id": `https://www.yoouz.com/place/${embedSlug}#business`,
+        "name": placeTitle,
+        "url": `https://www.yoouz.com/place/${embedSlug}`,
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": placeRating,
+          "bestRating": "5",
+          "worstRating": "1",
+          "ratingCount": String(reviewCount)
+        }
+      }
+    ];
+
+    placeVideos.forEach((v) => {
+      if (!v || !v.id) return;
+      const vAuthor = v.author?.name || 'Verified Customer';
+      const vCaption = v.caption || `Verified Video Review for ${placeTitle}`;
+      const vDate = v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString();
+      const vThumb = v.thumbnailUrl || 'https://www.yoouz.com/favicon.png';
+      const vUrl = v.videoUrl || `https://www.yoouz.com/api/videos/stream/${v.id}`;
+      graphItems.push({
+        "@type": "VideoObject",
+        "@id": `https://www.yoouz.com/video/${v.id}#video`,
+        "name": `Verified Video Review of ${placeTitle} by ${vAuthor}`,
+        "description": vCaption,
+        "thumbnailUrl": [vThumb],
+        "uploadDate": vDate,
+        "contentUrl": vUrl,
+        "embedUrl": `https://www.yoouz.com/embed/${embedSlug}?v=${v.id}`,
+        "interactionStatistic": {
+          "@type": "InteractionCounter",
+          "interactionType": { "@type": "http://schema.org/LikeAction" },
+          "userInteractionCount": v.likes || 0
+        },
+        "transcript": v.transcript || ""
+      } as any);
+    });
+
+    const jsonLd = JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": graphItems
+    }, null, 2);
+
+    const crawlableFallback = `<!-- Semantic Crawlable Fallback for Search Crawlers -->
+  <div class="yoouz-seo-crawlers" style="display:none !important; visibility:hidden; opacity:0; font-size:0; width:0; height:0; overflow:hidden;">
+    <h3>Verified Customer Reviews for ${placeTitle}</h3>
+    ${placeVideos.map(v => `
+      <div itemscope itemtype="https://schema.org/VideoObject">
+        <span itemprop="name">Review by ${v.author?.name || 'Verified Customer'}</span>
+        <p itemprop="description">${v.caption || ''}</p>
+        <span itemprop="uploadDate">${v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString()}</span>
+        <span itemprop="transcript">${v.transcript || ''}</span>
+      </div>
+    `).join('')}
+  </div>`;
+
+    return `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) SEO Package -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
   <iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
+  
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "AggregateRating",
-    "itemReviewed": {
-      "@type": "LocalBusiness",
-      "name": "${placeTitle}",
-      "url": "https://www.yoouz.com/place/${embedSlug}"
-    },
-    "ratingValue": "${placeRating}",
-    "bestRating": "5",
-    "worstRating": "1",
-    "ratingCount": "${reviewCount}"
-  }
+${jsonLd}
   </script>
+  
+  ${crawlableFallback}
 </div>`;
   };
 
   const copyEmbedCode = () => {
+    if (!isPremium) {
+      setPremiumTriggerFeature('embed');
+      setIsPremiumModalOpen(true);
+      return;
+    }
     const snippet = getEmbedCode();
     navigator.clipboard.writeText(snippet);
     setIsCodeCopied(true);
     setTimeout(() => setIsCodeCopied(false), 2500);
   };
 
+  const handleSendUpgradeInquiry = async () => {
+    if (!selectedUpgradeAgency) return;
+    setIsSubmittingUpgradeInquiry(true);
+    try {
+      const body = {
+        placeId: currentPlace?.id,
+        placeName: currentPlace?.name,
+        userEmail: (verifiedBusinessSession as any)?.businessEmail || currentUser?.email || 'owner@business.com',
+        userName: (verifiedBusinessSession as any)?.ownerName || currentUser?.name || 'Business Owner',
+        agencyId: selectedUpgradeAgency.id,
+        agencyName: selectedUpgradeAgency.name
+      };
+      const res = await fetch('/api/agencies/request-upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        setUpgradeInquirySuccess(true);
+      }
+    } catch (e) {
+      console.warn("Failed to send upgrade inquiry:", e);
+    } finally {
+      setIsSubmittingUpgradeInquiry(false);
+    }
+  };
   const copyDirectReviewLink = () => {
     const rawSlug = getPlaceSlug(currentPlace);
     const slug = (rawSlug && rawSlug.trim() !== '') ? rawSlug.trim() : (currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com');
@@ -2286,6 +2424,45 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   {t("business.tagline", "Real People. Real Reviews.")}
                 </span>
               </div>
+            </div>
+
+            {/* Business Plan Premium Card / Indicator */}
+            <div className="mx-1 px-3 py-3 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-wider">
+                  Plan Tier
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  isPremium 
+                    ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' 
+                    : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                }`}>
+                  {isPremium ? 'Premium' : 'Free Plan'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-white text-xs leading-none truncate">
+                    {currentPlace?.name || 'Business Venue'}
+                  </h4>
+                  <p className="text-[10px] text-zinc-400 truncate mt-1">
+                    {isPremium ? 'Full Marketing Suite Unlocked' : 'Basic Analytics & Comments'}
+                  </p>
+                </div>
+              </div>
+              {!isPremium && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPremiumTriggerFeature('general');
+                    setIsPremiumModalOpen(true);
+                  }}
+                  className="w-full py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 text-[11px] font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shadow-lg active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Upgrade Venue
+                </button>
+              )}
             </div>
 
             {/* Navigation items list (Clean unified list matching consumer sidebar) */}
@@ -3324,7 +3501,16 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                   userVideos={placeVideos}
                   allVideos={videos}
                   allUsers={allUsers}
-                  onSendMessage={onSendMessage}
+                  onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt, cardData) => {
+                    if (!isPremium) {
+                      setPremiumTriggerFeature('direct_messages');
+                      setIsPremiumModalOpen(true);
+                      return;
+                    }
+                    if (onSendMessage) {
+                      await onSendMessage(threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt, cardData);
+                    }
+                  }}
                   onDeleteThread={(threadId, targetPartnerKey) => {
                     deleteChatThreadFromBunnyDB(threadId, effectiveUser, targetPartnerKey);
                     if (onDeleteThread) {
@@ -3853,14 +4039,26 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                             <Code className="w-3.5 h-3.5 text-zinc-400" />
                           </div>
                           <span className="text-zinc-500 select-none">&lt;iframe&gt;</span>
-                          <span className="text-zinc-300 font-semibold truncate select-none">yoouz.com/embed/{getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}</span>
+                          <span className="text-zinc-300 font-semibold truncate select-none">
+                            {isPremium 
+                              ? `yoouz.com/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`
+                              : "yoouz.com/embed/••••••••"
+                            }
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
-                            onClick={() => setShowAdvanceEmbedCode(!showAdvanceEmbedCode)}
-                            className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors cursor-pointer"
+                            onClick={() => {
+                              if (!isPremium) {
+                                setPremiumTriggerFeature('embed');
+                                setIsPremiumModalOpen(true);
+                              } else {
+                                setShowAdvanceEmbedCode(!showAdvanceEmbedCode);
+                              }
+                            }}
+                            className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 transition-colors cursor-pointer"
                           >
                             <span>{showAdvanceEmbedCode ? 'Hide Code' : 'View Code'}</span>
                             {showAdvanceEmbedCode ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -5225,6 +5423,224 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         video={adExportVideo}
         place={currentPlace}
       />
+
+      {/* PREMIUM UPGRADE & DIGITAL MARKETING AGENCY MATCHER MODAL */}
+      {isPremiumModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-zinc-900 border border-zinc-800 text-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative space-y-6 scrollbar-thin">
+            <button
+              type="button"
+              onClick={() => setIsPremiumModalOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full bg-zinc-950 hover:bg-zinc-800 text-zinc-400 hover:text-white transition cursor-pointer border border-zinc-850"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {upgradeInquirySuccess ? (
+              <div className="text-center py-6 space-y-5 animate-in zoom-in-95">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-xl">
+                  <CheckCheck className="w-8 h-8" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-white">Upgrade Request Registered!</h3>
+                  <p className="text-sm text-zinc-300 max-w-md mx-auto">
+                    Yoouz has registered your inquiry and automatically contacted <strong className="text-white">{selectedUpgradeAgency?.name}</strong> at <span className="text-emerald-400 font-mono font-bold">{selectedUpgradeAgency?.email || 'partner@agency.com'}</span> (cc: support@yoouz.com) on your behalf.
+                  </p>
+                </div>
+                <div className="bg-zinc-950/80 border border-zinc-850 p-5 rounded-2xl text-left max-w-lg mx-auto text-xs space-y-2.5 text-zinc-400">
+                  <p className="font-bold text-zinc-200">What happens next?</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>A dedicated local partner agency representative will email you at <strong className="text-white">{verifiedBusinessSession?.businessEmail || currentUser?.email || 'your email'}</strong> to finalize billing, split payments, and activate your premium account.</li>
+                    <li>No online checkout or credit card is required on this platform. Everything is handled securely by your chosen local agency partners.</li>
+                    <li>Our team will manually toggle your Premium Plan active as soon as the agency authorizes the referral.</li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPremiumModalOpen(false)}
+                  className="px-6 py-2.5 bg-white text-zinc-950 hover:bg-zinc-200 font-bold rounded-xl text-xs transition cursor-pointer"
+                >
+                  Return to Dashboard
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-400/10 text-amber-400 border border-amber-400/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Yoouz Premium Partner Network</h3>
+                    <p className="text-xs text-zinc-400">Accredited Local Agencies • 1st-Page SEO Indexing • Zero Online Processing Fees</p>
+                  </div>
+                </div>
+
+                {premiumTriggerFeature === 'embed' && (
+                  <div className="p-4 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
+                    <p className="font-extrabold flex items-center gap-1.5 text-amber-400">
+                      <Lock className="w-3.5 h-3.5" /> HTML Embed Snippet & SEO Package Locked
+                    </p>
+                    <p className="leading-relaxed">
+                      If you only use a standard iframe, Google search crawlers cannot index the reviews. To index reviews on the <strong>first page of Google search results</strong>, our Premium Plan automatically injects a high-speed SEO Code Package (JSON-LD aggregate schema and verified Google rich snippets) into your website's source code! Please contact a local agency partner below to upgrade.
+                    </p>
+                  </div>
+                )}
+
+                {premiumTriggerFeature === 'direct_messages' && (
+                  <div className="p-4 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
+                    <p className="font-extrabold flex items-center gap-1.5 text-cyan-400">
+                      <Lock className="w-3.5 h-3.5" /> Customer Direct Messaging Restricted
+                    </p>
+                    <p className="leading-relaxed">
+                      While reply comments on reviews are completely free, private B2C Direct Chat Messages are a premium tool that lets you send direct updates, discount codes, or private resolution inquiries straight to your customers' private mobile inbox. Select an agency below to activate.
+                    </p>
+                  </div>
+                )}
+
+                {premiumTriggerFeature === 'download_video' && (
+                  <div className="p-4 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
+                    <p className="font-extrabold flex items-center gap-1.5 text-amber-400">
+                      <Lock className="w-3.5 h-3.5" /> Video Downloading Restricted
+                    </p>
+                    <p className="leading-relaxed">
+                      Premium venues can download original, raw 60-second video review files in full high-definition to embed on custom domains, run Google Video Ads, or post across social networks (TikTok, Instagram, Facebook). Upgrade to unlock unlimited file exports.
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column: Plan Information */}
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Compare Plans</h4>
+                    <div className="space-y-3.5 text-xs text-zinc-300">
+                      <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-zinc-850">
+                        <p className="font-bold text-zinc-400">Free Tier</p>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Basic Onboarding</p>
+                        <ul className="mt-2 space-y-1 list-disc pl-4 text-[11px]">
+                          <li>Verified venue claimed badge</li>
+                          <li>Core review dashboard & views counter</li>
+                          <li>Reply to user review comments (Free forever)</li>
+                        </ul>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-400/5 to-zinc-950/40 border border-amber-400/25">
+                        <p className="font-black text-amber-400">Premium Partner Plan</p>
+                        <p className="text-[10px] text-amber-400/80 mt-0.5">Full Marketing Suite</p>
+                        <ul className="mt-2 space-y-1 list-disc pl-4 text-[11px] font-medium">
+                          <li>Interactive responsive website embeds</li>
+                          <li className="text-amber-300 font-bold">Google 1st-Page SEO Code Package (Schema)</li>
+                          <li>HD raw video review downloads for ads</li>
+                          <li>Direct B2C Customer Private Messages (Inbox)</li>
+                          <li>Printed table QR standees (PDF generation)</li>
+                          <li>Dedicated agency support & onboarding</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Local Agency Matcher */}
+                  <div className="space-y-4 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Accredited Agencies Directory</h4>
+                      
+                      {/* Country Selector inside Upgrade Modal */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase">Your Country</label>
+                        <select
+                          value={selectedUpgradeCountry}
+                          onChange={(e) => {
+                            setSelectedUpgradeCountry(e.target.value);
+                            fetchUpgradeAgencies(e.target.value);
+                            setSelectedUpgradeAgency(null);
+                          }}
+                          className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer"
+                        >
+                          <option value="">All Countries</option>
+                          <option value="Belgium">Belgium</option>
+                          <option value="United Kingdom">United Kingdom</option>
+                          <option value="United States">United States</option>
+                          <option value="Netherlands">Netherlands</option>
+                          <option value="France">France</option>
+                        </select>
+                      </div>
+
+                      {/* Agencies List */}
+                      <div className="space-y-2 max-h-56 overflow-y-auto no-scrollbar pr-1">
+                        {isLoadingUpgradeAgencies ? (
+                          <div className="flex items-center justify-center py-6 text-zinc-400 text-xs gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                            <span>Finding local partners...</span>
+                          </div>
+                        ) : upgradeAgencies.length === 0 ? (
+                          <div className="text-center py-6 text-zinc-500 text-xs">
+                            No accredited agencies found for this country yet. Contact support@yoouz.com directly.
+                          </div>
+                        ) : (
+                          upgradeAgencies.map((agency) => {
+                            const isSelected = selectedUpgradeAgency?.id === agency.id;
+                            return (
+                              <div
+                                key={agency.id}
+                                onClick={() => setSelectedUpgradeAgency(agency)}
+                                className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? 'bg-amber-400/5 border-amber-400 shadow-lg shadow-amber-400/5' 
+                                    : 'bg-zinc-950/40 border-zinc-850 hover:border-zinc-800'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  {agency.logoUrl ? (
+                                    <img src={agency.logoUrl} alt={agency.name} className="w-8 h-8 rounded-lg object-cover bg-white" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-[10px] text-zinc-300">
+                                      {agency.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <h5 className="font-extrabold text-white text-xs leading-none truncate">{agency.name}</h5>
+                                    <p className="text-[10px] text-zinc-400 mt-1 truncate">{agency.city}, {agency.country}</p>
+                                  </div>
+                                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-zinc-850">
+                      {selectedUpgradeAgency ? (
+                        <button
+                          type="button"
+                          disabled={isSubmittingUpgradeInquiry}
+                          onClick={handleSendUpgradeInquiry}
+                          className="w-full py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-zinc-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50 cursor-pointer"
+                        >
+                          {isSubmittingUpgradeInquiry ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                              <span>Submitting Inquiry...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4 text-zinc-950" />
+                              <span>Request Premium Plan via {selectedUpgradeAgency.name}</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="p-3 text-center text-[11px] text-zinc-400 font-medium bg-zinc-950/30 border border-dashed border-zinc-850 rounded-xl">
+                          Select a local Digital Marketing Agency from the list to request your Premium Plan upgrade.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

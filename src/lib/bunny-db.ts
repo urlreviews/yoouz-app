@@ -140,6 +140,19 @@ const ALL_TABLE_SCHEMAS = [
     message TEXT,
     data TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS agencies (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    logoUrl TEXT,
+    website TEXT,
+    phone TEXT,
+    email TEXT,
+    city TEXT,
+    country TEXT,
+    data TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
   )`
 ];
 
@@ -440,6 +453,19 @@ export async function initBunnyDbSchema() {
       message TEXT,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS agencies (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      logoUrl TEXT,
+      website TEXT,
+      phone TEXT,
+      email TEXT,
+      city TEXT,
+      country TEXT,
+      data TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 

@@ -9379,7 +9379,11 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   // Authoritative collection counts matching /api/nosql/:table results 100%
   for (const tbl of tables) {
     try {
-      const items = await getNoSqlCollectionItems(tbl);
+      let items = await getNoSqlCollectionItems(tbl);
+      if (tbl === 'comments') {
+        const deletedSet = new Set(readDeletedCommentsIndex());
+        items = items.filter((c: any) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedSet.has(String(c.id)));
+      }
       counts[tbl] = items.length;
     } catch (err) {
       counts[tbl] = 0;
@@ -9465,9 +9469,286 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   });
 });
 
+// ==========================================
+// 🏢 DIGITAL MARKETING AGENCIES & UPGRADES
+// ==========================================
 
+const DEFAULT_SEED_AGENCIES = [
+  {
+    id: "agency_sortlist_brussels",
+    name: "Sortlist Belgium",
+    logoUrl: "https://www.sortlist.com/favicon.ico",
+    website: "https://www.sortlist.com",
+    phone: "+32 2 808 62 10",
+    email: "belgium@sortlist.com",
+    city: "Brussels",
+    country: "Belgium"
+  },
+  {
+    id: "agency_invisible_ghent",
+    name: "Invisible Puuup",
+    logoUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=80&auto=format&fit=crop",
+    website: "https://invisiblepuuup.be",
+    phone: "+32 9 396 11 02",
+    email: "info@invisiblepuuup.be",
+    city: "Ghent",
+    country: "Belgium"
+  },
+  {
+    id: "agency_webtext_bruges",
+    name: "Webtext SMM",
+    logoUrl: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=80&auto=format&fit=crop",
+    website: "https://webtextsmm.be",
+    phone: "+32 50 49 11 44",
+    email: "contact@webtextsmm.be",
+    city: "Bruges",
+    country: "Belgium"
+  },
+  {
+    id: "agency_passion_london",
+    name: "Passion Digital",
+    logoUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=80&auto=format&fit=crop",
+    website: "https://passiondigital.co.uk",
+    phone: "+44 20 7240 8400",
+    email: "hello@passiondigital.co.uk",
+    city: "London",
+    country: "United Kingdom"
+  },
+  {
+    id: "agency_pacific54_miami",
+    name: "Pacific54 Digital",
+    logoUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=80&auto=format&fit=crop",
+    website: "https://pacific54.com",
+    phone: "+1 305-515-5400",
+    email: "grow@pacific54.com",
+    city: "Miami",
+    country: "United States"
+  }
+];
 
+// Helper to pre-seed database if empty
+async function ensureAgenciesSeeded() {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return;
+  try {
+    const res = await bunnyDb.execute("SELECT COUNT(*) as count FROM agencies");
+    const count = Number(res.rows[0]?.count || 0);
+    if (count === 0) {
+      console.log("🏢 [Agencies] Seeding default partner agencies directory...");
+      for (const a of DEFAULT_SEED_AGENCIES) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO agencies (id, name, logoUrl, website, phone, email, city, country, data, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          args: [a.id, a.name, a.logoUrl, a.website, a.phone, a.email, a.city, a.country, JSON.stringify(a)]
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Error seeding default agencies:", e);
+  }
+}
 
+// 1. Public endpoint to list agencies (auto-seeds first)
+app.get('/api/agencies', async (req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return res.json(DEFAULT_SEED_AGENCIES);
+  try {
+    await ensureAgenciesSeeded();
+    const country = String(req.query.country || "").trim().toLowerCase();
+    let query = "SELECT id, name, logoUrl, website, phone, email, city, country, data FROM agencies ORDER BY name ASC";
+    let args: any[] = [];
+    if (country) {
+      query = "SELECT id, name, logoUrl, website, phone, email, city, country, data FROM agencies WHERE LOWER(country) = ? ORDER BY name ASC";
+      args = [country];
+    }
+    const dbRes = await bunnyDb.execute({ sql: query, args });
+    const list = dbRes.rows.map((row: any) => {
+      let parsedData: any = {};
+      try { parsedData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+      return {
+        id: row.id,
+        name: row.name,
+        logoUrl: row.logoUrl || parsedData.logoUrl || "",
+        website: row.website || parsedData.website || "",
+        phone: row.phone || parsedData.phone || "",
+        email: row.email || parsedData.email || "",
+        city: row.city || parsedData.city || "",
+        country: row.country || parsedData.country || "",
+        ...parsedData
+      };
+    });
+    res.json(list.length > 0 ? list : DEFAULT_SEED_AGENCIES);
+  } catch (err: any) {
+    res.json(DEFAULT_SEED_AGENCIES);
+  }
+});
+
+// 2. Admin endpoint to load agencies list
+app.get('/api/admin/agencies', async (_req, res) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+  try {
+    await ensureAgenciesSeeded();
+    const dbRes = await bunnyDb.execute("SELECT * FROM agencies ORDER BY createdAt DESC");
+    const list = dbRes.rows.map((row: any) => {
+      let parsedData: any = {};
+      try { parsedData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+      return {
+        id: row.id,
+        name: row.name,
+        logoUrl: row.logoUrl,
+        website: row.website,
+        phone: row.phone,
+        email: row.email,
+        city: row.city,
+        country: row.country,
+        ...parsedData
+      };
+    });
+    res.json({ success: true, agencies: list });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Admin create agency
+app.post('/api/admin/agencies', express.json(), async (req, res) => {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+  try {
+    const { name, logoUrl, website, phone, email, city, country } = req.body;
+    if (!name) return res.status(400).json({ error: "Agency name is required" });
+    const id = `agency_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const dataObj = { id, name, logoUrl, website, phone, email, city, country };
+    await bunnyDb.execute({
+      sql: `INSERT INTO agencies (id, name, logoUrl, website, phone, email, city, country, data, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      args: [id, name, logoUrl, website, phone, email, city, country, JSON.stringify(dataObj)]
+    });
+    res.json({ success: true, agency: dataObj });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Admin update agency
+app.put('/api/admin/agencies/:id', express.json(), async (req, res) => {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+  try {
+    const id = req.params.id;
+    const { name, logoUrl, website, phone, email, city, country } = req.body;
+    const dataObj = { id, name, logoUrl, website, phone, email, city, country };
+    await bunnyDb.execute({
+      sql: `UPDATE agencies SET name = ?, logoUrl = ?, website = ?, phone = ?, email = ?, city = ?, country = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+      args: [name, logoUrl, website, phone, email, city, country, JSON.stringify(dataObj), id]
+    });
+    res.json({ success: true, agency: dataObj });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Admin delete agency
+app.delete('/api/admin/agencies/:id', async (req, res) => {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+  try {
+    const id = req.params.id;
+    await bunnyDb.execute({ sql: "DELETE FROM agencies WHERE id = ?", args: [id] });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. Request upgrade path (notifies support@yoouz.com manually and creates a notification inside database)
+app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
+  const bunnyDb = getBunnyDb();
+  try {
+    const { placeId, placeName, userEmail, userName, agencyId, agencyName } = req.body;
+    if (!placeId || !agencyName) {
+      return res.status(400).json({ error: "Missing placeId or agencyName in request" });
+    }
+
+    const emailSubject = `🚨 New Premium Upgrade Request - ${placeName || placeId} via ${agencyName}`;
+    const emailHtml = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:30px;background-color:#09090b;color:#f4f4f5;border-radius:20px;max-width:600px;margin:20px auto;border:1px solid #27272a;">
+        <h2 style="color:#10b981;margin-top:0;font-size:24px;border-bottom:1px solid #27272a;padding-bottom:15px;text-align:center;">🏆 Premium Upgrade Request</h2>
+        <p style="font-size:15px;line-height:1.6;color:#e4e4e7;">
+          Hello Support Team,<br/><br/>
+          A business owner has requested a Premium Plan activation and chose a partner agency:
+        </p>
+        <div style="background-color:#18181b;padding:20px;border-radius:14px;border:1px solid #27272a;margin:20px 0;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;color:#d4d4d8;">
+            <tr>
+              <td style="padding:6px 0;font-weight:bold;color:#a1a1aa;width:130px;">Business:</td>
+              <td style="padding:6px 0;color:#ffffff;font-weight:bold;">${placeName || placeId}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:bold;color:#a1a1aa;">Domain:</td>
+              <td style="padding:6px 0;"><a href="https://${placeId}" style="color:#3b82f6;text-decoration:none;">${placeId}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:bold;color:#a1a1aa;">Owner:</td>
+              <td style="padding:6px 0;color:#ffffff;">${userName || "Unknown"}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:bold;color:#a1a1aa;">Owner Email:</td>
+              <td style="padding:6px 0;color:#ffffff;">${userEmail || "Unknown"}</td>
+            </tr>
+            <tr style="border-top:1px solid #27272a;">
+              <td style="padding:12px 0 6px 0;font-weight:bold;color:#10b981;">Selected Agency:</td>
+              <td style="padding:12px 0 6px 0;color:#10b981;font-weight:bold;">${agencyName}</td>
+            </tr>
+          </table>
+        </div>
+        <p style="font-size:13px;line-height:1.6;color:#a1a1aa;">
+          <strong>Next Action Required:</strong><br/>
+          1. Reach out to support@yoouz.com manually or email <strong>${userEmail}</strong> / contact <strong>${agencyName}</strong> to finalize the sales package.<br/>
+          2. Once payment split is agreed/transferred, log into the <a href="https://yoouz.com/admin" style="color:#10b981;text-decoration:underline;">Yoouz Admin Panel</a>.<br/>
+          3. Go to <strong>Businesses</strong>, locate <strong>${placeName || placeId}</strong>, and turn on the <strong>Premium Status</strong> toggle.
+        </p>
+        <p style="text-align:center;font-size:11px;color:#71717a;margin-top:30px;border-top:1px solid #27272a;padding-top:15px;">
+          Yoouz B2B Agency Partnership Network • Automagic Referral Subsystem
+        </p>
+      </div>
+    `;
+
+    // Send email to Support
+    await sendResendEmail({
+      to: "support@yoouz.com",
+      subject: emailSubject,
+      html: emailHtml,
+      fromName: "Yoouz System"
+    });
+
+    // Also log a notification for Admin
+    if (bunnyDb) {
+      const notifId = `notif_msg_${Date.now()}_biz_claim_upgrade`;
+      const notifData = {
+        id: notifId,
+        recipientEmail: "support@yoouz.com",
+        type: "upgrade_request",
+        text: `Upgrade request: ${placeName || placeId} selected agency ${agencyName}`,
+        isRead: false,
+        createdAt: Date.now()
+      };
+      await bunnyDb.execute({
+        sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, createdAt, updatedAt)
+              VALUES (?, 'support@yoouz.com', 'upgrade_request', ?, 0, ?, datetime('now'), datetime('now'))`,
+        args: [notifId, notifData.text, JSON.stringify(notifData)]
+      });
+    }
+
+    res.json({ success: true, message: "Upgrade request registered. Support has been notified." });
+  } catch (err: any) {
+    console.error("Upgrade request error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", service: "Copost Video Reviews API", timestamp: new Date().toISOString() });
