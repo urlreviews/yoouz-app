@@ -4257,9 +4257,14 @@ ${jsonLd}
                             {/* Mock Website Header */}
                             <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
                               <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-white text-zinc-950 font-black flex items-center justify-center text-xs">
-                                  {(currentPlace.name || 'B').charAt(0)}
-                                </div>
+                                <CopoBrandLogo
+                                  domain={currentPlace.website || currentPlace.id}
+                                  name={currentPlace.name}
+                                  logoUrl={currentPlace.logoUrl}
+                                  className="w-7 h-7 rounded-lg bg-white p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs border border-zinc-700"
+                                  imageClassName="w-full h-full object-contain rounded"
+                                  fallbackTextClassName="font-black text-[10px] text-zinc-950"
+                                />
                                 <span className="text-xs font-bold text-white truncate max-w-[130px]">{currentPlace.name}</span>
                               </div>
                               <div className="flex items-center gap-3 text-[11px] text-zinc-400 font-medium">

@@ -595,7 +595,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       >
         <div
           id="copo-embed-card"
-          className="relative w-full h-full max-w-[390px] max-h-[100%] bg-zinc-950 sm:rounded-[24px] overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-center items-center p-6 text-center space-y-6"
+          className="relative w-full h-full bg-zinc-950 overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-center items-center p-6 text-center space-y-6"
         >
           {/* Lock Icon Ring */}
           <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center shadow-lg">
@@ -631,7 +631,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     >
       <div
         id="copo-embed-card"
-        className="relative w-full h-full max-w-[390px] max-h-[100%] bg-zinc-950 sm:rounded-[24px] overflow-hidden border border-white/10 shadow-2xl flex flex-col justify-between group/embed"
+        className="relative w-full h-full bg-zinc-950 overflow-hidden border border-white/10 shadow-2xl flex flex-col justify-between group/embed"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
