@@ -11,6 +11,7 @@ import { CopoMessagesView } from './CopoMessagesView';
 import { CopoNotificationsView } from './CopoNotificationsView';
 import { CopoStarRating } from './CopoStarRating';
 import { CopoMoreView } from './CopoMoreView';
+import { CopoPremiumPlansModal } from './CopoPremiumPlansModal';
 import { 
   Home,
   Menu,
@@ -2581,7 +2582,7 @@ ${jsonLd}
               {isPremium ? (
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 shadow-xs">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Premium Partner ($199/mo)</span>
+                  <span>Premium Partner</span>
                 </div>
               ) : (
                 <button
@@ -2593,7 +2594,7 @@ ${jsonLd}
                   className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 bg-white hover:bg-zinc-200 text-zinc-950 font-black rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
                 >
                   <Zap className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
-                  <span>Upgrade Premium ($199/mo)</span>
+                  <span>View Plans</span>
                 </button>
               )}
 
@@ -5507,6 +5508,12 @@ ${jsonLd}
         onClose={() => setAdExportVideo(null)}
         video={adExportVideo}
         place={currentPlace}
+      />
+      <CopoPremiumPlansModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        businessName={verifiedBusinessSession.placeName || currentPlace?.name || 'Unknown Business'}
+        ownerEmail={verifiedBusinessSession.businessEmail || currentPlace?.claimedByEmail || 'info@yoouz.com'}
       />
 
 

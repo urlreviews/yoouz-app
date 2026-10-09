@@ -3917,7 +3917,29 @@ async function startServer() {
     next();
   });
 
-  // Apex Domain Canonicalization: Ensure all traffic to yoouz.com redirects to https://www.yoouz.com preserving the exact path & query
+  app.post('/api/upgrade-request', express.json(), async (req, res) => {
+    const { businessName, ownerEmail, timestamp } = req.body;
+    if (!businessName || !ownerEmail) {
+      return res.status(400).json({ error: 'Missing businessName or ownerEmail' });
+    }
+
+    try {
+      await sendResendEmail({
+        to: 'support@yoouz.com',
+        subject: `New Upgrade Request: ${businessName}`,
+        html: `
+          <h1>New Upgrade Request</h1>
+          <p><strong>Business Name:</strong> ${businessName}</p>
+          <p><strong>Owner Email:</strong> ${ownerEmail}</p>
+          <p><strong>Timestamp:</strong> ${timestamp}</p>
+        `,
+      });
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error sending upgrade email:', error);
+      res.status(500).json({ error: 'Failed to send email' });
+    }
+  });
   app.use((req: any, res: any, next: any) => {
     const rawHost = (req.headers['x-forwarded-host'] || req.headers.host || '').toString().toLowerCase();
     const host = rawHost.split(':')[0];
