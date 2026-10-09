@@ -4065,29 +4065,29 @@ ${jsonLd}
                     </div>
 
                     {/* Quick Install Bar & SEO Badge */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
                             <Globe className="w-4 h-4 text-zinc-300" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate">Works on Any Website</div>
-                            <div className="text-[10px] text-zinc-400 truncate">WordPress · Shopify · Wix · Webflow · Squarespace · HTML</div>
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="text-xs font-bold text-white tracking-tight">Works on Any Website</div>
+                            <div className="text-[11px] text-zinc-400 font-medium">WordPress, Shopify, Wix, Squarespace, HTML</div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3 flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                      <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                           <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 space-y-0.5">
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                            <span>Google Rich Snippets Included</span>
-                            <span className="text-[9px] uppercase px-1.5 py-0.2 bg-zinc-800 text-zinc-300 rounded font-mono font-bold">SEO</span>
+                            <span>Google Rich Snippets</span>
+                            <span className="text-[9px] uppercase px-1.5 py-0.5 bg-zinc-800 text-zinc-200 rounded font-mono font-bold tracking-wider">SEO</span>
                           </div>
-                          <div className="text-[10px] text-zinc-400 truncate">Displays golden review stars on Google Search automatically</div>
+                          <div className="text-[11px] text-zinc-400 font-medium">Displays golden review stars on Google Search</div>
                         </div>
                       </div>
                     </div>
