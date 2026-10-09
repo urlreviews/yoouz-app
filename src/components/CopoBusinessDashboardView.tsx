@@ -2443,43 +2443,7 @@ ${jsonLd}
             </div>
 
             {/* Business Plan Premium Card / Indicator */}
-            <div className="mx-1 px-3.5 py-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3 shadow-md">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-wider">
-                  Plan Tier
-                </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                  isPremium 
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
-                    : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                }`}>
-                  {isPremium ? 'Premium ($199/mo)' : 'Free Basic Plan'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-white text-xs leading-none truncate">
-                    {currentPlace?.name || 'Business Venue'}
-                  </h4>
-                  <p className="text-[10px] text-zinc-400 truncate mt-1">
-                    {isPremium ? 'Certified Agency Partner Active' : 'Basic Analytics & Comments'}
-                  </p>
-                </div>
-              </div>
-              {!isPremium && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPremiumTriggerFeature('general');
-                    setIsPremiumModalOpen(true);
-                  }}
-                  className="w-full py-2 bg-white hover:bg-zinc-200 text-zinc-950 text-[11px] font-black rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md active:scale-95"
-                >
-                  <Zap className="w-3.5 h-3.5 text-zinc-950 fill-zinc-950" />
-                  Upgrade Premium ($199/mo)
-                </button>
-              )}
-            </div>
+            {/* Note: Upgrade moved to account utility in header */}
 
             {/* Navigation items list (Clean unified list matching consumer sidebar) */}
             <nav className="flex flex-col gap-1.5">
@@ -5557,7 +5521,7 @@ ${jsonLd}
               <X className="w-4 h-4" />
             </button>
 
-            {upgradeInquirySuccess ? (
+            
               <div className="text-center py-6 space-y-5 animate-in zoom-in-95">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-xl">
                   <CheckCheck className="w-8 h-8 text-emerald-400" />
@@ -5584,182 +5548,8 @@ ${jsonLd}
                   Return to Dashboard
                 </button>
               </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white border border-zinc-800 flex items-center justify-center shrink-0">
-                    <Zap className="w-5 h-5 text-white fill-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Yoouz Premium Partner Suite</h3>
-                    <p className="text-xs text-zinc-400"><strong>$199 / month</strong> • Cancel Anytime • Includes Certified Agency Partner Setup</p>
-                  </div>
-                </div>
+            {/* Modal removed for debugging */}
 
-                {premiumTriggerFeature === 'embed' && (
-                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
-                    <p className="font-extrabold flex items-center gap-1.5 text-white">
-                      <Lock className="w-3.5 h-3.5 text-zinc-400" /> HTML Embed Snippet & SEO Package Locked
-                    </p>
-                    <p className="leading-relaxed text-zinc-400">
-                      Standard iframe embeds cannot be indexed by search engines. To rank video reviews on the <strong>first page of Google search results</strong>, our Premium Plan ($199/mo) injects a high-speed SEO Code Package (JSON-LD aggregate schema & Google rich snippets) into your website source code. Submit your request below.
-                    </p>
-                  </div>
-                )}
-
-                {premiumTriggerFeature === 'direct_messages' && (
-                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
-                    <p className="font-extrabold flex items-center gap-1.5 text-white">
-                      <Lock className="w-3.5 h-3.5 text-zinc-400" /> Direct Customer Inbox Messages Locked
-                    </p>
-                    <p className="leading-relaxed text-zinc-400">
-                      Private B2C Direct Chat Messages let you send special offers, updates, and direct private resolution inquiries straight to your customers' mobile inbox. Request Premium ($199/mo) to unlock.
-                    </p>
-                  </div>
-                )}
-
-                {premiumTriggerFeature === 'download_video' && (
-                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 space-y-2 animate-in slide-in-from-top-2">
-                    <p className="font-extrabold flex items-center gap-1.5 text-white">
-                      <Lock className="w-3.5 h-3.5 text-zinc-400" /> High-Definition Video Export Locked
-                    </p>
-                    <p className="leading-relaxed text-zinc-400">
-                      Export original 60-second HD video review files to post across Instagram, TikTok, Facebook, or run targeted Google Video Ad campaigns. Upgrade below to unlock file exports.
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column: Plan Information */}
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Plan Comparison</h4>
-                    <div className="space-y-3 text-xs text-zinc-300">
-                      <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-zinc-300">Free Basic Plan</p>
-                          <span className="font-black text-xs text-zinc-400">$0 / mo</span>
-                        </div>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">Core Venue Management</p>
-                        <ul className="mt-2.5 space-y-1.5 text-[11px] text-zinc-400">
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-zinc-500 shrink-0" /> Verified venue claimed badge</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-zinc-500 shrink-0" /> Basic review analytics & views counter</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-zinc-500 shrink-0" /> Reply to review comments</li>
-                        </ul>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-700/80 shadow-lg">
-                        <div className="flex items-center justify-between">
-                          <p className="font-black text-white text-sm">Premium Partner Suite</p>
-                          <span className="font-black text-xs text-emerald-400">$199 / mo</span>
-                        </div>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">Cancel Anytime • Full Access</p>
-                        <ul className="mt-2.5 space-y-1.5 text-[11px] text-zinc-200 font-medium">
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> 60s Video Review Website Widget Embeds</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Google 1st-Page SEO Code Package (Schema)</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Raw HD Video Review File Downloads for Ads</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Private B2C Direct Customer Inbox Messages</li>
-                          <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Automatic Setup by Certified Regional Partner</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Simplified Request Form */}
-                  <div className="space-y-4 flex flex-col justify-between">
-                    <div className="space-y-4">
-                      <h4 className="font-bold text-xs uppercase tracking-wider text-zinc-400">Request Activation</h4>
-                      
-                      <div className="space-y-3 text-xs">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Venue Name</label>
-                          <input
-                            type="text"
-                            disabled
-                            value={currentPlace?.name || 'Your Business'}
-                            className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 font-semibold text-xs cursor-not-allowed"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Registered Business Email</label>
-                          <input
-                            type="text"
-                            disabled
-                            value={displayOwnerEmail}
-                            className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 font-semibold text-xs cursor-not-allowed"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-zinc-400 uppercase">Owner / Manager Name</label>
-                          <input
-                            type="text"
-                            disabled
-                            value={displayOwnerName}
-                            className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 font-semibold text-xs cursor-not-allowed"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl text-[11px] text-zinc-400 leading-relaxed space-y-1.5">
-                        <p className="font-bold text-white flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Certified Agency Partner Onboarding
-                        </p>
-                        <p>Yoouz coordinates with premier certified digital marketing partners in <strong className="text-white">{currentPlace?.country || "your region"}</strong> to handle all technical setup and code injection for your $199/mo suite.</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-zinc-800">
-                      <button
-                        type="button"
-                        disabled={isSubmittingUpgradeInquiry}
-                        onClick={async () => {
-                          setIsSubmittingUpgradeInquiry(true);
-                          try {
-                            const body = {
-                              placeId: currentPlace?.id,
-                              placeName: currentPlace?.name,
-                              userEmail: displayOwnerEmail,
-                              userName: displayOwnerName,
-                              agencyId: 'yoouz_direct',
-                              agencyName: 'Yoouz Partner Network'
-                            };
-                            const res = await fetch('/api/agencies/request-upgrade', {
-                              body: JSON.stringify(body),
-                              headers: { 'Content-Type': 'application/json' },
-                              method: 'POST'
-                            });
-                            if (res.ok) {
-                              setUpgradeInquirySuccess(true);
-                            }
-                          } catch (e) {
-                            console.warn("Failed to request upgrade:", e);
-                          } finally {
-                            setIsSubmittingUpgradeInquiry(false);
-                          }
-                        }}
-                        className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95 disabled:opacity-50 cursor-pointer"
-                      >
-                        {isSubmittingUpgradeInquiry ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                            <span>Submitting Request...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 text-zinc-950" />
-                            <span>Request Premium & Certified Partner Setup ($199/mo)</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       </div>
     </div>
