@@ -162,11 +162,13 @@ function createLocalClient(): Client {
 }
 
 function createResilientClient(remoteClient: Client | null, localClient: Client): Client {
-  let activeClient: Client = remoteClient || localClient;
-  let remoteFailing = !remoteClient;
+  let remoteCooldownUntil = 0;
 
   const handleExecute = async (stmt: InStatement): Promise<ResultSet> => {
-    if (!remoteFailing && remoteClient) {
+    const now = Date.now();
+    const isRemoteAvailable = remoteClient && now > remoteCooldownUntil;
+
+    if (isRemoteAvailable && remoteClient) {
       try {
         return await remoteClient.execute(stmt);
       } catch (err: any) {
@@ -175,12 +177,9 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
           throw err; // Re-throw SQL errors so they can be caught by the caller without triggering a fallback
         }
 
-        if (!hasLoggedFallback) {
-          hasLoggedFallback = true;
-          console.warn("🐰 [BunnyDB] Remote endpoint unreachable, falling back to local persistent edge database");
-        }
-        remoteFailing = true;
-        activeClient = localClient;
+        // Transient network or connection failure. Impose a 5-second cooldown to protect performance, then fallback to local sqlite for this request
+        remoteCooldownUntil = Date.now() + 5000;
+        console.warn(`🐰 [BunnyDB] Remote endpoint query failed (${err.message || err}). Initiating 5-second auto-recovering cooldown and falling back to local persistent edge database.`);
         return await localClient.execute(stmt);
       }
     }
@@ -188,16 +187,20 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
   };
 
   const handleBatch = async (stmts: InStatement[], mode?: TransactionMode): Promise<ResultSet[]> => {
-    if (!remoteFailing && remoteClient) {
+    const now = Date.now();
+    const isRemoteAvailable = remoteClient && now > remoteCooldownUntil;
+
+    if (isRemoteAvailable && remoteClient) {
       try {
         return await remoteClient.batch(stmts, mode);
       } catch (err: any) {
-        if (!hasLoggedFallback) {
-          hasLoggedFallback = true;
-          console.warn("🐰 [BunnyDB] Remote endpoint unreachable, falling back to local persistent edge database");
+        const isSqlError = err.message?.includes("SQLITE_") || err.message?.includes("SQLite error") || err.code?.startsWith("SQLITE_");
+        if (isSqlError) {
+          throw err;
         }
-        remoteFailing = true;
-        activeClient = localClient;
+
+        remoteCooldownUntil = Date.now() + 5000;
+        console.warn(`🐰 [BunnyDB] Remote endpoint batch failed (${err.message || err}). Initiating 5-second auto-recovering cooldown and falling back to local persistent edge database.`);
         return await localClient.batch(stmts, mode);
       }
     }
@@ -206,7 +209,8 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
 
   return {
     get protocol() {
-      return activeClient.protocol;
+      const now = Date.now();
+      return (remoteClient && now > remoteCooldownUntil) ? remoteClient.protocol : localClient.protocol;
     },
     execute(stmt: InStatement) {
       return handleExecute(stmt);
@@ -215,13 +219,40 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
       return handleBatch(stmts, mode);
     },
     transaction(mode?: TransactionMode) {
-      return activeClient.transaction(mode);
+      const now = Date.now();
+      if (remoteClient && now > remoteCooldownUntil) {
+        try {
+          return remoteClient.transaction(mode);
+        } catch (e) {
+          remoteCooldownUntil = Date.now() + 5000;
+          return localClient.transaction(mode);
+        }
+      }
+      return localClient.transaction(mode);
     },
     executeMultiple(sql: string) {
-      return activeClient.executeMultiple(sql);
+      const now = Date.now();
+      if (remoteClient && now > remoteCooldownUntil) {
+        try {
+          return remoteClient.executeMultiple(sql);
+        } catch (e) {
+          remoteCooldownUntil = Date.now() + 5000;
+          return localClient.executeMultiple(sql);
+        }
+      }
+      return localClient.executeMultiple(sql);
     },
     sync() {
-      return activeClient.sync();
+      const now = Date.now();
+      if (remoteClient && now > remoteCooldownUntil) {
+        try {
+          return remoteClient.sync();
+        } catch (e) {
+          remoteCooldownUntil = Date.now() + 5000;
+          return localClient.sync();
+        }
+      }
+      return localClient.sync();
     },
     close() {
       if (remoteClient) try { remoteClient.close(); } catch (e) {}
