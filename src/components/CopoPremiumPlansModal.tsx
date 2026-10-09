@@ -34,6 +34,7 @@ interface CopoPremiumPlansModalProps {
   isPremium?: boolean;
   currentPlace?: Place | null;
   onUpdatePlace?: (place: Place) => void;
+  isEmbedded?: boolean;
 }
 
 export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
@@ -45,6 +46,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
   isPremium = false,
   currentPlace,
   onUpdatePlace,
+  isEmbedded = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'plans' | 'matrix' | 'faq'>('plans');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,39 +114,41 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-zinc-950 text-white flex flex-col overflow-y-auto animate-in fade-in duration-200 select-none">
-      {/* Sticky Top Header Bar */}
-      <div className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0 shadow-inner">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-xl font-black text-white tracking-tight">Business Membership Plans</h2>
-              {isPremium && (
-                <span className="px-2.5 py-0.5 rounded-full bg-white text-zinc-950 text-[10px] font-black uppercase tracking-wider hidden sm:inline-block">
-                  PREMIUM
-                </span>
-              )}
+    <div className={isEmbedded ? "w-full text-white flex flex-col space-y-6 animate-in fade-in duration-200 select-none pb-12" : "fixed inset-0 z-[100] bg-zinc-950 text-white flex flex-col overflow-y-auto animate-in fade-in duration-200 select-none"}>
+      {/* Sticky Top Header Bar (only if not embedded) */}
+      {!isEmbedded && (
+        <div className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0 shadow-inner">
+              <Zap className="w-5 h-5 text-white" />
             </div>
-            <p className="text-xs text-zinc-300 font-medium hidden sm:block">
-              Scale your location's video reputation and acquire high-intent local customers
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-xl font-black text-white tracking-tight">Business Membership Plans</h2>
+                {isPremium && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-white text-zinc-950 text-[10px] font-black uppercase tracking-wider hidden sm:inline-block">
+                    PREMIUM
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-zinc-300 font-medium hidden sm:block">
+                Scale your location's video reputation and acquire high-intent local customers
+              </p>
+            </div>
           </div>
-        </div>
 
-        <button
-          onClick={onClose}
-          className="p-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition-colors cursor-pointer active:scale-95"
-          aria-label="Close modal"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+          <button
+            onClick={onClose}
+            className="p-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition-colors cursor-pointer active:scale-95"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Main Content Area */}
-      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 space-y-6">
+      <div className={isEmbedded ? "w-full space-y-6" : "max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 space-y-6"}>
         
         {/* Business Identifier & Plan Status Banner */}
         <div className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all ${

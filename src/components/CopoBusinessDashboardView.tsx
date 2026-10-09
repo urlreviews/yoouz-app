@@ -2644,12 +2644,12 @@ ${jsonLd}
                   <>
                     {/* Fixed backdrop for click-outside dismiss */}
                     <div 
-                      className="fixed inset-0 bg-black/40 z-40" 
+                      className="fixed inset-0 bg-black/50 z-[190]" 
                       onClick={() => setShowAccountDropdown(false)} 
                     />
 
                     {/* Anchored Top Right Popover Dropdown */}
-                    <div className="absolute top-full right-0 mt-2 w-[280px] max-w-[calc(100vw-24px)] bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute top-full right-0 sm:right-0 mt-2 w-[calc(100vw-32px)] sm:w-[300px] max-w-[320px] bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-[200] animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
                       {/* Business Header Card */}
                       <div className="px-4 py-3 border-b border-zinc-800/80 mb-1">
                         <div className="flex items-center gap-3">
@@ -4971,6 +4971,23 @@ ${jsonLd}
             )}
 
 
+
+            {/* TAB: MEMBERSHIP PLANS */}
+            {activeTab === 'membership' && (
+              <div className="space-y-6 animate-in fade-in duration-200 pb-12 w-full">
+                <CopoPremiumPlansModal
+                  isOpen={true}
+                  onClose={() => setActiveTab('overview')}
+                  businessName={verifiedBusinessSession.placeName || currentPlace?.name || 'Claimed Business'}
+                  ownerEmail={verifiedBusinessSession.businessEmail || currentPlace?.claimedByEmail || 'info@yoouz.com'}
+                  placeId={currentPlace?.id || verifiedBusinessSession?.placeId}
+                  isPremium={isPremium}
+                  currentPlace={currentPlace}
+                  onUpdatePlace={onUpdatePlace}
+                  isEmbedded={true}
+                />
+              </div>
+            )}
 
             {/* TAB 7: MORE / KNOWLEDGE & TRUST CENTER */}
             {activeTab === 'more' && (
