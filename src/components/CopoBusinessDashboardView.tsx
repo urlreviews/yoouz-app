@@ -2581,7 +2581,7 @@ ${jsonLd}
               {/* Header Plan Badge / Upgrade Trigger */}
               {isPremium ? (
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
                   <span>Premium Partner</span>
                 </div>
               ) : (
@@ -2591,10 +2591,10 @@ ${jsonLd}
                     setPremiumTriggerFeature('general');
                     setIsPremiumModalOpen(true);
                   }}
-                  className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 bg-white hover:bg-zinc-200 text-zinc-950 font-black rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
+                  className="h-9 sm:h-10 px-3 sm:px-4 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 font-bold rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
-                  <span>View Plans</span>
+                  <Zap className="w-3.5 h-3.5 fill-white text-white" />
+                  <span>Plans & Membership</span>
                 </button>
               )}
 
@@ -4831,11 +4831,11 @@ ${jsonLd}
                 <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-5 shadow-2xl backdrop-blur-xl mt-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                      <ShieldCheck className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-base font-black text-white">Subscription & Plan Management</h3>
-                      <p className="text-[11px] text-zinc-400">View active package tier, pricing & unlocked enterprise features.</p>
+                      <p className="text-[11px] text-zinc-400">View active package tier & unlocked features.</p>
                     </div>
                   </div>
 
@@ -4843,12 +4843,12 @@ ${jsonLd}
                     <div>
                       <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider block">Active Plan</span>
                       <span className="text-sm font-black text-white mt-0.5 block">
-                        {isPremium ? 'Premium Partner Suite ($199/mo)' : 'Free Basic Plan ($0/mo)'}
+                        {isPremium ? 'Premium Partner Suite' : 'Free Basic Plan ($0)'}
                       </span>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                       isPremium 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
+                        ? 'bg-zinc-800 text-white border border-zinc-700' 
                         : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                     }`}>
                       {isPremium ? 'Active Partner' : 'Free Tier'}
@@ -4859,37 +4859,37 @@ ${jsonLd}
                     <h4 className="text-xs font-bold text-zinc-300">Included Package Features</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-400">
                       <div className="flex items-start gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <Check className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
                         <span>Verified venue claimed badge</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <Check className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
                         <span>Core review dashboard & views counter</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <Check className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
                         <span>Reply to customer review comments</span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-white' : 'text-zinc-600'}`} />
                         <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
-                          Responsive 60s website embeds ($199/mo)
+                          Responsive 60s website embeds
                         </span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-white' : 'text-zinc-600'}`} />
                         <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
                           Google 1st-Page SEO Code Package (Schema)
                         </span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-white' : 'text-zinc-600'}`} />
                         <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
                           HD raw video file exports for Ads
                         </span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                        <Check className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isPremium ? 'text-white' : 'text-zinc-600'}`} />
                         <span className={isPremium ? 'text-zinc-300' : 'text-zinc-500 line-through'}>
                           Automatic Certified Agency Partner Setup
                         </span>
@@ -4904,10 +4904,10 @@ ${jsonLd}
                         setPremiumTriggerFeature('general');
                         setIsPremiumModalOpen(true);
                       }}
-                      className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-black rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg active:scale-95"
+                      className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 text-xs font-bold rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg active:scale-95"
                     >
-                      <Zap className="w-4 h-4 text-zinc-950 fill-zinc-950" />
-                      Request Premium Suite ($199/mo)
+                      <Zap className="w-4 h-4 text-white fill-white" />
+                      Explore Membership Plans
                     </button>
                   )}
                 </div>
