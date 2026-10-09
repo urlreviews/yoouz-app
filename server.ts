@@ -3918,7 +3918,7 @@ async function startServer() {
   });
 
   app.post('/api/upgrade-request', express.json(), async (req, res) => {
-    const { businessName, ownerEmail, timestamp } = req.body;
+    const { businessName, ownerEmail, placeId, timestamp } = req.body;
     if (!businessName || !ownerEmail) {
       return res.status(400).json({ error: 'Missing businessName or ownerEmail' });
     }
@@ -3928,13 +3928,38 @@ async function startServer() {
         to: 'support@yoouz.com',
         subject: `New Upgrade Request: ${businessName}`,
         html: `
-          <h1>New Upgrade Request</h1>
-          <p><strong>Business Name:</strong> ${businessName}</p>
-          <p><strong>Owner Email:</strong> ${ownerEmail}</p>
-          <p><strong>Timestamp:</strong> ${timestamp}</p>
+          <div style="font-family:sans-serif;padding:20px;background:#09090b;color:#ffffff;border-radius:12px;">
+            <h1 style="color:#ffffff;margin-top:0;">🚨 New Business Upgrade Request</h1>
+            <p><strong>Business Name:</strong> ${businessName}</p>
+            <p><strong>Place ID / Domain:</strong> ${placeId || 'N/A'}</p>
+            <p><strong>Owner Email:</strong> ${ownerEmail}</p>
+            <p><strong>Timestamp:</strong> ${timestamp || new Date().toISOString()}</p>
+            <hr style="border-color:#27272a;margin:20px 0;" />
+            <p style="color:#a1a1aa;font-size:12px;">To activate this business, log into the Admin Panel and toggle Premium status for ${businessName}.</p>
+          </div>
         `,
+        fromName: 'Yoouz Upgrade Manager'
       });
-      res.status(200).json({ success: true });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const notifId = `notif_msg_${Date.now()}_biz_upgrade`;
+        const notifData = {
+          id: notifId,
+          recipientEmail: 'support@yoouz.com',
+          type: 'upgrade_request',
+          text: `Upgrade request: ${businessName} (${ownerEmail})`,
+          isRead: false,
+          createdAt: Date.now()
+        };
+        await bunnyDb.execute({
+          sql: `INSERT INTO notifications (id, recipientEmail, type, text, isRead, data, createdAt, updatedAt)
+                VALUES (?, 'support@yoouz.com', 'upgrade_request', ?, 0, ?, datetime('now'), datetime('now'))`,
+          args: [notifId, notifData.text, JSON.stringify(notifData)]
+        }).catch(() => {});
+      }
+
+      res.status(200).json({ success: true, message: 'Upgrade request submitted successfully.' });
     } catch (error) {
       console.error('Error sending upgrade email:', error);
       res.status(500).json({ error: 'Failed to send email' });

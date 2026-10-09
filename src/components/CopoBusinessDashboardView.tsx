@@ -5514,6 +5514,10 @@ ${jsonLd}
         onClose={() => setIsPremiumModalOpen(false)}
         businessName={verifiedBusinessSession.placeName || currentPlace?.name || 'Unknown Business'}
         ownerEmail={verifiedBusinessSession.businessEmail || currentPlace?.claimedByEmail || 'info@yoouz.com'}
+        placeId={currentPlace?.id || verifiedBusinessSession?.placeId}
+        isPremium={isPremium}
+        currentPlace={currentPlace}
+        onUpdatePlace={onUpdatePlace}
       />
 
 
