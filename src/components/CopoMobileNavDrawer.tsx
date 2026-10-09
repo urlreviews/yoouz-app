@@ -12,7 +12,9 @@ import {
   Menu,
   Video,
   X,
-  ChevronRight
+  ChevronRight,
+  Building2,
+  ArrowRight
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { triggerHaptic } from "../utils/haptics";
@@ -203,50 +205,61 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             </button>
 
             {/* Legal & Copyright Footer (Divided line sits BELOW Video Review) */}
-            <div className="flex flex-col gap-2 pt-3 border-t border-zinc-900/80">
-            <div className="flex items-center justify-between text-[10.5px] sm:text-[11px] font-medium text-zinc-300">
+            <div className="flex flex-col gap-3 pt-3 border-t border-zinc-900/80">
+              {/* Premium Yoouz for Business Standalone Card */}
               <button
                 onClick={() => {
                   window.open("/business", "_blank", "noopener,noreferrer");
                   onClose();
                 }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
+                className="w-full p-3 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between gap-3 group cursor-pointer shadow-sm text-left"
               >
-                {t("nav.forBusinesses", "For Businesses")}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 text-white">
+                    <Building2 className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-black text-white group-hover:text-zinc-200 tracking-tight flex items-center gap-1.5">
+                      <span>Yoouz for Business</span>
+                    </div>
+                    <div className="text-[10.5px] text-zinc-400 font-medium">Claim & scale your venue</div>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
               </button>
-              <span className="text-zinc-600 font-normal shrink-0">•</span>
-              <button
-                onClick={() => {
-                  if (onOpenLegal) onOpenLegal("privacy");
-                  else handleNavClick("more");
-                }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
-              >
-                {t("legal.privacy", "Privacy")}
-              </button>
-              <span className="text-zinc-600 font-normal shrink-0">•</span>
-              <button
-                onClick={() => {
-                  if (onOpenLegal) onOpenLegal("terms");
-                  else handleNavClick("more");
-                }}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
-              >
-                {t("legal.terms", "Terms")}
-              </button>
-              <span className="text-zinc-600 font-normal shrink-0">•</span>
-              <button
-                onClick={() => handleNavClick("more")}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-300 whitespace-nowrap"
-              >
-                {t("legal.about", "About")}
-              </button>
-            </div>
 
-            <p className="text-[11px] text-zinc-400 font-normal">
-              {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-            </p>
-          </div>
+              {/* Legal Links */}
+              <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 px-1">
+                <button
+                  onClick={() => {
+                    if (onOpenLegal) onOpenLegal("privacy");
+                    else handleNavClick("more");
+                  }}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                >
+                  {t("legal.privacy", "Privacy")}
+                </button>
+                <span className="text-zinc-600 font-normal shrink-0">•</span>
+                <button
+                  onClick={() => {
+                    if (onOpenLegal) onOpenLegal("terms");
+                    else handleNavClick("more");
+                  }}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                >
+                  {t("legal.terms", "Terms")}
+                </button>
+                <span className="text-zinc-600 font-normal shrink-0">•</span>
+                <button
+                  onClick={() => handleNavClick("more")}
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 font-medium text-zinc-400 whitespace-nowrap"
+                >
+                  {t("legal.about", "About")}
+                </button>
+                <span className="text-zinc-600 font-normal shrink-0">•</span>
+                <span className="text-zinc-500 font-normal text-[10px]">© 2026</span>
+              </div>
+            </div>
         </div>
       </div>
     </div>
