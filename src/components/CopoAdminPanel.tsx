@@ -1711,7 +1711,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     activeVideos.forEach((v) => {
       if (!v || !v.id) return;
       (v.comments || []).forEach((c) => {
-        if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102" || c.id.includes("test") || c.id === "comm-1791533469084-0gvat" || c.text === "Great authentic platform review!") return;
+        if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
         const key = `${v.id}_${c.id}`;
         if (!seenCommentKeys.has(key)) {
           seenCommentKeys.add(key);
@@ -1723,7 +1723,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
         if (Array.isArray(c.replies)) {
           c.replies.forEach((r) => {
-            if (!r || !r.id || r.id === "comm-101" || r.id === "comm-102" || r.id.includes("test") || r.id === "comm-1791533469084-0gvat" || r.text === "Great authentic platform review!") return;
+            if (!r || !r.id || r.id === "comm-101" || r.id === "comm-102") return;
             const rKey = `${v.id}_${r.id}`;
             if (!seenCommentKeys.has(rKey)) {
               seenCommentKeys.add(rKey);

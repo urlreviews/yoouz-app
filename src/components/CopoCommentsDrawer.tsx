@@ -603,7 +603,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   const combinedComments = useMemo(() => {
     const propList = (Array.isArray(video?.comments) && video.comments.length > 0
       ? video.comments
-      : []).filter((c: any) => c && c.id !== "comm-101" && c.id !== "comm-102" && !c.id.includes("test") && c.id !== "comm-1791533469084-0gvat" && c.text !== "Great authentic platform review!");
+      : []).filter((c: any) => c && c.id !== "comm-101" && c.id !== "comm-102");
     // If remote comments have been loaded, they are the authoritative source from the database.
     // Prop list may contain stale, cached deleted comments from a previous device session.
     const baseList = hasRemoteFetched
