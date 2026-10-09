@@ -229,8 +229,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
   const [showEmbedTester, setShowEmbedTester] = useState(false);
-  const [embedPreviewMode, setEmbedPreviewMode] = useState<'widget' | 'website'>('widget');
-  const [embedDeviceType, setEmbedDeviceType] = useState<'desktop' | 'mobile'>('desktop');
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
 
@@ -4159,142 +4157,32 @@ ${jsonLd}
                       )}
                     </div>
 
-                    {/* Hero Interactive Widget Preview with Mode Toggle */}
+                    {/* Hero Interactive Widget Preview */}
                     <div className="pt-2 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white uppercase tracking-wider">
                             Live Widget Preview
                           </span>
-                          <span className="text-[11px] text-zinc-400 hidden sm:inline">
+                          <span className="text-[11px] text-zinc-400">
                             • Exactly how it appears on your website
                           </span>
                         </div>
-
-                        {/* Mode Selector Toggle & Device Switcher */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-950 border border-zinc-800">
-                            <button
-                              type="button"
-                              onClick={() => setEmbedPreviewMode('widget')}
-                              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                embedPreviewMode === 'widget'
-                                  ? 'bg-white text-zinc-950 shadow-sm'
-                                  : 'text-zinc-400 hover:text-white'
-                              }`}
-                            >
-                              Widget View
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEmbedPreviewMode('website')}
-                              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                embedPreviewMode === 'website'
-                                  ? 'bg-white text-zinc-950 shadow-sm'
-                                  : 'text-zinc-400 hover:text-white'
-                              }`}
-                            >
-                              Website Simulation
-                            </button>
-                          </div>
-
-                          <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-950 border border-zinc-800">
-                            <button
-                              type="button"
-                              onClick={() => setEmbedDeviceType('desktop')}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                                embedDeviceType === 'desktop'
-                                  ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
-                                  : 'text-zinc-400 hover:text-white'
-                              }`}
-                              title="Desktop View"
-                            >
-                              <span>💻</span> Desktop
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEmbedDeviceType('mobile')}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                                embedDeviceType === 'mobile'
-                                  ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
-                                  : 'text-zinc-400 hover:text-white'
-                              }`}
-                              title="Mobile Phone View"
-                            >
-                              <span>📱</span> Mobile
-                            </button>
-                          </div>
-                        </div>
+                        {displayableWidgetVideos.length > 1 && (
+                          <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline-block">
+                            Interactive player ({displayableWidgetVideos.length} reviews)
+                          </span>
+                        )}
                       </div>
 
-                      {embedPreviewMode === 'widget' ? (
-                        <div className={`relative w-full ${embedDeviceType === 'desktop' ? 'max-w-[420px]' : 'max-w-[320px]'} h-[540px] mx-auto bg-black border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col group/embed select-none ring-1 ring-white/10 transition-all duration-300`}>
-                          <iframe
-                            src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
-                            title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
-                            className="w-full h-full border-0 bg-transparent"
-                            allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
-                          />
-                        </div>
-                      ) : (
-                        /* Simulated Website Browser Window Frame - Responsive Desktop/Mobile */
-                        <div className={`relative w-full ${embedDeviceType === 'desktop' ? 'max-w-xl' : 'max-w-[360px]'} h-[580px] mx-auto bg-zinc-950 border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col select-none ring-1 ring-white/10 transition-all duration-300`}>
-                          {/* Browser Toolbar */}
-                          <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between gap-3 shrink-0">
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                              <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                              <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                            </div>
-                            <div className="flex-1 max-w-xs px-3 py-1 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] text-zinc-400 font-mono text-center truncate">
-                              https://{currentPlace?.website ? extractCleanDomain(currentPlace.website) : (getPlaceSlug(currentPlace) + '.com')}
-                            </div>
-                            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest hidden sm:block">Website View</div>
-                          </div>
-
-                          {/* Simulated Website Content & Embedded Widget */}
-                          <div className="flex-1 overflow-y-auto bg-zinc-950 p-5 space-y-4">
-                            {/* Mock Website Header */}
-                            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
-                              <div className="flex items-center gap-2">
-                                <CopoBrandLogo
-                                  domain={currentPlace.website || currentPlace.id}
-                                  name={currentPlace.name}
-                                  logoUrl={currentPlace.logoUrl}
-                                  className="w-7 h-7 rounded-lg bg-white p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-xs border border-zinc-700"
-                                  imageClassName="w-full h-full object-contain rounded"
-                                  fallbackTextClassName="font-black text-[10px] text-zinc-950"
-                                />
-                                <span className="text-xs font-bold text-white truncate max-w-[130px]">{currentPlace.name}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-[11px] text-zinc-400 font-medium">
-                                <span className="hover:text-white cursor-pointer">Home</span>
-                                <span className="hover:text-white cursor-pointer">Services</span>
-                                <span className="text-white font-bold">Reviews</span>
-                              </div>
-                            </div>
-
-                            {/* Mock Website Hero */}
-                            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 text-center space-y-1.5">
-                              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-zinc-200">
-                                Official Website Preview
-                              </span>
-                              <h4 className="text-xs sm:text-sm font-black text-white">{currentPlace.name} Video Wall</h4>
-                              <p className="text-[10px] text-zinc-400">See how verified customer video testimonials appear live on your website.</p>
-                            </div>
-
-                            {/* Embedded Widget Inline Mockup */}
-                            <div className="relative w-full h-[320px] bg-black border border-zinc-800 rounded-2xl overflow-hidden shadow-xl ring-1 ring-white/10">
-                              <iframe
-                                src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
-                                title={`Yoouz Simulated Website Embed - ${currentPlace.name}`}
-                                className="w-full h-full border-0 bg-transparent"
-                                allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <div className="relative w-full max-w-[420px] h-[540px] mx-auto bg-black border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col group/embed select-none ring-1 ring-white/10">
+                        <iframe
+                          src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
+                          title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
+                          className="w-full h-full border-0 bg-transparent"
+                          allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
