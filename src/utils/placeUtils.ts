@@ -2192,19 +2192,40 @@ export function getUserFromRegistry(key: string): any {
  * and never replaced with generic fallback initial icons or placeholder names.
  */
 export function getSafeAvatarUrl(avatarUrl?: string | null, name?: string | null, handle?: string | null): string {
+  const cleanN = (name || "").toLowerCase().trim();
+  const cleanH = (handle || "").toLowerCase().trim();
+
   const isTargetYoouz = 
-    (name && (name.toLowerCase().trim() === "yoouz" || name.toLowerCase().trim() === "yoouz beta")) ||
-    (handle && (handle.toLowerCase().trim() === "@yoouz" || handle.toLowerCase().trim() === "yoouz" || handle.toLowerCase().trim() === "yoouz.com")) ||
-    (avatarUrl && (avatarUrl.toLowerCase().includes("yoouz") || avatarUrl.includes("favicon.svg")));
+    cleanN === "yoouz" || cleanN === "yoouz beta" || cleanN === "a yoouz member" || cleanN === "yoouz member" ||
+    cleanH === "@yoouz" || cleanH === "yoouz" || cleanH === "yoouz.com";
 
   if (isTargetYoouz) {
     return YOOUZ_LOGO_DATA_URI;
   }
 
   let candidateAvatar = avatarUrl;
+
+  // Filter out app logo or favicon if mistakenly passed for a real human user
+  if (
+    candidateAvatar &&
+    (candidateAvatar === YOOUZ_LOGO_DATA_URI ||
+      candidateAvatar.includes("favicon.svg") ||
+      candidateAvatar.includes("favicon.ico") ||
+      candidateAvatar.includes("yoouz_logo") ||
+      candidateAvatar.includes("YOOUZ_LOGO") ||
+      (candidateAvatar.includes("data:image/svg") && (candidateAvatar.includes("yoouz") || candidateAvatar.includes("YOOUZ"))))
+  ) {
+    candidateAvatar = undefined;
+  }
+
+  // Filter out corrupted strings with ellipsis
+  if (candidateAvatar && candidateAvatar.includes("...")) {
+    candidateAvatar = undefined;
+  }
+
   if (!candidateAvatar || candidateAvatar === "data:;" || candidateAvatar.trim() === "" || candidateAvatar.includes("/api/avatar") || candidateAvatar.includes("ui-avatars") || candidateAvatar.includes("dicebear")) {
     const regUser = (handle ? getUserFromRegistry(handle) : null) || (name ? getUserFromRegistry(name) : null);
-    if (regUser && regUser.avatar && !regUser.avatar.includes("/api/avatar") && !regUser.avatar.includes("data:;") && regUser.avatar.trim() !== "") {
+    if (regUser && regUser.avatar && !regUser.avatar.includes("/api/avatar") && !regUser.avatar.includes("data:;") && !regUser.avatar.includes("...") && regUser.avatar.trim() !== "") {
       candidateAvatar = regUser.avatar;
     }
   }

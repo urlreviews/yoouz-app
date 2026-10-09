@@ -395,6 +395,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmPurgeAllBookmarks, setConfirmPurgeAllBookmarks] = useState(false);
   const [isDeletingBookmarkId, setIsDeletingBookmarkId] = useState<string | null>(null);
 
+  // Admin Shares Audit Feed State
+  const [adminShares, setAdminShares] = useState<any[]>([]);
+  const [isLoadingShares, setIsLoadingShares] = useState(false);
+  const [sharesSearchQuery, setSharesSearchQuery] = useState("");
+  const [sharesSort, setSharesSort] = useState<"newest" | "oldest">("newest");
+  const [selectedShareDetailModal, setSelectedShareDetailModal] = useState<any | null>(null);
+  const [confirmDeleteShareId, setConfirmDeleteShareId] = useState<string | null>(null);
+  const [confirmPurgeAllShares, setConfirmPurgeAllShares] = useState(false);
+  const [isDeletingShareId, setIsDeletingShareId] = useState<string | null>(null);
+
   const fetchAdminBookmarks = useCallback(async () => {
     setIsLoadingBookmarks(true);
     try {
@@ -434,23 +444,63 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const handlePurgeAllBookmarks = async () => {
+  const handlePurgeAllShares = async () => {
     try {
-      const res = await fetch("/api/admin/bookmarks/purge-all", { method: "POST" });
+      const res = await fetch("/api/admin/shares/purge-all", { method: "POST" });
       if (res.ok) {
-        showToast("All bookmarks purged successfully");
-        setAdminBookmarks([]);
-        setConfirmPurgeAllBookmarks(false);
+        showToast("All shares purged successfully");
+        setAdminShares([]);
+        setConfirmPurgeAllShares(false);
         if (typeof fetchLiveStats === "function") {
           fetchLiveStats();
         }
       } else {
-        showToast("Failed to purge bookmarks");
+        showToast("Failed to purge shares");
       }
     } catch (e) {
-      showToast("Error purging bookmarks");
+      showToast("Error purging shares");
     }
   };
+
+  const fetchAdminShares = useCallback(async () => {
+    setIsLoadingShares(true);
+    try {
+      const res = await fetch(`/api/admin/shares?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminShares(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch admin shares:", e);
+    } finally {
+      setIsLoadingShares(false);
+    }
+  }, []);
+
+  const handleDeleteShare = async (shareId: string) => {
+    setIsDeletingShareId(shareId);
+    try {
+      const res = await fetch(`/api/admin/shares/${shareId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast("Share record removed successfully");
+        setAdminShares((prev) => prev.filter((s) => s.id !== shareId));
+        setConfirmDeleteShareId(null);
+        if (selectedShareDetailModal?.id === shareId) {
+          setSelectedShareDetailModal(null);
+        }
+        if (typeof fetchLiveStats === "function") {
+          fetchLiveStats();
+        }
+      } else {
+        showToast("Failed to delete share record");
+      }
+    } catch (e) {
+      showToast("Error deleting share record");
+    } finally {
+      setIsDeletingShareId(null);
+    }
+  };
+
 
   // Business Name & Compound Word Integrity Center State
   const [brandTestInput, setBrandTestInput] = useState("lassustandartsen.nl");
@@ -8324,6 +8374,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                       Inspect Like →
                                     </span>
                                   </div>
+                                ) : inspectTableModal === "shares" ? (
+                                  <div
+                                    onClick={() => setSelectedShareDetailModal(item)}
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-sky-500/50 hover:bg-zinc-850 transition-all group"
+                                    title="Click to view full Share Audit modal"
+                                  >
+                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-sky-500/20 group-hover:ring-sky-500 transition-all">
+                                      <img
+                                        src={getSafeAvatarUrl(item.userAvatar || item.authorAvatar, item.userName || item.name, item.userHandle)}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.src = generateGoogleLetterAvatarSvg(item.userName || "User", 128, item.userHandle || item.userName);
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-white text-xs group-hover:text-sky-400 transition-colors truncate">
+                                          {item.userName || "Community User"}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
+                                          {item.userHandle || "@user"}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                          ↗️ Shared
+                                        </span>
+                                      </div>
+                                      <div className="text-[11px] text-zinc-400 truncate flex items-center gap-2">
+                                        <span>Video: <strong className="text-zinc-200">{item.placeName || item.videoId}</strong></span>
+                                        {item.videoAuthor && <span className="text-zinc-500">• by {item.videoAuthor}</span>}
+                                      </div>
+                                    </div>
+                                    <span className="text-[10px] px-2 py-1 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg font-bold shrink-0 group-hover:bg-sky-500 group-hover:text-white transition-all">
+                                      Inspect Share →
+                                    </span>
+                                  </div>
                                 ) : inspectTableModal === "bookmarks" ? (
                                   <div
                                     onClick={() => setSelectedBookmarkDetailModal(item)}
@@ -9841,6 +9929,96 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* ========================================================================= */}
+      {/* SHARE RECORD AUDIT & DETAIL MODAL */}
+      {/* ========================================================================= */}
+      {selectedShareDetailModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                  ↗️
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Share Record Audit</h3>
+                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedShareDetailModal.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedShareDetailModal(null)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">User Identity</span>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0">
+                  <img
+                    src={getSafeAvatarUrl(selectedShareDetailModal.userAvatar, selectedShareDetailModal.userName, selectedShareDetailModal.userHandle)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = generateGoogleLetterAvatarSvg(selectedShareDetailModal.userName || "User", 128);
+                    }}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">{selectedShareDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono">{selectedShareDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedShareDetailModal.userId || selectedShareDetailModal.userEmail}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Video Card */}
+            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Video Review</span>
+              <div className="flex items-center gap-3">
+                {selectedShareDetailModal.videoThumbnail && (
+                  <img
+                    src={selectedShareDetailModal.videoThumbnail}
+                    alt=""
+                    className="w-14 h-14 rounded-xl object-cover border border-zinc-800 shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h4 className="font-bold text-white text-sm truncate">{selectedShareDetailModal.placeName || "Target Place"}</h4>
+                  <p className="text-xs text-zinc-400">Reviewed by {selectedShareDetailModal.videoAuthor || "Reviewer"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Video ID: {selectedShareDetailModal.videoId}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Platform: {selectedShareDetailModal.platform}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Raw JSON */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+                {JSON.stringify(selectedShareDetailModal, null, 2)}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  setConfirmDeleteShareId(selectedShareDetailModal.id);
+                  setSelectedShareDetailModal(null);
+                }}
+                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Remove Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* LIKE RECORD AUDIT & DETAIL MODAL */}
       {/* ========================================================================= */}
       {selectedLikeDetailModal && (
@@ -10164,6 +10342,73 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer"
               >
                 Close Audit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM DELETE INDIVIDUAL SHARE MODAL */}
+      {/* ========================================================================= */}
+      {confirmDeleteShareId && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center text-xl mx-auto">
+              ↗️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Delete Share Record?</h3>
+              <p className="text-xs text-zinc-400">
+                This will permanently delete this share record.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmDeleteShareId(null)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteShare(confirmDeleteShareId)}
+                disabled={isDeletingShareId === confirmDeleteShareId}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+              >
+                {isDeletingShareId === confirmDeleteShareId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONFIRM PURGE ALL SHARES MODAL */}
+      {/* ========================================================================= */}
+      {confirmPurgeAllShares && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
+              ⚠️
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-bold text-white">Purge All Shares?</h3>
+              <p className="text-xs text-zinc-400">
+                This will delete ALL share records from the database. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                onClick={() => setConfirmPurgeAllShares(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePurgeAllShares}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
+              >
+                Purge All
               </button>
             </div>
           </div>

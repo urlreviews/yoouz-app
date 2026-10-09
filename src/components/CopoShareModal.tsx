@@ -30,9 +30,9 @@ import {
 } from "lucide-react";
 import { VideoReview, UserProfile } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { getProxiedImageUrl, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
-import { extractCleanDomain, formatBusinessName, getPlaceSlug } from "../utils/placeUtils";
-import { getAvatarColor } from "../lib/avatar";
+import { getProxiedImageUrl, KNOWN_BRAND_BANNERS, YOOUZ_LOGO_DATA_URI } from "../utils/logoUtils";
+import { extractCleanDomain, formatBusinessName, getPlaceSlug, resolveSafeAuthor, getSafeAvatarUrl } from "../utils/placeUtils";
+import { getAvatarColor, generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -205,13 +205,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   let resolvedAvatarUrl: string | undefined = undefined;
   let resolvedBannerUrl: string | undefined = undefined;
 
+  let safeAuthor: any = null;
   if (isVideoMode && video) {
+    safeAuthor = resolveSafeAuthor(video, currentUser);
     const rawDomain = video.placeWebsite || (video.placeId && video.placeId.includes('.') ? video.placeId : '') || (video.placeName && video.placeName.includes('.') ? video.placeName : '') || video.placeId || video.placeName || "";
     const domainSlug = getPlaceSlug(rawDomain || video);
     shareUrl = `${appOrigin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(video.id)}`;
     const placeName = formatBusinessName(video.placeName || (video.placeId ? extractCleanDomain(video.placeId) : "Business"));
     title = placeName;
-    const authorName = video.author?.name || (video as any)?.authorName || "Verified Reviewer";
+    const authorName = safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Verified Reviewer";
     resolvedDomain = extractCleanDomain(rawDomain);
     const authorReviewsCount = (video as any)?.author?.reviewCount || (video as any)?.authorReviewCount || 0;
     const cleanDomain = resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase();
@@ -219,7 +221,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       ? `${authorReviewsCount} ${authorReviewsCount === 1 ? 'review' : 'reviews'} • Review for ${cleanDomain}`
       : `Review for ${cleanDomain}`;
     isBusiness = false;
-    resolvedAvatarUrl = video.author?.avatar || (video as any)?.authorAvatar;
+    resolvedAvatarUrl = safeAuthor?.avatar || video.author?.avatar || (video as any)?.authorAvatar;
     resolvedWebsite = video.placeWebsite || "";
     resolvedLogoUrl = video.placeLogoUrl || (video as any)?.placeLogo || (video as any)?.logoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo || (video as any)?.place?.logoUrl;
     resolvedBannerUrl = video.placeBannerUrl || (video as any)?.bannerUrl || (video as any)?.place?.bannerUrl;
@@ -241,7 +243,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : (resolvedBannerUrl || (isBusiness && resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) || "");
 
   const resolvedAuthorName = isVideoMode && video
-    ? (video.author?.name || (video as any)?.authorName || "Verified Reviewer")
+    ? (safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Verified Reviewer")
     : (title || "Community Reviewer");
 
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);
@@ -407,12 +409,17 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       onShareIncrement?.(targetVideoId);
 
       const activeUser = getActiveUser();
-      const userPayload = activeUser ? {
+      const userPayload = activeUser && (activeUser.email || activeUser.name || activeUser.id) ? {
         userId: activeUser.email || activeUser.userId || activeUser.id || "",
-        userName: activeUser.name || "",
-        userAvatar: activeUser.avatar || "",
+        userName: activeUser.name || "Steven Akan",
+        userAvatar: getSafeAvatarUrl(activeUser.avatar, activeUser.name, activeUser.handle || activeUser.email),
         userEmail: activeUser.email || ""
-      } : {};
+      } : {
+        userId: "",
+        userName: "A Yoouz Member",
+        userAvatar: YOOUZ_LOGO_DATA_URI,
+        userEmail: ""
+      };
 
       try {
         fetch("/api/interactions/share", {
@@ -983,20 +990,15 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     {isVideoMode && video ? (
                       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
                         <div className="w-8 h-8 rounded-full overflow-hidden border border-white/35 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
-                          {resolvedAvatarUrl ? (
-                            <img
-                              src={getProxiedImageUrl(resolvedAvatarUrl)}
-                              alt={resolvedAuthorName}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(resolvedAuthorName)}&background=27272a&color=fff&bold=true&size=128`;
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-zinc-750 text-white text-[11px] font-bold">
-                              {resolvedAuthorName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <img
+                            src={getSafeAvatarUrl(resolvedAvatarUrl, resolvedAuthorName, safeAuthor?.handle)}
+                            alt={resolvedAuthorName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.src = generateGoogleLetterAvatarSvg(resolvedAuthorName, 128, safeAuthor?.handle || resolvedAuthorName);
+                            }}
+                          />
                         </div>
                         <div className="flex flex-col min-w-0 justify-center pr-0.5">
                           {/* Line 1: By AuthorName + Verified badge */}

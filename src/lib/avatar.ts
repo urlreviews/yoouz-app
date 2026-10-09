@@ -134,8 +134,9 @@ export function getAvatarColor(nameOrSeed?: string, colorSeed?: string): { bg: s
  * Always renders a full-square (no embedded rx) so CSS border-radius applies smoothly.
  */
 export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, colorSeed?: string): string {
-  const norm = (nameOrSeed || colorSeed || '').toLowerCase().trim().replace(/^@/, '');
-  if (norm === 'yoouz' || norm === 'yoouz.com' || norm === 'yoouz beta' || norm.includes('yoouz')) {
+  const nameClean = (nameOrSeed || '').toLowerCase().trim().replace(/^@/, '');
+  const isBrandYoouz = nameClean === 'yoouz' || nameClean === 'yoouz.com' || nameClean === 'yoouz beta' || nameClean === 'a yoouz member' || nameClean === 'yoouz member';
+  if (isBrandYoouz) {
     return YOOUZ_LOGO_DATA_URI;
   }
 

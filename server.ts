@@ -6126,6 +6126,145 @@ function normalizeBookmarkServer(bm: any, row: any = {}): any {
   };
 }
 
+function normalizeShareServer(sh: any, row: any = {}): any {
+  if (!sh || typeof sh !== 'object') return sh;
+  const id = String(sh.id || row.id || `share_${Date.now()}`);
+  let rawUserId = String(sh.userId || sh.userEmail || row.userId || '').trim();
+  let rawVideoId = String(sh.videoId || row.videoId || '').trim();
+  let rawPlatform = String(sh.platform || row.platform || 'general').trim();
+
+  let userEmail = rawUserId.includes('@') ? rawUserId : (sh.userEmail || '');
+  let userId = rawUserId;
+  let rawName = String(sh.userName || sh.authorName || sh.name || '').trim();
+
+  const checkLower = `${rawUserId} ${userEmail} ${rawName}`.toLowerCase();
+  if (checkLower.includes('avr6566gd') || checkLower.includes('avtertuop') || checkLower.includes('steven akan') || checkLower.includes('steven')) {
+    userEmail = 'avr6566gd@gmail.com';
+    rawName = 'Steven Akan';
+    userId = 'avr6566gd@gmail.com';
+  } else if (checkLower.includes('aouisesmee') || checkLower.includes('ben blue')) {
+    userEmail = 'aouisesmee@gmail.com';
+    rawName = 'Ben Blue';
+    userId = 'aouisesmee@gmail.com';
+  } else if (checkLower.includes('louis42111') || checkLower.includes('biz riv')) {
+    userEmail = 'louis42111@gmail.com';
+    rawName = 'Biz Riv';
+    userId = 'louis42111@gmail.com';
+  }
+
+  let userName = rawName;
+  if (!userName || userName === 'User' || userName === 'Anonymous') {
+    if (userEmail && userEmail.includes('@')) {
+      const prefix = userEmail.split('@')[0];
+      userName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    } else if (userId && userId !== 'anon' && !userId.startsWith('anon_')) {
+      userName = userId.replace(/^usr_|^user_/, '');
+    } else {
+      userName = 'A Yoouz Member';
+    }
+  }
+
+  let userHandle = sh.userHandle || sh.authorHandle || (userName === 'A Yoouz Member' ? '@yoouz' : `@${String(userName).toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+  if (!userHandle.startsWith('@')) userHandle = `@${userHandle}`;
+
+  let userAvatar = sh.userAvatar || sh.authorAvatar || '';
+  if (!userAvatar || userAvatar.includes('...') || userAvatar === 'data:;') {
+    if (userName === 'Steven Akan' || checkLower.includes('steven')) {
+      userAvatar = 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20\'Google%20Sans\'%2C%20\'Segoe%20UI\'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E';
+    } else if (userName === 'Ben Blue' || checkLower.includes('ben blue')) {
+      userAvatar = 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20\'Google%20Sans\'%2C%20\'Segoe%20UI\'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E';
+    } else if (userName === 'A Yoouz Member') {
+      userAvatar = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DEFAULT_YOOUZ_ICON_SVG);
+    } else {
+      userAvatar = `/api/avatar?name=${encodeURIComponent(userName)}&background=27272a&color=fff&bold=true&size=128`;
+    }
+  }
+
+  let placeName = sh.placeName || '';
+  let videoThumbnail = sh.videoThumbnail || sh.thumbnailUrl || '';
+  let videoAuthor = sh.videoAuthor || sh.authorName || '';
+
+  // Link video info
+  try {
+    const list = readReviewsIndex();
+    if (rawVideoId) {
+      const vid = list.find((v: any) => v && (v.id === rawVideoId || v._id === rawVideoId));
+      if (vid) {
+        if (!placeName) placeName = vid.placeName || '';
+        if (!videoThumbnail) videoThumbnail = vid.thumbnailUrl || vid.posterUrl || '';
+        if (!videoAuthor) videoAuthor = vid.authorName || vid.author?.name || '';
+      }
+    }
+  } catch (e) {}
+
+  let rawCreated = sh.createdAt || row.createdAt || row.updatedAt || new Date().toISOString();
+  let createdAtMs = Date.parse(rawCreated);
+  if (isNaN(createdAtMs)) {
+    createdAtMs = Number(sh.createdAtMs || row.createdAtMs || sh.timestamp || Date.now());
+  }
+
+  let isoCreatedAt = new Date(createdAtMs).toISOString();
+  let timestamp = 'Just now';
+  const diffMs = Date.now() - createdAtMs;
+  if (diffMs > 86400000 * 2) {
+    timestamp = `${Math.floor(diffMs / 86400000)} days ago`;
+  } else if (diffMs > 86400000) {
+    timestamp = 'Yesterday';
+  } else if (diffMs > 3600000) {
+    timestamp = `${Math.floor(diffMs / 3600000)}h ago`;
+  } else if (diffMs > 60000) {
+    timestamp = `${Math.floor(diffMs / 60000)}m ago`;
+  }
+
+  return {
+    ...sh,
+    id,
+    userId: userEmail || userId || '',
+    userEmail: userEmail || '',
+    userName,
+    userHandle,
+    userAvatar,
+    authorName: userName,
+    authorHandle: userHandle,
+    authorAvatar: userAvatar,
+    videoId: rawVideoId,
+    platform: rawPlatform,
+    placeName,
+    videoThumbnail,
+    videoAuthor,
+    createdAt: isoCreatedAt,
+    createdAtMs,
+    timestamp
+  };
+}
+
+async function enrichShareItemServer(sh: any): Promise<any> {
+  if (!sh || typeof sh !== 'object') return sh;
+  const normalized = normalizeShareServer(sh);
+
+  if ((!normalized.userAvatar || normalized.userAvatar.includes('/api/avatar?')) && normalized.userId && normalized.userId !== 'anon') {
+    try {
+      const profile = await resolveUserProfileFromAnySource(normalized.userId);
+      if (profile) {
+        if (profile.avatar && !profile.avatar.includes('...')) {
+          normalized.userAvatar = profile.avatar;
+          normalized.authorAvatar = profile.avatar;
+        }
+        if (profile.name) {
+          normalized.userName = profile.name;
+          normalized.authorName = profile.name;
+        }
+        if (profile.handle) {
+          normalized.userHandle = profile.handle;
+          normalized.authorHandle = profile.handle;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return normalized;
+}
+
 async function enrichBookmarkItemServer(bm: any): Promise<any> {
   if (!bm || typeof bm !== 'object') return bm;
   const normalized = normalizeBookmarkServer(bm);
@@ -6404,6 +6543,18 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                   parsedData.userId = String(row.userId);
                 }
                 parsedData = normalizeBookmarkServer(parsedData, row);
+              }
+              if (colName === 'shares') {
+                if (!parsedData.videoId && row.videoId) {
+                  parsedData.videoId = String(row.videoId);
+                }
+                if (!parsedData.userId && row.userId) {
+                  parsedData.userId = String(row.userId);
+                }
+                if (!parsedData.platform && row.platform) {
+                  parsedData.platform = String(row.platform);
+                }
+                parsedData = normalizeShareServer(parsedData, row);
               }
               if (colName === 'chats') {
                 if (Array.isArray(parsedData.history)) {
@@ -6693,6 +6844,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
     if (colName === 'bookmarks') {
       items = await Promise.all(items.map(enrichBookmarkItemServer));
+    }
+    if (colName === 'shares') {
+      items = await Promise.all(items.map(enrichShareItemServer));
     }
 
     // For 'users' collection, aggregate and consolidate from all sources by unique canonical identity
@@ -9022,6 +9176,78 @@ app.post('/api/admin/bookmarks/purge-all', express.json(), async (_req, res) => 
       await bunnyDb.execute("UPDATE videoReviews SET bookmarksCount = 0");
     }
     broadcastSseEvent({ type: "bookmarks_purged" });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Shares Endpoint (Enriched feed of all shared reviews)
+app.get('/api/admin/shares', async (_req, res) => {
+  try {
+    const items = await getNoSqlCollectionItems('shares');
+    items.sort((a: any, b: any) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Delete Individual Share
+app.delete('/api/admin/shares/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.status(503).json({ error: "Database unavailable" });
+
+    let videoId = "";
+    try {
+      const existing = await bunnyDb.execute({
+        sql: "SELECT videoId, data FROM shares WHERE id = ? LIMIT 1",
+        args: [id]
+      });
+      if (existing.rows?.length > 0) {
+        const row: any = existing.rows[0];
+        videoId = row.videoId;
+        if (!videoId && row.data) {
+          try { videoId = JSON.parse(row.data).videoId; } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    await bunnyDb.execute({
+      sql: "DELETE FROM shares WHERE id = ?",
+      args: [id]
+    });
+
+    if (videoId) {
+      const countRes = await bunnyDb.execute({
+        sql: "SELECT COUNT(*) as total FROM shares WHERE videoId = ?",
+        args: [videoId]
+      });
+      const dbShares = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+      await bunnyDb.execute({
+        sql: "UPDATE videoReviews SET sharesCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        args: [dbShares, videoId]
+      });
+    }
+
+    broadcastSseEvent({ type: "share_deleted", shareId: id, videoId });
+    res.json({ success: true, id, videoId });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Purge All Shares
+app.post('/api/admin/shares/purge-all', express.json(), async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute("DELETE FROM shares");
+      await bunnyDb.execute("UPDATE videoReviews SET sharesCount = 0");
+    }
+    broadcastSseEvent({ type: "shares_purged" });
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -15662,17 +15888,33 @@ app.get('/api/admin/live-stats', async (_req, res) => {
       }
 
       const checkLower = `${effEmail} ${effId} ${effName}`.toLowerCase();
-      if (checkLower.includes("avr6566gd") || checkLower.includes("avtertuop") || checkLower.includes("steven akan")) {
+      if (checkLower.includes("avr6566gd") || checkLower.includes("avtertuop") || checkLower.includes("steven akan") || checkLower.includes("steven")) {
         effName = "Steven Akan";
         effEmail = "avr6566gd@gmail.com";
-        if (!effAvatar) effAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+        effId = "avr6566gd@gmail.com";
+        if (!effAvatar || effAvatar.includes("...") || effAvatar.includes("yoouz") || effAvatar === DEFAULT_YOOUZ_ICON_SVG) {
+          effAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+        }
       } else if (checkLower.includes("aouisesmee") || checkLower.includes("ben blue")) {
         effName = "Ben Blue";
         effEmail = "aouisesmee@gmail.com";
-        if (!effAvatar) effAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+        effId = "aouisesmee@gmail.com";
+        if (!effAvatar || effAvatar.includes("...") || effAvatar.includes("yoouz") || effAvatar === DEFAULT_YOOUZ_ICON_SVG) {
+          effAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+        }
       } else if (checkLower.includes("louis42111") || checkLower.includes("biz riv")) {
         effName = "Biz Riv";
         effEmail = "louis42111@gmail.com";
+        effId = "louis42111@gmail.com";
+        if (!effAvatar || effAvatar.includes("...")) {
+          effAvatar = `/api/avatar?name=Biz+Riv&background=8E24AA&color=fff&bold=true&size=128`;
+        }
+      }
+
+      // If user is not logged in:
+      if (!effId && !effEmail) {
+        effName = "A Yoouz Member";
+        effAvatar = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DEFAULT_YOOUZ_ICON_SVG)}`;
       }
 
       let nextShares = 1;
@@ -25640,8 +25882,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const seedParam = String(req.query.seed || req.query.colorSeed || req.query.handle || nameParam).trim();
     const size = Math.min(Math.max(parseInt(String(req.query.size || '128'), 10) || 128, 32), 512);
 
-    const norm = (nameParam || seedParam).toLowerCase().replace(/^@/, '');
-    if (norm === 'yoouz' || norm === 'yoouz.com' || norm.includes('yoouz')) {
+    const nameClean = nameParam.toLowerCase().replace(/^@/, '').trim();
+    if (nameClean === 'yoouz' || nameClean === 'yoouz.com' || nameClean === 'yoouz beta' || nameClean === 'a yoouz member' || nameClean === 'yoouz member') {
       res.setHeader('Content-Type', 'image/svg+xml');
       return res.send(DEFAULT_YOOUZ_ICON_SVG);
     }
