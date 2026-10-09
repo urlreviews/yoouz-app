@@ -330,13 +330,13 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
             }`}>
               <div className="space-y-5">
                 {/* Clean, perfectly aligned top header bar */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-xs font-extrabold border border-zinc-700 tracking-wide uppercase">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-xs font-extrabold border border-zinc-700 tracking-wide uppercase self-start">
                     <Shield className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                     <span>Growth Suite</span>
                   </div>
 
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-zinc-950 text-xs font-black uppercase tracking-wider shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-zinc-950 text-xs font-black uppercase tracking-wider shadow-sm self-start sm:self-auto">
                     <Sparkles className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
                     <span>Full Suite Access</span>
                   </div>

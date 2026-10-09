@@ -2379,8 +2379,8 @@ ${jsonLd}
     },
     { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
     { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
-    { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
     { id: 'membership' as BusinessTab, label: t('business.membershipNav', 'Membership'), icon: Zap, isProBadge: !isPremium },
+    { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
