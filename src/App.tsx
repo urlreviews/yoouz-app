@@ -1949,6 +1949,7 @@ export function App() {
   const effectiveMessagingUser = useMemo(() => {
     let effective = currentUser;
     if (activeSection === 'business') {
+      effective = null;
       try {
         const saved = localStorage.getItem('copo_business_verified_session');
         if (saved) {
@@ -1960,9 +1961,9 @@ export function App() {
               uid: session.placeId,
               userId: session.placeId,
               placeId: session.placeId,
-              name: session.placeName || 'Business Manager',
+              name: session.placeName || 'Business Executive',
               email: session.businessEmail || (isYoouz ? 'info@yoouz.com' : `biz_${session.placeId}@business.yoouz.com`),
-              avatar: session.logoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+              avatar: session.logoUrl || '/favicon.svg',
               handle: (session.domain || session.placeName || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
               isVerified: true,
               isBusiness: true
@@ -6065,6 +6066,17 @@ export function App() {
       const finalList = matched ? nextList : [updatedPlace, ...prev];
       try {
         localStorage.setItem("yoouz_cached_places", JSON.stringify(finalList));
+        
+        // Sync active business session if matching updated place
+        const rawSession = localStorage.getItem("copo_business_verified_session");
+        if (rawSession) {
+          const parsed = JSON.parse(rawSession);
+          if (parsed && (parsed.placeId === updatedPlace.id || parsed.domain === updatedPlace.id || parsed.domain === updatedPlace.brandDomain || (updatedPlace.id === 'yoouz.com' && parsed.domain?.includes('yoouz')))) {
+            parsed.isPremium = Boolean(updatedPlace.isPremium);
+            parsed.plan = updatedPlace.plan || (updatedPlace.isPremium ? "premium" : "free");
+            localStorage.setItem("copo_business_verified_session", JSON.stringify(parsed));
+          }
+        }
       } catch (e) {}
       return finalList;
     });
@@ -7522,7 +7534,7 @@ export function App() {
                 onOpenLegal={handleOpenLegal}
                 onRecordReview={(targetPlace) => handleOpenCreateReview(targetPlace)}
                 onSendMessage={async (threadId, text, recipient, videoUrl, customVideoId, customMessageId, customCreatedAt, cardData) => {
-                  let effectiveSender = currentUser as any;
+                  let effectiveSender: any = null;
                   try {
                     const saved = localStorage.getItem('copo_business_verified_session');
                     if (saved) {

@@ -166,10 +166,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   const isPlacePremium = useMemo(() => {
     if (!targetPlace) return false;
+    const planStr = ((targetPlace as any).plan || (targetPlace as any).subscriptionPlan || '').toLowerCase();
+    if (planStr === 'free') return false;
+    if ((targetPlace as any).isPremium === false && (targetPlace as any).isPremiumPlan === false) return false;
     return Boolean(
-      (targetPlace as any).isPremium ||
-      (targetPlace as any).plan === 'premium' ||
-      (targetPlace as any).isPremiumPlan
+      (targetPlace as any).isPremium === true ||
+      planStr === 'premium' ||
+      (targetPlace as any).isPremiumPlan === true
     );
   }, [targetPlace]);
 
@@ -592,23 +595,23 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       >
         <div
           id="copo-embed-card"
-          className="relative w-full h-full max-w-[390px] max-h-[100%] bg-zinc-950 sm:rounded-[24px] overflow-hidden border border-white/10 shadow-2xl flex flex-col justify-center items-center p-6 text-center space-y-6"
+          className="relative w-full h-full max-w-[390px] max-h-[100%] bg-zinc-950 sm:rounded-[24px] overflow-hidden border border-zinc-800 shadow-2xl flex flex-col justify-center items-center p-6 text-center space-y-6"
         >
-          {/* Lock/Sparkles Ring Icon */}
-          <div className="w-16 h-16 rounded-full bg-amber-400/5 border border-amber-400/20 text-amber-400 flex items-center justify-center animate-pulse shadow-lg">
-            <Sparkles className="w-8 h-8 animate-pulse" />
+          {/* Lock Icon Ring */}
+          <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center shadow-lg">
+            <Lock className="w-8 h-8 text-zinc-200" />
           </div>
 
           <div className="space-y-2 max-w-[280px]">
-            <h3 className="text-lg font-black text-white leading-tight uppercase tracking-wider">Yoouz Widget Paused</h3>
+            <h3 className="text-base font-black text-white leading-tight tracking-tight uppercase">Video Review Widget Inactive</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              This verified customer reviews widget requires <strong className="text-amber-400">Yoouz Premium Partner Plan</strong> activation to stream on external domains.
+              This venue is currently operating on the <strong className="text-zinc-200">Free Package</strong>. Upgrading to the <strong className="text-white">Premium Partner Suite ($199/mo)</strong> unlocks 60s video streams, widget embeds & 1st-Page Google SEO packages.
             </p>
           </div>
 
-          <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl text-[11px] text-zinc-300 max-w-[280px] leading-relaxed">
-            <p className="font-bold text-zinc-200 mb-1">How to Activate?</p>
-            Please contact <span className="text-amber-400 font-bold">support@yoouz.com</span> or reach out to your registered local digital marketing partner agency to toggle this venue active.
+          <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-[11px] text-zinc-300 max-w-[280px] leading-relaxed">
+            <p className="font-bold text-white mb-1">How to Re-activate Video Embeds?</p>
+            Request a Premium Partner Upgrade inside your Yoouz Business Portal or contact your assigned regional partner agency to activate your $199/mo suite.
           </div>
 
           {/* Mini branded watermark */}

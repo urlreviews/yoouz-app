@@ -19567,6 +19567,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       const session = {
         businessEmail: cleanEmail,
+        ownerName: derivedBrand ? `${derivedBrand} Executive` : 'Business Executive',
         placeId: matchedPlaceId,
         placeName: matchedPlaceName,
         domain: rawDomain,
