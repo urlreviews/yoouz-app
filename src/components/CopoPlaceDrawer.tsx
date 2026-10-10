@@ -596,6 +596,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return clean && isValidDomainUrl(clean) ? clean : (clean || null);
   }, [effectiveWebsite, drawerDomain, place.brandDomain, place.website, place.id]);
 
+  const effectiveCategoryDisplay = React.useMemo(() => {
+    const rawCat = (place.category || (place as any).placeCategory || (place as any).categoryType || "").trim();
+    if (!rawCat || rawCat.toLowerCase() === "website" || rawCat.toLowerCase() === "general" || rawCat.toLowerCase() === "all" || rawCat.toLowerCase() === "online") {
+      return "Online Brand";
+    }
+    return toTitleCase(rawCat);
+  }, [place.category, (place as any).placeCategory, (place as any).categoryType]);
+
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
     if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
@@ -1359,18 +1367,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               );
             })()}
 
-            {/* Official Website / Domain Link under Business Name */}
-            {displayWebsiteClean && (
-              <a
-                href={effectiveWebsite || `https://${displayWebsiteClean}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 transition-colors cursor-pointer group no-underline"
-              >
-                <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
-                <span className="truncate">{displayWebsiteClean}</span>
-              </a>
-            )}
+            {/* Official Website & Category Badge Sub-Header */}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {displayWebsiteClean && (
+                <a
+                  href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm transition-colors cursor-pointer group no-underline"
+                >
+                  <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                  <span className="truncate">{displayWebsiteClean}</span>
+                </a>
+              )}
+
+              {effectiveCategoryDisplay && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-900 text-zinc-300 border border-zinc-800 text-[11px] font-semibold tracking-wide shadow-xs">
+                  <Tag className="w-3 h-3 text-zinc-400 shrink-0" />
+                  <span>{effectiveCategoryDisplay}</span>
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Business Follow Button */}
@@ -2129,161 +2146,245 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 3: ABOUT */}
+          {/* TAB 3: ABOUT - Executive Unified Dark Mode Fact Sheet */}
           {activeTab === "about" && (
-            <div className="p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Info className="w-4 h-4 text-zinc-200" />
-                  <span>About {displayedPlaceName}</span>
-                </h3>
-                {isUserOwner && (
-                  <button
-                    onClick={openEditModal}
-                    className="text-xs text-zinc-200 hover:text-white font-bold hover:underline flex items-center gap-1"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>{t("common.edit", "Edit")}</span>
-                  </button>
-                )}
-              </div>
+            <div className="p-4 sm:p-5 space-y-4">
+              {/* Executive Unified Business Fact Sheet Container */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-4 shadow-xl backdrop-blur-sm">
+                {/* Top Header Row with Title & Edit */}
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <h3 className="text-sm font-bold text-white tracking-tight">
+                      About {displayedPlaceName}
+                    </h3>
+                  </div>
+                  {isUserOwner && (
+                    <button
+                      onClick={openEditModal}
+                      className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>{t("common.edit", "Edit")}</span>
+                    </button>
+                  )}
+                </div>
 
-              {/* Clean Business Overview Description Card */}
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
-                  About {displayedPlaceName}
-                </span>
-                <p className="text-xs text-zinc-200 leading-relaxed font-medium">
+                {/* Business Description */}
+                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-medium">
                   {getEffectivePlaceDescription(place)}
                 </p>
-              </div>
 
-              {/* Maps Integration & Address for physical places */}
-              {hasPhysicalLocation && (
-                <div className="pt-2 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-zinc-200">{t("place.locationAddress", "Location & Address")}</h4>
-                    <button onClick={handleOpenDirections} className="text-[10px] text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer">
-                      <Navigation className="w-3 h-3" />
-                      {t("place.getDirections", "Get Directions")}
-                    </button>
-                  </div>
-                  {(currentDisplayAddress || displayAddress) && (
-                     <div className="flex items-start gap-2.5 p-3.5 bg-zinc-900 rounded-xl border border-zinc-800">
-                       <MapPin className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
-                       <p className="text-xs text-zinc-200 font-medium leading-relaxed">{currentDisplayAddress || displayAddress}</p>
-                     </div>
-                  )}
-
-                  {/* Google Maps Live Interactive Preview Map Card */}
-                  <div
-                    className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
-                    onClick={handleOpenDirections}
-                  >
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
-                      <div className="bg-zinc-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
-                        <ExternalLink className="w-3 h-3 text-white" />
-                        {t("place.openInMaps", "Open in Google Maps")}
-                      </div>
+                {/* Clean Monochrome Structured Details Grid */}
+                <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Industry / Category */}
+                  <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                      <Tag className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      frameBorder="0"
-                      style={{ border: 0, pointerEvents: "none" }}
-                      referrerPolicy="no-referrer-when-downgrade"
-                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
-                      title="Google Maps Location Preview"
-                    />
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Category</span>
+                      <span className="text-xs font-bold text-white block truncate">{effectiveCategoryDisplay}</span>
+                    </div>
                   </div>
 
-                  {/* Multi-Branch Directory in About Tab */}
-                  {availableLocations.length > 1 && (
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">
-                          {t("place.allBranchLocations", "All Branch Locations")} ({availableLocations.length})
-                        </span>
+                  {/* Official Website */}
+                  {displayWebsiteClean && (
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Globe className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Official Website</span>
+                          <span className="text-xs font-bold text-white block truncate">{displayWebsiteClean}</span>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {availableLocations.map((loc: any, idx: number) => {
-                          const isSelected = selectedLocationIndex === idx;
-                          const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
-                          const branchAddress = loc.address ? `${loc.address}${loc.postalCode ? `, ${loc.postalCode}` : ''} ${loc.city || ''}${loc.country ? `, ${loc.country}` : ''}` : loc.city || '';
-                          return (
-                            <div
-                              key={idx}
-                              onClick={() => {
-                                setSelectedLocationIndex(idx);
-                                triggerHaptic();
-                              }}
-                              className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "bg-blue-950/20 border-blue-500/80 ring-1 ring-blue-500/40"
-                                  : "bg-zinc-900/60 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <Building2 className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-blue-400" : "text-zinc-400"}`} />
-                                  <span className="text-xs font-bold text-white truncate">{branchLabel}</span>
-                                </div>
-                                {isSelected ? (
-                                  <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded-full border border-blue-500/30 shrink-0">
-                                    {t("place.active", "Active")}
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] text-zinc-400 font-medium hover:text-zinc-200 shrink-0">
-                                    {t("place.select", "Select")}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-zinc-300 mb-1">{branchAddress}</p>
-                              <div className="flex items-center gap-3 text-[10.5px] text-zinc-400 pt-1 border-t border-zinc-800/60">
-                                {loc.phone && (
-                                  <a
-                                    href={`tel:${loc.phone}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="hover:text-blue-400 font-medium flex items-center gap-1"
-                                  >
-                                    <Phone className="w-3 h-3" />
-                                    <span>{formatPhoneNumber(loc.phone)}</span>
-                                  </a>
-                                )}
-                                {loc.openingHours && (
-                                  <div className="flex items-center gap-1 truncate">
-                                    <Clock className="w-3 h-3 shrink-0" />
-                                    <span className="truncate">{loc.openingHours}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="pt-2 space-y-2">
-                <h4 className="text-xs font-bold text-zinc-200">{t("place.accessibilityServices", "Accessibility & Services")}</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {(place.amenities || ["Wheelchair accessible entrance", "Public Reception", "Verified Listing"]).map(
-                    (amenity, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 rounded-lg bg-zinc-900 text-xs text-zinc-200 font-medium border border-zinc-800"
+                      <a
+                        href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Visit Website"
                       >
-                        ✓ {amenity}
-                      </span>
-                    )
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   )}
+
+                  {/* Operating Hours */}
+                  {((hasGenuineHours && effectiveHours) || place.openingHours) && (
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4 text-zinc-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Operating Hours</span>
+                        <span className="text-xs font-bold text-white block truncate">{effectiveHours || place.openingHours}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Phone */}
+                  {effectivePhone && (
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Phone className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Phone</span>
+                          <span className="text-xs font-bold text-white block truncate">{formatPhoneNumber(effectivePhone)}</span>
+                        </div>
+                      </div>
+                      <a
+                        href={`tel:${effectivePhone}`}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Call Business"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  {effectiveEmail && (
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Mail className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Email</span>
+                          <span className="text-xs font-bold text-white block truncate">{effectiveEmail}</span>
+                        </div>
+                      </div>
+                      <a
+                        href={`mailto:${effectiveEmail}`}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Email Business"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Address */}
+                  {hasPhysicalLocation && (currentDisplayAddress || displayAddress) && (
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2 sm:col-span-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <MapPin className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Location Address</span>
+                          <span className="text-xs font-bold text-white block truncate">{currentDisplayAddress || displayAddress}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleOpenDirections}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0 flex items-center gap-1 text-[11px] font-bold px-2.5 cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Directions</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Embedded Google Maps Preview (if physical location exists) */}
+                {hasPhysicalLocation && (
+                  <div className="pt-2 space-y-2">
+                    <div
+                      className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
+                      onClick={handleOpenDirections}
+                    >
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                        <div className="bg-zinc-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                          <ExternalLink className="w-3 h-3 text-white" />
+                          {t("place.openInMaps", "Open in Google Maps")}
+                        </div>
+                      </div>
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0, pointerEvents: "none" }}
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
+                        title="Google Maps Location Preview"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Multi-Branch Locations (if available) */}
+                {availableLocations.length > 1 && (
+                  <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+                      {t("place.allBranchLocations", "All Branch Locations")} ({availableLocations.length})
+                    </span>
+                    <div className="space-y-2">
+                      {availableLocations.map((loc: any, idx: number) => {
+                        const isSelected = selectedLocationIndex === idx;
+                        const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
+                        const branchAddress = loc.address ? `${loc.address}${loc.postalCode ? `, ${loc.postalCode}` : ''} ${loc.city || ''}${loc.country ? `, ${loc.country}` : ''}` : loc.city || '';
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => {
+                              setSelectedLocationIndex(idx);
+                              triggerHaptic();
+                            }}
+                            className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-500/30"
+                                : "bg-zinc-950/60 border-zinc-800 hover:bg-zinc-950 hover:border-zinc-700"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <Building2 className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+                                <span className="text-xs font-bold text-white truncate">{branchLabel}</span>
+                              </div>
+                              {isSelected ? (
+                                <span className="text-[10px] bg-zinc-800 text-zinc-200 font-bold px-2 py-0.5 rounded-full border border-zinc-700 shrink-0">
+                                  {t("place.active", "Active")}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-zinc-400 font-medium hover:text-zinc-200 shrink-0">
+                                  {t("place.select", "Select")}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-zinc-300 mb-1">{branchAddress}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Accessibility & Services Pills */}
+                <div className="pt-2 border-t border-zinc-800/80 space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{t("place.accessibilityServices", "Accessibility & Services")}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(place.amenities || ["Wheelchair accessible entrance", "Public Reception", "Verified Listing"]).map(
+                      (amenity, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-lg bg-zinc-950 text-xs text-zinc-300 font-medium border border-zinc-800"
+                        >
+                          ✓ {amenity}
+                        </span>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Staff & Ownership - Executive Clean Darkmode Section */}
-              <div className="pt-5 space-y-3">
+              {/* Management & Ownership Card */}
+              <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-zinc-300" />
@@ -2304,44 +2405,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {isClaimed ? (
-                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-3 shadow-xs">
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-5 h-5 text-zinc-200" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-white">
-                          {t("place.verifiedManagement", "Official Business Representative")}
-                        </p>
-                        <p className="text-[11px] text-zinc-300 leading-relaxed">
-                          {t("place.authorizedManage", "This profile is verified and active. Management can publish official video replies and control listing details.")}
-                        </p>
-                      </div>
+                  <div className="flex items-start gap-3.5 pt-1">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4 text-zinc-200" />
                     </div>
-
-                    {place.staffEmails && place.staffEmails.length > 0 && (
-                      <div className="pt-2 space-y-2 border-t border-zinc-800/80">
-                        <p className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-400">
-                          {t("place.recognizedStaff", "Recognized Management Team")}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {place.staffEmails.map((email, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-lg">
-                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-300" />
-                              <span className="text-[10px] font-medium text-zinc-200">{email.split('@')[0]}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-white">
+                        {t("place.verifiedManagement", "Official Business Representative")}
+                      </p>
+                      <p className="text-[11px] text-zinc-300 leading-relaxed">
+                        {t("place.authorizedManage", "This profile is verified and active. Management can publish official video replies and control listing details.")}
+                      </p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700/80 transition-all space-y-3.5 shadow-xs">
+                  <div className="space-y-3 pt-1">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
-                        <Building2 className="w-5 h-5 text-zinc-300" />
+                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                        <Building2 className="w-4 h-4 text-zinc-300" />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <p className="text-xs font-bold text-white">
                           {t("place.claimTitle", "Are you the owner or official manager?")}
                         </p>
@@ -2363,7 +2446,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               {onOpenReport && (
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     id="btn-report-business-about"
                     onClick={() => {
