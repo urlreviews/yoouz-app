@@ -1977,17 +1977,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               {/* Contact Information Stacked Cards */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {/* Website Card */}
                 {effectiveWebsite && (
                   <a
                     href={effectiveWebsite}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
+                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                      <Globe className="w-6 h-6 text-blue-400" />
+                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                      <Globe className="w-5 h-5 text-zinc-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.website", "Website")}</span>
@@ -2000,10 +2000,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {hasGenuinePhone && (
                   <a
                     href={`tel:${effectivePhone}`}
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
+                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                      <Phone className="w-6 h-6 text-emerald-400" />
+                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                      <Phone className="w-5 h-5 text-zinc-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.call", "Contact")}</span>
@@ -2018,10 +2018,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {effectiveEmail && (
                   <a
                     href={`mailto:${effectiveEmail}`}
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
+                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                      <Mail className="w-6 h-6 text-amber-400" />
+                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                      <Mail className="w-5 h-5 text-zinc-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.email", "Email")}</span>
@@ -2031,13 +2031,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
 
                 {/* Hours Summary Card */}
-                <div className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                    <Clock className="w-6 h-6 text-purple-400" />
+                <div className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-zinc-400" />
                   </div>
                   <div>
                     <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.hours", "Hours")}</span>
-                    <span className={`text-xs font-bold block ${hasGenuineHours ? "text-emerald-400" : "text-zinc-400"}`}>
+                    <span className={`text-xs font-bold block ${hasGenuineHours ? "text-zinc-200" : "text-zinc-400"}`}>
                       {hasGenuineHours ? t("place.openNow", "Open Now") : t("place.closed", "Closed")}
                     </span>
                   </div>
@@ -2047,11 +2047,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Detailed Location & Map Section */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
-                  {t("place.locationExperience", "Location & Experience")}
+                  {t("place.locationExperience", "Location")}
                 </h4>
                 
-                <div className="rounded-[2.5rem] bg-zinc-900/40 border border-zinc-800/80 overflow-hidden shadow-2xl shadow-black/50">
-                  <div className="h-52 w-full relative">
+                <div className="rounded-3xl bg-zinc-900/40 border border-zinc-800/80 overflow-hidden">
+                  <div className="h-40 w-full relative">
                     <iframe
                       width="100%"
                       height="100%"
@@ -2064,36 +2064,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent pointer-events-none" />
                   </div>
                   
-                  <div className="p-7 space-y-5">
-                    <div className="flex items-start justify-between gap-6">
-                      <div className="space-y-2">
+                  <div className="p-5 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
                         <p className="text-sm text-white font-bold leading-relaxed">
                           {currentDisplayAddress || displayAddress}
                         </p>
-                        {place.plusCode && (
-                          <div className="flex items-center gap-1.5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                            <Zap className="w-3 h-3" />
-                            <span>{place.plusCode}</span>
-                          </div>
-                        )}
                       </div>
                       <button 
                         onClick={handleOpenDirections}
-                        className="px-6 py-3 rounded-2xl bg-white text-black font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-zinc-200"
+                        className="px-4 py-2 rounded-xl bg-zinc-800 text-white font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-zinc-700 transition-all"
                       >
                         {t("place.getDirections", "Directions")}
                       </button>
                     </div>
-
                     {/* Operating Hours Table */}
                     {hasGenuineHours && (
-                      <div className="pt-5 border-t border-zinc-800/60">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{t("place.operatingHours", "Operating Hours")}</span>
-                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
-                            {t("place.verified", "Verified")}
-                          </span>
-                        </div>
+                      <div className="pt-3 border-t border-zinc-800/60">
                         <p className="text-xs text-zinc-300 font-medium leading-loose whitespace-pre-line">
                           {effectiveHours || place.openingHours}
                         </p>
@@ -2168,16 +2155,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {t("place.trustAndSafety", "Trust & Safety")}
                 </h4>
                 
-                <div className={`p-7 rounded-[2.5rem] border transition-all ${
+                <div className={`p-5 rounded-3xl border transition-all ${
                   isClaimed 
-                    ? "bg-zinc-900/60 border-zinc-800/80" 
+                    ? "bg-zinc-900/50 border-zinc-800/80" 
                     : "bg-zinc-900/40 border-dashed border-zinc-800"
                 }`}>
-                  <div className="flex items-start gap-5">
-                    <div className={`w-14 h-14 rounded-[1.25rem] shrink-0 flex items-center justify-center border shadow-2xl ${
-                      isClaimed ? "bg-blue-600/10 border-blue-500/20 text-blue-400" : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center border ${
+                      isClaimed ? "bg-zinc-800/50 border-zinc-700/50 text-zinc-400" : "bg-zinc-800 border-zinc-700 text-zinc-500"
                     }`}>
-                      {isClaimed ? <ShieldCheck className="w-7 h-7" /> : <Building2 className="w-7 h-7" />}
+                      {isClaimed ? <ShieldCheck className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
                     </div>
                     <div className="space-y-2">
                       <h5 className="text-sm font-black text-white">
