@@ -655,67 +655,67 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
       {/* Main Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* 1. Top-Level Tab Switcher */}
-        <section aria-label="Knowledge Navigation" className="-mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="w-full bg-zinc-900/90 border border-zinc-800/90 p-1.5 rounded-2xl shadow-sm grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5">
+        {/* 1. Top-Level Tab Switcher - Single-Line Horizontal Pill Bar (Matching Business Portal Style) */}
+        <section aria-label="Knowledge Navigation" className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-hidden">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-0.5">
             <button
               onClick={() => setActiveTab("about")}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "about"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <Info className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
+              <span>{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("faq")}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "faq"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <HelpCircle className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
+              <span>{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("business")}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "business"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <Building2 className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("trustCenter.forBusinesses", "For Businesses")}</span>
+              <span>{t("trustCenter.forBusinesses", "For Businesses")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("security")}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "security"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <Shield className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("trustCenter.privacySecurity", "Privacy")}</span>
+              <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("language")}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "language"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <Globe className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
+              <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
             </button>
 
             <button
@@ -724,14 +724,14 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 setSubmitSuccess(false);
                 setSubmitError("");
               }}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
                 activeTab === "contact"
-                  ? "bg-white text-zinc-950 shadow-sm font-black"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800/70"
+                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
               <Mail className="w-4 h-4 shrink-0" />
-              <span className="truncate">{t("trustCenter.contactSupport", "Support")}</span>
+              <span>{t("trustCenter.contactSupport", "Support")}</span>
             </button>
           </div>
         </section>
