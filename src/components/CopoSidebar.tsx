@@ -198,24 +198,19 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
         {/* Lower Section: Legal Footer */}
         <div className="flex flex-col gap-3">
           {/* Footer & Legal Links */}
-          <div className="px-1 pt-3 border-t border-zinc-800/80 flex flex-col gap-2.5">
-            {/* Yoouz for Business Clean Row */}
+          <div className="px-1 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
+            {/* Yoouz for Business Clean Bold Title */}
             <button
               onClick={() => {
                 window.open("/business", "_blank", "noopener,noreferrer");
               }}
-              className="w-full py-2 px-1 hover:bg-zinc-900/60 rounded-xl transition-all flex items-center gap-2.5 group cursor-pointer text-left"
+              className="text-left font-black text-[13px] text-white hover:text-zinc-200 transition-colors tracking-tight cursor-pointer bg-transparent border-none p-0 w-fit"
             >
-              <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 text-white">
-                <Building2 className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-xs font-bold text-zinc-200 group-hover:text-white transition-colors tracking-tight">
-                Yoouz for Business
-              </span>
+              Yoouz for Business
             </button>
 
             {/* Legal Links Line */}
-            <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400 w-full px-1">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 w-full">
               <button
                 onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
                 className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
@@ -239,7 +234,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             </div>
 
             {/* Separate Line for Copyright */}
-            <p className="text-[10.5px] text-zinc-500 font-normal px-1">
+            <p className="text-[10.5px] text-zinc-500 font-normal">
               {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
             </p>
           </div>
