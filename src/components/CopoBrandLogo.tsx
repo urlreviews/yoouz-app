@@ -131,10 +131,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       : "";
     return (
       <div
-        className={`relative flex items-center justify-center ${shapeRadius} bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden ${cleanCls}`}
+        className={`relative flex items-center justify-center ${shapeRadius} bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 ${cleanCls}`}
         id="copo-brand-logo-yoouz"
       >
-        <svg viewBox="0 0 24 24" className="w-full h-full p-[14%] fill-white">
+        <svg viewBox="0 0 24 24" className="w-full h-full p-[14%] fill-white print:fill-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
           <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
         </svg>
       </div>
@@ -146,7 +146,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
 
   return (
-    <div className={`relative overflow-hidden bg-transparent ${className}`}>
+    <div className={`relative overflow-hidden bg-transparent [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${className}`}>
       {currentSrc && candidateIdx < candidateUrls.length ? (
         <img
           key={currentSrc}
@@ -155,7 +155,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-150 ${
+          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-150 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
             imgLoaded ? "opacity-100" : "opacity-90"
           }`}
           referrerPolicy="no-referrer"
@@ -180,8 +180,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-300">
-          <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400" />
+        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-300 print:bg-zinc-900 print:text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+          <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400 print:text-white print:opacity-100" />
         </div>
       )}
     </div>

@@ -4172,17 +4172,22 @@ ${jsonLd}
                       domain={currentPlace.website || currentPlace.id}
                       name={currentPlace.name}
                       logoUrl={currentPlace.logoUrl}
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200/60 overflow-hidden"
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-800 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 overflow-hidden"
                       imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="font-black text-lg text-zinc-950"
+                      fallbackTextClassName="font-black text-lg text-white"
                     />
 
                     {/* Venue Title & Verified Badge */}
-                    <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
+                    <div className="flex items-center justify-center gap-1.5 mb-0.5 px-2">
                       <h3 className="font-black text-white text-base sm:text-xl tracking-tight truncate max-w-[260px] sm:max-w-[300px]">
                         {currentPlace.name}
                       </h3>
                       <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+                    </div>
+
+                    {/* Business Place Handle / URL */}
+                    <div className="text-[11px] font-bold text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
+                      <span>yoouz.com/place/{(selectedPlaceId || currentPlace.id || '').replace(/^yoouz\.com\/place\//, '')}</span>
                     </div>
 
                     {/* Star Rating & Reviews Count */}
@@ -5417,9 +5422,9 @@ ${jsonLd}
                 domain={currentPlace.website || currentPlace.id}
                 name={currentPlace.name}
                 logoUrl={currentPlace.logoUrl}
-                className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-200/80 overflow-hidden shrink-0"
+                className="w-14 h-14 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-800 print:bg-zinc-950 print:border-zinc-800 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
                 imageClassName="w-full h-full object-contain"
-                fallbackTextClassName="font-black text-xl text-zinc-950"
+                fallbackTextClassName="font-black text-xl text-white"
               />
 
               <div>
@@ -5427,6 +5432,10 @@ ${jsonLd}
                   <span>{currentPlace.name}</span>
                   <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 print:fill-black print:text-white" />
                 </h2>
+                {/* Business Place Handle / URL */}
+                <div className="text-xs font-bold text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                  <span>yoouz.com/place/{(selectedPlaceId || currentPlace.id || '').replace(/^yoouz\.com\/place\//, '')}</span>
+                </div>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
                   <span>★ {avgRating}</span>
                   <span className="text-zinc-300 font-medium print:text-zinc-600">
