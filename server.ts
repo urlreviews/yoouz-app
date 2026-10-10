@@ -14108,7 +14108,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
   }
 
   // Real-Time Server-Sent Events (SSE) Stream for Instant Global Video Updates, Deletions, Chats & Notifications
-  app.get(["/api/videos/stream", "/api/realtime/stream"], (req, res) => {
+  app.get(["/api/videos/stream", "/api/realtime/stream", "/api/sse"], (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
