@@ -1933,30 +1933,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
           {/* TAB 3: ABOUT - Premium Comprehensive Business Profile */}
           {activeTab === "about" && (
-            <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              {/* Header section with category and verification */}
-              <div className="flex items-center justify-between px-1">
-                <div className="space-y-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                    {t("place.businessProfile", "Business Profile")}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-black text-white">{displayedPlaceName}</span>
-                    {isClaimed && <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-500/10" />}
-                  </div>
-                </div>
-                {isUserOwner && (
-                  <button
-                    onClick={openEditModal}
-                    className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-sm"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
+            <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {/* Story / Description Section - High quality typography */}
-              <div className="p-7 rounded-[2.5rem] bg-zinc-900/40 border border-zinc-800/60 shadow-2xl backdrop-blur-3xl relative overflow-hidden">
+              <div className="p-6 rounded-[2.5rem] bg-zinc-900/40 border border-zinc-800/60 shadow-2xl backdrop-blur-3xl relative">
                 <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
                   <Sparkles className="w-32 h-32 text-white" />
                 </div>
@@ -2034,7 +2013,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               {/* Detailed Location & Map Section */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
                   {t("place.locationExperience", "Location")}
                 </h4>
@@ -2081,7 +2060,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* Multi-Branch Directory */}
               {availableLocations.length > 1 && (
-                <div className="space-y-4 pt-2">
+                <div className="space-y-3 pt-2">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
                     {t("place.globalNetwork", "Global Network")} ({availableLocations.length})
                   </h4>
@@ -2119,7 +2098,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               )}
 
               {/* Amenities & Services */}
-              <div className="space-y-4 pt-2">
+              <div className="space-y-3 pt-2">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
                   {t("place.servicesAndAmenities", "Services & Amenities")}
                 </h4>
@@ -2138,13 +2117,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               {/* Ownership & Trust Section */}
-              <div className="pt-6 space-y-4">
+              <div className="pt-4 space-y-3">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4" />
                   {t("place.trustAndSafety", "Trust & Safety")}
                 </h4>
                 
-                <div className={`p-4 rounded-3xl border transition-all ${
+                <div className={`p-3 rounded-3xl border transition-all ${
                   isClaimed 
                     ? "bg-zinc-900/50 border-zinc-800/80" 
                     : "bg-zinc-900/40 border-dashed border-zinc-800"
