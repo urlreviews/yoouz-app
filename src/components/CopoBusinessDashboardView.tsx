@@ -5440,28 +5440,36 @@ ${jsonLd}
             </div>
 
             {/* Printable Area */}
-            <div className="bg-zinc-950 border-2 border-zinc-800 rounded-2xl p-8 text-center space-y-4 shadow-inner relative overflow-hidden text-white">
-              {/* Fold Line Guide */}
-              <div className="absolute top-2 left-0 right-0 border-t border-dashed border-zinc-700 text-[8px] font-mono text-zinc-200">
-                FOLD LINE (TOP TENT)
-              </div>
+            <div className="bg-zinc-950 border-2 border-zinc-800 rounded-3xl p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
+              {qrTableLabel && (
+                <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-extrabold uppercase border border-zinc-700 tracking-wider print:bg-zinc-100 print:text-black print:border-zinc-300">
+                  {qrTableLabel}
+                </div>
+              )}
 
-              <div className="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center mx-auto shadow-md">
-                <Star className="w-6 h-6 fill-black" />
-              </div>
+              <CopoBrandLogo
+                domain={currentPlace.website || currentPlace.id}
+                name={currentPlace.name}
+                logoUrl={currentPlace.logoUrl}
+                className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-200/80 overflow-hidden shrink-0"
+                imageClassName="w-full h-full object-contain"
+                fallbackTextClassName="font-black text-xl text-zinc-950"
+              />
 
               <div>
-                <h2 className="font-black text-white text-lg tracking-tight text-center [overflow-wrap:anywhere]">
-                  {currentPlace.name}
-                  <CheckCircle className="inline-block w-5 h-5 ml-1.5 align-text-bottom fill-white text-black shrink-0 relative -top-[1.5px]" />
+                <h2 className="font-black text-white text-xl tracking-tight text-center [overflow-wrap:anywhere] print:text-black flex items-center justify-center gap-1.5">
+                  <span>{currentPlace.name}</span>
+                  <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 print:fill-black print:text-white" />
                 </h2>
-                <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1 mt-0.5">
+                <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
                   <span>★ {avgRating}</span>
-                  <span className="text-zinc-200 font-normal">({placeVideos.length} Video Reviews on Yoouz)</span>
+                  <span className="text-zinc-300 font-medium print:text-zinc-600">
+                    ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'} on Yoouz)
+                  </span>
                 </div>
               </div>
 
-              <div className="bg-zinc-900 p-4 rounded-2xl shadow-xl inline-block border border-zinc-800">
+              <div className="bg-white p-4 rounded-2xl shadow-xl inline-block border border-zinc-200 print:shadow-none print:border-zinc-300">
                 <QRCodeCanvas
                   value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
                   size={180}
@@ -5470,20 +5478,14 @@ ${jsonLd}
                 />
               </div>
 
-              <div>
-                <span className="inline-block px-3 py-1 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20">
+              <div className="space-y-1.5">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20 print:bg-zinc-100 print:text-black print:border-zinc-300">
                   {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
                 </span>
-                <p className="text-[10px] text-zinc-200 mt-2">
+                <p className="text-xs text-zinc-300 font-medium print:text-zinc-600">
                   Scan with your phone camera app to share your video review!
                 </p>
               </div>
-
-              {qrTableLabel && (
-                <div className="text-[11px] font-bold text-zinc-200 bg-zinc-900 py-1 px-3 rounded-md inline-block border border-zinc-800">
-                  {qrTableLabel}
-                </div>
-              )}
             </div>
 
             {/* Actions */}
