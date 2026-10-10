@@ -189,15 +189,15 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
   }, [filteredNotifications, userPrefs]);
 
   // Render Category Filter Pills
-  const filterPills: { label: string; value: FilterType; count?: number }[] = [
-    { label: "All", value: "all" },
-    { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined },
-    { label: "Messages", value: "messages" },
-    { label: "Likes", value: "likes" },
-    { label: "Comments", value: "comments" },
-    { label: "Shares", value: "shares" },
-    { label: "Followers", value: "people" },
-    { label: "Saves", value: "bookmarks" }
+  const filterPills: { label: string; value: FilterType; count?: number; icon: React.ReactNode }[] = [
+    { label: "All", value: "all", icon: <Bell className="w-4 h-4 shrink-0" /> },
+    { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined, icon: <Bell className="w-4 h-4 shrink-0" /> },
+    { label: "Messages", value: "messages", icon: <Mail className="w-4 h-4 shrink-0" /> },
+    { label: "Likes", value: "likes", icon: <Heart className="w-4 h-4 shrink-0" /> },
+    { label: "Comments", value: "comments", icon: <MessageSquare className="w-4 h-4 shrink-0" /> },
+    { label: "Shares", value: "shares", icon: <Repeat2 className="w-4 h-4 shrink-0" /> },
+    { label: "Followers", value: "people", icon: <UserPlus className="w-4 h-4 shrink-0" /> },
+    { label: "Saves", value: "bookmarks", icon: <Bookmark className="w-4 h-4 shrink-0" /> }
   ];
 
   // Helper to parse notification text into clean, scannable parts
@@ -453,23 +453,24 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-1 px-1">
           {filterPills.map((pill) => {
             const isActive = activeFilter === pill.value;
             return (
               <button
                 key={pill.value}
                 onClick={() => setActiveFilter(pill.value)}
-                className={`px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 active:scale-95 ${
+                className={`px-4 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 active:scale-95 border ${
                   isActive
-                    ? "bg-white text-zinc-950 shadow-md border border-transparent font-black"
-                    : "bg-zinc-900/90 text-zinc-300 border border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
+                    ? "bg-white text-zinc-950 border-white shadow-md font-black"
+                    : "bg-zinc-900/90 text-zinc-300 border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
                 }`}
               >
+                {pill.icon}
                 <span>{pill.label}</span>
                 {pill.count !== undefined && (
                   <span
-                    className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-extrabold ${
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-extrabold ${
                       isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-300 border border-zinc-700"
                     }`}
                   >
