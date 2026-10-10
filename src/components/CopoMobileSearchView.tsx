@@ -888,7 +888,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           getItemLogoUrl={getItemLogoUrl}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors" dir="auto">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors" dir="auto">
                             {title}
                           </div>
                           {cleanUrl ? (
@@ -929,7 +929,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           getItemLogoUrl={getItemLogoUrl}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-amber-300 transition-colors" dir="auto">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors" dir="auto">
                             {title}
                           </div>
                           {cleanUrl ? (

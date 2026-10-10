@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles } from "lucide-react";
+import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
@@ -47,6 +47,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const rawSaved = JSON.parse(localStorage.getItem("yoouz_recent_searches") || "[]");
+      if (Array.isArray(rawSaved)) {
+        setRecentSearches(rawSaved.filter((s): s is string => typeof s === "string" && s.trim().length > 0));
+      }
+    } catch (e) {}
+  }, []);
+
+  const saveRecentSearch = (term: string) => {
+    if (!term || !term.trim()) return;
+    const cleanTerm = term.trim();
+    const updated = [cleanTerm, ...recentSearches.filter(s => s !== cleanTerm)].slice(0, 8);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem("yoouz_recent_searches");
+    } catch (e) {}
+  };
 
   useEffect(() => {
     if (initialQuery) {
@@ -207,6 +235,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (e) e.preventDefault();
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
+
+    saveRecentSearch(rawQuery);
 
     // Clean query to remove obvious typos and junk that breaks Google search
     const cleanRawQuery = rawQuery
@@ -611,23 +641,72 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </div>
           )}
 
-          {/* Trending & Popular Searches Grid on Desktop */}
+          {/* Recent & Trending Searches (Matching Phone Layout Exactly) */}
           {!query.trim() && (
-            <div className="w-full max-w-xl mt-8 space-y-6 animate-in fade-in duration-300">
-              {/* Trending Searches Row */}
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-400">
-                  <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
-                  <span>Trending Searches</span>
+            <div className="w-full max-w-xl mt-6 space-y-5 text-left animate-in fade-in duration-200">
+              {/* 1. Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-zinc-400 text-sm font-bold">Recent Searches</h3>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-xs text-zinc-500 hover:text-white font-medium cursor-pointer transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
+                    {recentSearches.map((term, idx) => {
+                      const cleanUrl = extractCleanDomain(term);
+                      const title = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(term);
+                      return (
+                        <button
+                          key={`recent-${idx}`}
+                          onClick={() => {
+                            setQuery(term);
+                            handleSearch(undefined, term);
+                          }}
+                          className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
+                        >
+                          <CopoBrandLogo
+                            domain={cleanUrl || term}
+                            name={title}
+                            website={cleanUrl ? `https://${cleanUrl}` : ""}
+                            className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
+                            imageClassName="w-full h-full object-contain"
+                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
+                              {title}
+                            </div>
+                            {cleanUrl ? (
+                              <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
+                                {cleanUrl}
+                              </div>
+                            ) : null}
+                          </div>
+                          <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              )}
+
+              {/* 2. Trending Searches */}
+              <div className="space-y-2">
+                <div className="px-1">
+                  <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
+                </div>
+                <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
                   {[
-                    { id: "yoouz.com", name: "Yoouz", domain: "yoouz.com", category: "Video Review Platform" },
-                    { id: "firststrikeelectrical.co.uk", name: "First Strike Electrical", domain: "firststrikeelectrical.co.uk", category: "Verified Electrical Service" },
-                    { id: "izci.be", name: "Bosch Car Service Izci", domain: "izci.be", category: "Automotive Service" },
-                    { id: "apple.com", name: "Apple", domain: "apple.com", category: "Consumer Technology" },
-                    { id: "booking.com", name: "Booking.com", domain: "booking.com", category: "Travel & Hospitality" },
-                    { id: "airbnb.com", name: "Airbnb", domain: "airbnb.com", category: "Vacation Rentals" },
+                    { id: "yoouz.com", name: "Yoouz", domain: "yoouz.com" },
+                    { id: "firststrikeelectrical.co.uk", name: "First Strike Electrical", domain: "firststrikeelectrical.co.uk" },
+                    { id: "izci.be", name: "Bosch Car Service Izci", domain: "izci.be" },
+                    { id: "apple.com", name: "Apple", domain: "apple.com" },
+                    { id: "booking.com", name: "Booking.com", domain: "booking.com" },
                   ].map((item) => (
                     <button
                       key={item.id}
@@ -635,66 +714,29 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         setQuery(item.domain);
                         handleSearch(undefined, item.domain, item.name);
                       }}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800/90 hover:border-zinc-700 transition-all cursor-pointer group text-left shadow-xs"
+                      className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
                     >
                       <CopoBrandLogo
                         domain={item.domain}
                         name={item.name}
                         website={`https://${item.domain}`}
-                        className="w-8 h-8 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
+                        className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
                         imageClassName="w-full h-full object-contain"
                         fallbackTextClassName="font-extrabold text-xs text-zinc-950"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-xs text-white group-hover:text-zinc-200 transition-colors truncate">
+                        <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
                           {item.name}
                         </div>
-                        <div className="text-[10px] text-zinc-400 font-mono truncate">
+                        <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
                           {item.domain}
                         </div>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-200 shrink-0 transition-colors" />
+                      <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Trending Video Reviews Section */}
-              {videos.length > 0 && (
-                <div className="space-y-3 text-left pt-2 border-t border-zinc-800/60">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-400">
-                    <Play className="w-3.5 h-3.5 text-zinc-300 fill-current" />
-                    <span>Trending Video Reviews</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {videos.slice(0, 3).map((vid) => (
-                      <button
-                        key={vid.id}
-                        onClick={() => onSelectVideo(vid.id)}
-                        className="relative aspect-[9/16] rounded-2xl overflow-hidden group bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all text-left shadow-md cursor-pointer"
-                      >
-                        <CopoVideoThumbnail
-                          video={vid}
-                          alt={vid.caption || "Review"}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                        />
-                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[10px] font-black text-white flex items-center gap-0.5 border border-white/10 z-10">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                          <span>{vid.rating ? vid.rating.toFixed(1) : "5.0"}</span>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-2.5 pointer-events-none">
-                          <span className="text-xs font-bold text-white line-clamp-1">
-                            {formatBusinessName(vid.placeName || getDisplayUrlAsDomain(vid))}
-                          </span>
-                          <span className="text-[10px] text-zinc-400 font-medium truncate">
-                            By @{vid.author?.handle?.replace(/^@/, "") || vid.author?.name || "Reviewer"}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
