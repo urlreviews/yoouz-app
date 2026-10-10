@@ -1636,7 +1636,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {rawPlaceVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
-                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider"
+                      className="text-[10px] font-bold text-zinc-300 hover:text-white transition-colors uppercase tracking-wider"
                     >
                       {t("place.viewAll", "View All")}
                     </button>

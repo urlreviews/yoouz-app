@@ -718,6 +718,7 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "נועה הבית לאירועים": "נועה הבית לאירועים",
   "yust.com": "Yust Liege Hotel",
   "davidchantraine.be": "David Chantraine Eupen",
+  "autoworkplatts": "Auto Werkplaats",
   "autowerkplaatsbrugge.be": "Auto Werkplaats Brugge",
   "autowerkplaatsbrugge": "Auto Werkplaats Brugge",
   "digitalpark": "Digital Park",
