@@ -1728,12 +1728,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <span>{place.category}</span>
                     </div>
                   )}
-                  {hasGenuineHours && (
-                    <div className="flex items-center gap-1.5 text-emerald-500">
-                      <Clock className="w-3 h-3" />
-                      <span>{t("place.openNow", "Open Now")}</span>
-                    </div>
-                  )}
+                  {/* Removed green "Open Now" text here */}
                 </div>
               </div>
             </div>
