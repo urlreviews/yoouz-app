@@ -25,9 +25,9 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
   rating,
   maxStars = 5,
   starClassName = "w-6 h-6",
-  filledColorClass = "text-amber-400 fill-amber-400",
-  emptyColorClass = "text-zinc-400 fill-zinc-900/90",
-  className = "flex items-center text-amber-400 gap-0.5"
+  filledColorClass = "text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
+  emptyColorClass = "text-zinc-400 fill-zinc-900/90 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
+  className = "flex items-center text-amber-400 gap-0.5 print:inline-flex [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
 }) => {
   const rounded = getRoundedRating(rating);
   const fullStars = Math.floor(rounded);
@@ -42,7 +42,7 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
             <svg
               key={index}
               viewBox="0 0 24 24"
-              className={`${starClassName} ${filledColorClass} shrink-0`}
+              className={`${starClassName} ${filledColorClass} shrink-0 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
               fill="currentColor"
               stroke="currentColor"
               strokeWidth="1.5"
@@ -55,11 +55,11 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
         } else if (index === fullStars && hasHalfStar) {
           // 2. Half Star (Left half filled in amber, right half empty/dark)
           return (
-            <div key={index} className={`relative ${starClassName} shrink-0 inline-flex items-center justify-center`}>
+            <div key={index} className={`relative ${starClassName} shrink-0 inline-flex items-center justify-center [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}>
               {/* Background Empty Star */}
               <svg
                 viewBox="0 0 24 24"
-                className={`absolute inset-0 w-full h-full ${emptyColorClass}`}
+                className={`absolute inset-0 w-full h-full ${emptyColorClass} [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
                 fill="currentColor"
                 stroke="currentColor"
                 strokeWidth="1.5"
@@ -69,10 +69,10 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               {/* Foreground Left 50% Filled Star */}
-              <div className="absolute inset-0 w-1/2 overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 w-1/2 overflow-hidden pointer-events-none [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
                 <svg
                   viewBox="0 0 24 24"
-                  className={`h-full ${filledColorClass}`}
+                  className={`h-full ${filledColorClass} [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
                   style={{ width: "200%", maxWidth: "none" }}
                   fill="currentColor"
                   stroke="currentColor"
@@ -91,7 +91,7 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
             <svg
               key={index}
               viewBox="0 0 24 24"
-              className={`${starClassName} ${emptyColorClass} shrink-0`}
+              className={`${starClassName} ${emptyColorClass} shrink-0 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
               fill="currentColor"
               stroke="currentColor"
               strokeWidth="1.5"

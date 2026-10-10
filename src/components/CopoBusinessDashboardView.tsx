@@ -4192,12 +4192,13 @@ ${jsonLd}
 
                     {/* Star Rating & Reviews Count */}
                     <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
-                      <span className="text-amber-400">★ {avgRating}</span>
-                      <div className="flex text-amber-400 text-xs">
-                        {'★★★★★'.split('').map((s, idx) => (
-                          <span key={idx}>{s}</span>
-                        ))}
-                      </div>
+                      <span className="text-amber-400 font-extrabold">{avgRating}</span>
+                      <CopoStarRating
+                        rating={Number(avgRating) || 5.0}
+                        starClassName="w-3.5 h-3.5"
+                        filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                        emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                      />
                       <span className="text-zinc-400 text-[11px] font-normal">
                         ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'})
                       </span>
@@ -5437,8 +5438,14 @@ ${jsonLd}
                   <span>yoouz.com/place/{(selectedPlaceId || currentPlace.id || '').replace(/^yoouz\.com\/place\//, '')}</span>
                 </div>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
-                  <span>★ {avgRating}</span>
-                  <span className="text-zinc-300 font-medium print:text-zinc-600">
+                  <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRating}</span>
+                  <CopoStarRating
+                    rating={Number(avgRating) || 5.0}
+                    starClassName="w-3.5 h-3.5"
+                    filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                    emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                  />
+                  <span className="text-zinc-300 font-medium print:text-zinc-700">
                     ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'} on Yoouz)
                   </span>
                 </div>
