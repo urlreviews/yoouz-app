@@ -14150,6 +14150,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       res.write(`data: ${JSON.stringify({ type: "init", clientId, deletedIds, deletedPlaceIds, deletedUserIds, deactivatedUserIds, timestamp: Date.now() })}\n\n`);
     } catch (e) {}
 
+    req.on("close", () => {
+      clearInterval(heartbeat);
+      sseClients.delete(client);
+    });
+
     // Heartbeat every 15 seconds to keep Cloud Run / reverse proxy connection alive
     const heartbeat = setInterval(() => {
       try {

@@ -568,7 +568,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanRawLower = raw.toLowerCase().trim();
     if (KNOWN_OFFICIAL_NAMES[cleanRawLower]) return KNOWN_OFFICIAL_NAMES[cleanRawLower];
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) return KNOWN_OFFICIAL_NAMES[drawerDomain];
-    return toTitleCase(raw);
+    return raw.toUpperCase();
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
