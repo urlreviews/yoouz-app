@@ -50,47 +50,92 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  useEffect(() => {
+  const loadRecentSearches = () => {
     try {
       const rawSaved = JSON.parse(localStorage.getItem("yoouz_recent_searches") || "[]");
       if (Array.isArray(rawSaved)) {
         const cleaned: string[] = [];
         for (const item of rawSaved) {
           if (!item || typeof item !== "string") continue;
-          const clean = extractCleanDomain(item) || item.trim().toLowerCase();
-          if (clean && clean.length >= 2 && clean !== "web.whatsapp.com" && !cleaned.includes(clean)) {
+          const trimmed = item.trim();
+          const cleanDom = extractCleanDomain(trimmed);
+          const clean = cleanDom || trimmed;
+          if (clean && clean.length >= 2 && clean.toLowerCase() !== "web.whatsapp.com" && !cleaned.includes(clean)) {
             cleaned.push(clean);
           }
         }
-        setRecentSearches(cleaned.slice(0, 8));
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(cleaned.slice(0, 8)));
+        setRecentSearches(cleaned.slice(0, 10));
+      } else {
+        setRecentSearches([]);
       }
-    } catch (e) {}
+    } catch (e) {
+      setRecentSearches([]);
+    }
+  };
+
+  useEffect(() => {
+    loadRecentSearches();
+
+    const handleSync = () => loadRecentSearches();
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("yoouz_recent_searches_updated", handleSync);
+    return () => {
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("yoouz_recent_searches_updated", handleSync);
+    };
   }, []);
 
   const saveRecentSearch = (term: string) => {
     if (!term || !term.trim()) return;
     const cleanDomain = extractCleanDomain(term);
-    const cleanTerm = cleanDomain || term.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
-    if (!cleanTerm || cleanTerm === "web.whatsapp.com") return;
+    const storeTerm = (cleanDomain || term.trim())
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .replace(/\/$/, "")
+      .trim();
+    if (!storeTerm || storeTerm.toLowerCase() === "web.whatsapp.com") return;
+
     setRecentSearches((prev) => {
-      // Remove any previous duplicate or raw un-resolved query of the same term
       const filtered = prev.filter((s) => {
-        const sClean = extractCleanDomain(s) || s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
-        return sClean !== cleanTerm;
+        const sClean = (extractCleanDomain(s) || s)
+          .replace(/^https?:\/\//i, "")
+          .replace(/^www\./i, "")
+          .replace(/\/$/, "")
+          .trim()
+          .toLowerCase();
+        return sClean !== storeTerm.toLowerCase();
       });
-      const updated = [cleanTerm, ...filtered].slice(0, 8);
+      const updated = [storeTerm, ...filtered].slice(0, 10);
       try {
         localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+        window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
       } catch (e) {}
       return updated;
     });
   };
 
-  const clearRecentSearches = () => {
+  const removeRecentSearch = (termToRemove: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setRecentSearches((prev) => {
+      const updated = prev.filter((s) => s !== termToRemove);
+      try {
+        if (updated.length === 0) {
+          localStorage.removeItem("yoouz_recent_searches");
+        } else {
+          localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+        }
+        window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
+      } catch (err) {}
+      return updated;
+    });
+  };
+
+  const clearRecentSearches = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setRecentSearches([]);
     try {
       localStorage.removeItem("yoouz_recent_searches");
+      window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
     } catch (e) {}
   };
 
@@ -230,6 +275,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     if (match) {
       console.info("[Search] Loading complete local database match instantly:", match.name);
+      saveRecentSearch(match.brandDomain || match.website || match.name);
       setSearchedPlace(match);
       setQuery(match.name || item.title);
       if (onOpenPlace) onOpenPlace(match.id);
@@ -237,6 +283,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
 
     const targetQuery = (item.domain && isValidDomainUrl(item.domain)) ? item.domain : (item.title || query);
+    saveRecentSearch(item.domain || item.title || targetQuery);
     handleSearch(undefined, targetQuery, item.title, {
       country: item.country,
       city: item.city,
@@ -255,8 +302,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     if (!rawQuery) return;
 
     const cleanUrlImmediate = extractCleanDomain(rawQuery);
-    if (cleanUrlImmediate && isValidDomainUrl(cleanUrlImmediate)) {
-      saveRecentSearch(cleanUrlImmediate);
+    const termToSave = preferredName || locationDetails?.rawBusinessName || cleanUrlImmediate || rawQuery;
+    if (termToSave) {
+      saveRecentSearch(termToSave);
     }
 
     // Clean query to remove obvious typos and junk that breaks Google search
@@ -686,12 +734,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               {recentSearches.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-zinc-400 text-sm font-bold">Recent Searches</h3>
+                    <h3 className="text-zinc-400 text-sm font-bold">{t("search.recentSearches", "Recent Searches")}</h3>
                     <button
+                      type="button"
                       onClick={clearRecentSearches}
                       className="text-xs text-zinc-500 hover:text-white font-medium cursor-pointer transition-colors"
                     >
-                      Clear
+                      {t("common.clear", "Clear")}
                     </button>
                   </div>
                   <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
@@ -701,7 +750,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       const title = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
                         || (isRealDomain ? formatBusinessName(cleanUrl) : formatBusinessName(term));
                       return (
-                        <button
+                        <div
                           key={`recent-${idx}`}
                           onClick={() => {
                             setQuery(cleanUrl || term);
@@ -727,8 +776,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                               </div>
                             ) : null}
                           </div>
-                          <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={(e) => removeRecentSearch(term, e)}
+                            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800/80 transition-colors shrink-0 ml-auto"
+                            title="Remove search"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -751,6 +807,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <button
                       key={item.id}
                       onClick={() => {
+                        saveRecentSearch(item.domain || item.name);
                         setQuery(item.domain);
                         handleSearch(undefined, item.domain, item.name);
                       }}

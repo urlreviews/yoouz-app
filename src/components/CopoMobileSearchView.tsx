@@ -115,31 +115,103 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     return () => clearTimeout(timer);
   }, [query]);
   
-  // Recent searches (stored in localStorage)
+  // Recent searches (stored in localStorage with cross-tab/modal sync)
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
-  useEffect(() => {
+  const loadRecentSearches = () => {
     try {
       const rawSaved = JSON.parse(localStorage.getItem("yoouz_recent_searches") || "[]");
       if (Array.isArray(rawSaved)) {
         const cleaned: string[] = [];
         for (const item of rawSaved) {
           if (!item || typeof item !== "string") continue;
-          const clean = extractCleanDomain(item) || item.trim().toLowerCase();
-          if (clean && clean.length >= 2 && clean !== "web.whatsapp.com" && !cleaned.includes(clean)) {
+          const trimmed = item.trim();
+          const cleanDom = extractCleanDomain(trimmed);
+          const clean = cleanDom || trimmed;
+          if (clean && clean.length >= 2 && clean.toLowerCase() !== "web.whatsapp.com" && !cleaned.includes(clean)) {
             cleaned.push(clean);
           }
         }
-        setRecentSearches(cleaned.slice(0, 8));
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(cleaned.slice(0, 8)));
+        setRecentSearches(cleaned.slice(0, 10));
+      } else {
+        setRecentSearches([]);
       }
-    } catch {}
+    } catch {
+      setRecentSearches([]);
+    }
+  };
+
+  useEffect(() => {
+    loadRecentSearches();
+
+    const handleSync = () => loadRecentSearches();
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("yoouz_recent_searches_updated", handleSync);
     
     // Auto focus on mount
     setTimeout(() => {
       businessInputRef.current?.focus();
     }, 100);
+
+    return () => {
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("yoouz_recent_searches_updated", handleSync);
+    };
   }, []);
+
+  const saveRecentSearch = (term: string) => {
+    if (!term || !term.trim()) return;
+    const cleanDomain = extractCleanDomain(term);
+    const storeTerm = (cleanDomain || term.trim())
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .replace(/\/$/, "")
+      .trim();
+    if (!storeTerm || storeTerm.toLowerCase() === "web.whatsapp.com") return;
+
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((s) => {
+        const sClean = (extractCleanDomain(s) || s)
+          .replace(/^https?:\/\//i, "")
+          .replace(/^www\./i, "")
+          .replace(/\/$/, "")
+          .trim()
+          .toLowerCase();
+        return sClean !== storeTerm.toLowerCase();
+      });
+      const updated = [storeTerm, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+        window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const removeRecentSearch = (termToRemove: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setRecentSearches((prev) => {
+      const updated = prev.filter((s) => s !== termToRemove);
+      try {
+        if (updated.length === 0) {
+          localStorage.removeItem("yoouz_recent_searches");
+        } else {
+          localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+        }
+        window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
+      } catch (err) {}
+      return updated;
+    });
+  };
+
+  const clearRecentSearches = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem("yoouz_recent_searches");
+      window.dispatchEvent(new Event("yoouz_recent_searches_updated"));
+    } catch {}
+  };
 
   const findMatchingPlace = (term: string, preferredName?: string): Place | undefined => {
     const base = (preferredName || term).trim();
@@ -306,18 +378,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     setSearchErrorNotification(null);
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // Store recent searches (strictly clean domain or clean term)
-    const storeTerm = extractCleanDomain(cleanUrl || trimmed) || trimmed;
-    if (storeTerm && storeTerm !== "web.whatsapp.com") {
-      const newRecent = [storeTerm, ...recentSearches.filter(s => {
-        const sClean = extractCleanDomain(s) || s;
-        return sClean !== storeTerm;
-      })].slice(0, 8);
-      setRecentSearches(newRecent);
-      try {
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-      } catch {}
-    }
+    // Store recent searches
+    const storeTerm = extractCleanDomain(cleanUrl || trimmed) || preferredName || trimmed;
+    saveRecentSearch(storeTerm);
 
     // Synchronously register place into memory & database so logo/banner resolves on 1st search attempt
     if (!matchedPlace && onAddPlace) {
@@ -484,11 +547,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     if (existing) {
       const storeTerm = getCleanDomainUrl(existing) || cleanDom || title;
       if (storeTerm) {
-        const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-        setRecentSearches(newRecent);
-        try {
-          localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-        } catch {}
+        saveRecentSearch(storeTerm);
       }
       onOpenPlace(existing.id);
       return;
@@ -508,11 +567,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     const instantName = knownHead?.name || (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || title || (cleanDom ? formatBusinessName(cleanDom) : query);
 
     const storeTerm = cleanDom || title;
-    const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
-    setRecentSearches(newRecent);
-    try {
-      localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
-    } catch {}
+    saveRecentSearch(storeTerm);
 
     const newPlace: Place = {
       id: placeId,
@@ -849,15 +904,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {query.length === 0 && recentSearches.length > 0 && (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-zinc-400 text-sm font-bold">Recent</h3>
+                  <h3 className="text-zinc-400 text-sm font-bold">{t("search.recentSearches", "Recent Searches")}</h3>
                   <button 
-                    onClick={() => {
-                      setRecentSearches([]);
-                      localStorage.removeItem("yoouz_recent_searches");
-                    }}
+                    type="button"
+                    onClick={clearRecentSearches}
                     className="text-zinc-500 text-xs font-medium uppercase hover:text-zinc-300 cursor-pointer transition-colors"
                   >
-                    Clear All
+                    {t("common.clearAll", "Clear All")}
                   </button>
                 </div>
                 <div className="flex flex-col divide-y divide-zinc-900/60">
@@ -866,12 +919,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     const cleanUrl = getCleanDomainUrl(place || s) || (isValidDomainUrl(s) ? extractCleanDomain(s) : "");
                     const title = place?.name 
                       || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-                      || (cleanUrl ? formatBusinessName(cleanUrl) : s);
+                      || (cleanUrl ? formatBusinessName(cleanUrl) : formatBusinessName(s));
 
                     return (
-                      <button 
-                        key={idx}
+                      <div 
+                        key={`recent-mob-${idx}`}
                         onClick={() => {
+                          saveRecentSearch(cleanUrl || title || s);
                           if (place) {
                             onOpenPlace(place.id);
                           } else {
@@ -899,8 +953,15 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             </div>
                           ) : null}
                         </div>
-                        <Clock className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={(e) => removeRecentSearch(s, e)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800/80 transition-colors shrink-0 ml-auto"
+                          title="Remove search"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -921,7 +982,10 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                     return (
                       <button 
                         key={idx}
-                        onClick={() => onOpenPlace(place.id)}
+                        onClick={() => {
+                          saveRecentSearch(cleanUrl || place.name || place.id);
+                          onOpenPlace(place.id);
+                        }}
                         className="flex items-center gap-3.5 py-3 text-left cursor-pointer hover:bg-zinc-900 active:bg-zinc-850 px-2 rounded-xl transition-colors group"
                       >
                         <SearchBusinessBadge 
