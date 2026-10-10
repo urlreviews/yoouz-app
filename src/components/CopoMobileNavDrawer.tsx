@@ -218,37 +218,37 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               </button>
 
               {/* Legal Links Line */}
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-300">
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("privacy");
                     else handleNavClick("more");
                   }}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
                 >
                   {t("legal.privacy", "Privacy")}
                 </button>
-                <span className="text-zinc-600 text-[9px]">•</span>
+                <span className="text-zinc-500 text-[9px]">•</span>
                 <button
                   onClick={() => {
                     if (onOpenLegal) onOpenLegal("terms");
                     else handleNavClick("more");
                   }}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
                 >
                   {t("legal.terms", "Terms")}
                 </button>
-                <span className="text-zinc-600 text-[9px]">•</span>
+                <span className="text-zinc-500 text-[9px]">•</span>
                 <button
                   onClick={() => handleNavClick("more")}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
                 >
                   {t("legal.about", "About")}
                 </button>
               </div>
 
               {/* Separate Line for Copyright */}
-              <p className="text-[10.5px] text-zinc-500 font-normal">
+              <p className="text-[10.5px] text-zinc-400 font-medium">
                 {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
               </p>
             </div>
