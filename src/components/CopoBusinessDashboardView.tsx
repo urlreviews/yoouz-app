@@ -2768,21 +2768,21 @@ ${jsonLd}
             </div>
           </header>
 
-          {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode) */}
+          {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode - Matching User Knowledge Center Style) */}
           <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2.5 shrink-0 z-20">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth px-1">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-1">
               {/* Home Pill (Navigates to Business Suite Overview) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                   activeTab === 'overview'
-                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
-                    : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
+                    ? 'bg-white text-zinc-950 border-white shadow-sm font-black'
+                    : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
                 }`}
                 title={t('nav.home', 'Home')}
               >
-                <Home className="w-4 h-4 text-white shrink-0" />
+                <Home className={`w-4 h-4 shrink-0 ${activeTab === 'overview' ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
                 <span>{t('nav.home', 'Home')}</span>
               </button>
 
@@ -2793,16 +2793,16 @@ ${jsonLd}
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-2 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                       isActive 
-                        ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
-                        : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
+                        ? 'bg-white text-zinc-950 border-white shadow-sm font-black' 
+                        : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-white shrink-0" />
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="w-4 h-4 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold border border-zinc-700">
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-zinc-950 text-white' : 'bg-zinc-800 text-zinc-200 border border-zinc-700'}`}>
                         {item.badge}
                       </span>
                     )}
@@ -2814,14 +2814,14 @@ ${jsonLd}
               <button
                 type="button"
                 onClick={() => setActiveTab('more')}
-                className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
+                className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                   activeTab === 'more'
-                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
-                    : 'bg-zinc-950 text-white hover:bg-zinc-900 border border-zinc-800 font-medium'
+                    ? 'bg-white text-zinc-950 border-white shadow-sm font-black' 
+                    : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
                 }`}
                 title={t('nav.more', 'More')}
               >
-                <Menu className="w-4 h-4 text-white shrink-0" />
+                <Menu className={`w-4 h-4 shrink-0 ${activeTab === 'more' ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
                 <span>{t('nav.more', 'More')}</span>
               </button>
             </div>
