@@ -417,8 +417,8 @@ export function useFeedPagination() {
               .map(normalizeReview);
             
             setVideos((prev) => {
-              // Track local optimistic state (likes, bookmarks, views, comments, shares)
-              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; bookmarksCount?: number; sharesCount?: number; views?: number; comments?: any[]; commentsCount?: number }>();
+              // Track local optimistic state (likes, bookmarks, views, comments, shares, rating)
+              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; bookmarksCount?: number; sharesCount?: number; views?: number; comments?: any[]; commentsCount?: number; rating?: number; placeRating?: number }>();
               prev.forEach((v) => {
                 if (v && v.id) {
                   interactionMap.set(v.id, {
@@ -429,7 +429,9 @@ export function useFeedPagination() {
                     sharesCount: v.sharesCount,
                     views: v.views,
                     comments: v.comments,
-                    commentsCount: v.commentsCount
+                    commentsCount: v.commentsCount,
+                    rating: v.rating,
+                    placeRating: v.placeRating
                   });
                 }
               });
@@ -516,9 +518,12 @@ export function useFeedPagination() {
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
                   const effShares = Math.max(rawServerShares, rawLocalShares);
+                  const effRating = (typeof v.rating === 'number' && !isNaN(v.rating)) ? v.rating : (typeof local.rating === 'number' ? local.rating : 5.0);
 
                   return {
                     ...v,
+                    rating: effRating,
+                    placeRating: effRating,
                     isLiked: isLk,
                     isBookmarked: isBm,
                     likes: effLikes,
@@ -607,6 +612,28 @@ export function useFeedPagination() {
                 return updated;
               });
               window.dispatchEvent(new CustomEvent("copo-video-created", { detail: { video: freshVideo } }));
+            } else if (payload.type === "video_updated" && payload.videoId) {
+              const targetId = String(payload.videoId);
+              const updates = payload.updates || {};
+              setVideos((prev) => {
+                const updated = prev.map((v) => {
+                  if (String(v.id) === targetId) {
+                    return {
+                      ...v,
+                      ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+                      ...(updates.caption !== undefined && { caption: updates.caption }),
+                      ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                      ...(updates.tags !== undefined && { tags: updates.tags })
+                    };
+                  }
+                  return v;
+                });
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                } catch (e) {}
+                return updated;
+              });
+              window.dispatchEvent(new CustomEvent("copo-video-updated", { detail: { videoId: targetId, updates } }));
             } else if (payload.type === "video_deleted" && payload.videoId) {
               const targetId = String(payload.videoId);
               recordClientDeletedId(targetId);

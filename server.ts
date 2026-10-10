@@ -18180,8 +18180,21 @@ app.post("/api/videos/save-review", async (req, res) => {
         } catch (sErr) {}
       }
 
-      // Invalidate memory cache to force an immediate fresh fetch on all clients
+      // Invalidate memory cache and update in-memory item immediately if cached
       feedCache.lastFetched = 0;
+      if (feedCache.videos && Array.isArray(feedCache.videos)) {
+        const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === videoId);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = {
+            ...feedCache.videos[cachedIdx],
+            ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+            ...(updates.caption !== undefined && { caption: updates.caption }),
+            ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+            ...(updates.tags !== undefined && { tags: updates.tags }),
+            updatedAt: Date.now()
+          };
+        }
+      }
 
       // 2. Sync updates to Bunny Cloud Database (libSQL cloud)
       const bunnyDb = getBunnyDb();
@@ -18189,13 +18202,15 @@ app.post("/api/videos/save-review", async (req, res) => {
         try {
           // Fetch existing data payload if available to merge nicely
           const rowRes = await bunnyDb.execute({
-            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            sql: "SELECT * FROM videoReviews WHERE id = ? LIMIT 1",
             args: [videoId]
           });
           let currentData: any = {};
-          if (rowRes.rows && rowRes.rows.length > 0 && rowRes.rows[0].data) {
+          let existingRow: any = null;
+          if (rowRes.rows && rowRes.rows.length > 0) {
+            existingRow = rowRes.rows[0];
             try {
-              currentData = typeof rowRes.rows[0].data === 'string' ? JSON.parse(rowRes.rows[0].data as string) : rowRes.rows[0].data;
+              currentData = typeof existingRow.data === 'string' ? JSON.parse(existingRow.data) : (existingRow.data || {});
             } catch (e) {}
           }
 
@@ -18209,60 +18224,100 @@ app.post("/api/videos/save-review", async (req, res) => {
             updatedAt: Date.now()
           };
 
-          if (updates.rating !== undefined) {
-            await bunnyDb.execute({
-              sql: `UPDATE videoReviews SET rating = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-              args: [updates.rating, JSON.stringify(mergedData), videoId]
-            });
+          const targetRating = updates.rating !== undefined ? updates.rating : (mergedData.rating || existingRow?.rating || 5);
+          const targetPlaceId = mergedData.placeId || existingRow?.placeId || '';
+          const targetPlaceName = mergedData.placeName || existingRow?.placeName || '';
+          const targetAuthorName = mergedData.authorName || mergedData.author?.name || existingRow?.authorName || '';
+          const targetAuthorAvatar = mergedData.authorAvatar || mergedData.author?.avatar || existingRow?.authorAvatar || '';
+          const targetUserId = mergedData.userId || existingRow?.userId || '';
+          const targetVideoUrl = mergedData.videoUrl || existingRow?.videoUrl || '';
+          const targetThumbnailUrl = mergedData.thumbnailUrl || existingRow?.thumbnailUrl || '';
+          const targetDuration = mergedData.duration || existingRow?.duration || 60;
 
-            // Synchronize affected place average rating in BunnyDB places table
-            const pId = mergedData.placeId;
-            const pName = mergedData.placeName;
-            const pWeb = mergedData.placeWebsite;
-            if (pId || pName || pWeb) {
-              try {
-                const placeSearchKeys = [pId, pName, pWeb].filter(Boolean);
-                for (const pk of placeSearchKeys) {
-                  const plRows = await bunnyDb.execute({
-                    sql: `SELECT id, name, data FROM places WHERE id = ? OR name = ? OR id LIKE ? LIMIT 1`,
-                    args: [pk, pk, `%${pk}%`]
-                  });
-                  if (plRows && plRows.rows && plRows.rows[0]) {
-                    const pRow: any = plRows.rows[0];
-                    let pData: any = {};
-                    try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch (e) {}
+          // UPSERT into videoReviews table in BunnyDB so it persists permanently regardless of row existence
+          await bunnyDb.execute({
+            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, data, createdAt, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET
+                    rating = excluded.rating,
+                    placeId = COALESCE(NULLIF(excluded.placeId, ''), videoReviews.placeId),
+                    placeName = COALESCE(NULLIF(excluded.placeName, ''), videoReviews.placeName),
+                    authorName = COALESCE(NULLIF(excluded.authorName, ''), videoReviews.authorName),
+                    authorAvatar = COALESCE(NULLIF(excluded.authorAvatar, ''), videoReviews.authorAvatar),
+                    userId = COALESCE(NULLIF(excluded.userId, ''), videoReviews.userId),
+                    videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
+                    thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
+                    data = excluded.data,
+                    updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              videoId,
+              targetPlaceId,
+              targetPlaceName,
+              targetAuthorName,
+              targetAuthorAvatar,
+              targetUserId,
+              targetRating,
+              targetVideoUrl,
+              targetThumbnailUrl,
+              targetDuration,
+              JSON.stringify(mergedData)
+            ]
+          });
 
-                    const countRows = await bunnyDb.execute({
-                      sql: `SELECT COUNT(*) as cnt, AVG(rating) as avgRating FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
-                      args: [pRow.id, pRow.name, `%"${pRow.id}"%`]
-                    });
-                    const remCount = Number((countRows?.rows?.[0] as any)?.cnt || 0);
-                    const remAvg = (countRows?.rows?.[0] as any)?.avgRating;
-                    const newRating = remCount > 0 ? Number(Number(remAvg || 5.0).toFixed(1)) : (pData.rating || 5.0);
+          // Synchronize affected place average rating in BunnyDB places table across all reviews
+          const pId = mergedData.placeId;
+          const pName = mergedData.placeName;
+          const pWeb = mergedData.placeWebsite;
+          if (pId || pName || pWeb) {
+            try {
+              const allLocal = readReviewsIndex();
+              const matchingLocal = allLocal.filter((v: any) => 
+                (pId && v.placeId === pId) || 
+                (pName && v.placeName?.toLowerCase().trim() === pName.toLowerCase().trim()) || 
+                (pWeb && v.placeWebsite?.toLowerCase().trim() === pWeb.toLowerCase().trim())
+              );
+              const sumLocal = matchingLocal.reduce((acc: number, r: any) => acc + (Number(r.rating) || 5), 0);
+              const calculatedLocalAvg = matchingLocal.length > 0 ? Number((sumLocal / matchingLocal.length).toFixed(1)) : 5.0;
 
-                    pData.totalReviews = remCount;
-                    pData.videoReviewCount = remCount;
-                    pData.rating = newRating;
+              const countRows = await bunnyDb.execute({
+                sql: `SELECT COUNT(*) as cnt, AVG(rating) as avgRating FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
+                args: [pId || pName, pName || pId, `%"${pId}"%`]
+              });
+              const remCount = Math.max(Number((countRows?.rows?.[0] as any)?.cnt || 0), matchingLocal.length);
+              const remAvg = (countRows?.rows?.[0] as any)?.avgRating;
+              const finalRating = remCount > 0 && remAvg ? Number(Number(remAvg).toFixed(1)) : calculatedLocalAvg;
 
-                    await bunnyDb.execute({
-                      sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-                      args: [JSON.stringify(pData), pRow.id]
-                    });
-                  }
-                }
-              } catch (plErr) {}
+              const plRows = await bunnyDb.execute({
+                sql: `SELECT id, name, data FROM places WHERE id = ? OR name = ? OR id LIKE ? LIMIT 1`,
+                args: [pId || pName, pName || pId, `%${pId}%`]
+              });
+              if (plRows && plRows.rows && plRows.rows[0]) {
+                const pRow: any = plRows.rows[0];
+                let pData: any = {};
+                try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch (e) {}
+                pData.totalReviews = remCount;
+                pData.videoReviewCount = remCount;
+                pData.rating = finalRating;
+
+                await bunnyDb.execute({
+                  sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                  args: [JSON.stringify(pData), pRow.id]
+                });
+              }
+            } catch (plErr) {
+              console.warn("Place rating recalculation error:", plErr);
             }
-          } else {
-            await bunnyDb.execute({
-              sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-              args: [JSON.stringify(mergedData), videoId]
-            });
           }
           console.log(`🐰 [Server] BunnyDB successfully updated review rating for ${videoId}`);
         } catch (bunnyErr: any) {
           console.warn("BunnyDB sync in update-review notice:", bunnyErr?.message || bunnyErr);
         }
       }
+
+      // Real-Time Cross-Device SSE Broadcast so all open devices update rating instantly
+      try {
+        broadcastSseEvent({ type: "video_updated", videoId, updates, review: updatedReview });
+      } catch (e) {}
 
       // 3. Mirror to Drizzle PostgreSQL database
       if (getDb()) {

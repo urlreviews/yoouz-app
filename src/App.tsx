@@ -2904,6 +2904,25 @@ export function App() {
             localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated));
           }
         }
+
+        const localCreatedStr = localStorage.getItem("yoouz_local_created_reviews");
+        if (localCreatedStr) {
+          const localCreated = JSON.parse(localCreatedStr);
+          if (Array.isArray(localCreated)) {
+            const updatedLocal = localCreated.map((c: any) =>
+              c.id === videoId
+                ? {
+                    ...c,
+                    ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+                    ...(updates.caption !== undefined && { caption: updates.caption }),
+                    ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                    ...(updates.tags !== undefined && { tags: updates.tags })
+                  }
+                : c
+            );
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(updatedLocal));
+          }
+        }
       } catch (e) {}
 
       // Fallback mirror to BunnyDB if present
