@@ -1523,11 +1523,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {activeTab === "overview" && (
             <div className="space-y-4">
               {/* Action Buttons Row (Directions, Call, Save, Share, Chat) - Guaranteed 5 Buttons for All Businesses */}
-              <div className="p-3 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-around text-center gap-1 sm:gap-2 shadow-lg backdrop-blur-md">
+              <div className="p-3 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto no-scrollbar shadow-lg backdrop-blur-md whitespace-nowrap">
                 <button
                   id="btn-directions-place"
                   onClick={handleOpenDirections}
-                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("place.directions", "Directions")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
@@ -1550,7 +1550,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       }
                     }
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("place.call", "Call")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 transition-colors">
@@ -1562,7 +1562,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <button
                   id="btn-save-place"
                   onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
-                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                 >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
@@ -1588,7 +1588,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("place.shareBusiness", "Share Business")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
@@ -1616,7 +1616,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onStartChat(place.id, place.name, getPlaceLogoUrl(place));
                     }
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[52px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-white hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center shadow-sm">
@@ -1681,7 +1681,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-1.5">
+                    <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1 md:grid md:grid-cols-3 md:gap-1.5 md:overflow-x-visible">
                       {placeVideos.slice(0, 6).map((v) => {
                         const displayViews = getDisplayViews(v);
                         const formattedViews = formatViewCount(displayViews);
@@ -1690,7 +1690,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           <div
                             key={v.id}
                             onClick={() => onSelectVideo(v.id)}
-                            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-zinc-950 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
+                            className="shrink-0 w-[110px] sm:w-[130px] md:w-auto aspect-[3/4] snap-start relative rounded-lg overflow-hidden bg-zinc-950 cursor-pointer group transition-all transform active:scale-95 shadow-2xs hover:opacity-90 ring-1 ring-zinc-800"
                           >
                             <CopoVideoThumbnail
                               video={v}

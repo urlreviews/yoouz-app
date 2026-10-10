@@ -1258,11 +1258,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           {activeTab === "overview" && (
             <div className="divide-y divide-zinc-800">
               {/* Action Buttons Row */}
-              <div className="px-5 py-3.5 flex items-center justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-2">
+              <div className="px-3 sm:px-5 py-3.5 flex items-center justify-between sm:justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
                 >
                   <div
@@ -1289,7 +1289,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     triggerHaptic("light");
                     handleTabClick("reviews");
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.viewVideoReviews", "View Video Reviews")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
@@ -1304,7 +1304,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.shareProfile", "Share Profile")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
@@ -1320,7 +1320,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       triggerHaptic("medium");
                       if (author) onOpenReport(author);
                     }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[58px] cursor-pointer"
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                     title={t("profile.reportReviewer", "Report or Block Reviewer")}
                   >
                     <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-red-500/10 group-hover:border-red-500/40 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700 transition-colors">
@@ -1379,7 +1379,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     {t("profile.noVideosYet", "No video reviews published yet.")}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1 md:grid md:grid-cols-3 md:gap-2 md:overflow-x-visible">
                     {authorVideos.slice(0, 6).map((v) => {
                       const isCurrentActive = v.id === activeVideoId;
                       const displayViews = getDisplayViews(v);
@@ -1389,7 +1389,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         <div
                           key={v.id}
                           onClick={() => onSelectVideo(v.id)}
-                          className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
+                          className={`shrink-0 w-[110px] sm:w-[130px] md:w-auto aspect-[3/4] snap-start relative rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
                             isCurrentActive
                               ? "ring-2 ring-white"
                               : "hover:opacity-90"
