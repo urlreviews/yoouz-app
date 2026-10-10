@@ -1736,44 +1736,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   )}
                 </div>
               </div>
-
-              {/* Location & Map Preview */}
-              {hasPhysicalLocation && (
-                <div 
-                  className="rounded-[2rem] overflow-hidden border border-zinc-800/50 shadow-2xl relative group bg-zinc-900 cursor-pointer"
-                  onClick={handleOpenDirections}
-                >
-                  <div className="w-full h-40 relative">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      frameBorder="0"
-                      style={{ border: 0, pointerEvents: "none" }}
-                      referrerPolicy="no-referrer-when-downgrade"
-                      src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
-                      title="Google Maps Location Preview"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent pointer-events-none" />
-                  </div>
-                  
-                  <div className="p-5 pt-0 -mt-8 relative z-10">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-zinc-500 uppercase tracking-widest text-[9px] font-black mb-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{t("place.locationAndMap", "Location")}</span>
-                        </div>
-                        <p className="text-xs text-white font-bold leading-relaxed max-w-[200px]">
-                          {currentDisplayAddress || displayAddress}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 rounded-2xl bg-white text-black flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform active:scale-95">
-                        <Navigation className="w-5 h-5 fill-current" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -2014,18 +1976,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
               </div>
 
-              {/* Premium Contact Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Contact Information Stacked Cards */}
+              <div className="space-y-3">
                 {/* Website Card */}
                 {effectiveWebsite && (
                   <a
                     href={effectiveWebsite}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex flex-col gap-3 hover:bg-zinc-800/80 transition-all group"
+                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Globe className="w-5 h-5 text-blue-400" />
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Globe className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.website", "Website")}</span>
@@ -2038,10 +2000,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {hasGenuinePhone && (
                   <a
                     href={`tel:${effectivePhone}`}
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex flex-col gap-3 hover:bg-zinc-800/80 transition-all group"
+                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Phone className="w-5 h-5 text-emerald-400" />
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Phone className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.call", "Contact")}</span>
@@ -2056,10 +2018,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {effectiveEmail && (
                   <a
                     href={`mailto:${effectiveEmail}`}
-                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex flex-col gap-3 hover:bg-zinc-800/80 transition-all group"
+                    className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800/80 transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Mail className="w-5 h-5 text-amber-400" />
+                    <div className="w-12 h-12 rounded-2xl bg-amber-600/10 border border-amber-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Mail className="w-6 h-6 text-amber-400" />
                     </div>
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.email", "Email")}</span>
@@ -2069,9 +2031,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
 
                 {/* Hours Summary Card */}
-                <div className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex flex-col gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-purple-400" />
+                <div className="p-5 rounded-[2rem] bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-600/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                    <Clock className="w-6 h-6 text-purple-400" />
                   </div>
                   <div>
                     <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.hours", "Hours")}</span>
