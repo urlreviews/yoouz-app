@@ -708,8 +708,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
-                const resolvedBanner = isRealPhoto(place.bannerUrl) ? place.bannerUrl : (isRealPhoto(data.image) ? data.image : (place.bannerUrl || ""));
-                const resolvedLogo = (hasValidLogo && place.logoUrl) ? place.logoUrl : ((data.logo && !isFaviconUrl(data.logo)) ? data.logo : (place.logoUrl || ""));
+                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : (place.bannerUrl || ""));
+                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo) && !isGenericOrPlaceholderLogo(data.logo)) ? data.logo : ((hasValidLogo && place.logoUrl) ? place.logoUrl : (place.logoUrl || ""));
                 
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
@@ -721,33 +721,45 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   }
                 } catch(e) {}
 
-                if (isRealPhoto(data.image)) {
-                  setFetchedBannerUrl(data.image);
+                if (isRealPhoto(resolvedBanner)) {
+                  setFetchedBannerUrl(resolvedBanner);
                 }
-                if (onUpdatePlace && (isRealPhoto(data.image) || (data.logo && !hasValidLogo && !isFaviconUrl(data.logo)) || data.title || data.description || data.address || data.phone || data.category || data.openingHours || data.locations)) {
-                  onUpdatePlace({
-                    ...place,
-                    name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
-                    description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
-                    address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
-                    city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
-                    country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
-                    phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
-                    email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
-                    category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
-                    openingHours: data.openingHours || place.openingHours || "",
-                    locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
-                    lat: data.lat || place.lat || 0,
-                    lng: data.lng || place.lng || 0,
-                    bannerUrl: resolvedBanner || place.bannerUrl || "",
-                    ogImage: resolvedBanner || place.ogImage || "",
-                    logoUrl: resolvedLogo || place.logoUrl || "",
-                    avatarUrl: resolvedLogo || place.avatarUrl || "",
-                    brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
-                    website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
-                    photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
-                  });
+                const updatedPlaceObj = {
+                  ...place,
+                  name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
+                  description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
+                  address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
+                  city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
+                  country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
+                  phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
+                  email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
+                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
+                  openingHours: data.openingHours || place.openingHours || "",
+                  locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
+                  lat: data.lat || place.lat || 0,
+                  lng: data.lng || place.lng || 0,
+                  bannerUrl: resolvedBanner || place.bannerUrl || "",
+                  ogImage: resolvedBanner || place.ogImage || "",
+                  logoUrl: resolvedLogo || place.logoUrl || "",
+                  avatarUrl: resolvedLogo || place.avatarUrl || "",
+                  brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
+                  website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
+                  photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
+                };
+                if (onUpdatePlace) {
+                  onUpdatePlace(updatedPlaceObj);
                 }
+                // Persist directly to database
+                try {
+                  const saveTargetId = (place.brandDomain || data.domain || drawerDomain || place.id || "").toLowerCase().trim();
+                  if (saveTargetId) {
+                    fetch(`/api/nosql/places/${encodeURIComponent(saveTargetId)}`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(updatedPlaceObj)
+                    }).catch(() => {});
+                  }
+                } catch(pErr) {}
               }
             }
           })
@@ -755,6 +767,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             if (isMounted) {
               setIsEnriching(false); // Ensure loader is cleared even if connection fails
             }
+            fetchedTargetUrlsRef.current.delete(targetKey);
           });
 
         return () => { isMounted = false; };

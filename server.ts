@@ -241,21 +241,10 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
-      decoded.includes("justice") ||
-      decoded.includes("gavel") ||
-      decoded.includes("court") ||
-      decoded.includes("lawyer") ||
-      decoded.includes("attorney") ||
-      decoded.includes("legal") ||
-      decoded.includes("scale") ||
-      decoded.includes("blindfold") ||
-      decoded.includes("judge") ||
-      decoded.includes("malpractice") ||
-      decoded.includes("injury") ||
-      decoded.includes("accident") ||
-      decoded.includes("advocat") ||
-      decoded.includes("law-firm") ||
-      decoded.includes("lawfirm") ||
+      decoded.includes("justice-gavel") ||
+      decoded.includes("gavel-hammer") ||
+      decoded.includes("scale-of-justice") ||
+      decoded.includes("blindfold-statue") ||
       decoded.includes("shutterstock_") ||
       decoded.includes("istockphoto") ||
       decoded.includes("featured_image") ||
@@ -23564,7 +23553,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     // 0. Persistent Database Cache Lookup (Global Brain)
     if (bunnyDb) {
       try {
-        const cleanQDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+        const cleanQDom = cleanDomainName(cleanQ);
         // ONLY allow database lookup by exact domain/ID. 
         // Name-based lookup in the "Global Brain" is dangerous as it leads to cross-contamination 
         // if a business name is generic or if a record was previously corrupted with a wrong name.
@@ -23578,7 +23567,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         
         if (dbResult.rows && dbResult.rows.length > 0) {
           const row = dbResult.rows[0];
-          const rowId = (row.id as string) || "";
+          const rawRowId = (row.id as string) || "";
+          const rowId = cleanDomainName(rawRowId) || rawRowId;
           
           if (rowId && rowId.includes('.')) {
             // Guard against legacy fabricated domains synthesized from business names
@@ -23652,7 +23642,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     // 1. Explicit domain check - Live scrape the website directly so real banner, phone, address, and description are stored
     if (cleanQ.includes('.') && !cleanQ.includes(' ') && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(cleanQ)) {
-      const cleanDom = cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+      const cleanDom = cleanDomainName(cleanQ) || cleanQ.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
       const loc = KNOWN_ENTITY_LOCATIONS[cleanDom] || KNOWN_ENTITY_LOCATIONS[cleanDom.split('.')[0]];
       
       let domTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name || formatBusinessName(cleanDom);
@@ -24322,12 +24312,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
       if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
 
+      // If the query is an explicit URL or domain with a dot, strictly normalize to canonical clean domain
+      if (rawQuery.includes('.') && (!rawQuery.includes(' ') || rawQuery.startsWith('http'))) {
+        const potentialClean = cleanDomainName(rawQuery);
+        if (potentialClean && potentialClean.includes('.')) {
+          rawQuery = potentialClean;
+        }
+      }
+
       const resolveOnly = req.query.resolveOnly === 'true';
       const forceRefresh = req.query.refresh === 'true' || req.query.nocache === 'true';
 
       // Fast-path: If user wants resolve-only and passed a direct domain, return instantly in 0.0s
       if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ') && !forceRefresh) {
-        const cleanDom = rawQuery.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+        const cleanDom = cleanDomainName(rawQuery);
         console.log(`[Fast Resolve Only] Bypassing scrape for domain: ${cleanDom}`);
         return res.json({
           title: cleanDom.split('.')[0].toUpperCase(),
@@ -24341,7 +24339,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const activeDb = (global as any).bunnyDb || db;
       if (activeDb && rawQuery && !forceRefresh) {
         try {
-          const cleanQDom = rawQuery.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+          const cleanQDom = cleanDomainName(rawQuery);
           const isDomainQuery = cleanQDom.includes('.');
           const cachedPlace = await activeDb.execute({
             sql: isDomainQuery 
@@ -24455,8 +24453,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             locations: []
           });
         }
-      } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://') && targetUrl.includes('.')) {
-        targetUrl = 'https://' + targetUrl;
+      } else {
+        const cleanTgtDom = cleanDomainName(targetUrl);
+        if (cleanTgtDom && cleanTgtDom.includes('.')) {
+          targetUrl = 'https://' + cleanTgtDom;
+        } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+          targetUrl = 'https://' + targetUrl;
+        }
       }
 
       let parsedUrl: URL | null = null;
@@ -24473,7 +24476,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const ent = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
         if (ent) {
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
-          const realDomain = hasRealDomain ? ent.domain : "";
+          const realDomain = hasRealDomain ? cleanDomainName(ent.domain) : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
           const entityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
           return res.json({
@@ -24499,14 +24502,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let url = parsedUrl.origin;
       const domain = parsedUrl.hostname;
-      const cleanDomain = domain.replace(/^www\./i, "").toLowerCase();
+      const cleanDomain = cleanDomainName(domain) || domain;
+      const canonicalBaseUrl = `https://${cleanDomain}`;
+      url = canonicalBaseUrl;
       
       let title = '';
       let description = '';
       let image = '';
       let logo = '';
       let siteName = '';
-      let finalUrl = url;
+      let finalUrl = canonicalBaseUrl;
       let html = '';
       let $: any = null;
       let locInfo: any = {};
@@ -24520,7 +24525,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       
       try {
         let fetchResponse: any = null;
-        const candidateFetchUrls = [url, `https://www.${domain}`, `http://${domain}`];
+        const candidateFetchUrls = [canonicalBaseUrl, `https://www.${cleanDomain}`, url];
         for (const cUrl of candidateFetchUrls) {
           try {
             const resp = await fetch(cUrl, {
@@ -30318,14 +30323,49 @@ function getPlaceSlug(place: any): string {
   return clean || "yoouz.com";
 }
 
+const SERVER_TWO_PART_TLDS = new Set([
+  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk",
+  "com.au", "net.au", "org.au", "edu.au", "gov.au",
+  "co.nz", "org.nz", "net.nz", "govt.nz",
+  "co.il", "org.il", "net.il", "gov.il", "muni.il",
+  "com.br", "org.br", "net.br", "gov.br",
+  "com.tr", "org.tr", "net.tr", "gov.tr", "edu.tr",
+  "co.za", "org.za", "net.za", "gov.za",
+  "com.sg", "org.sg", "edu.sg", "gov.sg",
+  "com.my", "org.my", "net.my", "gov.my", "edu.my",
+  "com.mx", "org.mx", "net.mx", "edu.mx", "gob.mx",
+  "com.ar", "org.ar", "net.ar", "gov.ar",
+  "com.co", "org.co", "net.co", "gov.co",
+  "co.in", "org.in", "net.in", "gov.in", "edu.in",
+  "com.ph", "org.ph", "net.ph", "gov.ph",
+  "com.ng", "org.ng", "gov.ng", "edu.ng",
+  "com.es", "org.es", "nom.es",
+  "com.de", "org.de",
+  "com.pl", "org.pl", "net.pl",
+  "com.tw", "org.tw", "net.tw", "gov.tw",
+  "com.hk", "org.hk", "net.hk", "gov.hk",
+  "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp",
+  "co.kr", "or.kr", "ne.kr", "re.kr", "go.kr",
+  "com.cn", "org.cn", "net.cn", "gov.cn",
+  "com.ua", "org.ua", "net.ua", "gov.ua",
+  "co.th", "or.th", "ac.th", "go.th"
+]);
+
 function cleanDomainName(urlStr: any) {
   if (!urlStr) return "";
   try {
      let lower = String(urlStr).trim().toLowerCase();
-     lower = lower.replace(/^https?:\/\//, '');
-     lower = lower.replace(/^www[\.\-\/]/, '');
+     lower = lower.replace(/^https?:\/\//i, '');
+     lower = lower.replace(/^[\/\.\s_:@\-]+/, "");
      lower = lower.split('/')[0].split('?')[0].split('#')[0].split(':')[0];
+     lower = lower.replace(/%2f.*/i, "");
+
+     // Fix common domain TLD typos (e.g. .con/about -> .com)
+     lower = lower.replace(/\.(con|comm|cmo|cpm|xom)$/i, ".com");
+     lower = lower.replace(/\.(ner)$/i, ".net");
+     lower = lower.replace(/\.(og)$/i, ".org");
      
+     if (lower.endsWith("-co-uk")) lower = lower.replace(/-co-uk$/, ".co.uk");
      if (lower.endsWith("-com")) lower = lower.replace(/-com$/, ".com");
      if (lower.endsWith("-net")) lower = lower.replace(/-net$/, ".net");
      if (lower.endsWith("-org")) lower = lower.replace(/-org$/, ".org");
@@ -30338,16 +30378,37 @@ function cleanDomainName(urlStr: any) {
      if (lower.endsWith("-tech")) lower = lower.replace(/-tech$/, ".tech");
      if (lower.endsWith("-store")) lower = lower.replace(/-store$/, ".store");
      if (lower.endsWith("-be")) lower = lower.replace(/-be$/, ".be");
-     if (lower.endsWith("-co-uk")) lower = lower.replace(/-co-uk$/, ".co.uk");
 
-     lower = lower.replace(/^www[\.\-\/]/, '');
+     // Strip trailing language extensions / appended route slugs (e.g. .com.en -> .com, .com.about -> .com)
+     lower = lower.replace(/\.(com|org|net|biz|info|io|ai|app|co|dev|me|tech|site|online)\.(en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko|about|contact|home)$/i, '.$1');
+
+     // Strip www and known utility/subdomain prefixes repeatedly (e.g. web.whatsapp.com -> whatsapp.com)
+     const junkPrefixRegex = /^(?:www\d*|web\d*|m|mobile|app\d*|apps|my|login|signin|auth|accounts?|portal|admin|connect|secure|help|support|docs|faq|api|cdn|static|assets|media|mail|email|shop|store|news|blog|beta|dev|en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko)[\.\-]/i;
+     while (junkPrefixRegex.test(lower)) {
+       lower = lower.replace(junkPrefixRegex, "");
+     }
+
+     // Extract authentic root domain if domain still has 3+ parts (e.g. web.whatsapp.com -> whatsapp.com)
+     const parts = lower.split(".");
+     if (parts.length >= 3) {
+       const lastTwo = parts.slice(-2).join(".");
+       if (SERVER_TWO_PART_TLDS.has(lastTwo)) {
+         if (parts.length > 3) {
+           lower = parts.slice(-3).join(".");
+         }
+       } else {
+         lower = parts.slice(-2).join(".");
+       }
+     }
+
+     lower = lower.replace(/^[\/\.\s_-]+/, "").replace(/[\/\.\s_-]+$/, "").trim();
 
      if (!lower.includes(".") && lower.length > 0) {
         return "";
      }
      return lower;
   } catch(e) {
-     return urlStr.replace(/^(https?:\/\/)?(www[\.\-])?/i, '').split('/')[0];
+     return String(urlStr).replace(/^(https?:\/\/)?(www[\.\-])?/i, '').split('/')[0];
   }
 }
 

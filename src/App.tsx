@@ -43,7 +43,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage } from "./utils/placeUtils";
-import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
@@ -3963,7 +3963,13 @@ export function App() {
                   if (u.includes("unsplash.com") || u.includes("placeholder") || u.includes("injury-lawyer.jpg")) return "";
                   return url;
                 };
-                const effectiveBannerCandidate = cleanBanner(fetchedPlace?.bannerUrl) || cleanBanner(metaData.image) || "";
+                const isGoodPhoto = (u?: string | null) => Boolean(u && !isBadBanner(u) && !u.includes("/api/brand-banner"));
+                const effectiveBannerCandidate = isGoodPhoto(metaData.image) 
+                  ? metaData.image 
+                  : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
+                const effectiveLogoCandidate = (isValidLogo(metaData.logo)) 
+                  ? metaData.logo 
+                  : (existingValidLogo || (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
                 const enriched: Place = {
                   id: (metaData.domain || cleanId).toLowerCase(),
                   name: preservedName,
@@ -3977,8 +3983,8 @@ export function App() {
                   rating: fetchedPlace?.rating || 5,
                   totalReviews: fetchedPlace?.totalReviews || 1,
                   ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                  avatarUrl: fetchedLogo,
-                  logoUrl: fetchedLogo,
+                  avatarUrl: effectiveLogoCandidate,
+                  logoUrl: effectiveLogoCandidate,
                   bannerUrl: effectiveBannerCandidate,
                   ogImage: effectiveBannerCandidate,
                   photos: fetchedPlace?.photos && fetchedPlace.photos.length > 0 ? fetchedPlace.photos : (effectiveBannerCandidate ? [effectiveBannerCandidate] : []),

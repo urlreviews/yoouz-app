@@ -81,21 +81,10 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('${') ||
     u.includes('h:180') ||
     u.includes('qt=q:') ||
-    u.includes('justice') ||
-    u.includes('gavel') ||
-    u.includes('court') ||
-    u.includes('lawyer') ||
-    u.includes('attorney') ||
-    u.includes('legal') ||
-    u.includes('scale') ||
-    u.includes('blindfold') ||
-    u.includes('judge') ||
-    u.includes('malpractice') ||
-    u.includes('injury') ||
-    u.includes('accident') ||
-    u.includes('advocat') ||
-    u.includes('law-firm') ||
-    u.includes('lawfirm') ||
+    u.includes('justice-gavel') ||
+    u.includes('gavel-hammer') ||
+    u.includes('scale-of-justice') ||
+    u.includes('blindfold-statue') ||
     u.includes('shutterstock_') ||
     u.includes('istockphoto') ||
     u.includes('featured_image') ||
@@ -207,8 +196,19 @@ const DONLAN_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10
 </svg>`;
 export const DONLAN_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(DONLAN_LOGO_SVG)}`;
 
+export const WHATSAPP_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#25D366"/>
+  <path d="M50 18 C32.33 18 18 32.33 18 50 C18 55.97 19.64 61.56 22.49 66.38 L19.2 80.8 L34.02 76.91 C38.64 79.45 44.15 80.9 50 80.9 C67.67 80.9 82 66.57 82 50 C82 32.33 67.67 18 50 18 Z" fill="#ffffff"/>
+  <path d="M63.4 58.2 C62.7 60.3 59.1 62.1 57.2 62.4 C55.7 62.6 53.9 62.7 47.5 60 C39.4 56.6 34.2 48.4 33.8 47.9 C33.4 47.4 30.6 43.7 30.6 39.8 C30.6 36 32.5 34.2 33.4 33.3 C34 32.6 35 32.4 35.8 32.4 C36.6 32.4 37.4 32.4 38 34 C38.6 35.6 40.2 39.6 40.4 40 C40.6 40.4 40.7 41.1 40.4 41.7 C40.1 42.3 39.9 42.7 39.4 43.3 C38.9 43.9 38.4 44.4 37.9 45 C37.4 45.6 36.9 46.2 37.5 47.3 C38.1 48.4 40.4 52 43.7 55 C47.9 58.7 51.3 59.9 52.4 60.3 C53.5 60.7 54.1 60.6 54.7 59.9 C55.3 59.2 57.4 56.7 58.2 55.6 C59 54.5 59.7 54.7 60.7 55.1 C61.7 55.5 66.8 58.1 67.8 58.6 C68.8 59.1 69.5 59.5 69.8 60 C70 60.5 70 63.1 67.8 65.1 C65.6 67.1 63.4 58.2 63.4 58.2 Z" fill="#25D366"/>
+</svg>`;
+export const WHATSAPP_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(WHATSAPP_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "whatsapp.com": WHATSAPP_LOGO_DATA_URI,
+  "www.whatsapp.com": WHATSAPP_LOGO_DATA_URI,
+  "web.whatsapp.com": WHATSAPP_LOGO_DATA_URI,
+  "whatsapp": WHATSAPP_LOGO_DATA_URI,
   "bclaw.au": BCLAW_LOGO_DATA_URI,
   "www.bclaw.au": BCLAW_LOGO_DATA_URI,
   "donlanlawyers.com.au": DONLAN_LOGO_DATA_URI,

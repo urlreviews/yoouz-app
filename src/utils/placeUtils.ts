@@ -41,19 +41,52 @@ export function getReviewTime(v: any): number {
   return Math.max(fromMs, fromDt, fromRec, fromId, 0);
 }
 
+const TWO_PART_TLDS = new Set([
+  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk",
+  "com.au", "net.au", "org.au", "edu.au", "gov.au",
+  "co.nz", "org.nz", "net.nz", "govt.nz",
+  "co.il", "org.il", "net.il", "gov.il", "muni.il",
+  "com.br", "org.br", "net.br", "gov.br",
+  "com.tr", "org.tr", "net.tr", "gov.tr", "edu.tr",
+  "co.za", "org.za", "net.za", "gov.za",
+  "com.sg", "org.sg", "edu.sg", "gov.sg",
+  "com.my", "org.my", "net.my", "gov.my", "edu.my",
+  "com.mx", "org.mx", "net.mx", "edu.mx", "gob.mx",
+  "com.ar", "org.ar", "net.ar", "gov.ar",
+  "com.co", "org.co", "net.co", "gov.co",
+  "co.in", "org.in", "net.in", "gov.in", "edu.in",
+  "com.ph", "org.ph", "net.ph", "gov.ph",
+  "com.ng", "org.ng", "gov.ng", "edu.ng",
+  "com.es", "org.es", "nom.es",
+  "com.de", "org.de",
+  "com.pl", "org.pl", "net.pl",
+  "com.tw", "org.tw", "net.tw", "gov.tw",
+  "com.hk", "org.hk", "net.hk", "gov.hk",
+  "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp",
+  "co.kr", "or.kr", "ne.kr", "re.kr", "go.kr",
+  "com.cn", "org.cn", "net.cn", "gov.cn",
+  "com.ua", "org.ua", "net.ua", "gov.ua",
+  "co.th", "or.th", "ac.th", "go.th"
+]);
+
 /**
- * Cleanly extracts domain name from URL or text string
- * e.g., "https://www.jenny.be/en" -> "jenny.be"
- * "https://www.tajhotels.com/categories" -> "tajhotels.com"
- * "www-tajhotels-com" -> "tajhotels.com"
- * "tajhotels-com" -> "tajhotels.com"
- * "fiverr.com" -> "fiverr.com"
+ * Cleanly extracts domain name from URL or text string.
+ * Strictly guarantees clean root domains:
+ * - Strips protocol (https://, http://, //)
+ * - Strips URL paths (/about, /en, /contact), query strings, hashes, and ports
+ * - Strips junk/utility subdomains (web., m., mobile., app., login., portal., etc.)
+ * - Strips trailing language suffixes (e.g. .com.en -> .com)
+ * e.g. "web.whatsapp.com" -> "whatsapp.com"
+ * "https://web.whatsapp.com/about" -> "whatsapp.com"
+ * "whatsapp.com.en" -> "whatsapp.com"
+ * "m.facebook.com" -> "facebook.com"
+ * "firststrikeelectrical.co.uk" -> "firststrikeelectrical.co.uk"
  */
 export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
   let clean = input.trim().toLowerCase();
   
-  // Try standard URL hostname parsing if valid protocol or leading slashes
+  // 1. Try standard URL hostname parsing if valid protocol or leading slashes
   try {
     if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("//")) {
       const urlObj = new URL(clean.startsWith("//") ? `https:${clean}` : clean);
@@ -63,20 +96,20 @@ export function extractCleanDomain(input?: string | null): string {
     }
   } catch (e) {}
 
-  // Remove any remaining protocol
+  // 2. Remove any remaining protocol & leading slashes, colons, dots, symbols
   clean = clean.replace(/^https?:\/\//i, "");
-  // Remove leading slashes and leading dots
-  clean = clean.replace(/^[\/\.\s]+/, "");
-  // Remove www. or www- or www/ or www2. or www3.
-  clean = clean.replace(/^www\d*[\.\-\/]/i, "");
-  // Remove query, hash, and subpath
-  clean = clean.split("/")[0].split("?")[0].split("#")[0];
-  // Remove trailing colon and port
-  clean = clean.split(":")[0];
-  // Remove any trailing slashes or dots
-  clean = clean.replace(/[\/\.\s]+$/, "").trim();
+  clean = clean.replace(/^[\/\.\s_:@\-]+/, "");
+
+  // 3. Remove query, hash, subpaths (/about, /en, etc.), ports, and percent-encoded slashes (%2f)
+  clean = clean.split("/")[0].split("?")[0].split("#")[0].split(":")[0];
+  clean = clean.replace(/%2f.*/i, "");
+
+  // 3b. Fix common typos in TLDs (e.g. .con/about -> .com, .comm -> .com)
+  clean = clean.replace(/\.(con|comm|cmo|cpm|xom)$/i, ".com");
+  clean = clean.replace(/\.(ner)$/i, ".net");
+  clean = clean.replace(/\.(og)$/i, ".org");
   
-  // If slug like "fiverr-com", "digitalpark-ae", "mastercard-com", "legal500-com"
+  // 4. Handle slug suffixes like "fiverr-com", "digitalpark-ae", "mastercard-com", "legal500-com"
   if (clean.endsWith("-co-uk")) clean = clean.replace(/-co-uk$/, ".co.uk");
   if (clean.endsWith("-com")) clean = clean.replace(/-com$/, ".com");
   if (clean.endsWith("-net")) clean = clean.replace(/-net$/, ".net");
@@ -107,11 +140,30 @@ export function extractCleanDomain(input?: string | null): string {
   if (clean.endsWith("-es")) clean = clean.replace(/-es$/, ".es");
   if (clean.endsWith("-it")) clean = clean.replace(/-it$/, ".it");
 
-  // Strip again in case of www remaining
-  clean = clean.replace(/^www\d*[\.\-\/]/i, "");
+  // 5. Ending Clean: Strip trailing language extensions / appended route slugs (e.g. .com.en -> .com, .org.fr -> .org, .net.es -> .net, .com.about -> .com)
+  clean = clean.replace(/\.(com|org|net|biz|info|io|ai|app|co|dev|me|tech|site|online)\.(en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko|about|contact|home)$/i, '.$1');
 
-  // Strip any trailing slash or path residue
-  clean = clean.split("/")[0].replace(/[\/\.]+$/, "").trim();
+  // 6. Beginning Clean: Strip www and known utility/subdomain prefixes repeatedly (e.g. web.whatsapp.com -> whatsapp.com, m.facebook.com -> facebook.com)
+  const junkPrefixRegex = /^(?:www\d*|web\d*|m|mobile|app\d*|apps|my|login|signin|auth|accounts?|portal|admin|connect|secure|help|support|docs|faq|api|cdn|static|assets|media|mail|email|shop|store|news|blog|beta|dev|en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko)[\.\-]/i;
+  while (junkPrefixRegex.test(clean)) {
+    clean = clean.replace(junkPrefixRegex, "");
+  }
+
+  // 7. Extract authentic root domain if domain still has 3+ parts (e.g. web.whatsapp.com -> whatsapp.com, sub.company.co.uk -> company.co.uk)
+  const parts = clean.split(".");
+  if (parts.length >= 3) {
+    const lastTwo = parts.slice(-2).join(".");
+    if (TWO_PART_TLDS.has(lastTwo)) {
+      if (parts.length > 3) {
+        clean = parts.slice(-3).join(".");
+      }
+    } else {
+      clean = parts.slice(-2).join(".");
+    }
+  }
+
+  // 8. Final strip of any trailing or leading symbols, slashes, or dots
+  clean = clean.replace(/^[\/\.\s_-]+/, "").replace(/[\/\.\s_-]+$/, "").trim();
 
   return clean;
 }
@@ -257,6 +309,10 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "whatsapp": "WhatsApp",
+  "whatsapp.com": "WhatsApp",
+  "www.whatsapp.com": "WhatsApp",
+  "web.whatsapp.com": "WhatsApp",
   "american express": "American Express",
   "americanexpress": "American Express",
   "americanexpress.com": "American Express",

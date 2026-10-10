@@ -125,14 +125,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         const cleaned: string[] = [];
         for (const item of rawSaved) {
           if (!item || typeof item !== "string") continue;
-          const trimmed = item.trim();
-          if (trimmed.length < 2) continue; // Purge single-letter or invalid items
-          if (!cleaned.includes(trimmed)) {
-            cleaned.push(trimmed);
+          const clean = extractCleanDomain(item) || item.trim().toLowerCase();
+          if (clean && clean.length >= 2 && clean !== "web.whatsapp.com" && !cleaned.includes(clean)) {
+            cleaned.push(clean);
           }
         }
-        setRecentSearches(cleaned);
-        localStorage.setItem("yoouz_recent_searches", JSON.stringify(cleaned));
+        setRecentSearches(cleaned.slice(0, 8));
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(cleaned.slice(0, 8)));
       }
     } catch {}
     
@@ -307,10 +306,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
     setSearchErrorNotification(null);
     const isRealDomain = isValidDomainUrl(cleanUrl);
 
-    // Store recent searches (use cleanUrl if domain, otherwise fall back to trimmed name)
-    const storeTerm = cleanUrl || trimmed;
-    if (storeTerm) {
-      const newRecent = [storeTerm, ...recentSearches.filter(s => s && s !== storeTerm)].slice(0, 10);
+    // Store recent searches (strictly clean domain or clean term)
+    const storeTerm = extractCleanDomain(cleanUrl || trimmed) || trimmed;
+    if (storeTerm && storeTerm !== "web.whatsapp.com") {
+      const newRecent = [storeTerm, ...recentSearches.filter(s => {
+        const sClean = extractCleanDomain(s) || s;
+        return sClean !== storeTerm;
+      })].slice(0, 8);
       setRecentSearches(newRecent);
       try {
         localStorage.setItem("yoouz_recent_searches", JSON.stringify(newRecent));
@@ -891,7 +893,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors" dir="auto">
                             {title}
                           </div>
-                          {cleanUrl ? (
+                          {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
                             <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
                               {cleanUrl}
                             </div>
@@ -932,7 +934,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors" dir="auto">
                             {title}
                           </div>
-                          {cleanUrl ? (
+                          {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
                             <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
                               {cleanUrl}
                             </div>

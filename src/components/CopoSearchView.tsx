@@ -54,19 +54,37 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     try {
       const rawSaved = JSON.parse(localStorage.getItem("yoouz_recent_searches") || "[]");
       if (Array.isArray(rawSaved)) {
-        setRecentSearches(rawSaved.filter((s): s is string => typeof s === "string" && s.trim().length > 0));
+        const cleaned: string[] = [];
+        for (const item of rawSaved) {
+          if (!item || typeof item !== "string") continue;
+          const clean = extractCleanDomain(item) || item.trim().toLowerCase();
+          if (clean && clean.length >= 2 && clean !== "web.whatsapp.com" && !cleaned.includes(clean)) {
+            cleaned.push(clean);
+          }
+        }
+        setRecentSearches(cleaned.slice(0, 8));
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(cleaned.slice(0, 8)));
       }
     } catch (e) {}
   }, []);
 
   const saveRecentSearch = (term: string) => {
     if (!term || !term.trim()) return;
-    const cleanTerm = term.trim();
-    const updated = [cleanTerm, ...recentSearches.filter(s => s !== cleanTerm)].slice(0, 8);
-    setRecentSearches(updated);
-    try {
-      localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
-    } catch (e) {}
+    const cleanDomain = extractCleanDomain(term);
+    const cleanTerm = cleanDomain || term.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+    if (!cleanTerm || cleanTerm === "web.whatsapp.com") return;
+    setRecentSearches((prev) => {
+      // Remove any previous duplicate or raw un-resolved query of the same term
+      const filtered = prev.filter((s) => {
+        const sClean = extractCleanDomain(s) || s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
+        return sClean !== cleanTerm;
+      });
+      const updated = [cleanTerm, ...filtered].slice(0, 8);
+      try {
+        localStorage.setItem("yoouz_recent_searches", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   const clearRecentSearches = () => {
@@ -236,7 +254,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     const rawQuery = (overrideQuery || query).trim();
     if (!rawQuery) return;
 
-    saveRecentSearch(rawQuery);
+    const cleanUrlImmediate = extractCleanDomain(rawQuery);
+    if (cleanUrlImmediate && isValidDomainUrl(cleanUrlImmediate)) {
+      saveRecentSearch(cleanUrlImmediate);
+    }
 
     // Clean query to remove obvious typos and junk that breaks Google search
     const cleanRawQuery = rawQuery
@@ -389,6 +410,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             cleanUrl = data.domain;
             preloadedMeta = data;
             console.info("[Search] Backend search successfully resolved domain:", cleanUrl);
+            saveRecentSearch(cleanUrl);
           }
         }
       } catch (bErr) {
@@ -486,7 +508,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       try {
          const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
          const resp = await fetch(`/api/url-metadata?${queryParam}`, {
-           signal: AbortSignal.timeout(15000)
+           signal: AbortSignal.timeout(30000)
          });
          if (currentRequestId !== searchRequestIdRef.current) return;
          if (resp.ok) {
@@ -552,10 +574,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              if (discoveredDom && onOpenPlace) {
                onOpenPlace(discoveredDom);
              }
+             if (discoveredDom) {
+               saveRecentSearch(discoveredDom);
+             }
            }
          }
       } catch (err) {
          console.warn("Metadata fetch error:", err);
+         if (isRealDomain && cleanUrl) {
+           try {
+             const fallbackResp = await fetch(`/api/nosql/places/${encodeURIComponent(cleanUrl)}`);
+             if (fallbackResp.ok) {
+               const fbData = await fallbackResp.json();
+               if (fbData && (fbData.bannerUrl || fbData.logoUrl || fbData.name)) {
+                 const merged = { ...currentPlace, ...fbData };
+                 setSearchedPlace(merged);
+                 if (onAddPlace) onAddPlace(merged);
+               }
+             }
+           } catch(fbErr) {}
+         }
       } finally {
          if (currentRequestId === searchRequestIdRef.current) setIsEnriching(false);
       }
@@ -658,14 +696,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   </div>
                   <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
                     {recentSearches.map((term, idx) => {
-                      const cleanUrl = extractCleanDomain(term);
-                      const title = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(term);
+                      const isRealDomain = isValidDomainUrl(term) || (term.includes(".") && !term.includes(" "));
+                      const cleanUrl = isRealDomain ? extractCleanDomain(term) : "";
+                      const title = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
+                        || (isRealDomain ? formatBusinessName(cleanUrl) : formatBusinessName(term));
                       return (
                         <button
                           key={`recent-${idx}`}
                           onClick={() => {
-                            setQuery(term);
-                            handleSearch(undefined, term);
+                            setQuery(cleanUrl || term);
+                            handleSearch(undefined, cleanUrl || term, title);
                           }}
                           className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
                         >
@@ -681,7 +721,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                             <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
                               {title}
                             </div>
-                            {cleanUrl ? (
+                            {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
                               <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
                                 {cleanUrl}
                               </div>
