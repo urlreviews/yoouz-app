@@ -1960,20 +1960,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
                   <Sparkles className="w-32 h-32 text-white" />
                 </div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4 flex items-center gap-2">
-                  <span className="w-6 h-[1px] bg-zinc-800"></span>
-                  {t("place.theStory", "The Story")}
-                </h4>
-                <p className="text-sm md:text-base text-zinc-200 leading-[1.8] font-medium tracking-tight">
+                <p className="text-sm md:text-sm text-zinc-200 leading-[1.7] font-medium tracking-tight">
                   {getEffectivePlaceDescription(place)}
                 </p>
-                {place.category && (
-                  <div className="mt-6 flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                      {place.category}
-                    </span>
-                  </div>
-                )}
               </div>
 
               {/* Contact Information Stacked Cards */}
@@ -1984,7 +1973,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     href={effectiveWebsite}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
                     <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
                       <Globe className="w-5 h-5 text-zinc-400" />
@@ -2000,7 +1989,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {hasGenuinePhone && (
                   <a
                     href={`tel:${effectivePhone}`}
-                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
                     <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
                       <Phone className="w-5 h-5 text-zinc-400" />
@@ -2018,7 +2007,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {effectiveEmail && (
                   <a
                     href={`mailto:${effectiveEmail}`}
-                    className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
                   >
                     <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
                       <Mail className="w-5 h-5 text-zinc-400" />
@@ -2031,7 +2020,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 )}
 
                 {/* Hours Summary Card */}
-                <div className="p-4 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4">
+                <div className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
                     <Clock className="w-5 h-5 text-zinc-400" />
                   </div>
@@ -2064,24 +2053,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent pointer-events-none" />
                   </div>
                   
-                  <div className="p-5 space-y-4">
+                  <div className="p-3 space-y-2">
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1">
-                        <p className="text-sm text-white font-bold leading-relaxed">
+                        <p className="text-xs text-white font-bold leading-relaxed">
                           {currentDisplayAddress || displayAddress}
                         </p>
                       </div>
                       <button 
                         onClick={handleOpenDirections}
-                        className="px-4 py-2 rounded-xl bg-zinc-800 text-white font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-zinc-700 transition-all"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 text-white font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-zinc-700 transition-all shrink-0"
                       >
                         {t("place.getDirections", "Directions")}
                       </button>
                     </div>
                     {/* Operating Hours Table */}
                     {hasGenuineHours && (
-                      <div className="pt-3 border-t border-zinc-800/60">
-                        <p className="text-xs text-zinc-300 font-medium leading-loose whitespace-pre-line">
+                      <div className="pt-2 border-t border-zinc-800/60">
+                        <p className="text-[10px] text-zinc-300 font-medium leading-relaxed whitespace-pre-line">
                           {effectiveHours || place.openingHours}
                         </p>
                       </div>
@@ -2155,7 +2144,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {t("place.trustAndSafety", "Trust & Safety")}
                 </h4>
                 
-                <div className={`p-5 rounded-3xl border transition-all ${
+                <div className={`p-4 rounded-3xl border transition-all ${
                   isClaimed 
                     ? "bg-zinc-900/50 border-zinc-800/80" 
                     : "bg-zinc-900/40 border-dashed border-zinc-800"
@@ -2208,14 +2197,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               )}
 
-              {/* Footer Credits */}
-              <div className="py-10 text-center space-y-2 opacity-30">
-                <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Powered by Yoouz</span>
-                </div>
-                <p className="text-[9px] text-zinc-600 font-medium">Last updated: {new Date().toLocaleDateString()}</p>
-              </div>
+              {/* Footer Credits Removed */}
             </div>
           )}
         </div>
