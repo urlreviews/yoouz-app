@@ -6387,6 +6387,13 @@ function resolveCanonicalPlaceSlug(item: any, rawFallbackId?: string): string {
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
     const itemMap = new Map<string, any>();
+    
+    // Safety check for collection name to prevent SQL injection or weird parse errors like "None"
+    const validCollections = ['users', 'places', 'videoReviews', 'chats', 'notifications', 'comments', 'likes', 'shares', 'bookmarks', 'follows', 'saved_creators', 'contact_requests', 'nosql_items'];
+    if (!colName || colName === 'None' || !validCollections.includes(colName)) {
+      console.warn(`⚠️ [Server] Invalid collection request: ${colName}`);
+      return [];
+    }
 
     // 1. Query Bunny Database (Cloud libSQL) if configured
     const bunnyDb = getBunnyDb();
@@ -8146,6 +8153,14 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
       } catch (sqlErr) {}
     }
 
+    // Real-time generic broadcast for NoSQL updates
+    broadcastSseEvent({
+      type: "nosql_updated",
+      collection: colName,
+      id,
+      data
+    });
+
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 };
@@ -8590,6 +8605,14 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
         sql: `DELETE FROM ${colName} WHERE id = ?`,
         args: [id]
       });
+      
+      // Generic real-time broadcast for NoSQL deletions
+      broadcastSseEvent({
+        type: "nosql_deleted",
+        collection: colName,
+        id
+      });
+
       if (colName === 'comments') {
           // Trigger sync-comments-cache asynchronously
           fetch("http://localhost:3000/api/system/sync-comments-cache", { method: "POST" }).catch(console.error);
@@ -13553,10 +13576,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       // 0. Ensure videoReviews interaction counts strictly match live database table rows
       await bunnyDb.execute(`
         UPDATE videoReviews 
-        SET likesCount = COALESCE((SELECT COUNT(*) FROM likes WHERE likes.videoId = videoReviews.id), 0),
-            bookmarksCount = COALESCE((SELECT COUNT(*) FROM bookmarks WHERE bookmarks.videoId = videoReviews.id), 0),
-            sharesCount = COALESCE((SELECT COUNT(*) FROM shares WHERE shares.videoId = videoReviews.id), 0),
-            commentsCount = COALESCE((SELECT COUNT(*) FROM comments WHERE comments.videoId = videoReviews.id), 0)
+        SET likesCount = (SELECT COUNT(*) FROM likes WHERE likes.videoId = videoReviews.id),
+            bookmarksCount = (SELECT COUNT(*) FROM bookmarks WHERE bookmarks.videoId = videoReviews.id),
+            sharesCount = (SELECT COUNT(*) FROM shares WHERE shares.videoId = videoReviews.id),
+            commentsCount = (SELECT COUNT(*) FROM comments WHERE comments.videoId = videoReviews.id)
       `).catch(() => {});
 
       // 1. Ensure Yoouz place exists with canonical ID 'yoouz.com' and rich metadata
@@ -16359,10 +16382,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       // Sync to BunnyDB Admin if active
       
 
+      // Real-time broadcast for share count increment
       broadcastSseEvent({
         type: "video_shared",
         videoId,
         sharesCount: nextShares,
+        shares: nextShares,
         userId: userId || ""
       });
 
@@ -18303,6 +18328,17 @@ app.post("/api/videos/save-review", async (req, res) => {
                   sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
                   args: [JSON.stringify(pData), pRow.id]
                 });
+
+                // Broadcast place update so all clients update their rating/counts in real-time
+                broadcastSseEvent({
+                  type: "place_updated",
+                  placeId: pRow.id,
+                  updates: {
+                    rating: pData.rating,
+                    totalReviews: pData.totalReviews,
+                    videoReviewCount: pData.videoReviewCount
+                  }
+                });
               }
             } catch (plErr) {
               console.warn("Place rating recalculation error:", plErr);
@@ -18341,6 +18377,67 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       return res.json({ success: true, videoId, review: updatedReview });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get all business places from BunnyDB
+  app.get("/api/places", async (req, res) => {
+    try {
+      const bunnyDb = getBunnyDb();
+      if (!bunnyDb) {
+        return res.json({ success: true, places: [] });
+      }
+      const queryRes = await bunnyDb.execute("SELECT id, name, address, category, logoUrl, data FROM places");
+      const places = (queryRes.rows || []).map((row: any) => {
+        let pData: any = {};
+        try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+        return {
+          id: row.id,
+          name: row.name,
+          address: row.address,
+          category: row.category,
+          logoUrl: row.logoUrl,
+          ...pData
+        };
+      });
+      return res.json({ success: true, places });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get single place detail from BunnyDB
+  app.get("/api/places/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bunnyDb = getBunnyDb();
+      if (!bunnyDb) return res.status(503).json({ error: "Database not available" });
+      
+      const queryRes = await bunnyDb.execute({
+        sql: "SELECT id, name, address, category, logoUrl, data FROM places WHERE id = ? OR name = ? LIMIT 1",
+        args: [id, id]
+      });
+      
+      if (!queryRes || !queryRes.rows || queryRes.rows.length === 0) {
+        return res.status(404).json({ error: "Place not found" });
+      }
+      
+      const row = queryRes.rows[0];
+      let pData: any = {};
+      try { pData = typeof (row as any).data === 'string' ? JSON.parse((row as any).data) : ((row as any).data || {}); } catch(e){}
+      
+      const result = {
+        id: (row as any).id,
+        name: (row as any).name,
+        address: (row as any).address,
+        category: (row as any).category,
+        logoUrl: (row as any).logoUrl,
+        ...pData
+      };
+      
+      return res.json({ success: true, place: result });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -31988,22 +32085,21 @@ function injectOpenGraphTags(html: string, meta: any) {
           sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET
-                  userId = excluded.userId,
-                  authorName = excluded.authorName,
-                  authorAvatar = excluded.authorAvatar,
-                  placeId = excluded.placeId,
-                  placeName = excluded.placeName,
+                  userId = COALESCE(NULLIF(excluded.userId, ''), videoReviews.userId),
+                  authorName = COALESCE(NULLIF(excluded.authorName, ''), videoReviews.authorName),
+                  authorAvatar = COALESCE(NULLIF(excluded.authorAvatar, ''), videoReviews.authorAvatar),
+                  placeId = COALESCE(NULLIF(excluded.placeId, ''), videoReviews.placeId),
+                  placeName = COALESCE(NULLIF(excluded.placeName, ''), videoReviews.placeName),
                   rating = excluded.rating,
-                  videoUrl = excluded.videoUrl,
-                  thumbnailUrl = excluded.thumbnailUrl,
-                  duration = excluded.duration,
-                  likesCount = excluded.likesCount,
-                  bookmarksCount = excluded.bookmarksCount,
-                  sharesCount = excluded.sharesCount,
-                  commentsCount = excluded.commentsCount,
-                  viewsCount = excluded.viewsCount,
+                  videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
+                  thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
+                  duration = COALESCE(NULLIF(excluded.duration, 0), videoReviews.duration),
+                  likesCount = CASE WHEN excluded.likesCount > COALESCE(videoReviews.likesCount, 0) THEN excluded.likesCount ELSE COALESCE(videoReviews.likesCount, 0) END,
+                  bookmarksCount = CASE WHEN excluded.bookmarksCount > COALESCE(videoReviews.bookmarksCount, 0) THEN excluded.bookmarksCount ELSE COALESCE(videoReviews.bookmarksCount, 0) END,
+                  sharesCount = CASE WHEN excluded.sharesCount > COALESCE(videoReviews.sharesCount, 0) THEN excluded.sharesCount ELSE COALESCE(videoReviews.sharesCount, 0) END,
+                  commentsCount = CASE WHEN excluded.commentsCount > COALESCE(videoReviews.commentsCount, 0) THEN excluded.commentsCount ELSE COALESCE(videoReviews.commentsCount, 0) END,
+                  viewsCount = CASE WHEN excluded.viewsCount > COALESCE(videoReviews.viewsCount, 0) THEN excluded.viewsCount ELSE COALESCE(videoReviews.viewsCount, 0) END,
                   data = excluded.data,
-                  createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
                   updatedAt = CURRENT_TIMESTAMP`,
           args: [
             r.id,

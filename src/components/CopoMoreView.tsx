@@ -660,61 +660,61 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-0.5">
             <button
               onClick={() => setActiveTab("about")}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "about"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <Info className="w-4 h-4 shrink-0" />
+              <Info className="w-5 h-5 shrink-0" />
               <span>{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("faq")}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "faq"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <HelpCircle className="w-4 h-4 shrink-0" />
+              <HelpCircle className="w-5 h-5 shrink-0" />
               <span>{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("business")}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "business"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <Building2 className="w-4 h-4 shrink-0" />
+              <Building2 className="w-5 h-5 shrink-0" />
               <span>{t("trustCenter.forBusinesses", "For Businesses")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("security")}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "security"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <Shield className="w-4 h-4 shrink-0" />
+              <Shield className="w-5 h-5 shrink-0" />
               <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
             </button>
 
             <button
               onClick={() => setActiveTab("language")}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "language"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <Globe className="w-4 h-4 shrink-0" />
+              <Globe className="w-5 h-5 shrink-0" />
               <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
             </button>
 
@@ -724,13 +724,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 setSubmitSuccess(false);
                 setSubmitError("");
               }}
-              className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border ${
+              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
                 activeTab === "contact"
                   ? "bg-white text-zinc-950 border-white shadow-sm font-black"
                   : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
               }`}
             >
-              <Mail className="w-4 h-4 shrink-0" />
+              <Mail className="w-5 h-5 shrink-0" />
               <span>{t("trustCenter.contactSupport", "Support")}</span>
             </button>
           </div>

@@ -112,6 +112,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   // Unconditional ref hook for share deduplication
   const recordedSharesSet = useRef<Set<string>>(new Set());
+  const sheetOpenRecordedRef = useRef<string | null>(null);
 
   // Reset copied states and view on open
   useEffect(() => {
@@ -123,6 +124,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       setSearchQuery("");
       setImageLoaded(false);
       setImageError(false);
+
+      // Auto-record a "share sheet opened" interaction once per video per session
+      if (video?.id && sheetOpenRecordedRef.current !== video.id) {
+        sheetOpenRecordedRef.current = video.id;
+        recordShareAction("sheet_open");
+      }
     }
   }, [isModalOpen, video?.id]);
 

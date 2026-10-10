@@ -68,6 +68,32 @@ import { buildCommentTree } from "./utils/commentUtils";
 import { resolveMessageTimestampMs } from "./utils/dateUtils";
 
 export function App() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem("copo_user_profile");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (isUserDeleted(parsed)) {
+          localStorage.removeItem("copo_user_profile");
+          localStorage.removeItem("copo_user");
+          localStorage.removeItem("copo_business_verified_session");
+          return null;
+        }
+        const storedNotifs = localStorage.getItem("copo_notification_settings");
+        if (storedNotifs) {
+          try {
+            parsed.notificationSettings = {
+              ...DEFAULT_NOTIFICATION_PREFERENCES,
+              ...JSON.parse(storedNotifs)
+            };
+          } catch (e) {}
+        }
+        return parsed;
+      }
+    } catch (e) {}
+    return null;
+  });
+
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
     // Current App Version Timestamp
@@ -90,77 +116,86 @@ export function App() {
   }, []);
 
   // 1. Core State with LocalStorage Persistence (Instant Logo & Banner Caching)
-  const [places, setPlaces] = useState<Place[]>(() => {
-    const defaultYoouzPlace: Place = {
-      ...derivePlaceFromEmailOrDomain('yoouz.com', []),
-      id: 'yoouz.com',
-      name: 'Yoouz',
-      category: 'Video Reviews & Discovery Platform',
-      categoryType: 'all',
-      address: '',
-      city: '',
-      country: '',
-      website: 'https://yoouz.com',
-      brandDomain: 'yoouz.com',
-      logoUrl: YOOUZ_LOGO_DATA_URI,
-      avatarUrl: YOOUZ_LOGO_DATA_URI,
-      isClaimed: true,
-      isVerified: true,
-      claimedByEmail: 'info@yoouz.com',
-      rating: 5.0,
-      totalReviews: 1
-    } as Place;
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [isPlacesLoaded, setIsPlacesLoaded] = useState(false);
 
-    try {
-      const deletedPlaceIds = getDeletedPlaceIds();
-      const cached = localStorage.getItem("yoouz_cached_places");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          const validParsed = parsed;
-          const list = validParsed
-            .filter((p: any) => !isPlaceDeleted(p, deletedPlaceIds))
-            .filter((p: any) => Boolean(p && p.id && p.id !== "business" && p.id !== "business-1"))
-            .map((p: any) => {
-              // Strip any mock/fake/unsplash banners aggressively from the local cache on boot
-              if (p.bannerUrl && (p.bannerUrl.includes('unsplash.com') || p.bannerUrl.includes('placeholder') || p.bannerUrl.includes('mock'))) {
-                p.bannerUrl = "";
-              }
-              if (p.ogImage && (p.ogImage.includes('unsplash.com') || p.ogImage.includes('placeholder') || p.ogImage.includes('mock'))) {
-                p.ogImage = "";
-              }
-              const isYoouz = p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz') || p.brandDomain === 'yoouz.com';
-              let finalWebsite = p.website || '';
-              if (finalWebsite.includes('g.com') && p.id && p.id !== 'g.com') {
-                finalWebsite = p.id.includes('.') ? `https://${p.id}` : '';
-              }
-              return {
-                ...p,
-                logoUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.logoUrl,
-                avatarUrl: isYoouz ? YOOUZ_LOGO_DATA_URI : p.avatarUrl,
-                address: isYoouz ? "" : (p.address?.includes("1111 Lincoln") ? "" : p.address),
-                city: isYoouz ? "" : (p.city?.includes("Miami Beach") ? "" : p.city),
-                country: isYoouz ? "" : p.country,
-                lat: isYoouz ? 0 : p.lat,
-                lng: isYoouz ? 0 : p.lng,
-                isClaimed: isYoouz ? true : Boolean(p.isClaimed),
-                isVerified: isYoouz ? true : Boolean(p.isVerified),
-                claimedByEmail: isYoouz ? 'info@yoouz.com' : p.claimedByEmail,
-                rating: typeof p.rating === "number" && !isNaN(p.rating) ? p.rating : (Number(p.rating) || 5.0),
-                totalReviews: typeof p.totalReviews === "number" ? p.totalReviews : (Number(p.totalReviews) || 0),
-                website: finalWebsite
-              };
-            });
-          if (!list.some(p => p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz'))) {
-            list.unshift(defaultYoouzPlace);
-          }
-          return list;
+  // Load places from server on mount
+  useEffect(() => {
+    let active = true;
+    const fetchPlaces = async () => {
+      try {
+        const res = await fetch("/api/places");
+        const data = await res.json();
+        if (active && data && Array.isArray(data.places)) {
+          setPlaces(data.places);
+          setIsPlacesLoaded(true);
+          try {
+            localStorage.setItem("yoouz_cached_places", JSON.stringify(data.places));
+          } catch (e) {}
         }
+      } catch (err) {
+        console.warn("Error fetching places:", err);
       }
-    } catch(e){}
-    return [defaultYoouzPlace];
-  });
-  
+    };
+    fetchPlaces();
+    return () => { active = false; };
+  }, []);
+
+  // Real-time place updates listener
+  useEffect(() => {
+    let sse: EventSource | null = null;
+    let reconnectTimeout: any = null;
+
+    const setupSse = () => {
+      sse = new EventSource("/api/sse");
+      sse.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === "place_updated" && payload.placeId) {
+            setPlaces((prev) => prev.map((p) => 
+              p.id === payload.placeId ? { ...p, ...payload.updates } : p
+            ));
+          } else if (payload.type === "video_bookmarked" && payload.videoId === "place_bookmark" && payload.placeId) {
+            // Real-time sync for saved places
+            const currentEmail = currentUser?.email || auth.currentUser?.email;
+            if (payload.userId === currentEmail) {
+              setSavedPlaceIds((prev) => {
+                if (payload.isBookmarked) {
+                  return Array.from(new Set([payload.placeId, ...prev]));
+                } else {
+                  return prev.filter(id => id !== payload.placeId);
+                }
+              });
+            }
+          } else if (payload.type === "nosql_updated" && payload.collection === "saved_creators") {
+            const currentEmail = currentUser?.email || auth.currentUser?.email;
+            if (payload.data?.userId === currentEmail && payload.data?.creatorName) {
+              const name = String(payload.data.creatorName).toLowerCase();
+              setSavedCreators((prev) => Array.from(new Set([...prev, name])));
+            }
+          } else if (payload.type === "nosql_deleted" && payload.collection === "saved_creators") {
+            // For deletions, the ID usually contains the name
+            if (payload.id && payload.id.includes('_')) {
+              const parts = payload.id.split('_');
+              const name = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
+              setSavedCreators((prev) => prev.filter(n => n !== name));
+            }
+          }
+        } catch (e) {}
+      };
+      sse.onerror = () => {
+        if (sse) sse.close();
+        reconnectTimeout = setTimeout(setupSse, 5000);
+      };
+    };
+
+    setupSse();
+    return () => {
+      if (sse) sse.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem("yoouz_cached_places", JSON.stringify(places));
@@ -187,6 +222,36 @@ export function App() {
   });
   const [messages, setMessages] = useState<CopoMessage[]>([]);
   const [allRegisteredUsers, setAllRegisteredUsers] = useState<any[]>([]);
+
+  // Load user bookmarks & saved creators from server on mount/login
+  useEffect(() => {
+    const currentEmail = currentUser?.email || auth.currentUser?.email;
+    if (!currentEmail) return;
+
+    const loadUserData = async () => {
+      try {
+        const res = await fetch(`/api/interactions/user-bookmarks?userId=${encodeURIComponent(currentEmail)}`);
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.savedPlaceIds) && data.savedPlaceIds.length > 0) {
+            setSavedPlaceIds((prev) => Array.from(new Set([...prev, ...data.savedPlaceIds])));
+          }
+        }
+
+        // Load saved creators from NoSQL
+        const creatorsRes = await fetch(`/api/nosql/saved_creators?userId=${encodeURIComponent(currentEmail)}`);
+        const creatorsData = await creatorsRes.json();
+        if (Array.isArray(creatorsData)) {
+          const names = creatorsData.map((c: any) => String(c.creatorName).toLowerCase());
+          setSavedCreators((prev) => Array.from(new Set([...prev, ...names])));
+        }
+      } catch (err) {
+        console.warn("Error loading user data from server:", err);
+      }
+    };
+
+    loadUserData();
+  }, [currentUser?.email]);
 
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [inAppToast, setInAppToast] = useState<InAppToastPayload | null>(null);
@@ -353,32 +418,6 @@ export function App() {
     setIsLegalModalOpen(true);
   };
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState<boolean>(false);
-
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    try {
-      const saved = localStorage.getItem("copo_user_profile");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (isUserDeleted(parsed)) {
-          localStorage.removeItem("copo_user_profile");
-          localStorage.removeItem("copo_user");
-          localStorage.removeItem("copo_business_verified_session");
-          return null;
-        }
-        const storedNotifs = localStorage.getItem("copo_notification_settings");
-        if (storedNotifs) {
-          try {
-            parsed.notificationSettings = {
-              ...DEFAULT_NOTIFICATION_PREFERENCES,
-              ...JSON.parse(storedNotifs)
-            };
-          } catch (e) {}
-        }
-        return parsed;
-      }
-    } catch (e) {}
-    return null;
-  });
 
   // Helper to verify if user profile is activated with mandatory First & Last name
   const isProfileComplete = (user: UserProfile | null) => {
@@ -2940,8 +2979,8 @@ export function App() {
 
   const handleShareIncrement = (videoId: string, nextSharesCount?: number) => {
     if (!videoId) return;
-    setVideos((prev) =>
-      prev.map((v) => {
+    setVideos((prev) => {
+      const next = prev.map((v) => {
         if (v.id === videoId) {
           const currentShares = v.sharesCount || v.shares || 0;
           const updated = nextSharesCount !== undefined ? nextSharesCount : currentShares + 1;
@@ -2952,8 +2991,15 @@ export function App() {
           };
         }
         return v;
-      })
-    );
+      });
+
+      // Persist to local storage cache immediately
+      try {
+        localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(next.slice(0, 50)));
+      } catch (e) {}
+
+      return next;
+    });
   };
 
   const handleRecordVideoView = (videoId: string) => {
@@ -6011,11 +6057,34 @@ export function App() {
 
     setSavedPlaceIds((prev) => {
       const exists = prev.includes(place.id);
+      let next;
       if (exists) {
-        return prev.filter((id) => id !== place.id);
+        next = prev.filter((id) => id !== place.id);
       } else {
-        return [place.id, ...prev];
+        next = [place.id, ...prev];
       }
+      
+      // Sync with server
+      const currentEmail = currentUser?.email || auth.currentUser?.email;
+      if (currentEmail) {
+        const bookmarkId = `bm_${currentEmail.replace(/[^a-zA-Z0-9]/g, '_')}_${place.id}`;
+        fetch("/api/interactions/bookmark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId: "place_bookmark",
+            placeId: place.id,
+            placeName: place.name,
+            userId: currentEmail,
+            isBookmarked: !exists
+          })
+        }).catch(() => {});
+      }
+      
+      try {
+        localStorage.setItem("copo_saved_place_ids", JSON.stringify(next));
+      } catch (e) {}
+      return next;
     });
   };
 
@@ -6031,6 +6100,30 @@ export function App() {
       } else {
         next = [...prev, cleanName];
       }
+      
+      // Sync with server NoSQL
+      const currentEmail = currentUser?.email || auth.currentUser?.email;
+      if (currentEmail) {
+        const docId = `fav_creator_${currentEmail.replace(/[^a-zA-Z0-9]/g, '_')}_${cleanName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        if (!exists) {
+          fetch(`/api/nosql/saved_creators/${docId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              data: {
+                id: docId,
+                userId: currentEmail,
+                creatorName: cleanName,
+                author: author,
+                createdAt: new Date().toISOString()
+              }
+            })
+          }).catch(() => {});
+        } else {
+          fetch(`/api/nosql/saved_creators/${docId}`, { method: "DELETE" }).catch(() => {});
+        }
+      }
+
       try {
         localStorage.setItem("yoouz_saved_creators", JSON.stringify(next));
       } catch (e) {}

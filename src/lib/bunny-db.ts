@@ -141,6 +141,13 @@ const ALL_TABLE_SCHEMAS = [
     data TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
+  `CREATE TABLE IF NOT EXISTS nosql_items (
+    collection TEXT NOT NULL,
+    id TEXT NOT NULL,
+    data TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection, id)
+  )`,
   `CREATE TABLE IF NOT EXISTS agencies (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -453,6 +460,13 @@ export async function initBunnyDbSchema() {
       message TEXT,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS nosql_items (
+      collection TEXT NOT NULL,
+      id TEXT NOT NULL,
+      data TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (collection, id)
     )`,
     `CREATE TABLE IF NOT EXISTS agencies (
       id TEXT PRIMARY KEY,
