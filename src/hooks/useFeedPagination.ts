@@ -581,12 +581,21 @@ export function useFeedPagination() {
     };
 
     // 2. Real-Time Server-Sent Events (SSE) stream for instant cross-device deletions & updates
-    const setupSse = () => {
+    const setupSse = async () => {
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
       if (typeof document !== "undefined" && document.hidden) return;
       if (sse) {
         try { sse.close(); } catch (e) {}
         sse = null;
+      }
+
+      try {
+        const healthRes = await fetch("/api/health").catch(() => null);
+        if (!healthRes || !healthRes.ok) return;
+        const contentType = healthRes.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) return;
+      } catch (e) {
+        return;
       }
 
       try {

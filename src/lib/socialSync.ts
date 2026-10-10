@@ -101,46 +101,57 @@ function setupRealtimeStream(user: UserProfile) {
     userHandle: name
   }).toString();
 
-  try {
-    const es = new EventSource(`/api/realtime/stream?${query}`);
-    activeEventSource = es;
+  fetch("/api/health")
+    .then((healthRes) => {
+      if (!healthRes.ok) return;
+      return healthRes.headers.get("content-type") || "";
+    })
+    .then((contentType) => {
+      if (!contentType || contentType.includes("text/html")) return;
+      if (activeEventSource) return;
 
-    es.onopen = () => {
-      sseRetryDelay = 5000;
-    };
-
-    es.onmessage = (e) => {
-      sseRetryDelay = 5000;
       try {
-        if (!e.data || e.data.trim() === "heartbeat") return;
-        const parsed = JSON.parse(e.data);
-        realtimeListeners.forEach((fn) => {
+        const es = new EventSource(`/api/realtime/stream?${query}`);
+        activeEventSource = es;
+
+        es.onopen = () => {
+          sseRetryDelay = 5000;
+        };
+
+        es.onmessage = (e) => {
+          sseRetryDelay = 5000;
           try {
-            fn(parsed);
-          } catch (err) {}
-        });
-      } catch (parseErr) {}
-    };
+            if (!e.data || e.data.trim() === "heartbeat") return;
+            const parsed = JSON.parse(e.data);
+            realtimeListeners.forEach((fn) => {
+              try {
+                fn(parsed);
+              } catch (err) {}
+            });
+          } catch (parseErr) {}
+        };
 
-    es.onerror = () => {
-      try {
-        es.close();
-      } catch (e) {}
-      if (activeEventSource === es) {
-        activeEventSource = null;
-      }
-      // Silently schedule reconnect only if online and tab is active
-      if (!sseReconnectTimer && isNetworkOnline && typeof document !== "undefined" && !document.hidden) {
-        sseReconnectTimer = setTimeout(() => {
-          sseReconnectTimer = null;
-          if (realtimeListeners.size > 0 && user && isNetworkOnline && !document.hidden) {
-            setupRealtimeStream(user);
+        es.onerror = () => {
+          try {
+            es.close();
+          } catch (e) {}
+          if (activeEventSource === es) {
+            activeEventSource = null;
           }
-        }, sseRetryDelay);
-        sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
-      }
-    };
-  } catch (err) {}
+          // Silently schedule reconnect only if online and tab is active
+          if (!sseReconnectTimer && isNetworkOnline && typeof document !== "undefined" && !document.hidden) {
+            sseReconnectTimer = setTimeout(() => {
+              sseReconnectTimer = null;
+              if (realtimeListeners.size > 0 && user && isNetworkOnline && !document.hidden) {
+                setupRealtimeStream(user);
+              }
+            }, sseRetryDelay);
+            sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
+          }
+        };
+      } catch (err) {}
+    })
+    .catch(() => {});
 }
 
 // Global tab visibility listener to cleanly pause/resume realtime stream

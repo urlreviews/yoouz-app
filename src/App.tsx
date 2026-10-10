@@ -145,8 +145,20 @@ export function App() {
   useEffect(() => {
     let sse: EventSource | null = null;
     let reconnectTimeout: any = null;
+    let active = true;
 
-    const setupSse = () => {
+    const setupSse = async () => {
+      if (!active) return;
+      try {
+        const healthRes = await fetch("/api/health").catch(() => null);
+        if (!healthRes || !healthRes.ok) return;
+        const contentType = healthRes.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) return;
+      } catch (e) {
+        return;
+      }
+      if (!active) return;
+
       sse = new EventSource("/api/sse");
       sse.onmessage = (event) => {
         try {
@@ -191,6 +203,7 @@ export function App() {
 
     setupSse();
     return () => {
+      active = false;
       if (sse) sse.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
