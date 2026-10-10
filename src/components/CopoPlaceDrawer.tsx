@@ -2164,145 +2164,177 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 3: ABOUT - Executive Unified Fact Sheet */}
+          {/* TAB 3: ABOUT - Executive Unified Dark Mode Fact Sheet */}
           {activeTab === "about" && (
-            <div className="p-4 sm:p-6 space-y-6 animate-in fade-in duration-200">
+            <div className="p-4 sm:p-5 space-y-4">
               {/* Executive Unified Business Fact Sheet Container */}
-              <div className="p-5 sm:p-7 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-6 shadow-2xl">
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-4 shadow-xl backdrop-blur-sm">
                 {/* Top Header Row with Title & Edit */}
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-800/80">
-                  <div className="flex items-center gap-2.5">
-                    <Info className="w-5 h-5 text-zinc-300 shrink-0" />
-                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <h3 className="text-sm font-bold text-white tracking-tight">
                       About {displayedPlaceName}
                     </h3>
                   </div>
                   {isUserOwner && (
                     <button
                       onClick={openEditModal}
-                      className="text-xs sm:text-sm text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1.5 cursor-pointer"
+                      className="text-xs text-zinc-300 hover:text-white font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Edit3 className="w-3.5 h-3.5" />
                       <span>{t("common.edit", "Edit")}</span>
                     </button>
                   )}
                 </div>
 
                 {/* Business Description */}
-                <div className="space-y-1.5">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">Overview</span>
-                  <p className="text-sm sm:text-base text-zinc-100 leading-relaxed font-normal">
-                    {getEffectivePlaceDescription(place)}
-                  </p>
-                </div>
+                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-medium">
+                  {getEffectivePlaceDescription(place)}
+                </p>
 
                 {/* Clean Monochrome Structured Details Grid */}
-                <div className="pt-5 border-t border-zinc-800/80 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Industry / Category */}
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                      <Tag className="w-5 h-5 text-zinc-200" />
+                  <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                      <Tag className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Business Category</span>
-                      <span className="text-sm sm:text-base font-bold text-white block break-words">{effectiveCategoryDisplay}</span>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Category</span>
+                      <span className="text-xs font-bold text-white block truncate">{effectiveCategoryDisplay}</span>
                     </div>
                   </div>
 
                   {/* Official Website */}
                   {displayWebsiteClean && (
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                        <Globe className="w-5 h-5 text-zinc-200" />
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Globe className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Official Website</span>
+                          <span className="text-xs font-bold text-white block truncate">{displayWebsiteClean}</span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Official Website</span>
-                        <a
-                          href={effectiveWebsite || `https://${displayWebsiteClean}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm sm:text-base font-bold text-white hover:text-blue-400 underline decoration-zinc-600 hover:decoration-blue-400 transition-colors inline-flex items-center gap-1.5 break-all"
-                        >
-                          <span>{displayWebsiteClean}</span>
-                          <ExternalLink className="w-4 h-4 shrink-0 text-zinc-400" />
-                        </a>
-                      </div>
+                      <a
+                        href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Visit Website"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                   )}
 
                   {/* Operating Hours */}
                   {((hasGenuineHours && effectiveHours) || place.openingHours) && (
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                        <Clock className="w-5 h-5 text-zinc-200" />
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4 text-zinc-300" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Operating Hours</span>
-                        <span className="text-sm sm:text-base font-bold text-white block break-words">{effectiveHours || place.openingHours}</span>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Operating Hours</span>
+                        <span className="text-xs font-bold text-white block truncate">{effectiveHours || place.openingHours}</span>
                       </div>
                     </div>
                   )}
 
                   {/* Phone */}
                   {effectivePhone && (
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                        <Phone className="w-5 h-5 text-zinc-200" />
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Phone className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Phone</span>
+                          <span className="text-xs font-bold text-white block truncate">{formatPhoneNumber(effectivePhone)}</span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Phone Number</span>
-                        <a
-                          href={`tel:${effectivePhone}`}
-                          className="text-sm sm:text-base font-bold text-white hover:text-blue-400 transition-colors block"
-                        >
-                          {formatPhoneNumber(effectivePhone)}
-                        </a>
-                      </div>
+                      <a
+                        href={`tel:${effectivePhone}`}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Call Business"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                   )}
 
                   {/* Email */}
                   {effectiveEmail && (
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                        <Mail className="w-5 h-5 text-zinc-200" />
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <Mail className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Email</span>
+                          <span className="text-xs font-bold text-white block truncate">{effectiveEmail}</span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Email Address</span>
-                        <a
-                          href={`mailto:${effectiveEmail}`}
-                          className="text-sm sm:text-base font-bold text-white hover:text-blue-400 transition-colors block break-all"
-                        >
-                          {effectiveEmail}
-                        </a>
-                      </div>
+                      <a
+                        href={`mailto:${effectiveEmail}`}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0"
+                        title="Email Business"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                   )}
 
                   {/* Address */}
                   {hasPhysicalLocation && (currentDisplayAddress || displayAddress) && (
-                    <div className="flex items-start gap-3.5 md:col-span-2">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 mt-0.5">
-                        <MapPin className="w-5 h-5 text-zinc-200" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">Physical Address</span>
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <span className="text-sm sm:text-base font-bold text-white leading-snug">
-                            {currentDisplayAddress || displayAddress}
-                          </span>
-                          <button
-                            onClick={handleOpenDirections}
-                            className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer shrink-0 border border-zinc-700"
-                          >
-                            <Navigation className="w-3.5 h-3.5" />
-                            <span>Directions</span>
-                          </button>
+                    <div className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between gap-2 sm:col-span-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-750 flex items-center justify-center shrink-0">
+                          <MapPin className="w-4 h-4 text-zinc-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Location Address</span>
+                          <span className="text-xs font-bold text-white block truncate">{currentDisplayAddress || displayAddress}</span>
                         </div>
                       </div>
+                      <button
+                        onClick={handleOpenDirections}
+                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors shrink-0 flex items-center gap-1 text-[11px] font-bold px-2.5 cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Directions</span>
+                      </button>
                     </div>
                   )}
                 </div>
+
+                {/* Embedded Google Maps Preview (if physical location exists) */}
+                {hasPhysicalLocation && (
+                  <div className="pt-2 space-y-2">
+                    <div
+                      className="w-full h-[180px] rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-950 cursor-pointer relative group shadow-inner"
+                      onClick={handleOpenDirections}
+                    >
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors z-10 flex items-center justify-center pointer-events-none">
+                        <div className="bg-zinc-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-lg text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 border border-zinc-700">
+                          <ExternalLink className="w-3 h-3 text-white" />
+                          {t("place.openInMaps", "Open in Google Maps")}
+                        </div>
+                      </div>
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0, pointerEvents: "none" }}
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
+                        title="Google Maps Location Preview"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Embedded Google Maps Preview (if physical location exists) */}
                 {hasPhysicalLocation && (
