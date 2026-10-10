@@ -330,6 +330,38 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
     // --- Business FAQs ---
     {
+      id: "biz-premium-suite",
+      category: "business",
+      question: "What is included in the Yoouz Premium Business Suite ($149/mo)?",
+      answer:
+        "The Yoouz Premium Business Suite ($149/mo or $99/mo annual) provides a comprehensive enterprise growth stack: Verified Business Badge, Priority Search Placement in local search results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, HD Branded Video Ad Exporter with watermark overlays, Pinned Owner Video Replies, Direct Messaging Lead Capture, Table & Window QR Standees, and Real-Time Analytics.",
+      tags: ["premium", "plan", "membership", "features", "pricing", "$149", "suite", "seo", "ads"]
+    },
+    {
+      id: "biz-premium-seo",
+      category: "business",
+      question: "How does the Yoouz Premium Suite improve Google Search SEO & Rich Snippets?",
+      answer:
+        "When you embed your Yoouz video review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render star ratings and video thumbnails directly in organic search results, increasing organic click-through rates (CTR) by up to 35%.",
+      tags: ["seo", "google", "rich snippets", "schema", "ratings", "ctr", "organic search"]
+    },
+    {
+      id: "biz-premium-ads",
+      category: "business",
+      question: "Can businesses export customer video reviews as branded social media ads?",
+      answer:
+        "Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts.",
+      tags: ["ad export", "video ad", "social media", "instagram", "tiktok", "watermark", "branding"]
+    },
+    {
+      id: "biz-premium-terms",
+      category: "business",
+      question: "Are there any contracts, hidden fees, or cancellation lock-ins?",
+      answer:
+        "No. Yoouz Premium Business Suite is completely flexible with zero setup fees and zero cancellation penalties. You can upgrade, pause, or switch plans anytime with 1-click in your Business Dashboard.",
+      tags: ["contract", "fees", "cancellation", "flexible", "no lock-in"]
+    },
+    {
       id: "biz-1",
       category: "business",
       question: "How can my business claim its official domain or place page?",

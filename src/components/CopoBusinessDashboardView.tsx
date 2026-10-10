@@ -38,6 +38,7 @@ import {
   CreditCard, 
   Receipt, 
   BarChart3,
+  Award,
   Video,
   Play,
   Pause,
@@ -5118,10 +5119,34 @@ ${jsonLd}
                   answer: 'Yoouz connects your venue directly with authentic, real-world guests. Customers record genuine 60-second selfie video reviews using their front camera inside your location. There are no bot accounts, fake AI-written reviews, or anonymous trolls—just real people sharing authentic customer experiences that build trust and drive foot traffic.'
                 },
                 {
+                  id: 'qa-premium-included',
+                  icon: Zap,
+                  question: 'What is included in the Yoouz Premium Business Suite ($149/mo)?',
+                  answer: 'The Premium Suite ($149/mo) unlocks the complete enterprise growth stack: Verified Business Badge, Priority Search Placement in local results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, HD Branded Video Ad Exporter with logo watermarks, Pinned Owner Video Replies, Direct Messaging Lead Capture, Table & Window QR Code Standees, and Real-Time ROI Analytics.'
+                },
+                {
+                  id: 'qa-premium-seo',
+                  icon: Sparkles,
+                  question: 'How does the Premium Plan boost Google Search SEO & Rich Snippets?',
+                  answer: 'When you embed your Yoouz video review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render star ratings and video thumbnails directly in organic search results, increasing click-through rates (CTR) by up to 35%.'
+                },
+                {
+                  id: 'qa-premium-ads',
+                  icon: Award,
+                  question: 'Can I export customer video reviews as social media video ads?',
+                  answer: 'Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts.'
+                },
+                {
+                  id: 'qa-premium-contracts',
+                  icon: CreditCard,
+                  question: 'Are there any contracts, hidden fees, or cancellation lock-ins?',
+                  answer: 'No. Yoouz Premium Business Suite ($149/mo or $99/mo annual) is strictly flexible with zero setup fees and zero cancellation penalties. You can upgrade, pause, or switch plans anytime with 1-click in your Business Dashboard.'
+                },
+                {
                   id: 'qa-is-it-free',
                   icon: ShieldCheck,
                   question: 'Is claiming and managing my venue free of charge?',
-                  answer: 'Yes. Venue claiming, verified business badges, real-time review alerts, official owner replies, print-ready QR table standees, and website review embeds are fully included for all verified venue operators with zero subscription or hidden fees.'
+                  answer: 'Yes. Standard venue claiming, verified business badges, real-time review alerts, official owner replies, print-ready QR table standees, and website review embeds are fully included for all verified venue operators with zero subscription or hidden fees.'
                 },
                 {
                   id: 'qa-reply-reviews',

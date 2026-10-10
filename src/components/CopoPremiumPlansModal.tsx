@@ -21,7 +21,8 @@ import {
   Clock,
   CheckCircle,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  Award
 } from 'lucide-react';
 import { Place } from '../types';
 
@@ -644,10 +645,37 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
               <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                 <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
                   <CreditCard className="w-4 h-4 text-zinc-300" />
-                  What is the price of the Premium Business Suite?
+                  What is included in the Yoouz Premium Business Suite ($149/mo)?
                 </h4>
                 <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  The Premium Business Suite is <strong className="text-white font-bold">$149 per month</strong>. It is billed monthly with no long-term contracts — you can cancel anytime.
+                  The Premium Business Suite is <strong className="text-white font-bold">$149 per month</strong> ($99/mo billed annually). It includes:
+                </p>
+                <ul className="list-disc list-inside text-zinc-400 pl-6 space-y-1 font-medium">
+                  <li><strong className="text-zinc-200">Verified Business Badge</strong> & Priority Search Placement</li>
+                  <li><strong className="text-zinc-200">Live Website Review Widget</strong> with automated Google Rich Snippets SEO Schema</li>
+                  <li><strong className="text-zinc-200">HD Branded Video Ad Exporter</strong> with official logo watermark overlays</li>
+                  <li><strong className="text-zinc-200">Pinned Owner Video Replies</strong> & Direct Messaging Lead Capture</li>
+                  <li><strong className="text-zinc-200">Print-Ready Table & Window QR Standees</strong> & Real-Time Analytics</li>
+                </ul>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
+                  <Sparkles className="w-4 h-4 text-zinc-300" />
+                  How does the Premium Plan boost Google Search SEO & Rich Snippets?
+                </h4>
+                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
+                  When you embed your Yoouz review widget on your website, our system automatically generates Schema.org JSON-LD structured data. Search engines like Google index your customer star ratings and video thumbnails directly in organic search results, boosting click-through rates (CTR) by up to 35%.
+                </p>
+              </div>
+
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
+                  <Award className="w-4 h-4 text-zinc-300" />
+                  Can I export customer video reviews as branded video ad campaigns?
+                </h4>
+                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
+                  Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts.
                 </p>
               </div>
 
