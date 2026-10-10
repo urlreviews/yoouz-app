@@ -239,7 +239,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         id: "bc-2",
         title: "Creator Spotlight: Top 10 Hidden Cafes",
         message: "Check out this week's trending authentic community video reviews for specialty coffee spots.",
-        targetUrl: "/place/pl_1",
+        targetUrl: "/reviews/pl_1",
         audience: "creators",
         type: "announcement",
         sentAt: new Date(Date.now() - 3600000 * 48).toISOString()
@@ -7790,7 +7790,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         audience: "all" as const,
                         title: "Weekend Spotlight: Top-Rated Local Gems",
                         message: "Discover this week's highest-rated culinary spots and verified community favorites in your city.",
-                        targetUrl: "/place/pl_1"
+                        targetUrl: "/reviews/pl_1"
                       },
                       {
                         label: "👑 Creator Video Challenge",
@@ -7958,7 +7958,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         type="text"
                         value={broadcastData.targetUrl}
                         onChange={(e) => setBroadcastData({ ...broadcastData, targetUrl: e.target.value })}
-                        placeholder="e.g. /place/pl_1 or https://yoouz.com/search"
+                        placeholder="e.g. /reviews/pl_1 or https://yoouz.com/search"
                         className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-sm font-mono"
                       />
                     </div>

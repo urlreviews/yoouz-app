@@ -24307,7 +24307,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     try {
       let rawQuery = String(req.query.url || req.query.query || req.query.q || '').trim();
-      if (rawQuery.includes('/place/')) {
+      if (rawQuery.includes('/reviews/')) {
+        rawQuery = rawQuery.split('/reviews/')[1].split('/')[0].split('?')[0];
+      } else if (rawQuery.includes('/place/')) {
         rawQuery = rawQuery.split('/place/')[1].split('/')[0].split('?')[0];
       }
       if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
@@ -26899,9 +26901,16 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
   </url>
 `;
 
+      // 301 Permanent Redirect for SEO: /place/* -> /reviews/*
+      app.get(['/place/:slug', '/place/:slug/*'], (req: any, res: any) => {
+        const rawPath = req.originalUrl || req.url;
+        const newPath = rawPath.replace(/^\/place(\/|$)/i, '/reviews$1');
+        return res.redirect(301, newPath);
+      });
+
       // Add Places / Local Businesses
       allPlaces.forEach((p) => {
-        const placeUrl = `${baseUrl}/place/${encodeURIComponent(p.id)}`;
+        const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(p.id)}`;
         const photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
         xml += `  <url>
     <loc>${escapeXml(placeUrl)}</loc>
@@ -28871,7 +28880,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -28898,7 +28907,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -29585,10 +29594,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
         const rawPath = String(query.path || query.url || query.button || "");
         if (!type) {
           if (query.id || query.reviewId || query.review_id || query.video || query.v || query.r || query.embedId || query.videoId) type = "video";
-          else if (query.domain || query.logoUrl || query.website || query.place || query.placeId || query.business || rawPath.includes('/place/')) {
+          else if (query.domain || query.logoUrl || query.website || query.place || query.placeId || query.business || rawPath.includes('/reviews/') || rawPath.includes('/place/')) {
             type = "place";
-            if (!query.domain && rawPath.includes('/place/')) {
-              query.domain = rawPath.split('/place/')[1].split('/')[0].split('?')[0];
+            if (!query.domain && (rawPath.includes('/reviews/') || rawPath.includes('/place/'))) {
+              const marker = rawPath.includes('/reviews/') ? '/reviews/' : '/place/';
+              query.domain = rawPath.split(marker)[1].split('/')[0].split('?')[0];
             }
           }
           else if (query.avatarUrl || query.handle || query.creator || query.user || rawPath.includes('/@')) {
@@ -30655,12 +30665,12 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     const rawVideoId = params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r');
     const videoId = detectedVideoId || (rawVideoId && (rawVideoId.startsWith('rev-') || rawVideoId.length > 3) ? rawVideoId : null);
-    const placeIdMatch = pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
+    const placeIdMatch = pathname.match(/\/reviews\/([a-zA-Z0-9_\-\.]+)/) || pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
     const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
                          pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) ||
                          pathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
-    let placeId = (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") ? "sample" : (placeIdMatch ? placeIdMatch[1] : (placeDomainFromReviewPath && !videoId ? placeDomainFromReviewPath : (params.get('place') && !videoId ? params.get('place') : null)));
+    let placeId = (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") ? "sample" : (placeIdMatch ? placeIdMatch[1] : (placeDomainFromReviewPath && !videoId ? placeDomainFromReviewPath : (params.get('place') && !videoId ? params.get('place') : null)));
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
     }
@@ -30954,7 +30964,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
         imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=22`;
-        touchIcon = `${baseUrl}/api/touch-icon/place/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
+        touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing

@@ -82,7 +82,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
     "itemReviewed": {
       "@type": "LocalBusiness",
       "name": "${testSlug}",
-      "url": "https://www.yoouz.com/place/${testSlug}"
+      "url": "https://www.yoouz.com/reviews/${testSlug}"
     },
     "ratingValue": "5.0",
     "bestRating": "5",

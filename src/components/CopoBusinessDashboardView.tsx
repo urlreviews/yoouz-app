@@ -966,7 +966,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const qrDirectReviewUrl = useMemo(() => {
     const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://www.yoouz.com';
     const slug = getPlaceSlug(currentPlace);
-    return `${origin}/place/${slug}?action=record`;
+    return `${origin}/reviews/${slug}?action=record`;
   }, [currentPlace]);
 
   // Embed Customizer & Curation State
@@ -2197,9 +2197,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     const graphItems = [
       {
         "@type": "LocalBusiness",
-        "@id": `https://www.yoouz.com/place/${embedSlug}#business`,
+        "@id": `https://www.yoouz.com/reviews/${embedSlug}#business`,
         "name": placeTitle,
-        "url": `https://www.yoouz.com/place/${embedSlug}`,
+        "url": `https://www.yoouz.com/reviews/${embedSlug}`,
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": placeRating,
@@ -2307,8 +2307,8 @@ ${jsonLd}
     const rawSlug = getPlaceSlug(currentPlace);
     const slug = (rawSlug && rawSlug.trim() !== '') ? rawSlug.trim() : (currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com');
     const directUrl = typeof window !== 'undefined' && !window.location.hostname.includes('yoouz.com')
-      ? `${window.location.origin}/place/${encodeURIComponent(slug)}?record=true`
-      : `https://www.yoouz.com/place/${encodeURIComponent(slug)}?record=true`;
+      ? `${window.location.origin}/reviews/${encodeURIComponent(slug)}?record=true`
+      : `https://www.yoouz.com/reviews/${encodeURIComponent(slug)}?record=true`;
     navigator.clipboard.writeText(directUrl);
     setIsDirectReviewLinkCopied(true);
     setTimeout(() => setIsDirectReviewLinkCopied(false), 2500);
@@ -2726,7 +2726,7 @@ ${jsonLd}
                           if (onOpenPlaceDrawer) {
                             onOpenPlaceDrawer(targetId);
                           } else {
-                            window.location.href = `/place/${targetId}`;
+                            window.location.href = `/reviews/${targetId}`;
                           }
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
@@ -4187,7 +4187,7 @@ ${jsonLd}
 
                     {/* Business Place Handle / URL */}
                     <div className="text-[11px] font-bold text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
-                      <span>yoouz.com/place/{(selectedPlaceId || currentPlace.id || '').replace(/^yoouz\.com\/place\//, '')}</span>
+                      <span>yoouz.com/reviews/{(selectedPlaceId || currentPlace.id || '').replace(/^(https?:\/\/)?(www\.)?yoouz\.com\/(place|reviews)\//, '')}</span>
                     </div>
 
                     {/* Star Rating & Reviews Count */}
@@ -5435,7 +5435,7 @@ ${jsonLd}
                 </h2>
                 {/* Business Place Handle / URL */}
                 <div className="text-xs font-bold text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
-                  <span>yoouz.com/place/{(selectedPlaceId || currentPlace.id || '').replace(/^yoouz\.com\/place\//, '')}</span>
+                  <span>yoouz.com/reviews/{(selectedPlaceId || currentPlace.id || '').replace(/^(https?:\/\/)?(www\.)?yoouz\.com\/(place|reviews)\//, '')}</span>
                 </div>
                 <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
                   <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRating}</span>

@@ -218,7 +218,7 @@ export function App() {
       
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
-      const sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
+      const sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/reviews/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
       if (sectionParam && ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "business", "search", "record_review", "following"].includes(sectionParam)) {
         return sectionParam as NavSection;
       }
@@ -258,7 +258,7 @@ export function App() {
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(() => {
     try {
       const pathname = window.location.pathname;
-      if (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+      if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
         return "sample";
       }
     } catch (e) {}
@@ -579,14 +579,14 @@ export function App() {
         }
         const hash = window.location.hash;
 
-        let placeParam = params.get("place") || params.get("placeId") || params.get("p") || params.get("business") || (hash.startsWith("#/place/") ? hash.replace("#/place/", "") : null);
+        let placeParam = params.get("place") || params.get("placeId") || params.get("p") || params.get("business") || (hash.startsWith("#/reviews/") ? hash.replace("#/reviews/", "") : (hash.startsWith("#/place/") ? hash.replace("#/place/", "") : null));
         if (!placeParam && hash.includes("placeId=")) {
           const hashParams = new URLSearchParams(hash.split("?")[1] || "");
           placeParam = hashParams.get("placeId") || hashParams.get("place");
         }
         let creatorParam = params.get("creator") || params.get("c") || params.get("user") || params.get("u") || (hash.startsWith("#/creator/") ? hash.replace("#/creator/", "") : null);
         let videoParam = params.get("video") || params.get("v") || (hash.startsWith("#/video/") ? hash.replace("#/video/", "") : null);
-        let sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
+        let sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/reviews/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
 
         // Pathname parsing for elite SEO routes (e.g. /review/domain.com/rev-12345 or /review/rev-12345)
         if (!videoParam) {
@@ -613,12 +613,12 @@ export function App() {
           }
         }
         if (!placeParam) {
-          if (pathname === "/sample" || pathname === "/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+          if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
             placeParam = "sample";
           } else {
-            const pMatch = pathname.match(/^\/place\/([^\/]+)/);
+            const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
             if (pMatch) {
-              placeParam = pMatch[1];
+              placeParam = pMatch[2];
             } else {
               const bMatch = pathname.match(/^\/business\/([^\/]+)/);
               if (bMatch && bMatch[1] !== "dashboard" && bMatch[1] !== "claim" && bMatch[1] !== "portal") {
@@ -737,7 +737,7 @@ export function App() {
             setSelectedPlaceIdForDrawer(targetPlaceId);
             setSelectedAuthorForDrawer(null);
             try {
-              window.history.replaceState(null, "", `/place/${getPlaceSlug(targetPlaceId)}`);
+              window.history.replaceState(null, "", `/reviews/${getPlaceSlug(targetPlaceId)}`);
             } catch (e) {}
           } else {
             // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
@@ -1392,7 +1392,7 @@ export function App() {
       if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
-        path = `/place/${slug}`;
+        path = `/reviews/${slug}`;
         title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
       } else if (selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
@@ -4023,7 +4023,7 @@ export function App() {
                 if (canonicalId && canonicalId !== cleanId && canonicalId.includes('.')) {
                   setSelectedPlaceIdForDrawer(canonicalId);
                   try {
-                    const cleanPath = `/place/${encodeURIComponent(canonicalId)}`;
+                    const cleanPath = `/reviews/${encodeURIComponent(canonicalId)}`;
                     if (window.location.pathname !== cleanPath) {
                       window.history.replaceState(null, "", cleanPath);
                     }

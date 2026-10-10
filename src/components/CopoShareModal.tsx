@@ -319,7 +319,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const resolvedTouchIcon = isVideoMode && video
     ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=9`
     : isBusiness
-    ? `${appOrigin}/api/touch-icon/place/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=20`
+    ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=20`
     : `${appOrigin}/apple-touch-icon.png`;
 
   useEffect(() => {
@@ -371,7 +371,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     "itemReviewed": {
       "@type": "LocalBusiness",
       "name": "${placeTitle}",
-      "url": "https://www.yoouz.com/place/${embedSlug}"
+      "url": "https://www.yoouz.com/reviews/${embedSlug}"
     },
     "ratingValue": "${placeRating}",
     "bestRating": "5",

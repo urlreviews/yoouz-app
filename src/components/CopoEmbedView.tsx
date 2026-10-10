@@ -374,7 +374,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     }
   }, [playingVideoId, isVideoPaused]);
 
-  // Canonical place profile URL on Yoouz (e.g. /place/lernerandrowe.com or https://www.yoouz.com/place/...)
+  // Canonical place profile URL on Yoouz (e.g. /reviews/lernerandrowe.com or https://www.yoouz.com/reviews/...)
   const placeProfileUrl = useMemo(() => {
     const slug = getPlaceSlug(targetPlace) || targetPlace.id || cleanSlug;
     if (!slug || slug === "yoouz.com" || slug === "yoouz" || slug === "www.yoouz.com") {
@@ -384,9 +384,9 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       return "https://www.yoouz.com/";
     }
     if (typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")) {
-      return `/place/${encodeURIComponent(slug)}`;
+      return `/reviews/${encodeURIComponent(slug)}`;
     }
-    return `https://www.yoouz.com/place/${encodeURIComponent(slug)}`;
+    return `https://www.yoouz.com/reviews/${encodeURIComponent(slug)}`;
   }, [targetPlace, cleanSlug]);
 
   // Canonical reviewer user profile URL on Yoouz (e.g. /@ben-blue or https://www.yoouz.com/@benblue)
@@ -558,8 +558,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         // External website embed: open create review screen for this place
         const recordUrl =
           typeof window !== "undefined" && !window.location.hostname.includes("yoouz.com")
-            ? `/place/${encodeURIComponent(cleanSlug)}?record=true`
-            : `https://www.yoouz.com/place/${encodeURIComponent(cleanSlug)}?record=true`;
+            ? `/reviews/${encodeURIComponent(cleanSlug)}?record=true`
+            : `https://www.yoouz.com/reviews/${encodeURIComponent(cleanSlug)}?record=true`;
 
         try {
           const opened = window.open(recordUrl, "_blank", "noopener,noreferrer");
@@ -575,8 +575,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
       // 3. Standalone mode
       if (typeof window !== "undefined") {
         const recordUrl = !window.location.hostname.includes("yoouz.com")
-          ? `/place/${encodeURIComponent(cleanSlug)}?record=true`
-          : `https://www.yoouz.com/place/${encodeURIComponent(cleanSlug)}?record=true`;
+          ? `/reviews/${encodeURIComponent(cleanSlug)}?record=true`
+          : `https://www.yoouz.com/reviews/${encodeURIComponent(cleanSlug)}?record=true`;
         if (recordUrl.startsWith("/")) {
           window.location.href = recordUrl;
         } else {

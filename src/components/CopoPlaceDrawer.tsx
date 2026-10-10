@@ -2881,7 +2881,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       <CopoShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        shareUrl={`${window.location.origin}/place/${getPlaceSlug(place)}`}
+        shareUrl={`${window.location.origin}/reviews/${getPlaceSlug(place)}`}
         title={displayedPlaceName}
         subtitle={place.address && place.address !== "Verified Location" ? place.address : (place.city ? `${place.city}${place.country ? ', ' + place.country : ''}` : t("place.businessLocation", "Business Location"))}
         logoUrl={primaryLogoUrl || place.logoUrl || undefined}
