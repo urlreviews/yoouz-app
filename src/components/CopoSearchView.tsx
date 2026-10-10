@@ -610,6 +610,93 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               )}
             </div>
           )}
+
+          {/* Trending & Popular Searches Grid on Desktop */}
+          {!query.trim() && (
+            <div className="w-full max-w-xl mt-8 space-y-6 animate-in fade-in duration-300">
+              {/* Trending Searches Row */}
+              <div className="space-y-3 text-left">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-400">
+                  <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                  <span>Trending Searches</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { id: "yoouz.com", name: "Yoouz", domain: "yoouz.com", category: "Video Review Platform" },
+                    { id: "firststrikeelectrical.co.uk", name: "First Strike Electrical", domain: "firststrikeelectrical.co.uk", category: "Verified Electrical Service" },
+                    { id: "izci.be", name: "Bosch Car Service Izci", domain: "izci.be", category: "Automotive Service" },
+                    { id: "apple.com", name: "Apple", domain: "apple.com", category: "Consumer Technology" },
+                    { id: "booking.com", name: "Booking.com", domain: "booking.com", category: "Travel & Hospitality" },
+                    { id: "airbnb.com", name: "Airbnb", domain: "airbnb.com", category: "Vacation Rentals" },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setQuery(item.domain);
+                        handleSearch(undefined, item.domain, item.name);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800/90 hover:border-zinc-700 transition-all cursor-pointer group text-left shadow-xs"
+                    >
+                      <CopoBrandLogo
+                        domain={item.domain}
+                        name={item.name}
+                        website={`https://${item.domain}`}
+                        className="w-8 h-8 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
+                        imageClassName="w-full h-full object-contain"
+                        fallbackTextClassName="font-extrabold text-xs text-zinc-950"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-xs text-white group-hover:text-zinc-200 transition-colors truncate">
+                          {item.name}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 font-mono truncate">
+                          {item.domain}
+                        </div>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-200 shrink-0 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Trending Video Reviews Section */}
+              {videos.length > 0 && (
+                <div className="space-y-3 text-left pt-2 border-t border-zinc-800/60">
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-400">
+                    <Play className="w-3.5 h-3.5 text-zinc-300 fill-current" />
+                    <span>Trending Video Reviews</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {videos.slice(0, 3).map((vid) => (
+                      <button
+                        key={vid.id}
+                        onClick={() => onSelectVideo(vid.id)}
+                        className="relative aspect-[9/16] rounded-2xl overflow-hidden group bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all text-left shadow-md cursor-pointer"
+                      >
+                        <CopoVideoThumbnail
+                          video={vid}
+                          alt={vid.caption || "Review"}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                        />
+                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-[10px] font-black text-white flex items-center gap-0.5 border border-white/10 z-10">
+                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          <span>{vid.rating ? vid.rating.toFixed(1) : "5.0"}</span>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-2.5 pointer-events-none">
+                          <span className="text-xs font-bold text-white line-clamp-1">
+                            {formatBusinessName(vid.placeName || getDisplayUrlAsDomain(vid))}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-medium truncate">
+                            By @{vid.author?.handle?.replace(/^@/, "") || vid.author?.name || "Reviewer"}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="w-full max-w-4xl flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
