@@ -145,7 +145,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
           <button
             onClick={() => setActiveTab("videos")}
             className={`pb-3 relative cursor-pointer transition-all ${
-              activeTab === "videos" ? "text-amber-400 font-extrabold" : "text-zinc-400 hover:text-zinc-200"
+              activeTab === "videos" ? "text-white font-extrabold" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -153,14 +153,14 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               {t("bookmarks.tabVideos", "Videos")} ({bookmarkedVideos.length})
             </span>
             {activeTab === "videos" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full animate-fade-in" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-fade-in" />
             )}
           </button>
           
           <button
             onClick={() => setActiveTab("places")}
             className={`pb-3 relative cursor-pointer transition-all ${
-              activeTab === "places" ? "text-amber-400 font-extrabold" : "text-zinc-400 hover:text-zinc-200"
+              activeTab === "places" ? "text-white font-extrabold" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -168,14 +168,14 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               {t("bookmarks.tabPlaces", "Places")} ({savedPlaces.length})
             </span>
             {activeTab === "places" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full animate-fade-in" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-fade-in" />
             )}
           </button>
 
           <button
             onClick={() => setActiveTab("creators")}
             className={`pb-3 relative cursor-pointer transition-all ${
-              activeTab === "creators" ? "text-amber-400 font-extrabold" : "text-zinc-400 hover:text-zinc-200"
+              activeTab === "creators" ? "text-white font-extrabold" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -183,7 +183,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               {t("bookmarks.tabReviewers", "Reviewers")} ({savedCreators.length})
             </span>
             {activeTab === "creators" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full animate-fade-in" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-fade-in" />
             )}
           </button>
         </div>
@@ -212,7 +212,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                         <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">
                           {formatBusinessName(video.placeName || getDisplayUrlAsDomain(video))}
                         </h4>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-900 text-amber-400 text-[10px] font-mono font-bold border border-zinc-800 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold border border-zinc-700/50 shrink-0">
                           {getDisplayUrlAsDomain(video)}
                         </span>
                         {video.placeCategory && video.placeCategory !== "Website" && video.placeCategory !== "General" && (

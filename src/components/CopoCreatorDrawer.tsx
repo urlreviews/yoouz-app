@@ -1154,47 +1154,57 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             )}
           </div>
 
-          <div className="space-y-1">
-            {/* Line 1: Review count, Follower count & Following count */}
-            <div className="flex items-center gap-2 text-sm text-zinc-300 font-medium flex-wrap">
-              <span className="text-zinc-200">
-                {authorVideos.length} {authorVideos.length === 1 ? t("place.review", "review") : t("place.reviews", "reviews")}
-              </span>
-              <span className="text-zinc-600">·</span>
+          <div className="space-y-2">
+            {/* Clean Stats Row */}
+            <div className="flex items-center gap-3 text-sm flex-wrap text-zinc-300">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-white text-base">{authorVideos.length}</span>
+                <span className="text-zinc-400 text-xs font-medium">
+                  {authorVideos.length === 1 ? t("place.review", "Video Review") : t("place.reviews", "Video Reviews")}
+                </span>
+              </div>
+              <span className="text-zinc-700 font-bold">•</span>
               <button
                 type="button"
                 onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
-                className="text-zinc-200 hover:text-white font-semibold transition cursor-pointer hover:underline flex items-center gap-1"
+                className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition cursor-pointer group"
               >
-                <span>{effectiveFollowersCount}</span>
-                <span>{t("profile.followers", "followers")}</span>
+                <span className="font-extrabold text-white text-base group-hover:underline">{effectiveFollowersCount}</span>
+                <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.followers", "followers")}</span>
               </button>
-              <span className="text-zinc-600">·</span>
+              <span className="text-zinc-700 font-bold">•</span>
               <button
                 type="button"
                 onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
-                className="text-zinc-200 hover:text-white font-semibold transition cursor-pointer hover:underline flex items-center gap-1"
+                className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition cursor-pointer group"
               >
-                <span>{effectiveFollowingCount}</span>
-                <span>{t("profile.following", "following")}</span>
+                <span className="font-extrabold text-white text-base group-hover:underline">{effectiveFollowingCount}</span>
+                <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.following", "following")}</span>
               </button>
             </div>
 
-            {/* Line 2: Dedicated solid location line strictly below stats */}
-            {displayLocation ? (
-              <div className="flex items-start gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full min-h-[20px] transition-opacity duration-150">
-                <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-                <span className="leading-snug break-words text-zinc-300 select-none">{displayLocation}</span>
-              </div>
-            ) : null}
+            {/* Premium Metadata Bar: Location & Joined Date */}
+            {(displayLocation || (!isBusinessProfile && memberSinceStr)) && (
+              <div className="flex items-center gap-3 text-xs text-zinc-400 font-medium flex-wrap pt-2.5 mt-2 border-t border-zinc-800/60">
+                {displayLocation ? (
+                  <div className="flex items-center gap-1.5 text-zinc-300">
+                    <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span className="truncate">{displayLocation}</span>
+                  </div>
+                ) : null}
 
-            {/* Line 3: Dedicated Member Since strictly below stats and location */}
-            {!isBusinessProfile && (
-              <div className="flex items-start gap-1.5 text-xs text-zinc-400 font-medium min-w-0 max-w-full min-h-[20px] transition-opacity duration-150">
-                <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-                <span className="leading-snug break-words text-zinc-300 select-none">
-                  {t("profile.memberSince", "Member since")} {memberSinceStr}
-                </span>
+                {displayLocation && !isBusinessProfile && memberSinceStr ? (
+                  <span className="text-zinc-700 font-bold">•</span>
+                ) : null}
+
+                {!isBusinessProfile && memberSinceStr ? (
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <span>
+                      {t("profile.memberSince", "Member since")} {memberSinceStr}
+                    </span>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>

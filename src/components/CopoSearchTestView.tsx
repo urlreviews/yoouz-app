@@ -324,7 +324,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center min-w-0">
-                      <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 flex-wrap" dir="auto">
+                      <div className="font-bold text-sm text-white group-hover:text-zinc-200 transition-colors inline-flex items-center gap-1.5 flex-wrap" dir="auto">
                         <bdi dir="auto">{formatBusinessName(item.title, item.domain) || item.title || ""}</bdi>
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
                       </div>
@@ -487,7 +487,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
               {placeVideos.length > 0 ? (
                 <div className="mt-6 pt-6 border-t border-zinc-800">
                   <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Video className="w-4 h-4 text-amber-400" />
+                    <Video className="w-4 h-4 text-zinc-300" />
                     <span>Customer Reviews ({placeVideos.length})</span>
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
