@@ -1936,9 +1936,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {/* Story / Description Section - High quality typography */}
               <div className="p-6 rounded-[2.5rem] bg-zinc-900/40 border border-zinc-800/60 shadow-2xl backdrop-blur-3xl relative">
-                <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
-                  <Sparkles className="w-32 h-32 text-white" />
-                </div>
                 <p className="text-sm md:text-sm text-zinc-200 leading-[1.7] font-medium tracking-tight">
                   {getEffectivePlaceDescription(place)}
                 </p>
@@ -2046,14 +2043,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         {t("place.getDirections", "Directions")}
                       </button>
                     </div>
-                    {/* Operating Hours Table */}
-                    {hasGenuineHours && (
-                      <div className="pt-2 border-t border-zinc-800/60">
-                        <p className="text-[10px] text-zinc-300 font-medium leading-relaxed whitespace-pre-line">
-                          {effectiveHours || place.openingHours}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -2096,65 +2085,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 </div>
               )}
-
-              {/* Amenities & Services */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
-                  {t("place.servicesAndAmenities", "Services & Amenities")}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {(place.amenities || ["Verified Listing", "Customer Support", "Authentic Experience"]).map(
-                    (amenity, idx) => (
-                      <div
-                        key={idx}
-                        className="px-4 py-2 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 text-[10px] font-black uppercase tracking-widest text-zinc-300 shadow-sm"
-                      >
-                        {amenity}
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Ownership & Trust Section */}
-              <div className="pt-4 space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  {t("place.trustAndSafety", "Trust & Safety")}
-                </h4>
-                
-                <div className={`p-3 rounded-3xl border transition-all ${
-                  isClaimed 
-                    ? "bg-zinc-900/50 border-zinc-800/80" 
-                    : "bg-zinc-900/40 border-dashed border-zinc-800"
-                }`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center border ${
-                      isClaimed ? "bg-zinc-800/50 border-zinc-700/50 text-zinc-400" : "bg-zinc-800 border-zinc-700 text-zinc-500"
-                    }`}>
-                      {isClaimed ? <ShieldCheck className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
-                    </div>
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-black text-white">
-                        {isClaimed ? t("place.verifiedOfficial", "Verified Official Listing") : t("place.unclaimedListing", "Unclaimed Business Profile")}
-                      </h5>
-                      <p className="text-xs text-zinc-400 leading-[1.6] font-medium">
-                        {isClaimed 
-                          ? t("place.verifiedManagementDesc", "This business has been officially verified by the Yoouz trust team. Management has full control over video replies and profile details.")
-                          : t("place.unclaimedDesc", "This listing has not been claimed by the owner yet. Are you the manager? Claim it to interact with customer video reviews.")}
-                      </p>
-                      {!isClaimed && (
-                        <button
-                          onClick={() => setIsClaimModalOpen(true)}
-                          className="mt-4 px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg"
-                        >
-                          {t("place.claimNow", "Claim Listing")}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {onOpenReport && (
                 <div className="pt-2">
