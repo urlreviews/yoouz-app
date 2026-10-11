@@ -487,7 +487,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           <motion.div layout className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
             <AnimatePresence initial={false} mode="popLayout">
               {filteredNotifications.map((notif) => {
-                // ... (existing map content)
+                const details = parseNotificationDetails(notif.message, notif);
+                const thumbnail = resolveNotificationThumbnail(notif);
+
                 return (
                   <motion.div
                     key={notif.id}
@@ -495,9 +497,47 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
-                    className="relative overflow-hidden bg-zinc-950 group"
+                    className={`relative overflow-hidden bg-zinc-950 group ${!notif.isRead ? 'bg-zinc-900/40' : ''}`}
+                    onClick={() => {
+                        handleMarkAsRead(notif.id);
+                        if (notif.videoId) onSelectNotificationVideo(notif.videoId);
+                    }}
                   >
-                    {/* ... (existing item content) */}
+                    <div className="flex items-start gap-3 p-4 cursor-pointer">
+                      <div className="relative shrink-0 mt-0.5">
+                        <img 
+                          src={getSafeAvatarUrl(notif.user?.avatar)} 
+                          alt={notif.user?.name}
+                          className="w-10 h-10 rounded-full object-cover border border-zinc-800"
+                          onClick={(e) => handleOpenUserProfile(notif, e)}
+                        />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white leading-snug">
+                          <span className="font-bold hover:underline cursor-pointer" onClick={(e) => handleOpenUserProfile(notif, e)}>
+                            {notif.user?.name || "Someone"}
+                          </span>
+                          {" "}
+                          <span className="text-zinc-300">
+                            {details.action}
+                          </span>
+                          {" "}
+                          <span className="font-bold text-zinc-100">
+                             {details.target}
+                          </span>
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {formatRecordedDate(notif.createdAtMs)}
+                        </p>
+                      </div>
+
+                      {thumbnail && (
+                        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-zinc-800">
+                            <img src={thumbnail} alt="review" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 );
               })}
