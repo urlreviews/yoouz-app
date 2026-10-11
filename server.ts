@@ -14196,14 +14196,16 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
       };
 
-      const bunnyDb = getBunnyDb();
       const map = new Map<string, any>();
       let bunnyFetchSuccess = false;
 
-      if (bunnyDb) {
+      if (true) {
         try {
-          const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC");
-          bunnyRows.rows.forEach((r: any) => {
+          const dbRows = await db.select().from(BunnyDB_video_reviews).orderBy(desc(BunnyDB_video_reviews.createdAt));
+          dbRows.forEach((row: any) => {
+            const parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+            const r = { id: row.id, createdAt: row.createdAt, ...parsedData };
+            bunnyFetchSuccess = true;
             if (r && r.id && !deletedSet.has(String(r.id))) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
               const existing = map.get(r.id) || {};
