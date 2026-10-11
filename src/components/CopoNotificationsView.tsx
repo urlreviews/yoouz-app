@@ -812,7 +812,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               );
             })}
             </AnimatePresence>
-          </div>
+          </motion.div>
         ) : (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/80 rounded-3xl border border-zinc-800 shadow-2xs">
