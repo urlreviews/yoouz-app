@@ -4869,7 +4869,7 @@ export function App() {
       localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
     } catch (e) {}
 
-    // Persist to Server and BunnyDB database via authoritative /api/interactions/like endpoint
+    // Persist to Server and BunnyDB database via authoritative /api/interactions/like endpoint (Live for everyone on the internet instantly)
     try {
       fetch("/api/interactions/like", {
         method: "POST",
