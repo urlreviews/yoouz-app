@@ -168,22 +168,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
-                      {item.id === "notifications" && unreadNotifsCount > 0 && (
-                        <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-black rounded-full bg-red-500 text-white shadow-md shadow-red-500/50 animate-pulse">
-                          {unreadNotifsCount > 99 ? "99+" : unreadNotifsCount}
-                        </span>
-                      )}
                     </div>
                     <span className="truncate flex-1">
                       {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
                     </span>
                     
                     {item.badge && item.badge > 0 ? (
-                      <span className={`px-2 py-0.5 text-xs font-black rounded-full shadow-md ${
-                        item.id === "notifications"
-                          ? "bg-red-500 text-white shadow-red-500/50 animate-pulse border border-red-400"
-                          : "bg-red-500 text-white border border-red-400"
-                      }`}>
+                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-zinc-800 text-white border border-zinc-700 shadow-sm">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     ) : null}
