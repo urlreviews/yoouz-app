@@ -528,7 +528,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           </span>
                         </p>
                         <p className="text-xs text-zinc-500 mt-1">
-                          {formatRecordedDate(notif.createdAtMs)}
+                          {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
                         </p>
                       </div>
 
