@@ -484,8 +484,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
         {/* Notification Feed Card List */}
         {filteredNotifications.length > 0 ? (
-          <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
-            <AnimatePresence initial={false}>
+          <motion.div layout className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
+            <AnimatePresence initial={false} mode="popLayout">
             {filteredNotifications.map((notif) => {
               // Sleek, unified dark mode monochromatic badge styles for notification avatar overlays
               const badgeStyles = {
@@ -531,8 +531,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
               return (
                 <motion.div
-                  key={`notif-${notif.id}`}
-                  initial={{ opacity: 1, height: "auto" }}
+                  key={notif.id}
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
                   className="relative overflow-hidden bg-zinc-950 group"
                 >
