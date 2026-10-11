@@ -438,8 +438,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     };
   }, []);
 
-  const [remoteComments, setRemoteComments] = useState<ReviewComment[]>([]);
-  const [hasRemoteFetched, setHasRemoteFetched] = useState(false);
+  const [remoteComments, setRemoteComments] = useState<ReviewComment[]>(() => {
+    return Array.isArray(video?.comments) ? video.comments : [];
+  });
+  const [hasRemoteFetched, setHasRemoteFetched] = useState<boolean>(() => {
+    return Array.isArray(video?.comments) && video.comments.length > 0;
+  });
   const [localDeletedCommentIds, setLocalDeletedCommentIds] = useState<string[]>(() => {
     try {
       const delRaw = localStorage.getItem("copo_deleted_comments");
@@ -480,6 +484,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       setRemoteComments([]);
       setHasRemoteFetched(false);
       return;
+    }
+    // Instantly seed from video.comments if available
+    if (Array.isArray(video.comments) && video.comments.length > 0) {
+      setRemoteComments(video.comments);
+      setHasRemoteFetched(true);
     }
     let isMounted = true;
     fetch(`/api/interactions/comments?videoId=${video.id}`)
