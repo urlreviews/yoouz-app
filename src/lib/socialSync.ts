@@ -949,12 +949,12 @@ export function subscribeToNotifications(
     }
   });
 
-  // 3. Periodic Background Sync (every 12 seconds when visible & online)
+  // 3. Periodic Background Sync (every 3 seconds when visible & online)
   const pollTimer = setInterval(() => {
     if (document.visibilityState === "visible" && (typeof navigator === "undefined" || navigator.onLine)) {
       fetchFromBunny();
     }
-  }, 12000);
+  }, 3000);
 
   const handleOnlineRefresh = () => {
     if (document.visibilityState === "visible") {

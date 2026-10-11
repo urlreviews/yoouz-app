@@ -4874,8 +4874,8 @@ export function App() {
           setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v) }));
         }
       })
-      .catch(() => {});
-    } catch (e) {}
+      .catch((err) => console.error("Like interaction error:", err));
+    } catch (e) { console.error("Like interaction error:", e); }
 
     try {
 
