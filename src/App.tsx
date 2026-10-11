@@ -7085,24 +7085,7 @@ export function App() {
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
       
-      {/* Real-time In-App Pop-up Notifications & Messages Toast */}
-      <InAppNotificationToast
-        toast={inAppToast}
-        notificationSettings={currentUser?.notificationSettings}
-        onClose={() => setInAppToast(null)}
-        onNavigateToThread={(threadId) => {
-          setActiveSection("messages");
-          setActiveThreadId(threadId);
-          setInAppToast(null);
-          if (effectiveMessagingUser) {
-            markChatThreadAsRead(threadId, effectiveMessagingUser);
-          }
-        }}
-        onNavigateToNotifications={() => {
-          setActiveSection("notifications");
-          setInAppToast(null);
-        }}
-      />
+
       
       {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
        {isPlaceView ? (
