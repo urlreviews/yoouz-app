@@ -14586,6 +14586,205 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
   });
 
   // Save Video Review metadata endpoint (persists review record on server and BunnyDB)
+  app.post("/api/videos/save-review", async (req, res) => {
+    try {
+      const video = req.body;
+      if (!video || !video.id) return res.status(400).json({ error: "Missing video review payload" });
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const videoDataStr = JSON.stringify(video);
+        const createdAtStr = video.createdAt || (video.createdAtMs ? new Date(video.createdAtMs).toISOString() : new Date().toISOString());
+        
+        await bunnyDb.execute({
+          sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET 
+                  rating = excluded.rating,
+                  data = excluded.data,
+                  updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            video.id,
+            video.userId || video.userEmail || video.author?.id || "",
+            video.author?.name || video.authorName || "Reviewer",
+            video.author?.avatar || video.authorAvatar || "",
+            video.placeId || "",
+            video.placeName || "",
+            video.rating || 5,
+            video.videoUrl || "",
+            video.thumbnailUrl || video.posterUrl || "",
+            video.durationSeconds || video.duration || 60,
+            video.likesCount || 0,
+            video.bookmarksCount || 0,
+            video.sharesCount || 0,
+            video.commentsCount || 0,
+            videoDataStr,
+            createdAtStr
+          ]
+        });
+      }
+
+      try {
+        const list = readReviewsIndex();
+        const existingIdx = list.findIndex((v: any) => v && v.id === video.id);
+        if (existingIdx !== -1) {
+          list[existingIdx] = { ...list[existingIdx], ...video };
+        } else {
+          list.unshift(video);
+        }
+        writeReviewsIndex(list);
+
+        const cachedIdx = feedCache.videos.findIndex((v: any) => v && v.id === video.id);
+        if (cachedIdx !== -1) {
+          feedCache.videos[cachedIdx] = { ...feedCache.videos[cachedIdx], ...video };
+        } else {
+          feedCache.videos.unshift(video);
+        }
+      } catch (e) {}
+
+      broadcastSseEvent({
+        type: "new_video_review",
+        video
+      });
+
+      return res.json({ success: true, video });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Update Video Review endpoint (handles editing star rating, caption, tags)
+  app.post("/api/videos/update-review", async (req, res) => {
+    try {
+      const { videoId, updates } = req.body;
+      if (!videoId || !updates) return res.status(400).json({ error: "Missing videoId or updates" });
+
+      const bunnyDb = getBunnyDb();
+      let updatedVideo: any = null;
+      let targetPlaceId: string | null = null;
+      let targetPlaceName: string | null = null;
+
+      if (bunnyDb) {
+        const vRow = await bunnyDb.execute({
+          sql: "SELECT * FROM videoReviews WHERE id = ? LIMIT 1",
+          args: [videoId]
+        });
+
+        if (vRow && vRow.rows && vRow.rows.length > 0) {
+          const row: any = vRow.rows[0];
+          let vData: any = {};
+          try { vData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+
+          if (updates.rating !== undefined) {
+            const newRating = Number(updates.rating);
+            row.rating = newRating;
+            vData.rating = newRating;
+            vData.placeRating = newRating;
+          }
+          if (updates.caption !== undefined) {
+            vData.caption = updates.caption;
+          }
+          if (updates.dishOrItem !== undefined) {
+            vData.dishOrItem = updates.dishOrItem;
+          }
+          if (updates.tags !== undefined) {
+            vData.tags = updates.tags;
+          }
+
+          targetPlaceId = row.placeId || vData.placeId || null;
+          targetPlaceName = row.placeName || vData.placeName || null;
+          updatedVideo = vData;
+
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET rating = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [vData.rating || row.rating, JSON.stringify(vData), videoId]
+          });
+        }
+      }
+
+      // Always update local reviews_index.json and feedCache
+      const list = readReviewsIndex();
+      const idx = list.findIndex((v: any) => v && v.id === videoId);
+      if (idx !== -1) {
+        if (updates.rating !== undefined) {
+          list[idx].rating = Number(updates.rating);
+          list[idx].placeRating = Number(updates.rating);
+        }
+        if (updates.caption !== undefined) list[idx].caption = updates.caption;
+        if (updates.dishOrItem !== undefined) list[idx].dishOrItem = updates.dishOrItem;
+        if (updates.tags !== undefined) list[idx].tags = updates.tags;
+        targetPlaceId = targetPlaceId || list[idx].placeId;
+        targetPlaceName = targetPlaceName || list[idx].placeName;
+        updatedVideo = updatedVideo || list[idx];
+        writeReviewsIndex(list);
+      }
+
+      const cachedIdx = feedCache.videos.findIndex((v: any) => v && v.id === videoId);
+      if (cachedIdx !== -1) {
+        if (updates.rating !== undefined) {
+          feedCache.videos[cachedIdx].rating = Number(updates.rating);
+          feedCache.videos[cachedIdx].placeRating = Number(updates.rating);
+        }
+        if (updates.caption !== undefined) feedCache.videos[cachedIdx].caption = updates.caption;
+        if (updates.dishOrItem !== undefined) feedCache.videos[cachedIdx].dishOrItem = updates.dishOrItem;
+        if (updates.tags !== undefined) feedCache.videos[cachedIdx].tags = updates.tags;
+      }
+
+      // Recalculate place rating if rating changed
+      if (updates.rating !== undefined && (targetPlaceId || targetPlaceName)) {
+        try {
+          if (bunnyDb) {
+            const searchKey = targetPlaceId || targetPlaceName || "";
+            const pRows = await bunnyDb.execute({
+              sql: "SELECT id, data FROM places WHERE id = ? OR LOWER(name) = LOWER(?) LIMIT 1",
+              args: [searchKey, searchKey]
+            });
+            if (pRows && pRows.rows && pRows.rows.length > 0) {
+              const pRow: any = pRows.rows[0];
+              let pData: any = {};
+              try { pData = typeof pRow.data === "string" ? JSON.parse(pRow.data) : (pRow.data || {}); } catch(e){}
+
+              const revRes = await bunnyDb.execute({
+                sql: "SELECT rating, data FROM videoReviews WHERE placeId = ? OR LOWER(placeName) = LOWER(?)",
+                args: [pRow.id, targetPlaceName || pRow.name || ""]
+              });
+              if (revRes && revRes.rows && revRes.rows.length > 0) {
+                const ratings = revRes.rows.map((r: any) => {
+                  let parsed: any = {};
+                  try { parsed = typeof r.data === "string" ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
+                  return typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
+                    ? parsed.rating
+                    : (Number(r.rating) || 5);
+                });
+                const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
+                pData.rating = avg;
+                pData.totalReviews = ratings.length;
+
+                await bunnyDb.execute({
+                  sql: "UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                  args: [JSON.stringify(pData), pRow.id]
+                });
+              }
+            }
+          }
+        } catch (pErr) {
+          console.warn("Notice recalculating place rating on update-review:", pErr);
+        }
+      }
+
+      // Broadcast SSE update event so all connected clients see updated rating live!
+      broadcastSseEvent({
+        type: "video_updated",
+        videoId,
+        updates,
+        video: updatedVideo
+      });
+
+      return res.json({ success: true, videoId, updates, video: updatedVideo });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
 
   async function resolveVideoAuthorRecipient(video: any) {
     let email = "";
