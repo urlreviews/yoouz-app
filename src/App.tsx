@@ -4869,26 +4869,28 @@ export function App() {
       localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
     } catch (e) {}
 
-    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
+    // Persist to Server and BunnyDB database via authoritative /api/interactions/like endpoint
     try {
-      const updatedVideo = {
-        ...videos.find(v => v.id === videoId),
-        isLiked: nextIsLiked,
-        likes: nextLikes,
-        likesCount: nextLikes
-      };
-
-      fetch(`/api/nosql/videoReviews/${videoId}`, {
-        method: "PUT",
+      fetch("/api/interactions/like", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedVideo)
+        body: JSON.stringify({
+          videoId,
+          userId: currentUser?.email || currentUser?.id || "anon",
+          userEmail: currentUser?.email || "",
+          userName: currentUser?.name || "Community Member",
+          userAvatar: currentUser?.avatar || "",
+          userHandle: currentUser?.handle || "",
+          isLiked: nextIsLiked
+        })
       })
       .then(res => res.json())
       .then(data => {
-        if (data) {
-          // Reconcile with authoritative server state
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, ...data } : v) }));
+        if (data && typeof data.likesCount === 'number') {
+          const authLikes = data.likesCount;
+          const authIsLiked = Boolean(data.isLiked);
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, likes: authLikes, likesCount: authLikes, isLiked: authIsLiked } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, likes: authLikes, likesCount: authLikes, isLiked: authIsLiked } : v) }));
         }
       })
       .catch((err) => console.error("Like interaction error:", err));
@@ -5040,26 +5042,31 @@ export function App() {
 
     } catch (e) {}
 
-    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
+    // Persist to Server and BunnyDB database via authoritative /api/interactions/bookmark endpoint
     try {
-      const updatedVideo = {
-        ...videos.find(v => v.id === videoId),
-        isBookmarked: nextBookmarked,
-        bookmarks: nextCount,
-        bookmarksCount: nextCount
-      };
-
-      fetch(`/api/nosql/videoReviews/${videoId}`, {
-        method: "PUT",
+      const targetVid = videos.find(v => v.id === videoId);
+      fetch("/api/interactions/bookmark", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedVideo)
+        body: JSON.stringify({
+          videoId,
+          placeId: targetVid?.placeId || "",
+          placeName: targetVid?.placeName || "",
+          userId: currentUser?.email || currentUser?.id || "anon",
+          userEmail: currentUser?.email || "",
+          userName: currentUser?.name || "Community Member",
+          userAvatar: currentUser?.avatar || "",
+          userHandle: currentUser?.handle || "",
+          isBookmarked: nextBookmarked
+        })
       })
       .then(res => res.json())
       .then(data => {
-        if (data) {
-          // Reconcile with authoritative server state
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, ...data } : v) }));
+        if (data && typeof data.bookmarksCount === 'number') {
+          const authBm = data.bookmarksCount;
+          const authBmState = Boolean(data.isBookmarked);
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, bookmarks: authBm, bookmarksCount: authBm, isBookmarked: authBmState } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, bookmarks: authBm, bookmarksCount: authBm, isBookmarked: authBmState } : v) }));
         }
       })
       .catch((err) => console.error("Bookmark interaction error:", err));
