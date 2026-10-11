@@ -535,11 +535,11 @@ export function useFeedPagination() {
 
                   const rawServerLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
                   const rawLocalLikes = typeof local?.likes === 'number' ? local.likes : (typeof local?.likesCount === 'number' ? local.likesCount : 0);
-                  const effLikes = isLk ? Math.max(1, rawServerLikes, rawLocalLikes) : rawServerLikes;
+                  const effLikes = Math.max(rawServerLikes, rawLocalLikes, isLk ? 1 : 0);
 
                   const rawServerBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
                   const rawLocalBookmarks = typeof local?.bookmarksCount === 'number' ? local.bookmarksCount : (typeof local?.bookmarks === 'number' ? local.bookmarksCount : 0);
-                  const effBookmarks = isBm ? Math.max(1, rawServerBookmarks, rawLocalBookmarks) : rawServerBookmarks;
+                  const effBookmarks = Math.max(rawServerBookmarks, rawLocalBookmarks, isBm ? 1 : 0);
 
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
@@ -649,6 +649,62 @@ export function useFeedPagination() {
                 return updated;
               });
               window.dispatchEvent(new CustomEvent("copo-video-created", { detail: { video: freshVideo } }));
+            } else if (payload.type === "video_liked" && payload.videoId) {
+              const targetId = String(payload.videoId);
+              const newLikes = typeof payload.likesCount === "number" ? payload.likesCount : 0;
+              let currentUserId = "";
+              try {
+                currentUserId = localStorage.getItem("copo_user_email") || localStorage.getItem("copo_user_uid") || "";
+              } catch (e) {}
+
+              setVideos((prev) => {
+                const updated = prev.map((v) => {
+                  if (String(v.id) === targetId) {
+                    const isMyAction = payload.userId && currentUserId && (payload.userId === currentUserId || payload.userId.toLowerCase() === currentUserId.toLowerCase());
+                    const nextIsLiked = isMyAction ? Boolean(payload.isLiked) : v.isLiked;
+                    return {
+                      ...v,
+                      likes: newLikes,
+                      likesCount: newLikes,
+                      isLiked: nextIsLiked
+                    };
+                  }
+                  return v;
+                });
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                } catch (e) {}
+                return updated;
+              });
+              window.dispatchEvent(new CustomEvent("copo-video-liked", { detail: { videoId: targetId, likesCount: newLikes, isLiked: payload.isLiked, userId: payload.userId } }));
+            } else if (payload.type === "video_bookmarked" && payload.videoId) {
+              const targetId = String(payload.videoId);
+              const newBookmarks = typeof payload.bookmarksCount === "number" ? payload.bookmarksCount : 0;
+              let currentUserId = "";
+              try {
+                currentUserId = localStorage.getItem("copo_user_email") || localStorage.getItem("copo_user_uid") || "";
+              } catch (e) {}
+
+              setVideos((prev) => {
+                const updated = prev.map((v) => {
+                  if (String(v.id) === targetId) {
+                    const isMyAction = payload.userId && currentUserId && (payload.userId === currentUserId || payload.userId.toLowerCase() === currentUserId.toLowerCase());
+                    const nextIsBookmarked = isMyAction ? Boolean(payload.isBookmarked) : v.isBookmarked;
+                    return {
+                      ...v,
+                      bookmarks: newBookmarks,
+                      bookmarksCount: newBookmarks,
+                      isBookmarked: nextIsBookmarked
+                    };
+                  }
+                  return v;
+                });
+                try {
+                  localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                } catch (e) {}
+                return updated;
+              });
+              window.dispatchEvent(new CustomEvent("copo-video-bookmarked", { detail: { videoId: targetId, bookmarksCount: newBookmarks, isBookmarked: payload.isBookmarked, userId: payload.userId } }));
             } else if (payload.type === "video_updated" && payload.videoId) {
               const targetId = String(payload.videoId);
               const updates = payload.updates || {};
