@@ -150,24 +150,6 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   if (AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) return false;
   if (HARD_DELETED_IDS.includes(id)) return true;
 
-  // If global video purge was executed, purge all previous videos
-  if (typeof localStorage !== "undefined" && localStorage.getItem("copo_all_videos_purged") === "true") {
-    const purgeTime = Number(localStorage.getItem("copo_all_videos_purged_time") || 0);
-    const itemTime = v.createdAtMs || 0;
-    if (!purgeTime || itemTime <= purgeTime) {
-      return true;
-    }
-  }
-
-  // Check client blacklist copo_deleted_videos / yoouz_deleted_videos from localStorage (ignore empty/short strings)
-  try {
-    const deletedStr = localStorage.getItem("copo_deleted_videos") || localStorage.getItem("yoouz_deleted_videos") || "[]";
-    const deletedList = JSON.parse(deletedStr);
-    if (Array.isArray(deletedList)) {
-      if (deletedList.some(item => item && String(item).trim() === id)) return true;
-    }
-  } catch (e) {}
-
   if (extraDeletedIds) {
     if (extraDeletedIds instanceof Set && extraDeletedIds.has(id)) return true;
     if (Array.isArray(extraDeletedIds) && extraDeletedIds.some(item => item && String(item).trim() === id)) return true;

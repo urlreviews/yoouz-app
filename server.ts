@@ -810,22 +810,13 @@ function isDeletedUserServer(itemOrIdOrEmail: any, deletedSet?: Set<string>): bo
   const isFakeOrDeletedStr = (str?: string) => {
     if (!str) return false;
     const s = String(str).toLowerCase().trim().replace(/^@+/, '');
-    return (
-      s.includes('yoouz') ||
-      s.includes('member') ||
-      s.includes('reviewer') ||
-      s.includes('registered user') ||
-      s.includes('david') ||
-      s === 'user' ||
-      s === 'community member' ||
-      s === 'community reviewer'
-    );
+    return s === 'deleted_user' || s === 'deleted' || s === 'purged_user';
   };
 
   if (typeof itemOrIdOrEmail === 'string') {
     if (isFakeOrDeletedStr(itemOrIdOrEmail)) return true;
   } else if (typeof itemOrIdOrEmail === 'object') {
-    if (isFakeOrDeletedStr(itemOrIdOrEmail.name) || isFakeOrDeletedStr(itemOrIdOrEmail.id) || isFakeOrDeletedStr(itemOrIdOrEmail.uid) || isFakeOrDeletedStr(itemOrIdOrEmail.email) || isFakeOrDeletedStr(itemOrIdOrEmail.handle)) return true;
+    if (isFakeOrDeletedStr(itemOrIdOrEmail.id)) return true;
   }
   
   const checkEmail = typeof itemOrIdOrEmail === 'string' ? itemOrIdOrEmail.toLowerCase().trim() : (itemOrIdOrEmail?.email || itemOrIdOrEmail?.id || itemOrIdOrEmail?.uid || '').toLowerCase().trim();
@@ -14307,7 +14298,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
               const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? r.rating : (Number(r.rating) || 0);
               const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? parsedData.rating : (Number(parsedData.rating) || 0);
-              const effRating = rawDbRating > 0 ? rawDbRating : (rawParsedRating > 0 ? rawParsedRating : (Number(existing?.rating) || 5));
+              const effRating = rawParsedRating > 0 ? rawParsedRating : (rawDbRating > 0 ? rawDbRating : (Number(existing?.rating) || 5));
               parsedData.rating = effRating;
               parsedData.placeRating = effRating;
 
@@ -14414,11 +14405,17 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 const commentId = String(parsed.id || row.id || "");
                 if (commentId) {
                   const commentObj = { ...parsed, id: commentId, videoId: String(row.videoId) };
-                  const list = videoCommentsMap.get(String(row.videoId)) || [];
+                  const vKey = String(row.videoId).toLowerCase().trim();
+                  const list = videoCommentsMap.get(vKey) || [];
                   if (!list.some(c => c.id === commentId)) {
                     list.push(commentObj);
                   }
-                  videoCommentsMap.set(String(row.videoId), list);
+                  videoCommentsMap.set(vKey, list);
+                  if (String(row.videoId) !== vKey) {
+                    const listExact = videoCommentsMap.get(String(row.videoId)) || [];
+                    if (!listExact.some(c => c.id === commentId)) listExact.push(commentObj);
+                    videoCommentsMap.set(String(row.videoId), listExact);
+                  }
                 }
               }
             });
@@ -14497,14 +14494,19 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
         
         const enriched = enrichReviewPlaceAssets(r);
-        const separateComments = videoCommentsMap.get(String(r.id)) || [];
+        const vKey = String(r.id).toLowerCase().trim();
+        const separateComments = videoCommentsMap.get(vKey) || videoCommentsMap.get(String(r.id)) || [];
         const existingComments = Array.isArray(enriched.comments) ? enriched.comments : [];
         
         // Use buildCommentTree to produce the canonical deduplicated hierarchy and exact count
         const allComments = [...existingComments, ...separateComments];
         const tree = buildCommentTree(allComments);
         enriched.comments = tree.comments;
-        enriched.commentsCount = tree.count;
+        enriched.commentsCount = Math.max(
+          tree.count,
+          typeof r.commentsCount === 'number' ? r.commentsCount : 0,
+          typeof enriched.commentsCount === 'number' ? enriched.commentsCount : 0
+        );
 
         const dbBookmarks = videoBookmarksCountMap.get(String(r.id));
         const realBookmarks = typeof dbBookmarks === 'number' ? dbBookmarks : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
