@@ -2108,16 +2108,52 @@ export function App() {
       if (isFirstNotifLoadRef.current) {
         isFirstNotifLoadRef.current = false;
         notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
+        // Show recent unread notification toast on initial visit if any
+        const latestUnread = notifs.find(n => !n.isRead && !n.id?.startsWith("welcome_notif_"));
+        if (latestUnread && activeSectionRef.current !== "notifications") {
+          let prefs = currentUser?.notificationSettings;
+          if (!prefs) {
+            try {
+              const saved = localStorage.getItem("copo_notification_settings");
+              if (saved) prefs = JSON.parse(saved);
+            } catch (e) {}
+          }
+          if (prefs?.enabled !== false) {
+            let title = "1 new notification";
+            if (latestUnread.type === "like") title = "1 new like";
+            else if (latestUnread.type === "comment") title = "1 new comment";
+            else if (latestUnread.type === "follow") title = "1 new follower";
+            else if (latestUnread.type === "bookmark") title = "1 new save";
+            else if (latestUnread.type === "review") title = `1 new review for ${latestUnread.placeName || 'your place'}`;
+            else if (latestUnread.type === "repost" || latestUnread.type === "share") title = "1 new share";
+
+            setInAppToast({
+              id: latestUnread.id,
+              type: "notification",
+              actionType: latestUnread.type,
+              title: title,
+              subtitle: latestUnread.text ? `${latestUnread.user.name}: ${latestUnread.text}` : `${latestUnread.user.name} interacted with your review`,
+              avatar: latestUnread.user.avatar,
+              userName: latestUnread.user.name,
+              onAction: () => {
+                markNotificationAsRead(latestUnread.id, effectiveMessagingUser);
+                if (latestUnread.videoId) {
+                  handleSelectVideoById(latestUnread.videoId);
+                } else {
+                  setActiveSection("notifications");
+                }
+                setInAppToast(null);
+              }
+            });
+          }
+        }
         return;
       }
 
-      // Check for brand new live incoming notification (only for events created while current session is live)
+      // Check for brand new live incoming notification
       const newIncoming = notifs.find((n) => {
         if (n.isRead) return false;
         if (prevNotifIdsRef.current.has(n.id)) return false;
-        // Prevent historical / stale notifications from firing a popup toast on page refresh
-        const notifTime = n.createdAtMs || (n as any).createdAt || 0;
-        if (notifTime > 0 && notifTime < appMountTimeRef.current - 15000) return false;
         return true;
       });
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
@@ -8329,13 +8365,6 @@ export function App() {
       )}
 
       <GlobalUploadToast />
-
-      {/* Real-time In-App Notification Toast (Top Right, Clean Dark Mode) */}
-      <InAppNotificationToast
-        toast={inAppToast}
-        onClose={() => setInAppToast(null)}
-        notificationSettings={currentUser?.notificationSettings}
-      />
 
       {deleteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white rounded-2xl px-5 py-4 border border-zinc-800 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">
