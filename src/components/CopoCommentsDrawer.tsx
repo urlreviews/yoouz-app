@@ -613,11 +613,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     const propList = (Array.isArray(video?.comments) && video.comments.length > 0
       ? video.comments
       : []).filter((c: any) => c && c.id !== "comm-101" && c.id !== "comm-102");
-    // If remote comments have been loaded, they are the authoritative source from the database.
-    // Prop list may contain stale, cached deleted comments from a previous device session.
-    const baseList = hasRemoteFetched
-      ? remoteComments
-      : (remoteComments.length > 0 ? remoteComments : propList);
+    // If remote comments are empty, fallback to propList (video.comments)
+    const baseList = remoteComments.length > 0 ? remoteComments : propList;
 
     const tree = buildCommentTree(baseList);
     
