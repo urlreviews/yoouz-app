@@ -2905,36 +2905,43 @@ export function App() {
     let targetPlaceId: string | null = null;
     let targetPlaceName: string | null = null;
 
-    setVideos((prev) =>
-      prev.map((v) => {
-        if (v.id === videoId) {
-          targetPlaceId = v.placeId;
-          targetPlaceName = v.placeName;
-          return {
-            ...v,
-            rating: updates.rating !== undefined ? updates.rating : v.rating,
-            placeRating: updates.rating !== undefined ? updates.rating : v.placeRating,
-            caption: updates.caption !== undefined ? updates.caption : v.caption,
-            dishOrItem: updates.dishOrItem !== undefined ? updates.dishOrItem : v.dishOrItem,
-            tags: updates.tags !== undefined ? updates.tags : v.tags
-          };
-        }
-        return v;
-      })
-    );
+    const targetVid = videos.find((v) => v.id === videoId);
+    if (targetVid) {
+      targetPlaceId = targetVid.placeId || null;
+      targetPlaceName = targetVid.placeName || null;
+    }
+
+    const updatedRating = updates.rating;
+
+    // Build the updated videos array immediately for consistency
+    const nextVideos = videos.map((v) => {
+      if (v.id === videoId) {
+        if (!targetPlaceId && v.placeId) targetPlaceId = v.placeId;
+        if (!targetPlaceName && v.placeName) targetPlaceName = v.placeName;
+        return {
+          ...v,
+          ...(updatedRating !== undefined && { rating: updatedRating, placeRating: updatedRating }),
+          ...(updates.caption !== undefined && { caption: updates.caption }),
+          ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+          ...(updates.tags !== undefined && { tags: updates.tags })
+        };
+      }
+      return v;
+    });
+
+    setVideos(nextVideos);
 
     // If rating was changed, recalculate the place average rating across all its videos
-    if (updates.rating !== undefined) {
+    if (updatedRating !== undefined) {
       setPlaces((prev) => {
         const updated = prev.map((p) => {
-          if (
-            (targetPlaceId && p.id === targetPlaceId) ||
-            (targetPlaceName && (p.name || "").toLowerCase().trim() === targetPlaceName.toLowerCase().trim())
-          ) {
-            const updatedRating = updates.rating!;
-            const allPlaceReviews = videos.map((v) =>
-              v.id === videoId ? { ...v, rating: updatedRating, placeRating: updatedRating } : v
-            ).filter((v) => isPlaceReviewMatch(v, p));
+          const isMatch =
+            (targetPlaceId && (p.id === targetPlaceId || (p as any).placeId === targetPlaceId)) ||
+            (targetPlaceName && (p.name || (p as any).placeName || "").toLowerCase().trim() === targetPlaceName.toLowerCase().trim()) ||
+            isPlaceReviewMatch(targetVid, p);
+
+          if (isMatch) {
+            const allPlaceReviews = nextVideos.filter((v) => isPlaceReviewMatch(v, p));
 
             if (allPlaceReviews.length > 0) {
               const sum = allPlaceReviews.reduce((acc, r) => acc + (r.rating || 5), 0);

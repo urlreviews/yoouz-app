@@ -561,8 +561,31 @@ export function useFeedPagination() {
               const merged = [...pendingLocalVideos, ...mergedServerVideos];
               merged.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               
-              const result = pageNum === 1 ? merged : [...prev, ...merged];
-              const uniqueResult = Array.from(new Map(result.map(v => [v.id, v])).values());
+              const resultMap = new Map<string, VideoReview>();
+              if (pageNum === 1) {
+                // Keep all previously loaded non-deleted videos in state
+                prev.forEach((v) => {
+                  if (v && v.id && !allDeletedSet.has(String(v.id)) && !isPurgedItem(v)) {
+                    resultMap.set(String(v.id), v);
+                  }
+                });
+                // Overlay fresh server updates / pending videos
+                merged.forEach((v) => {
+                  if (v && v.id) {
+                    resultMap.set(String(v.id), v);
+                  }
+                });
+              } else {
+                prev.forEach((v) => {
+                  if (v && v.id) resultMap.set(String(v.id), v);
+                });
+                merged.forEach((v) => {
+                  if (v && v.id) resultMap.set(String(v.id), v);
+                });
+              }
+
+              const uniqueResult = Array.from(resultMap.values());
+              uniqueResult.sort((a, b) => getReviewTime(b) - getReviewTime(a));
               setHasMore(mergedServerVideos.length === 10);
 
               // Persist fresh feed to cache

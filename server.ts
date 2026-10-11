@@ -14559,7 +14559,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         feedCache.videos = merged;
         feedCache.lastFetched = now;
 
-        // Persist back to local reviews_index.json and seedReviews.ts so we have full durability and exact parity with BunnyDB admin data
+        // Persist back to local reviews_index.json so we have full durability and exact parity with BunnyDB admin data
         if (merged.length > 0) {
           const sanitizedForGlobalCache = merged.map((item: any) => ({
             ...item,
@@ -14567,11 +14567,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             isBookmarked: false
           }));
           writeReviewsIndex(sanitizedForGlobalCache);
-          try {
-            const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
-            const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = ' + JSON.stringify(sanitizedForGlobalCache, null, 2) + ';\n';
-            fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
-          } catch (sErr) {}
         }
       } else {
         // If BunnyDB read failed (e.g. quota limit), retry after 1 minute instead of spamming on every request
