@@ -13762,6 +13762,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             parsedData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
           } catch (e) { continue; }
 
+          if (parsedData.customEdited || parsedData.customized) {
+            continue; // Never overwrite custom edited business profiles!
+          }
+
           let domain = parsedData.brandDomain || parsedData.website || pRow.id || '';
           if (domain.startsWith('http')) {
             try { domain = new URL(domain).hostname.replace(/^www\./i, ''); } catch(e){}
@@ -13951,6 +13955,20 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       };
 
       for (const [entityId, info] of Object.entries(KNOWN_ENTITY_LOCATIONS)) {
+        const checkRow = await bunnyDb.execute({ sql: `SELECT data FROM places WHERE id = ?`, args: [entityId] }).catch(() => null);
+        let isCustom = false;
+        if (checkRow && checkRow.rows && checkRow.rows[0]) {
+          try {
+            const parsed = typeof (checkRow.rows[0] as any).data === 'string' ? JSON.parse((checkRow.rows[0] as any).data) : ((checkRow.rows[0] as any).data || {});
+            if (parsed.customEdited || parsed.customized) {
+              isCustom = true;
+            }
+          } catch(e) {}
+        }
+        if (isCustom) {
+          continue; // Respect custom edits by business owner!
+        }
+
         // Update places table
         await bunnyDb.execute({
           sql: `UPDATE places SET name = ?, address = ?, city = ?, country = ?, latitude = ?, longitude = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
