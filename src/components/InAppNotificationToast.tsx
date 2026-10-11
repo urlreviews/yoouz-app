@@ -131,14 +131,14 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed top-4 left-0 right-0 z-[400] flex justify-center px-3 pointer-events-none select-none">
+      <div className="fixed top-4 right-3 sm:right-6 z-[500] flex justify-end pointer-events-none select-none max-w-full">
         <motion.div
           key={toast.id}
-          initial={{ opacity: 0, y: -24, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.94 }}
+          initial={{ opacity: 0, x: 30, y: -10, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 30, scale: 0.95 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="pointer-events-auto w-full max-w-[390px] rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-zinc-700/80 shadow-[0_12px_36px_rgba(0,0,0,0.85)] p-3 text-white overflow-hidden relative cursor-pointer group active:scale-[0.98] transition-transform"
+          className="pointer-events-auto w-[360px] max-w-[calc(100vw-24px)] rounded-2xl bg-zinc-950/98 backdrop-blur-2xl border border-zinc-700/80 shadow-[0_12px_40px_rgba(0,0,0,0.95)] p-3 text-white overflow-hidden relative cursor-pointer group active:scale-[0.98] transition-transform"
           onClick={handleClick}
         >
           {/* Top Progress Bar */}
@@ -195,22 +195,22 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
               </span>
             </div>
 
-            {/* Content Text */}
+            {/* Content Text - Clean White Dark Mode Typography */}
             <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center justify-between gap-1">
                 <span className="text-[13px] font-bold text-white tracking-tight truncate">
                   {toast.title}
                 </span>
-                <span className="text-[10px] text-zinc-400 font-medium shrink-0">
+                <span className="text-[10px] text-zinc-300 font-semibold shrink-0">
                   Just now
                 </span>
               </div>
-              <p className="text-[12px] text-zinc-300 font-normal line-clamp-1 mt-0.5 [overflow-wrap:anywhere]">
+              <p className="text-[12px] text-zinc-200 font-medium line-clamp-1 mt-0.5 [overflow-wrap:anywhere]">
                 {toast.subtitle}
               </p>
             </div>
 
-            {/* Action / Close */}
+            {/* Action / Close Buttons */}
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
@@ -230,7 +230,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
                   e.stopPropagation();
                   onClose();
                 }}
-                className="w-7 h-7 rounded-full hover:bg-zinc-800 active:scale-90 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-full hover:bg-zinc-800 active:scale-90 text-zinc-300 hover:text-white flex items-center justify-center transition-colors"
                 title="Dismiss"
               >
                 <X className="w-3.5 h-3.5" />

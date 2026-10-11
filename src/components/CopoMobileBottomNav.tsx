@@ -125,7 +125,13 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
         {/* 4. Inbox / Messages */}
         <button
           id="mobile-nav-inbox-btn"
-          onClick={() => onSelectSection("messages")}
+          onClick={() => {
+            if (unreadNotifsCount > 0 && unreadMessagesCount === 0) {
+              onSelectSection("notifications");
+            } else {
+              onSelectSection("messages");
+            }
+          }}
           className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "messages" || activeSection === "notifications"
               ? "text-white"

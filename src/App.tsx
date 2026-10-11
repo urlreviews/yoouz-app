@@ -26,6 +26,7 @@ import { CopoMessagesView, getThreadPartnerDetails } from "./components/CopoMess
 import { CopoFollowingView } from "./components/CopoFollowingView";
 import { CopoDiscoverView } from "./components/CopoDiscoverView";
 import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
+import { CopoMobileBottomNav } from "./components/CopoMobileBottomNav";
 import { CopoAdminPanel } from "./components/CopoAdminPanel";
 import { CopoGoogleAuthModal, AuthIntent, CopoAuthPrompt } from "./components/CopoGoogleAuthModal";
 import { CopoLegalModal } from "./components/CopoLegalModal";
@@ -2214,8 +2215,7 @@ export function App() {
 
   // Real-time effective unread notifications count adhering to user preferences
   const effectiveUnreadNotifsCount = useMemo(() => {
-    if (!currentUser) return 0;
-    let prefs = currentUser.notificationSettings;
+    let prefs = currentUser?.notificationSettings;
     if (!prefs) {
       try {
         const saved = localStorage.getItem("copo_notification_settings");
@@ -2224,17 +2224,28 @@ export function App() {
     }
     if (prefs?.enabled === false) return 0;
     return notifications.filter((n) => {
-      if (n.isRead) return false;
+      const isRead = Boolean(
+        n.isRead === true ||
+        (n as any).read === true ||
+        (n as any).isRead === 1 ||
+        (n as any).read === 1 ||
+        (n as any).isRead === "true" ||
+        (n as any).read === "true" ||
+        (n as any).is_read === true
+      );
+      if (isRead) return false;
       if (prefs) {
         if (n.type === "like" && prefs.likes === false) return false;
         if (n.type === "comment" && prefs.comments === false) return false;
         if ((n.type === "message" || (n.type as any) === "chat") && prefs.messages === false) return false;
         if (n.type === "follow" && prefs.follows === false) return false;
-        if ((n.type === "bookmark" || n.type === "repost") && prefs.bookmarks === false) return false;
+        if ((n.type === "bookmark" || (n.type as string) === "save" || n.type === "repost") && prefs.bookmarks === false) return false;
+        if (n.type === "review" && prefs.reviews === false) return false;
+        if ((n.type === "repost" || n.type === "share") && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) return false;
       }
       return true;
     }).length;
-  }, [currentUser, currentUser?.notificationSettings, notifications]);
+  }, [currentUser?.notificationSettings, notifications]);
 
   const calculateUnreadMessagesCount = (msgList: CopoMessage[], user: UserProfile | null) => {
     if (!user) return 0;
@@ -8066,6 +8077,56 @@ export function App() {
         onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
       />
 
+      {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
+      {!embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
+        <CopoMobileBottomNav
+          activeSection={activeSection}
+          currentUser={currentUser}
+          unreadNotifsCount={effectiveUnreadNotifsCount}
+          unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
+          onSelectSection={(section) => {
+            if (section === "home") {
+              setSelectedPlaceIdForDrawer(null);
+              setSelectedAuthorForDrawer(null);
+              setCurrentVideoIndex(0);
+              setActiveSubTab("discover");
+              setActiveSection("home");
+              return;
+            }
+            if (section === "search") {
+              handleOpenSearchModal();
+              return;
+            }
+            if (section === "discover") {
+              setIsDiscoverModalOpen(true);
+              return;
+            }
+            if (section === "profile") {
+              handleGoToProfile();
+              return;
+            }
+            if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
+              setAuthIntent(section as AuthIntent);
+              setIsAuthModalOpen(true);
+              return;
+            }
+            setSelectedPlaceIdForDrawer(null);
+            setSelectedAuthorForDrawer(null);
+            setActiveSection(section);
+          }}
+          onOpenSearch={handleOpenSearchModal}
+          onOpenCreateModal={() => {
+            if (!currentUser) {
+              setAuthIntent('record');
+              setIsAuthModalOpen(true);
+            } else {
+              setPreselectedPlaceForRecording(null);
+              setIsCreateModalOpen(true);
+            }
+          }}
+        />
+      )}
+
       {/* Mobile Search Overlay */}
       {isSearchModalOpen && (
         <CopoMobileSearchView
@@ -8268,6 +8329,13 @@ export function App() {
       )}
 
       <GlobalUploadToast />
+
+      {/* Real-time In-App Notification Toast (Top Right, Clean Dark Mode) */}
+      <InAppNotificationToast
+        toast={inAppToast}
+        onClose={() => setInAppToast(null)}
+        notificationSettings={currentUser?.notificationSettings}
+      />
 
       {deleteSuccessToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-zinc-900 text-white rounded-2xl px-5 py-4 border border-zinc-800 shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">
