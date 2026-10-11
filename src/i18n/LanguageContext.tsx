@@ -6,7 +6,7 @@ import {
   translations,
   TranslationSchema
 } from "./translations";
-import { UNIVERSAL_PAGE_TRANSLATIONS } from "./locales/universal";
+import { UNIVERSAL_PAGE_TRANSLATIONS } from "@/src/i18n/locales/universal";
 
 interface LanguageContextType {
   language: SupportedLanguage;
