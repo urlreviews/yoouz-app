@@ -14204,10 +14204,13 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           const dbRows = await db.select().from(BunnyDB_video_reviews).orderBy(desc(BunnyDB_video_reviews.createdAt));
           dbRows.forEach((row: any) => {
             const parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-            const r = { id: row.id, createdAt: row.createdAt, ...parsedData };
+            const r = { 
+              id: row.id, 
+              createdAt: row.createdAt, 
+              ...parsedData 
+            };
             bunnyFetchSuccess = true;
             if (r && r.id && !deletedSet.has(String(r.id))) {
-              const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
               const existing = map.get(r.id) || {};
               const mergedAuthor = {
                 ...(typeof existing.author === 'object' ? existing.author : {}),
