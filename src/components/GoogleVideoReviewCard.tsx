@@ -316,8 +316,8 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         >
           <ThumbsUp className={`w-3.5 h-3.5 ${review.isLiked ? "fill-white" : ""}`} />
           <span className="text-[12px] font-medium">
-            {review.likes + (review.isLiked ? 1 : 0) > 0
-              ? review.likes + (review.isLiked ? 1 : 0)
+            {(typeof review.likesCount === 'number' ? review.likesCount : (typeof review.likes === 'number' ? review.likes : 0)) > 0
+              ? (typeof review.likesCount === 'number' ? review.likesCount : (typeof review.likes === 'number' ? review.likes : 0))
               : "Helpful"}
           </span>
         </button>

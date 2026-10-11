@@ -178,6 +178,28 @@ export function App() {
                 return [{ ...rawPlace, id: targetId }, ...prev];
               });
             }
+          } else if (payload.type === "video_liked" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            const nLikes = typeof payload.likesCount === 'number' ? payload.likesCount : 0;
+            setVideos((prev) => prev.map((v) => v.id === vidId ? { ...v, likes: nLikes, likesCount: nLikes } : v));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && r.id === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, likes: nLikes, likesCount: nLikes } : v)
+              };
+            }));
+          } else if (payload.type === "video_bookmarked" && payload.videoId && payload.videoId !== "place_bookmark") {
+            const vidId = String(payload.videoId);
+            const nBm = typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : 0;
+            setVideos((prev) => prev.map((v) => v.id === vidId ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && r.id === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v)
+              };
+            }));
           } else if (payload.type === "video_bookmarked" && payload.videoId === "place_bookmark" && payload.placeId) {
             // Real-time sync for saved places
             const currentEmail = currentUser?.email || auth.currentUser?.email;
@@ -4716,10 +4738,33 @@ export function App() {
           return {
             ...v,
             isLiked: nextIsLiked,
-            likes: nextLikes
+            likes: nextLikes,
+            likesCount: nextLikes
           };
         }
         return v;
+      })
+    );
+
+    setPlaces((prev) =>
+      prev.map((p) => {
+        if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
+        return {
+          ...p,
+          reviews: p.reviews.map((v: any) => {
+            if (v && v.id === videoId) {
+              const currentLikes = typeof v.likes === 'number' && !isNaN(v.likes) ? v.likes : (typeof v.likesCount === 'number' ? v.likesCount : 0);
+              const nLikes = nextIsLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+              return {
+                ...v,
+                isLiked: nextIsLiked,
+                likes: nLikes,
+                likesCount: nLikes
+              };
+            }
+            return v;
+          })
+        };
       })
     );
 
@@ -4758,6 +4803,7 @@ export function App() {
         if (data && typeof data.likesCount === 'number') {
           const authLikes = nextIsLiked ? Math.max(1, data.likesCount) : data.likesCount;
           setVideos(prev => prev.map(v => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v) }));
         }
       })
       .catch(() => {});
@@ -4871,6 +4917,28 @@ export function App() {
       })
     );
 
+    setPlaces((prev) =>
+      prev.map((p) => {
+        if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
+        return {
+          ...p,
+          reviews: p.reviews.map((v: any) => {
+            if (v && v.id === videoId) {
+              const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
+              const nBm = nextBookmarked ? Math.max(1, currentCount + 1) : Math.max(0, currentCount - 1);
+              return {
+                ...v,
+                isBookmarked: nextBookmarked,
+                bookmarksCount: nBm,
+                bookmarks: nBm
+              };
+            }
+            return v;
+          })
+        };
+      })
+    );
+
     // Persist to user's saved list in LocalStorage
     try {
       const savedStr = localStorage.getItem("copo_saved_video_ids") || "[]";
@@ -4919,6 +4987,7 @@ export function App() {
         if (data && typeof data.bookmarksCount === 'number') {
           const authCount = nextBookmarked ? Math.max(1, data.bookmarksCount) : data.bookmarksCount;
           setVideos(prev => prev.map(v => v.id === videoId ? { ...v, bookmarksCount: authCount, bookmarks: authCount } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, bookmarksCount: authCount, bookmarks: authCount } : v) }));
         }
       })
       .catch(() => {});

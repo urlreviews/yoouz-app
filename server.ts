@@ -15716,8 +15716,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           });
         } else {
           await bunnyDb.execute({
-            sql: "DELETE FROM likes WHERE (userId = ? AND videoId = ?) OR id = ?",
-            args: [userId || "", videoId, likeId]
+            sql: "DELETE FROM likes WHERE (userId = ? AND videoId = ?) OR (userEmail = ? AND videoId = ?) OR id = ?",
+            args: [userId || "", videoId, effEmail || "", videoId, likeId]
           });
         }
 
@@ -15989,8 +15989,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           });
         } else {
           await bunnyDb.execute({
-            sql: "DELETE FROM bookmarks WHERE (userId = ? AND videoId = ?) OR id = ?",
-            args: [userId || "", videoId, bmId]
+            sql: "DELETE FROM bookmarks WHERE (userId = ? AND videoId = ?) OR (userEmail = ? AND videoId = ?) OR id = ?",
+            args: [userId || "", videoId, userEmail || "", videoId, bmId]
           });
         }
 
@@ -16185,12 +16185,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         try {
           const [bmRows, likeRows] = await Promise.all([
             bunnyDb.execute({
-              sql: "SELECT videoId, placeId FROM bookmarks WHERE userId = ?",
-              args: [userId]
+              sql: "SELECT videoId, placeId FROM bookmarks WHERE userId = ? OR userEmail = ?",
+              args: [userId, userId]
             }).catch(() => ({ rows: [] })),
             bunnyDb.execute({
-              sql: "SELECT videoId FROM likes WHERE userId = ?",
-              args: [userId]
+              sql: "SELECT videoId FROM likes WHERE userId = ? OR userEmail = ?",
+              args: [userId, userId]
             }).catch(() => ({ rows: [] }))
           ]);
 
@@ -32163,12 +32163,12 @@ function injectOpenGraphTags(html: string, meta: any) {
                   videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
                   thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
                   duration = COALESCE(NULLIF(excluded.duration, 0), videoReviews.duration),
-                  likesCount = CASE WHEN excluded.likesCount > COALESCE(videoReviews.likesCount, 0) THEN excluded.likesCount ELSE COALESCE(videoReviews.likesCount, 0) END,
-                  bookmarksCount = CASE WHEN excluded.bookmarksCount > COALESCE(videoReviews.bookmarksCount, 0) THEN excluded.bookmarksCount ELSE COALESCE(videoReviews.bookmarksCount, 0) END,
-                  sharesCount = CASE WHEN excluded.sharesCount > COALESCE(videoReviews.sharesCount, 0) THEN excluded.sharesCount ELSE COALESCE(videoReviews.sharesCount, 0) END,
-                  commentsCount = CASE WHEN excluded.commentsCount > COALESCE(videoReviews.commentsCount, 0) THEN excluded.commentsCount ELSE COALESCE(videoReviews.commentsCount, 0) END,
+                  likesCount = excluded.likesCount,
+                  bookmarksCount = excluded.bookmarksCount,
+                  sharesCount = excluded.sharesCount,
+                  commentsCount = excluded.commentsCount,
                   viewsCount = CASE WHEN excluded.viewsCount > COALESCE(videoReviews.viewsCount, 0) THEN excluded.viewsCount ELSE COALESCE(videoReviews.viewsCount, 0) END,
-                  data = CASE WHEN videoReviews.data IS NOT NULL AND videoReviews.data != '' THEN videoReviews.data ELSE excluded.data END,
+                  data = excluded.data,
                   updatedAt = videoReviews.updatedAt`,
           args: [
             r.id,
