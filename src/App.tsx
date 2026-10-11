@@ -145,20 +145,8 @@ export function App() {
   useEffect(() => {
     let sse: EventSource | null = null;
     let reconnectTimeout: any = null;
-    let active = true;
 
-    const setupSse = async () => {
-      if (!active) return;
-      try {
-        const healthRes = await fetch("/api/health").catch(() => null);
-        if (!healthRes || !healthRes.ok) return;
-        const contentType = healthRes.headers.get("content-type") || "";
-        if (contentType.includes("text/html")) return;
-      } catch (e) {
-        return;
-      }
-      if (!active) return;
-
+    const setupSse = () => {
       sse = new EventSource("/api/sse");
       sse.onmessage = (event) => {
         try {
@@ -203,7 +191,6 @@ export function App() {
 
     setupSse();
     return () => {
-      active = false;
       if (sse) sse.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
@@ -2925,62 +2912,63 @@ export function App() {
 
     // Persist immediately to Backend API (BunnyDB + PostgreSQL + Server Index)
     try {
-      const response = await fetch("/api/videos/update-review", {
+      fetch("/api/videos/update-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId,
           updates
         })
+      }).catch((err) => {
+        console.warn("Server update review API error:", err);
       });
-      if (!response.ok) throw new Error("Backend update failed");
+
+      // Update local storage cache immediately
+      try {
+        const cachedStr = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          if (Array.isArray(cached)) {
+            const updated = cached.map((c: any) =>
+              c.id === videoId
+                ? {
+                    ...c,
+                    ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+                    ...(updates.caption !== undefined && { caption: updates.caption }),
+                    ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                    ...(updates.tags !== undefined && { tags: updates.tags })
+                  }
+                : c
+            );
+            localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated));
+          }
+        }
+
+        const localCreatedStr = localStorage.getItem("yoouz_local_created_reviews");
+        if (localCreatedStr) {
+          const localCreated = JSON.parse(localCreatedStr);
+          if (Array.isArray(localCreated)) {
+            const updatedLocal = localCreated.map((c: any) =>
+              c.id === videoId
+                ? {
+                    ...c,
+                    ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+                    ...(updates.caption !== undefined && { caption: updates.caption }),
+                    ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                    ...(updates.tags !== undefined && { tags: updates.tags })
+                  }
+                : c
+            );
+            localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(updatedLocal));
+          }
+        }
+      } catch (e) {}
+
+      // Fallback mirror to BunnyDB if present
+
     } catch (err) {
-      console.error("Server update review API error:", err);
-      throw err; // Re-throw to inform caller
+      console.warn("Update video rating error:", err);
     }
-
-    // Update local storage cache immediately
-    try {
-      const cachedStr = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
-      if (cachedStr) {
-        const cached = JSON.parse(cachedStr);
-        if (Array.isArray(cached)) {
-          const updated = cached.map((c: any) =>
-            c.id === videoId
-              ? {
-                  ...c,
-                  ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
-                  ...(updates.caption !== undefined && { caption: updates.caption }),
-                  ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
-                  ...(updates.tags !== undefined && { tags: updates.tags })
-                }
-              : c
-          );
-          localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated));
-        }
-      }
-
-      const localCreatedStr = localStorage.getItem("yoouz_local_created_reviews");
-      if (localCreatedStr) {
-        const localCreated = JSON.parse(localCreatedStr);
-        if (Array.isArray(localCreated)) {
-          const updatedLocal = localCreated.map((c: any) =>
-            c.id === videoId
-              ? {
-                  ...c,
-                  ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
-                  ...(updates.caption !== undefined && { caption: updates.caption }),
-                  ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
-                  ...(updates.tags !== undefined && { tags: updates.tags })
-                }
-              : c
-          );
-          localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(updatedLocal));
-        }
-      }
-    } catch (e) {}
-
-    // Fallback mirror to BunnyDB if present
   };
 
   // Video View Recording Session State
