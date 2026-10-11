@@ -1697,17 +1697,6 @@ export function App() {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // Sync currentUser to localStorage for live feed query authentication
-    useEffect(() => {
-      if (currentUser) {
-        try {
-          if (currentUser.email) localStorage.setItem("copo_user_email", currentUser.email);
-          if (currentUser.id || (currentUser as any).uid) localStorage.setItem("copo_user_uid", currentUser.id || (currentUser as any).uid);
-          localStorage.setItem("yoouz_current_user", JSON.stringify(currentUser));
-        } catch (e) {}
-      }
-    }, [currentUser]);
-
     // 4. BunnyDB onAuthStateChanged listener
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -2041,6 +2030,17 @@ export function App() {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  // Sync currentUser to localStorage for live feed query authentication
+  useEffect(() => {
+    if (currentUser) {
+      try {
+        if (currentUser.email) localStorage.setItem("copo_user_email", currentUser.email);
+        if (currentUser.id || (currentUser as any).uid) localStorage.setItem("copo_user_uid", currentUser.id || (currentUser as any).uid);
+        localStorage.setItem("yoouz_current_user", JSON.stringify(currentUser));
+      } catch (e) {}
+    }
+  }, [currentUser]);
 
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
