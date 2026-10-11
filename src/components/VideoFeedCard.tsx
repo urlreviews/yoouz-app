@@ -757,10 +757,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           />
         </button>
         <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
-          {Math.max(
-            typeof video.likes === 'number' ? video.likes : (video.likesCount || 0),
-            video.isLiked ? 1 : 0
-          )}
+          {typeof video.likesCount === 'number' ? video.likesCount : (typeof video.likes === 'number' ? video.likes : 0)}
         </span>
       </div>
 
@@ -838,11 +835,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           />
         </button>
         <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
-          {Math.max(
-            typeof video.bookmarksCount === 'number' ? video.bookmarksCount : 0,
-            typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0,
-            video.isBookmarked ? 1 : 0
-          )}
+          {typeof video.bookmarksCount === 'number' ? video.bookmarksCount : (typeof (video as any).bookmarks === 'number' ? (video as any).bookmarks : 0)}
         </span>
       </div>
 

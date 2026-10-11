@@ -14500,19 +14500,17 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         enriched.comments = tree.comments;
         enriched.commentsCount = tree.count;
 
-        const realBookmarks = videoBookmarksCountMap.has(String(r.id))
-          ? Math.max(videoBookmarksCountMap.get(String(r.id))!, typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0))
-          : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
+        const dbBookmarks = videoBookmarksCountMap.get(String(r.id));
+        const realBookmarks = typeof dbBookmarks === 'number' ? dbBookmarks : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
         enriched.bookmarks = realBookmarks;
         enriched.bookmarksCount = realBookmarks;
-        enriched.isBookmarked = userBookmarkedSet.has(String(r.id)) || Boolean(enriched.isBookmarked);
+        enriched.isBookmarked = userBookmarkedSet.has(String(r.id));
 
-        const realLikes = videoLikesCountMap.has(String(r.id))
-          ? Math.max(videoLikesCountMap.get(String(r.id))!, typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0))
-          : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
+        const dbLikes = videoLikesCountMap.get(String(r.id));
+        const realLikes = typeof dbLikes === 'number' ? dbLikes : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
         enriched.likes = realLikes;
         enriched.likesCount = realLikes;
-        enriched.isLiked = userLikedSet.has(String(r.id)) || Boolean(enriched.isLiked);
+        enriched.isLiked = userLikedSet.has(String(r.id));
 
         const realShares = videoSharesCountMap.has(String(r.id))
           ? Math.max(videoSharesCountMap.get(String(r.id))!, typeof enriched.sharesCount === 'number' ? enriched.sharesCount : (typeof enriched.shares === 'number' ? enriched.shares : 0))
@@ -15734,8 +15732,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           };
 
           await bunnyDb.execute({
-            sql: "INSERT OR REPLACE INTO likes (id, userId, videoId, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-            args: [likeId, userId || "", videoId, JSON.stringify(likeData)]
+            sql: "INSERT OR REPLACE INTO likes (id, userId, userEmail, videoId, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+            args: [likeId, userId || "", effEmail || "", videoId, JSON.stringify(likeData)]
           });
         } else {
           await bunnyDb.execute({
@@ -15824,13 +15822,15 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           vid.likesCount = updatedLikesCount;
           writeReviewsIndex(list);
         }
-        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
-        if (cachedIdx !== -1) {
-          feedCache.videos[cachedIdx] = {
-            ...feedCache.videos[cachedIdx],
-            likes: updatedLikesCount,
-            likesCount: updatedLikesCount
-          };
+        if (feedCache && Array.isArray(feedCache.videos)) {
+          const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === videoId || v._id === videoId));
+          if (cachedIdx !== -1) {
+            feedCache.videos[cachedIdx] = {
+              ...feedCache.videos[cachedIdx],
+              likes: updatedLikesCount,
+              likesCount: updatedLikesCount
+            };
+          }
         }
       } catch (e) {}
 
@@ -15940,13 +15940,13 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
       const bunnyDb = getBunnyDb();
       let updatedBookmarksCount = 0;
+      let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
       if (bunnyDb) {
         const bmId = `bm_${userId || 'anon'}_${videoId}`;
         if (isBookmarked) {
           let effName = userName || "";
           let effAvatar = userAvatar || "";
           let effHandle = userHandle || "";
-          let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
           let effPlaceName = placeName || "";
           let effPlaceId = placeId || "";
           let effThumb = videoThumbnail || "";
@@ -16007,13 +16007,13 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           };
 
           await bunnyDb.execute({
-            sql: "INSERT OR REPLACE INTO bookmarks (id, userId, placeId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-            args: [bmId, userId || "", effPlaceId, videoId, JSON.stringify(bmData)]
+            sql: "INSERT OR REPLACE INTO bookmarks (id, userId, userEmail, placeId, videoId, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            args: [bmId, userId || "", effEmail || "", effPlaceId, videoId, JSON.stringify(bmData)]
           });
         } else {
           await bunnyDb.execute({
             sql: "DELETE FROM bookmarks WHERE (userId = ? AND videoId = ?) OR (userEmail = ? AND videoId = ?) OR id = ?",
-            args: [userId || "", videoId, userEmail || "", videoId, bmId]
+            args: [userId || "", videoId, effEmail || userEmail || "", videoId, bmId]
           });
         }
 
@@ -16098,13 +16098,15 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           vid.bookmarksCount = updatedBookmarksCount;
           writeReviewsIndex(list);
         }
-        const cachedIdx = feedCache.videos.findIndex((v: any) => v.id === videoId);
-        if (cachedIdx !== -1) {
-          feedCache.videos[cachedIdx] = {
-            ...feedCache.videos[cachedIdx],
-            bookmarks: updatedBookmarksCount,
-            bookmarksCount: updatedBookmarksCount
-          };
+        if (feedCache && Array.isArray(feedCache.videos)) {
+          const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === videoId || v._id === videoId));
+          if (cachedIdx !== -1) {
+            feedCache.videos[cachedIdx] = {
+              ...feedCache.videos[cachedIdx],
+              bookmarks: updatedBookmarksCount,
+              bookmarksCount: updatedBookmarksCount
+            };
+          }
         }
       } catch (e) {}
 

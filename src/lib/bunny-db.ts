@@ -71,6 +71,7 @@ const ALL_TABLE_SCHEMAS = [
   `CREATE TABLE IF NOT EXISTS bookmarks (
     id TEXT PRIMARY KEY,
     userId TEXT,
+    userEmail TEXT,
     placeId TEXT,
     videoId TEXT,
     data TEXT,
@@ -117,6 +118,7 @@ const ALL_TABLE_SCHEMAS = [
   `CREATE TABLE IF NOT EXISTS likes (
     id TEXT PRIMARY KEY,
     userId TEXT,
+    userEmail TEXT,
     videoId TEXT,
     data TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -391,6 +393,7 @@ export async function initBunnyDbSchema() {
     `CREATE TABLE IF NOT EXISTS bookmarks (
       id TEXT PRIMARY KEY,
       userId TEXT,
+      userEmail TEXT,
       placeId TEXT,
       videoId TEXT,
       data TEXT,
@@ -437,6 +440,7 @@ export async function initBunnyDbSchema() {
     `CREATE TABLE IF NOT EXISTS likes (
       id TEXT PRIMARY KEY,
       userId TEXT,
+      userEmail TEXT,
       videoId TEXT,
       data TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -487,7 +491,8 @@ export async function initBunnyDbSchema() {
     for (const sql of tableSchemas) {
       await client.execute(sql);
     }
-    try { await client.execute("ALTER TABLE videoReviews ADD COLUMN bookmarksCount INTEGER DEFAULT 0"); } catch (e) {}
+    try { await client.execute("ALTER TABLE likes ADD COLUMN userEmail TEXT"); } catch (e) {}
+    try { await client.execute("ALTER TABLE bookmarks ADD COLUMN userEmail TEXT"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN sharesCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE videoReviews ADD COLUMN commentsCount INTEGER DEFAULT 0"); } catch (e) {}
     try { await client.execute("ALTER TABLE places ADD COLUMN bannerUrl TEXT"); } catch (e) {}

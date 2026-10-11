@@ -30,14 +30,11 @@ export function normalizeReview(v: any): VideoReview {
     const computedViews = getDisplayViews(v);
 
     const videoId = v.id || v.videoId || `rev-${Math.random().toString(36).substring(2, 9)}`;
-    const isBookmarked = savedIds.includes(videoId);
-    const isLiked = likedIds.includes(videoId);
+    const isBookmarked = typeof v.isBookmarked === 'boolean' ? v.isBookmarked : savedIds.includes(videoId);
+    const isLiked = typeof v.isLiked === 'boolean' ? v.isLiked : likedIds.includes(videoId);
 
-    const rawLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
-    const likesCountVal = isLiked ? Math.max(1, rawLikes) : rawLikes;
-
-    const rawBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
-    const bookmarksCountVal = isBookmarked ? Math.max(1, rawBookmarks) : rawBookmarks;
+    const likesCountVal = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
+    const bookmarksCountVal = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
 
     const sharesCountVal = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
 
@@ -507,16 +504,11 @@ export function useFeedPagination() {
 
                   const tree = buildCommentTree(activeComments);
 
-                  const isBm = local.isBookmarked !== undefined ? local.isBookmarked : v.isBookmarked;
-                  const isLk = local.isLiked !== undefined ? local.isLiked : v.isLiked;
+                  const isBm = typeof v.isBookmarked === 'boolean' ? v.isBookmarked : (local.isBookmarked !== undefined ? local.isBookmarked : false);
+                  const isLk = typeof v.isLiked === 'boolean' ? v.isLiked : (local.isLiked !== undefined ? local.isLiked : false);
 
-                  const rawServerLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
-                  const rawLocalLikes = typeof local.likes === 'number' ? local.likes : 0;
-                  const effLikes = isLk ? Math.max(1, rawServerLikes, rawLocalLikes) : Math.max(0, rawServerLikes);
-
-                  const rawServerBm = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
-                  const rawLocalBm = typeof local.bookmarksCount === 'number' ? local.bookmarksCount : 0;
-                  const effBookmarks = isBm ? Math.max(1, rawServerBm, rawLocalBm) : Math.max(0, rawServerBm);
+                  const effLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
+                  const effBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
 
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
