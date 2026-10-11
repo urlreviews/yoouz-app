@@ -15950,8 +15950,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
 
         const countRes = await bunnyDb.execute({
-          sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?",
-          args: [videoId]
+          sql: "SELECT COUNT(*) as total FROM likes WHERE LOWER(videoId) = LOWER(?)",
+          args: [videoId.trim()]
         });
         const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
         updatedLikesCount = dbLikes;
@@ -16133,6 +16133,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
       }
 
+      broadcastSseEvent({
+        type: "video_liked",
+        videoId: videoId,
+        likesCount: updatedLikesCount,
+        isLiked: Boolean(effectiveIsLiked),
+        userId: effEmail || userId || ""
+      });
+
       return res.json({ success: true, likesCount: updatedLikesCount, isLiked: Boolean(effectiveIsLiked) });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -16226,8 +16234,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
 
         const countRes = await bunnyDb.execute({
-          sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?",
-          args: [videoId]
+          sql: "SELECT COUNT(*) as total FROM bookmarks WHERE LOWER(videoId) = LOWER(?)",
+          args: [videoId.trim()]
         });
         const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
         updatedBookmarksCount = isBookmarked ? Math.max(1, dbBookmarks) : Math.max(0, dbBookmarks);
