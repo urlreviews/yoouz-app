@@ -15256,13 +15256,15 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       if (!videoId) return res.json({ comments: [], count: 0, commentsCount: 0 });
       const bunnyDb = getBunnyDb();
 
+      let allComments: any[] = [];
+
       if (bunnyDb) {
         try {
           const result = await bunnyDb.execute({
             sql: "SELECT * FROM comments WHERE LOWER(videoId) = LOWER(?) ORDER BY createdAt ASC",
             args: [videoId.trim()]
           });
-          const allComments = (result.rows || []).map((row: any) => {
+          allComments = (result.rows || []).map((row: any) => {
             let parsed: any = {};
             try { parsed = JSON.parse(row.data || '{}'); } catch(e){}
             return {
@@ -15276,6 +15278,22 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
             };
           });
+
+          // Fallback to embedded videoReviews comments if comments table is empty
+          if (allComments.length === 0) {
+            const reviewRes = await bunnyDb.execute({
+              sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+              args: [videoId.trim()]
+            });
+            if (reviewRes.rows && reviewRes.rows.length > 0) {
+              const rawData = (reviewRes.rows[0] as any).data;
+              let parsedReview: any = {};
+              try { parsedReview = typeof rawData === 'string' ? JSON.parse(rawData) : rawData; } catch(e){}
+              if (Array.isArray(parsedReview.comments)) {
+                allComments = parsedReview.comments;
+              }
+            }
+          }
 
           // Build canonical hierarchical tree and count
           const treeResult = buildCommentTree(allComments);

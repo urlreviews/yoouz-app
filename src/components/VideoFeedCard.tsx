@@ -803,10 +803,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             if (video.ownerResponse && !list.some((c) => c.isOwner || c.id?.startsWith("owner_comm_"))) {
               computedCount += 1;
             }
-            if (Array.isArray(video.comments) || Array.isArray(videoFromAll?.comments)) {
-              return computedCount;
-            }
-            return typeof computedCommentsCount === 'number' ? computedCommentsCount : (video.commentsCount || 0);
+            const serverCount = typeof computedCommentsCount === 'number' ? computedCommentsCount : (video.commentsCount || 0);
+            return Math.max(computedCount, serverCount);
           })()}
         </span>
       </div>
