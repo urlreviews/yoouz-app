@@ -14234,14 +14234,20 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const bunnyDb = getBunnyDb();
       if (bunnyDb && queryUserId) {
         try {
+          let altQueryId = "";
+          try {
+            const prof = await resolveUserProfileFromAnySource(queryUserId);
+            if (prof) altQueryId = prof.email || prof.uid || prof.id || "";
+          } catch(e){}
+
           const [uLikes, uBms] = await Promise.all([
             bunnyDb.execute({
-              sql: "SELECT videoId FROM likes WHERE userId = ? OR userEmail = ?",
-              args: [queryUserId, queryUserId]
+              sql: "SELECT videoId FROM likes WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?) OR LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
+              args: [queryUserId, queryUserId, altQueryId, altQueryId]
             }).catch(() => ({ rows: [] })),
             bunnyDb.execute({
-              sql: "SELECT videoId FROM bookmarks WHERE userId = ? OR userEmail = ?",
-              args: [queryUserId, queryUserId]
+              sql: "SELECT videoId FROM bookmarks WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?) OR LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
+              args: [queryUserId, queryUserId, altQueryId, altQueryId]
             }).catch(() => ({ rows: [] }))
           ]);
           (uLikes.rows || []).forEach((r: any) => { if (r.videoId) userLikedSet.add(String(r.videoId)); });
@@ -15946,28 +15952,29 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const bunnyDb = getBunnyDb();
       let updatedBookmarksCount = 0;
       let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
+      let effName = userName || "";
+      let effAvatar = userAvatar || "";
+      let effHandle = userHandle || "";
+
+      try {
+        const prof = await resolveUserProfileFromAnySource(userId || effEmail);
+        if (prof) {
+          if (!effName || effName === "User") effName = prof.name;
+          if (!effAvatar) effAvatar = prof.avatar;
+          if (!effHandle) effHandle = prof.handle;
+          if (!effEmail) effEmail = prof.email;
+        }
+      } catch (e) {}
+
       if (bunnyDb) {
         const bmId = `bm_${userId || 'anon'}_${videoId}`;
         if (isBookmarked) {
-          let effName = userName || "";
-          let effAvatar = userAvatar || "";
-          let effHandle = userHandle || "";
           let effPlaceName = placeName || "";
           let effPlaceId = placeId || "";
           let effThumb = videoThumbnail || "";
           let effAuthor = videoAuthor || "";
           let effRating = videoRating || 5;
           let effVideoUrl = videoUrl || "";
-
-          try {
-            const prof = await resolveUserProfileFromAnySource(userId || effEmail);
-            if (prof) {
-              if (!effName || effName === "User") effName = prof.name;
-              if (!effAvatar) effAvatar = prof.avatar;
-              if (!effHandle) effHandle = prof.handle;
-              if (!effEmail) effEmail = prof.email;
-            }
-          } catch (e) {}
 
           try {
             const list = readReviewsIndex();
@@ -16115,15 +16122,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
       } catch (e) {}
 
-      // Sync to BunnyDB Admin if active
-      
-
       broadcastSseEvent({
         type: "video_bookmarked",
         videoId,
         isBookmarked: Boolean(isBookmarked),
         bookmarksCount: updatedBookmarksCount,
-        userId: userId || ""
+        userId: effEmail || userId || ""
       });
 
       // Send backend notification if bookmarked/saved
@@ -16156,7 +16160,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           if (video) {
             const recipient = await resolveVideoAuthorRecipient(video);
             await createAndBroadcastBackendNotification({
-              senderUserId: userId || "",
+              senderUserId: effEmail || userId || "",
+              senderName: effName,
+              senderAvatar: effAvatar,
               recipientEmail: recipient.recipientEmail,
               recipientId: recipient.recipientId,
               recipientHandle: recipient.recipientHandle,
@@ -16165,7 +16171,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               videoId: videoId,
               videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
               placeName: video.placeName ? String(video.placeName) : "",
-              customId: `notif_bookmark_${userId || 'anon'}_${videoId}`
+              customId: `notif_bookmark_${(effEmail || userId || 'anon').replace(/[^a-z0-9]/gi, '_')}_${videoId}`
             });
 
             // Send notification to Business Owner(s) for this place
@@ -16174,7 +16180,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               for (const biz of bizOwners) {
                 if (biz.recipientEmail !== recipient.recipientEmail) {
                   await createAndBroadcastBackendNotification({
-                    senderUserId: userId || "",
+                    senderUserId: effEmail || userId || "",
+                    senderName: effName,
+                    senderAvatar: effAvatar,
                     recipientEmail: biz.recipientEmail,
                     recipientId: biz.recipientId,
                     recipientHandle: biz.recipientHandle,
@@ -16183,7 +16191,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                     videoId: videoId,
                     videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
                     placeName: video.placeName ? String(video.placeName) : "",
-                    customId: `notif_biz_bookmark_${userId || 'anon'}_${videoId}_${biz.recipientEmail.replace(/[^a-z0-9]/g, '_')}`
+                    customId: `notif_biz_bookmark_${(effEmail || userId || 'anon').replace(/[^a-z0-9]/gi, '_')}_${videoId}_${biz.recipientEmail.replace(/[^a-z0-9]/g, '_')}`
                   });
                 }
               }
@@ -16259,8 +16267,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       if (bunnyDb) {
         try {
           const rows = await bunnyDb.execute({
-            sql: "SELECT videoId FROM likes WHERE userId = ?",
-            args: [userId]
+            sql: "SELECT videoId FROM likes WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
+            args: [userId, userId]
           });
           if (rows && rows.rows) {
             rows.rows.forEach((r: any) => {
@@ -16291,8 +16299,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       if (bunnyDb) {
         try {
           const rows = await bunnyDb.execute({
-            sql: "SELECT videoId, placeId FROM bookmarks WHERE userId = ?",
-            args: [userId]
+            sql: "SELECT videoId, placeId FROM bookmarks WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
+            args: [userId, userId]
           });
           if (rows && rows.rows) {
             rows.rows.forEach((r: any) => {

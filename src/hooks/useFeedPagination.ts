@@ -652,16 +652,30 @@ export function useFeedPagination() {
             } else if (payload.type === "video_liked" && payload.videoId) {
               const targetId = String(payload.videoId);
               const newLikes = typeof payload.likesCount === "number" ? payload.likesCount : 0;
-              let currentUserId = "";
+              let currentEmail = "";
+              let currentUid = "";
               try {
-                currentUserId = localStorage.getItem("copo_user_email") || localStorage.getItem("copo_user_uid") || "";
+                currentEmail = localStorage.getItem("copo_user_email") || "";
+                currentUid = localStorage.getItem("copo_user_uid") || "";
+                if (!currentEmail && !currentUid) {
+                  const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+                  if (rawUser) {
+                    const parsed = JSON.parse(rawUser);
+                    currentEmail = parsed?.email || "";
+                    currentUid = parsed?.id || parsed?.uid || "";
+                  }
+                }
               } catch (e) {}
+
+              const pUserStr = String(payload.userId || "").toLowerCase().trim();
+              const myEmailStr = currentEmail.toLowerCase().trim();
+              const myUidStr = currentUid.toLowerCase().trim();
+              const isMyAction = Boolean(pUserStr && ((myEmailStr && pUserStr === myEmailStr) || (myUidStr && pUserStr === myUidStr)));
 
               setVideos((prev) => {
                 const updated = prev.map((v) => {
                   if (String(v.id) === targetId) {
-                    const isMyAction = payload.userId && currentUserId && (payload.userId === currentUserId || payload.userId.toLowerCase() === currentUserId.toLowerCase());
-                    const nextIsLiked = isMyAction ? Boolean(payload.isLiked) : v.isLiked;
+                    const nextIsLiked = isMyAction ? Boolean(payload.isLiked) : (Boolean(v.isLiked) || (Boolean(payload.isLiked) && isMyAction));
                     return {
                       ...v,
                       likes: newLikes,
@@ -676,20 +690,49 @@ export function useFeedPagination() {
                 } catch (e) {}
                 return updated;
               });
+
+              if (isMyAction) {
+                try {
+                  const lStr = localStorage.getItem("copo_liked_video_ids") || "[]";
+                  let lIds: string[] = [];
+                  try { lIds = JSON.parse(lStr); } catch (e) {}
+                  if (payload.isLiked) {
+                    if (!lIds.includes(targetId)) lIds.push(targetId);
+                  } else {
+                    lIds = lIds.filter(id => id !== targetId);
+                  }
+                  localStorage.setItem("copo_liked_video_ids", JSON.stringify(lIds));
+                } catch (e) {}
+              }
+
               window.dispatchEvent(new CustomEvent("copo-video-liked", { detail: { videoId: targetId, likesCount: newLikes, isLiked: payload.isLiked, userId: payload.userId } }));
             } else if (payload.type === "video_bookmarked" && payload.videoId) {
               const targetId = String(payload.videoId);
               const newBookmarks = typeof payload.bookmarksCount === "number" ? payload.bookmarksCount : 0;
-              let currentUserId = "";
+              let currentEmail = "";
+              let currentUid = "";
               try {
-                currentUserId = localStorage.getItem("copo_user_email") || localStorage.getItem("copo_user_uid") || "";
+                currentEmail = localStorage.getItem("copo_user_email") || "";
+                currentUid = localStorage.getItem("copo_user_uid") || "";
+                if (!currentEmail && !currentUid) {
+                  const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+                  if (rawUser) {
+                    const parsed = JSON.parse(rawUser);
+                    currentEmail = parsed?.email || "";
+                    currentUid = parsed?.id || parsed?.uid || "";
+                  }
+                }
               } catch (e) {}
+
+              const pUserStr = String(payload.userId || "").toLowerCase().trim();
+              const myEmailStr = currentEmail.toLowerCase().trim();
+              const myUidStr = currentUid.toLowerCase().trim();
+              const isMyAction = Boolean(pUserStr && ((myEmailStr && pUserStr === myEmailStr) || (myUidStr && pUserStr === myUidStr)));
 
               setVideos((prev) => {
                 const updated = prev.map((v) => {
                   if (String(v.id) === targetId) {
-                    const isMyAction = payload.userId && currentUserId && (payload.userId === currentUserId || payload.userId.toLowerCase() === currentUserId.toLowerCase());
-                    const nextIsBookmarked = isMyAction ? Boolean(payload.isBookmarked) : v.isBookmarked;
+                    const nextIsBookmarked = isMyAction ? Boolean(payload.isBookmarked) : (Boolean(v.isBookmarked) || (Boolean(payload.isBookmarked) && isMyAction));
                     return {
                       ...v,
                       bookmarks: newBookmarks,
@@ -704,6 +747,21 @@ export function useFeedPagination() {
                 } catch (e) {}
                 return updated;
               });
+
+              if (isMyAction) {
+                try {
+                  const sStr = localStorage.getItem("copo_saved_video_ids") || "[]";
+                  let sIds: string[] = [];
+                  try { sIds = JSON.parse(sStr); } catch (e) {}
+                  if (payload.isBookmarked) {
+                    if (!sIds.includes(targetId)) sIds.push(targetId);
+                  } else {
+                    sIds = sIds.filter(id => id !== targetId);
+                  }
+                  localStorage.setItem("copo_saved_video_ids", JSON.stringify(sIds));
+                } catch (e) {}
+              }
+
               window.dispatchEvent(new CustomEvent("copo-video-bookmarked", { detail: { videoId: targetId, bookmarksCount: newBookmarks, isBookmarked: payload.isBookmarked, userId: payload.userId } }));
             } else if (payload.type === "video_updated" && payload.videoId) {
               const targetId = String(payload.videoId);
