@@ -2122,11 +2122,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     if (!editingReviewVideo || !onUpdateVideoReview) return;
                     setIsSavingEdit(true);
                     try {
-                      // Ensure onUpdateVideoReview is awaited and handles persistence
                       await onUpdateVideoReview(editingReviewVideo.id, {
                         rating: editRating
                       });
-                      // If the persistence was successful, set success state
                       setSaveSuccess(true);
                       setTimeout(() => {
                         setIsSavingEdit(false);
@@ -2134,7 +2132,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         setSaveSuccess(false);
                       }, 500);
                     } catch (err) {
-                      console.error("Failed to save rating:", err);
                       setIsSavingEdit(false);
                     }
                   }}
