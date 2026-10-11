@@ -365,7 +365,10 @@ export function useFeedPagination() {
 
       try {
         // 1. Fetch from Server API (with fresh cache-busting)
-        const res = await fetch(`/api/videos/feed?page=${pageNum}&limit=10&_t=${Date.now()}`, { cache: "no-store" });
+        const uEmail = localStorage.getItem("copo_user_email") || "";
+        const uUid = localStorage.getItem("copo_user_uid") || "";
+        const uIdentifier = uEmail || uUid || "";
+        const res = await fetch(`/api/videos/feed?page=${pageNum}&limit=10&userId=${encodeURIComponent(uIdentifier)}&_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok && active) {
           const data = await res.json();
           const hardBannedIds = [

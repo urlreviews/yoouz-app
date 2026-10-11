@@ -14227,6 +14227,28 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const deletedIds = readDeletedReviewsIndex();
       const deletedSet = new Set(deletedIds);
 
+      const queryUserId = String(req.query.userId || req.query.userEmail || "").trim();
+      const userLikedSet = new Set<string>();
+      const userBookmarkedSet = new Set<string>();
+
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb && queryUserId) {
+        try {
+          const [uLikes, uBms] = await Promise.all([
+            bunnyDb.execute({
+              sql: "SELECT videoId FROM likes WHERE userId = ? OR userEmail = ?",
+              args: [queryUserId, queryUserId]
+            }).catch(() => ({ rows: [] })),
+            bunnyDb.execute({
+              sql: "SELECT videoId FROM bookmarks WHERE userId = ? OR userEmail = ?",
+              args: [queryUserId, queryUserId]
+            }).catch(() => ({ rows: [] }))
+          ]);
+          (uLikes.rows || []).forEach((r: any) => { if (r.videoId) userLikedSet.add(String(r.videoId)); });
+          (uBms.rows || []).forEach((r: any) => { if (r.videoId) userBookmarkedSet.add(String(r.videoId)); });
+        } catch (e) {}
+      }
+
       const getReviewTime = (v: any) => {
         if (!v) return 0;
         const fromDt = v.createdAt ? new Date(v.createdAt.includes('T') ? v.createdAt : v.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
@@ -14235,7 +14257,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         return Math.max(fromDt || 0, fromMs || 0, fromId || 0);
       };
 
-      const bunnyDb = getBunnyDb();
       const map = new Map<string, any>();
       let bunnyFetchSuccess = false;
 
@@ -14484,12 +14505,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
         enriched.bookmarks = realBookmarks;
         enriched.bookmarksCount = realBookmarks;
+        enriched.isBookmarked = userBookmarkedSet.has(String(r.id)) || Boolean(enriched.isBookmarked);
 
         const realLikes = videoLikesCountMap.has(String(r.id))
           ? Math.max(videoLikesCountMap.get(String(r.id))!, typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0))
           : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
         enriched.likes = realLikes;
         enriched.likesCount = realLikes;
+        enriched.isLiked = userLikedSet.has(String(r.id)) || Boolean(enriched.isLiked);
 
         const realShares = videoSharesCountMap.has(String(r.id))
           ? Math.max(videoSharesCountMap.get(String(r.id))!, typeof enriched.sharesCount === 'number' ? enriched.sharesCount : (typeof enriched.shares === 'number' ? enriched.shares : 0))
