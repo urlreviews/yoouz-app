@@ -518,7 +518,9 @@ export function useFeedPagination() {
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
                   const effShares = Math.max(rawServerShares, rawLocalShares);
-                  const effRating = (typeof local.rating === 'number') ? local.rating : ((typeof v.rating === 'number' && !isNaN(v.rating)) ? v.rating : 5.0);
+                  const serverRating = (typeof v.rating === 'number' && !isNaN(v.rating) && v.rating > 0) ? v.rating : 0;
+                  const localRating = (typeof local.rating === 'number' && !isNaN(local.rating) && local.rating > 0) ? local.rating : 0;
+                  const effRating = serverRating > 0 ? serverRating : (localRating > 0 ? localRating : 5.0);
 
                   return {
                     ...v,

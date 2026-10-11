@@ -2926,16 +2926,17 @@ export function App() {
 
     // Persist immediately to Backend API (BunnyDB + PostgreSQL + Server Index)
     try {
-      fetch("/api/videos/update-review", {
+      const resp = await fetch("/api/videos/update-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId,
           updates
         })
-      }).catch((err) => {
-        console.warn("Server update review API error:", err);
       });
+      if (!resp.ok) {
+        console.warn("Server update review API responded with status:", resp.status);
+      }
 
       // Update local storage cache immediately
       try {

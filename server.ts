@@ -14239,6 +14239,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 (r.id && typeof r.id === 'string' && r.id.startsWith('rev-')) ? parseInt(r.id.split('-')[1], 10) : 0
               );
 
+              const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? r.rating : (Number(r.rating) || 0);
+              const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? parsedData.rating : (Number(parsedData.rating) || 0);
+              const effRating = rawDbRating > 0 ? rawDbRating : (rawParsedRating > 0 ? rawParsedRating : (Number(existing?.rating) || 5));
+              parsedData.rating = effRating;
+              parsedData.placeRating = effRating;
+
               map.set(r.id, {
                 ...existing,
                 ...parsedData,
@@ -14247,7 +14253,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 placeName: r.placeName || parsedData.placeName,
                 authorName: r.authorName || parsedData.authorName,
                 authorAvatar: r.authorAvatar || parsedData.authorAvatar,
-                rating: r.rating || parsedData.rating || 5,
+                rating: effRating,
+                placeRating: effRating,
                 videoUrl: r.videoUrl || parsedData.videoUrl,
                 thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
                 duration: r.duration || parsedData.duration || 60,
@@ -15705,7 +15712,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                      ON CONFLICT(id) DO UPDATE SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.userEmail || "",
@@ -15723,8 +15730,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
                   seedCreatedAt,
-                  updatedLikesCount,
-                  JSON.stringify(seedData)
+                  updatedLikesCount
                 ]
               }).catch(() => {});
             }
@@ -15970,7 +15976,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                      ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.userEmail || "",
@@ -15988,8 +15994,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
                   seedCreatedAt,
-                  updatedBookmarksCount,
-                  JSON.stringify(seedData)
+                  updatedBookmarksCount
                 ]
               }).catch(() => {});
             }
@@ -18223,6 +18228,8 @@ app.post("/api/videos/save-review", async (req, res) => {
             ...(updates.tags !== undefined && { tags: updates.tags }),
             updatedAt: Date.now()
           };
+        } else if (updatedReview) {
+          feedCache.videos.unshift(updatedReview);
         }
       }
 
@@ -32095,7 +32102,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                   authorAvatar = COALESCE(NULLIF(excluded.authorAvatar, ''), videoReviews.authorAvatar),
                   placeId = COALESCE(NULLIF(excluded.placeId, ''), videoReviews.placeId),
                   placeName = COALESCE(NULLIF(excluded.placeName, ''), videoReviews.placeName),
-                  rating = excluded.rating,
+                  rating = CASE WHEN videoReviews.rating IS NOT NULL AND videoReviews.rating > 0 THEN videoReviews.rating ELSE excluded.rating END,
                   videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
                   thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
                   duration = COALESCE(NULLIF(excluded.duration, 0), videoReviews.duration),
@@ -32104,8 +32111,8 @@ function injectOpenGraphTags(html: string, meta: any) {
                   sharesCount = CASE WHEN excluded.sharesCount > COALESCE(videoReviews.sharesCount, 0) THEN excluded.sharesCount ELSE COALESCE(videoReviews.sharesCount, 0) END,
                   commentsCount = CASE WHEN excluded.commentsCount > COALESCE(videoReviews.commentsCount, 0) THEN excluded.commentsCount ELSE COALESCE(videoReviews.commentsCount, 0) END,
                   viewsCount = CASE WHEN excluded.viewsCount > COALESCE(videoReviews.viewsCount, 0) THEN excluded.viewsCount ELSE COALESCE(videoReviews.viewsCount, 0) END,
-                  data = excluded.data,
-                  updatedAt = CURRENT_TIMESTAMP`,
+                  data = CASE WHEN videoReviews.data IS NOT NULL AND videoReviews.data != '' THEN videoReviews.data ELSE excluded.data END,
+                  updatedAt = videoReviews.updatedAt`,
           args: [
             r.id,
             r.userId || r.userEmail || "",
