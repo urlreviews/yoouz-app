@@ -854,12 +854,12 @@ export function subscribeToNotifications(
             if (item && item.id) {
               const prev = map.get(item.id);
               if (prev) {
-                // If server item is explicitly unread, respect unread state. Otherwise respect local read status if marked read.
+                const wasReadLocally = Boolean(prev.isRead || prev.read);
                 const itemAny = item as any;
-                const isItemUnread = itemAny.isRead === false || itemAny.read === false || itemAny.isRead === 0 || itemAny.read === 0;
+                const isItemUnread = !wasReadLocally && (itemAny.isRead === false || itemAny.read === false || itemAny.isRead === 0 || itemAny.read === 0);
                 map.set(item.id, {
                   ...item,
-                  isRead: isItemUnread ? false : Boolean(prev.isRead || item.isRead)
+                  isRead: wasReadLocally ? true : (isItemUnread ? false : Boolean(item.isRead || item.read))
                 });
               } else {
                 map.set(item.id, item);
