@@ -30,11 +30,14 @@ export function normalizeReview(v: any): VideoReview {
     const computedViews = getDisplayViews(v);
 
     const videoId = v.id || v.videoId || `rev-${Math.random().toString(36).substring(2, 9)}`;
-    const isBookmarked = typeof v.isBookmarked === 'boolean' ? v.isBookmarked : savedIds.includes(videoId);
-    const isLiked = typeof v.isLiked === 'boolean' ? v.isLiked : likedIds.includes(videoId);
+    const isBookmarked = (typeof v.isBookmarked === 'boolean' && v.isBookmarked) || savedIds.includes(String(videoId));
+    const isLiked = (typeof v.isLiked === 'boolean' && v.isLiked) || likedIds.includes(String(videoId));
 
-    const likesCountVal = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
-    const bookmarksCountVal = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
+    const rawLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
+    const likesCountVal = isLiked ? Math.max(1, rawLikes) : rawLikes;
+
+    const rawBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
+    const bookmarksCountVal = isBookmarked ? Math.max(1, rawBookmarks) : rawBookmarks;
 
     const sharesCountVal = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
 
@@ -362,8 +365,18 @@ export function useFeedPagination() {
 
       try {
         // 1. Fetch from Server API (with fresh cache-busting)
-        const uEmail = localStorage.getItem("copo_user_email") || "";
-        const uUid = localStorage.getItem("copo_user_uid") || "";
+        let uEmail = localStorage.getItem("copo_user_email") || "";
+        let uUid = localStorage.getItem("copo_user_uid") || "";
+        if (!uEmail && !uUid) {
+          try {
+            const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+            if (rawUser) {
+              const parsed = JSON.parse(rawUser);
+              uEmail = parsed?.email || "";
+              uUid = parsed?.id || parsed?.uid || "";
+            }
+          } catch (e) {}
+        }
         const uIdentifier = uEmail || uUid || "";
         const res = await fetch(`/api/videos/feed?page=${pageNum}&limit=10&userId=${encodeURIComponent(uIdentifier)}&_t=${Date.now()}`, { cache: "no-store" });
         if (res.ok && active) {
@@ -418,13 +431,15 @@ export function useFeedPagination() {
             
             setVideos((prev) => {
               // Track local optimistic state (likes, bookmarks, views, comments, shares, rating)
-              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; bookmarksCount?: number; sharesCount?: number; views?: number; comments?: any[]; commentsCount?: number; rating?: number; placeRating?: number }>();
+              const interactionMap = new Map<string, { isLiked?: boolean; isBookmarked?: boolean; likes?: number; likesCount?: number; bookmarks?: number; bookmarksCount?: number; sharesCount?: number; views?: number; comments?: any[]; commentsCount?: number; rating?: number; placeRating?: number }>();
               prev.forEach((v) => {
                 if (v && v.id) {
                   interactionMap.set(v.id, {
                     isLiked: v.isLiked,
                     isBookmarked: v.isBookmarked,
                     likes: v.likes,
+                    likesCount: v.likesCount,
+                    bookmarks: (v as any).bookmarks,
                     bookmarksCount: v.bookmarksCount,
                     sharesCount: v.sharesCount,
                     views: v.views,
@@ -504,11 +519,27 @@ export function useFeedPagination() {
 
                   const tree = buildCommentTree(activeComments);
 
-                  const isBm = typeof v.isBookmarked === 'boolean' ? v.isBookmarked : (local.isBookmarked !== undefined ? local.isBookmarked : false);
-                  const isLk = typeof v.isLiked === 'boolean' ? v.isLiked : (local.isLiked !== undefined ? local.isLiked : false);
+                  let likedIds: string[] = [];
+                  let savedIds: string[] = [];
+                  try {
+                    const lStr = localStorage.getItem("copo_liked_video_ids") || "[]";
+                    if (lStr) likedIds = JSON.parse(lStr);
+                  } catch (e) {}
+                  try {
+                    const sStr = localStorage.getItem("copo_saved_video_ids") || "[]";
+                    if (sStr) savedIds = JSON.parse(sStr);
+                  } catch (e) {}
 
-                  const effLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
-                  const effBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
+                  const isLk = Boolean(v.isLiked) || Boolean(local?.isLiked) || likedIds.includes(String(v.id));
+                  const isBm = Boolean(v.isBookmarked) || Boolean(local?.isBookmarked) || savedIds.includes(String(v.id));
+
+                  const rawServerLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
+                  const rawLocalLikes = typeof local?.likes === 'number' ? local.likes : (typeof local?.likesCount === 'number' ? local.likesCount : 0);
+                  const effLikes = isLk ? Math.max(1, rawServerLikes, rawLocalLikes) : rawServerLikes;
+
+                  const rawServerBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
+                  const rawLocalBookmarks = typeof local?.bookmarksCount === 'number' ? local.bookmarksCount : (typeof local?.bookmarks === 'number' ? local.bookmarksCount : 0);
+                  const effBookmarks = isBm ? Math.max(1, rawServerBookmarks, rawLocalBookmarks) : rawServerBookmarks;
 
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;

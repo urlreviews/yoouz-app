@@ -32,7 +32,7 @@ interface GoogleVideoPlayerModalProps {
   onClose: () => void;
   onSelectReview: (review: VideoReview) => void;
   onToggleLike: (reviewId: string) => void;
-  onToggleBookmark: (placeId: string) => void;
+  onToggleBookmark: (videoId: string) => void;
   isBookmarked: boolean;
   onOpenCreator?: (author: VideoAuthor) => void;
   onRecordView?: (videoId: string) => void;
@@ -507,19 +507,21 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             </button>
 
             <button
-              onClick={() => onToggleBookmark(currentReview.placeId)}
+              onClick={() => onToggleBookmark(currentReview.id)}
               className="flex flex-col items-center group cursor-pointer"
             >
               <div
                 className={`w-11 h-11 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
-                  isBookmarked
+                  (currentReview.isBookmarked || isBookmarked)
                     ? "bg-amber-500 text-white scale-110"
                     : "bg-black/50 text-white hover:bg-black/70"
                 }`}
               >
-                <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-white" : ""}`} />
+                <Bookmark className={`w-5 h-5 ${(currentReview.isBookmarked || isBookmarked) ? "fill-white" : ""}`} />
               </div>
-              <span className="text-[11px] font-bold mt-1 drop-shadow">Save</span>
+              <span className="text-[11px] font-bold mt-1 drop-shadow">
+                {typeof currentReview.bookmarksCount === 'number' ? currentReview.bookmarksCount : (typeof (currentReview as any).bookmarks === 'number' ? (currentReview as any).bookmarks : 0)}
+              </span>
             </button>
 
             <button

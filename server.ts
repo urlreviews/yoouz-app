@@ -13419,9 +13419,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           ? Math.max(dbCommCount, tree.count)
           : Math.max(tree.count, typeof r.commentsCount === 'number' ? r.commentsCount : (existing.commentsCount || 0));
 
-        const realBookmarks = bmMap.get(String(r.id)) || 0;
-        const realLikes = likeMap.get(String(r.id)) || 0;
-        const realShares = shareMap.get(String(r.id)) || 0;
+        const realBookmarks = bmMap.has(String(r.id)) ? bmMap.get(String(r.id))! : (typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (parsedData.bookmarksCount || existing.bookmarksCount || 0));
+        const realLikes = likeMap.has(String(r.id)) ? likeMap.get(String(r.id))! : (typeof r.likesCount === 'number' ? r.likesCount : (parsedData.likesCount || existing.likesCount || 0));
+        const realShares = shareMap.has(String(r.id)) ? shareMap.get(String(r.id))! : (typeof r.sharesCount === 'number' ? r.sharesCount : (parsedData.sharesCount || existing.sharesCount || 0));
 
         const mergedAuthor = {
           ...(typeof existing.author === 'object' ? existing.author : {}),

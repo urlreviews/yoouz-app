@@ -1697,6 +1697,17 @@ export function App() {
     };
     window.addEventListener("storage", handleStorageChange);
 
+    // Sync currentUser to localStorage for live feed query authentication
+    useEffect(() => {
+      if (currentUser) {
+        try {
+          if (currentUser.email) localStorage.setItem("copo_user_email", currentUser.email);
+          if (currentUser.id || (currentUser as any).uid) localStorage.setItem("copo_user_uid", currentUser.id || (currentUser as any).uid);
+          localStorage.setItem("yoouz_current_user", JSON.stringify(currentUser));
+        } catch (e) {}
+      }
+    }, [currentUser]);
+
     // 4. BunnyDB onAuthStateChanged listener
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -1776,6 +1787,9 @@ export function App() {
         setCurrentUser(profileObj);
         try {
           localStorage.setItem("copo_user_profile", JSON.stringify(profileObj));
+          if (profileObj.email) localStorage.setItem("copo_user_email", profileObj.email);
+          if (profileObj.id || profileObj.uid) localStorage.setItem("copo_user_uid", profileObj.id || profileObj.uid);
+          localStorage.setItem("yoouz_current_user", JSON.stringify(profileObj));
         } catch (e) {}
 
         // Try reading custom profile data from BunnyDB if available
