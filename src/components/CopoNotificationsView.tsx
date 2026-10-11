@@ -486,63 +486,333 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         {filteredNotifications.length > 0 ? (
           <motion.div layout className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
             <AnimatePresence initial={false} mode="popLayout">
-              {filteredNotifications.map((notif) => {
-                const details = parseNotificationDetails(notif.message, notif);
-                const thumbnail = resolveNotificationThumbnail(notif);
+            {filteredNotifications.map((notif) => {
+              // Sleek, unified dark mode monochromatic badge styles for notification avatar overlays
+              const badgeStyles = {
+                like: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Heart className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
+                },
+                comment: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <MessageSquare className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
+                },
+                follow: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <UserPlus className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
+                },
+                repost: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
+                },
+                share: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Repeat2 className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
+                },
+                bookmark: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Bookmark className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
+                },
+                review: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Star className="w-3 h-3 fill-current shrink-0 text-zinc-100" />
+                },
+                message: {
+                  bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                  icon: <Mail className="w-3 h-3 stroke-[2.5] shrink-0 text-zinc-100" />
+                }
+              }[notif.type] || {
+                bg: "bg-zinc-900 border border-zinc-700/90 text-white ring-2 ring-zinc-950 shadow-md",
+                icon: <Bell className="w-3 h-3 shrink-0 text-zinc-100" />
+              };
 
-                return (
-                  <motion.div
-                    key={notif.id}
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
-                    className={`relative overflow-hidden bg-zinc-900/40 group border-b border-zinc-800/50 last:border-none ${!notif.isRead ? 'bg-zinc-800/20' : ''}`}
-                    onClick={() => {
-                        handleMarkAsRead(notif.id);
-                        if (notif.videoId) onSelectNotificationVideo(notif.videoId);
-                    }}
-                  >
-                    <div className="flex items-start gap-3 p-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
-                      <div className="relative shrink-0 mt-0.5">
-                        <img 
-                          src={getSafeAvatarUrl(notif.user?.avatar)} 
-                          alt={notif.user?.name}
-                          className="w-10 h-10 rounded-full object-cover border border-zinc-800"
-                          onClick={(e) => handleOpenUserProfile(notif, e)}
-                        />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-100 leading-snug">
-                          <span className="font-bold hover:underline cursor-pointer text-white" onClick={(e) => handleOpenUserProfile(notif, e)}>
-                            {notif.user?.name || "Someone"}
-                          </span>
-                          {" "}
-                          <span className="text-zinc-300">
-                            {details.action}
-                          </span>
-                          {" "}
-                          <span className="font-bold text-zinc-100">
-                             {details.target}
-                          </span>
-                        </p>
-                        <p className="text-xs text-zinc-500 mt-1">
-                          {formatRecordedDate(notif.timestamp, notif.createdAtMs)}
-                        </p>
-                      </div>
+              const resolvedThumbnail = resolveNotificationThumbnail(notif);
+              const details = parseNotificationDetails(notif.text, notif);
 
-                      {thumbnail && (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-zinc-800">
-                            <img src={thumbnail} alt="review" className="w-full h-full object-cover" />
-                        </div>
-                      )}
+              return (
+                <motion.div
+                  key={notif.id}
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
+                  className="relative overflow-hidden bg-zinc-950 group"
+                >
+                  {/* Mobile Swipe-to-delete Red Backdrop (Active on mobile touch screens) */}
+                  {isTouchDevice && (
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isDraggingRef.current) return;
+                        handleDismiss(notif.id, e);
+                        setSwipedNotifId(null);
+                      }}
+                      className="md:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
+                    >
+                      <Trash2 className="w-4 h-4 shrink-0" />
+                      <span>Delete</span>
                     </div>
-                  </motion.div>
-                );
-              })}
+                  )}
+
+                  {/* Notification Card */}
+                  <motion.div
+                    drag={isTouchDevice ? "x" : false}
+                    dragConstraints={isTouchDevice ? { left: -96, right: 0 } : undefined}
+                    dragElastic={isTouchDevice ? 0.12 : false}
+                    animate={{ x: isTouchDevice && swipedNotifId === notif.id ? -96 : 0 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    onDragStart={() => {
+                      isDraggingRef.current = true;
+                    }}
+                    onDragEnd={isTouchDevice ? (_, info) => {
+                      if (info.offset.x < -35 || info.velocity.x < -200) {
+                        setSwipedNotifId(notif.id);
+                      } else {
+                        setSwipedNotifId(null);
+                      }
+                      setTimeout(() => {
+                        isDraggingRef.current = false;
+                      }, 300);
+                    } : undefined}
+                    onClick={() => {
+                      if (isDraggingRef.current) return;
+                      if (swipedNotifId === notif.id) {
+                        setSwipedNotifId(null);
+                        return;
+                      }
+                      if (swipedNotifId) {
+                        setSwipedNotifId(null);
+                      }
+                      handleMarkAsRead(notif.id);
+                      if (notif.type === "message" && onNavigateToMessages) {
+                        const targetKey = notif.user?.email || (notif.user as any)?.id || notif.user?.name;
+                        onNavigateToMessages(targetKey);
+                      } else if (notif.type === "follow" && notif.user?.name && onOpenCreator) {
+                        const isYoouzTeam =
+                          (notif.user.name || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("yoouz") ||
+                          (notif.user.email || "").toLowerCase().includes("admin");
+                        if (!isYoouzTeam) {
+                          onOpenCreator({
+                            name: notif.user.name,
+                            avatar: notif.user.avatar,
+                            handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+                            isFollowed: false
+                          });
+                        }
+                      } else if (notif.videoId) {
+                        onSelectNotificationVideo(notif.videoId);
+                      }
+                    }}
+                    className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-colors ${
+                      !notif.isRead 
+                        ? "bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800" 
+                        : "bg-zinc-950 hover:bg-zinc-900 active:bg-zinc-850"
+                    }`}
+                  >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    {/* Avatar with Badge Overlay - Tapping Avatar opens User Profile */}
+                    <div 
+                      onClick={(e) => handleOpenUserProfile(notif, e)}
+                      className="relative shrink-0 select-none cursor-pointer hover:opacity-90 active:scale-95 transition-transform"
+                      title={notif.user?.name ? `View ${notif.user.name}'s profile` : "View profile"}
+                    >
+                      {(() => {
+                        const userName = notif.user.name || "";
+                        const userDomain = extractCleanDomain(userName || notif.user.avatar || "");
+                        const isYoouzSystem = Boolean(
+                          userName.toLowerCase().trim() === "yoouz" ||
+                          userName.toLowerCase().trim() === "yoouz beta" ||
+                          userName.toLowerCase().trim() === "@yoouz" ||
+                          userName.toLowerCase().trim() === "yoouz official" ||
+                          userName.toLowerCase().trim() === "yoouz team" ||
+                          (notif.user.email && (notif.user.email.toLowerCase().includes("info@yoouz.com") || notif.user.email.toLowerCase().includes("admin@yoouz.com"))) ||
+                          (notif.user.avatar && (notif.user.avatar.includes("favicon.svg") || notif.user.avatar.includes("yoouz-avatar")))
+                        );
+
+                        if (isYoouzSystem) {
+                          return (
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[14px] bg-zinc-950 border border-white/20 flex items-center justify-center shrink-0 shadow-sm hover:ring-2 hover:ring-white/40 transition-all p-2.5">
+                              <svg viewBox="0 0 24 24" className="w-full h-full fill-white">
+                                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+                              </svg>
+                            </div>
+                          );
+                        }
+
+                        const isBusinessNotif = Boolean(
+                          userName.includes(".") ||
+                          (notif.user.avatar && (notif.user.avatar.includes("/logos/") || notif.user.avatar.includes("/api/logo") || notif.user.avatar.includes("logo")))
+                        );
+
+                        if (isBusinessNotif) {
+                          return (
+                            <CopoBrandLogo
+                              domain={userDomain || userName}
+                              name={userName}
+                              logoUrl={notif.user.avatar}
+                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-zinc-950 p-1 border border-white/20 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all shrink-0 flex items-center justify-center overflow-hidden ring-1 ring-white/10"
+                              imageClassName="w-full h-full object-contain rounded-md [image-rendering:-webkit-optimize-contrast]"
+                              fallbackTextClassName="font-extrabold text-xs text-white"
+                            />
+                          );
+                        }
+
+                        const avatarSrc = getSafeAvatarUrl(
+                          notif.user.avatar,
+                          notif.user.name,
+                          (notif.user as any).email || (notif.user as any).id || notif.user.name
+                        );
+
+                        return (
+                          <img
+                            src={avatarSrc}
+                            alt={notif.user.name}
+                            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-zinc-800/80 shadow-2xs hover:ring-2 hover:ring-white/40 transition-all"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = getSafeAvatarUrl(
+                                null,
+                                notif.user.name,
+                                (notif.user as any).email || (notif.user as any).id || notif.user.name
+                              );
+                            }}
+                          />
+                        );
+                      })()}
+                      <span className={`absolute -bottom-1 -right-1 w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shrink-0 z-20 ${badgeStyles.bg}`}>
+                        {badgeStyles.icon}
+                      </span>
+                    </div>
+
+                    {/* Notification Text Content */}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs sm:text-[13px] text-zinc-200 leading-snug break-words line-clamp-2">
+                        {/* Tapping User Name specifically opens User Profile */}
+                        <span 
+                          onClick={(e) => handleOpenUserProfile(notif, e)}
+                          className="font-extrabold text-white hover:underline cursor-pointer transition-colors"
+                          title={notif.user?.name ? `View ${notif.user.name}'s profile` : "View profile"}
+                        >
+                          {notif.user.name}
+                        </span>{" "}
+                        {details.type === "recommendation" ? (
+                          <>
+                            <span className="text-zinc-300 font-medium">recommended</span>{" "}
+                            <span className="font-bold text-white underline-offset-2 hover:underline">
+                              {details.target}
+                            </span>
+                            {details.rating && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <span>{details.rating}</span>
+                              </span>
+                            )}
+                          </>
+                        ) : details.type === "video_share" ? (
+                          <>
+                            <span className="text-zinc-300 font-medium">shared a review for</span>{" "}
+                            <span className="font-bold text-white underline-offset-2 hover:underline">
+                              {details.target}
+                            </span>
+                            {details.rating && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <span>{details.rating}</span>
+                              </span>
+                            )}
+                          </>
+                        ) : details.type === "new_review" || notif.type === "review" ? (
+                          <>
+                            <span className="text-zinc-300 font-medium">{details.action || "posted a video review for"}</span>{" "}
+                            <span className="font-bold text-white underline-offset-2 hover:underline">
+                              {details.target || notif.placeName || "your business"}
+                            </span>
+                            {details.rating && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
+                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <span>{details.rating}</span>
+                              </span>
+                            )}
+                          </>
+                        ) : details.type === "direct_message" || (notif.type as string) === "message" || (notif.type as string) === "chat" ? (
+                          <span className="text-zinc-300 font-medium">sent you a message</span>
+                        ) : details.type === "review_activity" ? (
+                          <>
+                            <span className="text-zinc-300 font-medium">{details.action}</span>{" "}
+                            <span className="font-bold text-white">
+                              {details.target}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-zinc-300 font-medium">{details.rawText}</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {!notif.isRead && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                        )}
+                        <span className="text-[10px] sm:text-[11px] text-zinc-400 font-medium block">
+                          {formatRecordedDate(notif.timestamp, notif.createdAtMs || (notif as any).createdAt || parseTimestampToMs(notif.id) || undefined)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Thumbnail & Desktop Quick Delete */}
+                  <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 select-none">
+                    {resolvedThumbnail ? (
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkAsRead(notif.id);
+                          if (notif.videoId) {
+                            onSelectNotificationVideo(notif.videoId);
+                          }
+                        }}
+                        className="w-11 h-14 sm:w-12 sm:h-15 rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer"
+                        title="Watch video review"
+                      >
+                        <img
+                          src={resolvedThumbnail}
+                          alt="Video review by creator"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (notif.user?.avatar && target.src !== notif.user.avatar) {
+                              target.src = notif.user.avatar;
+                            } else {
+                              target.src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "Video")}&background=27272a&color=fff`;
+                            }
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent flex items-center justify-center">
+                          <div className="w-4.5 h-4.5 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center shadow-sm">
+                            <Play className="w-2 h-2 fill-white text-white translate-x-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Desktop Dedicated Delete Button: visible on hover / focus, no swiping needed on desktop */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDismiss(notif.id, e)}
+                      className="hidden sm:inline-flex p-2 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/15 border border-transparent hover:border-rose-500/20 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all cursor-pointer items-center justify-center shrink-0 active:scale-90"
+                      title="Delete notification"
+                      aria-label="Delete notification"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+                </motion.div>
+              );
+            })}
             </AnimatePresence>
-          </motion.div>
+          </div>
         ) : (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/80 rounded-3xl border border-zinc-800 shadow-2xs">
