@@ -854,12 +854,13 @@ export function subscribeToNotifications(
             if (item && item.id) {
               const prev = map.get(item.id);
               if (prev) {
-                const wasReadLocally = Boolean(prev.isRead || prev.read);
+                const prevAny = prev as any;
                 const itemAny = item as any;
+                const wasReadLocally = Boolean(prevAny.isRead || prevAny.read);
                 const isItemUnread = !wasReadLocally && (itemAny.isRead === false || itemAny.read === false || itemAny.isRead === 0 || itemAny.read === 0);
                 map.set(item.id, {
                   ...item,
-                  isRead: wasReadLocally ? true : (isItemUnread ? false : Boolean(item.isRead || item.read))
+                  isRead: wasReadLocally ? true : (isItemUnread ? false : Boolean(itemAny.isRead || itemAny.read))
                 });
               } else {
                 map.set(item.id, item);
