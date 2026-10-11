@@ -164,10 +164,20 @@ export function App() {
       sse.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
-          if (payload.type === "place_updated" && payload.placeId) {
-            setPlaces((prev) => prev.map((p) => 
-              p.id === payload.placeId ? { ...p, ...payload.updates } : p
-            ));
+          if (payload.type === "place_updated") {
+            const rawPlace = payload.place || payload.updates || payload;
+            const targetId = payload.placeId || rawPlace?.id;
+            if (targetId && rawPlace) {
+              setPlaces((prev) => {
+                const idx = prev.findIndex((p) => p.id === targetId);
+                if (idx >= 0) {
+                  const updated = [...prev];
+                  updated[idx] = { ...updated[idx], ...rawPlace, id: targetId };
+                  return updated;
+                }
+                return [{ ...rawPlace, id: targetId }, ...prev];
+              });
+            }
           } else if (payload.type === "video_bookmarked" && payload.videoId === "place_bookmark" && payload.placeId) {
             // Real-time sync for saved places
             const currentEmail = currentUser?.email || auth.currentUser?.email;
@@ -6218,17 +6228,24 @@ export function App() {
 
     // Mirror updates to BunnyDB so they persist forever
     try {
+      const payload = { data: { ...updatedPlace, customEdited: true }, merge: true };
       fetch(`/api/nosql/places/${encodeURIComponent(updatedPlace.id)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: updatedPlace, merge: true })
+        body: JSON.stringify(payload)
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
+
+      fetch(`/api/nosql/business_profiles/${encodeURIComponent(updatedPlace.id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
 
       if (updatedPlace.id.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
         fetch(`/api/nosql/places/yoouz.com`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: updatedPlace, merge: true })
+          body: JSON.stringify(payload)
         }).catch(() => {});
       }
     } catch (err) {

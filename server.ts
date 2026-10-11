@@ -6542,7 +6542,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               }
               if (colName === 'places') {
                 const isYoouz = String(row.id) === 'yoouz.com' || parsedData.brandDomain === 'yoouz.com' || parsedData.name?.toLowerCase() === 'yoouz' || String(row.id).includes('yoouz');
-                if (isYoouz) {
+                if (isYoouz && !parsedData.customEdited && (!parsedData.address || parsedData.address.startsWith("http"))) {
                   parsedData.address = "";
                   parsedData.city = "";
                   parsedData.country = "";
@@ -7008,18 +7008,22 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                             `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
           const bestHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
 
-          const rawLocation = (u.location && u.location.length >= (existing.location?.length || 0))
+          const rawLocation = (typeof u.location === 'string' && u.location.trim() !== '')
             ? u.location.trim()
-            : (existing.location?.trim() || u.location?.trim() || "");
-          const rawCity = u.city || existing.city || "";
-          const rawState = u.state || existing.state || "";
-          const rawCountry = u.country || existing.country || "";
+            : (existing.location?.trim() || "");
+          const rawCity = (typeof u.city === 'string' && u.city.trim() !== '') ? u.city.trim() : (existing.city || "");
+          const rawState = (typeof u.state === 'string' && u.state.trim() !== '') ? u.state.trim() : (existing.state || "");
+          const rawCountry = (typeof u.country === 'string' && u.country.trim() !== '') ? u.country.trim() : (existing.country || "");
 
           const normalizedLoc = normalizeUserLocationServer(rawLocation, rawCity, rawState, rawCountry);
           const bestLocation = normalizedLoc.location;
           const bestCity = normalizedLoc.city;
           const bestState = normalizedLoc.state;
           const bestCountry = normalizedLoc.country;
+
+          const bestBio = (typeof u.bio === 'string' && u.bio.trim() !== '')
+            ? u.bio.trim()
+            : (existing.bio || "Community reviewer on Yoouz.");
 
           userMap.set(key, {
             ...existing,
@@ -7030,7 +7034,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             handle: bestHandle,
             email: bestEmail,
             avatar: bestAvatar,
-            bio: (u.bio && u.bio.length >= (existing.bio?.length || 0)) ? u.bio : (existing.bio || u.bio || "Community reviewer on Yoouz."),
+            bio: bestBio,
             location: bestLocation,
             city: bestCity,
             state: bestState,
@@ -7826,6 +7830,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           } catch(e) {}
           const placeName = formatBusinessName(finalDataObj.name || id, id);
           finalDataObj.name = placeName;
+          finalDataObj.customEdited = true;
+          if (finalDataObj.claimedByEmail) {
+            finalDataObj.isClaimed = true;
+          }
           const address = finalDataObj.address || '';
           const category = finalDataObj.category || 'Website';
           const city = finalDataObj.city || 'Online';
@@ -7833,12 +7841,13 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           const latitude = Number(finalDataObj.lat) || 0;
           const longitude = Number(finalDataObj.lng) || 0;
           const logoUrl = finalDataObj.logoUrl || finalDataObj.avatarUrl || '';
+          const placeJsonStr = JSON.stringify(finalDataObj);
           await bunnyDb.execute({
             sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, data, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET name = ?, address = ?, category = ?, city = ?, country = ?, latitude = ?, longitude = ?, logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [id, placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr,
-                   placeName, address, category, city, country, latitude, longitude, logoUrl, jsonStr]
+            args: [id, placeName, address, category, city, country, latitude, longitude, logoUrl, placeJsonStr,
+                   placeName, address, category, city, country, latitude, longitude, logoUrl, placeJsonStr]
           });
 
           // Also propagate place banner, logo, name, address, phone, email changes into existing video reviews
@@ -7914,7 +7923,9 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
 
           broadcastSseEvent({
             type: "place_updated",
-            place: { id, ...finalDataObj }
+            placeId: id,
+            place: { id, ...finalDataObj },
+            updates: { id, ...finalDataObj }
           });
         } else if (colName === 'videoReviews' || colName === 'videos') {
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
@@ -9979,7 +9990,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
           for (const dup of duplicates) {
             if (!canonical.email && dup.email) canonical.email = dup.email;
-            if (dup.location && (!canonical.location || dup.location.length >= canonical.location.length)) {
+            if (dup.location && !canonical.location) {
               canonical.location = dup.location;
             }
             if (dup.city && !canonical.city) canonical.city = dup.city;
@@ -9988,7 +9999,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             if (dup.avatar && (!canonical.avatar || canonical.avatar.includes("ui-avatars"))) {
               canonical.avatar = dup.avatar;
             }
-            if (dup.bio && (!canonical.bio || dup.bio.length >= canonical.bio.length)) {
+            if (dup.bio && !canonical.bio) {
               canonical.bio = dup.bio;
             }
             if (dup.handle && (!canonical.handle || canonical.handle === "@user")) {
@@ -13776,9 +13787,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             }).catch(() => {});
           }
 
-          // Ensure only genuinely claimed businesses (with claimedByEmail) or official Yoouz have isClaimed true
+          // Ensure only genuinely claimed businesses (with claimedByEmail or custom claims) or official Yoouz have isClaimed true
           const isOfficialYoouz = String(pRow.id) === 'yoouz.com' || parsedData.brandDomain === 'yoouz.com' || (parsedData.name && String(parsedData.name).toLowerCase() === 'yoouz');
-          const hasRealClaim = Boolean(parsedData.claimedByEmail && String(parsedData.claimedByEmail).trim());
+          const hasRealClaim = Boolean(
+            (parsedData.claimedByEmail && String(parsedData.claimedByEmail).trim()) ||
+            (parsedData.ownerId && String(parsedData.ownerId).trim()) ||
+            (parsedData.ownerEmail && String(parsedData.ownerEmail).trim()) ||
+            parsedData.customEdited
+          );
           if (!isOfficialYoouz && !hasRealClaim && (parsedData.isClaimed || parsedData.isVerified)) {
             parsedData.isClaimed = false;
             parsedData.isVerified = false;
@@ -14043,6 +14059,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           for (const pRow of pRs.rows as any[]) {
             try {
               const parsed = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {});
+              // If user or admin set an explicit non-URL location or marked customEdited, preserve it permanently!
+              const hasExplicitLocation = Boolean((parsed.address && parsed.address.trim() && !parsed.address.startsWith("http")) || (parsed.city && parsed.city.trim() && parsed.city !== "Online") || parsed.customEdited);
+              if (hasExplicitLocation) {
+                continue;
+              }
               parsed.address = "";
               parsed.city = "";
               parsed.country = "";
