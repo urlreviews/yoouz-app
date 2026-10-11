@@ -497,13 +497,13 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0, overflow: "hidden", transition: { duration: 0.2 } }}
-                    className={`relative overflow-hidden bg-zinc-950 group ${!notif.isRead ? 'bg-zinc-900/40' : ''}`}
+                    className={`relative overflow-hidden bg-zinc-900/40 group border-b border-zinc-800/50 last:border-none ${!notif.isRead ? 'bg-zinc-800/20' : ''}`}
                     onClick={() => {
                         handleMarkAsRead(notif.id);
                         if (notif.videoId) onSelectNotificationVideo(notif.videoId);
                     }}
                   >
-                    <div className="flex items-start gap-3 p-4 cursor-pointer">
+                    <div className="flex items-start gap-3 p-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
                       <div className="relative shrink-0 mt-0.5">
                         <img 
                           src={getSafeAvatarUrl(notif.user?.avatar)} 
@@ -514,8 +514,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white leading-snug">
-                          <span className="font-bold hover:underline cursor-pointer" onClick={(e) => handleOpenUserProfile(notif, e)}>
+                        <p className="text-sm font-medium text-zinc-100 leading-snug">
+                          <span className="font-bold hover:underline cursor-pointer text-white" onClick={(e) => handleOpenUserProfile(notif, e)}>
                             {notif.user?.name || "Someone"}
                           </span>
                           {" "}
