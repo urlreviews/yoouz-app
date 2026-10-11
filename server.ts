@@ -7919,21 +7919,19 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
         } else if (colName === 'videoReviews' || colName === 'videos') {
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
           const revCreatedAt = finalDataObj.createdAt || (finalDataObj.createdAtMs ? new Date(finalDataObj.createdAtMs).toISOString() : new Date().toISOString());
-          const hasExplicitRating = finalDataObj.rating !== undefined;
-          const explicitRating = hasExplicitRating ? (Number(finalDataObj.rating) || 5) : null;
           await bunnyDb.execute({
             sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, commentsCount, data, createdAt, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, 5), ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET 
-                    placeId = COALESCE(NULLIF(excluded.placeId, ''), videoReviews.placeId),
-                    placeName = COALESCE(NULLIF(excluded.placeName, ''), videoReviews.placeName),
-                    authorName = COALESCE(NULLIF(excluded.authorName, ''), videoReviews.authorName),
-                    authorAvatar = COALESCE(NULLIF(excluded.authorAvatar, ''), videoReviews.authorAvatar),
-                    userId = COALESCE(NULLIF(excluded.userId, ''), videoReviews.userId),
-                    rating = COALESCE(?, videoReviews.rating),
-                    videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
-                    thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
-                    duration = COALESCE(NULLIF(excluded.duration, 0), videoReviews.duration),
+                    placeId = excluded.placeId,
+                    placeName = excluded.placeName,
+                    authorName = excluded.authorName,
+                    authorAvatar = excluded.authorAvatar,
+                    userId = excluded.userId,
+                    rating = excluded.rating,
+                    videoUrl = excluded.videoUrl,
+                    thumbnailUrl = excluded.thumbnailUrl,
+                    duration = excluded.duration,
                     likesCount = excluded.likesCount,
                     viewsCount = excluded.viewsCount,
                     commentsCount = COALESCE(excluded.commentsCount, videoReviews.commentsCount),
@@ -7947,7 +7945,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               rev.authorName || (rev.author && rev.author.name) || '',
               rev.authorAvatar || (rev.author && rev.author.avatar) || '',
               rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
-              explicitRating,
+              rev.rating || 5,
               rev.videoUrl || '',
               rev.thumbnailUrl || '',
               rev.duration || 60,
@@ -7955,8 +7953,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               rev.viewsCount || rev.views || 0,
               rev.commentsCount || (Array.isArray(rev.comments) ? rev.comments.length : 0),
               jsonStr,
-              revCreatedAt,
-              explicitRating
+              revCreatedAt
             ]
           });
 
@@ -13422,10 +13419,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           avatar: r.authorAvatar || parsedData.authorAvatar || (parsedData.author && parsedData.author.avatar) || (existing.author && existing.author.avatar) || ''
         };
 
-        const authoritativeRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0)
-          ? r.rating
-          : (Number(parsedData.rating) || Number(existing.rating) || 5);
-
         const vidObj = {
           ...existing,
           ...parsedData,
@@ -13434,8 +13427,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           placeName: r.placeName || parsedData.placeName || existing.placeName,
           authorName: mergedAuthor.name,
           authorAvatar: mergedAuthor.avatar,
-          rating: authoritativeRating,
-          placeRating: authoritativeRating,
+          rating: r.rating || parsedData.rating || existing.rating || 5,
           videoUrl: r.videoUrl || parsedData.videoUrl || existing.videoUrl,
           thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl || existing.thumbnailUrl,
           duration: r.duration || parsedData.duration || existing.duration || 60,
@@ -14302,18 +14294,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 name: incomingAuthor.name || existingAuthor.name || r.data.authorName || (r.data.userId && r.data.userId.includes('@') ? r.data.userId.split('@')[0] : r.data.userId),
                 avatar: incomingAuthor.avatar || existingAuthor.avatar || r.data.authorAvatar
               };
-              const authoritativeRating = (typeof existing.rating === 'number' && !isNaN(existing.rating) && existing.rating > 0)
-                ? existing.rating
-                : ((typeof r.data?.rating === 'number' && !isNaN(r.data.rating) && r.data.rating > 0) ? r.data.rating : 5);
-              const authoritativePlaceRating = existing.placeRating !== undefined ? existing.placeRating : authoritativeRating;
-              map.set(r.id, {
-                ...r.data,
-                ...existing,
-                id: r.id,
-                rating: authoritativeRating,
-                placeRating: authoritativePlaceRating,
-                author: mergedAuthor
-              });
+              map.set(r.id, { ...existing, id: r.id, ...r.data, author: mergedAuthor });
             }
           });
         } catch (dbErr) {}
@@ -15111,11 +15092,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           const userId = vData.userId || vData.userEmail || baseRow?.userId || "";
           const placeId = vData.placeId || baseRow?.placeId || "";
           const placeName = vData.placeName || baseRow?.placeName || "";
-          const rating = (typeof baseRow?.rating === 'number' && !isNaN(baseRow.rating) && baseRow.rating > 0)
-            ? baseRow.rating
-            : (Number(vData.rating) || Number(foundVid?.rating) || 5);
-          vData.rating = rating;
-          vData.placeRating = rating;
+          const rating = Number(vData.rating || baseRow?.rating) || 5;
           const videoUrl = vData.videoUrl || baseRow?.videoUrl || "";
           const thumbnailUrl = vData.thumbnailUrl || baseRow?.thumbnailUrl || "";
           const duration = Number(vData.durationSeconds || vData.duration || baseRow?.duration) || 60;
@@ -15127,7 +15104,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   ON CONFLICT(id) DO UPDATE SET 
                     data = excluded.data, 
                     commentsCount = excluded.commentsCount, 
-                    rating = COALESCE(videoReviews.rating, excluded.rating),
                     createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
                     updatedAt = CURRENT_TIMESTAMP`,
             args: [videoId, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, treeResult.count, jsonStr, createdAt]
@@ -15729,7 +15705,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET likesCount = excluded.likesCount, updatedAt = CURRENT_TIMESTAMP`,
+                      ON CONFLICT(id) DO UPDATE SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.userEmail || "",
@@ -15746,7 +15722,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   seedVid.sharesCount || 0,
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
-                  seedCreatedAt
+                  seedCreatedAt,
+                  updatedLikesCount,
+                  JSON.stringify(seedData)
                 ]
               }).catch(() => {});
             }
@@ -15992,7 +15970,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               await bunnyDb.execute({
                 sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET bookmarksCount = excluded.bookmarksCount, updatedAt = CURRENT_TIMESTAMP`,
+                      ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.userEmail || "",
@@ -16009,7 +15987,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   seedVid.sharesCount || 0,
                   seedVid.commentsCount || 0,
                   JSON.stringify(seedData),
-                  seedCreatedAt
+                  seedCreatedAt,
+                  updatedBookmarksCount,
+                  JSON.stringify(seedData)
                 ]
               }).catch(() => {});
             }
@@ -16357,9 +16337,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               const seedData = { ...seedVid, sharesCount: nextShares, shares: nextShares };
               const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
               await bunnyDb.execute({
-                sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET sharesCount = excluded.sharesCount, updatedAt = CURRENT_TIMESTAMP`,
+                sql: `INSERT OR REPLACE INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
                 args: [
                   videoId,
                   seedVid.userId || seedVid.author?.id || "",
@@ -18219,23 +18198,9 @@ app.post("/api/videos/save-review", async (req, res) => {
           updatedAt: Date.now()
         };
         updatedReview = list[existingIdx];
-      } else {
-        const cached = (feedCache.videos || []).find((v: any) => v && v.id === videoId);
-        if (cached) {
-          updatedReview = {
-            ...cached,
-            ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
-            ...(updates.caption !== undefined && { caption: updates.caption }),
-            ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
-            ...(updates.tags !== undefined && { tags: updates.tags }),
-            updatedAt: Date.now()
-          };
-          list.unshift(updatedReview);
-        }
-      }
-
-      if (updatedReview) {
         writeReviewsIndex(list);
+
+        // Keep static seed reviews file in sync on disk
         try {
           const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
           if (fs.existsSync(seedReviewsPath)) {
@@ -18399,20 +18364,17 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (getDb()) {
         try {
           const [existing] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
-          let existingData = existing && existing.data && typeof existing.data === 'object' ? existing.data : {};
-          const finalData = {
-            ...existingData,
-            ...(updatedReview ? updatedReview : {}),
-            ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
-            ...(updates.caption !== undefined && { caption: updates.caption }),
-            ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
-            ...(updates.tags !== undefined && { tags: updates.tags }),
-            updatedAt: Date.now()
-          };
           if (existing) {
+            let existingData = existing.data && typeof existing.data === 'object' ? existing.data : {};
+            const finalData = {
+              ...existingData,
+              ...(updates.rating !== undefined && { rating: updates.rating, placeRating: updates.rating }),
+              ...(updates.caption !== undefined && { caption: updates.caption }),
+              ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+              ...(updates.tags !== undefined && { tags: updates.tags }),
+              updatedAt: Date.now()
+            };
             await db.update(BunnyDB_video_reviews).set({ data: finalData }).where(eq(BunnyDB_video_reviews.id, videoId));
-          } else {
-            await db.insert(BunnyDB_video_reviews).values({ id: videoId, data: finalData });
           }
         } catch (sqlErr: any) {
           console.warn("SQL database sync in update-review notice:", sqlErr?.message || sqlErr);
@@ -32133,7 +32095,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                   authorAvatar = COALESCE(NULLIF(excluded.authorAvatar, ''), videoReviews.authorAvatar),
                   placeId = COALESCE(NULLIF(excluded.placeId, ''), videoReviews.placeId),
                   placeName = COALESCE(NULLIF(excluded.placeName, ''), videoReviews.placeName),
-                  rating = COALESCE(videoReviews.rating, excluded.rating),
+                  rating = excluded.rating,
                   videoUrl = COALESCE(NULLIF(excluded.videoUrl, ''), videoReviews.videoUrl),
                   thumbnailUrl = COALESCE(NULLIF(excluded.thumbnailUrl, ''), videoReviews.thumbnailUrl),
                   duration = COALESCE(NULLIF(excluded.duration, 0), videoReviews.duration),
@@ -32142,7 +32104,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                   sharesCount = CASE WHEN excluded.sharesCount > COALESCE(videoReviews.sharesCount, 0) THEN excluded.sharesCount ELSE COALESCE(videoReviews.sharesCount, 0) END,
                   commentsCount = CASE WHEN excluded.commentsCount > COALESCE(videoReviews.commentsCount, 0) THEN excluded.commentsCount ELSE COALESCE(videoReviews.commentsCount, 0) END,
                   viewsCount = CASE WHEN excluded.viewsCount > COALESCE(videoReviews.viewsCount, 0) THEN excluded.viewsCount ELSE COALESCE(videoReviews.viewsCount, 0) END,
-                  data = COALESCE(videoReviews.data, excluded.data),
+                  data = excluded.data,
                   updatedAt = CURRENT_TIMESTAMP`,
           args: [
             r.id,

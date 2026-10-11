@@ -2894,10 +2894,7 @@ export function App() {
               const avg = Number((sum / allPlaceReviews.length).toFixed(1));
               const updatedPlace = {
                 ...p,
-                rating: avg,
-                reviews: (p.reviews || []).map((r) =>
-                  r.id === videoId ? { ...r, rating: updatedRating, placeRating: updatedRating } : r
-                )
+                rating: avg
               };
 
               // Persist to BunnyDB
