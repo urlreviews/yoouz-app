@@ -2998,17 +2998,12 @@ export function App() {
                 rating: avg
               };
 
-              // Persist to BunnyDB
-              if (p.id) {
-                fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ 
-                    data: updatedPlace, 
-                    merge: true 
-                  })
-                }).catch(() => {});
-              }
+              // Persist to BunnyDB using authoritative PUT
+              fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedPlace)
+              }).catch(err => console.error("Failed to sync place aggregate:", err));
 
               return updatedPlace;
             }
@@ -3092,29 +3087,54 @@ export function App() {
   const pendingFollowClickRef = useRef<Map<string, number>>(new Map());
   const pendingCommentClickRef = useRef<Map<string, number>>(new Map());
 
-  const handleShareIncrement = (videoId: string, nextSharesCount?: number) => {
+  const handleShareIncrement = async (videoId: string) => {
     if (!videoId) return;
-    setVideos((prev) => {
-      const next = prev.map((v) => {
+
+    // Optimistic UI Update
+    setVideos((prev) =>
+      prev.map((v) => {
         if (v.id === videoId) {
           const currentShares = v.sharesCount || v.shares || 0;
-          const updated = nextSharesCount !== undefined ? nextSharesCount : currentShares + 1;
           return {
             ...v,
-            sharesCount: updated,
-            shares: updated
+            sharesCount: currentShares + 1,
+            shares: currentShares + 1,
           };
         }
         return v;
+      })
+    );
+
+    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
+    try {
+      const updatedVideo = {
+        ...videos.find((v) => v.id === videoId),
+      };
+      
+      if (!updatedVideo || !updatedVideo.id) return;
+
+      const response = await fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...updatedVideo,
+          sharesCount: (updatedVideo.sharesCount || 0) + 1,
+          shares: (updatedVideo.shares || 0) + 1,
+        }),
       });
 
-      // Persist to local storage cache immediately
-      try {
-        localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(next.slice(0, 50)));
-      } catch (e) {}
-
-      return next;
-    });
+      if (!response.ok) throw new Error("Failed to sync share");
+      
+      const data = await response.json();
+      
+      // Reconcile with server result
+      setVideos((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, ...data } : v))
+      );
+    } catch (error) {
+      console.error("Failed to sync share:", error);
+      // Optional: Revert optimistic update here if necessary
+    }
   };
 
   const handleRecordVideoView = (videoId: string) => {
@@ -4849,29 +4869,26 @@ export function App() {
       localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
     } catch (e) {}
 
-    // Persist to Server and BunnyDB database
+    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
     try {
-      const effectiveUserId = currentUser?.email || auth.currentUser?.uid || "community_user";
-      fetch("/api/interactions/like", {
-        method: "POST",
+      const updatedVideo = {
+        ...videos.find(v => v.id === videoId),
+        isLiked: nextIsLiked,
+        likes: nextLikes,
+        likesCount: nextLikes
+      };
+
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoId,
-          isLiked: nextIsLiked,
-          likesCount: nextLikes,
-          userId: effectiveUserId,
-          userName: currentUser?.name || (currentUser as any)?.displayName,
-          userAvatar: currentUser?.avatar || (currentUser as any)?.photoURL,
-          userHandle: currentUser?.handle,
-          userEmail: currentUser?.email
-        })
+        body: JSON.stringify(updatedVideo)
       })
       .then(res => res.json())
       .then(data => {
-        if (data && typeof data.likesCount === 'number') {
-          const authLikes = nextIsLiked ? Math.max(1, data.likesCount) : data.likesCount;
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, likesCount: authLikes, likes: authLikes } : v) }));
+        if (data) {
+          // Reconcile with authoritative server state
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, ...data } : v) }));
         }
       })
       .catch((err) => console.error("Like interaction error:", err));
@@ -5023,43 +5040,30 @@ export function App() {
 
     } catch (e) {}
 
-    // Persist to Server, Bunny.net Database and BunnyDB database
+    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
     try {
-      const targetVid =
-        videos.find((v) => v.id === videoId) ||
-        videosRef.current.find((v) => v.id === videoId) ||
-        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
+      const updatedVideo = {
+        ...videos.find(v => v.id === videoId),
+        isBookmarked: nextBookmarked,
+        bookmarks: nextCount,
+        bookmarksCount: nextCount
+      };
 
-      fetch("/api/interactions/bookmark", {
-        method: "POST",
+      fetch(`/api/nosql/videoReviews/${videoId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoId,
-          placeId: (targetVid as any)?.placeId || "",
-          placeName: (targetVid as any)?.placeName || (targetVid as any)?.name || "",
-          isBookmarked: nextBookmarked,
-          bookmarksCount: nextCount,
-          userId: currentUser?.email || auth.currentUser?.uid,
-          userName: currentUser?.name || (currentUser as any)?.displayName,
-          userHandle: currentUser?.handle,
-          userAvatar: currentUser?.avatar || (currentUser as any)?.photoURL,
-          userEmail: currentUser?.email,
-          videoThumbnail: (targetVid as any)?.thumbnailUrl || (targetVid as any)?.posterUrl,
-          videoAuthor: (targetVid as any)?.author?.name || (targetVid as any)?.authorName,
-          videoRating: (targetVid as any)?.rating || 5,
-          videoUrl: (targetVid as any)?.videoUrl
-        })
+        body: JSON.stringify(updatedVideo)
       })
       .then(res => res.json())
       .then(data => {
-        if (data && typeof data.bookmarksCount === 'number') {
-          const authCount = nextBookmarked ? Math.max(1, data.bookmarksCount) : data.bookmarksCount;
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, bookmarksCount: authCount, bookmarks: authCount } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, bookmarksCount: authCount, bookmarks: authCount } : v) }));
+        if (data) {
+          // Reconcile with authoritative server state
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, ...data } : v) }));
         }
       })
-      .catch(() => {});
-    } catch (e) {}
+      .catch((err) => console.error("Bookmark interaction error:", err));
+    } catch (e) { console.error("Bookmark interaction error:", e); }
 
     try {
 
@@ -5582,23 +5586,27 @@ export function App() {
       );
     }
 
-    // Persist to BunnyDB database & SQLite
+    // Persist to BunnyDB database via authoritative NoSQL endpoint
     try {
-      const dataToSave = cleanData({
+      const updatedVideo = {
+        ...videos.find(v => v.id === videoId),
         comments: tree.comments,
         commentsCount: tree.count
-      });
+      };
 
       fetch(`/api/nosql/videoReviews/${videoId}`, {
-        method: "POST",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: dataToSave, merge: true })
-      }).catch(() => {});
-      fetch("/api/interactions/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, comment: newCommentItem, userId: currentUser?.email || auth.currentUser?.uid })
-      }).catch(() => {});
+        body: JSON.stringify(updatedVideo)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          // Reconcile with authoritative server state
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
+        }
+      })
+      .catch((err) => console.error("Comment interaction error:", err));
     } catch (err) {
       console.warn("BunnyDB comment sync warning:", err);
     }
