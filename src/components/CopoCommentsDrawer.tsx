@@ -32,6 +32,7 @@ import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 
 interface CopoCommentsDrawerProps {
   video: VideoReview | null;
+  videos?: VideoReview[];
   currentUser?: UserProfile | null;
   allUsers?: UserProfile[];
   onClose: () => void;
@@ -185,7 +186,8 @@ export const resolveCommentUserMeta = (
 };
 
 export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
-  video,
+  video: rawVideo,
+  videos = [],
   currentUser,
   allUsers = [],
   onClose,
@@ -201,6 +203,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   placeLogoUrl: placeLogoUrlProp,
   onSelectAuthor,
 }) => {
+  const video = useMemo(() => {
+    if (!rawVideo) return null;
+    return videos.find((v) => v.id === rawVideo.id) || rawVideo;
+  }, [rawVideo, videos]);
   const { t } = useLanguage();
   const [commentText, setCommentText] = useState("");
   const [postAsOwner, setPostAsOwner] = useState(false);

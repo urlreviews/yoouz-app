@@ -6931,6 +6931,7 @@ export function App() {
         {activeCommentVideo && (
           <CopoCommentsDrawer
             video={activeCommentVideo}
+            videos={videos}
             currentUser={currentUser}
             allUsers={allRegisteredUsers}
             onClose={() => setActiveCommentVideo(null)}
@@ -7982,6 +7983,7 @@ export function App() {
       {activeCommentVideo && (
         <CopoCommentsDrawer
           video={activeCommentVideo}
+          videos={videos}
           currentUser={currentUser}
           allUsers={allRegisteredUsers}
           onClose={() => setActiveCommentVideo(null)}
