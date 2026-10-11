@@ -15744,35 +15744,44 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         } else {
           try {
             const list = readReviewsIndex();
-            const seedVid = list.find((v: any) => v && v.id === videoId);
-            if (seedVid) {
-              const seedData = { ...seedVid, likesCount: updatedLikesCount, likes: updatedLikesCount };
-              const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
-              await bunnyDb.execute({
-                sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP`,
-                args: [
-                  videoId,
-                  seedVid.userId || seedVid.userEmail || "",
-                  seedVid.author?.name || seedVid.authorName || "Reviewer",
-                  seedVid.author?.avatar || seedVid.authorAvatar || "",
-                  seedVid.placeId || "",
-                  seedVid.placeName || "",
-                  seedVid.rating || 5,
-                  seedVid.videoUrl || "",
-                  seedVid.thumbnailUrl || seedVid.posterUrl || "",
-                  seedVid.durationSeconds || seedVid.duration || 60,
-                  updatedLikesCount,
-                  seedVid.bookmarksCount || 0,
-                  seedVid.sharesCount || 0,
-                  seedVid.commentsCount || 0,
-                  JSON.stringify(seedData),
-                  seedCreatedAt,
-                  updatedLikesCount
-                ]
-              }).catch(() => {});
-            }
+            const seedVid = list.find((v: any) => v && v.id === videoId) || {
+              id: videoId,
+              userId: userId || "",
+              authorName: effName || "Community Member",
+              authorAvatar: effAvatar || "",
+              placeId: "",
+              placeName: "Yoouz",
+              rating: 5,
+              videoUrl: "",
+              thumbnailUrl: "",
+              duration: 60
+            };
+            const seedData = { ...seedVid, likesCount: updatedLikesCount, likes: updatedLikesCount };
+            const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
+            await bunnyDb.execute({
+              sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP`,
+              args: [
+                videoId,
+                seedVid.userId || seedVid.userEmail || userId || "",
+                seedVid.author?.name || seedVid.authorName || effName || "Reviewer",
+                seedVid.author?.avatar || seedVid.authorAvatar || effAvatar || "",
+                seedVid.placeId || "",
+                seedVid.placeName || "Yoouz",
+                seedVid.rating || 5,
+                seedVid.videoUrl || "",
+                seedVid.thumbnailUrl || seedVid.posterUrl || "",
+                seedVid.durationSeconds || seedVid.duration || 60,
+                updatedLikesCount,
+                seedVid.bookmarksCount || 0,
+                seedVid.sharesCount || 0,
+                seedVid.commentsCount || 0,
+                JSON.stringify(seedData),
+                seedCreatedAt,
+                updatedLikesCount
+              ]
+            }).catch(() => {});
           } catch(e){}
         }
       } else {
@@ -16008,35 +16017,44 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         } else {
           try {
             const list = readReviewsIndex();
-            const seedVid = list.find((v: any) => v && v.id === videoId);
-            if (seedVid) {
-              const seedData = { ...seedVid, bookmarksCount: updatedBookmarksCount, bookmarks: updatedBookmarksCount };
-              const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
-              await bunnyDb.execute({
-                sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP`,
-                args: [
-                  videoId,
-                  seedVid.userId || seedVid.userEmail || "",
-                  seedVid.author?.name || seedVid.authorName || "Reviewer",
-                  seedVid.author?.avatar || seedVid.authorAvatar || "",
-                  seedVid.placeId || "",
-                  seedVid.placeName || "",
-                  seedVid.rating || 5,
-                  seedVid.videoUrl || "",
-                  seedVid.thumbnailUrl || seedVid.posterUrl || "",
-                  seedVid.durationSeconds || seedVid.duration || 60,
-                  seedVid.likesCount || 0,
-                  updatedBookmarksCount,
-                  seedVid.sharesCount || 0,
-                  seedVid.commentsCount || 0,
-                  JSON.stringify(seedData),
-                  seedCreatedAt,
-                  updatedBookmarksCount
-                ]
-              }).catch(() => {});
-            }
+            const seedVid = list.find((v: any) => v && v.id === videoId) || {
+              id: videoId,
+              userId: userId || "",
+              authorName: userName || "Community Member",
+              authorAvatar: userAvatar || "",
+              placeId: placeId || "",
+              placeName: placeName || "Yoouz",
+              rating: videoRating || 5,
+              videoUrl: videoUrl || "",
+              thumbnailUrl: videoThumbnail || "",
+              duration: 60
+            };
+            const seedData = { ...seedVid, bookmarksCount: updatedBookmarksCount, bookmarks: updatedBookmarksCount };
+            const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
+            await bunnyDb.execute({
+              sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP`,
+              args: [
+                videoId,
+                seedVid.userId || seedVid.userEmail || userId || "",
+                seedVid.author?.name || seedVid.authorName || userName || "Reviewer",
+                seedVid.author?.avatar || seedVid.authorAvatar || userAvatar || "",
+                seedVid.placeId || placeId || "",
+                seedVid.placeName || placeName || "Yoouz",
+                seedVid.rating || videoRating || 5,
+                seedVid.videoUrl || videoUrl || "",
+                seedVid.thumbnailUrl || seedVid.posterUrl || videoThumbnail || "",
+                seedVid.durationSeconds || seedVid.duration || 60,
+                seedVid.likesCount || 0,
+                updatedBookmarksCount,
+                seedVid.sharesCount || 0,
+                seedVid.commentsCount || 0,
+                JSON.stringify(seedData),
+                seedCreatedAt,
+                updatedBookmarksCount
+              ]
+            }).catch(() => {});
           } catch(e){}
         }
       } else {
