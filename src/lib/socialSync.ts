@@ -539,10 +539,8 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       continue;
     }
 
-    // Exclude accidental pure self-action unless explicitly testing or addressed
-    const isPureSelfAction =
-      (userEmail && senderEmail && senderEmail === userEmail && !senderEmail.includes("test")) ||
-      (userName && senderName && userName === senderName && (!senderEmail || !userEmail || senderEmail === userEmail) && !userName.includes("test"));
+    // Allow self-actions so users testing likes/bookmarks always see their notifications
+    const isPureSelfAction = false;
 
     if (isPureSelfAction && !isSystemOrGlobal) {
       continue;

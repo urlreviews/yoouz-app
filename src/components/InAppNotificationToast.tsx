@@ -65,7 +65,7 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
 
     setProgress(100);
     const startTime = Date.now();
-    const duration = 4000; // 4 seconds
+    const duration = 8000; // 8 seconds
 
     const timer = setInterval(() => {
       const elapsed = Date.now() - startTime;
