@@ -276,6 +276,93 @@ interface ResolvedBusinessData {
   lng: number;
 }
 
+// Helper function to calculate ground-truth place aggregate rating dynamically from all videoReviews
+async function calculatePlaceRatingFromDb(placeId: string, placeName?: string): Promise<{
+  rating: number;
+  totalReviews: number;
+  ratingCount: number;
+  videoReviewCount: number;
+  starCounts: { 5: number; 4: number; 3: number; 2: number; 1: number };
+  ratingDistribution: { stars5: number; stars4: number; stars3: number; stars2: number; stars1: number };
+} | null> {
+  const bunnyDb = getBunnyDb();
+  const cleanId = String(placeId || '').toLowerCase().trim();
+  const cleanName = String(placeName || '').toLowerCase().trim();
+
+  const reviewsMap = new Map<string, number>();
+
+  // 1. Get reviews from local reviews_index.json
+  try {
+    const allLocal = readReviewsIndex();
+    allLocal.forEach((v: any) => {
+      if (!v || !v.id) return;
+      const vPlaceId = String(v.placeId || '').toLowerCase().trim();
+      const vPlaceName = String(v.placeName || '').toLowerCase().trim();
+      const vWebsite = String(v.placeWebsite || '').toLowerCase().trim();
+      
+      const isMatch = (cleanId && (vPlaceId === cleanId || vWebsite.includes(cleanId))) ||
+                      (cleanName && (vPlaceName === cleanName || vPlaceName.includes(cleanName)));
+      if (isMatch) {
+        const rVal = typeof v.rating === 'number' && !isNaN(v.rating) && v.rating > 0 ? Number(v.rating) : 5;
+        reviewsMap.set(String(v.id), rVal);
+      }
+    });
+  } catch (e) {}
+
+  // 2. Query BunnyDB videoReviews table
+  if (bunnyDb) {
+    try {
+      const dbRes = await bunnyDb.execute({
+        sql: `SELECT id, rating, data FROM videoReviews WHERE LOWER(placeId) = ? OR LOWER(placeName) = ? OR data LIKE ?`,
+        args: [cleanId, cleanName || cleanId, `%"${cleanId}"%`]
+      });
+
+      (dbRes?.rows || []).forEach((r: any) => {
+        if (r && r.id) {
+          let parsed: any = {};
+          try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
+          const rVal = typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
+            ? Number(parsed.rating)
+            : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5);
+          reviewsMap.set(String(r.id), rVal);
+        }
+      });
+    } catch(e) {
+      console.warn("[calculatePlaceRatingFromDb Error]:", e);
+    }
+  }
+
+  const combinedRatings = Array.from(reviewsMap.values());
+  const total = combinedRatings.length;
+  if (total === 0) {
+    return null;
+  }
+
+  const sum = combinedRatings.reduce((a, b) => a + b, 0);
+  const avg = Number((sum / total).toFixed(1));
+
+  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  combinedRatings.forEach((r) => {
+    const rounded = Math.min(5, Math.max(1, Math.round(r))) as 1 | 2 | 3 | 4 | 5;
+    starCounts[rounded] = (starCounts[rounded] || 0) + 1;
+  });
+
+  return {
+    rating: avg,
+    totalReviews: total,
+    ratingCount: total,
+    videoReviewCount: total,
+    starCounts,
+    ratingDistribution: {
+      stars5: starCounts[5],
+      stars4: starCounts[4],
+      stars3: starCounts[3],
+      stars2: starCounts[2],
+      stars1: starCounts[1]
+    }
+  };
+}
+
 // Helper function to persist resolved result to Database so that subsequent lookups are instant & free
 async function persistToDb(data: ResolvedBusinessData) {
   const bunnyDb = getBunnyDb();
@@ -285,6 +372,23 @@ async function persistToDb(data: ResolvedBusinessData) {
     const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || data.name || autoPlaceId;
     const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] || (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) ? data.logo : "");
     const bannerUrl = (data.photo && !isBadBanner(data.photo)) ? data.photo : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) ? KNOWN_BRAND_BANNERS[autoPlaceId] : "");
+
+    // Fetch existing place row if present to preserve custom rating / reviews if not calculated
+    let existingDoc: any = {};
+    try {
+      const exRes = await bunnyDb.execute({
+        sql: `SELECT data FROM places WHERE LOWER(id) = LOWER(?) LIMIT 1`,
+        args: [autoPlaceId]
+      });
+      if (exRes && exRes.rows && exRes.rows[0]) {
+        const row = exRes.rows[0] as any;
+        existingDoc = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+      }
+    } catch(e) {}
+
+    // Calculate ground-truth rating from videoReviews
+    const computedRating = await calculatePlaceRatingFromDb(autoPlaceId, resolvedName);
+
     const autoPlaceDoc = {
       id: autoPlaceId,
       name: resolvedName,
@@ -295,9 +399,12 @@ async function persistToDb(data: ResolvedBusinessData) {
       country: data.country,
       lat: data.lat || 0,
       lng: data.lng || 0,
-      rating: 5,
-      totalReviews: 1,
-      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+      rating: computedRating ? computedRating.rating : (existingDoc.rating !== undefined ? existingDoc.rating : 5),
+      totalReviews: computedRating ? computedRating.totalReviews : (existingDoc.totalReviews !== undefined ? existingDoc.totalReviews : 1),
+      ratingCount: computedRating ? computedRating.ratingCount : (existingDoc.ratingCount !== undefined ? existingDoc.ratingCount : 1),
+      videoReviewCount: computedRating ? computedRating.videoReviewCount : (existingDoc.videoReviewCount !== undefined ? existingDoc.videoReviewCount : 1),
+      starCounts: computedRating ? computedRating.starCounts : (existingDoc.starCounts || { 5: 1, 4: 0, 3: 0, 2: 0, 1: 0 }),
+      ratingDistribution: computedRating ? computedRating.ratingDistribution : (existingDoc.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 }),
       avatarUrl: logoUrl,
       logoUrl: logoUrl,
       bannerUrl: bannerUrl,
@@ -18502,8 +18609,12 @@ app.post("/api/videos/save-review", async (req, res) => {
         } catch (sErr) {}
       }
 
-      // Invalidate memory cache and update in-memory item immediately if cached
+      // Invalidate search and feed caches so search results immediately serve updated business ratings
       feedCache.lastFetched = 0;
+      try {
+        BUSINESS_QUERY_CACHE.clear();
+        searchSuggestCache.clear();
+      } catch (e) {}
       if (feedCache.videos && Array.isArray(feedCache.videos)) {
         const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === videoId);
         if (cachedIdx !== -1) {
@@ -18773,7 +18884,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (!bunnyDb) return res.status(503).json({ error: "Database not available" });
       
       const queryRes = await bunnyDb.execute({
-        sql: "SELECT id, name, address, category, logoUrl, data FROM places WHERE id = ? OR name = ? LIMIT 1",
+        sql: "SELECT id, name, address, category, logoUrl, data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(name) = LOWER(?) LIMIT 1",
         args: [id, id]
       });
       
@@ -18785,13 +18896,25 @@ app.post("/api/videos/save-review", async (req, res) => {
       let pData: any = {};
       try { pData = typeof (row as any).data === 'string' ? JSON.parse((row as any).data) : ((row as any).data || {}); } catch(e){}
       
+      const placeId = String((row as any).id || id);
+      const placeName = String((row as any).name || pData.name || '');
+      const computedRating = await calculatePlaceRatingFromDb(placeId, placeName);
+
       const result = {
         id: (row as any).id,
         name: (row as any).name,
         address: (row as any).address,
         category: (row as any).category,
         logoUrl: (row as any).logoUrl,
-        ...pData
+        ...pData,
+        ...(computedRating ? {
+          rating: computedRating.rating,
+          totalReviews: computedRating.totalReviews,
+          ratingCount: computedRating.ratingCount,
+          videoReviewCount: computedRating.videoReviewCount,
+          starCounts: computedRating.starCounts,
+          ratingDistribution: computedRating.ratingDistribution
+        } : {})
       };
       
       return res.json({ success: true, place: result });
