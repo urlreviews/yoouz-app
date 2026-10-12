@@ -190,14 +190,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   // Render Category Filter Pills
   const filterPills: { label: string; value: FilterType; count?: number; icon: React.ReactNode }[] = [
-    { label: "All", value: "all", icon: <Bell className="w-5 h-5 shrink-0" /> },
-    { label: "Unread", value: "unread", count: unreadCount > 0 ? unreadCount : undefined, icon: <Bell className="w-5 h-5 shrink-0" /> },
-    { label: "Messages", value: "messages", icon: <Mail className="w-5 h-5 shrink-0" /> },
-    { label: "Likes", value: "likes", icon: <Heart className="w-5 h-5 shrink-0" /> },
-    { label: "Comments", value: "comments", icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
-    { label: "Shares", value: "shares", icon: <Repeat2 className="w-5 h-5 shrink-0" /> },
-    { label: "Followers", value: "people", icon: <UserPlus className="w-5 h-5 shrink-0" /> },
-    { label: "Saves", value: "bookmarks", icon: <Bookmark className="w-5 h-5 shrink-0" /> }
+    { label: t("notifications.all", "All"), value: "all", icon: <Bell className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.unread", "Unread"), value: "unread", count: unreadCount > 0 ? unreadCount : undefined, icon: <Bell className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.messages", "Messages"), value: "messages", icon: <Mail className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.likes", "Likes"), value: "likes", icon: <Heart className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.comments", "Comments"), value: "comments", icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.shares", "Shares"), value: "shares", icon: <Repeat2 className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.followers", "Followers"), value: "people", icon: <UserPlus className="w-5 h-5 shrink-0" /> },
+    { label: t("notifications.saves", "Saves"), value: "bookmarks", icon: <Bookmark className="w-5 h-5 shrink-0" /> }
   ];
 
   // Helper to parse notification text into clean, scannable parts
@@ -439,14 +439,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
                 <BellOff className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <span className="truncate font-medium">In-app notifications are paused in your preferences.</span>
+              <span className="truncate font-medium">{t("notifications.pausedNotice", "In-app notifications are paused in your preferences.")}</span>
             </div>
             {onOpenSettings && (
               <button
                 onClick={onOpenSettings}
                 className="px-3 py-1.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 font-bold shrink-0 transition-all active:scale-95 text-xs shadow-sm"
               >
-                Settings
+                {t("common.settings", "Settings")}
               </button>
             )}
           </div>
@@ -550,7 +550,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                       className="md:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-700 z-0"
                     >
                       <Trash2 className="w-4 h-4 shrink-0" />
-                      <span>Delete</span>
+                      <span>{t("common.delete", "Delete")}</span>
                     </div>
                   )}
 
@@ -820,14 +820,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <BellOff className="w-7 h-7 stroke-[2]" />
             </div>
             <h3 className="font-black text-white text-base mb-1">
-              {userPrefs?.enabled === false ? "Notifications are paused" : "No notifications"}
+              {userPrefs?.enabled === false ? t("notifications.paused", "Notifications are paused") : t("notifications.noNotifications", "No notifications")}
             </h3>
             <p className="text-xs text-zinc-200 max-w-xs leading-relaxed font-medium">
               {userPrefs?.enabled === false
-                ? "You have paused in-app notifications in your preferences. Turn them on to see new alerts."
+                ? t("notifications.pausedNotice", "You have paused in-app notifications in your preferences. Turn them on to see new alerts.")
                 : activeFilter === "all"
-                ? "You're all caught up! Community updates and video review activity will appear here."
-                : `No notifications found under "${activeFilter}".`}
+                ? t("notifications.allCaughtUpDesc", "You're all caught up! Community updates and video review activity will appear here.")
+                : t("notifications.noNotificationsUnder", `No notifications found under "${activeFilter}".`).replace("{filter}", activeFilter)}
             </p>
             {userPrefs?.enabled === false ? (
               onOpenSettings && (
@@ -835,7 +835,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   onClick={onOpenSettings}
                   className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-zinc-950 bg-white hover:bg-zinc-200 shadow-sm transition-all cursor-pointer active:scale-95"
                 >
-                  Notification Settings
+                  {t("notifications.settings", "Notification Settings")}
                 </button>
               )
             ) : (
@@ -844,7 +844,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                   onClick={() => setActiveFilter("all")}
                   className="mt-4 px-4 py-2 rounded-full text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors cursor-pointer"
                 >
-                  View all notifications
+                  {t("notifications.viewAll", "View all notifications")}
                 </button>
               )
             )}

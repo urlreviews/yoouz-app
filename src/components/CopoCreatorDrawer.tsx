@@ -1005,7 +1005,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Bell className="w-4 h-4 text-zinc-200" />
-                          <span>Notification Preferences</span>
+                          <span>{t("profile.notificationPreferences", "Notification Preferences")}</span>
                         </button>
                       )}
 
@@ -1142,14 +1142,24 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 {isFollowed ? (
                   <>
                     <UserCheck className="w-3.5 h-3.5 text-zinc-200" />
-                    <span>{t("profile.following", "Following")}</span>
+                    <span>{t("common.following", "Following")}</span>
                   </>
                 ) : (
                   <>
                     <UserPlus className="w-3.5 h-3.5" />
-                    <span>{t("profile.follow", "Follow")}</span>
+                    <span>{t("common.follow", "Follow")}</span>
                   </>
                 )}
+              </button>
+            )}
+
+            {!isOwner && onStartChat && (
+              <button
+                onClick={() => onStartChat(author.userId || author.id || author.name, displayName, effectiveAvatar)}
+                className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-zinc-700 transition-all cursor-pointer shrink-0"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>{t("common.chat", "Message")}</span>
               </button>
             )}
           </div>
@@ -1160,7 +1170,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-white text-base">{authorVideos.length}</span>
                 <span className="text-zinc-400 text-xs font-medium">
-                  {authorVideos.length === 1 ? t("place.review", "Video Review") : t("place.reviews", "Video Reviews")}
+                  {authorVideos.length === 1 ? t("common.videoReview", "Video Review") : t("common.videoReviews", "Video Reviews")}
                 </span>
               </div>
               <span className="text-zinc-700 font-bold">•</span>
@@ -1230,7 +1240,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
-            <span>{t("place.reviews", "Reviews")}</span>
+            <span>{t("common.videoReviews", "Reviews")}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
               {authorVideos.length}
             </span>
@@ -1502,7 +1512,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <div>
                   <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`)}</span>
+                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`, { name: displayName || "User" })}</span>
                   </h3>
                   <p className="text-zinc-200 text-sm leading-relaxed font-normal">
                     {displayBio}
@@ -1588,11 +1598,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onChange={(e) => setDeletionReason(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition-colors"
                 >
-                  <option value="I no longer use this account">I no longer use this account</option>
-                  <option value="Privacy concerns">Privacy concerns</option>
-                  <option value="Created by mistake">Created by mistake</option>
-                  <option value="Temporary break">Temporary break</option>
-                  <option value="Other reason">Other reason</option>
+                  <option value="I no longer use this account">{t("profile.reason1", "I no longer use this account")}</option>
+                  <option value="Privacy concerns">{t("profile.reason2", "Privacy concerns")}</option>
+                  <option value="Created by mistake">{t("profile.reason3", "Created by mistake")}</option>
+                  <option value="Temporary break">{t("profile.reason4", "Temporary break")}</option>
+                  <option value="Other reason">{t("profile.reason5", "Other reason")}</option>
                 </select>
               </div>
 
@@ -1605,7 +1615,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   onChange={(e) => setDeletionNotes(e.target.value)}
                   rows={2}
                   maxLength={300}
-                  placeholder="Tell us if there is anything we can help with..."
+                  placeholder={t("profile.notesPlaceholder", "Tell us if there is anything we can help with...")}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors resize-none"
                 />
               </div>
@@ -1753,7 +1763,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value.slice(0, 50))}
-                  placeholder="Your Name"
+                  placeholder={t("profile.namePlaceholder", "Your Name")}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-400"
                 />
               </div>
@@ -1972,7 +1982,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   type="button"
                   onClick={() => setSocialModalOpen(null)}
                   className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition cursor-pointer shrink-0 border border-zinc-800 shadow-sm active:scale-95"
-                  title="Back"
+                  title={t("common.back", "Back")}
                 >
                   <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
                 </button>
@@ -1982,7 +1992,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span className="truncate">{displayName}</span>
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
-                    Manage followers and reviewers on Yoouz
+                    {t("profile.manageSocialDesc", "Manage followers and reviewers on Yoouz")}
                   </p>
                 </div>
               </div>
@@ -2036,7 +2046,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   type="text"
                   value={socialSearch}
                   onChange={(e) => setSocialSearch(e.target.value)}
-                  placeholder={socialModalTab === "following" ? "Search followed businesses or reviewers..." : "Search followers by name..."}
+                  placeholder={socialModalTab === "following" ? t("profile.searchFollowingPlaceholder", "Search followed businesses or reviewers...") : t("profile.searchFollowersPlaceholder", "Search followers by name...")}
                   className="w-full pl-10 pr-9 py-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
                 />
                 {socialSearch && (
@@ -2072,7 +2082,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     }`}
                   >
                     <Building2 className="w-3.5 h-3.5" />
-                    <span>Businesses</span>
+                    <span>{t("profile.businesses", "Businesses")}</span>
                   </button>
                   <button
                     onClick={() => setFollowingFilter("reviewers")}
@@ -2083,7 +2093,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
-                    <span>Reviewers</span>
+                    <span>{t("profile.reviewers", "Reviewers")}</span>
                   </button>
                 </div>
               )}
@@ -2234,7 +2244,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                             {isPlace && (
                               <span className="bg-zinc-800 text-zinc-300 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-zinc-700 uppercase tracking-wider shrink-0">
-                                Business
+                                {t("profile.business", "Business")}
                               </span>
                             )}
                           </div>
@@ -2250,7 +2260,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>
                                     <span className="shrink-0">
-                                      {videoCount} {videoCount === 1 ? "video review" : "video reviews"}
+                                      {videoCount} {videoCount === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}
                                     </span>
                                   </>
                                 ) : (

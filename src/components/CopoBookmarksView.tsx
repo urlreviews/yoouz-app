@@ -362,7 +362,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                   className="px-5 py-2.5 rounded-full text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Compass className="w-4 h-4" />
-                  <span>{t("nav.map", "Explore Map")}</span>
+                  <span>{t("nav.search", "Explore Map")}</span>
                 </button>
               )}
             </div>
