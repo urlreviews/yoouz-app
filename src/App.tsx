@@ -280,11 +280,18 @@ export function App() {
             // Real-time sync for saved places
             const currentEmail = currentUser?.email || auth.currentUser?.email;
             if (payload.userId === currentEmail) {
+              const rawTarget = String(payload.placeId).toLowerCase().trim();
+              const cleanTarget = extractCleanDomain(rawTarget);
               setSavedPlaceIds((prev) => {
                 if (payload.isBookmarked) {
                   return Array.from(new Set([payload.placeId, ...prev]));
                 } else {
-                  return prev.filter(id => id !== payload.placeId);
+                  return prev.filter((id) => {
+                    if (!id) return false;
+                    const norm = id.toLowerCase().trim();
+                    const cleanNorm = extractCleanDomain(norm);
+                    return norm !== rawTarget && cleanNorm !== rawTarget && norm !== cleanTarget && cleanNorm !== cleanTarget;
+                  });
                 }
               });
             }
@@ -6695,7 +6702,7 @@ export function App() {
   }, [videos]);
 
   const savedPlaces = useMemo(() => {
-    return places.filter((p) => savedPlaceIds.includes(p.id));
+    return places.filter((p) => isPlaceSaved(p));
   }, [places, savedPlaceIds]);
 
   const savedCreatorsList = useMemo(() => {

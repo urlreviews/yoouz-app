@@ -16256,28 +16256,33 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
       } catch (e) {}
 
+      const isPlaceBookmark = videoId === "place_bookmark" || videoId.startsWith("place_");
+
       if (bunnyDb) {
-        const bmId = `bm_${userId || 'anon'}_${videoId}`;
+        const bmId = `bm_${(userId || effEmail || 'anon').replace(/[^a-z0-9]/gi, '_')}_${isPlaceBookmark ? (placeId || placeName || 'place').replace(/[^a-z0-9]/gi, '_') : videoId}`;
+        let effPlaceName = placeName || "";
+        let effPlaceId = placeId || "";
+
         if (isBookmarked) {
-          let effPlaceName = placeName || "";
-          let effPlaceId = placeId || "";
           let effThumb = videoThumbnail || "";
           let effAuthor = videoAuthor || "";
           let effRating = videoRating || 5;
           let effVideoUrl = videoUrl || "";
 
-          try {
-            const list = readReviewsIndex();
-            const curVid = list.find((v: any) => v && (v.id === videoId || v._id === videoId));
-            if (curVid) {
-              if (!effPlaceName) effPlaceName = curVid.placeName || "";
-              if (!effPlaceId) effPlaceId = curVid.placeId || "";
-              if (!effThumb) effThumb = curVid.thumbnailUrl || curVid.posterUrl || "";
-              if (!effAuthor) effAuthor = curVid.author?.name || curVid.authorName || "";
-              if (!effRating && curVid.rating) effRating = Number(curVid.rating);
-              if (!effVideoUrl) effVideoUrl = curVid.videoUrl || "";
-            }
-          } catch (e) {}
+          if (!isPlaceBookmark) {
+            try {
+              const list = readReviewsIndex();
+              const curVid = list.find((v: any) => v && (v.id === videoId || v._id === videoId));
+              if (curVid) {
+                if (!effPlaceName) effPlaceName = curVid.placeName || "";
+                if (!effPlaceId) effPlaceId = curVid.placeId || "";
+                if (!effThumb) effThumb = curVid.thumbnailUrl || curVid.posterUrl || "";
+                if (!effAuthor) effAuthor = curVid.author?.name || curVid.authorName || "";
+                if (!effRating && curVid.rating) effRating = Number(curVid.rating);
+                if (!effVideoUrl) effVideoUrl = curVid.videoUrl || "";
+              }
+            } catch (e) {}
+          }
 
           if (!effPlaceName && effPlaceId) {
             try {
@@ -16300,10 +16305,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             userName: effName || "Community Member",
             userAvatar: effAvatar,
             userHandle: effHandle || `@${(effName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-            videoThumbnail: effThumb,
-            videoAuthor: effAuthor,
-            videoRating: effRating,
-            videoUrl: effVideoUrl,
+            videoThumbnail: isPlaceBookmark ? "" : effThumb,
+            videoAuthor: isPlaceBookmark ? "" : effAuthor,
+            videoRating: isPlaceBookmark ? undefined : effRating,
+            videoUrl: isPlaceBookmark ? "" : effVideoUrl,
             isBookmarked: true,
             createdAt: new Date().toISOString()
           };
@@ -16314,103 +16319,75 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           });
         } else {
           await bunnyDb.execute({
-            sql: "DELETE FROM bookmarks WHERE (LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)) AND (videoId = ? OR id = ? OR (videoId = 'place_bookmark' AND (LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?))))",
-            args: [userId || "", effEmail || userEmail || "", videoId, bmId, (placeId || "").toLowerCase(), (placeName || "").toLowerCase()]
+            sql: "DELETE FROM bookmarks WHERE (LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)) AND (videoId = ? OR id = ? OR (videoId = 'place_bookmark' AND (LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?))))",
+            args: [
+              userId || "",
+              effEmail || userEmail || "",
+              videoId,
+              bmId,
+              (placeId || "").toLowerCase(),
+              (placeName || "").toLowerCase(),
+              (placeId || placeName || "").toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split('/')[0]
+            ]
           });
         }
 
-        const countRes = await bunnyDb.execute({
-          sql: "SELECT COUNT(*) as total FROM bookmarks WHERE LOWER(videoId) = LOWER(?)",
-          args: [videoId.trim()]
-        });
-        const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
-        updatedBookmarksCount = isBookmarked ? Math.max(1, dbBookmarks) : Math.max(0, dbBookmarks);
-
-        const vRow = await bunnyDb.execute({
-          sql: "SELECT data, bookmarksCount FROM videoReviews WHERE id = ? LIMIT 1",
-          args: [videoId]
-        });
-        if (vRow && vRow.rows && vRow.rows.length > 0) {
-          let vData: any = {};
-          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
-          vData.bookmarks = updatedBookmarksCount;
-          vData.bookmarksCount = updatedBookmarksCount;
-          await bunnyDb.execute({
-            sql: "UPDATE videoReviews SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-            args: [updatedBookmarksCount, JSON.stringify(vData), videoId]
+        if (!isPlaceBookmark) {
+          const countRes = await bunnyDb.execute({
+            sql: "SELECT COUNT(*) as total FROM bookmarks WHERE LOWER(videoId) = LOWER(?)",
+            args: [videoId.trim()]
           });
-        } else {
-          try {
-            const list = readReviewsIndex();
-            const seedVid = list.find((v: any) => v && v.id === videoId) || {
-              id: videoId,
-              userId: userId || "",
-              authorName: userName || "Community Member",
-              authorAvatar: userAvatar || "",
-              placeId: placeId || "",
-              placeName: placeName || "Yoouz",
-              rating: videoRating || 5,
-              videoUrl: videoUrl || "",
-              thumbnailUrl: videoThumbnail || "",
-              duration: 60
-            };
-            const seedData = { ...seedVid, bookmarksCount: updatedBookmarksCount, bookmarks: updatedBookmarksCount };
-            const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());
+          const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+          updatedBookmarksCount = isBookmarked ? Math.max(1, dbBookmarks) : Math.max(0, dbBookmarks);
+
+          const vRow = await bunnyDb.execute({
+            sql: "SELECT data, bookmarksCount FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vRow && vRow.rows && vRow.rows.length > 0) {
+            let vData: any = {};
+            try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+            vData.bookmarks = updatedBookmarksCount;
+            vData.bookmarksCount = updatedBookmarksCount;
             await bunnyDb.execute({
-              sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(id) DO UPDATE SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP`,
-              args: [
-                videoId,
-                seedVid.userId || seedVid.userEmail || userId || "",
-                seedVid.author?.name || seedVid.authorName || userName || "Reviewer",
-                seedVid.author?.avatar || seedVid.authorAvatar || userAvatar || "",
-                seedVid.placeId || placeId || "",
-                seedVid.placeName || placeName || "Yoouz",
-                seedVid.rating || videoRating || 5,
-                seedVid.videoUrl || videoUrl || "",
-                seedVid.thumbnailUrl || seedVid.posterUrl || videoThumbnail || "",
-                seedVid.durationSeconds || seedVid.duration || 60,
-                seedVid.likesCount || 0,
-                updatedBookmarksCount,
-                seedVid.sharesCount || 0,
-                seedVid.commentsCount || 0,
-                JSON.stringify(seedData),
-                seedCreatedAt,
-                updatedBookmarksCount
-              ]
-            }).catch(() => {});
-          } catch(e){}
+              sql: "UPDATE videoReviews SET bookmarksCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+              args: [updatedBookmarksCount, JSON.stringify(vData), videoId]
+            });
+          }
         }
       } else {
-        const list = readReviewsIndex();
-        const vid = list.find((v: any) => v.id === videoId);
-        if (vid) {
-          const prevCount = typeof vid.bookmarksCount === 'number' ? vid.bookmarksCount : (typeof vid.bookmarks === 'number' ? vid.bookmarks : 0);
-          updatedBookmarksCount = isBookmarked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1);
+        if (!isPlaceBookmark) {
+          const list = readReviewsIndex();
+          const vid = list.find((v: any) => v.id === videoId);
+          if (vid) {
+            const prevCount = typeof vid.bookmarksCount === 'number' ? vid.bookmarksCount : (typeof vid.bookmarks === 'number' ? vid.bookmarks : 0);
+            updatedBookmarksCount = isBookmarked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1);
+          }
         }
       }
 
-      // Also sync to local review index and memory feedCache
-      try {
-        const list = readReviewsIndex();
-        const vid = list.find((v: any) => v.id === videoId);
-        if (vid) {
-          vid.bookmarks = updatedBookmarksCount;
-          vid.bookmarksCount = updatedBookmarksCount;
-          writeReviewsIndex(list);
-        }
-        if (feedCache && Array.isArray(feedCache.videos)) {
-          const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === videoId || v._id === videoId));
-          if (cachedIdx !== -1) {
-            feedCache.videos[cachedIdx] = {
-              ...feedCache.videos[cachedIdx],
-              bookmarks: updatedBookmarksCount,
-              bookmarksCount: updatedBookmarksCount
-            };
+      // Also sync to local review index and memory feedCache (for actual video reviews)
+      if (!isPlaceBookmark) {
+        try {
+          const list = readReviewsIndex();
+          const vid = list.find((v: any) => v.id === videoId);
+          if (vid) {
+            vid.bookmarks = updatedBookmarksCount;
+            vid.bookmarksCount = updatedBookmarksCount;
+            writeReviewsIndex(list);
           }
-        }
-      } catch (e) {}
+          if (feedCache && Array.isArray(feedCache.videos)) {
+            const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === videoId || v._id === videoId));
+            if (cachedIdx !== -1) {
+              feedCache.videos[cachedIdx] = {
+                ...feedCache.videos[cachedIdx],
+                bookmarks: updatedBookmarksCount,
+                bookmarksCount: updatedBookmarksCount
+              };
+            }
+          }
+        } catch (e) {}
+      }
 
       broadcastSseEvent({
         type: "video_bookmarked",
