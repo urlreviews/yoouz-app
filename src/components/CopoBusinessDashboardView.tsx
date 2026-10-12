@@ -4887,7 +4887,7 @@ ${jsonLd}
                 <CopoMoreView
                   currentUser={null}
                   businessDomain={currentPlace?.website || currentPlace?.id || verifiedBusinessSession?.domain}
-                  businessName={currentPlace?.name || verifiedBusinessSession?.businessName || ""}
+                  businessName={currentPlace?.name || (verifiedBusinessSession as any)?.businessName || (verifiedBusinessSession as any)?.ownerName || ""}
                   businessEmail={displayOwnerEmail || verifiedBusinessSession?.businessEmail || verifiedBusinessSession?.email || (currentPlace as any)?.claimedByEmail || ""}
                   isBusinessSuiteEmbedded={true}
                   onBack={() => setActiveTab('overview')}

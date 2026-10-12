@@ -123,10 +123,23 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
   // Prefill contact form when user profile or business details are present
   useEffect(() => {
-    if (isBusinessSuiteEmbedded) {
-      // In Business Portal mode, prefill strictly with verified business info if available
-      setContactName(businessName || "");
-      setContactEmail(businessEmail || "");
+    let bizSessionEmail = "";
+    let bizSessionName = "";
+    try {
+      const rawBiz = localStorage.getItem("copo_business_verified_session");
+      if (rawBiz) {
+        const parsed = JSON.parse(rawBiz);
+        if (parsed) {
+          bizSessionEmail = parsed.businessEmail || parsed.email || "";
+          bizSessionName = parsed.businessName || parsed.ownerName || "";
+        }
+      }
+    } catch (e) {}
+
+    if (isBusinessSuiteEmbedded || businessEmail || bizSessionEmail) {
+      // In Business Portal or business context, prefill strictly with verified business info
+      setContactName(businessName || bizSessionName || "Business Manager");
+      setContactEmail(businessEmail || bizSessionEmail || "");
     } else if (currentUser) {
       setContactName(currentUser.name || "");
       setContactEmail(currentUser.email || "");

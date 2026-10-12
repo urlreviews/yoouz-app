@@ -85,8 +85,11 @@ function loadSavedTranslations(lang: string): Record<string, string> {
 // Core texts to immediately translate & cache when user chooses any of the 64 languages
 const CORE_STRINGS_TO_WARM = [
   "Home", "Search", "Discover", "Following", "Messages", "Notifications", "Bookmarks", "Business", "Profile", "More",
-  "Review Any Business or Website", "Paste a business URL below to see short video reviews or record your own.",
-  "Search another business or website", "Verified Web Listing", "Discover Reviewers", "Search reviewer by name...",
+  "Review Any Business", "Review Any Business or Website", "Search any business to watch authentic video reviews or record your own.",
+  "Paste a business URL below to see short video reviews or record your own.",
+  "Search another business or website", "Search any business or website...", "Search place or URL...",
+  "Recent Searches", "Clear All", "No recent searches", "Overview", "Reviews", "About", "Contact", "Support",
+  "Verified Web Listing", "Discover Reviewers", "Search reviewer by name...",
   "Proof of Presence. Real People. Verified Places.", "The Yoouz Standard",
   "Traditional text reviews are vulnerable to bot networks, fake accounts, and AI-generated reviews. Yoouz creates authentic trust by capturing short 60-second video reviews recorded exclusively through live device cameras.",
   "Strict Rule", "Live Front-Camera Only", "No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.",
@@ -333,6 +336,18 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         } else {
           val = undefined;
           break;
+        }
+      }
+
+      // Check flat key lookup in static dictionary if nested traversal failed
+      if (typeof val !== "string" || !val) {
+        const langObj = (translations as any)[language];
+        if (langObj && typeof langObj === "object") {
+          if (typeof langObj[keyPath] === "string" && langObj[keyPath]) {
+            val = langObj[keyPath];
+          } else if (typeof langObj[englishText] === "string" && langObj[englishText]) {
+            val = langObj[englishText];
+          }
         }
       }
 

@@ -7562,7 +7562,7 @@ export function App() {
               <CopoDiscoverView
                 videos={videos}
                 allUsers={allRegisteredUsers}
-                currentUser={currentUser}
+                currentUser={null}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onToggleFollow={handleToggleFollow}
                 onStartChat={handleStartChat}
@@ -7914,7 +7914,7 @@ export function App() {
                 }}
                 places={places}
                 videos={videos}
-                currentUser={currentUser}
+                currentUser={null}
                 allUsers={allRegisteredUsers}
                 messages={messages}
                 notifications={notifications}

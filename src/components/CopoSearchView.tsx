@@ -688,11 +688,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {!isMobileModal && (
             <>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-                {t("search.title", "Review Any Business")}
+                {t("Review Any Business")}
               </h1>
               
               <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-                {t("search.subtitle", "Search any business to watch authentic video reviews or record your own.")}
+                {t("Search any business to watch authentic video reviews or record your own.")}
               </p>
             </>
           )}
@@ -734,13 +734,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               {recentSearches.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-zinc-400 text-sm font-bold">{t("search.recentSearches", "Recent Searches")}</h3>
+                    <h3 className="text-zinc-400 text-sm font-bold">{t("Recent Searches")}</h3>
                     <button
                       type="button"
                       onClick={clearRecentSearches}
                       className="text-xs text-zinc-500 hover:text-white font-medium cursor-pointer transition-colors"
                     >
-                      {t("common.clear", "Clear")}
+                      {t("Clear All", "Clear")}
                     </button>
                   </div>
                   <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
@@ -794,7 +794,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               {/* 2. Trending Searches */}
               <div className="space-y-2">
                 <div className="px-1">
-                  <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
+                  <h3 className="text-zinc-400 text-sm font-bold">{t("Trending Searches")}</h3>
                 </div>
                 <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
                   {[
