@@ -2107,22 +2107,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      triggerHaptic("medium");
-                      handleClaimOrEditClick();
-                    }}
-                    className={`w-full py-3 px-5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
-                      isClaimed
-                        ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
-                        : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10"
-                    }`}
-                  >
-                    <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim & Access Business Portal")}</span>
-                    <ArrowRight className="w-4 h-4 text-white" />
-                  </button>
-                </div>
+                {(!isClaimed || isUserOwner) && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        handleClaimOrEditClick();
+                      }}
+                      className={`w-full py-3 px-5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+                        isClaimed
+                          ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
+                          : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10"
+                      }`}
+                    >
+                      <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim & Access Business Portal")}</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {onOpenReport && (
