@@ -1379,7 +1379,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     {t("profile.noVideosYet", "No video reviews published yet.")}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1 md:grid md:grid-cols-3 md:gap-2 md:overflow-x-visible">
+                  <div className="grid grid-cols-3 gap-2">
                     {authorVideos.slice(0, 6).map((v) => {
                       const isCurrentActive = v.id === activeVideoId;
                       const displayViews = getDisplayViews(v);
@@ -1389,10 +1389,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         <div
                           key={v.id}
                           onClick={() => onSelectVideo(v.id)}
-                          className={`shrink-0 w-[110px] sm:w-[130px] md:w-auto aspect-[3/4] snap-start relative rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
+                          className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
                             isCurrentActive
                               ? "ring-2 ring-white"
-                              : "hover:opacity-90"
+                              : "hover:opacity-90 hover:ring-zinc-600"
                           }`}
                         >
                           <CopoVideoThumbnail

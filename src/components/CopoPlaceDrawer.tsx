@@ -1660,7 +1660,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
-                    {placeVideos.slice(0, 3).map((v) => {
+                    {placeVideos.slice(0, 6).map((v) => {
                       const displayViews = getDisplayViews(v);
                       const formattedViews = formatViewCount(displayViews);
 
