@@ -50,7 +50,9 @@ export const he: TranslationSchema = {
     ago: "לפני",
     hours: "שעות",
     days: "ימים",
-    minutes: "דקות"
+    minutes: "דקות",
+    clear: "נקה",
+    clearAll: "נקה הכל"
   },
   video: {
     by: "מאת",
@@ -85,6 +87,16 @@ export const he: TranslationSchema = {
     rating: "דירוג",
     about_business: "אודות בית העסק",
     chat_unavailable: "הודעות ישירות אינן זמינות כעת"
+  },
+  search: {
+    recentSearches: "חיפושים אחרונים",
+    trendingSearches: "חיפושים פופולריים",
+    backSearch: "חזרה לחיפוש עסק או אתר אחר",
+    viewBusiness: "צפה בעסק",
+    reviews: "ביקורות",
+    syncing: "מסנכרן פרטים...",
+    invalidUrl: "אנא בחר עסק מהרשימה או חפש באמצעות דומיין אתר תקין.",
+    placeholder: "חפש שם עסק או דומיין..."
   },
   record: {
     title: "הקלט ביקורת וידאו",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, Loader2, CheckCircle } from "lucide-react";
+import { Search, X, Loader2, CheckCircle, Globe } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
@@ -127,7 +127,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search business...")}
+              placeholder={t("search.placeholder", "Search business name or domain...")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
               autoFocus={autoFocus}
             />
@@ -203,7 +203,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.businessPlaceholder", "Search business...")}
+              placeholder={t("search.placeholder", "Search business name or domain...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"
               autoFocus={autoFocus}
             />
@@ -296,12 +296,14 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                     )}
                   </div>
                   {hasDomain ? (
-                    <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
-                      {targetDomain.toLowerCase()}
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium" dir="auto">
+                      <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                      <span>{targetDomain.toLowerCase()}</span>
                     </div>
                   ) : item.domain ? (
-                    <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono" dir="auto">
-                      {item.domain.toLowerCase()}
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium" dir="auto">
+                      <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                      <span>{item.domain.toLowerCase()}</span>
                     </div>
                   ) : null}
                 </div>

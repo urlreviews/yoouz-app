@@ -734,13 +734,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               {recentSearches.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-zinc-400 text-sm font-bold">{t("Recent Searches")}</h3>
+                    <h3 className="text-zinc-400 text-sm font-bold">{t("search.recentSearches", "Recent Searches")}</h3>
                     <button
                       type="button"
                       onClick={clearRecentSearches}
                       className="text-xs text-zinc-500 hover:text-white font-medium cursor-pointer transition-colors"
                     >
-                      {t("Clear All", "Clear")}
+                      {t("common.clear", "Clear")}
                     </button>
                   </div>
                   <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
@@ -771,8 +771,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                               {title}
                             </div>
                             {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
-                              <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
-                                {cleanUrl}
+                              <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                                <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                                <span>{cleanUrl.toLowerCase()}</span>
                               </div>
                             ) : null}
                           </div>
@@ -794,7 +795,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               {/* 2. Trending Searches */}
               <div className="space-y-2">
                 <div className="px-1">
-                  <h3 className="text-zinc-400 text-sm font-bold">{t("Trending Searches")}</h3>
+                  <h3 className="text-zinc-400 text-sm font-bold">{t("search.trendingSearches", "Trending Searches")}</h3>
                 </div>
                 <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
                   {[
@@ -825,8 +826,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
                           {item.name}
                         </div>
-                        <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
-                          {item.domain}
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                          <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                          <span>{item.domain.toLowerCase()}</span>
                         </div>
                       </div>
                       <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -975,7 +977,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                       {isEnriching && (
                         <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs px-2.5 py-1 bg-amber-400/10 rounded-md border border-amber-400/20 animate-pulse font-semibold">
                           <Sparkles className="w-3.5 h-3.5" />
-                          <span>Syncing details...</span>
+                          <span>{t("search.syncing", "Syncing details...")}</span>
                         </span>
                       )}
                     </div>

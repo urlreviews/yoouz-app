@@ -769,7 +769,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   executeSearch();
                 }
               }}
-              placeholder={t("search.businessPlaceholder", "Search business...")}
+              placeholder={t("search.placeholder", "Search business name or domain...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] font-medium placeholder:text-zinc-500 focus:outline-none"
               autoFocus={true}
             />
@@ -888,8 +888,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
                         </div>
                         {hasDomain ? (
-                          <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
-                            {targetDomain.toLowerCase()}
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                            <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                            <span>{targetDomain.toLowerCase()}</span>
                           </div>
                         ) : null}
                       </div>
@@ -948,8 +949,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             {title}
                           </div>
                           {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
-                            <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
-                              {cleanUrl}
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                              <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                              <span>{cleanUrl.toLowerCase()}</span>
                             </div>
                           ) : null}
                         </div>
@@ -971,7 +973,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             {/* Trending */}
             {query.length === 0 && trending.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-zinc-400 text-sm font-bold">Trending Searches</h3>
+                <h3 className="text-zinc-400 text-sm font-bold">{t("search.trendingSearches", "Trending Searches")}</h3>
                 <div className="flex flex-col divide-y divide-zinc-900/60">
                   {trending.map((place, idx) => {
                     const cleanUrl = getCleanDomainUrl(place);
@@ -999,8 +1001,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                             {title}
                           </div>
                           {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
-                            <div className="text-xs text-zinc-400 truncate mt-0.5 font-medium font-mono">
-                              {cleanUrl}
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                              <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                              <span>{cleanUrl.toLowerCase()}</span>
                             </div>
                           ) : null}
                         </div>

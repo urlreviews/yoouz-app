@@ -126,6 +126,8 @@ export interface TranslationSchema {
     hours: string;
     days: string;
     minutes: string;
+    clear: string;
+    clearAll: string;
   };
   video: {
     by: string;
@@ -160,6 +162,16 @@ export interface TranslationSchema {
     rating: string;
     about_business: string;
     chat_unavailable: string;
+  };
+  search: {
+    recentSearches: string;
+    trendingSearches: string;
+    backSearch: string;
+    viewBusiness: string;
+    reviews: string;
+    syncing: string;
+    invalidUrl: string;
+    placeholder: string;
   };
   record: {
     title: string;
@@ -642,7 +654,9 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       ago: "ago",
       hours: "hours",
       days: "days",
-      minutes: "minutes"
+      minutes: "minutes",
+      clear: "Clear",
+      clearAll: "Clear All"
     },
     video: {
       by: "By",
@@ -677,6 +691,16 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       rating: "Rating",
       about_business: "About this business",
       chat_unavailable: "Direct Messaging Unavailable"
+    },
+    search: {
+      recentSearches: "Recent Searches",
+      trendingSearches: "Trending Searches",
+      backSearch: "Search another business or website",
+      viewBusiness: "View Business",
+      reviews: "Reviews",
+      syncing: "Syncing details...",
+      invalidUrl: "Please select a business from the dropdown list or search with a valid website domain.",
+      placeholder: "Search business name or domain..."
     },
     record: {
       title: "Record Video Review",

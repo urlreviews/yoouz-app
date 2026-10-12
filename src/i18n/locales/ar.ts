@@ -50,7 +50,9 @@ export const ar: TranslationSchema = {
     ago: "منذ",
     hours: "ساعات",
     days: "أيام",
-    minutes: "دقائق"
+    minutes: "دقائق",
+    clear: "مسح",
+    clearAll: "مسح الكل"
   },
   video: {
     by: "بواسطة",
@@ -85,6 +87,16 @@ export const ar: TranslationSchema = {
     rating: "التقييم",
     about_business: "حول هذا النشاط التجاري",
     chat_unavailable: "المراسلة المباشرة غير متوفرة حالياً"
+  },
+  search: {
+    recentSearches: "عمليات البحث الأخيرة",
+    trendingSearches: "البحث الشائع",
+    backSearch: "العودة للبحث عن عمل أو موقع آخر",
+    viewBusiness: "عرض النشاط",
+    reviews: "مراجعات",
+    syncing: "جاري مزامنة التفاصيل...",
+    invalidUrl: "يرجى اختيار نشاط تجاري من القائمة أو البحث باستخدام نطاق موقع إلكتروني صالح.",
+    placeholder: "ابحث عن اسم النشاط أو النطاق..."
   },
   record: {
     title: "تسجيل مراجعة فيديو",

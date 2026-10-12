@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   X,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { Place, NavSection, UserProfile, VideoReview, BusinessSession } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -445,9 +447,16 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         </span>
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       </div>
-                      <span className="text-[11px] text-zinc-300 block truncate mt-0.5 font-normal">
-                        {selectedPlace.website ? extractCleanDomain(selectedPlace.website) : selectedPlace.address}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {selectedPlace.website ? (
+                          <Globe className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                        ) : (
+                          <MapPin className="w-2.5 h-2.5 text-zinc-400 shrink-0" />
+                        )}
+                        <span className="text-[11px] text-zinc-300 block truncate font-normal">
+                          {selectedPlace.website ? extractCleanDomain(selectedPlace.website) : selectedPlace.address}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
