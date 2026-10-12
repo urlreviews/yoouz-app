@@ -1608,7 +1608,9 @@ setTimeout(async () => {
             placeName: r.placeName || parsedData.placeName,
             authorName: r.authorName || parsedData.authorName,
             authorAvatar: r.authorAvatar || parsedData.authorAvatar,
-            rating: Number(r.rating) || Number(parsedData.rating) || 5,
+            rating: typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0
+              ? Number(parsedData.rating)
+              : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5),
             videoUrl: r.videoUrl || parsedData.videoUrl,
             thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
             duration: r.duration || parsedData.duration || 60,
@@ -6673,6 +6675,10 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             const mergedBookmarks = Math.max(Number(existing.bookmarks) || 0, Number(existing.bookmarksCount) || 0, Number(r.bookmarksCount) || 0, Number(r.bookmarks) || 0);
             const mergedViews = Math.max(Number(existing.views) || 0, Number(existing.viewsCount) || 0, Number(r.viewsCount) || 0, Number(r.views) || 0);
 
+            const finalRating = (existing && typeof existing.rating === 'number' && !isNaN(existing.rating) && existing.rating > 0)
+              ? existing.rating
+              : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? r.rating : 5);
+
             itemMap.set(r.id, {
               ...r,
               ...existing,
@@ -6681,7 +6687,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               placeName: r.placeName || existing.placeName,
               videoUrl: r.videoUrl || existing.videoUrl,
               thumbnailUrl: r.thumbnailUrl || existing.thumbnailUrl,
-              rating: r.rating || existing.rating || 5,
+              rating: finalRating,
+              placeRating: finalRating,
               duration: r.duration || existing.duration || 60,
               createdAt: realCreatedAt,
               createdAtMs: realCreatedAtMs,
@@ -6712,10 +6719,15 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           if (p && p.id) {
             const itemKey = String(p.id).toLowerCase().trim();
             const existing = itemMap.get(itemKey) || {};
+            const finalPlaceRating = (existing && typeof existing.rating === 'number' && !isNaN(existing.rating) && existing.rating > 0)
+              ? existing.rating
+              : (typeof p.rating === 'number' && !isNaN(p.rating) && p.rating > 0 ? p.rating : 5);
+
             itemMap.set(itemKey, {
               ...p,
               ...existing,
-              id: itemKey
+              id: itemKey,
+              rating: finalPlaceRating
             });
           }
         });
@@ -14646,138 +14658,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     }
   });
 
-  // Update Video Review endpoint (handles editing star rating, caption, tags)
-  app.post("/api/videos/update-review", async (req, res) => {
-    try {
-      const { videoId, updates } = req.body;
-      if (!videoId || !updates) return res.status(400).json({ error: "Missing videoId or updates" });
 
-      const bunnyDb = getBunnyDb();
-      let updatedVideo: any = null;
-      let targetPlaceId: string | null = null;
-      let targetPlaceName: string | null = null;
-
-      if (bunnyDb) {
-        const vRow = await bunnyDb.execute({
-          sql: "SELECT * FROM videoReviews WHERE id = ? LIMIT 1",
-          args: [videoId]
-        });
-
-        if (vRow && vRow.rows && vRow.rows.length > 0) {
-          const row: any = vRow.rows[0];
-          let vData: any = {};
-          try { vData = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
-
-          if (updates.rating !== undefined) {
-            const newRating = Number(updates.rating);
-            row.rating = newRating;
-            vData.rating = newRating;
-            vData.placeRating = newRating;
-          }
-          if (updates.caption !== undefined) {
-            vData.caption = updates.caption;
-          }
-          if (updates.dishOrItem !== undefined) {
-            vData.dishOrItem = updates.dishOrItem;
-          }
-          if (updates.tags !== undefined) {
-            vData.tags = updates.tags;
-          }
-
-          targetPlaceId = row.placeId || vData.placeId || null;
-          targetPlaceName = row.placeName || vData.placeName || null;
-          updatedVideo = vData;
-
-          await bunnyDb.execute({
-            sql: "UPDATE videoReviews SET rating = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-            args: [vData.rating || row.rating, JSON.stringify(vData), videoId]
-          });
-        }
-      }
-
-      // Always update local reviews_index.json and feedCache
-      const list = readReviewsIndex();
-      const idx = list.findIndex((v: any) => v && v.id === videoId);
-      if (idx !== -1) {
-        if (updates.rating !== undefined) {
-          list[idx].rating = Number(updates.rating);
-          list[idx].placeRating = Number(updates.rating);
-        }
-        if (updates.caption !== undefined) list[idx].caption = updates.caption;
-        if (updates.dishOrItem !== undefined) list[idx].dishOrItem = updates.dishOrItem;
-        if (updates.tags !== undefined) list[idx].tags = updates.tags;
-        targetPlaceId = targetPlaceId || list[idx].placeId;
-        targetPlaceName = targetPlaceName || list[idx].placeName;
-        updatedVideo = updatedVideo || list[idx];
-        writeReviewsIndex(list);
-      }
-
-      const cachedIdx = feedCache.videos.findIndex((v: any) => v && v.id === videoId);
-      if (cachedIdx !== -1) {
-        if (updates.rating !== undefined) {
-          feedCache.videos[cachedIdx].rating = Number(updates.rating);
-          feedCache.videos[cachedIdx].placeRating = Number(updates.rating);
-        }
-        if (updates.caption !== undefined) feedCache.videos[cachedIdx].caption = updates.caption;
-        if (updates.dishOrItem !== undefined) feedCache.videos[cachedIdx].dishOrItem = updates.dishOrItem;
-        if (updates.tags !== undefined) feedCache.videos[cachedIdx].tags = updates.tags;
-      }
-
-      // Recalculate place rating if rating changed
-      if (updates.rating !== undefined && (targetPlaceId || targetPlaceName)) {
-        try {
-          if (bunnyDb) {
-            const searchKey = targetPlaceId || targetPlaceName || "";
-            const pRows = await bunnyDb.execute({
-              sql: "SELECT id, data FROM places WHERE id = ? OR LOWER(name) = LOWER(?) LIMIT 1",
-              args: [searchKey, searchKey]
-            });
-            if (pRows && pRows.rows && pRows.rows.length > 0) {
-              const pRow: any = pRows.rows[0];
-              let pData: any = {};
-              try { pData = typeof pRow.data === "string" ? JSON.parse(pRow.data) : (pRow.data || {}); } catch(e){}
-
-              const revRes = await bunnyDb.execute({
-                sql: "SELECT rating, data FROM videoReviews WHERE placeId = ? OR LOWER(placeName) = LOWER(?)",
-                args: [pRow.id, targetPlaceName || pRow.name || ""]
-              });
-              if (revRes && revRes.rows && revRes.rows.length > 0) {
-                const ratings = revRes.rows.map((r: any) => {
-                  let parsed: any = {};
-                  try { parsed = typeof r.data === "string" ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
-                  return typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
-                    ? parsed.rating
-                    : (Number(r.rating) || 5);
-                });
-                const avg = Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1));
-                pData.rating = avg;
-                pData.totalReviews = ratings.length;
-
-                await bunnyDb.execute({
-                  sql: "UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-                  args: [JSON.stringify(pData), pRow.id]
-                });
-              }
-            }
-          }
-        } catch (pErr) {
-          console.warn("Notice recalculating place rating on update-review:", pErr);
-        }
-      }
-
-      // Broadcast SSE update event so all connected clients see updated rating live!
-      broadcastSseEvent({
-        type: "video_updated",
-        videoId,
-        updates,
-        video: updatedVideo
-      });
-
-      return res.json({ success: true, videoId, updates, video: updatedVideo });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
-  });
 
   async function resolveVideoAuthorRecipient(video: any) {
     let email = "";
@@ -18722,15 +18603,37 @@ app.post("/api/videos/save-review", async (req, res) => {
 
               // Query all reviews from BunnyDB for this place
               const allRows = await bunnyDb.execute({
-                sql: `SELECT rating, data FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
+                sql: `SELECT id, rating, data FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
                 args: [pId || pName, pName || pId, `%"${pId}"%`]
               });
 
-              const dbRatings: number[] = (allRows?.rows || []).map((r: any) => Number(r.rating) || 5);
-              const localRatings: number[] = matchingLocal.map((r: any) => Number(r.rating) || 5);
-              
-              // Merge ratings for accurate calculation
-              const combinedRatings = dbRatings.length > 0 ? dbRatings : localRatings;
+              const placeReviewsMap = new Map<string, number>();
+
+              // 1. Populate from local reviews
+              matchingLocal.forEach((v: any) => {
+                if (v && v.id) {
+                  const rVal = (v.id === videoId && updates.rating !== undefined)
+                    ? Number(updates.rating)
+                    : (typeof v.rating === 'number' && !isNaN(v.rating) && v.rating > 0 ? Number(v.rating) : 5);
+                  placeReviewsMap.set(String(v.id), rVal);
+                }
+              });
+
+              // 2. Merge with BunnyDB rows (overriding with DB state or requested update)
+              (allRows?.rows || []).forEach((r: any) => {
+                if (r && r.id) {
+                  let parsed: any = {};
+                  try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
+                  const rVal = (String(r.id) === String(videoId) && updates.rating !== undefined)
+                    ? Number(updates.rating)
+                    : (typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
+                      ? Number(parsed.rating)
+                      : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5));
+                  placeReviewsMap.set(String(r.id), rVal);
+                }
+              });
+
+              const combinedRatings = Array.from(placeReviewsMap.values());
               const remCount = combinedRatings.length;
               const sumRating = combinedRatings.reduce((a, b) => a + b, 0);
               const finalRating = remCount > 0 ? Number((sumRating / remCount).toFixed(1)) : 5.0;
