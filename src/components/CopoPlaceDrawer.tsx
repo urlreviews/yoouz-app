@@ -55,7 +55,6 @@ import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS } from "../utils/logoUtils";
 import { CopoShareModal } from "./CopoShareModal";
-import { CopoBusinessClaimModal } from "./CopoBusinessClaimModal";
 import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
@@ -107,7 +106,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [copiedNotification, setCopiedNotification] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+
   const [showUnclaimedChatModal, setShowUnclaimedChatModal] = useState(false);
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [bannerError, setBannerError] = useState(false);
@@ -1151,7 +1150,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         setTimeout(() => setCopiedNotification(""), 4000);
       }
     } else {
-      openEditModal();
+      // Direct simplify: Redirect to Business Login / Claim flow immediately
+      if (onClaimBusiness) {
+        onClaimBusiness(place);
+      } else {
+        openEditModal();
+      }
     }
   };
 
@@ -2160,7 +2164,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800 shrink-0">
               <div>
                 <h3 className="text-lg font-bold text-white">
-                  {modalStep === 1 ? t("place.suggestEdits", "Suggest Edits") : t("place.claimVerifyBusiness", "Claim & Verify Business")}
+                  {isClaimed ? t("place.editBusinessDetails", "Edit Business Details") : t("place.suggestEdits", "Suggest Edits")}
                 </h3>
                 <p className="text-xs text-zinc-200 truncate max-w-[280px]">{displayedPlaceName}</p>
               </div>
@@ -2172,34 +2176,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </button>
             </div>
 
-            {/* Stepper Progress bar */}
-            {!isClaimed && (
-              <div className="flex items-center gap-2 my-4 px-1 shrink-0">
-                <div 
-                  onClick={() => setModalStep(1)}
-                  className="flex-1 flex flex-col gap-1 cursor-pointer"
-                >
-                  <div className={`h-1.5 rounded-full transition-colors ${modalStep === 1 ? 'bg-white' : 'bg-zinc-800'}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 1 ? 'text-white' : 'text-zinc-200'}`}>
-                    {t("place.stepSuggestEdits", "1. Suggest Edits")}
-                  </span>
-                </div>
-                <div 
-                  onClick={() => setModalStep(2)}
-                  className="flex-1 flex flex-col gap-1 cursor-pointer"
-                >
-                  <div className={`h-1.5 rounded-full transition-colors ${modalStep === 2 ? 'bg-white' : 'bg-zinc-800'}`} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${modalStep === 2 ? 'text-white' : 'text-zinc-200'}`}>
-                    {t("place.stepClaimBusiness", "2. Claim Business")}
-                  </span>
-                </div>
-              </div>
-            )}
 
-            {/* Scrollable Modal Content */}
+
             <div className="overflow-y-auto py-2 flex-1 pr-1 -mr-1">
-              {modalStep === 1 ? (
-                /* STEP 1: SUGGEST EDITS / BUSINESS EDIT FORM */
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -2526,121 +2505,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       >
                         {t("place.saveEdits", "Save Edits")}
                       </button>
-                      {!isClaimed && (
-                        <button
-                          type="button"
-                          onClick={() => setModalStep(2)}
-                          className="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md transition-all cursor-pointer flex items-center gap-1"
-                        >
-                          {t("place.nextClaim", "Next: Claim ➔")}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </form>
-              ) : (
-                /* STEP 2: CLAIM & VERIFICATION */
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (claimAsOwner && !currentUser) return;
-                    handleSaveBusinessInfo(e);
-                  }} 
-                  className="space-y-4 text-xs"
-                >
-                  <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-start gap-3">
-                    <ShieldCheck className="w-6 h-6 text-zinc-200 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-white text-sm">{t("place.verifyOwnership", "Verify Ownership")}</h4>
-                      <p className="text-zinc-200 leading-relaxed text-[11px]">
-                        {t("place.verifyOwnershipPrompt", "To verify that you own")} <strong className="text-white">{displayedPlaceName}</strong>, {t("place.insertTagPrompt", "please insert this verification tag into the HTML head section of your home page:")}
-                      </p>
-                      
-                      <div className="mt-3 p-3 bg-zinc-900 rounded-xl text-[10px] font-mono text-zinc-200 break-all border border-zinc-800 relative group">
-                        <span className="block pr-10">{`<meta name="yoouz-verification" content="verify_${place.id || 'business'}" />`}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`<meta name="yoouz-verification" content="verify_${place.id || 'business'}" />`);
-                            setCopiedTag(true);
-                            setTimeout(() => setCopiedTag(false), 2000);
-                          }}
-                          className="absolute right-2 top-2 p-1.5 bg-zinc-800 text-zinc-200 hover:text-white rounded-lg border border-zinc-700 text-[10px] font-bold cursor-pointer transition-all"
-                        >
-                          {copiedTag ? t("common.copied", "Copied!") : t("common.copy", "Copy")}
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-zinc-200 italic">
-                        {t("place.crawlerTip", "Tip: Our crawler will look for this meta tag on your website to automatically activate your official badge.")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
-                    <h5 className="font-bold text-white text-[10px] uppercase tracking-wider">{t("place.ownerAdvantages", "Owner Advantages:")}</h5>
-                    <ul className="space-y-1.5 text-[11px] text-zinc-200">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">{t("place.advBadgeTitle", "Verification Badge")}</strong>: {t("place.advBadgeDesc", "Show clients your listing is official.")}</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">{t("place.advRespondTitle", "Respond to Reviews")}</strong>: {t("place.advRespondDesc", "Engage directly with customers with your 'Owner' badge next to answers.")}</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-white font-bold">✓</span>
-                        <span><strong className="text-white">{t("place.advLockTitle", "Lock Information")}</strong>: {t("place.advLockDesc", "Prevent standard viewers from overwriting key business coordinates.")}</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
-                    <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={claimAsOwner}
-                        onChange={(e) => setClaimAsOwner(e.target.checked)}
-                        className="mt-0.5 rounded border-zinc-700 text-white focus:ring-zinc-400 cursor-pointer bg-zinc-900"
-                      />
-                      <div>
-                        <span className="font-bold text-white block">{t("place.authorizedOwnerCheck", "I am the authorized owner / manager")}</span>
-                        <span className="text-[10px] text-zinc-200 block leading-tight">
-                          {t("place.authorizedOwnerDesc", "I confirm I represent this business and have authorization to claim it.")}
-                        </span>
-                      </div>
-                    </label>
-
-                    {claimAsOwner && !currentUser && (
-                      <div className="p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-zinc-200 text-[10px] font-semibold leading-normal animate-in fade-in duration-150">
-                        {t("place.mustSignInClaim", "⚠ You must sign in to claim this business. Please close this modal and sign in using the button at the top right first.")}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Step 2 Footer buttons */}
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-800 mt-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setModalStep(1)}
-                      className="px-3.5 py-2 rounded-xl text-zinc-200 font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
-                    >
-                      {t("place.backToEdits", "← Back to Edits")}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!claimAsOwner || (claimAsOwner && !currentUser)}
-                      className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
-                    >
-                      {t("place.verifyClaimBusiness", "Verify & Claim Business")}
-                    </button>
-                  </div>
-                </form>
-              )}
             </div>
           </div>
         </div>
       )}
-      
       </div>
     </aside>
 
@@ -2661,23 +2532,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         onOpenReport={onOpenReport ? () => onOpenReport({ type: "place", placeName: displayedPlaceName, placeId: place.id }) : undefined}
       />
 
-      {/* Business Claim & Verification Modal via Resend */}
-      <CopoBusinessClaimModal
-        isOpen={isClaimModalOpen}
-        onClose={() => setIsClaimModalOpen(false)}
-        places={place ? [place] : []}
-        selectedPlace={place}
-        onSuccess={(session) => {
-          if (onUpdatePlace && place) {
-            onUpdatePlace({
-              ...place,
-              isClaimed: true,
-              claimedByEmail: session.businessEmail
-            });
-          }
-          setIsClaimModalOpen(false);
-        }}
-      />
+
 
       {/* Unclaimed Business Chat Notice Modal */}
       {showUnclaimedChatModal && (
@@ -2717,8 +2572,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     setShowUnclaimedChatModal(false);
                     if (onClaimBusiness) {
                       onClaimBusiness(place);
-                    } else {
-                      setIsClaimModalOpen(true);
                     }
                   }}
                   className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"

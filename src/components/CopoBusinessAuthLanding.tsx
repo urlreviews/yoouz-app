@@ -15,8 +15,7 @@ import {
   Sparkles,
   RefreshCw
 } from 'lucide-react';
-import { Place, NavSection, UserProfile, VideoReview } from '../types';
-import { BusinessSession } from './CopoBusinessClaimModal';
+import { Place, NavSection, UserProfile, VideoReview, BusinessSession } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
 
@@ -406,7 +405,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           </div>
 
           <h1 className="text-2xl sm:text-[26px] font-extrabold text-white tracking-tight leading-snug">
-            {t("businessAuth.title", "Sign in to Yoouz Business")}
+            {initialMode === 'claim' ? t("businessAuth.claimTitle", "Verify Ownership & Claim Portal") : t("businessAuth.title", "Sign in to Yoouz Business")}
           </h1>
           <p className="text-zinc-200 text-xs sm:text-sm mt-2 leading-relaxed max-w-sm font-normal">
             {t("businessAuth.subtitle", "Claim your business, respond to authentic video reviews, and connect with customers as the verified owner.")}
@@ -550,7 +549,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
             <div className="space-y-5 animate-in fade-in" id="container-business-otp-verification">
               <div className="text-center space-y-1">
                 <h2 className="text-base font-bold text-white">
-                  {t("businessAuth.checkInbox", "Enter 6-Digit Code")}
+                  {initialMode === 'claim' ? t("businessAuth.verifyOwnership", "Verify Ownership") : t("businessAuth.checkInbox", "Enter 6-Digit Code")}
                 </h2>
                 <p className="text-xs text-zinc-200 leading-relaxed">
                   {t("businessAuth.codeSentTo", "We sent an official confirmation code to")}{' '}

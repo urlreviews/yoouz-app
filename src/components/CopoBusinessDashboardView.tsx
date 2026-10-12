@@ -1,11 +1,10 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab } from '../types';
+import { NavSection, Place, VideoReview, ReviewComment, UserProfile, VideoAuthor, CopoMessage, CopoNotification, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES, FeedSubTab, BusinessSession } from '../types';
 import { CopoNotificationSettingsModal } from './CopoNotificationSettingsModal';
 import { CopoTestEmbedView } from "./CopoTestEmbedView";
 import { getDisplayViews, getPlaceSlug, getSafeAvatarUrl, resolveSafeAuthor, extractCleanDomain } from '../utils/placeUtils';
 import { generateGoogleLetterAvatarSvg } from '../lib/avatar';
-import { CopoBusinessClaimModal, BusinessSession } from './CopoBusinessClaimModal';
 import { CopoBusinessAuthLanding } from './CopoBusinessAuthLanding';
 import { CopoMessagesView } from './CopoMessagesView';
 import { CopoNotificationsView } from './CopoNotificationsView';
@@ -450,7 +449,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Claiming Flow State (for onboarding new business)
   const [isClaiming, setIsClaiming] = useState(initialMode === 'claim');
   const [claimSearchQuery, setClaimSearchQuery] = useState('');
-  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+
 
   useEffect(() => {
     setIsClaiming(initialMode === 'claim');
@@ -5230,17 +5229,7 @@ ${jsonLd}
         </div>
       )}
 
-      {/* Business Claim & Verification Modal (Resend Magic Link & Website Meta Tag) */}
-      <CopoBusinessClaimModal
-        isOpen={isClaimModalOpen}
-        onClose={() => setIsClaimModalOpen(false)}
-        places={places}
-        selectedPlace={currentPlace}
-        onSuccess={(session) => {
-          setVerifiedBusinessSession(session);
-          setSelectedPlaceId(session.placeId);
-          setIsClaiming(false);
-        }} />
+
 
  {/* Interactive Command Palette Modal (⌘K) */}
       {isCommandPaletteOpen && (
@@ -5383,7 +5372,7 @@ ${jsonLd}
                     {
                       label: 'Claim or Verify Another Venue',
                       icon: ShieldCheck,
-                      action: () => setIsClaimModalOpen(true)
+                      action: () => setIsClaiming(true)
                     },
                     {
                       label: 'Merchant Guide & FAQ',

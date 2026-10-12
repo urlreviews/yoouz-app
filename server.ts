@@ -20090,6 +20090,22 @@ app.post("/api/videos/save-review", async (req, res) => {
       const cleanPlaceId = (placeId && placeId !== 'place-custom' && !placeId.startsWith('place-custom-')) ? placeId : canonicalDomainSlug;
       const cleanWebsite = website || (rawDomain ? `https://${rawDomain}` : '');
 
+      // Domain Matching Enforcement: If claiming a specific place, the email domain must match the website domain
+      if (placeId && placeId !== 'place-custom' && website && rawDomain) {
+        const websiteDomain = website.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        const publicDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'me.com', 'aol.com', 'zoho.com', 'protonmail.com', 'proton.me'];
+        
+        if (!publicDomains.includes(rawDomain)) {
+          // If it's not a public domain, it must match the website domain (or be a subdomain/parent)
+          const isMatch = rawDomain.includes(websiteDomain) || websiteDomain.includes(rawDomain);
+          if (!isMatch && websiteDomain !== 'yoouz.com' && !cleanEmail.endsWith('@yoouz.com')) {
+            return res.status(400).json({ 
+              error: `Verification Error: The email domain (@${rawDomain}) does not match the official website domain of ${placeName || 'this business'} (${websiteDomain}). Please use an official work email address associated with this business.`
+            });
+          }
+        }
+      }
+
       // Generate 6-digit numeric OTP code and UUID token
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
       const token = `rvz_token_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
