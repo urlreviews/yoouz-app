@@ -881,7 +881,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     onClick={() => setSearchQuery("")}
                     className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
                   >
-                    Clear search
+                    {t("following.clearSearch", "Clear search")}
                   </button>
                 )}
               </div>
@@ -920,8 +920,8 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                             <span className="shrink-0 text-zinc-300 text-xs">
                               {follower.videoReviewCount
-                                ? `${follower.videoReviewCount} ${follower.videoReviewCount === 1 ? "video review" : "video reviews"}`
-                                : "Local Reviewer"}
+                                ? `${follower.videoReviewCount} ${follower.videoReviewCount === 1 ? t("following.videoReview", "video review") : t("following.videoReviews", "video reviews")}`
+                                : t("following.localReviewer", "Local Reviewer")}
                             </span>
                             {follower.location && (
                               <>
@@ -956,18 +956,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           isHovered ? (
                             <>
                               <UserMinus className="w-3.5 h-3.5" />
-                              <span>Unfollow</span>
+                              <span>{t("following.unfollow", "Unfollow")}</span>
                             </>
                           ) : (
                             <>
                               <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                              <span>Following</span>
+                              <span>{t("following.following", "Following")}</span>
                             </>
                           )
                         ) : (
                           <>
                             <UserPlus className="w-3.5 h-3.5" />
-                            <span>Follow Back</span>
+                            <span>{t("following.followBack", "Follow Back")}</span>
                           </>
                         )}
                       </button>

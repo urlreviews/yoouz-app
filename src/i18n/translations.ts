@@ -168,6 +168,8 @@ export interface TranslationSchema {
     videoReview: string;
     videoReviews: string;
     unfollow: string;
+    followBack: string;
+    localReviewer: string;
   };
   place?: {
     reviews: string;
@@ -703,7 +705,9 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       clearSearch: "Clear search",
       videoReview: "video review",
       videoReviews: "video reviews",
-      unfollow: "Unfollow"
+      unfollow: "Unfollow",
+      followBack: "Follow Back",
+      localReviewer: "Local Reviewer"
     },
     video: {
       by: "By",
