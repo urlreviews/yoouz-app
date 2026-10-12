@@ -21,6 +21,7 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoFollowingViewProps {
   places: Place[];
@@ -60,6 +61,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   onNavigateHome,
   onSuccessAuth
 }) => {
+  const { t } = useLanguage();
   // Tabs: "following" (Who I Follow) and "followers" (Who Follows Me)
   const [activeTab, setActiveTab] = useState<"following" | "followers">("following");
   // Sub-filter inside Following: "all" | "reviewers" | "businesses"
@@ -503,10 +505,10 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2 truncate">
                   <Users className="w-5 h-5 text-zinc-300 shrink-0" />
-                  <span className="truncate">Following & Followers</span>
+                  <span className="truncate">{t("following.title", "Following & Followers")}</span>
                 </h1>
                 <p className="text-xs text-zinc-300 font-medium truncate mt-0.5">
-                  Manage businesses and reviewers you follow on Yoouz
+                  {t("following.subtitle", "Manage businesses and reviewers you follow on Yoouz")}
                 </p>
               </div>
             </div>
@@ -526,7 +528,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   : "text-zinc-300 hover:text-white"
               }`}
             >
-              <span>Following</span>
+              <span>{t("following.following", "Following")}</span>
               <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === "following" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
                 {totalFollowingCount}
               </span>
@@ -543,7 +545,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   : "text-zinc-300 hover:text-white"
               }`}
             >
-              <span>Followers</span>
+              <span>{t("following.followers", "Followers")}</span>
               <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${activeTab === "followers" ? "bg-zinc-200 text-zinc-950" : "bg-zinc-800 text-zinc-300"}`}>
                 {myFollowers.length}
               </span>
@@ -562,8 +564,8 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   activeTab === "following"
-                    ? "Search followed businesses or reviewers..."
-                    : "Search followers by name..."
+                    ? t("following.searchPlaceholder", "Search followed businesses or reviewers...")
+                    : t("following.searchFollowersPlaceholder", "Search followers by name...")
                 }
                 className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
               />
@@ -589,7 +591,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     : "bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800"
                 }`}
               >
-                All ({totalFollowingCount})
+                {t("following.all", "All")} ({totalFollowingCount})
               </button>
               <button
                 onClick={() => setFollowingFilter("businesses")}
@@ -600,7 +602,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
-                <span>Businesses ({followedPlacesList.length})</span>
+                <span>{t("following.businesses", "Businesses")} ({followedPlacesList.length})</span>
               </button>
               <button
                 onClick={() => setFollowingFilter("reviewers")}
@@ -611,7 +613,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 }`}
               >
                 <User className="w-3.5 h-3.5" />
-                <span>Reviewers ({followedAuthors.length})</span>
+                <span>{t("following.reviewers", "Reviewers")} ({followedAuthors.length})</span>
               </button>
             </div>
           )}
@@ -627,12 +629,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
-                    {searchQuery ? "No matching results found" : "You aren't following anyone yet"}
+                    {searchQuery ? t("following.noResults", "No matching results found") : t("following.noFollowingYet", "You aren't following anyone yet")}
                   </p>
                   <p className="text-xs text-zinc-300 leading-relaxed">
                     {searchQuery
-                      ? `No business or reviewer matches "${searchQuery}". Try a different name.`
-                      : "When you follow businesses or authentic local reviewers on Yoouz, they will appear here."}
+                      ? t("common.noMatchingFaqs", `No business or reviewer matches "{query}". Try a different name.`, { query: searchQuery })
+                      : t("following.followingDesc", "When you follow businesses or authentic local reviewers on Yoouz, they will appear here.")}
                   </p>
                 </div>
                 {searchQuery && (
@@ -640,7 +642,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     onClick={() => setSearchQuery("")}
                     className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
                   >
-                    Clear search
+                    {t("following.clearSearch", "Clear search")}
                   </button>
                 )}
               </div>
@@ -702,12 +704,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>
                                     <span className="shrink-0">
-                                      {place.totalReviews} {place.totalReviews === 1 ? "video review" : "video reviews"}
+                                      {place.totalReviews} {place.totalReviews === 1 ? t("following.videoReview", "video review") : t("following.videoReviews", "video reviews")}
                                     </span>
                                   </>
                                 ) : (
                                   <span className="text-zinc-400 text-xs shrink-0">
-                                    0 video reviews
+                                    0 {t("following.videoReviews", "video reviews")}
                                   </span>
                                 )}
                               </div>
@@ -756,12 +758,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           {isHovered ? (
                             <>
                               <UserMinus className="w-3.5 h-3.5" />
-                              <span>Unfollow</span>
+                              <span>{t("following.unfollow", "Unfollow")}</span>
                             </>
                           ) : (
                             <>
                               <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                              <span>Following</span>
+                              <span>{t("following.following", "Following")}</span>
                             </>
                           )}
                         </button>
@@ -839,12 +841,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           {isHovered ? (
                             <>
                               <UserMinus className="w-3.5 h-3.5" />
-                              <span>Unfollow</span>
+                              <span>{t("following.unfollow", "Unfollow")}</span>
                             </>
                           ) : (
                             <>
                               <UserCheck className="w-3.5 h-3.5 text-zinc-300" />
-                              <span>Following</span>
+                              <span>{t("following.following", "Following")}</span>
                             </>
                           )}
                         </button>
@@ -866,12 +868,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
-                    {searchQuery ? "No matching followers found" : "No followers yet"}
+                    {searchQuery ? t("following.noFollowersResults", "No matching followers found") : t("following.noFollowersYet", "No followers yet")}
                   </p>
                   <p className="text-xs text-zinc-300 leading-relaxed">
                     {searchQuery
-                      ? `No follower matches "${searchQuery}". Try a different name.`
-                      : "When other local reviewers follow your profile, they will appear here."}
+                      ? t("common.noMatchingFaqs", `No follower matches "{query}". Try a different name.`, { query: searchQuery })
+                      : t("following.followersDesc", "When other local reviewers follow your profile, they will appear here.")}
                   </p>
                 </div>
                 {searchQuery && (

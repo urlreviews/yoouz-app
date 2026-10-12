@@ -148,6 +148,27 @@ export interface TranslationSchema {
     delete_review: string;
     report_video: string;
   };
+  following?: {
+    title: string;
+    subtitle: string;
+    following: string;
+    followers: string;
+    searchPlaceholder: string;
+    searchFollowersPlaceholder: string;
+    all: string;
+    businesses: string;
+    reviewers: string;
+    noResults: string;
+    noFollowingYet: string;
+    followingDesc: string;
+    noFollowersResults: string;
+    noFollowersYet: string;
+    followersDesc: string;
+    clearSearch: string;
+    videoReview: string;
+    videoReviews: string;
+    unfollow: string;
+  };
   place?: {
     reviews: string;
     about: string;
@@ -662,6 +683,27 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       minutes: "minutes",
       clear: "Clear",
       clearAll: "Clear All"
+    },
+    following: {
+      title: "Following & Followers",
+      subtitle: "Manage businesses and reviewers you follow on Yoouz",
+      following: "Following",
+      followers: "Followers",
+      searchPlaceholder: "Search followed businesses or reviewers...",
+      searchFollowersPlaceholder: "Search followers by name...",
+      all: "All",
+      businesses: "Businesses",
+      reviewers: "Reviewers",
+      noResults: "No matching results found",
+      noFollowingYet: "You aren't following anyone yet",
+      followingDesc: "When you follow businesses or authentic local reviewers on Yoouz, they will appear here.",
+      noFollowersResults: "No matching followers found",
+      noFollowersYet: "No followers yet",
+      followersDesc: "When other local reviewers follow your profile, they will appear here.",
+      clearSearch: "Clear search",
+      videoReview: "video review",
+      videoReviews: "video reviews",
+      unfollow: "Unfollow"
     },
     video: {
       by: "By",

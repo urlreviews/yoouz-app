@@ -7,115 +7,166 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
   pl: {
     "Home": "Główna", "Search": "Szukaj", "Review Any Business": "Oceń dowolną firmę",
     "Search any business to watch authentic video reviews or record your own.": "Wyszukaj dowolną firmę, aby obejrzeć autentyczne recenzje wideo lub nagrać własną.",
-    "Search business...": "Szukaj firmy...", "Verified Web Listing": "Zweryfikowana Strona WWW"
+    "Search business...": "Szukaj firmy...", "Verified Web Listing": "Zweryfikowana Strona WWW",
+    "Following & Followers": "Obserwowani i Obserwujący", "Manage businesses and reviewers you follow on Yoouz": "Zarządzaj firmami i recenzentami, których obserwujesz na Yoouz",
+    "Followers": "Obserwujący", "You aren't following anyone yet": "Nie obserwujesz jeszcze nikogo",
+    "No followers yet": "Brak obserwujących", "Unfollow": "Przestań obserwować"
   },
   // Ukrainian (uk)
   uk: {
     "Home": "Головна", "Search": "Пошук", "Review Any Business": "Відгук про будь-який бізнес",
     "Search any business to watch authentic video reviews or record your own.": "Шукайте будь-який бізнес, щоб переглянути справжні відеовідгуки або записати власні.",
-    "Search business...": "Пошук бізнесу...", "Verified Web Listing": "Перевірений веб-сайт"
+    "Search business...": "Пошук бізнесу...", "Verified Web Listing": "Перевірений веб-сайт",
+    "Following & Followers": "Підписки та Підписники", "Manage businesses and reviewers you follow on Yoouz": "Керуйте компаніями та авторами, на яких ви підписані в Yoouz",
+    "Followers": "Підписники", "You aren't following anyone yet": "Ви ще ні на кого не підписані",
+    "No followers yet": "Підписників ще немає", "Unfollow": "Скасувати підписку"
   },
   // Swedish (sv)
   sv: {
     "Home": "Hem", "Search": "Sök", "Review Any Business": "Recensera vilket företag som helst",
     "Search any business to watch authentic video reviews or record your own.": "Sök efter valfritt företag för att se äkta videorecensioner eller spela in din egen.",
-    "Search business...": "Sök företag...", "Verified Web Listing": "Verifierad webbplats"
+    "Search business...": "Sök företag...", "Verified Web Listing": "Verifierad webbplats",
+    "Following & Followers": "Följer & Följare", "Manage businesses and reviewers you follow on Yoouz": "Hantera företag och recensenter du följer på Yoouz",
+    "Followers": "Följare", "You aren't following anyone yet": "Du följer ingen än",
+    "No followers yet": "Inga följare än", "Unfollow": "Sluta följa"
   },
   // Greek (el)
   el: {
     "Home": "Αρχική", "Search": "Αναζήτηση", "Review Any Business": "Αξιολογήστε οποιαδήποτε επιχείρηση",
     "Search any business to watch authentic video reviews or record your own.": "Αναζητήστε οποιαδήποτε επιχείρηση για να παρακολουθήσετε αυθεντικές κριτικές βίντεο ή να ηχογραφήσετε τη δική σας.",
-    "Search business...": "Αναζήτηση επιχείρησης...", "Verified Web Listing": "Επαληθευμένος ιστότοπος"
+    "Search business...": "Αναζήτηση επιχείρησης...", "Verified Web Listing": "Επαληθευμένος ιστότοπος",
+    "Following & Followers": "Ακολουθείτε & Ακόλουθοι", "Manage businesses and reviewers you follow on Yoouz": "Διαχειριστείτε επιχειρήσεις και αξιολογητές που ακολουθείτε στο Yoouz",
+    "Followers": "Ακόλουθοι", "You aren't following anyone yet": "Δεν ακολουθείτε κανέναν ακόμα",
+    "No followers yet": "Δεν υπάρχουν ακόλουθοι ακόμα", "Unfollow": "Διακοπή παρακολούθησης"
   },
   // Hebrew (he)
   he: {
     "Home": "בית", "Search": "חיפוש", "Review Any Business": "דרג כל עסק",
     "Search any business to watch authentic video reviews or record your own.": "חפש כל עסק כדי לצפות בביקורות וידאו אותנטיות או להקליט משלך.",
-    "Search business...": "חפש עסק...", "Verified Web Listing": "אתר מאומת"
+    "Search business...": "חפש עסק...", "Verified Web Listing": "אתר מאומת",
+    "Following & Followers": "מעקב ועוקבים", "Manage businesses and reviewers you follow on Yoouz": "נהל את העסקים והמבקרים שאתה עוקב אחריהם ב-Yoouz",
+    "Followers": "עוקבים", "You aren't following anyone yet": "אתה עדיין לא עוקב אחרי אף אחד",
+    "No followers yet": "אין עדיין עוקבים", "Unfollow": "הסר מעקב"
   },
   // Arabic (ar)
   ar: {
     "Home": "الرئيسية", "Search": "بحث", "Review Any Business": "قيم أي نشاط تجاري",
     "Search any business to watch authentic video reviews or record your own.": "ابحث عن أي نشاط تجاري لمشاهدة مراجعات فيديو حقيقية أو سجل مراجعتك الخاصة.",
-    "Search business...": "ابحث عن نشاط...", "Verified Web Listing": "موقع إلكتروني موثق"
+    "Search business...": "ابحث عن نشاط...", "Verified Web Listing": "موقع إلكتروني موثق",
+    "Following & Followers": "المتابَعون والمتابعون", "Manage businesses and reviewers you follow on Yoouz": "إدارة الشركات والمراجعين الذين تتابعهم على Yoouz",
+    "Followers": "المتابعون", "You aren't following anyone yet": "أنت لا تتابع أحداً بعد",
+    "No followers yet": "لا يوجد متابعون بعد", "Unfollow": "إلغاء المتابعة"
   },
   // French (fr)
   fr: {
     "Home": "Accueil", "Search": "Rechercher", "Review Any Business": "Évaluer n'importe quelle entreprise",
     "Search any business to watch authentic video reviews or record your own.": "Recherchez n'importe quelle entreprise pour regarder des avis vidéo authentiques ou enregistrez le vôtre.",
-    "Search business...": "Rechercher une entreprise...", "Verified Web Listing": "Site Web vérifié"
+    "Search business...": "Rechercher une entreprise...", "Verified Web Listing": "Site Web vérifié",
+    "Following & Followers": "Abonnements & Abonnés", "Manage businesses and reviewers you follow on Yoouz": "Gérez les entreprises et les testeurs que vous suivez sur Yoouz",
+    "Followers": "Abonnés", "You aren't following anyone yet": "Vous ne suivez encore personne",
+    "No followers yet": "Pas encore d'abonnés", "Unfollow": "Se désabonner"
   },
   // Spanish (es)
   es: {
     "Home": "Inicio", "Search": "Buscar", "Review Any Business": "Calificar cualquier negocio",
-    "Search any business to watch authentic video reviews or record your own.": "Busca cualquier negocio para ver reseñas de video auténticas o graba la tuya.",
-    "Search business...": "Buscar negocio...", "Verified Web Listing": "Sitio web verificado"
+    "Search business...": "Buscar negocio...", "Verified Web Listing": "Sitio web verificado",
+    "Following & Followers": "Seguidos y Seguidores", "Manage businesses and reviewers you follow on Yoouz": "Administra los negocios y críticos que sigues en Yoouz",
+    "Followers": "Seguidores", "You aren't following anyone yet": "Aún no sigues a nadie",
+    "No followers yet": "Sin seguidores aún", "Unfollow": "Dejar de seguir"
   },
   // German (de)
   de: {
     "Home": "Startseite", "Search": "Suche", "Review Any Business": "Jedes Unternehmen bewerten",
     "Search any business to watch authentic video reviews or record your own.": "Suchen Sie nach einem Unternehmen, um authentische Videobewertungen anzusehen oder Ihre eigene aufzunehmen.",
-    "Search business...": "Unternehmen suchen...", "Verified Web Listing": "Verifizierte Website"
+    "Search business...": "Unternehmen suchen...", "Verified Web Listing": "Verifizierte Website",
+    "Following & Followers": "Gefolgt & Follower", "Manage businesses and reviewers you follow on Yoouz": "Verwalten Sie Unternehmen und Bewerter, denen Sie auf Yoouz folgen",
+    "Followers": "Follower", "You aren't following anyone yet": "Sie folgen noch niemandem",
+    "No followers yet": "Noch keine Follower", "Unfollow": "Nicht mehr folgen"
   },
   // Italian (it)
   it: {
     "Home": "Home", "Search": "Cerca", "Review Any Business": "Recensisci qualsiasi attività",
     "Search any business to watch authentic video reviews or record your own.": "Cerca qualsiasi attività per guardare recensioni video autentiche o registra la tua.",
-    "Search business...": "Cerca attività...", "Verified Web Listing": "Sito web verificato"
+    "Search business...": "Cerca attività...", "Verified Web Listing": "Sito web verificato",
+    "Following & Followers": "Seguiti e Follower", "Manage businesses and reviewers you follow on Yoouz": "Gestisci le attività e i recensori che segui su Yoouz",
+    "Followers": "Follower", "You aren't following anyone yet": "Non segui ancora nessuno",
+    "No followers yet": "Ancora nessun follower", "Unfollow": "Non seguire più"
   },
   // Portuguese (pt)
   pt: {
     "Home": "Início", "Search": "Buscar", "Review Any Business": "Avaliar qualquer negócio",
     "Search any business to watch authentic video reviews or record your own.": "Pesquise qualquer negócio para ver avaliações em vídeo autênticas ou grave a sua.",
-    "Search business...": "Buscar negócio...", "Verified Web Listing": "Site verificado"
+    "Search business...": "Buscar negócio...", "Verified Web Listing": "Site verificado",
+    "Following & Followers": "Seguindo e Seguidores", "Manage businesses and reviewers you follow on Yoouz": "Gerencie as empresas e críticos que você segue no Yoouz",
+    "Followers": "Seguidores", "You aren't following anyone yet": "Você ainda não segue ninguém",
+    "No followers yet": "Sem seguidores ainda", "Unfollow": "Deixar de seguir"
   },
   // Russian (ru)
   ru: {
     "Home": "Главная", "Search": "Поиск", "Review Any Business": "Оцените любой бизнес",
     "Search any business to watch authentic video reviews or record your own.": "Ищите любой бизнес, чтобы посмотреть подлинные видеоотзывы или записать свой собственный.",
-    "Search business...": "Поиск бизнеса...", "Verified Web Listing": "Проверенный веб-сайт"
+    "Search business...": "Поиск бизнеса...", "Verified Web Listing": "Проверенный веб-сайт",
+    "Following & Followers": "Подписки и Подписчики", "Manage businesses and reviewers you follow on Yoouz": "Управляйте компаниями и экспертами, на которых вы подписаны в Yoouz",
+    "Followers": "Подписчики", "You aren't following anyone yet": "Вы пока ни на кого не подписаны",
+    "No followers yet": "Пока нет подписчиков", "Unfollow": "Отписаться"
   },
   // Turkish (tr)
   tr: {
     "Home": "Anasayfa", "Search": "Ara", "Review Any Business": "Herhangi bir işletmeyi değerlendir",
     "Search any business to watch authentic video reviews or record your own.": "Gerçek video incelemelerini izlemek veya kendi incelemenizi kaydetmek için herhangi bir işletmeyi arayın.",
-    "Search business...": "İşletme ara...", "Verified Web Listing": "Doğrulanmış Web Sitesi"
+    "Search business...": "İşletme ara...", "Verified Web Listing": "Doğrulanmış Web Sitesi",
+    "Following & Followers": "Takip Edilenler ve Takipçiler", "Manage businesses and reviewers you follow on Yoouz": "Yoouz'da takip ettiğiniz işletmeleri ve yorumcuları yönetin",
+    "Followers": "Takipçiler", "You aren't following anyone yet": "Henüz kimseyi takip etmiyorsunuz",
+    "No followers yet": "Henüz takipçi yok", "Unfollow": "Takibi Bırak"
   },
   // Dutch (nl)
   nl: {
     "Home": "Home", "Search": "Zoeken", "Review Any Business": "Beoordeel elk bedrijf",
-    "Search any business to watch authentic video reviews or record your own.": "Zoek naar elk bedrijf om authentieke videorecensies te bekijken of neem uw eigen recensie op.",
-    "Search business...": "Bedrijf zoeken...", "Verified Web Listing": "Geverifieerde website"
+    "Search business...": "Bedrijf zoeken...", "Verified Web Listing": "Geverifieerde website",
+    "Following & Followers": "Gevolgd & Volgers", "Manage businesses and reviewers you follow on Yoouz": "Beheer bedrijven en reviewers die u volgt op Yoouz",
+    "Followers": "Volgers", "You aren't following anyone yet": "U volgt nog niemand",
+    "No followers yet": "Nog geen volgers", "Unfollow": "Ontvolgen"
   },
   // Hindi (hi)
   hi: {
     "Home": "होम", "Search": "खोजें", "Review Any Business": "किसी भी व्यवसाय की समीक्षा करें",
-    "Search any business to watch authentic video reviews or record your own.": "प्रामाणिक वीडियो समीक्षाएं देखने या अपनी खुद की समीक्षा रिकॉर्ड करने के लिए किसी भी व्यवसाय को खोजें।",
-    "Search business...": "व्यवसाय खोजें...", "Verified Web Listing": "सत्यापित वेबसाइट"
+    "Search business...": "व्यवसाय खोजें...", "Verified Web Listing": "सत्यापित वेबसाइट",
+    "Following & Followers": "फॉलोइंग और फॉलोअर्स", "Manage businesses and reviewers you follow on Yoouz": "Yoouz पर उन व्यवसायों और समीक्षकों को प्रबंधित करें जिन्हें आप फॉलो करते हैं",
+    "Followers": "फॉलोअर्स", "You aren't following anyone yet": "आप अभी तक किसी को फॉलो नहीं कर रहे हैं",
+    "No followers yet": "अभी तक कोई फॉलोअर्स नहीं", "Unfollow": "अनफॉलो करें"
   },
   // Japanese (ja)
   ja: {
     "Home": "ホーム", "Search": "検索", "Review Any Business": "あらゆるビジネスを評価",
-    "Search any business to watch authentic video reviews or record your own.": "本物のビデオレビューを見たり、自分で録画したりするために、あらゆるビジネスを検索してください。",
-    "Search business...": "ビジネスを検索...", "Verified Web Listing": "認証済みウェブサイト"
+    "Search business...": "ビジネスを検索...", "Verified Web Listing": "認証済みウェブサイト",
+    "Following & Followers": "フォロー・フォロワー", "Manage businesses and reviewers you follow on Yoouz": "Yoouzでフォローしているビジネスやレビュアーを管理する",
+    "Followers": "フォロワー", "You aren't following anyone yet": "まだ誰もフォローしていません",
+    "No followers yet": "フォロワーはまだいません", "Unfollow": "フォロー解除"
   },
   // Korean (ko)
   ko: {
     "Home": "홈", "Search": "검색", "Review Any Business": "모든 비즈니스 리뷰",
-    "Search any business to watch authentic video reviews or record your own.": "실제 동영상 리뷰를 보거나 직접 녹화하려면 모든 비즈니스를 검색하세요.",
-    "Search business...": "비즈니스 검색...", "Verified Web Listing": "인증된 웹사이트"
+    "Search business...": "비즈니스 검색...", "Verified Web Listing": "인증된 웹사이트",
+    "Following & Followers": "팔로잉 및 팔로워", "Manage businesses and reviewers you follow on Yoouz": "Yoouz에서 팔로우하는 비즈니스 및 리뷰어 관리",
+    "Followers": "팔로워", "You aren't following anyone yet": "아직 아무도 팔로우하고 있지 않습니다",
+    "No followers yet": "아직 팔로워가 없습니다", "Unfollow": "언팔로우"
   },
   // Chinese Simplified (zh)
   zh: {
     "Home": "首页", "Search": "搜索", "Review Any Business": "评价任何商家",
-    "Search any business to watch authentic video reviews or record your own.": "搜索任何商家以观看真实的视频评论或亲自录制。",
-    "Search business...": "搜索商家...", "Verified Web Listing": "认证网站"
+    "Search business...": "搜索商家...", "Verified Web Listing": "认证网站",
+    "Following & Followers": "关注与粉丝", "Manage businesses and reviewers you follow on Yoouz": "管理您在 Yoouz 上关注的商家和评论者",
+    "Followers": "粉丝", "You aren't following anyone yet": "您尚未关注任何人",
+    "No followers yet": "暂无粉丝", "Unfollow": "取消关注"
   },
   // Chinese Traditional (zh-TW)
   "zh-TW": {
     "Home": "首頁", "Search": "搜尋", "Review Any Business": "評價任何商家",
     "Search any business to watch authentic video reviews or record your own.": "搜尋任何商家以觀看真實的影音評論或親自錄製。",
-    "Search business...": "搜尋商家...", "Verified Web Listing": "已認證商家網頁"
+    "Search business...": "搜尋商家...", "Verified Web Listing": "已認證商家網頁",
+    "Following & Followers": "關注與粉絲", "Manage businesses and reviewers you follow on Yoouz": "管理您在 Yoouz 上關注的商家和評論者",
+    "Followers": "粉絲", "You aren't following anyone yet": "您尚未關注任何人",
+    "No followers yet": "暫無粉絲", "Unfollow": "取消關注"
   },
   // Indonesian (id)
   id: {
