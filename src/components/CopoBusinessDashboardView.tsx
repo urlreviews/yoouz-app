@@ -2360,32 +2360,32 @@ ${jsonLd}
   const suiteNavItems = [
     { 
       id: 'reviews' as BusinessTab, 
-      label: t('business.reviews', 'Reviews'), 
+      label: 'Reviews', 
       icon: Video, 
       badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined 
     },
     { 
       id: 'inbox' as BusinessTab, 
-      label: t('nav.messages', 'Messages'), 
+      label: 'Messages', 
       icon: MessageSquare,
       badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined
     },
     { 
       id: 'followers' as BusinessTab, 
-      label: t('business.followers', 'Followers'), 
+      label: 'Followers', 
       icon: Users,
       badge: unseenFollowersCount > 0 ? unseenFollowersCount : undefined
     },
     { 
       id: 'notifications' as BusinessTab, 
-      label: t('nav.notifications', 'Alerts'), 
+      label: 'Alerts', 
       icon: Bell,
       badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
     },
-    { id: 'embed' as BusinessTab, label: t('business.embed', 'Embed'), icon: Code },
-    { id: 'qr_invites' as BusinessTab, label: t('business.qrCode', 'QR Code'), icon: QrCode },
-    { id: 'membership' as BusinessTab, label: t('business.membershipNav', 'Membership'), icon: Zap, isProBadge: !isPremium },
-    { id: 'profile' as BusinessTab, label: t('business.profile', 'Profile'), icon: Building2 },
+    { id: 'embed' as BusinessTab, label: 'Embed', icon: Code },
+    { id: 'qr_invites' as BusinessTab, label: 'QR Code', icon: QrCode },
+    { id: 'membership' as BusinessTab, label: 'Membership', icon: Zap, isProBadge: !isPremium },
+    { id: 'profile' as BusinessTab, label: 'Profile', icon: Building2 },
   ];
 
   // If user hasn't signed in / claimed a business or is currently claiming
