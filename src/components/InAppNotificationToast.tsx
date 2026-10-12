@@ -80,9 +80,8 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     return () => clearInterval(timer);
   }, [toast?.id, onClose]);
 
-  if (!toast || isSuppressed) return null;
-
   const handleClick = () => {
+    if (!toast) return;
     if (toast.onAction) {
       toast.onAction();
     } else if (toast.type === "message" && toast.threadId && onNavigateToThread) {
@@ -93,152 +92,154 @@ export const InAppNotificationToast: React.FC<InAppNotificationToastProps> = ({
     onClose();
   };
 
-  // Determine badge styling based on actionType
-  const actionType = toast.actionType || (toast.type === "message" ? "message" : undefined);
-  let badgeBg = "bg-zinc-900 border border-zinc-700/80 text-white";
-  let progressBg = "bg-white";
-  let ActionIcon = Bell;
+  const actionType = toast?.actionType || (toast?.type === "message" ? "message" : "notification");
 
-  if (actionType === "message") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
-    ActionIcon = Mail;
-  } else if (actionType === "like") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
+  let ActionIcon = Bell;
+  let badgeBg = "bg-amber-400";
+  let progressBg = "bg-amber-400";
+
+  if (actionType === "like") {
     ActionIcon = Heart;
+    badgeBg = "bg-rose-500 text-white";
+    progressBg = "bg-rose-500";
   } else if (actionType === "comment") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
     ActionIcon = MessageSquare;
+    badgeBg = "bg-sky-400 text-black";
+    progressBg = "bg-sky-400";
   } else if (actionType === "follow") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
     ActionIcon = UserPlus;
+    badgeBg = "bg-purple-400 text-black";
+    progressBg = "bg-purple-400";
   } else if (actionType === "bookmark") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
     ActionIcon = Bookmark;
-  } else if (actionType === "review") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
-    ActionIcon = Star;
+    badgeBg = "bg-amber-400 text-black";
+    progressBg = "bg-amber-400";
   } else if (actionType === "repost" || actionType === "share") {
-    badgeBg = "bg-zinc-900 border border-zinc-700/90 text-white";
-    progressBg = "bg-white";
     ActionIcon = Repeat2;
+    badgeBg = "bg-emerald-400 text-black";
+    progressBg = "bg-emerald-400";
+  } else if (actionType === "message") {
+    ActionIcon = Mail;
+    badgeBg = "bg-indigo-400 text-white";
+    progressBg = "bg-indigo-400";
+  } else if (actionType === "review") {
+    ActionIcon = Star;
+    badgeBg = "bg-yellow-400 text-black";
+    progressBg = "bg-yellow-400";
   }
 
   return (
     <AnimatePresence>
-      <div className="fixed top-4 right-3 sm:right-6 z-[500] flex justify-end pointer-events-none select-none max-w-full">
-        <motion.div
-          key={toast.id}
-          initial={{ opacity: 0, x: 30, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 30, scale: 0.95 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="pointer-events-auto w-[360px] max-w-[calc(100vw-24px)] rounded-2xl bg-zinc-950/98 backdrop-blur-2xl border border-zinc-700/80 shadow-[0_12px_40px_rgba(0,0,0,0.95)] p-3 text-white overflow-hidden relative cursor-pointer group active:scale-[0.98] transition-transform"
-          onClick={handleClick}
-        >
-          {/* Top Progress Bar */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 overflow-hidden">
-            <div
-              className={`h-full transition-all duration-75 ${progressBg}`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Avatar or Icon */}
-            <div className="relative shrink-0">
-              {(() => {
-                const uName = (toast.userName || "").toLowerCase().trim();
-                const isYoouzOfficial =
-                  (uName === "yoouz" ||
-                   uName === "yoouz team" ||
-                   uName === "@yoouz" ||
-                   uName === "yoouz official") &&
-                  !uName.includes("member");
-
-                if (isYoouzOfficial) {
-                  return (
-                    <div className="w-10 h-10 rounded-[12px] bg-zinc-950 flex items-center justify-center border border-white/20 shadow-sm shrink-0 p-2">
-                      <svg viewBox="0 0 24 24" className="w-full h-full fill-white">
-                        <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
-                      </svg>
-                    </div>
-                  );
-                }
-
-                const effectiveName = toast.userName || (toast.title && !toast.title.startsWith("1 new") ? toast.title : "User");
-                const avatarSrc = getSafeAvatarUrl(toast.avatar, effectiveName, effectiveName);
-
-                return (
-                  <img
-                    src={avatarSrc}
-                    alt={effectiveName}
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80 shrink-0"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = getSafeAvatarUrl(null, effectiveName, effectiveName);
-                    }}
-                  />
-                );
-              })()}
-
-              {/* Type Badge on avatar */}
-              <span
-                className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-black ${badgeBg} ring-2 ring-zinc-950`}
-              >
-                <ActionIcon className="w-2.5 h-2.5 stroke-[2.5]" />
-              </span>
+      {toast && !isSuppressed && (
+        <div className="fixed top-4 right-3 sm:right-6 z-[500] flex justify-end pointer-events-none select-none max-w-full">
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, x: 30, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 30, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="pointer-events-auto w-[360px] max-w-[calc(100vw-24px)] rounded-2xl bg-zinc-950/98 backdrop-blur-2xl border border-zinc-700/80 shadow-[0_12px_40px_rgba(0,0,0,0.95)] p-3 text-white overflow-hidden relative cursor-pointer group active:scale-[0.98] transition-transform"
+            onClick={handleClick}
+          >
+            {/* Top Progress Bar */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 overflow-hidden">
+              <div
+                className={`h-full transition-all duration-75 ${progressBg}`}
+                style={{ width: `${progress}%` }}
+              />
             </div>
 
-            {/* Content Text - Clean White Dark Mode Typography */}
-            <div className="flex-1 min-w-0 pr-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[13px] font-bold text-white tracking-tight truncate">
-                  {toast.title}
-                </span>
-                <span className="text-[10px] text-zinc-300 font-semibold shrink-0">
-                  Just now
+            <div className="flex items-center gap-3">
+              {/* Avatar or Icon */}
+              <div className="relative shrink-0">
+                {(() => {
+                  const uName = (toast.userName || "").toLowerCase().trim();
+                  const isYoouzOfficial =
+                    (uName === "yoouz" ||
+                     uName === "yoouz team" ||
+                     uName === "@yoouz" ||
+                     uName === "yoouz official") &&
+                    !uName.includes("member");
+
+                  if (isYoouzOfficial) {
+                    return (
+                      <div className="w-10 h-10 rounded-[12px] bg-zinc-950 flex items-center justify-center border border-white/20 shadow-sm shrink-0 p-2">
+                        <svg viewBox="0 0 24 24" className="w-full h-full fill-white">
+                          <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+                        </svg>
+                      </div>
+                    );
+                  }
+
+                  const effectiveName = toast.userName || (toast.title && !toast.title.startsWith("1 new") ? toast.title : "User");
+                  const avatarSrc = getSafeAvatarUrl(toast.avatar, effectiveName, effectiveName);
+
+                  return (
+                    <img
+                      src={avatarSrc}
+                      alt={effectiveName}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-700/80 shrink-0"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.src = getSafeAvatarUrl(null, effectiveName, effectiveName);
+                      }}
+                    />
+                  );
+                })()}
+
+                {/* Type Badge on avatar */}
+                <span
+                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-black ${badgeBg} ring-2 ring-zinc-950`}
+                >
+                  <ActionIcon className="w-2.5 h-2.5 stroke-[2.5]" />
                 </span>
               </div>
-              <p className="text-[12px] text-zinc-200 font-medium line-clamp-1 mt-0.5 [overflow-wrap:anywhere]">
-                {toast.subtitle}
-              </p>
-            </div>
 
-            {/* Action / Close Buttons */}
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClick();
-                }}
-                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white text-[11px] font-bold border border-zinc-600 transition-all flex items-center gap-0.5"
-              >
-                <span>{toast.type === "message" ? "Reply" : "View"}</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
+              {/* Content Text - Clean White Dark Mode Typography */}
+              <div className="flex-1 min-w-0 pr-1">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[13px] font-bold text-white tracking-tight truncate">
+                    {toast.title}
+                  </span>
+                  <span className="text-[10px] text-zinc-300 font-semibold shrink-0">
+                    Just now
+                  </span>
+                </div>
+                <p className="text-[12px] text-zinc-200 font-medium line-clamp-1 mt-0.5 [overflow-wrap:anywhere]">
+                  {toast.subtitle}
+                </p>
+              </div>
 
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="w-7 h-7 rounded-full hover:bg-zinc-800 active:scale-90 text-zinc-300 hover:text-white flex items-center justify-center transition-colors"
-                title="Dismiss"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              {/* Action / Close Buttons */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClick();
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white text-[11px] font-bold border border-zinc-600 transition-all flex items-center gap-0.5"
+                >
+                  <span>{toast.type === "message" ? "Reply" : "View"}</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  className="w-7 h-7 rounded-full hover:bg-zinc-800 active:scale-90 text-zinc-300 hover:text-white flex items-center justify-center transition-colors"
+                  title="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };

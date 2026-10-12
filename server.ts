@@ -5813,7 +5813,7 @@ async function isNotificationAllowedForRecipient(recipientIdentifier: string, no
         if ((normType === 'message' || normType === 'chat') && prefs.messages === false) return false;
         if (normType === 'follow' && prefs.follows === false) return false;
         if ((normType === 'bookmark' || normType === 'save') && prefs.bookmarks === false) return false;
-        if ((normType === 'repost' || normType === 'share') && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) return false;
+        if ((normType === 'repost' || normType === 'share') && prefs.shares === false) return false;
       }
     }
   } catch (err) {

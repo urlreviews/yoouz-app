@@ -174,7 +174,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     </span>
                     
                     {item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-zinc-800 text-white border border-zinc-700 shadow-sm">
+                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-red-600 text-white border border-red-500 shadow-md animate-pulse ring-1 ring-red-500/50">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     ) : null}
@@ -299,7 +299,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                       )}
                     </div>
                     {item.badge && item.badge > 0 ? (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-zinc-800 text-white border border-zinc-700 ring-2 ring-zinc-950">
+                      <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-red-600 text-white border-2 border-zinc-950 shadow-md ring-1 ring-red-500/50 animate-pulse">
                         {item.badge > 9 ? "9+" : item.badge}
                       </span>
                     ) : null}

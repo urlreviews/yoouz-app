@@ -2198,7 +2198,7 @@ export function App() {
             if (latestUnread.type === "like") title = "1 new like";
             else if (latestUnread.type === "comment") title = "1 new comment";
             else if (latestUnread.type === "follow") title = "1 new follower";
-            else if (latestUnread.type === "bookmark") title = "1 new save";
+            else if (latestUnread.type === "bookmark" || (latestUnread.type as string) === "save") title = "1 new save";
             else if (latestUnread.type === "review") title = `1 new review for ${latestUnread.placeName || 'your place'}`;
             else if (latestUnread.type === "repost" || latestUnread.type === "share") title = "1 new share";
 
@@ -2250,16 +2250,16 @@ export function App() {
         if (newIncoming.type === "like" && prefs?.likes === false) return;
         if (newIncoming.type === "comment" && prefs?.comments === false) return;
         if (newIncoming.type === "follow" && prefs?.follows === false) return;
-        if (newIncoming.type === "bookmark" && prefs?.bookmarks === false) return;
+        if ((newIncoming.type === "bookmark" || (newIncoming.type as string) === "save") && prefs?.bookmarks === false) return;
         if (newIncoming.type === "review" && prefs?.reviews === false) return;
-        if ((newIncoming.type === "repost" || newIncoming.type === "share") && (prefs?.shares === false || (prefs?.shares === undefined && prefs?.bookmarks === false))) return;
+        if ((newIncoming.type === "repost" || newIncoming.type === "share") && prefs?.shares === false) return;
         if ((newIncoming.type === "message" || (newIncoming.type as any) === "chat") && prefs?.messages === false) return;
 
         let title = "1 new notification";
         if (newIncoming.type === "like") title = "1 new like";
         else if (newIncoming.type === "comment") title = "1 new comment";
         else if (newIncoming.type === "follow") title = "1 new follower";
-        else if (newIncoming.type === "bookmark") title = "1 new save";
+        else if (newIncoming.type === "bookmark" || (newIncoming.type as string) === "save") title = "1 new save";
         else if (newIncoming.type === "review") title = `1 new review for ${newIncoming.placeName || 'your place'}`;
         else if (newIncoming.type === "repost" || newIncoming.type === "share") title = "1 new share";
         else if (newIncoming.type === "message" || (newIncoming.type as any) === "chat") title = `1 new message from ${newIncoming.user?.name || 'Yoouz'}`;
@@ -2350,9 +2350,9 @@ export function App() {
         if (n.type === "comment" && prefs.comments === false) return false;
         if ((n.type === "message" || (n.type as any) === "chat") && prefs.messages === false) return false;
         if (n.type === "follow" && prefs.follows === false) return false;
-        if ((n.type === "bookmark" || (n.type as string) === "save" || n.type === "repost") && prefs.bookmarks === false) return false;
+        if ((n.type === "bookmark" || (n.type as string) === "save") && prefs.bookmarks === false) return false;
         if (n.type === "review" && prefs.reviews === false) return false;
-        if ((n.type === "repost" || n.type === "share") && (prefs.shares === false || (prefs.shares === undefined && prefs.bookmarks === false))) return false;
+        if ((n.type === "repost" || n.type === "share") && prefs.shares === false) return false;
       }
       return true;
     }).length;
@@ -8501,6 +8501,22 @@ export function App() {
           </div>
         </div>
       )}
+
+      {/* Global In-App Notification Toast Pop-up */}
+      <InAppNotificationToast
+        toast={inAppToast}
+        onClose={() => setInAppToast(null)}
+        onNavigateToThread={(threadId) => {
+          setActiveSection("messages");
+          setActiveThreadId(threadId);
+          setInAppToast(null);
+        }}
+        onNavigateToNotifications={() => {
+          setActiveSection("notifications");
+          setInAppToast(null);
+        }}
+        notificationSettings={currentUser?.notificationSettings}
+      />
     </div>
   );
 }
