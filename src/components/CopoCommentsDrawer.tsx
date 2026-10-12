@@ -788,7 +788,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         return [newOptComment, ...prev];
       });
 
-      // Post normal comment or reply (saved to BunnyDB)
+      // Post normal comment or reply (authoritatively persisted to BunnyDB & PostgreSQL in App.tsx)
       if (onAddComment) {
         onAddComment(video.id, text, {
           replyToId: replyingTo?.commentId,
@@ -796,18 +796,21 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           postAsCreator: isUserCreator,
           commentItem: newOptComment
         });
+      } else {
+        // Fallback direct persistent write if onAddComment handler is not supplied
+        fetch("/api/interactions/comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId: video.id,
+            comment: newOptComment,
+            userId: currentUser?.email || (currentUser as any)?.id || "user",
+            userEmail: currentUser?.email || "",
+            userName: currentUser?.name || newOptComment.authorName,
+            userAvatar: currentUser?.avatar || newOptComment.authorAvatar
+          })
+        }).catch(() => {});
       }
-
-      // Direct persistent write to Bunny Cloud Database API to guarantee zero data loss
-      fetch("/api/interactions/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoId: video.id,
-          comment: newOptComment,
-          userId: currentUser?.email || (currentUser as any)?.id || "user"
-        })
-      }).catch(() => {});
 
       if (replyingTo) {
         setExpandedReplies((prev) => ({

@@ -15289,8 +15289,39 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               const rawData = (reviewRes.rows[0] as any).data;
               let parsedReview: any = {};
               try { parsedReview = typeof rawData === 'string' ? JSON.parse(rawData) : rawData; } catch(e){}
-              if (Array.isArray(parsedReview.comments)) {
+              if (Array.isArray(parsedReview.comments) && parsedReview.comments.length > 0) {
                 allComments = parsedReview.comments;
+              }
+            }
+          }
+
+          if (allComments.length === 0) {
+            const list = readReviewsIndex();
+            const seedVid = list.find((v: any) => v && v.id === videoId.trim());
+            if (seedVid && Array.isArray(seedVid.comments) && seedVid.comments.length > 0) {
+              allComments = seedVid.comments;
+            }
+          }
+
+          // If we found legacy comments, backfill them into BunnyDB comments table non-destructively
+          if (allComments.length > 0) {
+            for (const leg of allComments) {
+              if (leg && leg.id) {
+                try {
+                  await bunnyDb.execute({
+                    sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                    args: [
+                      String(leg.id),
+                      videoId.trim(),
+                      leg.userId || leg.authorHandle || "",
+                      leg.authorName || leg.userName || "Guest",
+                      leg.authorAvatar || leg.userAvatar || "",
+                      leg.text || "",
+                      JSON.stringify({ ...leg, videoId: videoId.trim() }),
+                      leg.createdAt || new Date().toISOString()
+                    ]
+                  });
+                } catch(e) {}
               }
             }
           }
@@ -15355,6 +15386,53 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
           };
         });
+
+        // Non-destructive preservation: check if there are legacy comments that need migration
+        const existingCommentIds = new Set(allComments.map(c => String(c.id)));
+        let legacyComments: any[] = [];
+        try {
+          const vRowCheck = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [videoId]
+          });
+          if (vRowCheck.rows && vRowCheck.rows.length > 0) {
+            let vDataCheck: any = {};
+            try { vDataCheck = JSON.parse((vRowCheck.rows[0] as any).data || '{}'); } catch(e){}
+            if (Array.isArray(vDataCheck.comments)) {
+              legacyComments.push(...vDataCheck.comments);
+            }
+          }
+        } catch(e) {}
+        try {
+          const list = readReviewsIndex();
+          const seedVid = list.find((v: any) => v && v.id === videoId);
+          if (seedVid && Array.isArray(seedVid.comments)) {
+            legacyComments.push(...seedVid.comments);
+          }
+        } catch(e) {}
+
+        for (const leg of legacyComments) {
+          if (leg && leg.id && !existingCommentIds.has(String(leg.id))) {
+            existingCommentIds.add(String(leg.id));
+            allComments.push(leg);
+            try {
+              await bunnyDb.execute({
+                sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                args: [
+                  String(leg.id),
+                  videoId,
+                  leg.userId || leg.authorHandle || "",
+                  leg.authorName || leg.userName || "Guest",
+                  leg.authorAvatar || leg.userAvatar || "",
+                  leg.text || "",
+                  JSON.stringify({ ...leg, videoId }),
+                  leg.createdAt || new Date().toISOString()
+                ]
+              });
+            } catch (legErr) {}
+          }
+        }
+
         treeResult = buildCommentTree(allComments);
 
         // 3. Update videoReviews table in BunnyDB
@@ -16651,10 +16729,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             args: [nextShares, JSON.stringify(vData), videoId]
           });
         } else {
-          nextShares = Math.max(1, dbShares);
+          const list = readReviewsIndex();
+          const seedVid = list.find((v: any) => v && v.id === videoId);
+          const existingSeedShares = seedVid ? (seedVid.sharesCount || seedVid.shares || 0) : 0;
+          nextShares = Math.max(1, dbShares, existingSeedShares + 1);
           try {
-            const list = readReviewsIndex();
-            const seedVid = list.find((v: any) => v && v.id === videoId);
             if (seedVid) {
               const seedData = { ...seedVid, sharesCount: nextShares, shares: nextShares };
               const seedCreatedAt = seedVid.createdAt || (seedVid.createdAtMs ? new Date(seedVid.createdAtMs).toISOString() : new Date().toISOString());

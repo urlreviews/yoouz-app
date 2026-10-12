@@ -36,6 +36,8 @@ interface GoogleVideoPlayerModalProps {
   isBookmarked: boolean;
   onOpenCreator?: (author: VideoAuthor) => void;
   onRecordView?: (videoId: string) => void;
+  onAddComment?: (videoId: string, text: string) => void;
+  onShareIncrement?: (videoId: string) => void;
 }
 
 export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
@@ -47,7 +49,9 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   onToggleBookmark,
   isBookmarked,
   onOpenCreator,
-  onRecordView
+  onRecordView,
+  onAddComment,
+  onShareIncrement
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(true);
@@ -252,7 +256,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    const commentBody = newComment.trim();
+    if (!commentBody) return;
     let currentUserProfile: any = null;
     try {
       const stored = localStorage.getItem("copo_user_profile");
@@ -262,16 +267,40 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
     const commentAuthorHandle = currentUserProfile?.handle || `@${commentAuthorName.toLowerCase().replace(/[^a-z0-9]/g, "") || "reviewer"}`;
     const commentAuthorAvatar = currentUserProfile?.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`;
 
-    currentReview.comments.push({
-      id: `comm-${Date.now()}`,
+    const newCommentItem = {
+      id: `comm-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       authorName: commentAuthorName,
       authorHandle: commentAuthorHandle,
       authorAvatar: commentAuthorAvatar,
-      text: newComment,
+      text: commentBody,
       createdAt: "Just now",
       createdAtMs: Date.now(),
       likesCount: 0
-    });
+    };
+
+    if (!Array.isArray(currentReview.comments)) {
+      currentReview.comments = [];
+    }
+    currentReview.comments.push(newCommentItem);
+    currentReview.commentsCount = (currentReview.commentsCount || 0) + 1;
+
+    if (onAddComment) {
+      onAddComment(currentReview.id, commentBody);
+    } else {
+      fetch("/api/interactions/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId: currentReview.id,
+          comment: newCommentItem,
+          userId: currentUserProfile?.email || currentUserProfile?.id || "anon",
+          userEmail: currentUserProfile?.email || "",
+          userName: commentAuthorName,
+          userAvatar: commentAuthorAvatar
+        })
+      }).catch(() => {});
+    }
+
     setNewComment("");
   };
 
@@ -526,6 +555,22 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
             <button
               onClick={() => {
+                if (onShareIncrement) {
+                  onShareIncrement(currentReview.id);
+                } else {
+                  fetch("/api/interactions/share", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      videoId: currentReview.id,
+                      platform: "general"
+                    })
+                  }).catch(() => {});
+                }
+                const currentShares = (currentReview.sharesCount || currentReview.shares || 0) + 1;
+                currentReview.shares = currentShares;
+                currentReview.sharesCount = currentShares;
+
                 if (navigator.share) {
                   const domainSlug = getPlaceSlug(currentReview.placeWebsite || currentReview.placeId || currentReview.placeName || currentReview);
                   const shareUrl = `${window.location.origin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(currentReview.id)}`;
@@ -537,7 +582,9 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center hover:bg-black/70">
                 <Share2 className="w-5 h-5 text-white" />
               </div>
-              <span className="text-[11px] font-bold mt-1 drop-shadow">Share</span>
+              <span className="text-[11px] font-bold mt-1 drop-shadow">
+                {currentReview.sharesCount || currentReview.shares || "Share"}
+              </span>
             </button>
           </div>
         </div>

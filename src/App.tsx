@@ -201,6 +201,60 @@ export function App() {
                 reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v)
               };
             }));
+          } else if (payload.type === "video_shared" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            const nShares = typeof payload.sharesCount === 'number' ? payload.sharesCount : (typeof payload.shares === 'number' ? payload.shares : 0);
+            setVideos((prev) => prev.map((v) => v.id === vidId ? { ...v, shares: nShares, sharesCount: nShares } : v));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && r.id === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, shares: nShares, sharesCount: nShares } : v)
+              };
+            }));
+          } else if (payload.type === "new_comment" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            const nComments = typeof payload.commentsCount === 'number' ? payload.commentsCount : 0;
+            const newCommentObj = payload.comment;
+            setVideos((prev) => prev.map((v) => {
+              if (v.id !== vidId) return v;
+              const existingComments = Array.isArray(v.comments) ? v.comments : [];
+              const commentExists = newCommentObj && newCommentObj.id && existingComments.some((c: any) => c && c.id === newCommentObj.id);
+              const updatedComments = commentExists ? existingComments : (newCommentObj ? [newCommentObj, ...existingComments] : existingComments);
+              return {
+                ...v,
+                commentsCount: typeof payload.commentsCount === 'number' ? nComments : Math.max(v.commentsCount || 0, updatedComments.length),
+                comments: updatedComments
+              };
+            }));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && r.id === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => {
+                  if (!v || v.id !== vidId) return v;
+                  const existingComments = Array.isArray(v.comments) ? v.comments : [];
+                  const commentExists = newCommentObj && newCommentObj.id && existingComments.some((c: any) => c && c.id === newCommentObj.id);
+                  const updatedComments = commentExists ? existingComments : (newCommentObj ? [newCommentObj, ...existingComments] : existingComments);
+                  return {
+                    ...v,
+                    commentsCount: typeof payload.commentsCount === 'number' ? nComments : Math.max(v.commentsCount || 0, updatedComments.length),
+                    comments: updatedComments
+                  };
+                })
+              };
+            }));
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || currentActive.id !== vidId) return currentActive;
+              const existingComments = Array.isArray(currentActive.comments) ? currentActive.comments : [];
+              const commentExists = newCommentObj && newCommentObj.id && existingComments.some((c: any) => c && c.id === newCommentObj.id);
+              const updatedComments = commentExists ? existingComments : (newCommentObj ? [newCommentObj, ...existingComments] : existingComments);
+              return {
+                ...currentActive,
+                commentsCount: typeof payload.commentsCount === 'number' ? nComments : Math.max(currentActive.commentsCount || 0, updatedComments.length),
+                comments: updatedComments
+              };
+            });
           } else if (payload.type === "video_bookmarked" && payload.videoId === "place_bookmark" && payload.placeId) {
             // Real-time sync for saved places
             const currentEmail = currentUser?.email || auth.currentUser?.email;
@@ -3087,53 +3141,83 @@ export function App() {
   const pendingFollowClickRef = useRef<Map<string, number>>(new Map());
   const pendingCommentClickRef = useRef<Map<string, number>>(new Map());
 
-  const handleShareIncrement = async (videoId: string) => {
+  const handleShareIncrement = async (videoId: string, nextSharesCount?: number) => {
     if (!videoId) return;
 
     // Optimistic UI Update
     setVideos((prev) =>
       prev.map((v) => {
         if (v.id === videoId) {
-          const currentShares = v.sharesCount || v.shares || 0;
+          const currentShares = typeof nextSharesCount === 'number' ? nextSharesCount : (v.sharesCount || v.shares || 0) + 1;
           return {
             ...v,
-            sharesCount: currentShares + 1,
-            shares: currentShares + 1,
+            sharesCount: currentShares,
+            shares: currentShares,
           };
         }
         return v;
       })
     );
 
-    // Persist to Server and BunnyDB database via authoritative NoSQL endpoint
-    try {
-      const updatedVideo = {
-        ...videos.find((v) => v.id === videoId),
-      };
-      
-      if (!updatedVideo || !updatedVideo.id) return;
+    setPlaces((prev) =>
+      prev.map((p) => {
+        if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
+        return {
+          ...p,
+          reviews: p.reviews.map((v: any) => {
+            if (v && v.id === videoId) {
+              const currentShares = typeof nextSharesCount === 'number' ? nextSharesCount : (v.sharesCount || v.shares || 0) + 1;
+              return {
+                ...v,
+                sharesCount: currentShares,
+                shares: currentShares,
+              };
+            }
+            return v;
+          })
+        };
+      })
+    );
 
-      const response = await fetch(`/api/nosql/videoReviews/${videoId}`, {
-        method: "PUT",
+    // If authoritative nextSharesCount was already passed from an active modal POST, state is updated
+    if (typeof nextSharesCount === 'number') return;
+
+    // Otherwise persist to Server and Cloud SQL / BunnyDB via authoritative /api/interactions/share endpoint
+    try {
+      const activeUser = currentUser;
+      const response = await fetch("/api/interactions/share", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...updatedVideo,
-          sharesCount: (updatedVideo.sharesCount || 0) + 1,
-          shares: (updatedVideo.shares || 0) + 1,
+          videoId,
+          platform: "general",
+          userId: activeUser?.email || (activeUser as any)?.id || "",
+          userName: activeUser?.name || "A Yoouz Member",
+          userAvatar: activeUser?.avatar || "",
+          userEmail: activeUser?.email || ""
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to sync share");
-      
-      const data = await response.json();
-      
-      // Reconcile with server result
-      setVideos((prev) =>
-        prev.map((v) => (v.id === videoId ? { ...v, ...data } : v))
-      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && typeof data.shares === 'number') {
+          const authShares = data.shares;
+          setVideos((prev) =>
+            prev.map((v) => (v.id === videoId ? { ...v, shares: authShares, sharesCount: authShares } : v))
+          );
+          setPlaces((prev) =>
+            prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => v && v.id === videoId ? { ...v, shares: authShares, sharesCount: authShares } : v)
+              };
+            })
+          );
+        }
+      }
     } catch (error) {
-      console.error("Failed to sync share:", error);
-      // Optional: Revert optimistic update here if necessary
+      console.error("Failed to sync share to server:", error);
     }
   };
 
@@ -5593,24 +5677,26 @@ export function App() {
       );
     }
 
-    // Persist to BunnyDB database via authoritative NoSQL endpoint
+    // Persist to BunnyDB database via authoritative /api/interactions/comment endpoint (Live for everyone instantly)
     try {
-      const updatedVideo = {
-        ...videos.find(v => v.id === videoId),
-        comments: tree.comments,
-        commentsCount: tree.count
-      };
-
-      fetch(`/api/nosql/videoReviews/${videoId}`, {
-        method: "PUT",
+      fetch("/api/interactions/comment", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedVideo)
+        body: JSON.stringify({
+          videoId,
+          comment: newCommentItem,
+          userId: currentUser?.email || (currentUser as any)?.id || "anon",
+          userEmail: currentUser?.email || "",
+          userName: currentUser?.name || authorName,
+          userAvatar: currentUser?.avatar || authorAvatar
+        })
       })
       .then(res => res.json())
       .then(data => {
-        if (data) {
-          // Reconcile with authoritative server state
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, ...data } : v));
+        if (data && typeof data.commentsCount === 'number') {
+          const authCommentsCount = data.commentsCount;
+          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, commentsCount: authCommentsCount } : v));
+          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, commentsCount: authCommentsCount } : v) }));
         }
       })
       .catch((err) => console.error("Comment interaction error:", err));
