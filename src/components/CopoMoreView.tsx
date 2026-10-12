@@ -61,6 +61,8 @@ interface CopoMoreViewProps {
   onOpenNotificationSettings?: () => void;
   isBusinessSuiteEmbedded?: boolean;
   businessDomain?: string;
+  businessName?: string;
+  businessEmail?: string;
   onBack?: () => void;
 }
 
@@ -83,6 +85,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   onOpenNotificationSettings,
   isBusinessSuiteEmbedded = false,
   businessDomain = "",
+  businessName = "",
+  businessEmail = "",
   onBack
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
@@ -117,16 +121,20 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Prefill contact form when user profile or businessDomain is present
+  // Prefill contact form when user profile or business details are present
   useEffect(() => {
-    if (currentUser) {
+    if (isBusinessSuiteEmbedded) {
+      // In Business Portal mode, prefill strictly with verified business info if available
+      setContactName(businessName || "");
+      setContactEmail(businessEmail || "");
+    } else if (currentUser) {
       setContactName(currentUser.name || "");
       setContactEmail(currentUser.email || "");
     }
     if (businessDomain) {
       setContactDomain(businessDomain);
     }
-  }, [currentUser, businessDomain]);
+  }, [currentUser, businessDomain, businessName, businessEmail, isBusinessSuiteEmbedded]);
 
   const processFiles = (filesList: File[]) => {
     setSubmitError("");

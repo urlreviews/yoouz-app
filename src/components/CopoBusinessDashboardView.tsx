@@ -4881,8 +4881,10 @@ ${jsonLd}
             {activeTab === 'more' && (
               <div className="space-y-6 animate-in fade-in duration-200 pb-12 w-full">
                 <CopoMoreView
-                  currentUser={currentUser}
-                  businessDomain={currentPlace?.website || currentPlace?.id}
+                  currentUser={null}
+                  businessDomain={currentPlace?.website || currentPlace?.id || verifiedBusinessSession?.domain}
+                  businessName={currentPlace?.name || verifiedBusinessSession?.businessName || ""}
+                  businessEmail={currentPlace?.email || verifiedBusinessSession?.email || (currentPlace as any)?.claimedByEmail || ""}
                   isBusinessSuiteEmbedded={true}
                   onBack={() => setActiveTab('overview')}
                   onOpenLegal={onOpenLegal}
