@@ -877,7 +877,7 @@ export function App() {
           }
         }
         if (!sectionParam) {
-          if (pathname === "/business" || pathname === "/business/claim" || pathname === "/business/dashboard" || pathname === "/portal" || pathname === "/business-dashboard") sectionParam = "business";
+          if (pathname.startsWith("/business") || pathname === "/portal" || pathname === "/business-dashboard") sectionParam = "business";
           if (pathname === "/discover") sectionParam = "discover";
           if (pathname === "/following") sectionParam = "following";
           if (pathname === "/search") sectionParam = "search";
@@ -900,7 +900,7 @@ export function App() {
         }
 
         // Automatically sync URL for existing & new businesses to include their business slug
-        if (activeSection === 'business') {
+        if (activeSection === 'business' || pathname.startsWith('/business')) {
           try {
             const saved = localStorage.getItem('copo_business_verified_session');
             if (saved) {
@@ -910,7 +910,7 @@ export function App() {
                 const slug = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
                 if (slug && slug !== 'portal') {
                   const expectedPath = `/business/${slug}`;
-                  if (window.location.pathname !== expectedPath && window.location.pathname.startsWith('/business')) {
+                  if (window.location.pathname !== expectedPath) {
                     window.history.replaceState(null, "", expectedPath);
                   }
                 }
