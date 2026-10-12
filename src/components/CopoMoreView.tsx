@@ -136,13 +136,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       }
     } catch (e) {}
 
-    if (isBusinessSuiteEmbedded || businessEmail || bizSessionEmail) {
+    if (isBusinessSuiteEmbedded) {
       // In Business Portal or business context, prefill strictly with verified business info
       setContactName(businessName || bizSessionName || "Business Manager");
       setContactEmail(businessEmail || bizSessionEmail || "");
     } else if (currentUser) {
       setContactName(currentUser.name || "");
       setContactEmail(currentUser.email || "");
+    } else {
+      setContactName("");
+      setContactEmail("");
     }
     if (businessDomain) {
       setContactDomain(businessDomain);
