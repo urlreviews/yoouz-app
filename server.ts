@@ -16137,14 +16137,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
       } catch (e) {}
 
-      broadcastSseEvent({
-        type: "video_liked",
-        videoId,
-        isLiked: Boolean(effectiveIsLiked),
-        likesCount: updatedLikesCount,
-        userId: userId || ""
-      });
-
       // Send backend notification if liked
       if (effectiveIsLiked) {
         try {

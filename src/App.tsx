@@ -161,7 +161,16 @@ export function App() {
       }
       if (!active) return;
 
-      sse = new EventSource("/api/sse");
+    const uEmail = currentUser?.email || "";
+    const uId = currentUser?.userId || (currentUser as any)?.id || "";
+    const uHandle = currentUser?.handle || currentUser?.name || "";
+    const sseParams = new URLSearchParams({
+      ...(uEmail ? { userEmail: uEmail } : {}),
+      ...(uId ? { userId: uId } : {}),
+      ...(uHandle ? { userHandle: uHandle } : {})
+    }).toString();
+
+    sse = new EventSource(sseParams ? `/api/sse?${sseParams}` : "/api/sse");
       sse.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
@@ -190,6 +199,10 @@ export function App() {
                 reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, likes: nLikes, likesCount: nLikes } : v)
               };
             }));
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || currentActive.id !== vidId) return currentActive;
+              return { ...currentActive, likes: nLikes, likesCount: nLikes };
+            });
           } else if (payload.type === "video_bookmarked" && payload.videoId && payload.videoId !== "place_bookmark") {
             const vidId = String(payload.videoId);
             const nBm = typeof payload.bookmarksCount === 'number' ? payload.bookmarksCount : 0;
@@ -201,6 +214,10 @@ export function App() {
                 reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v)
               };
             }));
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || currentActive.id !== vidId) return currentActive;
+              return { ...currentActive, bookmarks: nBm, bookmarksCount: nBm };
+            });
           } else if (payload.type === "video_shared" && payload.videoId) {
             const vidId = String(payload.videoId);
             const nShares = typeof payload.sharesCount === 'number' ? payload.sharesCount : (typeof payload.shares === 'number' ? payload.shares : 0);
@@ -212,6 +229,10 @@ export function App() {
                 reviews: p.reviews.map((v: any) => v && v.id === vidId ? { ...v, shares: nShares, sharesCount: nShares } : v)
               };
             }));
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || currentActive.id !== vidId) return currentActive;
+              return { ...currentActive, shares: nShares, sharesCount: nShares };
+            });
           } else if (payload.type === "new_comment" && payload.videoId) {
             const vidId = String(payload.videoId);
             const nComments = typeof payload.commentsCount === 'number' ? payload.commentsCount : 0;
@@ -295,7 +316,7 @@ export function App() {
       if (sse) sse.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
-  }, []);
+  }, [currentUser?.email, currentUser?.userId]);
 
   useEffect(() => {
     try {

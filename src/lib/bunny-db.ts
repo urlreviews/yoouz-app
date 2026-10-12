@@ -186,26 +186,34 @@ function createLocalClient(): Client {
 function createResilientClient(remoteClient: Client | null, localClient: Client): Client {
   let remoteCooldownUntil = 0;
 
-  const handleExecute = async (stmt: InStatement): Promise<ResultSet> => {
+  const handleExecute = async (stmt: InStatement, args?: any[]): Promise<ResultSet> => {
     const now = Date.now();
     const isRemoteAvailable = remoteClient && now > remoteCooldownUntil;
+    const finalStmt: InStatement = (args && typeof stmt === "string") ? { sql: stmt, args } : stmt;
 
     if (isRemoteAvailable && remoteClient) {
       try {
-        return await remoteClient.execute(stmt);
+        return await remoteClient.execute(finalStmt);
       } catch (err: any) {
-        const isSqlError = err.message?.includes("SQLITE_") || err.message?.includes("SQLite error") || err.code?.startsWith("SQLITE_");
+        const isSqlError = 
+          err.message?.includes("SQLITE_") || 
+          err.message?.includes("SQLite error") || 
+          err.code?.startsWith("SQLITE_") ||
+          err.message?.includes("ARGS_INVALID") ||
+          err.message?.includes("syntax error") ||
+          err.message?.includes("no such table") ||
+          err.message?.includes("no such column");
         if (isSqlError) {
-          throw err; // Re-throw SQL errors so they can be caught by the caller without triggering a fallback
+          throw err; // Re-throw SQL errors so they can be caught by the caller without triggering an incorrect cooldown
         }
 
         // Transient network or connection failure. Impose a 5-second cooldown to protect performance, then fallback to local sqlite for this request
         remoteCooldownUntil = Date.now() + 5000;
         console.warn(`🐰 [BunnyDB] Remote endpoint query failed (${err.message || err}). Initiating 5-second auto-recovering cooldown and falling back to local persistent edge database.`);
-        return await localClient.execute(stmt);
+        return await localClient.execute(finalStmt);
       }
     }
-    return await localClient.execute(stmt);
+    return await localClient.execute(finalStmt);
   };
 
   const handleBatch = async (stmts: InStatement[], mode?: TransactionMode): Promise<ResultSet[]> => {
@@ -234,8 +242,8 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
       const now = Date.now();
       return (remoteClient && now > remoteCooldownUntil) ? remoteClient.protocol : localClient.protocol;
     },
-    execute(stmt: InStatement) {
-      return handleExecute(stmt);
+    execute(stmt: InStatement, args?: any[]) {
+      return handleExecute(stmt, args);
     },
     batch(stmts: InStatement[], mode?: TransactionMode) {
       return handleBatch(stmts, mode);

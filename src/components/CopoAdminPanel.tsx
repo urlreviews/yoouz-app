@@ -1516,13 +1516,42 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       setDbVideos([]);
       setSelectedVideoIds([]);
     };
+    const handleLiked = (e: any) => {
+      const vidId = e?.detail?.videoId;
+      const nLikes = typeof e?.detail?.likesCount === "number" ? e?.detail?.likesCount : undefined;
+      if (vidId && nLikes !== undefined) {
+        setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, likes: nLikes, likesCount: nLikes } : v));
+      }
+      fetchAdminLikes();
+      fetchLiveStats();
+    };
+    const handleBookmarked = (e: any) => {
+      const vidId = e?.detail?.videoId;
+      const nBm = typeof e?.detail?.bookmarksCount === "number" ? e?.detail?.bookmarksCount : undefined;
+      if (vidId && nBm !== undefined) {
+        setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v));
+      }
+      fetchAdminBookmarks();
+      fetchLiveStats();
+    };
+    const handleComment = () => {
+      fetchLiveStats();
+    };
+
     window.addEventListener("copo-video-deleted", handleDeleted);
     window.addEventListener("copo-videos-purged", handlePurged);
+    window.addEventListener("copo-video-liked", handleLiked);
+    window.addEventListener("copo-video-bookmarked", handleBookmarked);
+    window.addEventListener("copo-new-comment", handleComment);
+
     return () => {
       window.removeEventListener("copo-video-deleted", handleDeleted);
       window.removeEventListener("copo-videos-purged", handlePurged);
+      window.removeEventListener("copo-video-liked", handleLiked);
+      window.removeEventListener("copo-video-bookmarked", handleBookmarked);
+      window.removeEventListener("copo-new-comment", handleComment);
     };
-  }, []);
+  }, [fetchAdminLikes, fetchAdminBookmarks]);
 
   useEffect(() => {
     if (isAuthenticated) {

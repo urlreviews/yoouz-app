@@ -147,7 +147,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               }`}
             />
             {(unreadMessagesCount + unreadNotifsCount) > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[9.5px] font-black rounded-full bg-zinc-800 text-white border-2 border-zinc-950 shadow-md">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[10px] font-black rounded-full bg-red-600 text-white border-2 border-zinc-950 shadow-lg animate-pulse ring-1 ring-red-500/50">
                 {(unreadMessagesCount + unreadNotifsCount) > 9 ? "9+" : (unreadMessagesCount + unreadNotifsCount)}
               </span>
             )}
