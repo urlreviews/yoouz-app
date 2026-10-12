@@ -18742,45 +18742,81 @@ app.post("/api/videos/save-review", async (req, res) => {
                 (pName && v.placeName?.toLowerCase().trim() === pName.toLowerCase().trim()) || 
                 (pWeb && v.placeWebsite?.toLowerCase().trim() === pWeb.toLowerCase().trim())
               );
-              const sumLocal = matchingLocal.reduce((acc: number, r: any) => acc + (Number(r.rating) || 5), 0);
-              const calculatedLocalAvg = matchingLocal.length > 0 ? Number((sumLocal / matchingLocal.length).toFixed(1)) : 5.0;
 
-              const countRows = await bunnyDb.execute({
-                sql: `SELECT COUNT(*) as cnt, AVG(rating) as avgRating FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
+              // Query all reviews from BunnyDB for this place
+              const allRows = await bunnyDb.execute({
+                sql: `SELECT rating, data FROM videoReviews WHERE (placeId = ? OR placeName = ? OR data LIKE ?)`,
                 args: [pId || pName, pName || pId, `%"${pId}"%`]
               });
-              const remCount = Math.max(Number((countRows?.rows?.[0] as any)?.cnt || 0), matchingLocal.length);
-              const remAvg = (countRows?.rows?.[0] as any)?.avgRating;
-              const finalRating = remCount > 0 && remAvg ? Number(Number(remAvg).toFixed(1)) : calculatedLocalAvg;
+
+              const dbRatings: number[] = (allRows?.rows || []).map((r: any) => Number(r.rating) || 5);
+              const localRatings: number[] = matchingLocal.map((r: any) => Number(r.rating) || 5);
+              
+              // Merge ratings for accurate calculation
+              const combinedRatings = dbRatings.length > 0 ? dbRatings : localRatings;
+              const remCount = combinedRatings.length;
+              const sumRating = combinedRatings.reduce((a, b) => a + b, 0);
+              const finalRating = remCount > 0 ? Number((sumRating / remCount).toFixed(1)) : 5.0;
+
+              const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+              combinedRatings.forEach((r) => {
+                const rounded = Math.min(5, Math.max(1, Math.round(r)));
+                starCounts[rounded as keyof typeof starCounts] = (starCounts[rounded as keyof typeof starCounts] || 0) + 1;
+              });
 
               const plRows = await bunnyDb.execute({
                 sql: `SELECT id, name, data FROM places WHERE id = ? OR name = ? OR id LIKE ? LIMIT 1`,
                 args: [pId || pName, pName || pId, `%${pId}%`]
               });
+              
+              const targetPlaceId = (plRows && plRows.rows && plRows.rows[0]) ? (plRows.rows[0] as any).id : (pId || pName);
+
               if (plRows && plRows.rows && plRows.rows[0]) {
                 const pRow: any = plRows.rows[0];
                 let pData: any = {};
                 try { pData = typeof pRow.data === 'string' ? JSON.parse(pRow.data) : (pRow.data || {}); } catch (e) {}
                 pData.totalReviews = remCount;
                 pData.videoReviewCount = remCount;
+                pData.ratingCount = remCount;
                 pData.rating = finalRating;
+                pData.starCounts = starCounts;
 
                 await bunnyDb.execute({
                   sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
                   args: [JSON.stringify(pData), pRow.id]
                 });
-
-                // Broadcast place update so all clients update their rating/counts in real-time
-                broadcastSseEvent({
-                  type: "place_updated",
-                  placeId: pRow.id,
-                  updates: {
-                    rating: pData.rating,
-                    totalReviews: pData.totalReviews,
-                    videoReviewCount: pData.videoReviewCount
-                  }
-                });
               }
+
+              // Also update local places index file
+              try {
+                const curPlaces = readPlacesIndex();
+                const plIdx = curPlaces.findIndex((p: any) => p.id === targetPlaceId || (pName && p.name?.toLowerCase().trim() === pName.toLowerCase().trim()));
+                if (plIdx >= 0) {
+                  curPlaces[plIdx] = {
+                    ...curPlaces[plIdx],
+                    rating: finalRating,
+                    totalReviews: remCount,
+                    videoReviewCount: remCount,
+                    ratingCount: remCount,
+                    starCounts
+                  };
+                  writePlacesIndex(curPlaces);
+                }
+              } catch (idxErr) {}
+
+              // Broadcast place update so all connected clients update their rating/counts in real-time
+              broadcastSseEvent({
+                type: "place_updated",
+                placeId: targetPlaceId,
+                placeName: pName,
+                updates: {
+                  rating: finalRating,
+                  totalReviews: remCount,
+                  ratingCount: remCount,
+                  videoReviewCount: remCount,
+                  starCounts
+                }
+              });
             } catch (plErr) {
               console.warn("Place rating recalculation error:", plErr);
             }

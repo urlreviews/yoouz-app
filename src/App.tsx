@@ -288,6 +288,92 @@ export function App() {
                 }
               });
             }
+          } else if (payload.type === "video_updated" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            const updates = payload.updates || {};
+            const updatedRating = updates.rating !== undefined ? Number(updates.rating) : undefined;
+
+            setVideos((prev) => prev.map((v) => {
+              if (String(v.id) !== vidId) return v;
+              return {
+                ...v,
+                ...updates,
+                ...(updatedRating !== undefined && { rating: updatedRating, placeRating: updatedRating }),
+                ...(updates.caption !== undefined && { caption: updates.caption }),
+                ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                ...(updates.tags !== undefined && { tags: updates.tags }),
+                updatedAt: Date.now()
+              };
+            }));
+
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && String(r.id) === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => {
+                  if (!v || String(v.id) !== vidId) return v;
+                  return {
+                    ...v,
+                    ...updates,
+                    ...(updatedRating !== undefined && { rating: updatedRating, placeRating: updatedRating }),
+                    ...(updates.caption !== undefined && { caption: updates.caption }),
+                    ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                    ...(updates.tags !== undefined && { tags: updates.tags }),
+                    updatedAt: Date.now()
+                  };
+                })
+              };
+            }));
+
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || String(currentActive.id) !== vidId) return currentActive;
+              return {
+                ...currentActive,
+                ...updates,
+                ...(updatedRating !== undefined && { rating: updatedRating, placeRating: updatedRating }),
+                ...(updates.caption !== undefined && { caption: updates.caption }),
+                ...(updates.dishOrItem !== undefined && { dishOrItem: updates.dishOrItem }),
+                ...(updates.tags !== undefined && { tags: updates.tags }),
+                updatedAt: Date.now()
+              };
+            });
+          } else if (payload.type === "place_updated" && (payload.placeId || payload.place?.id || payload.updates?.id)) {
+            const targetId = String(payload.placeId || payload.place?.id || payload.updates?.id || '');
+            const targetName = String(payload.placeName || payload.place?.name || payload.updates?.name || '');
+            const updates = payload.updates || payload.place || {};
+
+            setPlaces((prev) => prev.map((p) => {
+              const isMatch =
+                (targetId && (p.id === targetId || p.id.includes(targetId) || targetId.includes(p.id))) ||
+                (targetName && (p.name || "").toLowerCase().trim() === targetName.toLowerCase().trim());
+
+              if (!isMatch) return p;
+
+              return {
+                ...p,
+                ...updates,
+                ...(updates.rating !== undefined && { rating: Number(updates.rating) }),
+                ...(updates.totalReviews !== undefined && { totalReviews: Number(updates.totalReviews) }),
+                ...(updates.ratingCount !== undefined && { ratingCount: Number(updates.ratingCount) }),
+                ...(updates.videoReviewCount !== undefined && { videoReviewCount: Number(updates.videoReviewCount) }),
+                ...(updates.starCounts !== undefined && { starCounts: updates.starCounts }),
+                updatedAt: Date.now()
+              };
+            }));
+          } else if (payload.type === "video_deleted" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            setVideos((prev) => prev.filter((v) => String(v.id) !== vidId));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && String(r.id) === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.filter((v: any) => v && String(v.id) !== vidId)
+              };
+            }));
+            setActiveCommentVideo((currentActive) => {
+              if (currentActive && String(currentActive.id) === vidId) return null;
+              return currentActive;
+            });
           } else if (payload.type === "nosql_updated" && payload.collection === "saved_creators") {
             const currentEmail = currentUser?.email || auth.currentUser?.email;
             if (payload.data?.userId === currentEmail && payload.data?.creatorName) {
