@@ -1223,7 +1223,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
-              <span className="whitespace-nowrap truncate leading-tight no-underline">{t("video.by", "By")} {safeAuthor.name}</span>
+              <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
               {safeAuthor.isVerified && (
                 <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
               )}

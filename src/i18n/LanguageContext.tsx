@@ -21,14 +21,42 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const STORAGE_KEY = "yoouz_user_language_preference";
+const ALL_STORAGE_KEYS = ["yoouz_user_language_preference", "copo_language", "yoouz_language"];
 
 function detectBestLanguage(): SupportedLanguage {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
-      return saved as SupportedLanguage;
+    // 1. Check all local storage keys for explicit user selection
+    for (const key of ALL_STORAGE_KEYS) {
+      const saved = localStorage.getItem(key);
+      if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
+        return saved as SupportedLanguage;
+      }
     }
 
+    // 2. Check saved cookie
+    if (typeof document !== "undefined" && document.cookie) {
+      const match = document.cookie.match(/yoouz_lang=([a-z]{2,5})/i);
+      if (match && match[1] && SUPPORTED_LANGUAGES.some((l) => l.code === match[1].toLowerCase())) {
+        return match[1].toLowerCase() as SupportedLanguage;
+      }
+    }
+
+    // 3. Check logged in user profile in storage
+    const userKeys = ["copo_user", "yoouz_user", "copo_logged_in_user"];
+    for (const uKey of userKeys) {
+      const raw = localStorage.getItem(uKey);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          const userLang = parsed?.language || parsed?.preferredLanguage || parsed?.locale;
+          if (userLang && SUPPORTED_LANGUAGES.some((l) => l.code === userLang.toLowerCase())) {
+            return userLang.toLowerCase() as SupportedLanguage;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. Fallback to browser language
     const browserLangs = navigator.languages || [navigator.language || "en"];
     for (const raw of browserLangs) {
       const code = raw.toLowerCase().split("-")[0];
@@ -183,10 +211,51 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!SUPPORTED_LANGUAGES.some((l) => l.code === newLang)) return;
     setLanguageState(newLang);
     currentLangRef.current = newLang;
+
+    // 1. Persist across all local storage keys & cookies for instant client retention
     try {
-      localStorage.setItem(STORAGE_KEY, newLang);
+      ALL_STORAGE_KEYS.forEach((key) => {
+        localStorage.setItem(key, newLang);
+      });
+      document.cookie = `yoouz_lang=${newLang}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {}
-    // Load cached translations for new language if not in state
+
+    // 2. Sync with logged in user profile in local storage
+    try {
+      const userKeys = ["copo_user", "yoouz_user", "copo_logged_in_user"];
+      userKeys.forEach((uKey) => {
+        const raw = localStorage.getItem(uKey);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            parsed.language = newLang;
+            parsed.preferredLanguage = newLang;
+            localStorage.setItem(uKey, JSON.stringify(parsed));
+          } catch (e) {}
+        }
+      });
+    } catch (e) {}
+
+    // 3. Sync language preference with server database backend
+    try {
+      const rawUser = localStorage.getItem("copo_user") || localStorage.getItem("yoouz_user");
+      if (rawUser) {
+        const uObj = JSON.parse(rawUser);
+        if (uObj && (uObj.id || uObj.email || uObj.uid)) {
+          fetch("/api/users/language", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: uObj.id || uObj.uid,
+              userEmail: uObj.email,
+              language: newLang
+            })
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {}
+
+    // 4. Load cached translations for new language if not in state
     setDynamicCache((prev) => {
       if (prev[newLang]) return prev;
       return { ...prev, [newLang]: loadSavedTranslations(newLang) };

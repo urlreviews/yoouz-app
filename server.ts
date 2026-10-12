@@ -18955,7 +18955,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   // Live User Profile Update (propagates to users table, videoReviews authors, memory feed cache, and indexes for instant global updates)
   app.post(["/api/users/update-profile", "/api/users/profile"], async (req, res) => {
     try {
-      const { uid, id: bodyId, email, name, handle, avatar, bio, banner, location, city, state, country } = req.body || {};
+      const { uid, id: bodyId, email, name, handle, avatar, bio, banner, location, city, state, country, language, preferredLanguage } = req.body || {};
       const targetUserId = uid || bodyId;
       if (!targetUserId && !email && !name) {
         return res.status(400).json({ error: "Missing user identification (uid, email, or name)" });
@@ -18973,8 +18973,9 @@ app.post("/api/videos/save-review", async (req, res) => {
       const nextCountry = (country || "").trim();
       const locParts = [nextCity, nextState, nextCountry].filter(Boolean);
       const nextLocation = (location || locParts.join(", ")).trim();
+      const nextLang = (language || preferredLanguage || "").toLowerCase().trim();
 
-      const profileObj = {
+      const profileObj: any = {
         id: targetUserId || `usr-${Date.now()}`,
         uid: targetUserId || `usr-${Date.now()}`,
         email: (email || "").toLowerCase().trim(),
@@ -18987,6 +18988,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         city: nextCity,
         state: nextState,
         country: nextCountry,
+        ...(nextLang && { language: nextLang, preferredLanguage: nextLang }),
         updatedAt: Date.now()
       };
 
@@ -19149,6 +19151,39 @@ app.post("/api/videos/save-review", async (req, res) => {
       return res.json({ success: true, profile: profileObj, message: "Profile updated globally across all feeds." });
     } catch (err: any) {
       console.error("Profile update error:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated User Language Preference Persistence Endpoint
+  app.post(["/api/users/language", "/api/users/save-language"], async (req, res) => {
+    try {
+      const { userId, userEmail, language } = req.body || {};
+      if (!language) {
+        return res.status(400).json({ error: "Missing language parameter" });
+      }
+      const cleanLang = String(language).toLowerCase().trim();
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb && (userId || userEmail)) {
+        const targetId = userId || userEmail;
+        const userRow = await bunnyDb.execute({
+          sql: `SELECT id, email, data FROM users WHERE id = ? OR (email != '' AND email = ?) LIMIT 1`,
+          args: [targetId || "", userEmail || userId || ""]
+        });
+        if (userRow && userRow.rows && userRow.rows[0]) {
+          const u = userRow.rows[0] as any;
+          let uData: any = {};
+          try { uData = typeof u.data === 'string' ? JSON.parse(u.data) : (u.data || {}); } catch(e){}
+          uData.language = cleanLang;
+          uData.preferredLanguage = cleanLang;
+          await bunnyDb.execute({
+            sql: `UPDATE users SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+            args: [JSON.stringify(uData), u.id]
+          });
+        }
+      }
+      return res.json({ success: true, language: cleanLang });
+    } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   });
