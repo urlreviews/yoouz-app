@@ -727,17 +727,19 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab("language")}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "language"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <Globe className="w-5 h-5 shrink-0" />
-              <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
-            </button>
+            {!isBusinessSuiteEmbedded && (
+              <button
+                onClick={() => setActiveTab("language")}
+                className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
+                  activeTab === "language"
+                    ? "bg-white text-zinc-950 border-white shadow-sm font-black"
+                    : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
+                }`}
+              >
+                <Globe className="w-5 h-5 shrink-0" />
+                <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
+              </button>
+            )}
 
             <button
               onClick={() => {

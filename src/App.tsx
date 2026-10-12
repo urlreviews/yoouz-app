@@ -904,6 +904,26 @@ export function App() {
           setIsComparisonModalOpen(true);
         }
 
+        // Automatically sync URL for existing & new businesses to include their business slug
+        if (activeSection === 'business') {
+          try {
+            const saved = localStorage.getItem('copo_business_verified_session');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed && (parsed.placeId || parsed.businessName || parsed.domain)) {
+                const placeObj = (places || []).find(p => p.id === parsed.placeId);
+                const slug = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                if (slug && slug !== 'portal') {
+                  const expectedPath = `/business/${slug}`;
+                  if (window.location.pathname !== expectedPath && window.location.pathname.startsWith('/business')) {
+                    window.history.replaceState(null, "", expectedPath);
+                  }
+                }
+              }
+            }
+          } catch(e) {}
+        }
+
         if (placeParam) {
           const cleanPlaceId = decodeURIComponent(placeParam);
           
@@ -7145,7 +7165,25 @@ export function App() {
             } else if (section === "business") {
               setEmbedTargetId(null);
               setActiveSection("business");
-              window.history.pushState(null, "", "/business");
+              const bSlug = (() => {
+                try {
+                  const saved = localStorage.getItem('copo_business_verified_session');
+                  if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed) {
+                      const placeObj = places.find(p => p.id === parsed.placeId);
+                      const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                      if (s && s !== 'portal') return s;
+                    }
+                  }
+                  if (businessClaimTargetPlace) {
+                    const s = getPlaceSlug(businessClaimTargetPlace);
+                    if (s && s !== 'portal') return s;
+                  }
+                } catch(e) {}
+                return '';
+              })();
+              window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
             } else {
               setEmbedTargetId(null);
               setActiveSection(section);
@@ -7351,7 +7389,25 @@ export function App() {
               setSelectedPlaceIdForDrawer(null);
               setSelectedAuthorForDrawer(null);
               setActiveSection("business");
-              window.history.pushState(null, "", "/business");
+              const bSlug = (() => {
+                try {
+                  const saved = localStorage.getItem('copo_business_verified_session');
+                  if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed) {
+                      const placeObj = places.find(p => p.id === parsed.placeId);
+                      const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                      if (s && s !== 'portal') return s;
+                    }
+                  }
+                  if (businessClaimTargetPlace) {
+                    const s = getPlaceSlug(businessClaimTargetPlace);
+                    if (s && s !== 'portal') return s;
+                  }
+                } catch(e) {}
+                return '';
+              })();
+              window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
               return;
             } else if ((activeSection as string) === "business" && (section as string) !== "business") {
               window.history.pushState(null, "", "/");
@@ -8188,7 +8244,25 @@ export function App() {
             setSelectedPlaceIdForDrawer(null);
             setSelectedAuthorForDrawer(null);
             setActiveSection("business");
-            window.history.pushState(null, "", "/business");
+            const bSlug = (() => {
+              try {
+                const saved = localStorage.getItem('copo_business_verified_session');
+                if (saved) {
+                  const parsed = JSON.parse(saved);
+                  if (parsed) {
+                    const placeObj = places.find(p => p.id === parsed.placeId);
+                    const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                    if (s && s !== 'portal') return s;
+                  }
+                }
+                if (businessClaimTargetPlace) {
+                  const s = getPlaceSlug(businessClaimTargetPlace);
+                  if (s && s !== 'portal') return s;
+                }
+              } catch(e) {}
+              return '';
+            })();
+            window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
             return;
           } else if ((activeSection as string) === "business" && (section as string) !== "business") {
             setBusinessClaimTargetPlace(null);

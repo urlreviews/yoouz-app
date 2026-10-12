@@ -229,6 +229,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   onRecordReview
 }) => {
   const { language, setLanguage, languages, currentLanguageMeta, t, isRTL } = useLanguage();
+
+  // Ensure Business Portal stays strictly in English (international standard)
+  useEffect(() => {
+    if (language !== 'en') {
+      setLanguage('en');
+    }
+  }, [language, setLanguage]);
+
   const [showEmbedTester, setShowEmbedTester] = useState(false);
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
