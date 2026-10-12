@@ -1693,7 +1693,21 @@ export function App() {
         path = "/discover";
         title = "Discover Trending Places & Video Reviews | Yoouz";
       } else if (activeSection === "business") {
-        path = "/business";
+        const bSlug = (() => {
+          try {
+            const saved = localStorage.getItem('copo_business_verified_session');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed) {
+                const placeObj = (places || []).find(p => p.id === parsed.placeId);
+                const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                if (s && s !== 'portal') return s;
+              }
+            }
+          } catch(e) {}
+          return '';
+        })();
+        path = bSlug ? `/business/${bSlug}` : "/business";
         title = "Yoouz for Business - Verified Customer Video Reviews & Feedback";
       } else if (activeSection === "following") {
         path = "/following";
