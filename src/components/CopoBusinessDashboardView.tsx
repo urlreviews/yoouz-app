@@ -324,6 +324,22 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     }
   });
 
+  // Instantly sync URL for existing and new signed-in businesses to show their business domain slug
+  useEffect(() => {
+    try {
+      if (verifiedBusinessSession) {
+        const domainSource = verifiedBusinessSession.domain || verifiedBusinessSession.website || verifiedBusinessSession.placeId || verifiedBusinessSession.businessEmail || verifiedBusinessSession.placeName;
+        const slug = getPlaceSlug(domainSource);
+        if (slug && slug !== 'portal') {
+          const expectedPath = `/business/${slug}`;
+          if (window.location.pathname !== expectedPath) {
+            window.history.replaceState(null, "", expectedPath);
+          }
+        }
+      }
+    } catch(e) {}
+  }, [verifiedBusinessSession]);
+
   // Business Selection State
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>(() => {
     if (verifiedBusinessSession && verifiedBusinessSession.placeId && verifiedBusinessSession.placeId !== 'place-custom') {
