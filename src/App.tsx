@@ -866,18 +866,13 @@ export function App() {
             creatorParam = cMatch[1];
           }
         }
-        if (!placeParam) {
+        if (!placeParam && !pathname.startsWith("/business/")) {
           if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
             placeParam = "sample";
           } else {
             const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
             if (pMatch) {
               placeParam = pMatch[2];
-            } else {
-              const bMatch = pathname.match(/^\/business\/([^\/]+)/);
-              if (bMatch && bMatch[1] !== "dashboard" && bMatch[1] !== "claim" && bMatch[1] !== "portal") {
-                placeParam = bMatch[1];
-              }
             }
           }
         }
