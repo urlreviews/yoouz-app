@@ -10162,6 +10162,43 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     }
   }
 
+  // Helper to sanitize existing user database and purge any business system emails from user records
+  async function sanitizeExistingUsersDatabase(): Promise<number> {
+    try {
+      const bunnyDb = getBunnyDb();
+      let purgedCount = 0;
+      if (bunnyDb) {
+        const res = await bunnyDb.execute({
+          sql: `DELETE FROM users WHERE email LIKE '%@yoouz.com' OR email LIKE '%info@%' OR email LIKE '%support@%'`
+        });
+        purgedCount += Number(res.rowsAffected || 0);
+      }
+      try {
+        if (typeof getDb === 'function' && getDb()) {
+          const dbInstance = getDb();
+          await dbInstance.delete(users).where(eq(users.email, 'info@yoouz.com'));
+          await dbInstance.delete(users).where(eq(users.email, 'support@yoouz.com'));
+        }
+      } catch (e) {}
+
+      const usersDir = path.join(process.cwd(), "uploads", "nosql", "users");
+      if (fs.existsSync(usersDir)) {
+        const files = fs.readdirSync(usersDir);
+        for (const file of files) {
+          if (file.toLowerCase().includes('yoouz.com') || file.toLowerCase().includes('info@') || file.toLowerCase().includes('support@')) {
+            try {
+              fs.unlinkSync(path.join(usersDir, file));
+              purgedCount++;
+            } catch (e) {}
+          }
+        }
+      }
+      return purgedCount;
+    } catch (err) {
+      return 0;
+    }
+  }
+
   // Endpoint to fetch system health diagnostic status
   app.get("/api/system/health-check", async (_req, res) => {
     try {
@@ -19275,6 +19312,10 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail.endsWith('@yoouz.com') || cleanEmail.includes('info@yoouz.com') || cleanEmail.includes('support@yoouz.com')) {
+        return res.status(403).json({ error: "Business system emails cannot be used for personal user accounts. Please use a personal email address." });
+      }
+
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
       const token = `usr_token_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
       const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes TTL
@@ -32774,6 +32815,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
     }
   }).catch((e) => console.warn("User profile reconciliation startup notice:", e?.message));
+
+  // Sanitize existing user database to purge mismatched business system emails
+  sanitizeExistingUsersDatabase().then((count) => {
+    if (count > 0) {
+      console.log(`🧹 [Server] Purged ${count} mismatched business email record(s) from user database.`);
+    }
+  }).catch(() => {});
 
   // Purge any legacy anti-bot blocked place records from database
   purgeBlockedPlaceRecords().catch(() => {});
