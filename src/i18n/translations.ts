@@ -200,6 +200,32 @@ export interface TranslationSchema {
     deleteConversation: string;
     blockUser: string;
     reportThread: string;
+    connectDescription: string;
+    startMessage: string;
+    blockTitle: string;
+    blockDescription: string;
+    messageMembersDesc: string;
+    messageBusinessesDesc: string;
+    messageAllDesc: string;
+    searchMembersPlaceholder: string;
+    searchBusinessesPlaceholder: string;
+    searchMembers: string;
+    searchAll: string;
+    typeMembersDesc: string;
+    typeAllDesc: string;
+    noMatches: string;
+    business: string;
+    member: string;
+    businessOrMember: string;
+    businessLabel: string;
+    verifiedBusiness: string;
+    communityReviewer: string;
+    chatAction: string;
+    deleteTitle: string;
+    deleteDescription: string;
+    message: string;
+    messages: string;
+    blockedPlaceholder: string;
   };
   place?: {
     reviews: string;
@@ -767,7 +793,33 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       noConversations: "You don't have any messages yet",
       deleteConversation: "Delete Conversation",
       blockUser: "Block User",
-      reportThread: "Report Thread"
+      reportThread: "Report Thread",
+      connectDescription: "Connect and message other community reviewers.",
+      startMessage: "Start a Message",
+      blockTitle: "Block {name}?",
+      blockDescription: "They will not be able to message you or see your direct chat history. You can unblock them at any time.",
+      messageMembersDesc: "Message community members & reviewers on Yoouz",
+      messageBusinessesDesc: "Message official business profiles on Yoouz",
+      messageAllDesc: "Message members or business profiles on Yoouz",
+      searchMembersPlaceholder: "Search member by name or handle...",
+      searchBusinessesPlaceholder: "Search business by name, category, or city...",
+      searchMembers: "Search community members",
+      searchAll: "Search businesses & members",
+      typeMembersDesc: "Type a reviewer or member name above to message them directly.",
+      typeAllDesc: "Type a business or member name above, or switch to the Businesses tab.",
+      noMatches: "No {type} matches \"{query}\".",
+      business: "business",
+      member: "member",
+      businessOrMember: "business or member",
+      businessLabel: "Business",
+      verifiedBusiness: "Verified Business",
+      communityReviewer: "Community reviewer",
+      chatAction: "Chat",
+      deleteTitle: "Delete this conversation?",
+      deleteDescription: "This will delete the chat thread with {name}. This action cannot be undone.",
+      message: "message",
+      messages: "messages",
+      blockedPlaceholder: "You have blocked {name}"
     },
     video: {
       by: "By",

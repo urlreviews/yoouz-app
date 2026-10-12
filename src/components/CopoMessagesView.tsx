@@ -2545,7 +2545,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <div className="max-w-md space-y-2">
                   <p className="text-base font-bold text-white font-['Google_Sans',sans-serif]">{t("nav.messages", "Messages")}</p>
                   <p className="text-xs text-zinc-200 leading-relaxed">
-                    {t("messages.emptyState", "Select a conversation to message reviewers.")}
+                    {t("messages.emptyState", "Select a conversation to start messaging")}
                   </p>
                 </div>
               </div>
@@ -2700,7 +2700,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => setShowBlockConfirmModal(false)}
                 className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-200 font-bold text-xs hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
@@ -2951,7 +2951,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => setShowDeleteConfirmModal(false)}
                 className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-200 font-bold text-xs hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel", "Cancel")}
               </button>
               <button
                 type="button"
