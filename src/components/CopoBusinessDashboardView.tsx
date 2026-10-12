@@ -502,10 +502,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [currentPlace]);
 
   const displayOwnerEmail = useMemo(() => {
-    if (currentPlace?.id === 'yoouz.com' || currentPlace?.name?.toLowerCase() === 'yoouz') {
-      return 'info@yoouz.com';
+    const signedUpEmail = verifiedBusinessSession?.businessEmail || verifiedBusinessSession?.email || (currentPlace as any)?.claimedByEmail || (currentPlace as any)?.ownerEmail || (currentPlace as any)?.claimedBy;
+    if (signedUpEmail && typeof signedUpEmail === 'string' && signedUpEmail.includes('@')) {
+      return signedUpEmail.trim();
     }
-    return verifiedBusinessSession?.businessEmail || (currentPlace as any)?.claimedByEmail || (currentPlace as any)?.email || profileEmail || 'info@yoouz.com';
+    if (profileEmail && typeof profileEmail === 'string' && profileEmail.includes('@')) {
+      return profileEmail.trim();
+    }
+    return '';
   }, [currentPlace, verifiedBusinessSession, profileEmail]);
 
   const displayOwnerName = useMemo(() => {
@@ -4867,7 +4871,7 @@ ${jsonLd}
                   isOpen={true}
                   onClose={() => setActiveTab('overview')}
                   businessName={verifiedBusinessSession.placeName || currentPlace?.name || 'Claimed Business'}
-                  ownerEmail={verifiedBusinessSession.businessEmail || currentPlace?.claimedByEmail || 'info@yoouz.com'}
+                  ownerEmail={displayOwnerEmail || verifiedBusinessSession?.businessEmail || currentPlace?.claimedByEmail || ''}
                   placeId={currentPlace?.id || verifiedBusinessSession?.placeId}
                   isPremium={isPremium}
                   currentPlace={currentPlace}
@@ -4884,7 +4888,7 @@ ${jsonLd}
                   currentUser={null}
                   businessDomain={currentPlace?.website || currentPlace?.id || verifiedBusinessSession?.domain}
                   businessName={currentPlace?.name || verifiedBusinessSession?.businessName || ""}
-                  businessEmail={currentPlace?.email || verifiedBusinessSession?.email || (currentPlace as any)?.claimedByEmail || ""}
+                  businessEmail={displayOwnerEmail || verifiedBusinessSession?.businessEmail || verifiedBusinessSession?.email || (currentPlace as any)?.claimedByEmail || ""}
                   isBusinessSuiteEmbedded={true}
                   onBack={() => setActiveTab('overview')}
                   onOpenLegal={onOpenLegal}
@@ -5513,7 +5517,7 @@ ${jsonLd}
         isOpen={isPremiumModalOpen}
         onClose={() => setIsPremiumModalOpen(false)}
         businessName={verifiedBusinessSession.placeName || currentPlace?.name || 'Unknown Business'}
-        ownerEmail={verifiedBusinessSession.businessEmail || currentPlace?.claimedByEmail || 'info@yoouz.com'}
+        ownerEmail={displayOwnerEmail || verifiedBusinessSession?.businessEmail || currentPlace?.claimedByEmail || ''}
         placeId={currentPlace?.id || verifiedBusinessSession?.placeId}
         isPremium={isPremium}
         currentPlace={currentPlace}
