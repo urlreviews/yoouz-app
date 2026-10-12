@@ -1173,7 +1173,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     } catch (e) {}
   }, [currentPlace?.id]);
 
-  // Effective Business User Profile for Messaging & Collaboration
+  // Effective Business User Profile for Messaging & Collaboration (Strictly separated from private user account)
   const effectiveUser: UserProfile = useMemo(() => {
     const base = verifiedBusinessSession ? {
       id: verifiedBusinessSession.placeId,
@@ -1186,10 +1186,6 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       handle: (verifiedBusinessSession.domain || currentPlace?.name || 'business').toLowerCase().replace(/[^a-z0-9]/g, ''),
       isVerified: true,
       isBusiness: true
-    } : currentUser ? {
-      ...currentUser,
-      isBusiness: true,
-      placeId: currentPlace?.id || (currentUser as any).placeId
     } : {
       id: currentPlace?.id || 'unknown',
       uid: currentPlace?.id || 'unknown',
@@ -1207,7 +1203,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       ...base,
       notificationSettings: businessNotificationSettings
     };
-  }, [currentUser, verifiedBusinessSession, currentPlace, businessNotificationSettings]);
+  }, [verifiedBusinessSession, currentPlace, businessNotificationSettings]);
 
   // Keyboard shortcut listener for ⌘K / Ctrl+K
   useEffect(() => {
