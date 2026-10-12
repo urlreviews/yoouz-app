@@ -1809,10 +1809,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 </div>
                 <p className="text-xs text-zinc-400 font-medium truncate">
                   {unreadCount > 0
-                    ? `${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
+                    ? `${unreadCount} ${t("messages.unread", "UNREAD").toLowerCase()} ${unreadCount > 1 ? t("messages.messages", "messages") : t("messages.message", "message")}`
                     : filteredThreads.length > 0
-                    ? `${filteredThreads.length} conversation${filteredThreads.length > 1 ? "s" : ""}`
-                    : "No conversations yet"}
+                    ? `${filteredThreads.length} ${filteredThreads.length > 1 ? t("messages.conversations", "conversations") : t("messages.conversation", "conversation")}`
+                    : t("messages.noConversations", "No conversations yet")}
                 </p>
               </div>
             </div>
@@ -1821,11 +1821,11 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             <div className="flex items-center gap-2.5 shrink-0">
               <div className="hidden sm:flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 shrink-0">
                 <div className="text-center border-r border-zinc-800 pr-4">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Unread</p>
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{t("messages.unread", "UNREAD")}</p>
                   <p className="text-sm font-black text-white">{unreadCount}</p>
                 </div>
                 <div className="text-center pl-1">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Chats</p>
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{t("messages.totalChats", "TOTAL CHATS")}</p>
                   <p className="text-sm font-black text-white">{messages.length}</p>
                 </div>
               </div>
@@ -1858,7 +1858,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <Search className="absolute left-3.5 w-4 h-4 text-zinc-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search chats or reviewers..."
+                  placeholder={t("messages.searchPlaceholder", "Search chats or reviewers...")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-zinc-900/90 text-xs text-white placeholder-zinc-500 pl-10 pr-9 py-2.5 rounded-xl border border-zinc-800 focus:outline-none focus:border-zinc-500 focus:bg-zinc-900 transition-all font-medium shadow-inner"
@@ -1881,8 +1881,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <div className="p-8 text-center text-zinc-200 space-y-3 mt-4">
                   <Mail className="w-8 h-8 text-zinc-600 mx-auto" />
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-white">No conversations yet</p>
-                    <p className="text-[11px] text-zinc-200">Connect and message other community reviewers.</p>
+                    <p className="text-xs font-bold text-white">{t("messages.noConversations", "No conversations yet")}</p>
+                    <p className="text-[11px] text-zinc-200">{t("messages.connectDescription", "Connect and message other community reviewers.")}</p>
                   </div>
                   <button
                     type="button"
@@ -1893,7 +1893,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 text-white text-xs font-bold shadow-xs hover:bg-zinc-700 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Start a Message</span>
+                    <span>{t("messages.startMessage", "Start a Message")}</span>
                   </button>
                 </div>
               ) : (
@@ -1935,7 +1935,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="md:hidden absolute inset-y-0 right-0 w-24 bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-1.5 font-bold text-xs cursor-pointer select-none active:bg-rose-800 z-0"
                           >
                             <Trash2 className="w-4 h-4 shrink-0" />
-                            <span>Delete</span>
+                            <span>{t("messages.delete", "Delete")}</span>
                           </div>
                         )}
 
@@ -2200,7 +2200,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                            <span>Unblock {targetActionThread.senderName}</span>
+                            <span>{t("messages.unblockUser", `Unblock {name}`, { name: targetActionThread.senderName })}</span>
                           </button>
                         ) : (
                           <button
@@ -2209,7 +2209,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <UserX className="w-4 h-4 text-zinc-200" />
-                            <span>Block {targetActionThread.senderName}</span>
+                            <span>{t("messages.blockUser", `Block {name}`, { name: targetActionThread.senderName })}</span>
                           </button>
                         )}
 
@@ -2225,7 +2225,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
-                          <span>Delete Conversation</span>
+                          <span>{t("messages.deleteConversation", "Delete Conversation")}</span>
                         </button>
                       </div>
                     )}
@@ -2238,14 +2238,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 text-red-500 shrink-0" />
                       <span className="font-semibold">
-                        You blocked {partnerDetails.name}. New messages from this user are blocked.
+                        {t("messages.youBlocked", `You blocked {name}. New messages from this user are blocked.`, { name: partnerDetails.name })}
                       </span>
                     </div>
                     <button
                       onClick={() => handleUnblockUserAction(activeThread)}
                       className="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold text-[11px] hover:bg-red-700 transition-colors shadow-2xs cursor-pointer"
                     >
-                      Unblock
+                      {t("messages.unblock", "Unblock")}
                     </button>
                   </div>
                 )}
@@ -2293,10 +2293,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           )}
                         </button>
                         <p className="text-xs text-zinc-400 font-medium">
-                          Active on Yoouz
+                          {t("messages.activeOnYoouz", "Active on Yoouz")}
                         </p>
                         <p className="text-[11px] text-zinc-500 pt-1.5 font-medium">
-                          No messages yet. Say hello or share a recommendation to start the conversation!
+                          {t("messages.noMessagesYet", "No messages yet. Say hello or share a recommendation to start the conversation!")}
                         </p>
                       </div>
                     </div>
@@ -2509,8 +2509,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder={
                       isSenderBlocked
-                        ? `You have blocked ${partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user"}`
-                        : `Message ${partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user"}...`
+                        ? t("messages.blockedPlaceholder", `You have blocked {name}`, { name: partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user" })
+                        : t("messages.inputPlaceholder", `Message {name}...`, { name: partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user" })
                     }
                     className="flex-1 bg-zinc-900 sm:bg-zinc-800 disabled:bg-zinc-900 disabled:text-zinc-200 text-white placeholder-zinc-500 text-[16px] sm:text-sm px-4 py-2.5 min-h-[44px] sm:min-h-[40px] rounded-full border border-zinc-700/80 sm:border-zinc-700 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 transition-all font-medium"
                   />
@@ -2543,9 +2543,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <Mail className="w-8 h-8" />
                 </div>
                 <div className="max-w-md space-y-2">
-                  <p className="text-base font-bold text-white font-['Google_Sans',sans-serif]">Messages</p>
+                  <p className="text-base font-bold text-white font-['Google_Sans',sans-serif]">{t("nav.messages", "Messages")}</p>
                   <p className="text-xs text-zinc-200 leading-relaxed">
-                    Select a conversation to message reviewers.
+                    {t("messages.emptyState", "Select a conversation to message reviewers.")}
                   </p>
                 </div>
               </div>
@@ -2595,7 +2595,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       <p className="text-sm font-bold text-white truncate">
                         {pName}
                       </p>
-                      <p className="text-[11px] text-zinc-400">Conversation options</p>
+                      <p className="text-[11px] text-zinc-400">{t("messages.conversationOptions", "Conversation options")}</p>
                     </div>
                   </div>
                   <button
@@ -2621,7 +2621,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
               >
                 <Flag className="w-5 h-5 text-red-500 shrink-0" />
-                <span>Report User or Messages</span>
+                <span>{t("messages.reportThread", "Report User or Messages")}</span>
               </button>
 
               {/* Block / Unblock toggle */}
@@ -2633,7 +2633,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-                  <span>Unblock {targetActionThread.senderName}</span>
+                  <span>{t("messages.unblockUser", `Unblock {name}`, { name: targetActionThread.senderName })}</span>
                 </button>
               ) : (
                 <button
@@ -2643,7 +2643,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <UserX className="w-5 h-5 text-zinc-400 shrink-0" />
-                  <span>Block {targetActionThread.senderName}</span>
+                  <span>{t("messages.blockUser", `Block {name}`, { name: targetActionThread.senderName })}</span>
                 </button>
               )}
 
@@ -2658,7 +2658,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 className="w-full px-4 py-3 text-left text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
               >
                 <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
-                <span>Delete Conversation</span>
+                <span>{t("messages.deleteConversation", "Delete Conversation")}</span>
               </button>
             </div>
 
@@ -2671,7 +2671,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
               }}
               className="w-full py-3 rounded-2xl bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 font-bold text-sm text-center active:scale-[0.99] transition-all cursor-pointer mt-1"
             >
-              Cancel
+              {t("common.cancel", "Cancel")}
             </button>
           </div>
         </div>
@@ -2687,10 +2687,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             
             <div className="text-center space-y-1.5">
               <h3 className="text-base font-black text-white">
-                Block {targetActionThread.senderName}?
+                {t("messages.blockTitle", `Block {name}?`, { name: targetActionThread.senderName })}
               </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
-                They will not be able to message you or see your direct chat history. You can unblock them at any time.
+                {t("messages.blockDescription", "They will not be able to message you or see your direct chat history. You can unblock them at any time.")}
               </p>
             </div>
 
@@ -2707,7 +2707,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => handleBlockUserAction(targetActionThread)}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
               >
-                Block User
+                {t("messages.block", "Block User")}
               </button>
             </div>
           </div>
@@ -2724,13 +2724,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">New Message</h3>
+                  <h3 className="text-sm font-black text-white">{t("messages.newChat", "New Message")}</h3>
                   <p className="text-[10px] text-zinc-400">
                     {recipientFilterTab === "members"
-                      ? "Message community members & reviewers on Yoouz"
+                      ? t("messages.messageMembersDesc", "Message community members & reviewers on Yoouz")
                       : recipientFilterTab === "businesses"
-                      ? "Message official business profiles on Yoouz"
-                      : "Message members or business profiles on Yoouz"}
+                      ? t("messages.messageBusinessesDesc", "Message official business profiles on Yoouz")
+                      : t("messages.messageAllDesc", "Message members or business profiles on Yoouz")}
                   </p>
                 </div>
               </div>
@@ -2755,7 +2755,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 }`}
               >
                 <User className="w-3.5 h-3.5" />
-                <span>Members</span>
+                <span>{t("messages.members", "Members")}</span>
               </button>
               <button
                 type="button"
@@ -2767,7 +2767,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
-                <span>Businesses</span>
+                <span>{t("messages.businesses", "Businesses")}</span>
               </button>
               <button
                 type="button"
@@ -2778,7 +2778,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                <span>All</span>
+                <span>{t("messages.all", "All")}</span>
               </button>
             </div>
 
@@ -2789,10 +2789,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 type="text"
                 placeholder={
                   recipientFilterTab === "members"
-                    ? "Search member by name or handle..."
+                    ? t("messages.searchMembersPlaceholder", "Search member by name or handle...")
                     : recipientFilterTab === "businesses"
-                    ? "Search business by name, category, or city..."
-                    : "Search members or businesses..."
+                    ? t("messages.searchBusinessesPlaceholder", "Search business by name, category, or city...")
+                    : t("messages.newChatPlaceholder", "Search by name or email...")
                 }
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
@@ -2819,12 +2819,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-zinc-200">
-                      {recipientFilterTab === "members" ? "Search community members" : "Search businesses & members"}
+                      {recipientFilterTab === "members" ? t("messages.searchMembers", "Search community members") : t("messages.searchAll", "Search businesses & members")}
                     </p>
                     <p className="text-[11px] text-zinc-400 max-w-xs mx-auto">
                       {recipientFilterTab === "members"
-                        ? "Type a reviewer or member name above to message them directly."
-                        : "Type a business or member name above, or switch to the Businesses tab."}
+                        ? t("messages.typeMembersDesc", "Type a reviewer or member name above to message them directly.")
+                        : t("messages.typeAllDesc", "Type a business or member name above, or switch to the Businesses tab.")}
                     </p>
                   </div>
                 </div>
@@ -2835,9 +2835,12 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   ) : (
                     <User className="w-8 h-8 mx-auto text-zinc-600" />
                   )}
-                  <p className="text-xs font-bold text-zinc-200">No results found</p>
+                  <p className="text-xs font-bold text-zinc-200">{t("messages.noResults", "No results found")}</p>
                   <p className="text-[11px] text-zinc-400">
-                    No {recipientFilterTab === "businesses" ? "business" : recipientFilterTab === "members" ? "member" : "business or member"} matches &ldquo;{newChatSearch.trim()}&rdquo;.
+                    {t("messages.noMatches", `No {type} matches "{query}".`, { 
+                      type: recipientFilterTab === "businesses" ? t("messages.business", "business") : recipientFilterTab === "members" ? t("messages.member", "member") : t("messages.businessOrMember", "business or member"),
+                      query: newChatSearch.trim() 
+                    })}
                   </p>
                 </div>
               ) : (
@@ -2878,7 +2881,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           )}
                           {recipient.isBusiness && (
                             <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700/80 text-[9px] font-bold shrink-0">
-                              Business
+                              {t("messages.businessLabel", "Business")}
                             </span>
                           )}
                         </div>
@@ -2891,7 +2894,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           </div>
                         ) : (
                           <p className="text-[11px] text-zinc-400 whitespace-normal break-words leading-tight mt-0.5">
-                            {recipient.bio || (recipient.isBusiness ? "Verified Business" : "Community reviewer")}
+                            {recipient.bio || (recipient.isBusiness ? t("messages.verifiedBusiness", "Verified Business") : t("messages.communityReviewer", "Community reviewer"))}
                           </p>
                         )}
                       </div>
@@ -2905,7 +2908,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       }}
                       className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200 hover:text-white text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs border border-zinc-700/60"
                     >
-                      Chat
+                      {t("messages.chatAction", "Chat")}
                     </button>
                   </div>
                 ))
@@ -2918,7 +2921,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => setShowNewChatModal(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-200 hover:text-white cursor-pointer"
               >
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
           </div>
@@ -2935,10 +2938,10 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             
             <div className="text-center space-y-1.5">
               <h3 className="text-base font-black text-white">
-                Delete this conversation?
+                {t("messages.deleteTitle", "Delete this conversation?")}
               </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
-                This will delete the chat thread with {targetActionThread.senderName}. This action cannot be undone.
+                {t("messages.deleteDescription", `This will delete the chat thread with {name}. This action cannot be undone.`, { name: targetActionThread.senderName })}
               </p>
             </div>
 
@@ -2955,7 +2958,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 onClick={() => handleDeleteConversation(targetActionThread)}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs hover:bg-red-700 transition-colors shadow-xs cursor-pointer"
               >
-                Delete
+                {t("messages.delete", "Delete")}
               </button>
             </div>
           </div>

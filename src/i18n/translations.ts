@@ -171,6 +171,36 @@ export interface TranslationSchema {
     followBack: string;
     localReviewer: string;
   };
+  messages?: {
+    title: string;
+    searchPlaceholder: string;
+    unread: string;
+    totalChats: string;
+    activeOnYoouz: string;
+    inputPlaceholder: string;
+    noUnread: string;
+    clearSearch: string;
+    noResults: string;
+    tryDifferent: string;
+    conversation: string;
+    conversations: string;
+    newChat: string;
+    newChatPlaceholder: string;
+    all: string;
+    businesses: string;
+    members: string;
+    block: string;
+    unblock: string;
+    delete: string;
+    report: string;
+    cancel: string;
+    confirm: string;
+    emptyState: string;
+    noConversations: string;
+    deleteConversation: string;
+    blockUser: string;
+    reportThread: string;
+  };
   place?: {
     reviews: string;
     about: string;
@@ -708,6 +738,36 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       unfollow: "Unfollow",
       followBack: "Follow Back",
       localReviewer: "Local Reviewer"
+    },
+    messages: {
+      title: "Messages",
+      searchPlaceholder: "Search chats or reviewers...",
+      unread: "UNREAD",
+      totalChats: "TOTAL CHATS",
+      activeOnYoouz: "Active on Yoouz",
+      inputPlaceholder: "Message {name}...",
+      noUnread: "No unread messages",
+      clearSearch: "Clear search",
+      noResults: "No matching results found",
+      tryDifferent: "Try a different name or search term",
+      conversation: "conversation",
+      conversations: "conversations",
+      newChat: "Start a new conversation",
+      newChatPlaceholder: "Search by name or email...",
+      all: "All",
+      businesses: "Businesses",
+      members: "Members",
+      block: "Block",
+      unblock: "Unblock",
+      delete: "Delete",
+      report: "Report",
+      cancel: "Cancel",
+      confirm: "Confirm",
+      emptyState: "Select a conversation to start messaging",
+      noConversations: "You don't have any messages yet",
+      deleteConversation: "Delete Conversation",
+      blockUser: "Block User",
+      reportThread: "Report Thread"
     },
     video: {
       by: "By",

@@ -12,18 +12,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Obserwujący", "You aren't following anyone yet": "Nie obserwujesz jeszcze nikogo",
     "No followers yet": "Brak obserwujących", "Unfollow": "Przestań obserwować",
     "Search followed businesses or reviewers...": "Szukaj obserwowanych firm lub recenzentów...",
-    "Search followers by name...": "Szukaj obserwujących po imieniu..."
+    "Search followers by name...": "Szukaj obserwujących po imieniu...",
+    "Messages": "Wiadomości", "Search chats or reviewers...": "Szukaj czatów lub recenzentów...", "UNREAD": "NIEPRZECZYTANE", "TOTAL CHATS": "WSZYSTKIE CZATY", "Active on Yoouz": "Aktywny na Yoouz", "No conversations yet": "Brak rozmów", "Delete Conversation": "Usuń rozmowę", "Block User": "Zablokuj użytkownika"
   },
   // Ukrainian (uk)
   uk: {
-    "Home": "Головна", "Search": "Пошук", "Review Any Business": "Відгук про будь-який бізнес",
+    "Home": "Головна", "Search": "Пошук", "Review Any Business": "Відгук pro будь-який бізнес",
     "Search any business to watch authentic video reviews or record your own.": "Шукайте будь-який бізнес, щоб переглянути справжні відеовідгуки або записати власні.",
     "Search business...": "Пошук бізнесу...", "Verified Web Listing": "Перевірений веб-сайт",
     "Following & Followers": "Підписки та Підписники", "Manage businesses and reviewers you follow on Yoouz": "Керуйте компаніями та авторами, на яких ви підписані в Yoouz",
-    "Followers": "Підписники", "You aren't following anyone yet": "Ви ще ні на кого не підписані",
+    "Followers": "Підписники", "You aren't following anyone yet": "Ви ще ні на кого nie підписані",
     "No followers yet": "Підписників ще немає", "Unfollow": "Скасувати підписку",
     "Search followed businesses or reviewers...": "Пошук підписок на бізнес або авторів...",
-    "Search followers by name...": "Пошук підписників за ім'ям..."
+    "Search followers by name...": "Пошук підписників за ім'ям...",
+    "Messages": "Повідомлення", "Search chats or reviewers...": "Пошук чатів або авторів...", "UNREAD": "НЕПРОЧИТАНІ", "TOTAL CHATS": "УСІ ЧАТИ", "Active on Yoouz": "Активний у Yoouz", "No conversations yet": "Ще немає повідомлень", "Delete Conversation": "Видалити бесіду", "Block User": "Заблокувати користувача"
   },
   // Swedish (sv)
   sv: {
@@ -34,7 +36,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Följare", "You aren't following anyone yet": "Du följer ingen än",
     "No followers yet": "Inga följare än", "Unfollow": "Sluta följa",
     "Search followed businesses or reviewers...": "Sök följda företag eller recensenter...",
-    "Search followers by name...": "Sök följare efter namn..."
+    "Search followers by name...": "Sök följare efter namn...",
+    "Messages": "Meddelanden", "Search chats or reviewers...": "Sök chattar eller recensenter...", "UNREAD": "OLÄSTA", "TOTAL CHATS": "TOTALT ANTAL CHATTAR", "Active on Yoouz": "Aktiv på Yoouz", "No conversations yet": "Inga konversationer än", "Delete Conversation": "Ta bort konversation", "Block User": "Blockera användare"
   },
   // Greek (el)
   el: {
@@ -45,7 +48,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Ακόλουθοι", "You aren't following anyone yet": "Δεν ακολουθείτε κανέναν ακόμα",
     "No followers yet": "Δεν υπάρχουν ακόλουθοι ακόμα", "Unfollow": "Διακοπή παρακολούθησης",
     "Search followed businesses or reviewers...": "Αναζήτηση επιχειρήσεων ή αξιολογητών που ακολουθείτε...",
-    "Search followers by name...": "Αναζήτηση ακόλουθων κατά όνομα..."
+    "Search followers by name...": "Αναζήτηση ακόλουθων κατά όνομα...",
+    "Messages": "Μηνύματα", "Search chats or reviewers...": "Αναζήτηση συνομιλιών ή αξιολογητών...", "UNREAD": "ΜΗ ΑΝΑΓΝΩΣΜΕΝΑ", "TOTAL CHATS": "ΣΥΝΟΛΟ ΣΥΝΟΜΙΛΙΩΝ", "Active on Yoouz": "Ενεργός στο Yoouz", "No conversations yet": "Δεν υπάρχουν συνομιλίες ακόμα", "Delete Conversation": "Διαγραφή συνομιλίας", "Block User": "Αποκλεισμός χρήστη"
   },
   // Hebrew (he)
   he: {
@@ -56,7 +60,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "עוקבים", "You aren't following anyone yet": "אתה עדיין לא עוקב אחרי אף אחד",
     "No followers yet": "אין עדיין עוקבים", "Unfollow": "הסר מעקב",
     "Search followed businesses or reviewers...": "חפש עסקים או מבקרים במעקב...",
-    "Search followers by name...": "חפש עוקבים לפי שם..."
+    "Search followers by name...": "חפש עוקבים לפי שם...",
+    "Messages": "הודעות", "Search chats or reviewers...": "חפש צ'אטים או מבקרים...", "UNREAD": "לא נקראו", "TOTAL CHATS": "סה\"כ צ'אטים", "Active on Yoouz": "פעיל ב-Yoouz", "No conversations yet": "אין עדיין הודעות", "Delete Conversation": "מחק שיחה", "Block User": "חסום משתמש"
   },
   // Arabic (ar)
   ar: {
@@ -67,7 +72,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "المتابعون", "You aren't following anyone yet": "أنت لا تتابع أحداً بعد",
     "No followers yet": "لا يوجد متابعون بعد", "Unfollow": "إلغاء المتابعة",
     "Search followed businesses or reviewers...": "البحث في الشركات أو المراجعين المتابَعين...",
-    "Search followers by name...": "البحث عن المتابعين بالاسم..."
+    "Search followers by name...": "البحث عن المتابعين بالاسم...",
+    "Messages": "الرسائل", "Search chats or reviewers...": "البحث في الدردشات أو المراجعين...", "UNREAD": "غير مقروءة", "TOTAL CHATS": "إجمالي الدردشات", "Active on Yoouz": "نشط على Yoouz", "No conversations yet": "لا توجد محادثات بعد", "Delete Conversation": "حذف المحادثة", "Block User": "حظر المستخدم"
   },
   // French (fr)
   fr: {
@@ -78,7 +84,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Abonnés", "You aren't following anyone yet": "Vous ne suivez encore personne",
     "No followers yet": "Pas encore d'abonnés", "Unfollow": "Se désabonner",
     "Search followed businesses or reviewers...": "Rechercher des entreprises ou des testeurs suivis...",
-    "Search followers by name...": "Rechercher des abonnés par nom..."
+    "Search followers by name...": "Rechercher des abonnés par nom...",
+    "Messages": "Messages", "Search chats or reviewers...": "Rechercher des chats ou des testeurs...", "UNREAD": "NON LUS", "TOTAL CHATS": "TOTAL DES CHATS", "Active on Yoouz": "Actif sur Yoouz", "No conversations yet": "Pas encore de conversations", "Delete Conversation": "Supprimer la conversation", "Block User": "Bloquer l'utilisateur"
   },
   // Spanish (es)
   es: {
@@ -89,7 +96,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Seguidores", "You aren't following anyone yet": "Aún no sigues a nadie",
     "No followers yet": "Sin seguidores aún", "Unfollow": "Dejar de seguir",
     "Search followed businesses or reviewers...": "Buscar negocios o críticos seguidos...",
-    "Search followers by name...": "Buscar seguidores por nombre..."
+    "Search followers by name...": "Buscar seguidores por nombre...",
+    "Messages": "Mensajes", "Search chats or reviewers...": "Buscar chats o críticos...", "UNREAD": "NO LEÍDOS", "TOTAL CHATS": "CHATS TOTALES", "Active on Yoouz": "Activo en Yoouz", "No conversations yet": "No hay conversaciones aún", "Delete Conversation": "Eliminar conversación", "Block User": "Bloquear usuario"
   },
   // German (de)
   de: {
@@ -100,18 +108,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Follower", "You aren't following anyone yet": "Sie folgen noch niemandem",
     "No followers yet": "Noch keine Follower", "Unfollow": "Nicht mehr folgen",
     "Search followed businesses or reviewers...": "Gefolgte Unternehmen oder Bewerter suchen...",
-    "Search followers by name...": "Follower nach Namen suchen..."
+    "Search followers by name...": "Follower nach Namen suchen...",
+    "Messages": "Nachrichten", "Search chats or reviewers...": "Chats oder Bewerter suchen...", "UNREAD": "UNGELSEN", "TOTAL CHATS": "GESAMTZAHL CHATS", "Active on Yoouz": "Aktiv auf Yoouz", "No conversations yet": "Noch keine Gespräche", "Delete Conversation": "Unterhaltung löschen", "Block User": "Benutzer blockieren"
   },
   // Italian (it)
   it: {
     "Home": "Home", "Search": "Cerca", "Review Any Business": "Recensisci qualsiasi attività",
     "Search any business to watch authentic video reviews or record your own.": "Cerca qualsiasi attività per guardare recensioni video autentiche o registra la tua.",
-    "Search business...": "Cerca attività...", "Verified Web Listing": "Sito web verificato",
+    "Search business...": "Cerca attività...", "Verified Web Listing": "Sito web verificado",
     "Following & Followers": "Seguiti e Follower", "Manage businesses and reviewers you follow on Yoouz": "Gestisci le attività e i recensori che segui su Yoouz",
     "Followers": "Follower", "You aren't following anyone yet": "Non segui ancora nessuno",
     "No followers yet": "Ancora nessun follower", "Unfollow": "Non seguire più",
     "Search followed businesses or reviewers...": "Cerca attività o recensori seguiti...",
-    "Search followers by name...": "Cerca follower per nome..."
+    "Search followers by name...": "Cerca follower per nome...",
+    "Messages": "Messaggi", "Search chats or reviewers...": "Cerca chat o recensori...", "UNREAD": "NON LETTI", "TOTAL CHATS": "CHAT TOTALI", "Active on Yoouz": "Attivo su Yoouz", "No conversations yet": "Ancora nessuna conversazione", "Delete Conversation": "Elimina conversazione", "Block User": "Blocca utente"
   },
   // Portuguese (pt)
   pt: {
@@ -122,7 +132,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Seguidores", "You aren't following anyone yet": "Você ainda não segue ninguém",
     "No followers yet": "Sem seguidores ainda", "Unfollow": "Deixar de seguir",
     "Search followed businesses or reviewers...": "Pesquisar empresas ou críticos seguidos...",
-    "Search followers by name...": "Pesquisar seguidores por nome..."
+    "Search followers by name...": "Pesquisar seguidores por nome...",
+    "Messages": "Mensagens", "Search chats or reviewers...": "Pesquisar chats ou críticos...", "UNREAD": "NÃO LIDAS", "TOTAL CHATS": "TOTAL DE CHATS", "Active on Yoouz": "Ativo no Yoouz", "No conversations yet": "Ainda não há conversas", "Delete Conversation": "Excluir conversa", "Block User": "Bloquear usuário"
   },
   // Russian (ru)
   ru: {
@@ -130,10 +141,11 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Search any business to watch authentic video reviews or record your own.": "Ищите любой бизнес, чтобы посмотреть подлинные видеоотзывы или записать свой собственный.",
     "Search business...": "Поиск бизнеса...", "Verified Web Listing": "Проверенный веб-сайт",
     "Following & Followers": "Подписки и Подписчики", "Manage businesses and reviewers you follow on Yoouz": "Управляйте компаниями и экспертами, на которых вы подписаны в Yoouz",
-    "Followers": "Подписчики", "You aren't following anyone yet": "Вы пока ни на кого не подписаны",
+    "Followers": "Подписчики", "You aren't following anyone yet": "Вы пока ни на кого nie подписаны",
     "No followers yet": "Пока нет подписчиков", "Unfollow": "Отписаться",
     "Search followed businesses or reviewers...": "Поиск по подпискам на компании или экспертов...",
-    "Search followers by name...": "Поиск подписчиков по имени..."
+    "Search followers by name...": "Поиск подписчиков по имени...",
+    "Messages": "Сообщения", "Search chats or reviewers...": "Поиск чатов или экспертов...", "UNREAD": "НЕПРОЧИТАННЫЕ", "TOTAL CHATS": "ВСЕГО ЧАТОВ", "Active on Yoouz": "В сети в Yoouz", "No conversations yet": "Пока нет сообщений", "Delete Conversation": "Удалить беседу", "Block User": "Заблокировать пользователя"
   },
   // Turkish (tr)
   tr: {
@@ -144,7 +156,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Takipçiler", "You aren't following anyone yet": "Henüz kimseyi takip etmiyorsunuz",
     "No followers yet": "Henüz takipçi yok", "Unfollow": "Takibi Bırak",
     "Search followed businesses or reviewers...": "Takip edilen işletmeleri veya yorumcuları ara...",
-    "Search followers by name...": "Takipçileri isme göre ara..."
+    "Search followers by name...": "Takipçileri isme göre ara...",
+    "Messages": "Mesajlar", "Search chats or reviewers...": "Sohbet veya yorumcu ara...", "UNREAD": "OKUNMAMIŞ", "TOTAL CHATS": "TOPLAM SOHBET", "Active on Yoouz": "Yoouz'da aktif", "No conversations yet": "Henüz mesaj yok", "Delete Conversation": "Sohbeti Sil", "Block User": "Kullanıcıyı Engelle"
   },
   // Dutch (nl)
   nl: {
@@ -155,7 +168,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Volgers", "You aren't following anyone yet": "U volgt nog niemand",
     "No followers yet": "Nog geen volgers", "Unfollow": "Ontvolgen",
     "Search followed businesses or reviewers...": "Zoek gevolgde bedrijven of reviewers...",
-    "Search followers by name...": "Zoek volgers op naam..."
+    "Search followers by name...": "Zoek volgers op naam...",
+    "Messages": "Berichten", "Search chats or reviewers...": "Zoek chats of reviewers...", "UNREAD": "ONGELEZEN", "TOTAL CHATS": "TOTAAL AANTAL CHATS", "Active on Yoouz": "Actief op Yoouz", "No conversations yet": "Nog geen gesprekken", "Delete Conversation": "Gesprek verwijderen", "Block User": "Gebruiker blokkeren"
   },
   // Hindi (hi)
   hi: {
@@ -166,18 +180,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "फॉलोअर्स", "You aren't following anyone yet": "आप अभी तक किसी को फॉलो नहीं कर रहे हैं",
     "No followers yet": "अभी तक कोई फॉलोअर्स नहीं", "Unfollow": "अनफॉलो करें",
     "Search followed businesses or reviewers...": "फॉलो किए गए व्यवसायों या समीक्षकों को खोजें...",
-    "Search followers by name...": "नाम से फॉलोअर्स खोजें..."
+    "Search followers by name...": "नाम से फॉलोअर्स खोजें...",
+    "Messages": "संदेश", "Search chats or reviewers...": "चैट या समीक्षकों को खोजें...", "UNREAD": "अपठित", "TOTAL CHATS": "कुल चैट", "Active on Yoouz": "Yoouz पर सक्रिय", "No conversations yet": "अभी तक कोई संदेश नहीं", "Delete Conversation": "बातचीत हटाएं", "Block User": "उपयोगकर्ता को ब्लॉक करें"
   },
   // Japanese (ja)
   ja: {
     "Home": "ホーム", "Search": "検索", "Review Any Business": "あらゆるビジネスを評価",
     "Search any business to watch authentic video reviews or record your own.": "ビジネスを検索して、本物のビデオレビューを見たり、自分で録画したりできます。",
     "Search business...": "ビジネスを検索...", "Verified Web Listing": "認証済みウェブサイト",
-    "Following & Followers": "フォロー・フォロワー", "Manage businesses and reviewers you follow on Yoouz": "Yoouzでフォローしているビジネスやレビュアーを管理する",
+    "Following & Followers": "フォロー・フォロワー", "Manage businesses and reviewers you follow on Yoouz Japanese": "Yoouzでフォローしているビジネスやレビュアーを管理する",
     "Followers": "フォロワー", "You aren't following anyone yet": "まだ誰もフォローしていません",
     "No followers yet": "フォロワーはまだいません", "Unfollow": "フォロー解除",
     "Search followed businesses or reviewers...": "フォロー中のビジネスやレビュアーを検索...",
-    "Search followers by name...": "フォロワーを名前で検索..."
+    "Search followers by name...": "フォロワーを名前で検索...",
+    "Messages": "メッセージ", "Search chats or reviewers...": "チャットやレビュアーを検索...", "UNREAD": "未読", "TOTAL CHATS": "合計チャット数", "Active on Yoouz": "Yoouzでオンライン", "No conversations yet": "まだメッセージはありません", "Delete Conversation": "会話を削除", "Block User": "ユーザーをブロック"
   },
   // Korean (ko)
   ko: {
@@ -188,7 +204,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "팔로워", "You aren't following anyone yet": "아직 아무도 팔로우하고 있지 않습니다",
     "No followers yet": "아직 팔로워가 없습니다", "Unfollow": "언팔로우",
     "Search followed businesses or reviewers...": "팔로우한 비즈니스 또는 리뷰어 검색...",
-    "Search followers by name...": "이름으로 팔로워 검색..."
+    "Search followers by name...": "이름으로 팔로워 검색...",
+    "Messages": "메시지", "Search chats or reviewers...": "채팅 또는 리뷰어 검색...", "UNREAD": "읽지 않음", "TOTAL CHATS": "총 채팅", "Active on Yoouz": "Yoouz 활동 중", "No conversations yet": "아직 메시지가 없습니다", "Delete Conversation": "대화 삭제", "Block User": "사용자 차단"
   },
   // Chinese Simplified (zh)
   zh: {
@@ -199,7 +216,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "粉丝", "You aren't following anyone yet": "您尚未关注任何人",
     "No followers yet": "暂无粉丝", "Unfollow": "取消关注",
     "Search followed businesses or reviewers...": "搜索关注的商家或评论者...",
-    "Search followers by name...": "按姓名搜索粉丝..."
+    "Search followers by name...": "按姓名搜索粉丝...",
+    "Messages": "消息", "Search chats or reviewers...": "搜索聊天或评论者...", "UNREAD": "未读", "TOTAL CHATS": "总聊天数", "Active on Yoouz": "在 Yoouz 上活跃", "No conversations yet": "暂无消息", "Delete Conversation": "删除对话", "Block User": "阻止用户"
   },
   // Chinese Traditional (zh-TW)
   "zh-TW": {
@@ -210,18 +228,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "粉絲", "You aren't following anyone yet": "您尚未關注任何人",
     "No followers yet": "暫無粉絲", "Unfollow": "取消關注",
     "Search followed businesses or reviewers...": "搜尋關注的商家或評論者...",
-    "Search followers by name...": "按姓名搜尋粉絲..."
+    "Search followers by name...": "按姓名搜尋粉絲...",
+    "Messages": "訊息", "Search chats or reviewers...": "搜尋聊天或評論者...", "UNREAD": "未讀", "TOTAL CHATS": "總聊天數", "Active on Yoouz": "在 Yoouz 上活躍", "No conversations yet": "暫無訊息", "Delete Conversation": "刪除對話", "Block User": "封鎖用戶"
   },
   // Indonesian (id)
   id: {
     "Home": "Beranda", "Search": "Cari", "Review Any Business": "Tinjau Bisnis Apa Pun",
     "Search any business to watch authentic video reviews or record your own.": "Cari bisnis apa pun untuk menonton ulasan video asli atau rekam ulasan Anda sendiri.",
     "Search business...": "Cari bisnis...", "Verified Web Listing": "Situs Web Terverifikasi",
-    "Following & Followers": "Mengikuti & Pengikut", "Manage businesses and reviewers you follow on Yoouz": "Kelola bisnis dan pengulas yang Anda ikuti di Yoouz",
+    "Following & Followers": "Mengikuti & Pengikut", "Manage businesses and reviewers you follow on Yoouz Indonesian": "Kelola bisnis dan pengulas yang Anda ikuti di Yoouz",
     "Followers": "Pengikut", "You aren't following anyone yet": "Anda belum mengikuti siapa pun",
     "No followers yet": "Belum ada pengikut", "Unfollow": "Batal Mengikuti",
     "Search followed businesses or reviewers...": "Cari bisnis atau pengulas yang diikuti...",
-    "Search followers by name...": "Cari pengikut berdasarkan nama..."
+    "Search followers by name...": "Cari pengikut berdasarkan nama...",
+    "Messages": "Pesan", "Search chats or reviewers...": "Cari chat atau pengulas...", "UNREAD": "BELUM DIBACA", "TOTAL CHATS": "TOTAL CHAT", "Active on Yoouz": "Aktif di Yoouz", "No conversations yet": "Belum ada percakapan", "Delete Conversation": "Hapus Percakapan", "Block User": "Blokir Pengguna"
   },
   // Vietnamese (vi)
   vi: {
@@ -232,18 +252,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Người theo dõi", "You aren't following anyone yet": "Bạn chưa theo dõi ai",
     "No followers yet": "Chưa có người theo dõi", "Unfollow": "Bỏ theo dõi",
     "Search followed businesses or reviewers...": "Tìm kiếm doanh nghiệp hoặc người đánh giá đã theo dõi...",
-    "Search followers by name...": "Tìm kiếm người theo dõi theo tên..."
+    "Search followers by name...": "Tìm kiếm người theo dõi theo tên...",
+    "Messages": "Tin nhắn", "Search chats or reviewers...": "Tìm kiếm chat hoặc người đánh giá...", "UNREAD": "CHƯA ĐỌC", "TOTAL CHATS": "TỔNG SỐ CHAT", "Active on Yoouz": "Hoạt động trên Yoouz", "No conversations yet": "Chưa có cuộc hội thoại nào", "Delete Conversation": "Xóa cuộc hội thoại", "Block User": "Chặn người dùng"
   },
   // Thai (th)
   th: {
     "Home": "หน้าแรก", "Search": "ค้นหา", "Review Any Business": "รีวิวธุรกิจใดก็ได้",
     "Search any business to watch authentic video reviews or record your own.": "ค้นหาธุรกิจใดก็ได้เพื่อชมวิดีโอรีวิวที่แท้จริงหรือบันทึกรีวิวของคุณเอง",
     "Search business...": "ค้นหาธุรกิจ...", "Verified Web Listing": "เว็บไซต์ที่ได้รับการยืนยัน",
-    "Following & Followers": "กำลังติดตาม & ผู้ติดตาม", "Manage businesses and reviewers you follow on Yoouz": "จัดการธุรกิจและผู้รีวิวที่คุณติดตามบน Yoouz",
+    "Following & Followers": "กำลังติดตาม & ผู้ติดตาม", "Manage businesses and reviewers you follow on Yoouz Thai": "จัดการธุรกิจและผู้รีวิวที่คุณติดตามบน Yoouz",
     "Followers": "ผู้ติดตาม", "You aren't following anyone yet": "คุณยังไม่ได้ติดตามใคร",
     "No followers yet": "ยังไม่มีผู้ติดตาม", "Unfollow": "เลิกติดตาม",
     "Search followed businesses or reviewers...": "ค้นหาธุรกิจหรือผู้รีวิวที่ติดตาม...",
-    "Search followers by name...": "ค้นหาผู้ติดตามตามชื่อ..."
+    "Search followers by name...": "ค้นหาผู้ติดตามตามชื่อ...",
+    "Messages": "ข้อความ", "Search chats or reviewers...": "ค้นหาแชทหรือผู้รีวิว...", "UNREAD": "ยังไม่ได้อ่าน", "TOTAL CHATS": "แชททั้งหมด", "Active on Yoouz": "ใช้งานบน Yoouz", "No conversations yet": "ยังไม่มีการสนทนา", "Delete Conversation": "ลบบทสนทนา", "Block User": "บล็อกผู้ใช้"
   },
   // Romanian (ro)
   ro: {
@@ -254,18 +276,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Urmăritori", "You aren't following anyone yet": "Nu urmărești pe nimeni încă",
     "No followers yet": "Niciun urmăritor încă", "Unfollow": "Nu mai urmări",
     "Search followed businesses or reviewers...": "Caută afaceri sau recenzenți urmăriți...",
-    "Search followers by name...": "Caută urmăritori după nume..."
+    "Search followers by name...": "Caută urmăritori după nume...",
+    "Messages": "Mesaje", "Search chats or reviewers...": "Caută chat-uri sau recenzenți...", "UNREAD": "NECITITE", "TOTAL CHATS": "TOTAL CHAT-URI", "Active on Yoouz": "Activ pe Yoouz", "No conversations yet": "Nicio conversație încă", "Delete Conversation": "Șterge conversația", "Block User": "Blochează utilizatorul"
   },
   // Hungarian (hu)
   hu: {
     "Home": "Főoldal", "Search": "Keresés", "Review Any Business": "Értékeljen bármilyen vállalkozást",
     "Search any business to watch authentic video reviews or record your own.": "Keressen bármilyen vállalkozást, hogy hiteles videóértékeléseket nézzen meg, vagy rögzítse sajátját.",
     "Search business...": "Vállalkozás keresése...", "Verified Web Listing": "Hitelesített weboldal",
-    "Following & Followers": "Követések & Követők", "Manage businesses and reviewers you follow on Yoouz": "Kezelje a követett vállalkozásokat és véleményezőket a Yoouz-on",
+    "Following & Followers": "Követések & Követők", "Manage businesses and reviewers you follow on Yoouz Hungarian": "Kezelje a követett vállalkozásokat és véleményezőket a Yoouz-on",
     "Followers": "Követők", "You aren't following anyone yet": "Még nem követ senkit",
     "No followers yet": "Még nincsenek követők", "Unfollow": "Követés leállítása",
     "Search followed businesses or reviewers...": "Követett vállalkozások vagy véleményezők keresése...",
-    "Search followers by name...": "Követők keresése név szerint..."
+    "Search followers by name...": "Követők keresése név szerint...",
+    "Messages": "Üzenetek", "Search chats or reviewers...": "Csevegések vagy véleményezők keresése...", "UNREAD": "OLVASATLAN", "TOTAL CHATS": "ÖSSZES CSEVEGÉS", "Active on Yoouz": "Aktív a Yoouz-on", "No conversations yet": "Még nincsenek beszélgetések", "Delete Conversation": "Beszélgetés törlése", "Block User": "Felhasználó letiltása"
   },
   // Czech (cs)
   cs: {
@@ -276,18 +300,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Sledující", "You aren't following anyone yet": "Zatím nikoho nesledujete",
     "No followers yet": "Zatím žádní sledující", "Unfollow": "Zrušit sledování",
     "Search followed businesses or reviewers...": "Hledat sledované firmy nebo recenzenty...",
-    "Search followers by name...": "Hledat sledující podle jména..."
+    "Search followers by name...": "Hledat sledující podle jména...",
+    "Messages": "Zprávy", "Search chats or reviewers...": "Hledat chaty nebo recenzenty...", "UNREAD": "NEPŘEČTENÉ", "TOTAL CHATS": "CELKEM CHATŮ", "Active on Yoouz": "Aktivní na Yoouz", "No conversations yet": "Zatím žádné konverzace", "Delete Conversation": "Smazat konverzaci", "Block User": "Zablokovat uživatele"
   },
   // Danish (da)
   da: {
     "Home": "Hjem", "Search": "Søg", "Review Any Business": "Anmeld enhver virksomhed",
     "Search any business to watch authentic video reviews or record your own.": "Søg efter enhver virksomhed for at se autentiske videoanmeldelser eller optag din egen.",
     "Search business...": "Søg virksomhed...", "Verified Web Listing": "Verificeret Hjemmeside",
-    "Following & Followers": "Følger & Følgere", "Manage businesses and reviewers you follow on Yoouz": "Administrer virksomheder og anmeldere, du følger på Yoouz",
+    "Following & Followers": "Følger & Fölgere", "Manage businesses and reviewers you follow on Yoouz Danish": "Administrer virksomheder og anmeldere, du følger på Yoouz",
     "Followers": "Følgere", "You aren't following anyone yet": "Du følger ikke nogen endnu",
     "No followers yet": "Ingen følgere endnu", "Unfollow": "Hold op med at følge",
     "Search followed businesses or reviewers...": "Søg efter fulgte virksomheder eller anmeldere...",
-    "Search followers by name...": "Søg efter følgere efter navn..."
+    "Search followers by name...": "Søg efter følgere efter navn...",
+    "Messages": "Beskeder", "Search chats or reviewers...": "Søg efter chats eller anmeldere...", "UNREAD": "ULÆSTE", "TOTAL CHATS": "TOTAL ANTAL CHATS", "Active on Yoouz": "Aktiv på Yoouz", "No conversations yet": "Ingen samtaler endnu", "Delete Conversation": "Slet samtale", "Block User": "Bloker bruger"
   },
   // Norwegian (no)
   no: {
@@ -297,8 +323,9 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Following & Followers": "Følger & Følgere", "Manage businesses and reviewers you follow on Yoouz": "Administrer bedrifter og anmeldere du følger på Yoouz",
     "Followers": "Følgere", "You aren't following anyone yet": "Du følger ingen ennå",
     "No followers yet": "Ingen følgere ennå", "Unfollow": "Slutt å følge",
-    "Search followed businesses or reviewers...": "Søk etter fulgte bedrifter eller anmeldere...",
-    "Search followers by name...": "Søk etter følgere etter navn..."
+    "Search followed businesses or reviewers...": "Sök etter fulgte bedrifter eller anmeldere...",
+    "Search followers by name...": "Sök etter følgere etter navn...",
+    "Messages": "Meldinger", "Search chats or reviewers...": "Søk etter chatter eller anmeldere...", "UNREAD": "ULESTE", "TOTAL CHATS": "TOTALT ANTALL CHATTER", "Active on Yoouz": "Aktiv på Yoouz", "No conversations yet": "Ingen samtaler ennå", "Delete Conversation": "Slett samtale", "Block User": "Blokker bruker"
   },
   // Finnish (fi)
   fi: {
@@ -309,21 +336,23 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Seuraajat", "You aren't following anyone yet": "Et seuraa vielä ketään",
     "No followers yet": "Ei vielä seuraajia", "Unfollow": "Lopeta seuraaminen",
     "Search followed businesses or reviewers...": "Etsi seurattuja yrityksiä tai arvostelijoita...",
-    "Search followers by name...": "Etsi seuraajia nimen mukaan..."
+    "Search followers by name...": "Etsi seuraajia nimen mukaan...",
+    "Messages": "Viestit", "Search chats or reviewers...": "Etsi chatteja tai arvostelijoita...", "UNREAD": "LUKEMATTOMAT", "TOTAL CHATS": "VIESTEJÄ YHTEENSÄ", "Active on Yoouz": "Aktiivinen Yoouzissa", "No conversations yet": "Ei vielä keskusteluja", "Delete Conversation": "Poista keskustelu", "Block User": "Estä käyttäjä"
   },
   // Bulgarian (bg)
   bg: {
     "Home": "Начало", "Search": "Търсене", "Review Any Business": "Оценете всеки бизнес",
     "Search any business to watch authentic video reviews or record your own.": "Потърсете бизнес, за да гледате истински видео ревюта или запишете свое.",
     "Search business...": "Търсене на бизнес...", "Verified Web Listing": "Проверен уебсайт",
-    "Following & Followers": "Следвани и Последователи", "Manage businesses and reviewers you follow on Yoouz": "Управлявайте бизнесите и рецензентите, които следвате в Yoouz",
+    "Following & Followers": "Следвани и Последователи", "Manage businesses and reviewers you follow on Yoouz Bulgarian": "Управлявайте бизнесите и рецензентите, които следвате в Yoouz",
     "Followers": "Последователи", "You aren't following anyone yet": "Все още не следвате никого",
     "No followers yet": "Все още няма последователи", "Unfollow": "Спиране на следването",
     "Search followed businesses or reviewers...": "Търсене на следвани бизнеси или рецензенти...",
-    "Search followers by name...": "Търсене на последователи по име..."
+    "Search followers by name...": "Търсене на последователи по име...",
+    "Messages": "Съобщения", "Search chats or reviewers...": "Търсене на чатове или рецензенти...", "UNREAD": "НЕПРОЧЕТЕНИ", "TOTAL CHATS": "ОБЩО ЧАТОВЕ", "Active on Yoouz": "Активен в Yoouz", "No conversations yet": "Все още няма разговори", "Delete Conversation": "Изтриване на разговор", "Block User": "Блокиране на потребител"
   },
   // Serbian (sr)
-  sr: {
+ Serbia: {
     "Home": "Почетна", "Search": "Претрага", "Review Any Business": "Оцените било који посао",
     "Search any business to watch authentic video reviews or record your own.": "Потражите било који посао да бисте погледали аутентичне видео рецензије или снимили своје.",
     "Search business...": "Претрага посла...", "Verified Web Listing": "Верификован веб-сајт",
@@ -331,7 +360,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Пратиоци", "You aren't following anyone yet": "Још увек не пратите никога",
     "No followers yet": "Још увек нема пратилаца", "Unfollow": "Престани да пратиш",
     "Search followed businesses or reviewers...": "Претражи праћена предузећа или рецензенте...",
-    "Search followers by name...": "Претражи пратиоце по имену..."
+    "Search followers by name...": "Претражи пратиоце по имену...",
+    "Messages": "Поруке", "Search chats or reviewers...": "Претражи ћаскања или рецензенте...", "UNREAD": "НЕПРОЧИТАНО", "TOTAL CHATS": "УКУПНО ЋАСКАЊА", "Active on Yoouz": "Активан на Yoouz-у", "No conversations yet": "Још увек нема разговора", "Delete Conversation": "Обриши разговор", "Block User": "Блокирај корисника"
   },
   // Croatian (hr)
   hr: {
@@ -342,7 +372,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Pratitelji", "You aren't following anyone yet": "Još uvijek ne pratite nikoga",
     "No followers yet": "Još nema pratitelja", "Unfollow": "Prestani pratiti",
     "Search followed businesses or reviewers...": "Pretraži praćene tvrtke ili recenzente...",
-    "Search followers by name...": "Pretraži pratitelje po imenu..."
+    "Search followers by name...": "Pretraži pratitelje po imenu...",
+    "Messages": "Poruke", "Search chats or reviewers...": "Pretraži chatove ili recenzente...", "UNREAD": "NEPROČITANO", "TOTAL CHATS": "UKUPNO CHATOVA", "Active on Yoouz": "Aktivan na Yoouz-u", "No conversations yet": "Još nema razgovora", "Delete Conversation": "Obriši razgovor", "Block User": "Blokiraj korisnika"
   },
   // Slovak (sk)
   sk: {
@@ -353,7 +384,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Sledovatelia", "You aren't following anyone yet": "Zatiaľ nikoho nesledujete",
     "No followers yet": "Zatiaľ žiadni sledovatelia", "Unfollow": "Prestať sledovať",
     "Search followed businesses or reviewers...": "Hľadať sledované firmy alebo recenzentov...",
-    "Search followers by name...": "Hľadať sledovateľov podľa mena..."
+    "Search followers by name...": "Hľadať sledovateľov podľa mena...",
+    "Messages": "Správy", "Search chats or reviewers...": "Hľadať chaty alebo recenzentov...", "UNREAD": "NEPREČÍTANÉ", "TOTAL CHATS": "CELKOM CHATOV", "Active on Yoouz": "Aktívny na Yoouz", "No conversations yet": "Zatiaľ žiadne konverzácie", "Delete Conversation": "Vymazať konverzáciu", "Block User": "Zablokovať používateľa"
   },
   // Slovenian (sl)
   sl: {
@@ -364,7 +396,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Sledilci", "You aren't following anyone yet": "Še nikomur ne sledite",
     "No followers yet": "Še ni sledilcev", "Unfollow": "Prenehaj slediti",
     "Search followed businesses or reviewers...": "Iskanje sledenih podjetij ali ocenjevalcev...",
-    "Search followers by name...": "Iskanje sledilcev po imenu..."
+    "Search followers by name...": "Iskanje sledilcev po imenu...",
+    "Messages": "Sporočila", "Search chats or reviewers...": "Iskanje klepetov ali ocenjevalcev...", "UNREAD": "NEPREBRANO", "TOTAL CHATS": "SKUPAJ KLEPETOV", "Active on Yoouz": "Aktiven na Yoouz", "No conversations yet": "Še ni pogovorov", "Delete Conversation": "Izbriši pogovor", "Block User": "Blokiraj uporabnika"
   },
   // Lithuanian (lt)
   lt: {
@@ -375,7 +408,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Sekėjai", "You aren't following anyone yet": "Dar nieko nesekate",
     "No followers yet": "Dar nėra sekėjų", "Unfollow": "Nebesekti",
     "Search followed businesses or reviewers...": "Ieškoti sekamų verslų ar apžvalgininkų...",
-    "Search followers by name...": "Ieškoti sekėjų pagal vardą..."
+    "Search followers by name...": "Ieškoti sekėjų pagal vardą...",
+    "Messages": "Žinutės", "Search chats or reviewers...": "Ieškoti pokalbių ar apžvalgininkų...", "UNREAD": "NEPERSKAITYTA", "TOTAL CHATS": "IŠ VISO POKALBIŲ", "Active on Yoouz": "Aktyvus „Yoouz“", "No conversations yet": "Dar nėra pokalbių", "Delete Conversation": "Ištrinti pokalbį", "Block User": "Užblokuoti vartotoją"
   },
   // Latvian (lv)
   lv: {
@@ -386,7 +420,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Sekotāji", "You aren't following anyone yet": "Jūs vēl nevienam nesekojat",
     "No followers yet": "Vēl nav sekotāju", "Unfollow": "Atcelt sekošanu",
     "Search followed businesses or reviewers...": "Meklēt sekotos uzņēmumus vai recenzentus...",
-    "Search followers by name...": "Meklēt sekotājus pēc vārda..."
+    "Search followers by name...": "Meklēt sekotājus pēc vārda...",
+    "Messages": "Ziņojumi", "Search chats or reviewers...": "Meklēt tērzēšanu vai recenzentus...", "UNREAD": "NELASĪTI", "TOTAL CHATS": "KOPĀ TĒRZĒŠANU", "Active on Yoouz": "Aktīvs Yoouz", "No conversations yet": "Vēl nav sarunu", "Delete Conversation": "Dzēst sarunu", "Block User": "Bloķēt lietotāju"
   },
   // Estonian (et)
   et: {
@@ -397,7 +432,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Jälgijad", "You aren't following anyone yet": "Sa ei jälgi veel kedagi",
     "No followers yet": "Jälgijaid veel pole", "Unfollow": "Lõpeta jälgimine",
     "Search followed businesses or reviewers...": "Otsi jälgitavaid ettevõtteid või arvustajaid...",
-    "Search followers by name...": "Otsi jälgijaid nime järgi..."
+    "Search followers by name...": "Otsi jälgijaid nime järgi...",
+    "Messages": "Sõnumid", "Search chats or reviewers...": "Otsi vestlusi või arvustajaid...", "UNREAD": "LUGEMATA", "TOTAL CHATS": "VESTLUSI KOKKU", "Active on Yoouz": "Aktiivne Yoouzis", "No conversations yet": "Vestlusi veel pole", "Delete Conversation": "Kustuta vestlus", "Block User": "Blokeeri kasutaja"
   },
   // Persian (fa)
   fa: {
@@ -408,18 +444,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "دنبال‌کنندگان", "You aren't following anyone yet": "شما هنوز کسی را دنبال نمی‌کنید",
     "No followers yet": "هنوز دنبال‌کننده‌ای وجود ندارد", "Unfollow": "لغو دنبال کردن",
     "Search followed businesses or reviewers...": "جستجوی کسب و کارها یا منتقدان دنبال شده...",
-    "Search followers by name...": "جستجوی دنبال‌کنندگان بر اساس نام..."
+    "Search followers by name...": "جستجوی دنبال‌کنندگان بر اساس نام...",
+    "Messages": "پیام‌ها", "Search chats or reviewers...": "جستجوی چت‌ها یا منتقدان...", "UNREAD": "خوانده نشده", "TOTAL CHATS": "مجموع چت‌ها", "Active on Yoouz": "فعال در Yoouz", "No conversations yet": "هنوز هیچ گفتگویی وجود ندارد", "Delete Conversation": "حذف گفتگو", "Block User": "مسدود کردن کاربر"
   },
   // Urdu (ur)
   ur: {
-    "Home": "ہوم", "Search": "تلاش", "Review Any Business": "کسی بھی کاروبار का جائزہ لیں",
-    "Search any business to watch authentic video reviews or record your own.": "اصلی ویڈیو جائزے دیکھنے یا اپنا ریکارڈ کرنے کے لیے کسی भी کاروبار کو تلاش کریں۔",
+    "Home": "ہوم", "Search": "تلاش", "Review Any Business": "کسی भी کاروبار کا جائزہ لیں",
+    "Search any business to watch authentic video reviews or record your own.": "اصلی ویڈیو جائزے دیکھنے یا اپنا ریکارڈ کرنے کے لیے کسی بھی کاروبار کو تلاش کریں۔",
     "Search business...": "کاروبار تلاش کریں...", "Verified Web Listing": "تصدیق شدہ ویب سائٹ",
     "Following & Followers": "فالوئنگ اور فالورز", "Manage businesses and reviewers you follow on Yoouz": "Yoouz پر ان کاروباروں اور تبصرہ نگاروں کا انتظام کریں جنہیں آپ فالو کرتے ہیں",
     "Followers": "فالورز", "You aren't following anyone yet": "آپ ابھی تک کسی کو فالو نہیں کر رہے ہیں",
     "No followers yet": "ابھی تک کوئی فالورز نہیں", "Unfollow": "ان فالو کریں",
     "Search followed businesses or reviewers...": "فالو کیے گئے کاروبار یا تبصرہ نگار تلاش کریں...",
-    "Search followers by name...": "نام سے فالورز تلاش کریں..."
+    "Search followers by name...": "نام سے فالورز تلاش کریں...",
+    "Messages": "پیغامات", "Search chats or reviewers...": "چیٹ یا تبصرہ نگار تلاش کریں...", "UNREAD": "غیر پڑھے ہوئے", "TOTAL CHATS": "کل چیٹس", "Active on Yoouz": "Yoouz پر فعال", "No conversations yet": "ابھی تک کوئی بات چیت نہیں", "Delete Conversation": "بات چیت حذف کریں", "Block User": "صارف کو بلاک کریں"
   },
   // Georgian (ka)
   ka: {
@@ -430,7 +468,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "მიმდევრები", "You aren't following anyone yet": "თქვენ ჯერ არავის მიჰყვებით",
     "No followers yet": "ჯერ მიმდევრები არ არიან", "Unfollow": "მიდევნების შეწყვეტა",
     "Search followed businesses or reviewers...": "მოძებნეთ მიდევნებული ბიზნესები ან მიმომხილველები...",
-    "Search followers by name...": "მოძებნეთ მიმდევრები სახელით..."
+    "Search followers by name...": "მოძებნეთ მიმდევრები სახელით...",
+    "Messages": "შეტყობინებები", "Search chats or reviewers...": "მოძებნეთ ჩატები ან მიმომხილველები...", "UNREAD": "წაუკითხავი", "TOTAL CHATS": "სულ ჩატები", "Active on Yoouz": "აქტიურია Yoouz-ზე", "No conversations yet": "ჯერ არ არის საუბრები", "Delete Conversation": "საუბრის წაშლა", "Block User": "მომხმარებლის დაბლოკვა"
   },
   // Armenian (hy)
   hy: {
@@ -441,7 +480,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Հետևորդներ", "You aren't following anyone yet": "Դուք դեռ ոչ ոքի չեք հետևում",
     "No followers yet": "Դեռևս հետևորդներ չկան", "Unfollow": "Դադարեցնել հետևելը",
     "Search followed businesses or reviewers...": "Փնտրել հետևվող բիզնեսներին կամ գրախոսողներին...",
-    "Search followers by name...": "Փնտրել հետևորդներին ըստ անվան..."
+    "Search followers by name...": "Փնտրել հետևորդներին ըստ անվան...",
+    "Messages": "Հաղորդագրություններ", "Search chats or reviewers...": "Փնտրել չաթեր կամ գրախոսողներ...", "UNREAD": "ՉԿԱՐԴԱՑՎԱԾ", "TOTAL CHATS": "ԸՆԴՀԱՆՈՒՐ ՉԱԹԵՐ", "Active on Yoouz": "Ակտիվ է Yoouz-ում", "No conversations yet": "Դեռևս զրույցներ չկան", "Delete Conversation": "Ջնջել զրույցը", "Block User": "Արգելափակել օգտատիրոջը"
   },
   // Azerbaijani (az)
   az: {
@@ -452,7 +492,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "İzləyicilər", "You aren't following anyone yet": "Hələ heç kimi izləmirsiniz",
     "No followers yet": "Hələ izləyici yoxdur", "Unfollow": "İzləməyi dayandır",
     "Search followed businesses or reviewers...": "İzlənilən biznesləri və ya rəyçiləri axtarın...",
-    "Search followers by name...": "İzləyiciləri ada görə axtarın..."
+    "Search followers by name...": "İzləyiciləri ada görə axtarın...",
+    "Messages": "Mesajlar", "Search chats or reviewers...": "Söhbətləri və ya rəyçiləri axtarın...", "UNREAD": "OXUNMAMIŞ", "TOTAL CHATS": "CƏMİ SÖHBƏTLƏR", "Active on Yoouz": "Yoouz-da aktivdir", "No conversations yet": "Hələ söhbət yoxdur", "Delete Conversation": "Söhbəti sil", "Block User": "İstifadəçini blokla"
   },
   // Bengali (bn)
   bn: {
@@ -463,18 +504,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ফলোয়ার", "You aren't following anyone yet": "আপনি এখনও কাউকে ফলো করছেন না",
     "No followers yet": "এখনও কোনও ফলোয়ার নেই", "Unfollow": "আনফলো করুন",
     "Search followed businesses or reviewers...": "অনুসরণ করা ব্যবসা বা পর্যালোচকদের খুঁজুন...",
-    "Search followers by name...": "নাম দিয়ে ফলোয়ার খুঁজুন..."
+    "Search followers by name...": "নাম দিয়ে ফলোয়ার খুঁজুন...",
+    "Messages": "বার্তা", "Search chats or reviewers...": "চ্যাট বা পর্যালোচকদের খুঁজুন...", "UNREAD": "অপঠিত", "TOTAL CHATS": "মোট চ্যাট", "Active on Yoouz": "Yoouz-এ সক্রিয়", "No conversations yet": "এখনও কোনো কথোপকথন নেই", "Delete Conversation": "কথোপকথন মুছুন", "Block User": "ব্যবহারকারীকে ব্লক করুন"
   },
   // Filipino (tl)
   tl: {
     "Home": "Home", "Search": "Maghanap", "Review Any Business": "Suriin ang Anumang Negosyo",
-    "Search any business to watch authentic video reviews or record your own.": "Maghanap ng negosyo para manood ng mga totoong video review o i-record ang iyong sarili.",
+    "Search any business to watch authentic video reviews or record your own.": "Maghanap ng anumang negosyo para manood ng mga totoong video review o i-record ang iyong sarili.",
     "Search business...": "Maghanap ng negosyo...", "Verified Web Listing": "Na-verify na Website",
     "Following & Followers": "Following & Followers", "Manage businesses and reviewers you follow on Yoouz": "Pamahalaan ang mga negosyo at reviewer na sinusunod mo sa Yoouz",
     "Followers": "Followers", "You aren't following anyone yet": "Hindi ka pa sumusunod sa sinuman",
     "No followers yet": "Wala pang followers", "Unfollow": "Unfollow",
     "Search followed businesses or reviewers...": "Maghanap ng mga sinusunod na negosyo o reviewer...",
-    "Search followers by name...": "Maghanap ng mga follower sa pangalan..."
+    "Search followers by name...": "Maghanap ng mga follower sa pangalan...",
+    "Messages": "Mga Mensahe", "Search chats or reviewers...": "Maghanap ng mga chat o reviewer...", "UNREAD": "HINDI NABABASA", "TOTAL CHATS": "KABUUANG MGA CHAT", "Active on Yoouz": "Aktibo sa Yoouz", "No conversations yet": "Wala pang mga pag-uusap", "Delete Conversation": "I-delete ang Pag-uusap", "Block User": "I-block ang User"
   },
   // Malay (ms)
   ms: {
@@ -485,7 +528,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Pengikut", "You aren't following anyone yet": "Anda belum mengikuti sesiapa lagi",
     "No followers yet": "Belum ada pengikut", "Unfollow": "Berhenti Mengikuti",
     "Search followed businesses or reviewers...": "Cari perniagaan atau pengulas yang diikuti...",
-    "Search followers by name...": "Cari pengikut mengikut nama..."
+    "Search followers by name...": "Cari pengikut mengikut nama...",
+    "Messages": "Mesej", "Search chats or reviewers...": "Cari sembang atau pengulas...", "UNREAD": "TIDAK DIBACA", "TOTAL CHATS": "JUMLAH SEMBANG", "Active on Yoouz": "Aktif di Yoouz", "No conversations yet": "Belum ada perbualan", "Delete Conversation": "Padam Perbualan", "Block User": "Sekat Pengguna"
   },
   // Swahili (sw)
   sw: {
@@ -496,7 +540,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Wafuasi", "You aren't following anyone yet": "Hujamfuata mtu yeyote bado",
     "No followers yet": "Hakuna wafuasi bado", "Unfollow": "Acha kufuata",
     "Search followed businesses or reviewers...": "Tafuta biashara au wakaguzi unaowafuata...",
-    "Search followers by name...": "Tafuta wafuasi kwa jina..."
+    "Search followers by name...": "Tafuta wafuasi kwa jina...",
+    "Messages": "Ujumbe", "Search chats or reviewers...": "Tafuta soga au wakaguzi...", "UNREAD": "HAJASOMWA", "TOTAL CHATS": "JUMLA YA SOGA", "Active on Yoouz": "Yupo hewani Yoouz", "No conversations yet": "Hakuna mazungumzo bado", "Delete Conversation": "Futa Mazungumzo", "Block User": "Mzuie Mtumiaji"
   },
   // Icelandic (is)
   is: {
@@ -507,7 +552,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Fylgjendur", "You aren't following anyone yet": "Þú fylgist ekki með neinum ennþá",
     "No followers yet": "Engir fylgjendur ennþá", "Unfollow": "Hætta að fylgja",
     "Search followed businesses or reviewers...": "Leita að fyrirtækjum eða gagnrýnendum sem þú fylgist með...",
-    "Search followers by name...": "Leita að fylgjendum eftir nafni..."
+    "Search followers by name...": "Leita að fylgjendum eftir nafni...",
+    "Messages": "Skilaboð", "Search chats or reviewers...": "Leita að spjalli eða gagnrýnendum...", "UNREAD": "ÓLESIÐ", "TOTAL CHATS": "SAMTALS SPJÖLL", "Active on Yoouz": "Virkur á Yoouz", "No conversations yet": "Engar samræður ennþá", "Delete Conversation": "Eyða samræðum", "Block User": "Loka á notanda"
   },
   // Albanian (sq)
   sq: {
@@ -518,7 +564,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Ndjekësit", "You aren't following anyone yet": "Nuk po ndiqni askënd ende",
     "No followers yet": "Asnjë ndjekës ende", "Unfollow": "Hiq ndjekjen",
     "Search followed businesses or reviewers...": "Kërkoni bizneset ose recenzentët e ndjekur...",
-    "Search followers by name...": "Kërkoni ndjekësit sipas emrit..."
+    "Search followers by name...": "Kërkoni ndjekësit sipas emrit...",
+    "Messages": "Mesazhet", "Search chats or reviewers...": "Kërkoni bisedat ose recenzentët...", "UNREAD": "TË PALEXUARA", "TOTAL CHATS": "TOTALI I BISEDAVE", "Active on Yoouz": "Aktiv në Yoouz", "No conversations yet": "Asnjë bisedë ende", "Delete Conversation": "Fshini bisedën", "Block User": "Bllokoni përdoruesin"
   },
   // Irish (ga)
   ga: {
@@ -529,7 +576,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Leantóirí", "You aren't following anyone yet": "Níl tú ag leanúint aon duine fós",
     "No followers yet": "Níl aon leantóirí fós", "Unfollow": "Stop ag leanúint",
     "Search followed businesses or reviewers...": "Cuardaigh gnóthaí nó léirmheastóirí a leantar...",
-    "Search followers by name...": "Cuardaigh leantóirí de réir ainm..."
+    "Search followers by name...": "Cuardaigh leantóirí de réir ainm...",
+    "Messages": "Teachtaireachtaí", "Search chats or reviewers...": "Cuardaigh comhráite nó léirmheastóirí...", "UNREAD": "GAN LÉAMH", "TOTAL CHATS": "IOMLÁN COMHRÁITE", "Active on Yoouz": "Gníomhach ar Yoouz", "No conversations yet": "Níl aon chomhráite fós", "Delete Conversation": "Scrios Comhrá", "Block User": "Cuir bac ar úsáideoir"
   },
   // Catalan (ca)
   ca: {
@@ -540,7 +588,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Seguidors", "You aren't following anyone yet": "Encara no segueixes ningú",
     "No followers yet": "Encara no hi ha seguidors", "Unfollow": "Deixar de seguir",
     "Search followed businesses or reviewers...": "Cerca negocis o ressenyadors seguits...",
-    "Search followers by name...": "Cerca seguidors per nom..."
+    "Search followers by name...": "Cerca seguidors per nom...",
+    "Messages": "Missatges", "Search chats or reviewers...": "Cerca xats o ressenyadors...", "UNREAD": "NO LLEGITS", "TOTAL CHATS": "XATS TOTALS", "Active on Yoouz": "Actiu a Yoouz", "No conversations yet": "Encara no hi ha converses", "Delete Conversation": "Eliminar conversa", "Block User": "Bloquejar usuari"
   },
   // Basque (eu)
   eu: {
@@ -551,7 +600,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Jarraitzaileak", "You aren't following anyone yet": "Oraindik ez diozu inori jarraitzen",
     "No followers yet": "Jarraitzailerik ez oraindik", "Unfollow": "Jarraitzeari utzi",
     "Search followed businesses or reviewers...": "Bilatu jarraitutako negozioak edo iritzi-emaileak...",
-    "Search followers by name...": "Bilatu jarraitzaileak izenaren arabera..."
+    "Search followers by name...": "Bilatu jarraitzaileak izenaren arabera...",
+    "Messages": "Mezuak", "Search chats or reviewers...": "Bilatu txatak edo iritzi-emaileak...", "UNREAD": "IRAKURRI GABEKOAK", "TOTAL CHATS": "TXATAK GUZTIRA", "Active on Yoouz": "Aktibo Yoouzen", "No conversations yet": "Elkarrizketarik ez oraindik", "Delete Conversation": "Ezabatu elkarrizketa", "Block User": "Blokeatu erabiltzailea"
   },
   // Galician (gl)
   gl: {
@@ -562,7 +612,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Seguidores", "You aren't following anyone yet": "Aínda no segues a ninguén",
     "No followers yet": "Sen seguidores aínda", "Unfollow": "Deixar de seguir",
     "Search followed businesses or reviewers...": "Buscar negocios ou críticos seguidos...",
-    "Search followers by name...": "Buscar seguidores por nome..."
+    "Search followers by name...": "Buscar seguidores por nome...",
+    "Messages": "Mensaxes", "Search chats or reviewers...": "Buscar chats ou críticos...", "UNREAD": "NON LIDAS", "TOTAL CHATS": "TOTAL DE CHATS", "Active on Yoouz": "Activo en Yoouz", "No conversations yet": "Aínda non hai conversas", "Delete Conversation": "Eliminar conversa", "Block User": "Bloquear usuario"
   },
   // Maltese (mt)
   mt: {
@@ -573,7 +624,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Segwaċi", "You aren't following anyone yet": "Għadek ma ssegwi lil ħadd",
     "No followers yet": "Għadu m'hemmx segwaċi", "Unfollow": "Unfollow",
     "Search followed businesses or reviewers...": "Fittex negozji jew reviżuri segwiti...",
-    "Search followers by name...": "Fittex segwaċi bl-isem..."
+    "Search followers by name...": "Fittex segwaċi bl-isem...",
+    "Messages": "Messaġġi", "Search chats or reviewers...": "Fittex chats jew reviżuri...", "UNREAD": "MHUX MOQRUJA", "TOTAL CHATS": "TOTAL TA' CHATS", "Active on Yoouz": "Attiv fuq Yoouz", "No conversations yet": "Għadu m'hemmx konversazzjonijiet", "Delete Conversation": "Ħassar il-Konversazzjoni", "Block User": "Blokka lill-Utent"
   },
   // Punjabi (pa)
   pa: {
@@ -584,18 +636,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ਫਾਲੋਅਰਜ਼", "You aren't following anyone yet": "ਤੁਸੀਂ ਅਜੇ ਤੱਕ ਕਿਸੇ ਨੂੰ ਫਾਲੋ ਨਹੀਂ ਕਰ ਰਹੇ ਹੋ",
     "No followers yet": "ਅਜੇ ਤੱਕ ਕੋਈ ਫਾਲੋਅਰਜ਼ ਨਹੀਂ", "Unfollow": "ਅਨਫਾਲੋ ਕਰੋ",
     "Search followed businesses or reviewers...": "ਫਾਲੋ ਕੀਤੇ ਕਾਰੋਬਾਰਾਂ ਜਾਂ ਸਮੀਖਿਅਕਾਂ ਦੀ ਖੋਜ ਕਰੋ...",
-    "Search followers by name...": "ਨਾਂ ਨਾਲ ਫਾਲੋਅਰਜ਼ ਦੀ ਖੋਜ ਕਰੋ..."
-  },
-  // Tamil (ta)
- Tamil: {
-    "Home": "முகப்பு", "Search": "தேடல்", "Review Any Business": "எந்தவொரு வணிகத்தையும் மதிப்பாய்வு செய்யவும்",
-    "Search any business to watch authentic video reviews or record your own.": "உண்மையான வீடியோ மதிப்புரைகளைப் பார்க்க அல்லது உங்கள் சொந்தத்தைப் பதிவு செய்ய எந்தவொரு வணிகத்தையும் தேடுங்கள்.",
-    "Search business...": "வணிகத்தைத் தேடுங்கள்...", "Verified Web Listing": "சரிபார்க்கப்பட்ட இணையதளம்",
-    "Following & Followers": "பின்தொடர்தல் & பின்பற்றுபவர்கள்", "Manage businesses and reviewers you follow on Yoouz": "Yoouz-ல் நீங்கள் பின்தொடரும் வணிகங்கள் மற்றும் விமர்சகர்களை நிர்வகிக்கவும்",
-    "Followers": "பின்பற்றுபவர்கள்", "You aren't following anyone yet": "நீங்கள் இன்னும் யாரையும் பின்தொடரவில்லை",
-    "No followers yet": "இன்னும் பின்பற்றுபவர்கள் இல்லை", "Unfollow": "பின்தொடர்வதை நிறுத்து",
-    "Search followed businesses or reviewers...": "பின்தொடரும் வணிகங்கள் அல்லது விமர்சகர்களைத் தேடுங்கள்...",
-    "Search followers by name...": "பெயர் மூலம் பின்பற்றுபவர்களைத் தேடுங்கள்..."
+    "Search followers by name...": "ਨਾਂ ਨਾਲ ਫਾਲੋਅਰਜ਼ ਦੀ ਖੋਜ ਕਰੋ...",
+    "Messages": "ਸੁਨੇਹੇ", "Search chats or reviewers...": "ਚੈਟ ਜਾਂ ਸਮੀਖਿਅਕਾਂ ਦੀ ਖੋਜ ਕਰੋ...", "UNREAD": "ਅਣਪੜ੍ਹੇ", "TOTAL CHATS": "ਕੁੱਲ ਚੈਟ", "Active on Yoouz": "Yoouz 'ਤੇ ਸਰਗਰਮ", "No conversations yet": "ਅਜੇ ਤੱਕ ਕੋਈ ਗੱਲਬਾਤ ਨਹੀਂ", "Delete Conversation": "ਗੱਲਬਾਤ ਮਿਟਾਓ", "Block User": "ਵਰਤੋਂਕਾਰ ਨੂੰ ਬਲੌਕ ਕਰੋ"
   },
   // Telugu (te)
   te: {
@@ -606,7 +648,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ఫాలోయర్స్", "You aren't following anyone yet": "మీరు ఇంకా ఎవరినీ ఫాలో అవ్వడం లేదు",
     "No followers yet": "ఇంకా ఫాలోయర్స్ లేరు", "Unfollow": "అన్‌ఫాలో చేయండి",
     "Search followed businesses or reviewers...": "ఫాలో అవుతున్న వ్యాపారాలు లేదా సమీక్షకులను శోధించండి...",
-    "Search followers by name...": "పేరు ద్వారా ఫాలోయర్లను శోధించండి..."
+    "Search followers by name...": "పేరు ద్వారా ఫాలోయర్లను శోధించండి...",
+    "Messages": "సందేశాలు", "Search chats or reviewers...": "చాట్‌లు లేదా సమీక్షకులను శోధించండి...", "UNREAD": "చదవనివి", "TOTAL CHATS": "మొత్తం చాట్‌లు", "Active on Yoouz": "Yoouzలో యాక్టివ్‌గా ఉన్నారు", "No conversations yet": "ఇంకా సంభాషణలు లేవు", "Delete Conversation": "సంభాషణను తొలగించు", "Block User": "వినియోగదారుని బ్లాక్ చేయండి"
   },
   // Marathi (mr)
   mr: {
@@ -617,7 +660,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "फॉलोअर्स", "You aren't following anyone yet": "तुम्ही अजून कोणालाही फॉलो करत नाही आहात",
     "No followers yet": "अजून कोणीही फॉलोअर्स नाहीत", "Unfollow": "अनफॉलो करा",
     "Search followed businesses or reviewers...": "फॉलो केलेले व्यवसाय किंवा समीक्षक शोधा...",
-    "Search followers by name...": "नावाने फॉलोअर्स शोधा..."
+    "Search followers by name...": "नावाने फॉलोअर्स शोधा...",
+    "Messages": "संदेश", "Search chats or reviewers...": "चॅट किंवा समीक्षक शोधा...", "UNREAD": "न वाचलेले", "TOTAL CHATS": "एकूण चॅट", "Active on Yoouz": "Yoouz वर सक्रिय", "No conversations yet": "अद्याप कोणतीही संभाषणे नाहीत", "Delete Conversation": "संभाषण हटवा", "Block User": "वापरकर्त्याला ब्लॉक करा"
   },
   // Gujarati (gu)
   gu: {
@@ -628,18 +672,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ફોલોઅર્સ", "You aren't following anyone yet": "તમે હજી સુધી કોઈને ફોલો કરી રહ્યા નથી",
     "No followers yet": "હજી સુધી કોઈ ફોલોઅર્સ નથી", "Unfollow": "અનફોલો કરો",
     "Search followed businesses or reviewers...": "ફોલો કરેલા વ્યવસાયો અથવા સમીક્ષકો શોધો...",
-    "Search followers by name...": "નામ દ્વારા ફોલોઅર્સ શોધો..."
+    "Search followers by name...": "નામ દ્વારા ફોલોઅર્સ શોધો...",
+    "Messages": "સંદેશા", "Search chats or reviewers...": "ચેટ અથવા સમીક્ષકો શોધો...", "UNREAD": "ન વંચાયેલ", "TOTAL CHATS": "કુલ ચેટ", "Active on Yoouz": "Yoouz પર સક્રિય", "No conversations yet": "હજી સુધી કોઈ વાતચીત નથી", "Delete Conversation": "વાતચીત કાઢી નાખો", "Block User": "વપરાશકર્તાને અવરોધિત કરો"
   },
   // Kannada (kn)
   kn: {
     "Home": "ಹೋಮ್", "Search": "ಹುಡುಕಿ", "Review Any Business": "ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ವಿಮರ್ಶಿಸಿ",
-    "Search any business to watch authentic video reviews or record your own.": "ಅಪ್ಪಟ ವೀಡಿಯೊ ವಿಮರ್ಶೆಗಳನ್ನು ವೀಕ್ಷಿಸಲು ಅಥವಾ ನಿಮ್ಮದೇ ಆದದನ್ನು ರೆಕาร์ಡ್ ಮಾಡಲು ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ಹುಡುಕಿ.",
+    "Search any business to watch authentic video reviews or record your own.": "ಅಪ್ಪಟ ವೀಡಿಯೊ ವಿಮರ್ಶೆಗಳನ್ನು ವೀಕ್ಷಿಸಲು ಅಥವಾ ನಿಮ್ಮದೇ ಆದದನ್ನು ರೆಕಾರ್ಡ್ ಮಾಡಲು ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ಹುಡುಕಿ.",
     "Search business...": "ವ್ಯವಹಾರವನ್ನು ಹುಡುಕಿ...", "Verified Web Listing": "ಪರಿಶೀಲಿಸಿದ ವೆಬ್‌ಸೈಟ್",
     "Following & Followers": "ಫಾಲೋಯಿಂಗ್ ಮತ್ತು ಫಾಲೋವರ್ಸ್", "Manage businesses and reviewers you follow on Yoouz": "Yoouz ನಲ್ಲಿ ನೀವು ಫಾಲೋ ಮಾಡುತ್ತಿರುವ ವ್ಯವಹಾರಗಳು ಮತ್ತು ವಿಮರ್ಶಕರನ್ನು ನಿರ್ವಹಿಸಿ",
     "Followers": "ಫಾಲೋವರ್ಸ್", "You aren't following anyone yet": "ನೀವು ಇನ್ನೂ ಯಾರನ್ನೂ ಫಾಲೋ ಮಾಡುತ್ತಿಲ್ಲ",
     "No followers yet": "ಇನ್ನೂ ಯಾವುದೇ ಫಾಲೋವರ್ಸ್ ಇಲ್ಲ", "Unfollow": "ಅನ್‌ಫಾಲೋ ಮಾಡಿ",
     "Search followed businesses or reviewers...": "ಫಾಲೋ ಮಾಡಿದ ವ್ಯವಹಾರಗಳು ಅಥವಾ ವಿಮರ್ಶಕರನ್ನು ಹುಡುಕಿ...",
-    "Search followers by name...": "ಹೆಸರಿನ ಮೂಲಕ ಫಾಲೋವರ್ಸ್ ಹುಡುಕಿ..."
+    "Search followers by name...": "ಹೆಸರಿನ ಮೂಲಕ ಫಾಲೋವರ್ಸ್ ಹುಡುಕಿ...",
+    "Messages": "ಸಂದೇಶಗಳು", "Search chats or reviewers...": "ಚಾಟ್‌ಗಳು ಅಥವಾ ವಿಮರ್ಶಕರನ್ನು ಹುಡುಕಿ...", "UNREAD": "ಓದದ", "TOTAL CHATS": "ಒಟ್ಟು ಚಾಟ್‌ಗಳು", "Active on Yoouz": "Yoouz ನಲ್ಲಿ ಸಕ್ರಿಯವಾಗಿದೆ", "No conversations yet": "ಇನ್ನೂ ಯಾವುದೇ ಸಂಭಾಷಣೆಗಳಿಲ್ಲ", "Delete Conversation": "ಸಂಭಾಷಣೆಯನ್ನು ಅಳಿಸಿ", "Block User": "ಬಳಕೆದಾರರನ್ನು ನಿರ್ಬಂಧಿಸಿ"
   },
   // Malayalam (ml)
   ml: {
@@ -650,7 +696,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ഫോളോവേഴ്‌സ്", "You aren't following anyone yet": "നിങ്ങൾ ഇതുവരെ ആരെയും പിന്തുടരുന്നില്ല",
     "No followers yet": "ഇതുവരെ ഫോളോവേഴ്‌സ് ഇല്ല", "Unfollow": "അൺഫോളോ ചെയ്യുക",
     "Search followed businesses or reviewers...": "പിന്തുടരുന്ന ബിസിനസ്സുകളോ അവലോകകരോ തിരയുക...",
-    "Search followers by name...": "പേര് ഉപയോഗിച്ച് ഫോളോവേഴ്‌സിനെ തിരയുക..."
+    "Search followers by name...": "പേര് ഉപയോഗിച്ച് ഫോളোവേഴ്‌സിനെ തിരയുക...",
+    "Messages": "സന്ദേശങ്ങൾ", "Search chats or reviewers...": "ചാറ്റുകളോ അവലോകകരോ തിരയുക...", "UNREAD": "വായിക്കാത്തവ", "TOTAL CHATS": "ആകെ ചാറ്റുകൾ", "Active on Yoouz": "Yoouz-ൽ സജീവമാണ്", "No conversations yet": "സംഭാഷണങ്ങളൊന്നുമില്ല", "Delete Conversation": "സംഭാഷണം ഇല്ലാതാക്കുക", "Block User": "ഉപയോക്താവിനെ തടയുക"
   },
   // Burmese (my)
   my: {
@@ -661,18 +708,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ဖော်လိုဝါများ", "You aren't following anyone yet": "သင် မည်သူ့ကိုမျှ ဖော်လိုမလုပ်ရသေးပါ",
     "No followers yet": "ဖော်လိုဝါ မရှိသေးပါ", "Unfollow": "ဖော်လိုလုပ်ထားမှုကို ရပ်ဆိုင်းပါ",
     "Search followed businesses or reviewers...": "ဖော်လိုလုပ်ထားသော လုပ်ငန်းများ သို့မဟုတ် သုံးသပ်သူများကို ရှာဖွေပါ...",
-    "Search followers by name...": "အမည်ဖြင့် ဖော်လိုဝါများကို ရှာဖွေပါ..."
+    "Search followers by name...": "အမည်ဖြင့် ဖော်လိုဝါများကို ရှာဖွေပါ...",
+    "Messages": "မက်ဆေ့ဂျ်များ", "Search chats or reviewers...": "ချက်တင်များ သို့မဟုတ် သုံးသပ်သူများကို ရှာဖွေပါ...", "UNREAD": "မဖတ်ရသေးသော", "TOTAL CHATS": "စုစုပေါင်း ချက်တင်များ", "Active on Yoouz": "Yoouz တွင် အသုံးပြုနေသည်", "No conversations yet": "ပြောဆိုမှုများ မရှိသေးပါ", "Delete Conversation": "ပြောဆိုမှုကို ဖျက်ပါ", "Block User": "အသုံးပြုသူကို ပိတ်ဆို့ပါ"
   },
   // Khmer (km)
   km: {
     "Home": "ទំព័រដើម", "Search": "ស្វែងរក", "Review Any Business": "ពិនិត្យមើលអាជីវកម្មណាមួយ",
-    "Search any business to watch authentic video reviews or record your own.": "ស្វែងរកអាជីវកម្មណាមួយเพื่อមើលការវាយតម្លៃវីដេអូពិតប្រាកដ ឬកត់ត្រាដោយខ្លួនឯង។",
+    "Search any business to watch authentic video reviews or record your own.": "ស្វែងរកអាជីវកម្មណាមួយដើម្បីមើលការវាយតម្លៃវីដេអូពិតប្រាកដ ឬកត់ត្រាដោយខ្លួនឯង។",
     "Search business...": "ស្វែងរកអាជីវកម្ម...", "Verified Web Listing": "គេហទំព័រដែលបានផ្ទៀងផ្ទាត់",
     "Following & Followers": "កំពុងតាមដាន & អ្នកតាមដាន", "Manage businesses and reviewers you follow on Yoouz": "គ្រប់គ្រងអាជីវកម្ម និងអ្នកត្រួតពិនិត្យដែលអ្នកតាមដាននៅលើ Yoouz",
     "Followers": "អ្នកតាមដាន", "You aren't following anyone yet": "អ្នកមិនទាន់តាមដាននរណាម្នាក់នៅឡើយទេ",
     "No followers yet": "មិនទាន់មានអ្នកតាមដានទេ", "Unfollow": "ឈប់តាមដាន",
     "Search followed businesses or reviewers...": "ស្វែងរកអាជីវកម្ម ឬអ្នកពិនិត្យដែលបានតាមដាន...",
-    "Search followers by name...": "ស្វែងរកអ្នកតាមដានតាមឈ្មោះ..."
+    "Search followers by name...": "ស្វែងរកអ្នកតាមដានតាមឈ្មោះ...",
+    "Messages": "សារ", "Search chats or reviewers...": "ស្វែងរកការជជែក ឬអ្នកពិនិត្យ...", "UNREAD": "មិនទាន់អាន", "TOTAL CHATS": "ការជជែកសរុប", "Active on Yoouz": "សកម្មនៅលើ Yoouz", "No conversations yet": "មិនទាន់มีการសន្ទនានៅឡើយទេ", "Delete Conversation": "លុបការសន្ទនា", "Block User": "រារាំងអ្នកប្រើប្រាស់"
   },
   // Lao (lo)
   lo: {
@@ -683,7 +732,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ຜູ້ຕິດຕາມ", "You aren't following anyone yet": "ທ່ານຍັງບໍ່ໄດ້ຕິດຕາມໃຜເທື່ອ",
     "No followers yet": "ຍັງບໍ່ມີຜູ້ຕິດຕາມເທື່ອ", "Unfollow": "ເລີກຕິດຕາມ",
     "Search followed businesses or reviewers...": "ຄົ້ນຫາທຸລະກິດ ຫຼື ຜູ້ທົບທວນທີ່ຕິດຕາມ...",
-    "Search followers by name...": "ຄົ້ນຫາຜູ້ຕິດຕາມຕາມຊື່..."
+    "Search followers by name...": "ຄົ້ນຫາຜູ້ຕິດຕາມຕາມຊື່...",
+    "Messages": "ຂໍ້ຄວາມ", "Search chats or reviewers...": "ຄົ້ນຫາການສົນທະນາ ຫຼື ຜູ້ທົບທວນ...", "UNREAD": "ຍັງບໍ່ໄດ້ອ່ານ", "TOTAL CHATS": "ການສົນທະນາທັງໝົດ", "Active on Yoouz": "ໃຊ້ງານໃນ Yoouz", "No conversations yet": "ຍັງບໍ່ມີການສົນທະນາເທື່ອ", "Delete Conversation": "ລົບການສົນທະນາ", "Block User": "ບລັອກຜູ້ໃຊ້"
   },
   // Kazakh (kk)
   kk: {
@@ -694,7 +744,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Жазылушылар", "You aren't following anyone yet": "Сіз әлі ешкімге жазылмағансыз",
     "No followers yet": "Әлі жазылушылар жоқ", "Unfollow": "Жазылымнан бас тарту",
     "Search followed businesses or reviewers...": "Жазылған бизнестерді немесе шолушыларды іздеу...",
-    "Search followers by name...": "Жазылушыларды аты бойынша іздеу..."
+    "Search followers by name...": "Жазылушыларды аты бойынша іздеу...",
+    "Messages": "Хабарламалар", "Search chats or reviewers...": "Чаттарды немесе шолушыларды іздеу...", "UNREAD": "ОҚЫЛМАҒАН", "TOTAL CHATS": "БАРЛЫҚ ЧАТТАР", "Active on Yoouz": "Yoouz-да белсенді", "No conversations yet": "Әлі сөйлесулер жоқ", "Delete Conversation": "Сөйлесуді жою", "Block User": "Пайдаланушыны блоктау"
   },
   // Uzbek (uz)
   uz: {
@@ -705,7 +756,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Kuzatuvchilar", "You aren't following anyone yet": "Siz hali hech kimni kuzatmayapsiz",
     "No followers yet": "Hali kuzatuvchilar yo'q", "Unfollow": "Kuzatishni to'xtatish",
     "Search followed businesses or reviewers...": "Kuzatilayotgan biznes yoki sharhlovchilarni qidirish...",
-    "Search followers by name...": "Kuzatuvchilarni ismi bo'yicha qidirish..."
+    "Search followers by name...": "Kuzatuvchilarni ismi bo'yicha qidirish...",
+    "Messages": "Xabarlar", "Search chats or reviewers...": "Chatlar yoki sharhlovchilarni qidirish...", "UNREAD": "O'QILMAGAN", "TOTAL CHATS": "JAMI CHATLAR", "Active on Yoouz": "Yoouzda faol", "No conversations yet": "Hali suhbatlar yo'q", "Delete Conversation": "Suhbatni o'chirish", "Block User": "Foydalanuvchini bloklash"
   },
   // Mongolian (mn)
   mn: {
@@ -716,18 +768,20 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Дагагчид", "You aren't following anyone yet": "Та хараахан хэнийг ч дагаагүй байна",
     "No followers yet": "Дагагчид хараахан байхгүй байна", "Unfollow": "Дагахаа болих",
     "Search followed businesses or reviewers...": "Дагасан бизнес эсвэл шүүмжлэгчдийг хайх...",
-    "Search followers by name...": "Дагагчдыг нэрээр нь хайх..."
+    "Search followers by name...": "Дагагчдыг нэрээр нь хайх...",
+    "Messages": "Зурвасууд", "Search chats or reviewers...": "Чат эсвэл шүүмжлэгч хайх...", "UNREAD": "УНШААГҮЙ", "TOTAL CHATS": "НИЙТ ЧАТ", "Active on Yoouz": "Yoouz дээр идэвхтэй", "No conversations yet": "Одоогоор яриа байхгүй байна", "Delete Conversation": "Яриа устгах", "Block User": "Хэрэглэгчийг блоклох"
   },
   // Nepali (ne)
   ne: {
     "Home": "होम", "Search": "खोज", "Review Any Business": "कुनै पनि व्यवसायको समीक्षा गर्नुहोस्",
-    "Search any business to watch authentic video reviews or record your own.": "प्रामाणिक भिडियो समीक्षाहरू हेर्न वा तपाईंको आफ्नै रेකর্ড गर्न कुनै पनि व्यवसाय खोज्नुहोस्।",
+    "Search any business to watch authentic video reviews or record your own.": "प्रामाणिक भिडियो समीक्षाहरू हेर्न वा तपाईंको आफ्नै रेकर्ड गर्न कुनै पनि व्यवसाय खोज्नुहोस्।",
     "Search business...": "व्यवसाय खोज्नुहोस्...", "Verified Web Listing": "प्रमाणित वेबसाइट",
     "Following & Followers": "फलोइङ र फलोअर्स", "Manage businesses and reviewers you follow on Yoouz": "Yoouz मा तपाईंले फलो गर्ने व्यवसाय र समीक्षकहरू व्यवस्थापन गर्नुहोस्",
     "Followers": "फलोअर्स", "You aren't following anyone yet": "तपाईंले अझै कसैलाई फलो गर्नुभएको छैन",
     "No followers yet": "अझै कुनै फलोअर्स छैनन्", "Unfollow": "अनफलो गर्नुहोस्",
     "Search followed businesses or reviewers...": "फलो गरिएका व्यवसाय वा समीक्षकहरू खोज्नुहोस्...",
-    "Search followers by name...": "नामबाट फलोअर्स खोज्नुहोस्..."
+    "Search followers by name...": "नामबाट फलोअर्स खोज्नुहोस्...",
+    "Messages": "सन्देशहरू", "Search chats or reviewers...": "च्याट वा समीक्षकहरू खोज्नुहोस्...", "UNREAD": "नपढिएको", "TOTAL CHATS": "कुल च्याटहरू", "Active on Yoouz": "Yoouz मा सक्रिय", "No conversations yet": "अहिलेसम्म कुनै कुराकानी छैन", "Delete Conversation": "कुराकानी मेटाउनुहोस्", "Block User": "प्रयोगकर्तालाई ब्लक गर्नुहोस्"
   },
   // Sinhalese (si)
   si: {
@@ -738,7 +792,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "අනුගාමිකයින්", "You aren't following anyone yet": "ඔබ තවමත් කිසිවෙකු අනුගමනය කර නැත",
     "No followers yet": "තවමත් අනුගාමිකයින් නැත", "Unfollow": "අනුගමනය කිරීම නවත්වන්න",
     "Search followed businesses or reviewers...": "අනුගමනය කරන ව්‍යාපාර හෝ සමාලෝචකයින් සොයන්න...",
-    "Search followers by name...": "නම අනුව අනුගාමිකයින් සොයන්න..."
+    "Search followers by name...": "නම අනුව අනුගාමිකයින් සොයන්න...",
+    "Messages": "පණිවිඩ", "Search chats or reviewers...": "කතාබස් හෝ සමාලෝචකයින් සොයන්න...", "UNREAD": "නොකියවූ", "TOTAL CHATS": "මුළු කතාබස්", "Active on Yoouz": "Yoouz හි සක්‍රීයයි", "No conversations yet": "තවමත් සංවාද නොමැත", "Delete Conversation": "සංවාදය මකන්න", "Block User": "පරිශීලකයා අවහිර කරන්න"
   },
   // Amharic (am)
   am: {
@@ -749,7 +804,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "ተከታዮች", "You aren't following anyone yet": "እስካሁን ማንንም አልተከተሉም",
     "No followers yet": "እስካሁን ምንም ተከታዮች የሉም", "Unfollow": "መከተል አቁም",
     "Search followed businesses or reviewers...": "የሚከተሏቸውን ንግዶች ወይም ገምጋሚዎችን ይፈልጉ...",
-    "Search followers by name...": "ተከታዮችን በስም ይፈልጉ..."
+    "Search followers by name...": "ተከታዮችን በስም ይፈልጉ...",
+    "Messages": "መልእክቶች", "Search chats or reviewers...": "ውይይቶችን ወይም ገምጋሚዎችን ይፈልጉ...", "UNREAD": "ያልተነበበ", "TOTAL CHATS": "ጠቅላላ ውይይቶች", "Active on Yoouz": "በYoouz ላይ ንቁ", "No conversations yet": "እስካሁን ምንም ውይይቶች የሉም", "Delete Conversation": "ውይይትን ሰርዝ", "Block User": "ተጠቃሚን እገድ"
   },
   // Somali (so)
   so: {
@@ -760,7 +816,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Raacayaal", "You aren't following anyone yet": "Ma aadan raacin qofna weli",
     "No followers yet": "Ma jiraan raacayaal weli", "Unfollow": "Jooji raacidda",
     "Search followed businesses or reviewers...": "Raadi ganacsiyada ama dadka dib u eegista sameeya ee la raacay...",
-    "Search followers by name...": "Raadi raacayaasha magac ahaan..."
+    "Search followers by name...": "Raadi raacayaasha magac ahaan...",
+    "Messages": "Farriimaha", "Search chats or reviewers...": "Raadi sheekeysiga ama dadka dib u eegista sameeya...", "UNREAD": "AAN LA AKHRIN", "TOTAL CHATS": "WARTA SHEEKAYSIGA", "Active on Yoouz": "Wuxuu ku jiraa Yoouz", "No conversations yet": "Wali ma jiraan wadahadalo", "Delete Conversation": "Tirtir Wadahadalka", "Block User": "Xannib Isticmaalaha"
   },
   // Hausa (ha)
   ha: {
@@ -771,7 +828,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Masu Bi", "You aren't following anyone yet": "Ba kwa bin kowa tukuna",
     "No followers yet": "Babu masu bi tukuna", "Unfollow": "Daina Bi",
     "Search followed businesses or reviewers...": "Nemo kasuwanci ko masu bita da ake bi...",
-    "Search followers by name...": "Nemo masu bi da suna..."
+    "Search followers by name...": "Nemo masu bi da suna...",
+    "Messages": "Saƙonni", "Search chats or reviewers...": "Nemo tattaunawa ko masu bita...", "UNREAD": "WADANDA BA A KARANTA BA", "TOTAL CHATS": "JIKIN TATTAUNAWA", "Active on Yoouz": "Yana aiki a Yoouz", "No conversations yet": "Babu tattaunawa tukuna", "Delete Conversation": "Share Tattaunawa", "Block User": "Toshe Mai Amfani"
   },
   // Yoruba (yo)
   yo: {
@@ -782,7 +840,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Awọn olutẹle", "You aren't following anyone yet": "O ko tii tẹle ẹnikẹni",
     "No followers yet": "Ko si awọn olutẹle sibẹsibẹ", "Unfollow": "Duro titele",
     "Search followed businesses or reviewers...": "Wa awọn iṣowo tabi awọn oluyẹwo ti o tẹle...",
-    "Search followers by name...": "Wa awọn olutẹle nipasẹ orukọ..."
+    "Search followers by name...": "Wa awọn olutẹle nipasẹ orukọ...",
+    "Messages": "Awọn ifiranṣẹ", "Search chats or reviewers...": "Wa awọn ibaraẹnisọrọ tabi awọn oluyẹwo...", "UNREAD": "AÌKÀ", "TOTAL CHATS": "ÀRÒPÒ ÌSỌ̀RỌ̀", "Active on Yoouz": "Nṣiṣẹ lori Yoouz", "No conversations yet": "Ko si awọn ibaraẹnisọrọ sibẹsibẹ", "Delete Conversation": "Pa Ibaraẹnisọrọ rẹ", "Block User": "Dina Olumulo"
   },
   // Igbo (ig)
   ig: {
@@ -793,7 +852,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Ndị na-eso ụzọ", "You aren't following anyone yet": "Ị naghị eso onye ọ bụla ma",
     "No followers yet": "Enweghị ndị na-eso ụzọ ma", "Unfollow": "Kwụsị iso",
     "Search followed businesses or reviewers...": "Chọọ azụmahịa ma ọ bụ ndị nyocha a na-eso...",
-    "Search followers by name...": "Chọọ ndị na-eso ụzọ site n'aha..."
+    "Search followers by name...": "Chọọ ndị na-eso ụzọ site n'aha...",
+    "Messages": "Ozi", "Search chats or reviewers...": "Chọọ nkata ma ọ bụ ndị nyocha...", "UNREAD": "AGỤGHỊ", "TOTAL CHATS": "NGỤKỌTA NKATA", "Active on Yoouz": "Na-arụ ọrụ na Yoouz", "No conversations yet": "Enweghị mkparịta ụka ma", "Delete Conversation": "Hichapụ mkparịta ụka", "Block User": "Gbochie onye ọrụ"
   },
   // Zulu (zu)
   zu: {
@@ -804,7 +864,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Abalandeli", "You aren't following anyone yet": "Awulandelanga muntu okwamanje",
     "No followers yet": "Abekho abalandeli okwamanje", "Unfollow": "Yeka ukulandela",
     "Search followed businesses or reviewers...": "Sesha amabhizinisi okanye ababuyekezi abalandelwayo...",
-    "Search followers by name...": "Sesha abalandeli ngegama..."
+    "Search followers by name...": "Sesha abalandeli ngegama...",
+    "Messages": "Imilayezo", "Search chats or reviewers...": "Sesha izingxoxo okanye ababuyekezi...", "UNREAD": "AKUFUNDIWE", "TOTAL CHATS": "INGXOXO ZONKE", "Active on Yoouz": "Uyasebenza ku-Yoouz", "No conversations yet": "Azikho izingxoxo okwamanje", "Delete Conversation": "Sula Ingxoxo", "Block User": "Vimba Umsebenzisi"
   },
   // Xhosa (xh)
   xh: {
@@ -815,7 +876,8 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Abalandeli", "You aren't following anyone yet": "Awukalandeli mntu okwangoku",
     "No followers yet": "Abekho abalandeli okwangoku", "Unfollow": "Yeka ukulandela",
     "Search followed businesses or reviewers...": "Khangela amashishini okanye abahlalutyi abalandelwayo...",
-    "Search followers by name...": "Khangela abalandeli ngegama..."
+    "Search followers by name...": "Khangela abalandeli ngegama...",
+    "Messages": "Imiyalezo", "Search chats or reviewers...": "Khangela iincoko okanye abahlalutyi...", "UNREAD": "AYIKAFUNDWA", "TOTAL CHATS": "IMIYALEZO IONKE", "Active on Yoouz": "Iyasebenza kuYoouz", "No conversations yet": "Akukabikho zincoko", "Delete Conversation": "Cima iNcoko", "Block User": "Vala uMsebenzisi"
   },
   // Afrikaans (af)
   af: {
@@ -826,6 +888,7 @@ export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>>
     "Followers": "Volgelinge", "You aren't following anyone yet": "Jy volg nog niemand nie",
     "No followers yet": "Nog geen volgelinge nie", "Unfollow": "Ontvolg",
     "Search followed businesses or reviewers...": "Soek gevolgde besighede of resensente...",
-    "Search followers by name...": "Soek volgelinge op naam..."
+    "Search followers by name...": "Soek volgelinge op naam...",
+    "Messages": "Boodskappe", "Search chats or reviewers...": "Soek kletse of resensente...", "UNREAD": "ONGELEES", "TOTAL CHATS": "TOTALE KLETSE", "Active on Yoouz": "Aktief op Yoouz", "No conversations yet": "Nog geen gesprekke nie", "Delete Conversation": "Vee gesprek uit", "Block User": "Blokkeer gebruiker"
   }
 };

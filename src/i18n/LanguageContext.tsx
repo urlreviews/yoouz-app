@@ -113,6 +113,8 @@ const CORE_STRINGS_TO_WARM = [
   "You aren't following anyone yet", "When you follow businesses or authentic local reviewers on Yoouz, they will appear here.",
   "No matching followers found", "No followers yet", "When other local reviewers follow your profile, they will appear here.",
   "video review", "video reviews", "Unfollow",
+  "Search chats or reviewers...", "UNREAD", "TOTAL CHATS", "Active on Yoouz", "No conversations yet",
+  "Delete Conversation", "Block User", "Report Thread", "Select a conversation to start messaging",
   "Read Privacy Policy", "Read Terms & Conditions", "Official Yoouz Support Desk", "Submit support inquiries, business domain claim requests, or report community guideline infractions.",
   "Your Full Name", "Email Address", "Category", "General Account / Technical Support", "Business / Domain Ownership Verification",
   "Report Policy Violation / Fake Content", "API & Partnership Inquiries", "Website Domain (Optional)", "Message Details",
