@@ -2082,31 +2082,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               )}
 
               {/* Claim Business Status & Ownership Card */}
-              <div className="p-5 rounded-[2.5rem] bg-gradient-to-br from-zinc-900/80 via-zinc-900/40 to-zinc-950 border border-zinc-800/80 shadow-xl backdrop-blur-3xl space-y-3 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="p-5 rounded-[2.5rem] bg-zinc-900/60 border border-zinc-800/80 shadow-xl backdrop-blur-3xl space-y-3 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-md ${
-                    isClaimed 
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                      : "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                  }`}>
-                    {isClaimed ? <ShieldCheck className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 shadow-md text-white">
+                    {isClaimed ? <ShieldCheck className="w-6 h-6 text-white" /> : <Building2 className="w-6 h-6 text-white" />}
                   </div>
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                        {isClaimed ? t("place.businessClaimedTitle", "Business Claimed & Verified") : t("place.ownThisBusiness", "Own This Business?")}
+                        {isClaimed ? t("place.businessClaimedTitle", "Business Claimed & Secured") : t("place.ownThisBusiness", "Own This Business? Claim Page")}
                       </h4>
                       {isClaimed && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-extrabold uppercase tracking-widest border border-emerald-500/30">
-                          {t("place.verifiedOwner", "Verified")}
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[9px] font-extrabold uppercase tracking-widest border border-zinc-700">
+                          {t("place.claimedStatus", "Claimed")}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed font-medium">
                       {isClaimed 
-                        ? t("place.businessClaimedDesc", "This business profile is officially claimed and managed by the owner on Yoouz.") 
-                        : t("place.claimBusinessDesc", "Claim your free business page to verify ownership, respond to video reviews, and activate customer messaging.")}
+                        ? t("place.businessClaimedDesc", "This business profile is officially claimed and managed through the secure Yoouz business portal. All management rights are reserved.") 
+                        : t("place.claimBusinessDesc", "Claim this business profile to unlock full administrative access, manage customer video reviews, update business details, and connect directly with patrons.")}
                     </p>
                   </div>
                 </div>
@@ -2119,12 +2115,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     }}
                     className={`w-full py-3 px-5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
                       isClaimed
-                        ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                        ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
                         : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10"
                     }`}
                   >
-                    <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Profile") : t("place.claimPageNow", "Claim & Verify Page Now")}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim & Access Business Portal")}</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 </div>
               </div>
