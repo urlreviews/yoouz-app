@@ -118,7 +118,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
       </div>
 
       {/* Top Filter Category Pills matching Google Maps */}
-      <div className="hidden lg:flex items-center gap-2 overflow-x-auto hide-scrollbar pointer-events-auto py-1">
+      <div className="hidden lg:flex items-center gap-1.5 overflow-x-auto hide-scrollbar pointer-events-auto py-1">
         {filterPills.map((pill) => {
           const isSelected = activeFilter === pill.id;
           return (
@@ -126,7 +126,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
               key={pill.id}
               id={`pill-${pill.id}`}
               onClick={() => onSelectFilter(isSelected ? "all" : pill.id)}
-              className={`h-9 px-3.5 rounded-full text-[13px] font-bold flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap border ${
+              className={`h-8 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all whitespace-nowrap border ${
                 isSelected
                   ? "bg-white text-black border-white"
                   : "bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 hover:text-white"

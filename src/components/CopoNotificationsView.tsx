@@ -403,7 +403,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {notifications.length > 0 && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="px-3 py-1.5 rounded-full text-xs font-bold text-white bg-zinc-800/90 hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700/80 active:scale-95 shadow-xs whitespace-nowrap"
+                className="px-3 py-1.5 md:px-2.5 md:py-1 rounded-full md:rounded-lg text-xs md:text-[11px] font-bold text-white bg-zinc-800/90 hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700/80 active:scale-95 shadow-xs whitespace-nowrap"
               >
                 {t("notifications.markRead", "Mark read")}
               </button>
@@ -412,7 +412,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs whitespace-nowrap"
+                className="px-3 py-1.5 md:px-2.5 md:py-1 rounded-full md:rounded-lg text-xs md:text-[11px] font-semibold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs whitespace-nowrap"
               >
                 {t("notifications.clearAll", "Clear all")}
               </button>
@@ -422,11 +422,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <button
                 id="btn-notifications-settings"
                 onClick={onOpenSettings}
-                className="w-10 h-10 rounded-full text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs flex items-center justify-center shrink-0"
+                className="w-10 h-10 md:w-8 md:h-8 rounded-full md:rounded-lg text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs flex items-center justify-center shrink-0"
                 title={t("notifications.preferences", "Notification Preferences")}
                 aria-label={t("notifications.preferences", "Notification Preferences")}
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-5 h-5 md:w-4 md:h-4" />
               </button>
             )}
           </div>
@@ -453,14 +453,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-2.5 md:gap-1.5 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
           {filterPills.map((pill) => {
             const isActive = activeFilter === pill.value;
             return (
               <button
                 key={pill.value}
                 onClick={() => setActiveFilter(pill.value)}
-                className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2.5 active:scale-95 border ${
+                className={`px-5 py-3 md:px-3.5 md:py-1.5 rounded-full md:rounded-xl text-[13px] md:text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2.5 md:gap-1.5 active:scale-95 border ${
                   isActive
                     ? "bg-white text-zinc-950 border-white shadow-md font-black"
                     : "bg-zinc-900/90 text-zinc-300 border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
@@ -470,7 +470,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                 <span>{pill.label}</span>
                 {pill.count !== undefined && (
                   <span
-                    className={`inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full text-[10px] font-extrabold ${
+                    className={`inline-flex items-center justify-center min-w-[20px] md:min-w-[18px] h-[20px] md:h-[18px] px-1.5 md:px-1 rounded-full text-[10px] md:text-[9px] font-extrabold ${
                       isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-300 border border-zinc-700"
                     }`}
                   >
