@@ -19288,6 +19288,46 @@ app.post("/api/videos/save-review", async (req, res) => {
         expiresAt
       });
 
+      // Check if user is already registered in BunnyDB or Postgres users table
+      let isAlreadyRegistered = false;
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const userRow = await bunnyDb.execute({
+            sql: `SELECT id FROM users WHERE email = ? LIMIT 1`,
+            args: [cleanEmail]
+          });
+          if (userRow && userRow.rows && userRow.rows.length > 0) {
+            isAlreadyRegistered = true;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (!isAlreadyRegistered) {
+        try {
+          const sqlUsers = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
+          if (sqlUsers && sqlUsers.length > 0) {
+            isAlreadyRegistered = true;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      const emailSubject = isAlreadyRegistered
+        ? `Welcome Back: Your Yoouz sign-in code (${otpCode})`
+        : `Your Yoouz sign-in code: ${otpCode}`;
+
+      const emailHeading = isAlreadyRegistered
+        ? "Welcome back to Yoouz!"
+        : "Sign in to your account";
+
+      const emailBodyDesc = isAlreadyRegistered
+        ? "Welcome back! Enter your 6-digit confirmation code below or click the magic sign-in button to access your account:"
+        : "Enter the 6-digit confirmation code below or click the magic sign-in button to log in directly:";
+
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       const originHost = host || req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
       const magicLinkUrl = `${protocol}://${originHost}/?magic_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
@@ -19298,7 +19338,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Yoouz Sign-in Code</title>
+          <title>${emailSubject}</title>
         </head>
         <body style="margin: 0; padding: 24px 12px; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f4f4f5; -webkit-font-smoothing: antialiased;">
           <div style="max-width: 520px; margin: 0 auto; background-color: #121215; border: 1px solid #27272a; border-radius: 24px; padding: 36px 28px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);">
@@ -19316,9 +19356,9 @@ app.post("/api/videos/save-review", async (req, res) => {
               </tr>
             </table>
 
-            <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">Sign in to your account</h1>
+            <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">${emailHeading}</h1>
             <p style="font-size: 15px; line-height: 24px; color: #a1a1aa; margin: 0 0 28px 0;">
-              Enter the 6-digit confirmation code below or click the magic sign-in button to log in directly:
+              ${emailBodyDesc}
             </p>
             
             <!-- 6-Digit Code Box -->
@@ -19349,11 +19389,13 @@ app.post("/api/videos/save-review", async (req, res) => {
         </html>
       `;
 
-      const emailText = `Your Yoouz sign-in verification code is: ${otpCode}\nOr sign in directly using: ${magicLinkUrl}`;
+      const emailText = isAlreadyRegistered
+        ? `Welcome back to Yoouz! Your sign-in verification code is: ${otpCode}\nOr sign in directly using: ${magicLinkUrl}`
+        : `Your Yoouz sign-in verification code is: ${otpCode}\nOr sign in directly using: ${magicLinkUrl}`;
 
       const sendResult = await sendResendEmail({
         to: cleanEmail,
-        subject: `Your Yoouz sign-in code: ${otpCode}`,
+        subject: emailSubject,
         html: emailHtml,
         text: emailText,
         fromName: "Yoouz"
@@ -20026,6 +20068,35 @@ app.post("/api/videos/save-review", async (req, res) => {
       const originHost = host || req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
       const magicLinkUrl = `${protocol}://${originHost}/business?magic_token=${token}&email=${encodeURIComponent(cleanEmail)}&place=${encodeURIComponent(cleanPlaceId)}`;
 
+      let isAlreadyClaimed = false;
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const placeRow = await bunnyDb.execute({
+            sql: `SELECT data FROM places WHERE id = ? LIMIT 1`,
+            args: [cleanPlaceId]
+          }).catch(() => null);
+          if (placeRow && placeRow.rows && placeRow.rows.length > 0) {
+            const pData = JSON.parse(placeRow.rows[0].data as string || '{}');
+            if (pData.isClaimed || pData.claimedByEmail || pData.ownerId) {
+              isAlreadyClaimed = true;
+            }
+          }
+        }
+      } catch (e) {}
+
+      const emailSubject = isAlreadyClaimed
+        ? `Welcome Back: Sign-In Code for ${cleanPlaceName} on Yoouz (Code: ${otpCode})`
+        : `Verify Ownership: ${cleanPlaceName} on Yoouz (Code: ${otpCode})`;
+
+      const emailHeading = isAlreadyClaimed
+        ? `Welcome Back to Yoouz Business`
+        : `Claim & Verify Business Portal`;
+
+      const emailBodyDesc = isAlreadyClaimed
+        ? `Welcome back! You requested a secure sign-in verification link to access your merchant dashboard for <strong style="color: #ffffff;">${cleanPlaceName}</strong> on Yoouz.`
+        : `You requested a secure verification link to manage the official business profile for <strong style="color: #ffffff;">${cleanPlaceName}</strong> on Yoouz.`;
+
       const emailHtml = `
         <!DOCTYPE html>
         <html>
@@ -20053,9 +20124,9 @@ app.post("/api/videos/save-review", async (req, res) => {
               </tr>
             </table>
 
-            <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">Claim & Verify Business Portal</h1>
+            <h1 style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.3px;">${emailHeading}</h1>
             <p style="font-size: 15px; line-height: 24px; color: #a1a1aa; margin: 0 0 28px 0;">
-              You requested a secure verification link to manage the official business profile for <strong style="color: #ffffff;">${cleanPlaceName}</strong> on Yoouz.
+              ${emailBodyDesc}
             </p>
             
             <!-- 6-Digit Code Box -->
@@ -20086,11 +20157,13 @@ app.post("/api/videos/save-review", async (req, res) => {
         </html>
       `;
 
-      const emailText = `Your Yoouz business verification code for ${cleanPlaceName} is: ${otpCode}\nOr verify directly using: ${magicLinkUrl}`;
+      const emailText = isAlreadyClaimed
+        ? `Welcome back to Yoouz Business! Your sign-in verification code for ${cleanPlaceName} is: ${otpCode}\nOr sign in directly using: ${magicLinkUrl}`
+        : `Your Yoouz business verification code for ${cleanPlaceName} is: ${otpCode}\nOr verify directly using: ${magicLinkUrl}`;
 
       const sendResult = await sendResendEmail({
         to: cleanEmail,
-        subject: `Verify Ownership: ${cleanPlaceName} on Yoouz (Code: ${otpCode})`,
+        subject: emailSubject,
         html: emailHtml,
         text: emailText,
         fromName: "Yoouz Business"
