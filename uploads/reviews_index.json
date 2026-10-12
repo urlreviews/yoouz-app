@@ -13,7 +13,7 @@
     "placeCountry": "",
     "placePhone": "+1 (800) 555-9668",
     "placeEmail": "support@yoouz.com",
-    "placeRating": 4,
+    "placeRating": 2,
     "placeWebsite": "https://yoouz.com",
     "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
@@ -30,7 +30,7 @@
       "city": "London",
       "country": "United Kingdom"
     },
-    "rating": 4,
+    "rating": 2,
     "durationSeconds": 8,
     "videoUrl": "https://rev1.b-cdn.net/videos/rev-1791495006783-jy6ld.mp4",
     "fallbackVideoUrls": [

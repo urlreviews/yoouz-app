@@ -321,9 +321,9 @@ async function calculatePlaceRatingFromDb(placeId: string, placeName?: string): 
         if (r && r.id) {
           let parsed: any = {};
           try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
-          const rVal = typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
-            ? Number(parsed.rating)
-            : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5);
+          const rVal = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0)
+            ? Number(r.rating)
+            : (typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0 ? Number(parsed.rating) : 5);
           reviewsMap.set(String(r.id), rVal);
         }
       });
@@ -1715,9 +1715,9 @@ setTimeout(async () => {
             placeName: r.placeName || parsedData.placeName,
             authorName: r.authorName || parsedData.authorName,
             authorAvatar: r.authorAvatar || parsedData.authorAvatar,
-            rating: typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0
-              ? Number(parsedData.rating)
-              : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5),
+            rating: (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0)
+              ? Number(r.rating)
+              : (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0 ? Number(parsedData.rating) : 5),
             videoUrl: r.videoUrl || parsedData.videoUrl,
             thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
             duration: r.duration || parsedData.duration || 60,
@@ -14413,9 +14413,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 (r.id && typeof r.id === 'string' && r.id.startsWith('rev-')) ? parseInt(r.id.split('-')[1], 10) : 0
               );
 
-              const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? r.rating : (Number(r.rating) || 0);
-              const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? parsedData.rating : (Number(parsedData.rating) || 0);
-              const effRating = rawParsedRating > 0 ? rawParsedRating : (rawDbRating > 0 ? rawDbRating : (Number(existing?.rating) || 5));
+              const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? Number(r.rating) : (Number(r.rating) || 0);
+              const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? Number(parsedData.rating) : (Number(parsedData.rating) || 0);
+              const effRating = rawDbRating > 0 ? rawDbRating : (rawParsedRating > 0 ? rawParsedRating : (Number(existing?.rating) || 5));
               parsedData.rating = effRating;
               parsedData.placeRating = effRating;
 
@@ -18737,9 +18737,9 @@ app.post("/api/videos/save-review", async (req, res) => {
                   try { parsed = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e){}
                   const rVal = (String(r.id) === String(videoId) && updates.rating !== undefined)
                     ? Number(updates.rating)
-                    : (typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0
-                      ? Number(parsed.rating)
-                      : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0 ? Number(r.rating) : 5));
+                    : (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0
+                      ? Number(r.rating)
+                      : (typeof parsed.rating === 'number' && !isNaN(parsed.rating) && parsed.rating > 0 ? Number(parsed.rating) : 5));
                   placeReviewsMap.set(String(r.id), rVal);
                 }
               });
