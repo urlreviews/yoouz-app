@@ -16314,8 +16314,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           });
         } else {
           await bunnyDb.execute({
-            sql: "DELETE FROM bookmarks WHERE (userId = ? AND videoId = ?) OR (userEmail = ? AND videoId = ?) OR id = ?",
-            args: [userId || "", videoId, effEmail || userEmail || "", videoId, bmId]
+            sql: "DELETE FROM bookmarks WHERE (LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)) AND (videoId = ? OR id = ? OR (videoId = 'place_bookmark' AND (LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?))))",
+            args: [userId || "", effEmail || userEmail || "", videoId, bmId, (placeId || "").toLowerCase(), (placeName || "").toLowerCase()]
           });
         }
 
@@ -16415,6 +16415,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       broadcastSseEvent({
         type: "video_bookmarked",
         videoId,
+        placeId: placeId || "",
         isBookmarked: Boolean(isBookmarked),
         bookmarksCount: updatedBookmarksCount,
         userId: effEmail || userId || ""
@@ -16614,11 +16615,13 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           });
           if (rows && rows.rows) {
             rows.rows.forEach((r: any) => {
-              if (r.videoId && !savedVideoIds.includes(String(r.videoId))) {
-                savedVideoIds.push(String(r.videoId));
+              const vId = String(r.videoId || "").trim();
+              const pId = String(r.placeId || "").trim();
+              if (vId && vId !== "place_bookmark" && !savedVideoIds.includes(vId)) {
+                savedVideoIds.push(vId);
               }
-              if (r.placeId && !savedPlaceIds.includes(String(r.placeId))) {
-                savedPlaceIds.push(String(r.placeId));
+              if (vId === "place_bookmark" && pId && !savedPlaceIds.includes(pId)) {
+                savedPlaceIds.push(pId);
               }
             });
           }

@@ -6246,21 +6246,15 @@ export function App() {
       return [place, ...prev];
     });
 
+    const isCurrentlySaved = isPlaceSaved(place);
     const pId = (place.id || "").toLowerCase().trim();
     const domain = extractCleanDomain(place.brandDomain || place.website || place.id || "").toLowerCase().trim();
     const pName = (place.name || "").toLowerCase().trim();
-    const targetKeys = [pId, domain, pName].filter(Boolean);
+    const targetKeys = Array.from(new Set([pId, domain, pName].filter(Boolean)));
 
     setSavedPlaceIds((prev) => {
-      const exists = prev.some((id) => {
-        if (!id) return false;
-        const norm = id.toLowerCase().trim();
-        const cleanNorm = extractCleanDomain(norm);
-        return targetKeys.some((k) => norm === k || cleanNorm === k);
-      });
-
       let next: string[];
-      if (exists) {
+      if (isCurrentlySaved) {
         next = prev.filter((id) => {
           if (!id) return false;
           const norm = id.toLowerCase().trim();
@@ -6269,7 +6263,7 @@ export function App() {
         });
       } else {
         const keyToAdd = place.id || domain || place.name;
-        next = [keyToAdd, ...prev];
+        next = Array.from(new Set([keyToAdd, ...prev]));
       }
       
       // Sync with server and send notification to business owner
@@ -6285,7 +6279,7 @@ export function App() {
             userId: currentEmail,
             userName: currentUser?.name || "Member",
             userAvatar: currentUser?.avatar || "",
-            isBookmarked: !exists
+            isBookmarked: !isCurrentlySaved
           })
         }).catch(() => {});
       }

@@ -55,6 +55,7 @@ interface CopoShareModalProps {
   rating?: number;
   reviewsCount?: number;
   reviewCount?: number;
+  placeId?: string;
 
   // Mode B: Video Share (Backward Compatibility)
   video?: VideoReview | null;
@@ -80,6 +81,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   rating: propRating,
   reviewsCount: propReviewsCount,
   reviewCount: propReviewCount,
+  placeId: propPlaceId,
   video,
   currentUser,
   onClose,
@@ -460,7 +462,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             videoId: "place_share",
-            placeId: propDomain || propTitle || "place",
+            placeId: propPlaceId || propDomain || propTitle || "place",
             placeName: propTitle || propDomain || "Business",
             platform,
             ...userPayload
