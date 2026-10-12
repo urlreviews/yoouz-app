@@ -127,7 +127,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.placeholder", "Search business name or domain...")}
+              placeholder={t("search.placeholder", "Search business...")}
               className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
               autoFocus={autoFocus}
             />

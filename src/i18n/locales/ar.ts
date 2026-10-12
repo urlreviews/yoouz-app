@@ -89,6 +89,8 @@ export const ar: TranslationSchema = {
     chat_unavailable: "المراسلة المباشرة غير متوفرة حالياً"
   },
   search: {
+    title: "قيم أي نشاط تجاري",
+    subtitle: "ابحث عن أي نشاط تجاري لمشاهدة مراجعات فيديو حقيقية أو سجل مراجعتك الخاصة.",
     recentSearches: "عمليات البحث الأخيرة",
     trendingSearches: "البحث الشائع",
     backSearch: "العودة للبحث عن عمل أو موقع آخر",
@@ -96,7 +98,7 @@ export const ar: TranslationSchema = {
     reviews: "مراجعات",
     syncing: "جاري مزامنة التفاصيل...",
     invalidUrl: "يرجى اختيار نشاط تجاري من القائمة أو البحث باستخدام نطاق موقع إلكتروني صالح.",
-    placeholder: "ابحث عن اسم النشاط أو النطاق..."
+    placeholder: "ابحث عن نشاط..."
   },
   record: {
     title: "تسجيل مراجعة فيديو",

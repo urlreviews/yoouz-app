@@ -90,7 +90,7 @@ export interface TranslationSchema {
     record_review: string;
     language: string;
   };
-  common: {
+  common?: {
     back: string;
     close: string;
     save: string;
@@ -126,10 +126,10 @@ export interface TranslationSchema {
     hours: string;
     days: string;
     minutes: string;
-    clear: string;
-    clearAll: string;
+    clear?: string;
+    clearAll?: string;
   };
-  video: {
+  video?: {
     by: string;
     unmute: string;
     mute: string;
@@ -148,7 +148,7 @@ export interface TranslationSchema {
     delete_review: string;
     report_video: string;
   };
-  place: {
+  place?: {
     reviews: string;
     about: string;
     photos: string;
@@ -163,7 +163,9 @@ export interface TranslationSchema {
     about_business: string;
     chat_unavailable: string;
   };
-  search: {
+  search?: {
+    title: string;
+    subtitle: string;
     recentSearches: string;
     trendingSearches: string;
     backSearch: string;
@@ -173,7 +175,7 @@ export interface TranslationSchema {
     invalidUrl: string;
     placeholder: string;
   };
-  record: {
+  record?: {
     title: string;
     select_place: string;
     start_recording: string;
@@ -189,7 +191,7 @@ export interface TranslationSchema {
     front_camera_only: string;
     one_minute_limit: string;
   };
-  share: {
+  share?: {
     share_title: string;
     share_subtitle: string;
     whatsapp: string;
@@ -199,7 +201,7 @@ export interface TranslationSchema {
     email: string;
     copy: string;
   };
-  comments: {
+  comments?: {
     title: string;
     placeholder: string;
     post: string;
@@ -207,7 +209,7 @@ export interface TranslationSchema {
     no_comments: string;
     be_first: string;
   };
-  business: {
+  business?: {
     for_businesses: string;
     claim_now: string;
     manage_profile: string;
@@ -402,6 +404,9 @@ export interface TranslationSchema {
     verificationCode?: string;
     verifyCode?: string;
     resendCode?: string;
+    searchPlaceOptional?: string;
+    reviewerConflictSelf?: string;
+    reviewerConflictReview?: string;
     htmlVerificationTitle?: string;
     searchPlaceLabel?: string;
     searchPlacePlaceholder?: string;
@@ -693,6 +698,8 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       chat_unavailable: "Direct Messaging Unavailable"
     },
     search: {
+      title: "Review Any Business",
+      subtitle: "Search any business to watch authentic video reviews or record your own.",
       recentSearches: "Recent Searches",
       trendingSearches: "Trending Searches",
       backSearch: "Search another business or website",
@@ -700,7 +707,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       reviews: "Reviews",
       syncing: "Syncing details...",
       invalidUrl: "Please select a business from the dropdown list or search with a valid website domain.",
-      placeholder: "Search business name or domain..."
+      placeholder: "Search business..."
     },
     record: {
       title: "Record Video Review",

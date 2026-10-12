@@ -89,6 +89,8 @@ export const he: TranslationSchema = {
     chat_unavailable: "הודעות ישירות אינן זמינות כעת"
   },
   search: {
+    title: "דרג כל עסק",
+    subtitle: "חפש כל עסק כדי לצפות בביקורות וידאו אותנטיות או להקליט משלך.",
     recentSearches: "חיפושים אחרונים",
     trendingSearches: "חיפושים פופולריים",
     backSearch: "חזרה לחיפוש עסק או אתר אחר",
@@ -96,7 +98,7 @@ export const he: TranslationSchema = {
     reviews: "ביקורות",
     syncing: "מסנכרן פרטים...",
     invalidUrl: "אנא בחר עסק מהרשימה או חפש באמצעות דומיין אתר תקין.",
-    placeholder: "חפש שם עסק או דומיין..."
+    placeholder: "חפש עסק..."
   },
   record: {
     title: "הקלט ביקורת וידאו",

@@ -688,11 +688,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {!isMobileModal && (
             <>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-                {t("Review Any Business")}
+                {t("search.title", "Review Any Business")}
               </h1>
               
               <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-                {t("Search any business to watch authentic video reviews or record your own.")}
+                {t("search.subtitle", "Search any business to watch authentic video reviews or record your own.")}
               </p>
             </>
           )}

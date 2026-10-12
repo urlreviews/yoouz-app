@@ -20302,10 +20302,12 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
 
       // Determine the final matchedPlaceId - priority: 1. Record from send-magic-link, 2. provided placeId, 3. derived from domain
+      let isYoouz = false;
       if (record && record.placeId) {
         matchedPlaceId = record.placeId;
+        isYoouz = matchedPlaceId === 'yoouz.com' || matchedPlaceId.includes('yoouz');
       } else if (!matchedPlaceId || matchedPlaceId === 'place-custom') {
-        const isYoouz = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz');
+        isYoouz = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz');
         if (isYoouz) {
           matchedPlaceId = 'yoouz.com';
         } else if (rawDomain) {
