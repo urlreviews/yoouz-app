@@ -1259,10 +1259,8 @@ function readReviewsIndex(): any[] {
         let processed = parsed
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet));
 
-        // Ensure all 6 authentic protected reviews are always present and never dropped
+        // Ensure authentic protected reviews are present and never dropped
         const AUTHENTIC_PROTECTED_REVIEW_IDS = [
-          "rev-1791495006783-jy6ld",
-          "rev-1791494959785-27pap",
           "rev-1791485919882-l8av6",
           "rev-1790368898192-sw74n",
           "rev-1790363378621-w65oy",
@@ -16488,6 +16486,26 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 }
               }
             } catch (bErr) {}
+          } else if (placeId || placeName) {
+            // Direct Place / Business Profile Save notification to Business Owner(s)
+            try {
+              const targetPlaceKey = placeId || placeName || "yoouz";
+              const bizOwners = await resolveBusinessOwnersForPlace(targetPlaceKey);
+              for (const biz of bizOwners) {
+                await createAndBroadcastBackendNotification({
+                  senderUserId: effEmail || userId || "",
+                  senderName: effName,
+                  senderAvatar: effAvatar,
+                  recipientEmail: biz.recipientEmail,
+                  recipientId: biz.recipientId,
+                  recipientHandle: biz.recipientHandle,
+                  type: "bookmark",
+                  text: `saved your business profile (${placeName || targetPlaceKey})`,
+                  placeName: placeName || targetPlaceKey,
+                  customId: `notif_biz_place_save_${(effEmail || userId || 'anon').replace(/[^a-z0-9]/gi, '_')}_${targetPlaceKey.replace(/[^a-z0-9]/gi, '_')}_${biz.recipientEmail.replace(/[^a-z0-9]/g, '_')}`
+                });
+              }
+            } catch (bErr) {}
           }
         } catch (nErr: any) {
           console.warn("Notice triggering video bookmark notification:", nErr.message);
@@ -16616,8 +16634,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
   // Increment Video Share Count (persisted to Bunny.net shares table and videoReviews table)
   app.post("/api/interactions/share", async (req, res) => {
     try {
-      const { videoId, userId, platform, userName, userAvatar, userEmail } = req.body;
-      if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+      const { videoId, userId, platform, userName, userAvatar, userEmail, placeId, placeName } = req.body;
+      if (!videoId && !placeId && !placeName) return res.status(400).json({ error: "Missing videoId or placeId" });
 
       let effName = userName || "";
       let effAvatar = userAvatar || "";
@@ -16864,6 +16882,26 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                   customId: `notif_biz_share_${(effEmail || effId || 'anon').replace(/[^a-z0-9]/gi, '_')}_${videoId}_${biz.recipientEmail.replace(/[^a-z0-9]/g, '_')}`
                 });
               }
+            }
+          } catch (bErr) {}
+        } else if (placeId || placeName) {
+          // Direct Place / Business Profile Share notification to Business Owner(s)
+          try {
+            const targetPlaceKey = placeId || placeName || "yoouz";
+            const bizOwners = await resolveBusinessOwnersForPlace(targetPlaceKey);
+            for (const biz of bizOwners) {
+              await createAndBroadcastBackendNotification({
+                senderUserId: effEmail || effId || "",
+                senderName: effName,
+                senderAvatar: effAvatar,
+                recipientEmail: biz.recipientEmail,
+                recipientId: biz.recipientId,
+                recipientHandle: biz.recipientHandle,
+                type: "repost",
+                text: `shared your business profile (${placeName || targetPlaceKey})`,
+                placeName: placeName || targetPlaceKey,
+                customId: `notif_biz_place_share_${(effEmail || effId || 'anon').replace(/[^a-z0-9]/gi, '_')}_${targetPlaceKey.replace(/[^a-z0-9]/gi, '_')}_${biz.recipientEmail.replace(/[^a-z0-9]/g, '_')}`
+              });
             }
           } catch (bErr) {}
         }

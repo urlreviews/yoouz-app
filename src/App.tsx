@@ -2183,118 +2183,10 @@ export function App() {
       if (isFirstNotifLoadRef.current) {
         isFirstNotifLoadRef.current = false;
         notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
-        // Show recent unread notification toast on initial visit if any
-        const latestUnread = notifs.find(n => !n.isRead && !n.id?.startsWith("welcome_notif_"));
-        if (latestUnread && activeSectionRef.current !== "notifications") {
-          let prefs = currentUser?.notificationSettings;
-          if (!prefs) {
-            try {
-              const saved = localStorage.getItem("copo_notification_settings");
-              if (saved) prefs = JSON.parse(saved);
-            } catch (e) {}
-          }
-          if (prefs?.enabled !== false) {
-            let title = "1 new notification";
-            if (latestUnread.type === "like") title = "1 new like";
-            else if (latestUnread.type === "comment") title = "1 new comment";
-            else if (latestUnread.type === "follow") title = "1 new follower";
-            else if (latestUnread.type === "bookmark" || (latestUnread.type as string) === "save") title = "1 new save";
-            else if (latestUnread.type === "review") title = `1 new review for ${latestUnread.placeName || 'your place'}`;
-            else if (latestUnread.type === "repost" || latestUnread.type === "share") title = "1 new share";
-
-            setInAppToast({
-              id: latestUnread.id,
-              type: "notification",
-              actionType: latestUnread.type,
-              title: title,
-              subtitle: latestUnread.text ? `${latestUnread.user.name}: ${latestUnread.text}` : `${latestUnread.user.name} interacted with your review`,
-              avatar: latestUnread.user.avatar,
-              userName: latestUnread.user.name,
-              onAction: () => {
-                markNotificationAsRead(latestUnread.id, effectiveMessagingUser);
-                if (latestUnread.videoId) {
-                  handleSelectVideoById(latestUnread.videoId);
-                } else {
-                  setActiveSection("notifications");
-                }
-                setInAppToast(null);
-              }
-            });
-          }
-        }
         return;
       }
 
-      // Check for brand new live incoming notification
-      const newIncoming = notifs.find((n) => {
-        if (n.isRead) return false;
-        if (prevNotifIdsRef.current.has(n.id)) return false;
-        return true;
-      });
       notifs.forEach((n) => prevNotifIdsRef.current.add(n.id));
-
-      if (newIncoming && activeSectionRef.current !== "notifications") {
-        if ((newIncoming.type as string) === "message") return; // Chat popups are uniquely handled by subscribeToUserChats
-        // Suppress in-app toast for welcome notification (the welcome notification sits quietly in the Notifications tab upon initial signup)
-        if (newIncoming.id?.startsWith("welcome_notif_") || newIncoming.text?.toLowerCase().includes("welcome to yoouz")) {
-          return;
-        }
-        let prefs = currentUser?.notificationSettings;
-        if (!prefs) {
-          try {
-            const saved = localStorage.getItem("copo_notification_settings");
-            if (saved) prefs = JSON.parse(saved);
-          } catch (e) {}
-        }
-        if (prefs?.enabled === false) return;
-        if (newIncoming.type === "like" && prefs?.likes === false) return;
-        if (newIncoming.type === "comment" && prefs?.comments === false) return;
-        if (newIncoming.type === "follow" && prefs?.follows === false) return;
-        if ((newIncoming.type === "bookmark" || (newIncoming.type as string) === "save") && prefs?.bookmarks === false) return;
-        if (newIncoming.type === "review" && prefs?.reviews === false) return;
-        if ((newIncoming.type === "repost" || newIncoming.type === "share") && prefs?.shares === false) return;
-        if ((newIncoming.type === "message" || (newIncoming.type as any) === "chat") && prefs?.messages === false) return;
-
-        let title = "1 new notification";
-        if (newIncoming.type === "like") title = "1 new like";
-        else if (newIncoming.type === "comment") title = "1 new comment";
-        else if (newIncoming.type === "follow") title = "1 new follower";
-        else if (newIncoming.type === "bookmark" || (newIncoming.type as string) === "save") title = "1 new save";
-        else if (newIncoming.type === "review") title = `1 new review for ${newIncoming.placeName || 'your place'}`;
-        else if (newIncoming.type === "repost" || newIncoming.type === "share") title = "1 new share";
-        else if (newIncoming.type === "message" || (newIncoming.type as any) === "chat") title = `1 new message from ${newIncoming.user?.name || 'Yoouz'}`;
-
-        const targetThreadId = (newIncoming as any).threadId || (newIncoming as any).chatId;
-
-        setInAppToast({
-          id: newIncoming.id,
-          type: (newIncoming.type === "message" || (newIncoming.type as any) === "chat") ? "message" : "notification",
-          actionType: newIncoming.type,
-          title: title,
-          subtitle: newIncoming.text ? `${newIncoming.user.name}: ${newIncoming.text}` : `${newIncoming.user.name} sent you a message`,
-          avatar: newIncoming.user.avatar,
-          userName: newIncoming.user.name,
-          threadId: targetThreadId,
-          onAction: () => {
-            markNotificationAsRead(newIncoming.id, effectiveMessagingUser);
-            if (newIncoming.type === "message" || (newIncoming.type as any) === "chat" || targetThreadId) {
-              if (activeSection === "business") {
-                // Business dashboard already in view
-              } else {
-                setActiveSection("messages");
-                if (targetThreadId) {
-                  setActiveThreadId(targetThreadId);
-                }
-              }
-            } else if (newIncoming.videoId) {
-              handleSelectVideoById(newIncoming.videoId);
-            } else {
-              setActiveSection("notifications");
-            }
-            setInAppToast(null);
-          }
-        });
-      }
     });
 
     return () => unsubscribe();
@@ -6332,34 +6224,67 @@ export function App() {
     await handleAdminDeleteVideo(videoId);
   };
 
+  // Helper to robustly check if a place is saved in user's profile
+  const isPlaceSaved = (p: Place | null) => {
+    if (!p) return false;
+    const pId = (p.id || "").toLowerCase().trim();
+    const domain = extractCleanDomain(p.brandDomain || p.website || p.id || "").toLowerCase().trim();
+    const pName = (p.name || "").toLowerCase().trim();
+    return savedPlaceIds.some((id) => {
+      if (!id) return false;
+      const norm = id.toLowerCase().trim();
+      const cleanNorm = extractCleanDomain(norm);
+      return (pId && norm === pId) || (domain && (norm === domain || cleanNorm === domain)) || (pName && norm === pName);
+    });
+  };
+
   // Handle Grab / Save Place to Profile
   const handleToggleGrabPlace = (place: Place) => {
+    if (!place) return;
     setPlaces((prev) => {
       if (prev.some((p) => p.id === place.id)) return prev;
       return [place, ...prev];
     });
 
+    const pId = (place.id || "").toLowerCase().trim();
+    const domain = extractCleanDomain(place.brandDomain || place.website || place.id || "").toLowerCase().trim();
+    const pName = (place.name || "").toLowerCase().trim();
+    const targetKeys = [pId, domain, pName].filter(Boolean);
+
     setSavedPlaceIds((prev) => {
-      const exists = prev.includes(place.id);
-      let next;
+      const exists = prev.some((id) => {
+        if (!id) return false;
+        const norm = id.toLowerCase().trim();
+        const cleanNorm = extractCleanDomain(norm);
+        return targetKeys.some((k) => norm === k || cleanNorm === k);
+      });
+
+      let next: string[];
       if (exists) {
-        next = prev.filter((id) => id !== place.id);
+        next = prev.filter((id) => {
+          if (!id) return false;
+          const norm = id.toLowerCase().trim();
+          const cleanNorm = extractCleanDomain(norm);
+          return !targetKeys.some((k) => norm === k || cleanNorm === k);
+        });
       } else {
-        next = [place.id, ...prev];
+        const keyToAdd = place.id || domain || place.name;
+        next = [keyToAdd, ...prev];
       }
       
-      // Sync with server
+      // Sync with server and send notification to business owner
       const currentEmail = currentUser?.email || auth.currentUser?.email;
       if (currentEmail) {
-        const bookmarkId = `bm_${currentEmail.replace(/[^a-zA-Z0-9]/g, '_')}_${place.id}`;
         fetch("/api/interactions/bookmark", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             videoId: "place_bookmark",
-            placeId: place.id,
-            placeName: place.name,
+            placeId: place.id || domain || place.name,
+            placeName: place.name || "Business",
             userId: currentEmail,
+            userName: currentUser?.name || "Member",
+            userAvatar: currentUser?.avatar || "",
             isBookmarked: !exists
           })
         }).catch(() => {});
@@ -6967,7 +6892,7 @@ export function App() {
             onUpdatePlace={handleUpdatePlace}
             onToggleFollowPlace={handleToggleFollowPlace}
             onOpenReport={handleOpenReport}
-            isSaved={savedPlaceIds.includes(drawerPlace.id)}
+            isSaved={isPlaceSaved(drawerPlace)}
             reviewSort={placeReviewSort}
             onSortChange={(sort) => {
               setPlaceReviewSort(sort);
@@ -7221,7 +7146,7 @@ export function App() {
           onUpdatePlace={handleUpdatePlace}
           onToggleFollowPlace={handleToggleFollowPlace}
           onOpenReport={handleOpenReport}
-          isSaved={drawerPlace ? savedPlaceIds.includes(drawerPlace.id) : false}
+          isSaved={isPlaceSaved(drawerPlace)}
           reviewSort={placeReviewSort}
           onSortChange={(sort) => {
             setPlaceReviewSort(sort);

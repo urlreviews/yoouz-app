@@ -406,6 +406,19 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Record share interaction to Bunny.net backend storage
   const recordShareAction = (platform: string = "general") => {
     const targetVideoId = video?.id;
+    const activeUser = getActiveUser();
+    const userPayload = activeUser && (activeUser.email || activeUser.name || activeUser.id) ? {
+      userId: activeUser.email || activeUser.userId || activeUser.id || "",
+      userName: activeUser.name || "Member",
+      userAvatar: getSafeAvatarUrl(activeUser.avatar, activeUser.name, activeUser.handle || activeUser.email),
+      userEmail: activeUser.email || ""
+    } : {
+      userId: "",
+      userName: "A Yoouz Member",
+      userAvatar: YOOUZ_LOGO_DATA_URI,
+      userEmail: ""
+    };
+
     if (targetVideoId) {
       const shareKey = `${targetVideoId}_${platform}_${Math.floor(Date.now() / 3000)}`;
       if (recordedSharesSet.current.has(shareKey)) return;
@@ -414,19 +427,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
       // Optimistic local state update
       onShareIncrement?.(targetVideoId);
-
-      const activeUser = getActiveUser();
-      const userPayload = activeUser && (activeUser.email || activeUser.name || activeUser.id) ? {
-        userId: activeUser.email || activeUser.userId || activeUser.id || "",
-        userName: activeUser.name || "Steven Akan",
-        userAvatar: getSafeAvatarUrl(activeUser.avatar, activeUser.name, activeUser.handle || activeUser.email),
-        userEmail: activeUser.email || ""
-      } : {
-        userId: "",
-        userName: "A Yoouz Member",
-        userAvatar: YOOUZ_LOGO_DATA_URI,
-        userEmail: ""
-      };
 
       try {
         fetch("/api/interactions/share", {
@@ -445,6 +445,27 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             }
           })
           .catch(() => {});
+      } catch (e) {}
+    } else {
+      // Business Profile or Place share recording
+      const placeTargetKey = propDomain || propTitle || "place_share";
+      const shareKey = `place_${placeTargetKey}_${platform}_${Math.floor(Date.now() / 3000)}`;
+      if (recordedSharesSet.current.has(shareKey)) return;
+      recordedSharesSet.current.add(shareKey);
+      setTimeout(() => recordedSharesSet.current.delete(shareKey), 3000);
+
+      try {
+        fetch("/api/interactions/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId: "place_share",
+            placeId: propDomain || propTitle || "place",
+            placeName: propTitle || propDomain || "Business",
+            platform,
+            ...userPayload
+          })
+        }).catch(() => {});
       } catch (e) {}
     }
   };
