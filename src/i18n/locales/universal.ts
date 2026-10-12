@@ -1,315 +1,456 @@
 // Universal instant translation database for all supported languages
-// Pre-maps common page texts, headings, buttons, and sections for all 64 languages
+// Pre-maps common page texts, headings, buttons, and sections for all 64+ languages
+// This ensures "already right now" translations without waiting for AI processing
 
 export const UNIVERSAL_PAGE_TRANSLATIONS: Record<string, Record<string, string>> = {
   // Polish (pl)
   pl: {
-    "Home": "Główna", "Search": "Szukaj", "Discover": "Odkrywaj", "Following": "Obserwowani", "Messages": "Wiadomości",
-    "Notifications": "Powiadomienia", "Bookmarks": "Zapisane", "Business": "Dla Firm", "Profile": "Profil", "More": "Więcej",
-    "Review Any Business or Website": "Oceń dowolną firmę lub stronę WWW",
-    "Review Any Business": "Recenzuj dowolną firmę",
+    "Home": "Główna", "Search": "Szukaj", "Review Any Business": "Oceń dowolną firmę",
     "Search any business to watch authentic video reviews or record your own.": "Wyszukaj dowolną firmę, aby obejrzeć autentyczne recenzje wideo lub nagrać własną.",
-    "Paste a business URL below to see short video reviews or record your own.": "Wklej adres URL firmy, aby obejrzeć 60-sekundowe recenzje wideo lub nagrać własną.",
-    "Search another business or website": "Szukaj innej firmy lub strony...",
-    "Verified Web Listing": "Zweryfikowana Strona WWW",
-    "Discover Reviewers": "Odkryj Recenzentów",
-    "Search reviewer by name...": "Szukaj recenzenta po imieniu...",
-    "Proof of Presence. Real People. Verified Places.": "Dowód obecności. Prawdziwi ludzie. Zweryfikowane miejsca.",
-    "The Yoouz Standard": "Standard Yoouz",
-    "Live Front-Camera Only": "Tylko przednia kamera na żywo",
-    "60-Second Focus": "60 sekund skupienia",
-    "3-Way Dialogue": "Trójstronny dialog",
-    "All Questions": "Wszystkie pytania", "For Reviewers": "Dla Recenzentów", "For Businesses": "Dla Firm",
-    "Trust & Authenticity": "Zaufanie i Autentyczność", "Technical & Privacy": "Techniczne i Prywatność",
-    "Search FAQs, guidelines, or topics...": "Szukaj w FAQ i tematach...",
-    "Official Yoouz Support Desk": "Oficjalne Biuro Obsługi Yoouz",
-    "Your Full Name": "Imię i nazwisko", "Email Address": "Adres e-mail", "Category": "Kategoria",
-    "Send Message": "Wyślij wiadomość", "Inquiry Received Successfully": "Zgłoszenie zostało przyjęte"
+    "Search business...": "Szukaj firmy...", "Verified Web Listing": "Zweryfikowana Strona WWW"
   },
   // Ukrainian (uk)
   uk: {
-    "Home": "Головна", "Search": "Пошук", "Discover": "Огляд", "Following": "Підписки", "Messages": "Повідомлення",
-    "Notifications": "Сповіщення", "Bookmarks": "Збережене", "Business": "Для бізнесу", "Profile": "Профіль", "More": "Більше",
-    "Review Any Business or Website": "Оцініть будь-який бізнес чи сайт",
-    "Review Any Business": "Відгук про будь-який бізнес",
+    "Home": "Головна", "Search": "Пошук", "Review Any Business": "Відгук про будь-який бізнес",
     "Search any business to watch authentic video reviews or record your own.": "Шукайте будь-який бізнес, щоб переглянути справжні відеовідгуки або записати власні.",
-    "Paste a business URL below to see short video reviews or record your own.": "Вставте URL-адресу, щоб переглянути 60-секундні відеовідгуки або записати власний.",
-    "Search another business or website": "Шукати інший бізнес або сайт...",
-    "Verified Web Listing": "Перевірений веб-сайт",
-    "Discover Reviewers": "Знайти авторів відгуків",
-    "Search reviewer by name...": "Пошук автора за ім'ям...",
-    "Proof of Presence. Real People. Verified Places.": "Доказ присутності. Справжні люди. Перевірені місця.",
-    "The Yoouz Standard": "Стандарт Yoouz",
-    "Live Front-Camera Only": "Тільки фронтальна камера наживо",
-    "60-Second Focus": "Фокус на 60 секунд",
-    "3-Way Dialogue": "Тристоронній діалог",
-    "All Questions": "Усі питання", "For Reviewers": "Для авторів", "For Businesses": "Для бізнесу",
-    "Trust & Authenticity": "Довіра та автентичність", "Technical & Privacy": "Технічні питання та приватність",
-    "Search FAQs, guidelines, or topics...": "Пошук у запитаннях та темах...",
-    "Official Yoouz Support Desk": "Офіційна служба підтримки Yoouz",
-    "Your Full Name": "Повне ім'я", "Email Address": "Електронна пошта", "Category": "Категорія",
-    "Send Message": "Надіслати повідомлення", "Inquiry Received Successfully": "Запит успішно отримано"
+    "Search business...": "Пошук бізнесу...", "Verified Web Listing": "Перевірений веб-сайт"
   },
   // Swedish (sv)
   sv: {
-    "Home": "Hem", "Search": "Sök", "Discover": "Upptäck", "Following": "Följer", "Messages": "Meddelanden",
-    "Notifications": "Aviseringar", "Bookmarks": "Sparat", "Business": "För Företag", "Profile": "Profil", "More": "Mer",
-    "Review Any Business or Website": "Recensera vilket företag eller webbplats som helst",
-    "Paste a business URL below to see short video reviews or record your own.": "Klistra in en URL för att se 60-sekunders videorecensioner eller spela in din egen.",
-    "Search another business or website": "Sök annat företag eller webbplats...",
-    "Verified Web Listing": "Verifierad webbplats",
-    "Discover Reviewers": "Upptäck recensenter",
-    "Search reviewer by name...": "Sök recensent efter namn...",
-    "Proof of Presence. Real People. Verified Places.": "Bevis på närvaro. Riktiga människor. Verifierade platser.",
-    "The Yoouz Standard": "Yoouz-standarden",
-    "Live Front-Camera Only": "Endast live framkamera",
-    "60-Second Focus": "60 sekunders fokus",
-    "3-Way Dialogue": "Trevägsdialog",
-    "All Questions": "Alla frågor", "For Reviewers": "För recensenter", "For Businesses": "För företag",
-    "Trust & Authenticity": "Förtroende och äkthet", "Technical & Privacy": "Teknik och integritet",
-    "Search FAQs, guidelines, or topics...": "Sök i vanliga frågor och ämnen...",
-    "Official Yoouz Support Desk": "Officiell Yoouz Support",
-    "Your Full Name": "Fullständigt namn", "Email Address": "E-postadress", "Category": "Kategori",
-    "Send Message": "Skicka meddelande", "Inquiry Received Successfully": "Förfrågan har mottagits"
+    "Home": "Hem", "Search": "Sök", "Review Any Business": "Recensera vilket företag som helst",
+    "Search any business to watch authentic video reviews or record your own.": "Sök efter valfritt företag för att se äkta videorecensioner eller spela in din egen.",
+    "Search business...": "Sök företag...", "Verified Web Listing": "Verifierad webbplats"
   },
   // Greek (el)
   el: {
-    "Home": "Αρχική", "Search": "Αναζήτηση", "Discover": "Ανακάλυψη", "Following": "Ακολουθείτε", "Messages": "Μηνύματα",
-    "Notifications": "Ειδοποιήσεις", "Bookmarks": "Αποθηκευμένα", "Business": "Για Επιχειρήσεις", "Profile": "Προφίλ", "More": "Περισσότερα",
-    "Review Any Business or Website": "Αξιολογήστε οποιαδήποτε επιχείρηση ή ιστότοπο",
-    "Review Any Business": "Αξιολογήστε οποιαδήποτε επιχείρηση",
+    "Home": "Αρχική", "Search": "Αναζήτηση", "Review Any Business": "Αξιολογήστε οποιαδήποτε επιχείρηση",
     "Search any business to watch authentic video reviews or record your own.": "Αναζητήστε οποιαδήποτε επιχείρηση για να παρακολουθήσετε αυθεντικές κριτικές βίντεο ή να ηχογραφήσετε τη δική σας.",
-    "Paste a business URL below to see short video reviews or record your own.": "Επικολλήστε ένα URL για να δείτε κριτικές βίντεο 60 δευτερολέπτων ή να καταγράψετε τη δική σας.",
-    "Search another business or website": "Αναζήτηση άλλης επιχείρησης...",
-    "Verified Web Listing": "Επαληθευμένος ιστότοπος",
-    "Discover Reviewers": "Ανακαλύψτε αξιολογητές",
-    "Search reviewer by name...": "Αναζήτηση με όνομα...",
-    "Proof of Presence. Real People. Verified Places.": "Απόδειξη παρουσίας. Πραγματικοί άνθρωποι. Επαληθευμένα μέρη.",
-    "The Yoouz Standard": "Το πρότυπο Yoouz",
-    "Live Front-Camera Only": "Μόνο ζωντανή μπροστινή κάμερα",
-    "60-Second Focus": "Εστίαση 60 δευτερολέπτων",
-    "3-Way Dialogue": "Τριμερής διάλογος",
-    "All Questions": "Όλες οι ερωτήσεις", "For Reviewers": "Για αξιολογητές", "For Businesses": "Για επιχειρήσεις",
-    "Trust & Authenticity": "Εμπιστοσύνη & Αυθεντικότητα", "Technical & Privacy": "Τεχνικά & Απόρρητο",
-    "Search FAQs, guidelines, or topics...": "Αναζήτηση σε συχνές ερωτήσεις...",
-    "Official Yoouz Support Desk": "Επίσημη Υποστήριξη Yoouz",
-    "Your Full Name": "Ονοματεπώνυμο", "Email Address": "Διεύθυνση Email", "Category": "Κατηγορία",
-    "Send Message": "Αποστολή μηνύματος", "Inquiry Received Successfully": "Το αίτημα ελήφθη επιτυχώς"
+    "Search business...": "Αναζήτηση επιχείρησης...", "Verified Web Listing": "Επαληθευμένος ιστότοπος"
   },
-  // Traditional Chinese (zh-TW)
+  // Hebrew (he)
+  he: {
+    "Home": "בית", "Search": "חיפוש", "Review Any Business": "דרג כל עסק",
+    "Search any business to watch authentic video reviews or record your own.": "חפש כל עסק כדי לצפות בביקורות וידאו אותנטיות או להקליט משלך.",
+    "Search business...": "חפש עסק...", "Verified Web Listing": "אתר מאומת"
+  },
+  // Arabic (ar)
+  ar: {
+    "Home": "الرئيسية", "Search": "بحث", "Review Any Business": "قيم أي نشاط تجاري",
+    "Search any business to watch authentic video reviews or record your own.": "ابحث عن أي نشاط تجاري لمشاهدة مراجعات فيديو حقيقية أو سجل مراجعتك الخاصة.",
+    "Search business...": "ابحث عن نشاط...", "Verified Web Listing": "موقع إلكتروني موثق"
+  },
+  // French (fr)
+  fr: {
+    "Home": "Accueil", "Search": "Rechercher", "Review Any Business": "Évaluer n'importe quelle entreprise",
+    "Search any business to watch authentic video reviews or record your own.": "Recherchez n'importe quelle entreprise pour regarder des avis vidéo authentiques ou enregistrez le vôtre.",
+    "Search business...": "Rechercher une entreprise...", "Verified Web Listing": "Site Web vérifié"
+  },
+  // Spanish (es)
+  es: {
+    "Home": "Inicio", "Search": "Buscar", "Review Any Business": "Calificar cualquier negocio",
+    "Search any business to watch authentic video reviews or record your own.": "Busca cualquier negocio para ver reseñas de video auténticas o graba la tuya.",
+    "Search business...": "Buscar negocio...", "Verified Web Listing": "Sitio web verificado"
+  },
+  // German (de)
+  de: {
+    "Home": "Startseite", "Search": "Suche", "Review Any Business": "Jedes Unternehmen bewerten",
+    "Search any business to watch authentic video reviews or record your own.": "Suchen Sie nach einem Unternehmen, um authentische Videobewertungen anzusehen oder Ihre eigene aufzunehmen.",
+    "Search business...": "Unternehmen suchen...", "Verified Web Listing": "Verifizierte Website"
+  },
+  // Italian (it)
+  it: {
+    "Home": "Home", "Search": "Cerca", "Review Any Business": "Recensisci qualsiasi attività",
+    "Search any business to watch authentic video reviews or record your own.": "Cerca qualsiasi attività per guardare recensioni video autentiche o registra la tua.",
+    "Search business...": "Cerca attività...", "Verified Web Listing": "Sito web verificato"
+  },
+  // Portuguese (pt)
+  pt: {
+    "Home": "Início", "Search": "Buscar", "Review Any Business": "Avaliar qualquer negócio",
+    "Search any business to watch authentic video reviews or record your own.": "Pesquise qualquer negócio para ver avaliações em vídeo autênticas ou grave a sua.",
+    "Search business...": "Buscar negócio...", "Verified Web Listing": "Site verificado"
+  },
+  // Russian (ru)
+  ru: {
+    "Home": "Главная", "Search": "Поиск", "Review Any Business": "Оцените любой бизнес",
+    "Search any business to watch authentic video reviews or record your own.": "Ищите любой бизнес, чтобы посмотреть подлинные видеоотзывы или записать свой собственный.",
+    "Search business...": "Поиск бизнеса...", "Verified Web Listing": "Проверенный веб-сайт"
+  },
+  // Turkish (tr)
+  tr: {
+    "Home": "Anasayfa", "Search": "Ara", "Review Any Business": "Herhangi bir işletmeyi değerlendir",
+    "Search any business to watch authentic video reviews or record your own.": "Gerçek video incelemelerini izlemek veya kendi incelemenizi kaydetmek için herhangi bir işletmeyi arayın.",
+    "Search business...": "İşletme ara...", "Verified Web Listing": "Doğrulanmış Web Sitesi"
+  },
+  // Dutch (nl)
+  nl: {
+    "Home": "Home", "Search": "Zoeken", "Review Any Business": "Beoordeel elk bedrijf",
+    "Search any business to watch authentic video reviews or record your own.": "Zoek naar elk bedrijf om authentieke videorecensies te bekijken of neem uw eigen recensie op.",
+    "Search business...": "Bedrijf zoeken...", "Verified Web Listing": "Geverifieerde website"
+  },
+  // Hindi (hi)
+  hi: {
+    "Home": "होम", "Search": "खोजें", "Review Any Business": "किसी भी व्यवसाय की समीक्षा करें",
+    "Search any business to watch authentic video reviews or record your own.": "प्रामाणिक वीडियो समीक्षाएं देखने या अपनी खुद की समीक्षा रिकॉर्ड करने के लिए किसी भी व्यवसाय को खोजें।",
+    "Search business...": "व्यवसाय खोजें...", "Verified Web Listing": "सत्यापित वेबसाइट"
+  },
+  // Japanese (ja)
+  ja: {
+    "Home": "ホーム", "Search": "検索", "Review Any Business": "あらゆるビジネスを評価",
+    "Search any business to watch authentic video reviews or record your own.": "本物のビデオレビューを見たり、自分で録画したりするために、あらゆるビジネスを検索してください。",
+    "Search business...": "ビジネスを検索...", "Verified Web Listing": "認証済みウェブサイト"
+  },
+  // Korean (ko)
+  ko: {
+    "Home": "홈", "Search": "검색", "Review Any Business": "모든 비즈니스 리뷰",
+    "Search any business to watch authentic video reviews or record your own.": "실제 동영상 리뷰를 보거나 직접 녹화하려면 모든 비즈니스를 검색하세요.",
+    "Search business...": "비즈니스 검색...", "Verified Web Listing": "인증된 웹사이트"
+  },
+  // Chinese Simplified (zh)
+  zh: {
+    "Home": "首页", "Search": "搜索", "Review Any Business": "评价任何商家",
+    "Search any business to watch authentic video reviews or record your own.": "搜索任何商家以观看真实的视频评论或亲自录制。",
+    "Search business...": "搜索商家...", "Verified Web Listing": "认证网站"
+  },
+  // Chinese Traditional (zh-TW)
   "zh-TW": {
-    "Home": "首頁", "Search": "搜尋", "Discover": "探索", "Following": "追蹤中", "Messages": "訊息",
-    "Notifications": "通知", "Bookmarks": "已儲存", "Business": "商家專區", "Profile": "個人檔案", "More": "更多",
-    "Review Any Business or Website": "評價任何商家或網站",
-    "Review Any Business": "評價任何商家",
+    "Home": "首頁", "Search": "搜尋", "Review Any Business": "評價任何商家",
     "Search any business to watch authentic video reviews or record your own.": "搜尋任何商家以觀看真實的影音評論或親自錄製。",
-    "Paste a business URL below to see short video reviews or record your own.": "貼上商家網址，查看 60 秒短影音評論或親自錄製。",
-    "Search another business or website": "搜尋其他商家或網址...",
-    "Verified Web Listing": "已認證商家網頁",
-    "Discover Reviewers": "探索評論創作者",
-    "Search reviewer by name...": "搜尋創作者姓名...",
-    "Proof of Presence. Real People. Verified Places.": "到場證明。真實用戶。認證地點。",
-    "The Yoouz Standard": "Yoouz 信任準則",
-    "Live Front-Camera Only": "僅限前置鏡頭即時拍攝",
-    "60-Second Focus": "60 秒高濃縮焦點",
-    "3-Way Dialogue": "三方即時互動",
-    "All Questions": "所有問題", "For Reviewers": "創作者問答", "For Businesses": "商家專區",
-    "Trust & Authenticity": "真實性與信任機制", "Technical & Privacy": "技術與隱私保障",
-    "Search FAQs, guidelines, or topics...": "搜尋常見問題與主題...",
-    "Official Yoouz Support Desk": "Yoouz 官方客服中心",
-    "Your Full Name": "真實姓名", "Email Address": "電子信箱", "Category": "諮詢類別",
-    "Send Message": "送出諮詢", "Inquiry Received Successfully": "諮詢已成功送達"
+    "Search business...": "搜尋商家...", "Verified Web Listing": "已認證商家網頁"
   },
-  // Danish (da)
-  da: {
-    "Home": "Hjem", "Search": "Søg", "Discover": "Opdag", "Following": "Følger", "Messages": "Beskeder",
-    "Notifications": "Notifikationer", "Bookmarks": "Gemt", "Business": "For Virksomheder", "Profile": "Profil", "More": "Mere",
-    "Review Any Business or Website": "Anmeld enhver virksomhed eller hjemmeside",
-    "Review Any Business": "Anmeld enhver virksomhed",
-    "Search any business to watch authentic video reviews or record your own.": "Søg efter enhver virksomhed for at se autentiske videoanmeldelser eller optag din egen.",
-    "Paste a business URL below to see short video reviews or record your own.": "Indsæt et link for at se 60-sekunders videoanmeldelser eller optage din egen.",
-    "Search another business or website": "Søg efter en anden virksomhed...",
-    "Verified Web Listing": "Verificeret Hjemmeside",
-    "Discover Reviewers": "Find anmeldere",
-    "Search reviewer by name...": "Søg anmelder efter navn...",
-    "Proof of Presence. Real People. Verified Places.": "Bevis for tilstedeværelse. Rigtige mennesker. Verificerede steder.",
-    "The Yoouz Standard": "Yoouz Standarden",
-    "Live Front-Camera Only": "Kun live frontkamera",
-    "60-Second Focus": "60 sekunders fokus",
-    "3-Way Dialogue": "Trevejsdialog",
-    "All Questions": "Alle spørgsmål", "For Reviewers": "For anmeldere", "For Businesses": "For virksomheder",
-    "Trust & Authenticity": "Tillid & Ægthed", "Technical & Privacy": "Teknik & Privatliv",
-    "Search FAQs, guidelines, or topics...": "Søg i ofte stillede spørgsmål...",
-    "Official Yoouz Support Desk": "Officiel Yoouz Support",
-    "Your Full Name": "Fulde navn", "Email Address": "E-mailadresse", "Category": "Kategori",
-    "Send Message": "Send besked", "Inquiry Received Successfully": "Forespørgsel modtaget"
-  },
-  // Norwegian (no)
-  no: {
-    "Home": "Hjem", "Search": "Søk", "Discover": "Oppdag", "Following": "Følger", "Messages": "Meldinger",
-    "Notifications": "Varsler", "Bookmarks": "Lagret", "Business": "For Bedrifter", "Profile": "Profil", "More": "Mer",
-    "Review Any Business or Website": "Anmeld enhver bedrift eller nettside",
-    "Review Any Business": "Anmeld enhver bedrift",
-    "Search any business to watch authentic video reviews or record your own.": "Sök efter hvilken som helst bedrift for å se ekte videoanmeldelser eller spill inn din egen.",
-    "Paste a business URL below to see short video reviews or record your own.": "Lim inn en lenke for å se 60-sekunders videoanmeldelser eller spill inn din egen.",
-    "Search another business or website": "Søk etter en annen bedrift...",
-    "Verified Web Listing": "Verifisert nettside",
-    "Discover Reviewers": "Finn anmeldere",
-    "Search reviewer by name...": "Søk etter anmelder...",
-    "Proof of Presence. Real People. Verified Places.": "Bevis på tilstedeværelse. Ekte mennesker. Verifiserte steder.",
-    "The Yoouz Standard": "Yoouz-standarden",
-    "Live Front-Camera Only": "Kun live frontkamera",
-    "60-Second Focus": "60 sekunders fokus",
-    "3-Way Dialogue": "Treveisdialog",
-    "All Questions": "Alle spørsmål", "For Reviewers": "For anmeldere", "For Businesses": "For bedrifter",
-    "Trust & Authenticity": "Tillit og ekthet", "Technical & Privacy": "Teknisk og personvern",
-    "Search FAQs, guidelines, or topics...": "Søk i vanlige spørsmål...",
-    "Official Yoouz Support Desk": "Offisiell Yoouz Brukerstøtte",
-    "Your Full Name": "Fullt navn", "Email Address": "E-postadresse", "Category": "Kategori",
-    "Send Message": "Send melding", "Inquiry Received Successfully": "Forespørsel mottatt"
-  },
-  // Finnish (fi)
-  fi: {
-    "Home": "Koti", "Search": "Haku", "Discover": "Löydä", "Following": "Seurataan", "Messages": "Viestit",
-    "Notifications": "Ilmoitukset", "Bookmarks": "Tallennetut", "Business": "Yrityksille", "Profile": "Profiili", "More": "Lisää",
-    "Review Any Business or Website": "Arvioi mikä tahansa yritys tai sivusto",
-    "Review Any Business": "Arvioi mikä tahansa yritys",
-    "Search any business to watch authentic video reviews or record your own.": "Etsi mikä tahansa yritys katsoaksesi aitoja videoarvosteluja tai tallentaaksesi omasi.",
-    "Paste a business URL below to see short video reviews or record your own.": "Liitä URL-osoite nähdäksesi 60 sekunnin videoarvosteluja tai äänittääksesi omasi.",
-    "Search another business or website": "Etsi toista yritystä...",
-    "Verified Web Listing": "Vahvistettu verkkosivusto",
-    "Discover Reviewers": "Löydä arvostelijoita",
-    "Search reviewer by name...": "Hae arvostelijan nimellä...",
-    "Proof of Presence. Real People. Verified Places.": "Todiste läsnäolosta. Oikeat ihmiset. Vahvistetut paikat.",
-    "The Yoouz Standard": "Yoouz-standardi",
-    "Live Front-Camera Only": "Vain live-etukamera",
-    "60-Second Focus": "60 sekunnin tarkkuus",
-    "3-Way Dialogue": "Kolmisuuntainen vuoropuhelu",
-    "All Questions": "Kaikki kysymykset", "For Reviewers": "Arvostelijoille", "For Businesses": "Yrityksille",
-    "Trust & Authenticity": "Luottamus ja aitous", "Technical & Privacy": "Teknologia ja tietosuoja",
-    "Search FAQs, guidelines, or topics...": "Hae usein kysytyistä kysymyksistä...",
-    "Official Yoouz Support Desk": "Virallinen Yoouz-tukipalvelu",
-    "Your Full Name": "Koko nimi", "Email Address": "Sähköpostiosoite", "Category": "Kategoria",
-    "Send Message": "Lähetä viesti", "Inquiry Received Successfully": "Pyyntö vastaanotettu"
-  },
-  // Czech (cs)
-  cs: {
-    "Home": "Domů", "Search": "Hledat", "Discover": "Objevovat", "Following": "Sledovaní", "Messages": "Zprávy",
-    "Notifications": "Upozornění", "Bookmarks": "Uložené", "Business": "Pro Firmy", "Profile": "Profil", "More": "Více",
-    "Review Any Business or Website": "Ohodnoťte jakoukoli firmu nebo web",
-    "Review Any Business": "Recenzujte jakoukoli firmu",
-    "Search any business to watch authentic video reviews or record your own.": "Vyhledejte jakoukoli firmu a podívejte se na autentické videorecenze nebo natočte vlastní.",
-    "Paste a business URL below to see short video reviews or record your own.": "Vložte URL adresu a prohlédněte si 60sekundové videorecenze nebo natočte vlastní.",
-    "Search another business or website": "Hledat jinou firmu nebo web...",
-    "Verified Web Listing": "Ověřená webová stránka",
-    "Discover Reviewers": "Objevte recenzenty",
-    "Search reviewer by name...": "Hledat recenzenta podle jména...",
-    "Proof of Presence. Real People. Verified Places.": "Důkaz přítomnosti. Skuteční lidé. Ověřená místa.",
-    "The Yoouz Standard": "Standard Yoouz",
-    "Live Front-Camera Only": "Pouze živá přední kamera",
-    "60-Second Focus": "60sekundové zaměření",
-    "3-Way Dialogue": "Třístranný dialog",
-    "All Questions": "Všechny otázky", "For Reviewers": "Pro recenzenty", "For Businesses": "Pro firmy",
-    "Trust & Authenticity": "Důvěra a autentičnost", "Technical & Privacy": "Technické a soukromí",
-    "Search FAQs, guidelines, or topics...": "Hledat v častých dotazech...",
-    "Official Yoouz Support Desk": "Oficiální podpora Yoouz",
-    "Your Full Name": "Celé jméno", "Email Address": "E-mailová adresa", "Category": "Kategorie",
-    "Send Message": "Odeslat zprávu", "Inquiry Received Successfully": "Dotaz byl úspěšně přijat"
-  },
-  // Hungarian (hu)
-  hu: {
-    "Home": "Főoldal", "Search": "Keresés", "Discover": "Felfedezés", "Following": "Követések", "Messages": "Üzenetek",
-    "Notifications": "Értesítések", "Bookmarks": "Mentettek", "Business": "Vállalkozásoknak", "Profile": "Profil", "More": "Több",
-    "Review Any Business or Website": "Értékeljen bármilyen helyet vagy weboldalt",
-    "Review Any Business": "Értékeljen bármilyen vállalkozást",
-    "Search any business to watch authentic video reviews or record your own.": "Keressen bármilyen vállalkozást, hogy hiteles videóértékeléseket nézzen meg, vagy rögzítse sajátját.",
-    "Paste a business URL below to see short video reviews or record your own.": "Illessze be a linket a 60 másodperces videóértékelések megtekintéséhez vagy saját rögzítéséhez.",
-    "Search another business or website": "Másik hely vagy weboldal keresése...",
-    "Verified Web Listing": "Hitelesített weboldal",
-    "Discover Reviewers": "Értékelők felfedezése",
-    "Search reviewer by name...": "Értékelő keresése név szerint...",
-    "Proof of Presence. Real People. Verified Places.": "Jelenléti bizonyíték. Valódi emberek. Hitelesített helyek.",
-    "The Yoouz Standard": "A Yoouz szabvány",
-    "Live Front-Camera Only": "Kizárólag élő előlapi kamera",
-    "60-Second Focus": "60 másodperces fókusz",
-    "3-Way Dialogue": "Háromoldalú párbeszéd",
-    "All Questions": "Minden kérdés", "For Reviewers": "Értékelőknek", "For Businesses": "Vállalkozásoknak",
-    "Trust & Authenticity": "Bizalom és hitelesség", "Technical & Privacy": "Technikai és adatvédelem",
-    "Search FAQs, guidelines, or topics...": "Keresés a gyakori kérdésekben...",
-    "Official Yoouz Support Desk": "Hivatalos Yoouz ügyfélszolgálat",
-    "Your Full Name": "Teljes név", "Email Address": "E-mail cím", "Category": "Kategória",
-    "Send Message": "Üzenet küldése", "Inquiry Received Successfully": "Megkeresés sikeresen elküldve"
-  },
-  // Romanian (ro)
-  ro: {
-    "Home": "Acasă", "Search": "Căutare", "Discover": "Descoperă", "Following": "Urmărești", "Messages": "Mesaje",
-    "Notifications": "Notificări", "Bookmarks": "Salvate", "Business": "Pentru Afaceri", "Profile": "Profil", "More": "Mai mult",
-    "Review Any Business or Website": "Evaluează orice afacere sau site",
-    "Review Any Business": "Evaluează orice afacere",
-    "Search any business to watch authentic video reviews or record your own.": "Caută orice afacere pentru a viziona recenzii video autentice sau pentru a înregistra propria ta recenzie.",
-    "Paste a business URL below to see short video reviews or record your own.": "Introdu linkul pentru a viziona recenzii video de 60 de secunde sau pentru a înregistra propria ta recenzie.",
-    "Search another business or website": "Caută altă afacere sau site...",
-    "Verified Web Listing": "Site Verificat",
-    "Discover Reviewers": "Descoperă recenzori",
-    "Search reviewer by name...": "Caută recenzor după nume...",
-    "Proof of Presence. Real People. Verified Places.": "Dovada prezenței. Oameni reali. Locații verificate.",
-    "The Yoouz Standard": "Standardul Yoouz",
-    "Live Front-Camera Only": "Exclusiv camera frontală live",
-    "60-Second Focus": "Concentrare de 60 de secunde",
-    "3-Way Dialogue": "Dialog tripartit",
-    "All Questions": "Toate întrebările", "For Reviewers": "Pentru recenzori", "For Businesses": "Pentru afaceri",
-    "Trust & Authenticity": "Încredere și autenticitate", "Technical & Privacy": "Tehnic și confidențialitate",
-    "Search FAQs, guidelines, or topics...": "Caută în întrebări frecvente...",
-    "Official Yoouz Support Desk": "Suport Oficial Yoouz",
-    "Your Full Name": "Nume complet", "Email Address": "Adresă de e-mail", "Category": "Categorie",
-    "Send Message": "Trimite mesaj", "Inquiry Received Successfully": "Solicitarea a fost primită cu succes"
+  // Indonesian (id)
+  id: {
+    "Home": "Beranda", "Search": "Cari", "Review Any Business": "Tinjau Bisnis Apa Pun",
+    "Search any business to watch authentic video reviews or record your own.": "Cari bisnis apa pun untuk menonton ulasan video asli atau rekam ulasan Anda sendiri.",
+    "Search business...": "Cari bisnis...", "Verified Web Listing": "Situs Web Terverifikasi"
   },
   // Vietnamese (vi)
   vi: {
-    "Home": "Trang chủ", "Search": "Tìm kiếm", "Discover": "Khám phá", "Following": "Đang theo dõi", "Messages": "Tin nhắn",
-    "Notifications": "Thông báo", "Bookmarks": "Đã lưu", "Business": "Dành cho doanh nghiệp", "Profile": "Hồ sơ", "More": "Thêm",
-    "Review Any Business or Website": "Đánh giá bất kỳ địa điểm hoặc trang web nào",
-    "Review Any Business": "Đánh giá bất kỳ doanh nghiệp nào",
+    "Home": "Trang chủ", "Search": "Tìm kiếm", "Review Any Business": "Đánh giá bất kỳ doanh nghiệp nào",
     "Search any business to watch authentic video reviews or record your own.": "Tìm kiếm bất kỳ doanh nghiệp nào để xem các video đánh giá thực tế hoặc quay video của riêng bạn.",
-    "Paste a business URL below to see short video reviews or record your own.": "Dán liên kết trang web để xem các video đánh giá 60 giây hoặc tự quay video của bạn.",
-    "Search another business or website": "Tìm kiếm địa điểm khác...",
-    "Verified Web Listing": "Trang web đã xác minh",
-    "Discover Reviewers": "Khám phá người đánh giá",
-    "Search reviewer by name...": "Tìm người đánh giá theo tên...",
-    "Proof of Presence. Real People. Verified Places.": "Bằng chứng hiện diện. Người thật. Địa điểm xác thực.",
-    "The Yoouz Standard": "Tiêu chuẩn Yoouz",
-    "Live Front-Camera Only": "Chỉ quay trực tiếp bằng camera trước",
-    "60-Second Focus": "Tập trung trong 60 giây",
-    "3-Way Dialogue": "Đối thoại 3 chiều",
-    "All Questions": "Tất cả câu hỏi", "For Reviewers": "Dành cho người đánh giá", "For Businesses": "Dành cho doanh nghiệp",
-    "Trust & Authenticity": "Tin cậy & Xác thực", "Technical & Privacy": "Kỹ thuật & Quyền riêng tư",
-    "Search FAQs, guidelines, or topics...": "Tìm kiếm câu hỏi thường gặp...",
-    "Official Yoouz Support Desk": "Bàn hỗ trợ Yoouz chính thức",
-    "Your Full Name": "Họ và tên", "Email Address": "Địa chỉ email", "Category": "Danh mục",
-    "Send Message": "Gửi tin nhắn", "Inquiry Received Successfully": "Đã nhận yêu cầu thành công"
+    "Search business...": "Tìm doanh nghiệp...", "Verified Web Listing": "Trang web đã xác minh"
   },
   // Thai (th)
   th: {
-    "Home": "หน้าแรก", "Search": "ค้นหา", "Discover": "สำรวจ", "Following": "กำลังติดตาม", "Messages": "ข้อความ",
-    "Notifications": "การแจ้งเตือน", "Bookmarks": "บันทึกแล้ว", "Business": "สำหรับธุรกิจ", "Profile": "โปรไฟล์", "More": "เพิ่มเติม",
-    "Review Any Business or Website": "รีวิวธุรกิจหรือเว็บไซต์ใดก็ได้",
-    "Review Any Business": "รีวิวธุรกิจใดก็ได้",
+    "Home": "หน้าแรก", "Search": "ค้นหา", "Review Any Business": "รีวิวธุรกิจใดก็ได้",
     "Search any business to watch authentic video reviews or record your own.": "ค้นหาธุรกิจใดก็ได้เพื่อชมวิดีโอรีวิวที่แท้จริงหรือบันทึกรีวิวของคุณเอง",
-    "Paste a business URL below to see short video reviews or record your own.": "วาง URL เพื่อดูวิดีโอรีวิวความยาว 60 วินาที หรือบันทึกรีวิวของคุณเอง",
-    "Search another business or website": "ค้นหาธุรกิจหรือเว็บไซต์อื่น...",
-    "Verified Web Listing": "เว็บไซต์ที่ได้รับการยืนยัน",
-    "Discover Reviewers": "ค้นหานักรีวิว",
-    "Search reviewer by name...": "ค้นหานักรีวิวตามชื่อ...",
-    "Proof of Presence. Real People. Verified Places.": "หลักฐานการไปจริง ผู้คนจริง สถานที่ที่ผ่านการยืนยัน",
-    "The Yoouz Standard": "มาตรฐาน Yoouz",
-    "Live Front-Camera Only": "บันทึกสดผ่านกล้องหน้าเท่านั้น",
-    "60-Second Focus": "โฟกัส 60 วินาที",
-    "3-Way Dialogue": "การสนทนา 3 ฝ่าย",
-    "All Questions": "คำถามทั้งหมด", "For Reviewers": "สำหรับนักรีวิว", "For Businesses": "สำหรับธุรกิจ",
-    "Trust & Authenticity": "ความน่าเชื่อถือและความแท้จริง", "Technical & Privacy": "ด้านเทคนิคและความเป็นส่วนตัว",
-    "Search FAQs, guidelines, or topics...": "ค้นหาคำถามที่พบบ่อย...",
-    "Official Yoouz Support Desk": "ศูนย์ช่วยเหลืออย่างเป็นทางการของ Yoouz",
-    "Your Full Name": "ชื่อ-นามสกุล", "Email Address": "ที่อยู่อีเมล", "Category": "หมวดหมู่",
-    "Send Message": "ส่งข้อความ", "Inquiry Received Successfully": "ได้รับคำขอเรียบร้อยแล้ว"
+    "Search business...": "ค้นหาธุรกิจ...", "Verified Web Listing": "เว็บไซต์ที่ได้รับการยืนยัน"
+  },
+  // Romanian (ro)
+  ro: {
+    "Home": "Acasă", "Search": "Căutare", "Review Any Business": "Evaluează orice afacere",
+    "Search any business to watch authentic video reviews or record your own.": "Caută orice afacere pentru a viziona recenzii video autentice sau pentru a înregistra propria ta recenzie.",
+    "Search business...": "Caută afacere...", "Verified Web Listing": "Site Verificat"
+  },
+  // Hungarian (hu)
+  hu: {
+    "Home": "Főoldal", "Search": "Keresés", "Review Any Business": "Értékeljen bármilyen vállalkozást",
+    "Search any business to watch authentic video reviews or record your own.": "Keressen bármilyen vállalkozást, hogy hiteles videóértékeléseket nézzen meg, vagy rögzítse sajátját.",
+    "Search business...": "Vállalkozás keresése...", "Verified Web Listing": "Hitelesített weboldal"
+  },
+  // Czech (cs)
+  cs: {
+    "Home": "Domů", "Search": "Hledat", "Review Any Business": "Recenzujte jakoukoli firmu",
+    "Search any business to watch authentic video reviews or record your own.": "Vyhledejte jakoukoli firmu a podívejte se na autentické videorecenze nebo natočte vlastní.",
+    "Search business...": "Hledat firmu...", "Verified Web Listing": "Ověřená webová stránka"
+  },
+  // Danish (da)
+  da: {
+    "Home": "Hjem", "Search": "Søg", "Review Any Business": "Anmeld enhver virksomhed",
+    "Search any business to watch authentic video reviews or record your own.": "Søg efter enhver virksomhed for at se autentiske videoanmeldelser eller optag din egen.",
+    "Search business...": "Søg virksomhed...", "Verified Web Listing": "Verificeret Hjemmeside"
+  },
+  // Norwegian (no)
+  no: {
+    "Home": "Hjem", "Search": "Søk", "Review Any Business": "Anmeld enhver bedrift",
+    "Search any business to watch authentic video reviews or record your own.": "Sök efter hvilken som helst bedrift for å se ekte videoanmeldelser eller spill inn din egen.",
+    "Search business...": "Sök bedrift...", "Verified Web Listing": "Verifisert nettside"
+  },
+  // Finnish (fi)
+  fi: {
+    "Home": "Koti", "Search": "Haku", "Review Any Business": "Arvioi mikä tahansa yritys",
+    "Search any business to watch authentic video reviews or record your own.": "Etsi mikä tahansa yritys katsoaksesi aitoja videoarvosteluja tai tallentaaksesi omasi.",
+    "Search business...": "Etsi yritystä...", "Verified Web Listing": "Vahvistettu verkkosivusto"
+  },
+  // Bulgarian (bg)
+  bg: {
+    "Home": "Начало", "Search": "Търсене", "Review Any Business": "Оценете всеки бизнес",
+    "Search any business to watch authentic video reviews or record your own.": "Потърсете бизнес, за да гледате истински видео ревюта или запишете свое.",
+    "Search business...": "Търсене на бизнес...", "Verified Web Listing": "Проверен уебсайт"
+  },
+  // Serbian (sr)
+  sr: {
+    "Home": "Почетна", "Search": "Претрага", "Review Any Business": "Оцените било који посао",
+    "Search any business to watch authentic video reviews or record your own.": "Потражите било који посао да бисте погледали аутентичне видео рецензије или снимили своје.",
+    "Search business...": "Претрага посла...", "Verified Web Listing": "Верификован веб-сајт"
+  },
+  // Croatian (hr)
+  hr: {
+    "Home": "Početna", "Search": "Pretraživanje", "Review Any Business": "Ocijenite bilo koju tvrtku",
+    "Search any business to watch authentic video reviews or record your own.": "Potražite bilo koju tvrtku da biste pogledali autentične video recenzije ili snimili vlastitu.",
+    "Search business...": "Pretraživanje tvrtke...", "Verified Web Listing": "Provjerena web stranica"
+  },
+  // Slovak (sk)
+  sk: {
+    "Home": "Domov", "Search": "Hľadať", "Review Any Business": "Ohodnoťte akúkoľvek firmu",
+    "Search any business to watch authentic video reviews or record your own.": "Vyhľadajte akúkoľvek firmu a pozrite si autentické videorecenzie alebo natočte vlastnú.",
+    "Search business...": "Hľadať firmu...", "Verified Web Listing": "Overená webová stránka"
+  },
+  // Slovenian (sl)
+  sl: {
+    "Home": "Domov", "Search": "Iskanje", "Review Any Business": "Ocenite katero koli podjetje",
+    "Search any business to watch authentic video reviews or record your own.": "Poiščite katero koli podjetje za ogled pristnih video ocen ali posnemite svojo.",
+    "Search business...": "Iskanje podjetja...", "Verified Web Listing": "Preverjeno spletno mesto"
+  },
+  // Lithuanian (lt)
+  lt: {
+    "Home": "Pradžia", "Search": "Paieška", "Review Any Business": "Įvertinkite bet kurį verslą",
+    "Search any business to watch authentic video reviews or record your own.": "Ieškokite bet kurio verslo, kad peržiūrėtumėte autentiškas vaizdo apžvalgas arba įrašytumėte savo.",
+    "Search business...": "Ieškoti verslo...", "Verified Web Listing": "Patvirtinta svetainė"
+  },
+  // Latvian (lv)
+  lv: {
+    "Home": "Sākums", "Search": "Meklēšana", "Review Any Business": "Novērtējiet jebkuru uzņēmumu",
+    "Search any business to watch authentic video reviews or record your own.": "Meklējiet jebkuru uzņēmumu, lai skatītos autentiskas video atsauksmes vai ierakstītu savu.",
+    "Search business...": "Meklēt uzņēmumu...", "Verified Web Listing": "Verificēta tīmekļa vietne"
+  },
+  // Estonian (et)
+  et: {
+    "Home": "Avaleht", "Search": "Otsi", "Review Any Business": "Hinda mis tahes ettevõtet",
+    "Search any business to watch authentic video reviews or record your own.": "Otsige mis tahes ettevõtet, et vaadata autentseid videoarvustusi või salvestada oma.",
+    "Search business...": "Otsi ettevõtet...", "Verified Web Listing": "Kinnitatud veebisait"
+  },
+  // Persian (fa)
+  fa: {
+    "Home": "خانه", "Search": "جستجو", "Review Any Business": "هر کسب و کاری را ارزیابی کنید",
+    "Search any business to watch authentic video reviews or record your own.": "هر کسب و کاری را جستجو کنید تا نظرات ویدیویی واقعی را تماشا کنید یا نظر خود را ثبت کنید.",
+    "Search business...": "جستجوی کسب و کار...", "Verified Web Listing": "وب سایت تایید شده"
+  },
+  // Urdu (ur)
+  ur: {
+    "Home": "ہوم", "Search": "تلاش", "Review Any Business": "کسی بھی کاروبار کا جائزہ لیں",
+    "Search any business to watch authentic video reviews or record your own.": "اصلی ویڈیو جائزے دیکھنے یا اپنا ریکارڈ کرنے کے لیے کسی भी کاروبار کو تلاش کریں۔",
+    "Search business...": "کاروبار تلاش کریں...", "Verified Web Listing": "تصدیق شدہ ویب سائٹ"
+  },
+  // Georgian (ka)
+  ka: {
+    "Home": "მთავარი", "Search": "ძიება", "Review Any Business": "შეაფასეთ ნებისმიერი ბიზნესი",
+    "Search any business to watch authentic video reviews or record your own.": "მოძებნეთ ნებისმიერი ბიზნესი ავთენტური ვიდეო მიმოხილვების სანახავად ან ჩაწერეთ თქვენი.",
+    "Search business...": "ბიზნესის ძებნა...", "Verified Web Listing": "ვერიფიცირებული ვებგვერდი"
+  },
+  // Armenian (hy)
+  hy: {
+    "Home": "Գլխավոր", "Search": "Փնտրել", "Review Any Business": "Գնահատեք ցանկացած բիզնես",
+    "Search any business to watch authentic video reviews or record your own.": "Փնտրեք ցանկացած բիզնես՝ վավերական վիդեո ակնարկներ դիտելու կամ ձերը ձայնագրելու համար:",
+    "Search business...": "Փնտրել բիզնես...", "Verified Web Listing": "Վավերացված վեբ կայք"
+  },
+  // Azerbaijani (az)
+  az: {
+    "Home": "Ana Səhifə", "Search": "Axtar", "Review Any Business": "Hər hansı bir biznesi qiymətləndirin",
+    "Search any business to watch authentic video reviews or record your own.": "Orijinal video rəylərə baxmaq və ya öz rəyinizi yazmaq üçün hər hansı bir biznesi axtarın.",
+    "Search business...": "Biznes axtar...", "Verified Web Listing": "Təsdiqlənmiş veb sayt"
+  },
+  // Bengali (bn)
+  bn: {
+    "Home": "হোম", "Search": "অনুসন্ধান", "Review Any Business": "যেকোনো ব্যবসা পর্যালোচনা করুন",
+    "Search any business to watch authentic video reviews or record your own.": "প্রামাণিক ভিডিও পর্যালোচনা দেখতে বা আপনার নিজের রেকর্ড করতে যেকোনো ব্যবসা অনুসন্ধান করুন।",
+    "Search business...": "ব্যবসা খুঁজুন...", "Verified Web Listing": "যাচাইকৃত ওয়েবসাইট"
+  },
+  // Filipino (tl)
+  tl: {
+    "Home": "Home", "Search": "Maghanap", "Review Any Business": "Suriin ang Anumang Negosyo",
+    "Search any business to watch authentic video reviews or record your own.": "Maghanap ng anumang negosyo para manood ng mga totoong video review o i-record ang iyong sarili.",
+    "Search business...": "Maghanap ng negosyo...", "Verified Web Listing": "Na-verify na Website"
+  },
+  // Malay (ms)
+  ms: {
+    "Home": "Laman Utama", "Search": "Cari", "Review Any Business": "Semak Mana-mana Perniagaan",
+    "Search any business to watch authentic video reviews or record your own.": "Cari mana-mana perniagaan untuk menonton ulasan video tulen atau rakam ulasan anda sendiri.",
+    "Search business...": "Cari perniagaan...", "Verified Web Listing": "Tapak Web Disahkan"
+  },
+  // Swahili (sw)
+  sw: {
+    "Home": "Nyumbani", "Search": "Tafuta", "Review Any Business": "Kagua Biashara Yoyote",
+    "Search any business to watch authentic video reviews or record your own.": "Tafuta biashara yoyote ili kutazama ukaguzi halisi wa video au kurekodi wako mwenewe.",
+    "Search business...": "Tafuta biashara...", "Verified Web Listing": "Tovuti Iliyothibitishwa"
+  },
+  // Icelandic (is)
+  is: {
+    "Home": "Heim", "Search": "Leita", "Review Any Business": "Gefa umsögn um hvaða fyrirtæki sem er",
+    "Search any business to watch authentic video reviews or record your own.": "Leitaðu að hvaða fyrirtæki sem er til að horfa á ósviknar myndbandsumsagnir eða taka upp þína eigin.",
+    "Search business...": "Leita að fyrirtæki...", "Verified Web Listing": "Staðfest vefsíða"
+  },
+  // Albanian (sq)
+  sq: {
+    "Home": "Ballina", "Search": "Kërko", "Review Any Business": "Vlerësoni çdo biznes",
+    "Search any business to watch authentic video reviews or record your own.": "Kërkoni për çdo biznes për të parë vlerësime autentike me video ose regjistroni tuajën.",
+    "Search business...": "Kërko biznes...", "Verified Web Listing": "Faqe interneti e verifikuar"
+  },
+  // Irish (ga)
+  ga: {
+    "Home": "Baile", "Search": "Cuardaigh", "Review Any Business": "Déan léirmheas ar aon ghnó",
+    "Search any business to watch authentic video reviews or record your own.": "Cuardaigh aon ghnó chun fíor-léirmheasanna físe a fheiceáil nó do cheann féin a thaifeadadh.",
+    "Search business...": "Cuardaigh gnó...", "Verified Web Listing": "Suíomh Gréasáin deimhnithe"
+  },
+  // Catalan (ca)
+  ca: {
+    "Home": "Inici", "Search": "Cerca", "Review Any Business": "Ressenya qualsevol negoci",
+    "Search any business to watch authentic video reviews or record your own.": "Cerca qualsevol negoci per veure ressenyes en vídeo autèntiques o grava la teva.",
+    "Search business...": "Cerca negoci...", "Verified Web Listing": "Lloc web verificat"
+  },
+  // Basque (eu)
+  eu: {
+    "Home": "Hasiera", "Search": "Bilatu", "Review Any Business": "Edozein negozio baloratu",
+    "Search any business to watch authentic video reviews or record your own.": "Bilatu edozein negozio bideo-balorazio autentikoak ikusteko edo zurea grabatzeko.",
+    "Search business...": "Bilatu negozioa...", "Verified Web Listing": "Egiaztatutako webgunea"
+  },
+  // Galician (gl)
+  gl: {
+    "Home": "Inicio", "Search": "Buscar", "Review Any Business": "Avaliar calquera negocio",
+    "Search any business to watch authentic video reviews or record your own.": "Busca calquera negocio para ver recensións en vídeo auténticas ou grava a túa.",
+    "Search business...": "Buscar negocio...", "Verified Web Listing": "Sitio web verificado"
+  },
+  // Maltese (mt)
+  mt: {
+    "Home": "Home", "Search": "Fittex", "Review Any Business": "Irrevedu kwalunkwe negozju",
+    "Search any business to watch authentic video reviews or record your own.": "Fittex kwalunkwe negozju biex tara reviżjonijiet tal-vidjow awtentiċi jew irreġistra tiegħek.",
+    "Search business...": "Fittex negozju...", "Verified Web Listing": "Websajt verifikata"
+  },
+  // Punjabi (pa)
+  pa: {
+    "Home": "ਹੋਮ", "Search": "ਖੋਜ", "Review Any Business": "ਕਿਸੇ ਵੀ ਕਾਰੋਬਾਰ ਦੀ ਸਮੀਖਿਆ ਕਰੋ",
+    "Search any business to watch authentic video reviews or record your own.": "ਪ੍ਰਮਾਣਿਕ ਵੀਡੀਓ ਸਮੀਖਿਆਵਾਂ ਦੇਖਣ ਜਾਂ ਆਪਣੀ ਖੁਦ ਦੀ ਰਿਕਾਰਡ ਕਰਨ ਲਈ ਕਿਸੇ ਵੀ ਕਾਰੋਬਾਰ ਦੀ ਖੋਜ ਕਰੋ।",
+    "Search business...": "ਕਾਰੋਬਾਰ ਖੋਜੋ...", "Verified Web Listing": "ਪ੍ਰਮਾਣਿਤ ਵੈੱਬਸਾਈਟ"
+  },
+  // Tamil (ta)
+  ta: {
+    "Home": "முகப்பு", "Search": "தேடல்", "Review Any Business": "எந்தவொரு வணிகத்தையும் மதிப்பாய்வு செய்யவும்",
+    "Search any business to watch authentic video reviews or record your own.": "உண்மையான வீடியோ மதிப்புரைகளைப் பார்க்க அல்லது உங்கள் சொந்தத்தைப் பதிவு செய்ய எந்தவொரு வணிகத்தையும் தேடுங்கள்.",
+    "Search business...": "வணிகத்தைத் தேடுங்கள்...", "Verified Web Listing": "சரிபார்க்கப்பட்ட இணையதளம்"
+  },
+  // Telugu (te)
+  te: {
+    "Home": "హోమ్", "Search": "శోధన", "Review Any Business": "ఏదైనా వ్యాపారాన్ని సమీక్షించండి",
+    "Search any business to watch authentic video reviews or record your own.": "అసలైన వీడియో సమీక్షలను చూడటానికి లేదా మీ స్వంతంగా రికార్డ్ చేయడానికి ఏదైనా వ్యాపారాన్ని శోధించండి.",
+    "Search business...": "వ్యాపారాన్ని శోధించండి...", "Verified Web Listing": "ధృవీకరించబడిన వెబ్‌సైట్"
+  },
+  // Marathi (mr)
+  mr: {
+    "Home": "होम", "Search": "शोधा", "Review Any Business": "कोणत्याही व्यवसायाचे पुनरावलोकन करा",
+    "Search any business to watch authentic video reviews or record your own.": "अस्सल व्हिडिओ पुनरावलोकने पाहण्यासाठी किंवा स्वतःचे रेकॉर्ड करण्यासाठी कोणताही व्यवसाय शोधा.",
+    "Search business...": "व्यवसाय शोधा...", "Verified Web Listing": "सत्यापित वेबसाइट"
+  },
+  // Gujarati (gu)
+  gu: {
+    "Home": "હોમ", "Search": "શોધો", "Review Any Business": "કોઈપણ વ્યવસાયની સમીક્ષા કરો",
+    "Search any business to watch authentic video reviews or record your own.": "અસલી વિડિયો સમીક્ષાઓ જોવા અથવા તમારી પોતાની રેકોર્ડ કરવા માટે કોઈપણ વ્યવસાય શોધો.",
+    "Search business...": "વ્યવસાય શોધો...", "Verified Web Listing": "ચકાસાયેલ વેબસાઇટ"
+  },
+  // Kannada (kn)
+  kn: {
+    "Home": "ಹೋಮ್", "Search": "ಹುಡುಕಿ", "Review Any Business": "ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ವಿಮರ್ಶಿಸಿ",
+    "Search any business to watch authentic video reviews or record your own.": "ಅಪ್ಪಟ ವೀಡಿಯೊ ವಿಮರ್ಶೆಗಳನ್ನು ವೀಕ್ಷಿಸಲು ಅಥವಾ ನಿಮ್ಮದೇ ಆದದನ್ನು ರೆಕಾರ್ಡ್ ಮಾಡಲು ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ಹುಡುಕಿ.",
+    "Search business...": "ವ್ಯವಹಾರವನ್ನು ಹುಡುಕಿ...", "Verified Web Listing": "ಪರಿಶೀಲಿಸಿದ ವೆಬ್‌ಸೈಟ್"
+  },
+  // Malayalam (ml)
+  ml: {
+    "Home": "ഹോം", "Search": "തിരയുക", "Review Any Business": "ഏത് ബിസിനസ്സും അവലോകനം ചെയ്യുക",
+    "Search any business to watch authentic video reviews or record your own.": "യഥാർത്ഥ വീഡിയോ അവലോകനങ്ങൾ കാണാനോ സ്വന്തമായി റെക്കോർഡ് ചെയ്യാനോ ഏതെങ്കിലും ബിസിനസ്സ് തിരയുക.",
+    "Search business...": "ബിസിനസ്സ് തിരയുക...", "Verified Web Listing": "സ്ഥിരീകരിച്ച വെബ്സൈറ്റ്"
+  },
+  // Burmese (my)
+  my: {
+    "Home": "ပင်မ", "Search": "ရှာဖွေရန်", "Review Any Business": "မည်သည့်လုပ်ငန်းကိုမဆို သုံးသပ်ပါ",
+    "Search any business to watch authentic video reviews or record your own.": "စစ်မှန်သော ဗီဒီယိုသုံးသပ်ချက်များကို ကြည့်ရှုရန် သို့မဟုတ် သင့်ကိုယ်ပိုင် မှတ်တမ်းတင်ရန် မည်သည့်လုပ်ငန်းကိုမဆို ရှာဖွေပါ။",
+    "Search business...": "လုပ်ငန်းရှာဖွေရန်...", "Verified Web Listing": "အတည်ပြုပြီးသော ဝဘ်ဆိုဒ်"
+  },
+  // Khmer (km)
+  km: {
+    "Home": "ទំព័រដើម", "Search": "ស្វែងរក", "Review Any Business": "ពិនិត្យមើលអាជីវកម្មណាមួយ",
+    "Search any business to watch authentic video reviews or record your own.": "ស្វែងរកអាជីវកម្មណាមួយដើម្បីមើលការវាយតម្លៃវីដេអូពិតប្រាកដ ឬកត់ត្រាដោយខ្លួនឯง។",
+    "Search business...": "ស្វែងរកអាជីវកម្ម...", "Verified Web Listing": "គេហទំព័រដែលបានផ្ទៀងផ្ទាត់"
+  },
+  // Lao (lo)
+  lo: {
+    "Home": "ໜ້າຫຼັກ", "Search": "ຄົ້ນຫາ", "Review Any Business": "ທົບທວນທຸລະກິດໃດນຶ່ງ",
+    "Search any business to watch authentic video reviews or record your own.": "ຄົ້ນຫາທຸລະກິດໃດນຶ່ງເພື່ອເບິ່ງການທົບທວນວິດີໂອທີ່ແທ້ຈິງ ຫຼືບັນທຶກຂອງທ່ານເອງ.",
+    "Search business...": "ຄົ้นຫາທຸລະກິດ...", "Verified Web Listing": "ເວັບໄຊທີ່ໄດ້ຮັບການຢືນຢັນ"
+  },
+  // Kazakh (kk)
+  kk: {
+    "Home": "Басты бет", "Search": "Іздеу", "Review Any Business": "Кез келген бизнесті бағалаңыз",
+    "Search any business to watch authentic video reviews or record your own.": "Нағыз видео шолуларды көру немесе өзіңізді жазу үшін кез келген бизнесті іздеңіз.",
+    "Search business...": "Бизнесті іздеу...", "Verified Web Listing": "Тексерілген веб-сайт"
+  },
+  // Uzbek (uz)
+  uz: {
+    "Home": "Bosh sahifa", "Search": "Qidiruv", "Review Any Business": "Har qanday biznesni ko'rib chiqing",
+    "Search any business to watch authentic video reviews or record your own.": "Haqiqiy video sharhlarni ko'rish yoki o'zingizni yozib olish uchun har qanday biznesni qidiring.",
+    "Search business...": "Biznesni qidirish...", "Verified Web Listing": "Tasdiqlangan veb-sayt"
+  },
+  // Mongolian (mn)
+  mn: {
+    "Home": "Нүүр хуудас", "Search": "Хайх", "Review Any Business": "Ямар ч бизнесийг үнэлэх",
+    "Search any business to watch authentic video reviews or record your own.": "Бодит видео шүүмж үзэх эсвэл өөрийн шүүмжийг бичихийн тулд дурын бизнесийг хайж олоорой.",
+    "Search business...": "Бизнес хайх...", "Verified Web Listing": "Баталгаажсан вэбсайт"
+  },
+  // Nepali (ne)
+  ne: {
+    "Home": "होम", "Search": "खोज", "Review Any Business": "कुनै पनि व्यवसायको समीक्षा गर्नुहोस्",
+    "Search any business to watch authentic video reviews or record your own.": "प्रामाणिक भिडियो समीक्षाहरू हेर्न वा तपाईंको आफ्नै रेकर्ड गर्न कुनै पनि व्यवसाय खोज्नुहोस्।",
+    "Search business...": "व्यवसाय खोज्नुहोस्...", "Verified Web Listing": "प्रमाणित वेबसाइट"
+  },
+  // Sinhalese (si)
+  si: {
+    "Home": "මුල් පිටුව", "Search": "සොයන්න", "Review Any Business": "ඕනෑම ව්යාපාරයක් සමාලෝචනය කරන්න",
+    "Search any business to watch authentic video reviews or record your own.": "සැබෑ වීඩියෝ සමාලෝචන නැරඹීමට හෝ ඔබේම වාර්තා කිරීමට ඕනෑම ව්‍යාපාරයක් සොයන්න.",
+    "Search business...": "ව්යාපාර සොයන්න...", "Verified Web Listing": "සත්‍යාපිත වෙබ් අඩවිය"
+  },
+  // Amharic (am)
+  am: {
+    "Home": "መነሻ", "Search": "ፈልግ", "Review Any Business": "ማንኛውንም ንግድ ይገምግሙ",
+    "Search any business to watch authentic video reviews or record your own.": "እውነተኛ የቪዲዮ ግምገማዎችን ለማየት ወይም የራስዎን ለመቅረጽ ማንኛውንም ንግድ ይፈልጉ።",
+    "Search business...": "ንግድ ይፈልጉ...", "Verified Web Listing": "የተረጋገጠ ድር ጣቢያ"
+  },
+  // Somali (so)
+  so: {
+    "Home": "Hoyga", "Search": "Raadi", "Review Any Business": "Dib u eeg Ganacsi kasta",
+    "Search any business to watch authentic video reviews or record your own.": "Raadi ganacsi kasta si aad u daawato muuqaalo dhab ah ama u duub adiga kuu gaar ah.",
+    "Search business...": "Raadi ganacsi...", "Verified Web Listing": "Websaydh la xaqiijiyay"
+  },
+  // Hausa (ha)
+  ha: {
+    "Home": "Gida", "Search": "Nema", "Review Any Business": "Yi bitar kowane Kasuwanci",
+    "Search any business to watch authentic video reviews or record your own.": "Nemi kowane kasuwanci don kallon ingantattun bidiyon bita ko nada naku.",
+    "Search business...": "Nemi kasuwanci...", "Verified Web Listing": "Shafin Yanar Gizo"
+  },
+  // Yoruba (yo)
+  yo: {
+    "Home": "Ile", "Search": "Wa", "Review Any Business": "Ṣe ayẹwo eyikeyi Iṣowo",
+    "Search any business to watch authentic video reviews or record your own.": "Wa eyikeyi iṣowo lati wo awọn atunwo fidio ojulowo tabi ṣe igbasilẹ tirẹ.",
+    "Search business...": "Wa iṣowo...", "Verified Web Listing": "Oju opo wẹẹbu ti a fọwọsi"
+  },
+  // Igbo (ig)
+  ig: {
+    "Home": "Ulo", "Search": "Chọọ", "Review Any Business": "Nyochaa azụmahịa ọ bụla",
+    "Search any business to watch authentic video reviews or record your own.": "Chọọ azụmahịa ọ bụla ka ị lelee nyocha vidiyo doro anya ma ọ bụ dekọọ nke gị.",
+    "Search business...": "Chọọ azụmahịa...", "Verified Web Listing": "Ebe nrụọrụ weebụ akwadoro"
+  },
+  // Zulu (zu)
+  zu: {
+    "Home": "Ikhaya", "Search": "Sesha", "Review Any Business": "Buyekeza noma iyiphi Ibhizinisi",
+    "Search any business to watch authentic video reviews or record your own.": "Sesha noma iyiphi ibhizinisi ukuze ubuke ukubuyekezwa kwevidiyo kwangempela noma urekhode okwakho.",
+    "Search business...": "Sesha ibhizinisi...", "Verified Web Listing": "Iwebhusayithi Eqinisekisiwe"
+  },
+  // Xhosa (xh)
+  xh: {
+    "Home": "Ikhaya", "Search": "Khangela", "Review Any Business": "Hlaziya naliphi na iShishini",
+    "Search any business to watch authentic video reviews or record your own.": "Khangela naliphi na ishishini ukuze ubuke uphononongo lwevidiyo lokwenyani okanye urekhode olwakho.",
+    "Search business...": "Khangela ishishini...", "Verified Web Listing": "Iwebhusayithi eqinisekisiwe"
+  },
+  // Afrikaans (af)
+  af: {
+    "Home": "Tuis", "Search": "Soek", "Review Any Business": "Resenseer enige besigheid",
+    "Search any business to watch authentic video reviews or record your own.": "Soek vir enige besigheid om outentieke videoresensies te kyk of neem jou eie op.",
+    "Search business...": "Soek besigheid...", "Verified Web Listing": "Geverifieerde webwerf"
   }
 };
