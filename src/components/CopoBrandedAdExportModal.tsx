@@ -174,7 +174,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 <div className="flex flex-col min-w-0 justify-center">
                   {/* Line 1: By AuthorName + Verified badge */}
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-white text-xs font-bold truncate leading-tight">By {authorName}</span>
+                    <span className="text-white text-xs font-bold truncate leading-tight">{authorName}</span>
                     <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
                       <svg className="w-2 h-2 text-zinc-950 stroke-[2.8]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />

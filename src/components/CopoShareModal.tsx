@@ -1033,7 +1033,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         <div className="flex flex-col min-w-0 justify-center pr-0.5">
                           {/* Line 1: By AuthorName + Verified badge */}
                           <div className="flex items-center gap-1 min-w-0">
-                            <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">By {resolvedAuthorName}</span>
+                            <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
                             <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                           </div>
                           {/* Line 2: 5 Stars + Stark White Clean Domain */}

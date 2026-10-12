@@ -245,7 +245,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                           }}
                         /> 
                         <span className="text-[10px] text-zinc-400 font-semibold">
-                          {t("video.recommendedBy", "Recommended by")} <span className="text-zinc-200 hover:underline">{video.author.name}</span>
+                          <span className="text-zinc-200 hover:underline">{video.author.name}</span>
                         </span>
                       </div>
                     </div>

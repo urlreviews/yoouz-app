@@ -513,7 +513,7 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
                               {vid.caption || "Customer Review"}
                             </p>
                             <p className="text-[10px] text-zinc-400 font-medium truncate mt-1">
-                              By @{vid.author?.handle?.replace(/^@/, "") || vid.author?.name || "Reviewer"}
+                              @{vid.author?.handle?.replace(/^@/, "") || vid.author?.name || "Reviewer"}
                             </p>
                           </div>
                         </div>
