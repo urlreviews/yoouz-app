@@ -18,6 +18,7 @@ import {
 import { Place, NavSection, UserProfile, VideoReview, BusinessSession } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
+import { extractCleanDomain } from '../utils/placeUtils';
 
 interface CopoBusinessAuthLandingProps {
   onNavigate: (section: NavSection) => void;
@@ -445,7 +446,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       </div>
                       <span className="text-[11px] text-zinc-300 block truncate mt-0.5 font-normal">
-                        {selectedPlace.address || selectedPlace.website}
+                        {selectedPlace.website ? extractCleanDomain(selectedPlace.website) : selectedPlace.address}
                       </span>
                     </div>
                   </div>
