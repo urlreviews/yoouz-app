@@ -88,7 +88,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
     { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true },
     { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
     { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
-    { id: "notifications" as NavSection, label: t("nav.notifications", "Alerts"), icon: Bell, badge: unreadNotifsCount },
+    { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },
     { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Saved"), icon: Bookmark },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
@@ -174,7 +174,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     </span>
                     
                     {item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-red-600 text-white border border-red-500 shadow-md animate-pulse ring-1 ring-red-500/50">
+                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     ) : null}
@@ -299,7 +299,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                       )}
                     </div>
                     {item.badge && item.badge > 0 ? (
-                      <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-red-600 text-white border-2 border-zinc-950 shadow-md ring-1 ring-red-500/50 animate-pulse">
+                      <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-md">
                         {item.badge > 9 ? "9+" : item.badge}
                       </span>
                     ) : null}

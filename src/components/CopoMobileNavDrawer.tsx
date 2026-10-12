@@ -179,7 +179,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                   </span>
 
                   {item.badge && item.badge > 0 ? (
-                    <span className="px-2 py-0.5 text-xs font-black rounded-full bg-red-600 text-white border border-red-500 shadow-md">
+                    <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
                       {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   ) : null}

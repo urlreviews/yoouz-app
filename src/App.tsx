@@ -8502,21 +8502,7 @@ export function App() {
         </div>
       )}
 
-      {/* Global In-App Notification Toast Pop-up */}
-      <InAppNotificationToast
-        toast={inAppToast}
-        onClose={() => setInAppToast(null)}
-        onNavigateToThread={(threadId) => {
-          setActiveSection("messages");
-          setActiveThreadId(threadId);
-          setInAppToast(null);
-        }}
-        onNavigateToNotifications={() => {
-          setActiveSection("notifications");
-          setInAppToast(null);
-        }}
-        notificationSettings={currentUser?.notificationSettings}
-      />
+
     </div>
   );
 }

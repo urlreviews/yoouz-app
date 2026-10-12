@@ -2493,7 +2493,7 @@ ${jsonLd}
                     </div>
                     <span className="truncate flex-1">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-zinc-800 text-white border border-zinc-700">
+                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
                         {item.badge}
                       </span>
                     )}
