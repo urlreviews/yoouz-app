@@ -94,32 +94,30 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     const effectiveDuration = duration && duration > 0 ? duration : 60;
 
-    // If parsed segments already provide granular 2-4 word timed chunks starting near 0.0s, use them
-    if (parsed.length >= 3) {
-      const firstStart = Number(parsed[0].start ?? parsed[0].start_time ?? 0);
-      if (firstStart <= 1.5) {
-        const refined: { start: number; end: number; text: string }[] = [];
-        for (const s of parsed) {
-          const rawText = String(s.text || s.transcript || '').trim();
-          const start = Number(s.start ?? s.start_time ?? 0);
-          const end = Number(s.end ?? s.end_time ?? (start + 4));
-          const segDuration = Math.max(1.2, end - start);
+    // Priority 1: Use exact VAD speech-to-text timestamps when real segments exist
+    if (parsed.length > 0) {
+      const refined: { start: number; end: number; text: string }[] = [];
+      for (const s of parsed) {
+        const rawText = String(s.text || s.transcript || '').trim();
+        const start = Number(s.start ?? s.start_time ?? 0);
+        const end = Number(s.end ?? s.end_time ?? (start + 3.5));
+        const segDuration = Math.max(1.0, end - start);
 
-          if (!rawText || isTitleFallbackText(rawText)) continue;
+        if (!rawText || isTitleFallbackText(rawText)) continue;
 
-          const wordCount = rawText.split(/\s+/).length;
-          if (wordCount > 4) {
-            const subChunks = buildSegmentsFromTranscript(rawText, segDuration, start);
-            refined.push(...subChunks);
-          } else {
-            refined.push({ start, end, text: rawText });
-          }
+        const wordCount = rawText.split(/\s+/).length;
+        if (wordCount > 4) {
+          // Sub-chunk long sentences into 3-4 word single-line phrases within this segment's exact VAD time window
+          const subChunks = buildSegmentsFromTranscript(rawText, segDuration, start);
+          refined.push(...subChunks);
+        } else {
+          refined.push({ start, end, text: rawText });
         }
-        if (refined.length > 0) return refined;
       }
+      if (refined.length > 0) return refined;
     }
 
-    // Default & Guaranteed Premium Standard: Start at 0.0s (INSTANTLY), chunk into 3-4 word single-line phrases
+    // Priority 2: Fallback to proportional single-line timing only if raw transcript text exists without segment timestamps
     return buildSegmentsFromTranscript(fullText, effectiveDuration, 0);
   }, [segments, transcriptText, duration]);
 
