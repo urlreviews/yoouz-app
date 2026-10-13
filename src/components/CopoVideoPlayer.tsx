@@ -5,6 +5,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlo
 import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade, downloadVideoForAds } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
+import { SubtitleOverlay } from "./SubtitleOverlay";
 import { CopoBrandedAdExportModal } from "./CopoBrandedAdExportModal";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import {
@@ -147,6 +148,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [videos, feedContextTitle]);
   const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
   const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
+  const [videoTime, setVideoTime] = useState(0);
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
   const [showConfirmPurgeAllModal, setShowConfirmPurgeAllModal] = useState<boolean>(false);
 
@@ -195,6 +197,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [activeCardIndex]);
   const activeCardIndexRef = useRef<number>(activeCardIndex);
   activeCardIndexRef.current = activeCardIndex;
+
+  // Sync current video time for subtitle rendering
+  useEffect(() => {
+    const activeVid = feedVideoRef.current;
+    if (!activeVid) return;
+    const handleTimeUpdate = () => setVideoTime(activeVid.currentTime);
+    activeVid.addEventListener('timeupdate', handleTimeUpdate);
+    return () => activeVid.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [currentIndex, activeCardIndex, isPaused]);
 
   // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
   // Maintains strictly 3 hardware video elements across the feed to guarantee 0ms instant playback on swipe
@@ -1567,7 +1578,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             const isCardNear = Math.abs(idx - activeCardIndex) <= bufferRadius;
 
             return (
-              <VideoFeedCard
+              <React.Fragment key={item.key}>
+                <VideoFeedCard
                 key={item.key}
                 video={vid}
                 index={idx}

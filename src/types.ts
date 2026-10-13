@@ -194,6 +194,9 @@ export interface VideoReview {
   recordedAt?: string; // e.g. "a week ago", "3 days ago"
   feedCategory?: "discover" | "following";
   transcript?: string;
+  transcriptText?: string;
+  vttUrl?: string;
+  segments?: any[];
   tags?: string[];
   ownerResponse?: {
     text: string;

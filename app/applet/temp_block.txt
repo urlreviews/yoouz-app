@@ -1,0 +1,93 @@
+          {displayItems.map((item) => {
+            const vid = item.video;
+            const idx = item.cardIndex;
+            const isCardActive = idx === activeCardIndex;
+            const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+            const bufferRadius = isTouch ? 1 : 2;
+            const isCardNear = Math.abs(idx - activeCardIndex) <= bufferRadius;
+
+            return (
+              <div 
+                key={item.key} 
+                data-video-index={idx}
+                className="w-full h-full relative"
+              >
+                <div 
+                  id={item.slotId} 
+                  className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-none z-0" 
+                />
+                <VideoFeedCard
+                  video={vid}
+                  index={idx}
+                  isActive={isCardActive}
+                  isNear={isCardNear}
+                  isMuted={isMuted}
+                  isPlaying={isCardActive && !isPaused ? isPlaying : false}
+                  isBuffering={isCardActive ? isBuffering : false}
+                  progressPercent={isCardActive ? progressPercent : 0}
+                  videoDuration={videoDuration}
+                  onScrubStart={isCardActive ? handleScrubStart : undefined}
+                  onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
+                  onSeekDelta={isCardActive ? handleSeekDelta : undefined}
+                  onScrubEnd={isCardActive ? handleScrubEnd : undefined}
+                  isActualMuted={isActualMuted}
+                  isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
+                  hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
+                  onTogglePlayPause={handleTogglePlayPause}
+                  onPauseVideo={handlePauseVideo}
+                  allUsers={allUsers}
+                  currentUser={currentUser}
+                  places={places}
+                  allVideos={videos}
+                  activeSubTab={activeSubTab}
+                  onSelectSubTab={onSelectSubTab}
+                  isSessionAudioUnlocked={isSessionAudioUnlocked}
+                  onUnlockAudio={unlockAudioSession}
+                  onToggleMute={toggleMute}
+                  onForceMute={() => {
+                    setIsMuted(true);
+                    if (feedVideoRef.current) feedVideoRef.current.muted = true;
+                  }}
+                  onOpenComments={onOpenComments}
+                  onOpenPlace={onOpenPlace}
+                  onOpenCreator={onOpenCreator}
+                  onOpenShare={onOpenShare}
+                  onOpenMoreMenu={setMoreMenuVideo}
+                  onToggleLike={onToggleLike}
+                  onToggleBookmark={onToggleBookmark}
+                  onToggleFollow={onToggleFollow}
+                  onToggleRepost={onToggleRepost}
+                  onOpenReport={onOpenReport}
+                  onHideVideo={onHideVideo}
+                  onGoHome={onGoHome}
+                  onGoBack={onGoBack}
+                  feedContextTitle={feedContextTitle}
+                  onOpenCreateModal={onOpenCreateModal}
+                  onOpenMenu={onOpenMenu}
+                  onDeleteVideo={onDeleteVideo}
+                  onPurgeAllVideos={onPurgeAllVideos}
+                  onUpdateVideoReview={onUpdateVideoReview}
+                  contextKey={contextKey}
+                  onRecordView={onRecordView}
+                  unreadCount={unreadCount}
+                  forceShowMenu={forceShowMenu}
+                  hideFloatingNav={hideFloatingNav}
+                  isEmbed={isEmbed}
+                  isBusinessOwnerView={isBusinessOwnerView}
+                  onOpenOwnerReply={onOpenOwnerReply}
+                  onCloseEmbed={onCloseEmbed}
+                  commentsOpen={commentsOpen}
+                  cardRef={(el) => {
+                    cardRefs.current[idx] = el;
+                  }}
+                />
+                <SubtitleOverlay 
+                  currentTime={videoTime} 
+                  segments={vid.segments} 
+                  isActive={isCardActive} 
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>

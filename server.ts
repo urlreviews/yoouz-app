@@ -538,6 +538,7 @@ const multerStorage = multer.diskStorage({
 });
 const multerUpload = multer({ storage: multerStorage, limits: { fileSize: 100 * 1024 * 1024 } });
 const searchCache = new Map<string, { places: any[]; source: string; timestamp: number }>();
+let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
   if (!process.env.GEMINI_API_KEY) return null;
   if (!geminiClient) {
@@ -12450,7 +12451,37 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
 
       // Respond immediately to client so mobile upload completes in under 1 second without stalling
-      res.json({ success: true, url: publicUrl, thumbnailUrl, fileName: targetVideoFileName, bunnyVideoId: base });
+      // 3. Automated Local Transcription (Faster-Whisper)
+      let transcriptText = "";
+      let segments = [];
+      let vttContent = "";
+      try {
+        const videoBuffer = fs.readFileSync(finalVideoPath);
+        const transResult = await transcribeVideoLocally(videoBuffer, targetVideoFileName);
+        if (transResult && transResult.transcript) {
+          transcriptText = transResult.transcript;
+          segments = transResult.segments || [];
+          vttContent = transResult.vtt_content || "";
+          
+          // Save VTT locally for the player
+          const vttFileName = `${base}.vtt`;
+          const vttFilePath = path.join(serverUploadsDir, vttFileName);
+          fs.writeFileSync(vttFilePath, vttContent);
+        }
+      } catch (tErr) {
+        console.warn("[Upload] Auto-transcription failed, proceeding without transcript:", tErr);
+      }
+
+      res.json({ 
+        success: true, 
+        url: publicUrl, 
+        thumbnailUrl, 
+        fileName: targetVideoFileName, 
+        bunnyVideoId: base,
+        transcriptText,
+        segments,
+        vttUrl: vttContent ? (bunnyAccessKey && bunnyStorageZone ? `${pullZoneDomain}/videos/${base}.vtt` : `/uploads/${base}.vtt`) : ""
+      });
 
       // Run background Bunny CDN sync asynchronously without holding the HTTP response
       (async () => {
@@ -21537,24 +21568,77 @@ ${JSON.stringify(chunk)}`;
     }
   });
 
+  // Local Transcription Helper using the Python Faster-Whisper service
+  async function transcribeVideoLocally(videoBuffer: Buffer, filename: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
+    try {
+      // Check if local service is reachable (running on port 8000)
+      const healthCheck = await fetch("http://localhost:8000/health").catch(() => null);
+      if (!healthCheck || !healthCheck.ok) {
+        console.log("[Transcription] Local service not reachable, falling back to Gemini.");
+        return { transcript: "" }; // Trigger fallback
+      }
+
+      const formData = new FormData();
+      const blob = new Blob([videoBuffer], { type: 'video/webm' });
+      formData.append('file', blob, filename);
+
+      const response = await fetch("http://localhost:8000/transcribe", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        console.error("[Transcription] Local service error:", await response.text());
+        return { transcript: "" };
+      }
+
+      const data = await response.json();
+      return {
+        transcript: data.text,
+        segments: data.segments,
+        vtt_content: data.vtt_content
+      };
+    } catch (err) {
+      console.error("[Transcription] Error calling local service:", err);
+      return { transcript: "" };
+    }
+  }
+
   // AI Video Speech-to-Text Transcription Endpoint using Gemini
   app.post("/api/videos/transcribe", async (req, res) => {
     try {
-      const { videoData, mimeType } = req.body;
+      const { videoData, mimeType, filename } = req.body;
       if (!videoData || typeof videoData !== "string") {
-        return res.status(200).json({ success: true, transcript: "" });
-      }
-
-      const gemini = getGeminiClient();
-      if (!gemini) {
         return res.status(200).json({ success: true, transcript: "" });
       }
 
       const rawBase64 = videoData.includes("base64,")
         ? videoData.split("base64,")[1]
         : videoData;
-
+      const videoBuffer = Buffer.from(rawBase64, 'base64');
       const actualMime = mimeType || "video/webm";
+      const safeFilename = filename || `video_${Date.now()}.webm`;
+
+      // 1. Try local transcription first (Faster-Whisper)
+      const localResult = await transcribeVideoLocally(videoBuffer, safeFilename);
+      
+      if (localResult && localResult.transcript) {
+        console.log("[Transcription] Using local Faster-Whisper results.");
+        return res.json({ 
+          success: true, 
+          transcript: localResult.transcript,
+          segments: localResult.segments,
+          vtt_content: localResult.vtt_content,
+          method: "local"
+        });
+      }
+
+      // 2. Fallback to Gemini if local service fails or is not running
+      console.log("[Transcription] Falling back to Gemini for transcription.");
+      const gemini = getGeminiClient();
+      if (!gemini) {
+        return res.status(200).json({ success: true, transcript: "" });
+      }
 
       const response = await gemini.models.generateContent({
         model: "gemini-3.8-flash",
@@ -21575,13 +21659,14 @@ ${JSON.stringify(chunk)}`;
           }
         ]
       }).catch((err) => {
-        // Graceful handling for quota exhaustion (429) or other API limits
+        console.error("[Transcription] Gemini error:", err);
         return { text: "" };
       });
 
       const transcript = (response && response.text ? response.text : "").trim();
-      return res.json({ success: true, transcript });
+      return res.json({ success: true, transcript, method: "gemini" });
     } catch (err: any) {
+      console.error("[Transcription] Endpoint error:", err);
       return res.status(200).json({ success: true, transcript: "" });
     }
   });

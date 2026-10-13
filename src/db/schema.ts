@@ -19,6 +19,8 @@ export const reviews = pgTable('reviews', {
   videoThumbnail: text('video_thumbnail'),
   rating: integer('rating').notNull(),
   comment: text('comment'),
+  transcriptText: text('transcript_text'),
+  vttUrl: text('vtt_url'),
   likesCount: integer('likes_count').default(0).notNull(),
   helpfulCount: integer('helpful_count').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
