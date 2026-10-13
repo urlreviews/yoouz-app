@@ -21610,6 +21610,63 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return { transcript: "", segments: [], vtt_content: "" };
   }
 
+  // Serves valid WebVTT (.vtt) file with exact HH:MM:SS.mmm timecodes for native HTML5 <track> elements
+  app.get("/api/videos/:id/subtitles.vtt", async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      let video: any = null;
+
+      try {
+        const list = readReviewsIndex();
+        video = list.find((v: any) => v && String(v.id) === String(videoId));
+      } catch (e) {}
+
+      if (!video) {
+        video = feedCache.videos.find((v: any) => v && String(v.id) === String(videoId));
+      }
+
+      if (!video || (!video.segments && !video.transcriptText)) {
+        res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+        return res.send("WEBVTT\n\n");
+      }
+
+      const dur = video.durationSeconds || video.duration || 60;
+      let segments = video.segments || [];
+
+      const formatVttTimecode = (seconds: number): string => {
+        const totalMs = Math.round(seconds * 1000);
+        const hrs = Math.floor(totalMs / 3600000);
+        const mins = Math.floor((totalMs % 3600000) / 60000);
+        const secs = Math.floor((totalMs % 60000) / 1000);
+        const ms = totalMs % 1000;
+
+        const pad = (num: number, size: number = 2) => String(num).padStart(size, '0');
+        return `${pad(hrs)}:${pad(mins)}:${pad(secs)}.${pad(ms, 3)}`;
+      };
+
+      const vttLines = ["WEBVTT\n"];
+      if (Array.isArray(segments) && segments.length > 0) {
+        segments.forEach((s: any, idx: number) => {
+          const start = Number(s.start ?? s.start_time ?? 0);
+          const end = Number(s.end ?? s.end_time ?? (start + 3));
+          const text = String(s.text || s.transcript || '').trim();
+          if (text) {
+            vttLines.push(`${idx + 1}`);
+            vttLines.push(`${formatVttTimecode(start)} --> ${formatVttTimecode(end)}`);
+            vttLines.push(`${text}\n`);
+          }
+        });
+      }
+
+      res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      return res.send(vttLines.join("\n"));
+    } catch (err: any) {
+      res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+      return res.send("WEBVTT\n\n");
+    }
+  });
+
   // AI Video Speech-to-Text Transcription Endpoint
   app.post("/api/videos/transcribe", async (req, res) => {
     try {
