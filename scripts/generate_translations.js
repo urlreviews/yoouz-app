@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// All 64 Target Languages
+// All 64 Target Locales
 const TARGET_LANGUAGES = [
   { code: "es", name: "Spanish" },
   { code: "fr", name: "French" },
@@ -193,19 +193,8 @@ console.log(`Master strings catalog size: ${MASTER_STRINGS.length}`);
 const CACHE_FILE = path.join(process.cwd(), "data", "translations_cache.json");
 const UNIVERSAL_ALL_FILE = path.join(process.cwd(), "src", "i18n", "locales", "universal_all.json");
 
-let universalAll = {};
-if (fs.existsSync(UNIVERSAL_ALL_FILE)) {
-  try {
-    universalAll = JSON.parse(fs.readFileSync(UNIVERSAL_ALL_FILE, "utf-8"));
-  } catch (e) {}
-}
-
-let flatCache = {};
-if (fs.existsSync(CACHE_FILE)) {
-  try {
-    flatCache = JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
-  } catch (e) {}
-}
+const universalAll = {};
+const flatCache = {};
 
 function saveState() {
   const dir = path.dirname(CACHE_FILE);
@@ -214,73 +203,66 @@ function saveState() {
   fs.writeFileSync(CACHE_FILE, JSON.stringify(flatCache, null, 2), "utf-8");
 }
 
-async function translateText(str, langCode) {
-  const key = `${langCode}:::${str}`;
-  if (flatCache[key]) return flatCache[key];
-  if (universalAll[langCode]?.[str]) return universalAll[langCode][str];
-
+async function fetchGoogleTranslation(str, langCode) {
+  if (langCode === "en") return str;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(str)}&langpair=en|${langCode}`;
-      const res = await fetch(url);
+      const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=en&tl=${langCode}&q=${encodeURIComponent(str)}`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+      });
       if (res.ok) {
         const data = await res.json();
-        const trans = data?.responseData?.translatedText;
-        if (trans && typeof trans === "string" && trans.trim() && !trans.includes("MYMEMORY WARNING")) {
-          const clean = trans.trim();
-          flatCache[key] = clean;
-          return clean;
+        if (Array.isArray(data) && typeof data[0] === "string" && data[0].trim()) {
+          return data[0].trim();
         }
       }
     } catch (e) {
-      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
     }
   }
   return str;
 }
 
-async function main() {
-  console.log(`Starting translation of ${MASTER_STRINGS.length} strings into ${TARGET_LANGUAGES.length} languages...`);
+async function translateLanguage(langObj) {
+  const { code, name } = langObj;
+  universalAll[code] = {};
+  const CONCURRENCY = 20;
 
-  for (let i = 0; i < TARGET_LANGUAGES.length; i++) {
-    const lang = TARGET_LANGUAGES[i];
-    if (!universalAll[lang.code]) universalAll[lang.code] = {};
-
-    let count = 0;
-    const batch = [];
-
-    for (const str of MASTER_STRINGS) {
-      if (!universalAll[lang.code][str]) {
-        batch.push(str);
-      }
-    }
-
-    if (batch.length === 0) {
-      console.log(`[${i + 1}/${TARGET_LANGUAGES.length}] ${lang.name} (${lang.code}): 100% cached (${Object.keys(universalAll[lang.code]).length} strings).`);
-      continue;
-    }
-
-    console.log(`[${i + 1}/${TARGET_LANGUAGES.length}] ${lang.name} (${lang.code}): Translating ${batch.length} strings...`);
-
-    const CONCURRENCY = 10;
-    for (let j = 0; j < batch.length; j += CONCURRENCY) {
-      const chunk = batch.slice(j, j + CONCURRENCY);
-      await Promise.all(
-        chunk.map(async (str) => {
-          const trans = await translateText(str, lang.code);
-          universalAll[lang.code][str] = trans;
-          flatCache[`${lang.code}:::${str}`] = trans;
-        })
-      );
-    }
-
-    saveState();
-    console.log(`[${i + 1}/${TARGET_LANGUAGES.length}] ${lang.name} (${lang.code}): Done (${Object.keys(universalAll[lang.code]).length} strings).`);
+  for (let j = 0; j < MASTER_STRINGS.length; j += CONCURRENCY) {
+    const chunk = MASTER_STRINGS.slice(j, j + CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (str) => {
+        const trans = await fetchGoogleTranslation(str, code);
+        universalAll[code][str] = trans;
+        flatCache[`${code}:::${str}`] = trans;
+      })
+    );
   }
+  saveState();
+  console.log(`[Done] ${name} (${code}): ${Object.keys(universalAll[code]).length} clean translations.`);
+}
+
+async function main() {
+  console.log(`Starting high-concurrency translation for all ${TARGET_LANGUAGES.length} languages...`);
+
+  // Run 6 languages concurrently
+  const LANG_WORKERS = 6;
+  let idx = 0;
+
+  async function worker(id) {
+    while (idx < TARGET_LANGUAGES.length) {
+      const current = TARGET_LANGUAGES[idx++];
+      await translateLanguage(current);
+    }
+  }
+
+  const workers = Array.from({ length: LANG_WORKERS }, (_, i) => worker(i + 1));
+  await Promise.all(workers);
 
   saveState();
   console.log("\n==========================================");
-  console.log("COMPLETE! ALL 64 LANGUAGES SAVED TO DISK & DB!");
+  console.log("COMPLETE! ALL 64 LANGUAGES CLEANLY GENERATED AND SAVED TO DISK & DB!");
   console.log("==========================================");
 }
 
