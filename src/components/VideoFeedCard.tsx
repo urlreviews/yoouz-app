@@ -74,6 +74,7 @@ interface VideoFeedCardProps {
   isActualMuted?: boolean;
   isManuallyPaused?: boolean;
   hasRenderedFirstFrame?: boolean;
+  videoTime?: number;
   allUsers?: any[];
   currentUser?: any;
   places?: Place[];
@@ -132,6 +133,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isActualMuted = true,
   isManuallyPaused = false,
   hasRenderedFirstFrame = false,
+  videoTime = 0,
   allUsers,
   currentUser,
   places,
@@ -1220,6 +1222,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Sync Captions Subtitle Overlay */}
+      <SubtitleOverlay 
+        currentTime={videoTime} 
+        segments={video.segments} 
+        isActive={isActive} 
+      />
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar on mobile and desktop */}
       <div 

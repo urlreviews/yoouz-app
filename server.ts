@@ -32,6 +32,7 @@ import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
 import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/avatar.ts";
 
 import { db, getDb } from "./src/db/index.ts";
+import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
 import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords } from "./src/utils/placeUtils.ts";
@@ -21568,6 +21569,75 @@ ${JSON.stringify(chunk)}`;
     }
   });
 
+  // Ensure Transcription endpoint for on-demand processing (old videos)
+  app.post("/api/videos/:id/ensure-transcript", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const [record] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, id));
+      if (!record) return res.status(404).json({ error: "Video not found" });
+      
+      const video = record.data as VideoReview;
+      if (video.segments && video.segments.length > 0) {
+        return res.json({ success: true, alreadyExists: true, segments: video.segments });
+      }
+
+      const videoUrl = video.videoUrl;
+      if (!videoUrl) return res.status(400).json({ error: "No video URL" });
+
+      console.log(`[Transcription] Auto-processing old video: ${id}`);
+      
+      const fetchResp = await fetch(videoUrl);
+      if (!fetchResp.ok) throw new Error(`Failed to fetch video: ${fetchResp.statusText}`);
+      const arrayBuf = await fetchResp.arrayBuffer();
+      const vBuffer = Buffer.from(arrayBuf);
+      const b64 = vBuffer.toString('base64');
+
+      const gemini = getGeminiClient();
+      if (!gemini) return res.status(500).json({ error: "Gemini not configured" });
+
+      const gResp = await gemini.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  data: b64,
+                  mimeType: "video/mp4" 
+                }
+              },
+              {
+                text: "Listen carefully to the spoken voice in this audio/video recording. Transcribe word-for-word exactly what the speaker says in their original language. Output your response as a JSON array of objects, where each object has 'start' (float seconds), 'end' (float seconds), and 'text' (string) fields. Break the transcription into short segments (max 5-8 words per segment) for readable subtitles. If no human speech is detected or it is silence, return an empty array []. Output ONLY the valid JSON array. No markdown code blocks."
+              }
+            ]
+          }
+        ]
+      });
+
+      const rawText = (gResp && gResp.text ? gResp.text : "").trim();
+      let segments = [];
+      let transcriptText = "";
+
+      try {
+        const jsonStr = rawText.replace(/```json\n?|```/g, "").trim();
+        if (jsonStr.startsWith("[")) {
+          segments = JSON.parse(jsonStr);
+          transcriptText = segments.map((s: any) => s.text).join(" ").trim();
+        }
+      } catch (e) {}
+
+      const updatedVideo = { ...video, transcriptText, segments };
+      await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, id));
+
+      return res.json({ success: true, transcriptText, segments, method: "gemini" });
+    } catch (err: any) {
+      console.error("[Transcription] Ensure error:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // Local Transcription Helper using the Python Faster-Whisper service
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
@@ -21641,7 +21711,7 @@ ${JSON.stringify(chunk)}`;
       }
 
       const response = await gemini.models.generateContent({
-        model: "gemini-3.8-flash",
+        model: "gemini-1.5-flash", // Using 1.5-flash for better JSON and timestamp reliability
         contents: [
           {
             role: "user",
@@ -21653,7 +21723,7 @@ ${JSON.stringify(chunk)}`;
                 }
               },
               {
-                text: "Listen carefully to the spoken voice in this audio/video recording. Transcribe word-for-word exactly what the speaker says in their original language. Output ONLY the exact transcription of spoken words. Do NOT add notes, intros, explanations, or quotes. If no human speech is detected or it is silence, return nothing (empty string)."
+                text: "Listen carefully to the spoken voice in this audio/video recording. Transcribe word-for-word exactly what the speaker says in their original language. Output your response as a JSON array of objects, where each object has 'start' (float seconds), 'end' (float seconds), and 'text' (string) fields. Break the transcription into short segments (max 5-8 words per segment) for readable subtitles. If no human speech is detected or it is silence, return an empty array []. Output ONLY the valid JSON array. No markdown code blocks."
               }
             ]
           }
@@ -21663,8 +21733,31 @@ ${JSON.stringify(chunk)}`;
         return { text: "" };
       });
 
-      const transcript = (response && response.text ? response.text : "").trim();
-      return res.json({ success: true, transcript, method: "gemini" });
+      const rawText = (response && response.text ? response.text : "").trim();
+      let segments = [];
+      let transcriptText = "";
+
+      try {
+        // Handle potential markdown code blocks in Gemini output
+        const jsonStr = rawText.replace(/```json\n?|```/g, "").trim();
+        if (jsonStr.startsWith("[")) {
+          segments = JSON.parse(jsonStr);
+          transcriptText = segments.map((s: any) => s.text).join(" ").trim();
+        } else {
+          // Fallback if not JSON
+          transcriptText = rawText;
+        }
+      } catch (pErr) {
+        console.warn("[Transcription] Failed to parse Gemini JSON, using raw text:", pErr);
+        transcriptText = rawText;
+      }
+
+      return res.json({ 
+        success: true, 
+        transcript: transcriptText, 
+        segments,
+        method: "gemini" 
+      });
     } catch (err: any) {
       console.error("[Transcription] Endpoint error:", err);
       return res.status(200).json({ success: true, transcript: "" });

@@ -43,6 +43,12 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "caption": "Video review for firststrikeelectrical.co.uk",
     "dishOrItem": "first strike electrical ltd london",
     "businessName": "First Strike Electrical",
+    "segments": [
+      { "start": 0, "end": 2, "text": "Hi, I'm Ben Blue," },
+      { "start": 2, "end": 4.5, "text": "and today I'm reviewing First Strike Electrical." },
+      { "start": 4.5, "end": 7, "text": "Their service was absolutely top-notch," },
+      { "start": 7, "end": 10, "text": "highly recommended for everyone in London!" }
+    ],
     "likes": 0,
     "isLiked": false,
     "commentsCount": 2,
