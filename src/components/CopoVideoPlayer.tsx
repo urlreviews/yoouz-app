@@ -202,9 +202,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   useEffect(() => {
     const activeVid = feedVideoRef.current;
     if (!activeVid) return;
-    const handleTimeUpdate = () => setVideoTime(activeVid.currentTime);
+
+    const handleTimeUpdate = () => {
+      setVideoTime(activeVid.currentTime);
+    };
+
     activeVid.addEventListener('timeupdate', handleTimeUpdate);
-    return () => activeVid.removeEventListener('timeupdate', handleTimeUpdate);
+    return () => {
+      activeVid.removeEventListener('timeupdate', handleTimeUpdate);
+    };
   }, [currentIndex, activeCardIndex, isPaused]);
 
   // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
@@ -1580,66 +1586,70 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             return (
               <React.Fragment key={item.key}>
                 <VideoFeedCard
-                key={item.key}
-                video={vid}
-                index={idx}
-                slotId={item.slotId}
-                isActive={isCardActive}
-                isNear={isCardNear}
-                isMuted={isMuted}
-                isPlaying={isCardActive && !isPaused ? isPlaying : false}
-                isBuffering={isCardActive ? isBuffering : false}
-                progressPercent={isCardActive ? progressPercent : 0}
-                videoDuration={videoDuration}
-                onScrubStart={isCardActive ? handleScrubStart : undefined}
-                onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
-                onSeekDelta={isCardActive ? handleSeekDelta : undefined}
-                onScrubEnd={isCardActive ? handleScrubEnd : undefined}
-                isActualMuted={isActualMuted}
-                isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
-                hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
-                onTogglePlayPause={handleTogglePlayPause}
-                onPauseVideo={handlePauseVideo}
-                allUsers={allUsers}
-                currentUser={currentUser}
-                places={places}
-                allVideos={videos}
-                activeSubTab={activeSubTab}
-                onSelectSubTab={onSelectSubTab}
-                isSessionAudioUnlocked={isSessionAudioUnlocked}
-                onUnlockAudio={unlockAudioSession}
-                onToggleMute={toggleMute}
-                onForceMute={() => {
-                  setIsMuted(true);
-                  if (feedVideoRef.current) feedVideoRef.current.muted = true;
-                }}
-                onOpenComments={onOpenComments}
-                onOpenPlace={onOpenPlace}
-                onOpenCreator={onOpenCreator}
-                onOpenShare={onOpenShare}
-                onOpenMoreMenu={setMoreMenuVideo}
-                onToggleLike={onToggleLike}
-                onToggleBookmark={onToggleBookmark}
-                onToggleFollow={onToggleFollow}
-                onToggleRepost={onToggleRepost}
-                onOpenMenu={onOpenMenu}
-                onGoBack={onGoBack}
-                feedContextTitle={feedContextTitle}
-                onGoHome={onGoHome}
-                businessName={getBusinessNameForVideo(vid)}
-                businessLogoUrl={getLogoForVideo(vid)}
-                businessBannerUrl={getBannerForVideo(vid)}
-                cardRef={(el) => {
-                  cardRefs.current[idx] = el;
-                }}
-                onRecordView={onRecordView}
-                unreadCount={unreadCount}
-                forceShowMenu={forceShowMenu}
-                isEmbed={isEmbed}
-                isBusinessOwnerView={isBusinessOwnerView}
-                onOpenOwnerReply={onOpenOwnerReply}
-                onCloseEmbed={onCloseEmbed}
-              />
+                  video={vid}
+                  index={idx}
+                  slotId={item.slotId}
+                  isActive={isCardActive}
+                  isNear={isCardNear}
+                  isMuted={isMuted}
+                  isPlaying={isCardActive && !isPaused ? isPlaying : false}
+                  isBuffering={isCardActive ? isBuffering : false}
+                  progressPercent={isCardActive ? progressPercent : 0}
+                  videoDuration={videoDuration}
+                  onScrubStart={isCardActive ? handleScrubStart : undefined}
+                  onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
+                  onSeekDelta={isCardActive ? handleSeekDelta : undefined}
+                  onScrubEnd={isCardActive ? handleScrubEnd : undefined}
+                  isActualMuted={isActualMuted}
+                  isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
+                  hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
+                  onTogglePlayPause={handleTogglePlayPause}
+                  onPauseVideo={handlePauseVideo}
+                  allUsers={allUsers}
+                  currentUser={currentUser}
+                  places={places}
+                  allVideos={videos}
+                  activeSubTab={activeSubTab}
+                  onSelectSubTab={onSelectSubTab}
+                  isSessionAudioUnlocked={isSessionAudioUnlocked}
+                  onUnlockAudio={unlockAudioSession}
+                  onToggleMute={toggleMute}
+                  onForceMute={() => {
+                    setIsMuted(true);
+                    if (feedVideoRef.current) feedVideoRef.current.muted = true;
+                  }}
+                  onOpenComments={onOpenComments}
+                  onOpenPlace={onOpenPlace}
+                  onOpenCreator={onOpenCreator}
+                  onOpenShare={onOpenShare}
+                  onOpenMoreMenu={setMoreMenuVideo}
+                  onToggleLike={onToggleLike}
+                  onToggleBookmark={onToggleBookmark}
+                  onToggleFollow={onToggleFollow}
+                  onToggleRepost={onToggleRepost}
+                  onGoHome={onGoHome}
+                  onGoBack={onGoBack}
+                  feedContextTitle={feedContextTitle}
+                  businessName={getBusinessNameForVideo(vid)}
+                  businessLogoUrl={getLogoForVideo(vid)}
+                  businessBannerUrl={getBannerForVideo(vid)}
+                  cardRef={(el) => {
+                    cardRefs.current[idx] = el;
+                  }}
+                  onRecordView={onRecordView}
+                  unreadCount={unreadCount}
+                  forceShowMenu={forceShowMenu}
+                  isEmbed={isEmbed}
+                  isBusinessOwnerView={isBusinessOwnerView}
+                  onOpenOwnerReply={onOpenOwnerReply}
+                  onCloseEmbed={onCloseEmbed}
+                />
+                <SubtitleOverlay 
+                  currentTime={videoTime} 
+                  segments={vid.segments} 
+                  isActive={isCardActive} 
+                />
+              </React.Fragment>
             );
           })}
         </div>
