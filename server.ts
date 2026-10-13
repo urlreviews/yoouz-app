@@ -4009,33 +4009,6 @@ async function startServer() {
     next();
   });
 
-  // Top-level explicit icon & manifest handler (must be before Vite middlewares)
-  app.get([
-    "/apple-touch-icon.png",
-    "/apple-touch-icon-precomposed.png",
-    "/icon-512.png",
-    "/icon-192.png",
-    "/favicon-512x512.png",
-    "/favicon-192x192.png",
-    "/favicon.ico",
-    "/favicon.png",
-    "/favicon.svg",
-    "/manifest.json"
-  ], (req, res) => {
-    const filename = req.path.substring(1);
-    const filePath = path.join(process.cwd(), "public", filename);
-    if (fs.existsSync(filePath)) {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400");
-      if (filename.endsWith('.png')) res.setHeader("Content-Type", "image/png");
-      else if (filename.endsWith('.ico')) res.setHeader("Content-Type", "image/x-icon");
-      else if (filename.endsWith('.svg')) res.setHeader("Content-Type", "image/svg+xml");
-      else if (filename.endsWith('.json')) res.setHeader("Content-Type", "application/json");
-      return res.sendFile(filePath);
-    }
-    return res.status(404).end();
-  });
-
   app.post('/api/upgrade-request', express.json(), async (req, res) => {
     const { businessName, ownerEmail, placeId, timestamp } = req.body;
     if (!businessName || !ownerEmail) {
