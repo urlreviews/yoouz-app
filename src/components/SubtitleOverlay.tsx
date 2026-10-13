@@ -71,7 +71,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime,
   segments,
   transcriptText,
-  duration = 60,
+  duration = 15,
   isActive
 }) => {
   if (!isActive) return null;

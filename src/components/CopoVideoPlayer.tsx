@@ -382,19 +382,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           setProgressPercent((curTime / vid.duration) * 100);
         }
       }
-      if (isPlaying) {
-        frameId = requestAnimationFrame(tickPrecisionSync);
-      }
+      frameId = requestAnimationFrame(tickPrecisionSync);
     };
 
-    if (isPlaying) {
-      frameId = requestAnimationFrame(tickPrecisionSync);
-    }
+    frameId = requestAnimationFrame(tickPrecisionSync);
 
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [isPlaying]);
+  }, []);
 
   // Sync mute state changes to the active video without interrupting playback
   useEffect(() => {
