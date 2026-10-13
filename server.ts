@@ -21525,40 +21525,80 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return res.json(result);
   });
 
-  // Local Transcription Helper using the Python Faster-Whisper service
+  // Local & Fallback Transcription Helper (Faster-Whisper + Gemini API)
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
-      // Check if local service is reachable (running on port 8000)
+      // 1. Try local Python Faster-Whisper service on port 8000
       const healthCheck = await fetch("http://localhost:8000/health").catch(() => null);
-      if (!healthCheck || !healthCheck.ok) {
-        console.warn("[Transcription] Local service not reachable on port 8000.");
-        return { transcript: "" };
+      if (healthCheck && healthCheck.ok) {
+        const formData = new FormData();
+        const blob = new Blob([videoBuffer], { type: 'video/webm' });
+        formData.append('file', blob, filename);
+
+        const response = await fetch("http://localhost:8000/transcribe", {
+          method: "POST",
+          body: formData
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.text) {
+            return {
+              transcript: data.text,
+              segments: data.segments || [],
+              vtt_content: data.vtt_content || ""
+            };
+          }
+        }
+      } else {
+        console.warn("[Transcription] Local Python service not reachable on port 8000. Checking fallback...");
       }
-
-      const formData = new FormData();
-      const blob = new Blob([videoBuffer], { type: 'video/webm' });
-      formData.append('file', blob, filename);
-
-      const response = await fetch("http://localhost:8000/transcribe", {
-        method: "POST",
-        body: formData
-      });
-
-      if (!response.ok) {
-        console.error("[Transcription] Local service error:", await response.text());
-        return { transcript: "" };
-      }
-
-      const data = await response.json();
-      return {
-        transcript: data.text,
-        segments: data.segments,
-        vtt_content: data.vtt_content
-      };
     } catch (err) {
-      console.error("[Transcription] Error calling local service:", err);
-      return { transcript: "" };
+      console.warn("[Transcription] Local service attempt error:", err);
     }
+
+    // 2. High-availability Fallback via Gemini API
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (apiKey) {
+      try {
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI({ apiKey });
+        const b64Data = videoBuffer.toString("base64");
+        const response = await ai.models.generateContent({
+          model: "gemini-3.5-transcribe",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "video/webm",
+                    data: b64Data
+                  }
+                },
+                {
+                  text: "Provide an accurate, verbatim text transcript of all spoken words in this video review. Output only the transcript text with no extra commentary or formatting."
+                }
+              ]
+            }
+          ]
+        });
+
+        const transcript = response.text ? response.text.trim() : "";
+        if (transcript) {
+          const vtt = `WEBVTT\n\n00:00.000 --> 01:00.000\n${transcript}`;
+          return {
+            transcript,
+            segments: [{ start: 0, end: 60, text: transcript }],
+            vtt_content: vtt
+          };
+        }
+      } catch (gemErr) {
+        console.warn("[Transcription] Gemini API fallback error:", gemErr);
+      }
+    }
+
+    return { transcript: "", segments: [], vtt_content: "" };
   }
 
   // AI Video Speech-to-Text Transcription Endpoint (Local Only)
