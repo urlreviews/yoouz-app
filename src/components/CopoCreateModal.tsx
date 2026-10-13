@@ -760,8 +760,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             if (fullText) {
               setLiveTranscript(fullText);
               const nowSec = Math.max(0.2, (Date.now() - recStartTime) / 1000);
-              const phraseStart = Math.max(0, nowSec - 2.5);
-              const builtSegments = buildSegmentsFromTranscript(fullText, nowSec, phraseStart);
+              const builtSegments = buildSegmentsFromTranscript(fullText, nowSec, 0);
               if (builtSegments.length > 0) {
                 setLiveSegments(builtSegments);
               }

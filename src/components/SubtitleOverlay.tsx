@@ -105,7 +105,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     const effectiveDuration = duration && duration > 0 ? duration : 60;
 
-    // Priority 1: Use exact VAD speech-to-text timestamps when real segments exist
+    // Priority 1: Use exact VAD speech-to-text timestamps when real segments exist and are valid
     if (parsed.length > 0) {
       const refined: { start: number; end: number; text: string; words?: any[] }[] = [];
       for (const s of parsed) {
@@ -136,12 +136,19 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
           refined.push({ start, end, text: rawText, words: s.words || wordTimings });
         }
       }
-      if (refined.length > 0) return refined;
+
+      if (refined.length > 0) {
+        const firstSegStart = refined[0].start;
+        // If the first segment is shifted towards the end of the video (> 2.5s and > 30% of duration), auto-correct by rebuilding from 0.0s
+        if (firstSegStart < 2.5 || firstSegStart < effectiveDuration * 0.3) {
+          return refined;
+        }
+      }
     }
 
-    // Priority 2: Build timed segments from fullText if no explicit segment timestamps exist
+    // Priority 2: Build timed segments from fullText starting cleanly at 0.0s
     if (fullText) {
-      return buildSegmentsFromTranscript(fullText, effectiveDuration);
+      return buildSegmentsFromTranscript(fullText, effectiveDuration, 0);
     }
 
     return [];
