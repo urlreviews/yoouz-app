@@ -32739,8 +32739,8 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
-  // Start transcription service
-  console.log("Attempting to start transcription service...");
+  // Start transcription service if python3 is present
+  console.log("Attempting to start local transcription service...");
   try {
     const servicePath = fs.existsSync("/app/applet/transcription_service.py")
       ? "/app/applet/transcription_service.py"
@@ -32749,10 +32749,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       detached: true,
       stdio: 'inherit'
     });
+    transcriptionProcess.on('error', (err) => {
+      console.warn("[Transcription Service] python3 process unavailable on host environment:", err.message);
+    });
     transcriptionProcess.unref();
-    console.log("Transcription service spawned at:", servicePath);
-  } catch (err) {
-    console.error("Failed to start transcription service:", err);
+    console.log("Transcription service spawn initiated at:", servicePath);
+  } catch (err: any) {
+    console.warn("[Transcription Service] Could not spawn local transcription service:", err?.message || err);
   }
 
   app.listen(PORT, "0.0.0.0", () => {
