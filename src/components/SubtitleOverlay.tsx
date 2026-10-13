@@ -126,7 +126,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (validSegments.length === 0) return null;
 
   const activeSegment = validSegments.find(
-    s => currentTime >= s.start && currentTime <= s.end
+    s => currentTime >= (s.start - 0.05) && currentTime <= s.end
   );
 
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) {

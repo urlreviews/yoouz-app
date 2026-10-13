@@ -369,6 +369,33 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, []);
 
+  // High-Precision 60Hz Millisecond Subtitle Synchronization Loop (TikTok / CapCut sub-16ms precision standard)
+  useEffect(() => {
+    let frameId: number;
+
+    const tickPrecisionSync = () => {
+      const vid = feedVideoRef.current;
+      if (vid && !vid.paused && typeof vid.currentTime === 'number') {
+        const curTime = vid.currentTime;
+        setVideoTime(curTime);
+        if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
+          setProgressPercent((curTime / vid.duration) * 100);
+        }
+      }
+      if (isPlaying) {
+        frameId = requestAnimationFrame(tickPrecisionSync);
+      }
+    };
+
+    if (isPlaying) {
+      frameId = requestAnimationFrame(tickPrecisionSync);
+    }
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [isPlaying]);
+
   // Sync mute state changes to the active video without interrupting playback
   useEffect(() => {
     const vid = feedVideoRef.current;
