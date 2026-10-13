@@ -140,8 +140,8 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       if (refined.length > 0) return refined;
     }
 
-    // Priority 2: Fallback to proportional single-line timing only if raw transcript text exists without segment timestamps
-    return buildSegmentsFromTranscript(fullText, effectiveDuration, 0);
+    // Require explicit acoustic segment timestamps (no guessing/estimating when timestamps are absent)
+    return [];
   }, [segments, transcriptText, duration]);
 
   if (validSegments.length === 0) return null;
