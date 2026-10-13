@@ -20,39 +20,39 @@ const isTitleFallbackText = (text: string): boolean => {
   );
 };
 
-// Helper to build timed segments from plain text transcript if explicit segments are missing
-export const buildSegmentsFromTranscript = (text: string, totalDuration: number = 60) => {
+// Helper to build short 3-5 word single-line timed segments from transcript text
+export const buildSegmentsFromTranscript = (text: string, totalDuration: number = 60, startOffset: number = 0) => {
   if (!text || !text.trim() || isTitleFallbackText(text)) return [];
 
-  // Clean and split text by sentence/clause boundaries (. ! ? \n or commas)
-  const sentences = text
-    .trim()
-    .split(/(?<=[.!?\n])\s+/)
-    .map(s => s.trim())
-    .filter(Boolean)
-    .filter(s => !isTitleFallbackText(s));
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
 
-  if (sentences.length === 0) return [];
+  const dur = totalDuration && totalDuration > 0 ? totalDuration : Math.max(4, Math.round(words.length * 0.38));
+  const secondsPerWord = dur / words.length;
 
-  // Calculate total words to assign duration proportionally
-  const totalWords = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0);
-  const dur = totalDuration && totalDuration > 0 ? totalDuration : 60;
-  
-  let currentStart = 0;
-  return sentences.map((sentence) => {
-    const wordCount = sentence.split(/\s+/).length;
-    // Calculate slice duration proportional to word count (min 2 seconds per segment)
-    const segDuration = Math.max(2, (wordCount / (totalWords || 1)) * dur);
-    const start = Math.round(currentStart * 100) / 100;
-    const end = Math.round((currentStart + segDuration) * 100) / 100;
-    currentStart += segDuration;
+  const chunks: { start: number; end: number; text: string }[] = [];
+  const maxWordsPerLine = 4; // Strict 3-5 words max per line for premium TikTok/Reels single-line captions
 
-    return {
-      start,
-      end,
-      text: sentence
-    };
-  });
+  let currentWordIdx = 0;
+  while (currentWordIdx < words.length) {
+    const chunkWords = words.slice(currentWordIdx, currentWordIdx + maxWordsPerLine);
+    const chunkText = chunkWords.join(' ');
+    const chunkStartIdx = currentWordIdx;
+    currentWordIdx += chunkWords.length;
+
+    if (isTitleFallbackText(chunkText)) continue;
+
+    const segStart = Math.round((startOffset + chunkStartIdx * secondsPerWord) * 100) / 100;
+    const segEnd = Math.round((startOffset + currentWordIdx * secondsPerWord) * 100) / 100;
+
+    chunks.push({
+      start: segStart,
+      end: segEnd,
+      text: chunkText
+    });
+  }
+
+  return chunks;
 };
 
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
@@ -76,16 +76,28 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     if (parsed.length > 0) {
-      return parsed
-        .map(s => ({
-          start: Number(s.start ?? s.start_time ?? 0),
-          end: Number(s.end ?? s.end_time ?? 9999),
-          text: String(s.text || s.transcript || '').trim()
-        }))
-        .filter(s => s.text && !isTitleFallbackText(s.text));
+      const refined: { start: number; end: number; text: string }[] = [];
+      for (const s of parsed) {
+        const rawText = String(s.text || s.transcript || '').trim();
+        const start = Number(s.start ?? s.start_time ?? 0);
+        const end = Number(s.end ?? s.end_time ?? (start + 5));
+        const segDuration = Math.max(1.5, end - start);
+
+        if (!rawText || isTitleFallbackText(rawText)) continue;
+
+        // If segment has more than 5 words, split into 3-5 word single-line chunks
+        const wordCount = rawText.split(/\s+/).length;
+        if (wordCount > 5) {
+          const subChunks = buildSegmentsFromTranscript(rawText, segDuration, start);
+          refined.push(...subChunks);
+        } else {
+          refined.push({ start, end, text: rawText });
+        }
+      }
+      if (refined.length > 0) return refined;
     }
 
-    // Fallback: build segments on-the-fly from transcriptText
+    // Fallback: build short 3-5 word single-line segments on-the-fly from transcriptText
     if (transcriptText && transcriptText.trim() && !isTitleFallbackText(transcriptText)) {
       return buildSegmentsFromTranscript(transcriptText, duration);
     }

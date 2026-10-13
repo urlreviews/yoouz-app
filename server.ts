@@ -21539,7 +21539,22 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       } catch (e) {}
 
-      // 3. Mirror to PostgreSQL if present
+      // 3. Mirror to BunnyDB (libSQL cloud) & PostgreSQL
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const sqlReview = { ...updatedVideo };
+          delete sqlReview.videoData;
+          await bunnyDb.execute({
+            sql: `UPDATE videoReviews SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+            args: [JSON.stringify(sqlReview), videoId]
+          });
+          console.log(`🐰 [BunnyDB] Transcription synced for video ${videoId}`);
+        } catch (bErr) {
+          console.warn("Notice updating BunnyDB transcription:", bErr);
+        }
+      }
+
       try {
         await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
       } catch (e) {}
