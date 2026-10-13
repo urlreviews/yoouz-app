@@ -536,9 +536,12 @@ const multerStorage = multer.diskStorage({
 });
 const multerUpload = multer({ storage: multerStorage, limits: { fileSize: 100 * 1024 * 1024 } });
 const searchCache = new Map<string, { places: any[]; source: string; timestamp: number }>();
-let geminiClient: GoogleGenAI | null = null;
-function getGeminiClient() {
-  return null; // COMPLETELY AND PERMANENTLY REMOVED AND DISABLED
+function getGeminiClient(): GoogleGenAI | null {
+  if (!process.env.GEMINI_API_KEY) return null;
+  if (!geminiClient) {
+    geminiClient = new GoogleGenAI({});
+  }
+  return geminiClient;
 }
 
 function getResendClient(): Resend | null {
@@ -21383,8 +21386,68 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
-  // High-performance batch translation endpoint using Gemini 3.8 Flash with in-memory caching
+  // High-performance batch translation endpoint backed by Gemini 3.8 Flash & persistent disk storage
+  const TRANSLATIONS_CACHE_FILE = path.join(process.cwd(), "data", "translations_cache.json");
   const serverTranslationCache = new Map<string, string>();
+
+  // Initialize serverTranslationCache from persistent disk file
+  try {
+    if (fs.existsSync(TRANSLATIONS_CACHE_FILE)) {
+      const raw = fs.readFileSync(TRANSLATIONS_CACHE_FILE, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        for (const [k, v] of Object.entries(parsed)) {
+          if (typeof v === "string") {
+            serverTranslationCache.set(k, v);
+          }
+        }
+        console.log(`[i18n] Loaded ${serverTranslationCache.size} persistent translations from disk.`);
+      }
+    }
+  } catch (err) {
+    console.warn("[i18n] Failed to load translations cache from disk:", err);
+  }
+
+  let saveCacheTimeout: NodeJS.Timeout | null = null;
+  function persistTranslationCache() {
+    if (saveCacheTimeout) clearTimeout(saveCacheTimeout);
+    saveCacheTimeout = setTimeout(() => {
+      try {
+        const obj: Record<string, string> = {};
+        for (const [k, v] of serverTranslationCache.entries()) {
+          obj[k] = v;
+        }
+        const dir = path.dirname(TRANSLATIONS_CACHE_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(TRANSLATIONS_CACHE_FILE, JSON.stringify(obj, null, 2), "utf-8");
+      } catch (err) {
+        console.warn("[i18n] Failed to persist translations cache to disk:", err);
+      }
+    }, 500);
+  }
+
+  // Preloaded translation bundle for instant 0ms switching
+  app.get("/api/translations/bundle", (req, res) => {
+    try {
+      const lang = String(req.query.lang || "").toLowerCase().trim();
+      if (!lang || lang === "en") {
+        return res.json({ translations: {} });
+      }
+
+      const results: Record<string, string> = {};
+      const prefix = `${lang}:::`;
+      for (const [k, v] of serverTranslationCache.entries()) {
+        if (k.startsWith(prefix)) {
+          const originalText = k.slice(prefix.length);
+          results[originalText] = v;
+        }
+      }
+
+      return res.json({ lang, translations: results });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  });
 
   app.post("/api/translate", express.json({ limit: "5mb" }), async (req, res) => {
     try {
@@ -21419,6 +21482,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       if (gemini) {
         // Chunk requests to batches of up to 40 strings for optimal latency
         const chunkSize = 40;
+        let hasNewTranslations = false;
+
         for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
           const chunk = uniqueMissing.slice(i, i + chunkSize);
           const prompt = `You are a professional localization and translation service for "Yoouz", an authentic 60-second video review app.
@@ -21432,7 +21497,7 @@ ${JSON.stringify(chunk)}`;
 
           try {
             const response = await gemini.models.generateContent({
-              model: "gemini-2.5-flash",
+              model: "gemini-3.8-flash",
               contents: prompt,
               config: {
                 responseMimeType: "application/json",
@@ -21448,6 +21513,7 @@ ${JSON.stringify(chunk)}`;
                   if (typeof translated === "string" && translated.trim()) {
                     results[orig] = translated.trim();
                     serverTranslationCache.set(`${targetLang}:::${orig}`, translated.trim());
+                    hasNewTranslations = true;
                   }
                 }
               }
@@ -21455,6 +21521,10 @@ ${JSON.stringify(chunk)}`;
           } catch (e: any) {
             console.warn(`[Translate API] Gemini translation notice for ${targetLang}:`, e?.message || e);
           }
+        }
+
+        if (hasNewTranslations) {
+          persistTranslationCache();
         }
       }
 
@@ -21485,7 +21555,7 @@ ${JSON.stringify(chunk)}`;
       const actualMime = mimeType || "video/webm";
 
       const response = await gemini.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.8-flash",
         contents: [
           {
             role: "user",
@@ -21549,7 +21619,7 @@ Respond ONLY with a JSON object:
 }`;
 
       const response = await gemini.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.8-flash",
         contents: [
           {
             role: "user",

@@ -7,6 +7,7 @@ import {
   TranslationSchema
 } from "./translations";
 import { UNIVERSAL_PAGE_TRANSLATIONS } from "./locales/universal";
+import universalAllJson from "./locales/universal_all.json";
 
 interface LanguageContextType {
   language: SupportedLanguage;
@@ -529,11 +530,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // 2. Dynamic cache lookup by keyPath or by englishText
       const langCache = dynamicCache[language] || loadSavedTranslations(language);
+      const universalAllDict = (universalAllJson as Record<string, Record<string, string>>)[language];
       if (typeof val !== "string" || !val) {
         if (langCache[keyPath]) {
           val = langCache[keyPath];
         } else if (langCache[englishText]) {
           val = langCache[englishText];
+        } else if (universalAllDict?.[englishText]) {
+          val = universalAllDict[englishText];
+        } else if (universalAllDict?.[keyPath]) {
+          val = universalAllDict[keyPath];
         } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[englishText]) {
           val = UNIVERSAL_PAGE_TRANSLATIONS[language][englishText];
         } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[keyPath]) {
