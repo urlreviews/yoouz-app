@@ -78,7 +78,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const countdownTimerRef = useRef<any>(null);
 
   // Audio Context for hardware unlocking
-  const audioContextRef = useRef<any>(null);
   const voiceDetectedRef = useRef<boolean>(true);
   const [isSpeakingDetected, setIsSpeakingDetected] = useState<boolean>(true);
 
@@ -107,6 +106,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const activeStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [liveSegments, setLiveSegments] = useState<any[]>([]);
+  const [liveTranscript, setLiveTranscript] = useState("");
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -668,6 +672,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       mediaRecorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
           chunksRef.current.push(e.data);
+          // Video chunks are collected for the final file
+          // Real-time audio is handled separately via AudioContext
         }
       };
 
@@ -698,8 +704,73 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         });
       };
 
-      // Request data slices periodically
-      mediaRecorder.start(250);
+      // Open WebSocket for real-time transcription (Raw PCM)
+      try {
+        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${wsProtocol}//${window.location.hostname}:8000/ws/transcribe`;
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+        
+        ws.onopen = () => {
+          console.log("[WS] Transcription stream connected");
+          // Initialize AudioContext to capture raw PCM
+          try {
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            const audioCtx = new AudioContextClass({ sampleRate: 16000 });
+            audioContextRef.current = audioCtx;
+            
+            const source = audioCtx.createMediaStreamSource(stream);
+            // ScriptProcessor is widely supported including legacy iOS
+            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            audioProcessorRef.current = processor;
+            
+            processor.onaudioprocess = (e) => {
+              if (ws.readyState === WebSocket.OPEN) {
+                const inputData = e.inputBuffer.getChannelData(0);
+                // Convert Float32 to Int16 for the Python service
+                const pcm16 = new Int16Array(inputData.length);
+                for (let i = 0; i < inputData.length; i++) {
+                  pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7FFF;
+                }
+                ws.send(pcm16.buffer);
+              }
+            };
+            
+            source.connect(processor);
+            processor.connect(audioCtx.destination);
+          } catch (audioErr) {
+            console.warn("[WS] AudioContext setup failed:", audioErr);
+          }
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "partial") {
+              if (data.text) {
+                setLiveTranscript(prev => {
+                  if (prev.endsWith(data.text)) return prev;
+                  return prev + " " + data.text;
+                });
+              }
+            } else if (data.type === "final") {
+              if (data.segments) {
+                setLiveSegments(data.segments);
+              }
+              if (data.text) {
+                setLiveTranscript(data.text);
+              }
+              // The server will close the connection after 'final'
+            }
+          } catch (e) {}
+        };
+        ws.onerror = (e) => console.warn("[WS] Transcription error:", e);
+      } catch (e) {
+        console.warn("[WS] Could not initialize live transcription:", e);
+      }
+
+      // Request data slices periodically (every 500ms for responsiveness)
+      mediaRecorder.start(500);
       setIsRecording(true);
       isRecordingRef.current = true;
       setRecordingTime(0);
@@ -734,6 +805,33 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setIsRecording(false);
       isRecordingRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
+      
+      // Stop Audio Processing
+      if (audioProcessorRef.current) {
+        try { audioProcessorRef.current.disconnect(); } catch (e) {}
+        audioProcessorRef.current = null;
+      }
+      if (audioContextRef.current) {
+        try { audioContextRef.current.close(); } catch (e) {}
+        audioContextRef.current = null;
+      }
+
+      // Close WebSocket gracefully with a 'finish' signal
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        try {
+          wsRef.current.send(JSON.stringify({ type: "finish" }));
+          // We let it close naturally after receiving 'final' or timeout
+          setTimeout(() => {
+            if (wsRef.current) wsRef.current.close();
+            wsRef.current = null;
+          }, 2000);
+        } catch (e) {
+          wsRef.current.close();
+          wsRef.current = null;
+        }
+      } else {
+        wsRef.current = null;
+      }
     }
   };
 
@@ -991,34 +1089,36 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Transcribe video in background before saving
-    setPublishingStage("Generating captions...");
-    let transcriptText = "";
-    let segments = [];
+    // 5. Transcribe video in background before saving (Fallback if live stream failed)
+    setPublishingStage("Finalizing captions...");
+    let transcriptText = liveTranscript || "";
+    let segments = liveSegments || [];
 
-    try {
-      const transcribeRes = await fetch("/api/videos/transcribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoData: await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-            reader.readAsDataURL(recordedVideoBlob!);
-          }),
-          mimeType: recordedVideoBlob?.type || "video/webm",
-          filename: cleanFileName
-        })
-      });
-      if (transcribeRes.ok) {
-        const transData = await transcribeRes.json();
-        if (transData.success) {
-          transcriptText = transData.transcript;
-          segments = transData.segments || [];
+    if (!segments.length) {
+      try {
+        const transcribeRes = await fetch("/api/videos/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoData: await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+              reader.readAsDataURL(recordedVideoBlob!);
+            }),
+            mimeType: recordedVideoBlob?.type || "video/webm",
+            filename: cleanFileName
+          })
+        });
+        if (transcribeRes.ok) {
+          const transData = await transcribeRes.json();
+          if (transData.success) {
+            transcriptText = transData.transcript;
+            segments = transData.segments || [];
+          }
         }
+      } catch (e) {
+        console.warn("Transcription notice:", e);
       }
-    } catch (e) {
-      console.warn("Transcription notice:", e);
     }
 
     const finalReview: VideoReview = {

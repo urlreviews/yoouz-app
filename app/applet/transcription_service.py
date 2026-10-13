@@ -2,11 +2,14 @@ import os
 import time
 import math
 import logging
+import asyncio
+import json
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from faster_whisper import WhisperModel
 import uvicorn
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,14 +18,19 @@ logger = logging.getLogger("transcription-service")
 app = FastAPI(title="Yoouz Local Transcription Service")
 
 # Initialize Faster-Whisper model
-# Using 'base' model for a good balance of speed and accuracy
-# In a real production environment with GPU, 'large-v3' is recommended
 MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
-DEVICE = os.getenv("WHISPER_DEVICE", "cpu")  # Change to "cuda" if GPU is available
+DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
 COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
 
 logger.info(f"Loading Whisper model: {MODEL_SIZE} on {DEVICE}...")
-model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
+# In this environment, we may want to delay model loading until first use or use a smaller model
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        model = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
+    return model
 
 class TranscriptSegment(BaseModel):
     start: float
@@ -38,7 +46,6 @@ class TranscriptionResponse(BaseModel):
     vtt_content: str
 
 def format_timestamp(seconds: float) -> str:
-    """Formats seconds into WebVTT timestamp format (HH:MM:SS.mmm)"""
     hours = math.floor(seconds / 3600)
     minutes = math.floor((seconds % 3600) / 60)
     secs = math.floor(seconds % 60)
@@ -46,7 +53,6 @@ def format_timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d}.{msecs:03d}"
 
 def generate_vtt(segments: List[TranscriptSegment]) -> str:
-    """Generates WebVTT content from segments"""
     vtt = ["WEBVTT", ""]
     for i, seg in enumerate(segments):
         start_t = format_timestamp(seg.start)
@@ -63,11 +69,7 @@ async def health_check():
 
 @app.post("/transcribe", response_model=TranscriptionResponse)
 async def transcribe_audio(file: UploadFile = File(...)):
-    """
-    Receives an audio/video file and returns transcription with timestamps and VTT.
-    """
     try:
-        # Save temporary file
         temp_filename = f"temp_{int(time.time())}_{file.filename}"
         with open(temp_filename, "wb") as buffer:
             content = await file.read()
@@ -75,9 +77,8 @@ async def transcribe_audio(file: UploadFile = File(...)):
         
         logger.info(f"Transcribing file: {temp_filename}")
         
-        # Transcribe
-        # word_timestamps=True provides granular data for "premium" synced display
-        segments_gen, info = model.transcribe(
+        m = get_model()
+        segments_gen, info = m.transcribe(
             temp_filename, 
             beam_size=5, 
             word_timestamps=True
@@ -96,8 +97,8 @@ async def transcribe_audio(file: UploadFile = File(...)):
             segments.append(seg_obj)
             full_text += segment.text + " "
         
-        # Cleanup temp file
-        os.remove(temp_filename)
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
         
         vtt_content = generate_vtt(segments)
         
@@ -112,6 +113,96 @@ async def transcribe_audio(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws/transcribe")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    logger.info("WebSocket connected for real-time transcription")
+    
+    # We'll use a local buffer to store incoming PCM chunks
+    # Assuming the frontend sends 16-bit PCM at 16kHz
+    audio_data = []
+    
+    try:
+        while True:
+            # Receive message (can be binary audio or JSON command)
+            message = await websocket.receive()
+            
+            if "bytes" in message:
+                data = message["bytes"]
+                # Convert bytes to numpy array (16-bit PCM)
+                chunk = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
+                audio_data.extend(chunk)
+                
+                # Every ~3 seconds of audio, we can try to get partial results
+                if len(audio_data) >= 16000 * 3:
+                    # Partial transcription for live feedback
+                    # (In production, use a background thread for this)
+                    m = get_model()
+                    segments_gen, _ = m.transcribe(
+                        np.array(audio_data),
+                        beam_size=5,
+                        vad_filter=True
+                    )
+                    
+                    last_text = ""
+                    for s in segments_gen:
+                        last_text = s.text.strip()
+                    
+                    if last_text:
+                        await websocket.send_json({
+                            "type": "partial",
+                            "text": last_text
+                        })
+            
+            elif "text" in message:
+                command = json.loads(message["text"])
+                if command.get("type") == "finish":
+                    logger.info("Finish command received, generating final transcription")
+                    break # Exit loop to run final transcription logic below
+                
+    except WebSocketDisconnect:
+        logger.info("WebSocket disconnected unexpectedly")
+    except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}")
+    
+    # Final transcription logic (runs after loop break or disconnect)
+    if len(audio_data) > 0:
+        try:
+            logger.info(f"Processing final transcription for {len(audio_data)/16000:.2f}s of audio")
+            m = get_model()
+            segments_gen, info = m.transcribe(
+                np.array(audio_data),
+                beam_size=5,
+                word_timestamps=True
+            )
+            
+            final_segments = []
+            full_text = ""
+            for segment in segments_gen:
+                seg_obj = {
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text.strip()
+                }
+                final_segments.append(seg_obj)
+                full_text += segment.text + " "
+            
+            # Send final result if the connection is still open
+            try:
+                await websocket.send_json({
+                    "type": "final",
+                    "text": full_text.strip(),
+                    "segments": final_segments
+                })
+            except:
+                pass # Connection might be closed already
+                
+            logger.info(f"Final transcription sent: {len(final_segments)} segments")
+        except Exception as e:
+            logger.error(f"Final transcription error: {str(e)}")
+    finally:
+        pass
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
