@@ -21512,6 +21512,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       // 3. Mirror to PostgreSQL
       await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
 
+      // 4. Real-time broadcast to active players
+      try {
+        broadcastSseEvent({ type: "video_transcribed", videoId, transcriptText, segments });
+      } catch (e) {}
+
       return { success: true, transcriptText, segments, method: "local" };
     } catch (err: any) {
       console.error(`[Transcription] ensureTranscriptionForVideo error for ${videoId}:`, err);
@@ -21526,13 +21531,13 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   });
 
   // Local & Fallback Transcription Helper (Faster-Whisper + Gemini API)
-  async function transcribeVideoLocally(videoBuffer: Buffer, filename: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
+  async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
-      // 1. Try local Python Faster-Whisper service on port 8000
-      const healthCheck = await fetch("http://localhost:8000/health").catch(() => null);
+      // 1. Try local Python Faster-Whisper service on port 8000 if active
+      const healthCheck = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(800) }).catch(() => null);
       if (healthCheck && healthCheck.ok) {
         const formData = new FormData();
-        const blob = new Blob([videoBuffer], { type: 'video/webm' });
+        const blob = new Blob([videoBuffer], { type: mimeTypeInput || 'video/webm' });
         formData.append('file', blob, filename);
 
         const response = await fetch("http://localhost:8000/transcribe", {
@@ -21550,20 +21555,24 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             };
           }
         }
-      } else {
-        console.warn("[Transcription] Local Python service not reachable on port 8000. Checking fallback...");
       }
     } catch (err) {
-      console.warn("[Transcription] Local service attempt error:", err);
+      console.warn("[Transcription] Local service check note:", err);
     }
 
-    // 2. High-availability Fallback via Gemini API
+    // 2. High-availability Gemini AI Speech-to-Text Transcription Engine
     const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (apiKey) {
       try {
         const { GoogleGenAI } = await import("@google/genai");
         const ai = new GoogleGenAI({ apiKey });
         const b64Data = videoBuffer.toString("base64");
+        
+        let targetMimeType = mimeTypeInput || "video/webm";
+        if (filename.endsWith(".mp4") || filename.endsWith(".mov")) {
+          targetMimeType = "video/mp4";
+        }
+
         const response = await ai.models.generateContent({
           model: "gemini-3.5-transcribe",
           contents: [
@@ -21572,41 +21581,100 @@ Timestamp: ${new Date(timestamp).toUTCString()}
               parts: [
                 {
                   inlineData: {
-                    mimeType: "video/webm",
+                    mimeType: targetMimeType,
                     data: b64Data
                   }
                 },
                 {
-                  text: "Provide an accurate, verbatim text transcript of all spoken words in this video review. Output only the transcript text with no extra commentary or formatting."
+                  text: `You are an expert video subtitle generator. Transcribe all spoken words in this video review.
+Return ONLY a valid JSON object with the following schema:
+{
+  "transcript": "Full verbatim text transcript of spoken audio",
+  "segments": [
+    { "start": 0.0, "end": 3.0, "text": "First spoken phrase or sentence" },
+    { "start": 3.0, "end": 6.5, "text": "Next spoken phrase or sentence" }
+  ]
+}
+Ensure start and end timestamps are numbers in seconds. Output ONLY raw JSON. Do not include markdown tags, code blocks, or commentary.`
                 }
               ]
             }
           ]
         });
 
-        const transcript = response.text ? response.text.trim() : "";
-        if (transcript) {
-          const vtt = `WEBVTT\n\n00:00.000 --> 01:00.000\n${transcript}`;
+        const rawText = response.text ? response.text.trim() : "";
+        let transcript = "";
+        let segments: any[] = [];
+
+        if (rawText) {
+          try {
+            const cleanJsonStr = rawText
+              .replace(/^```json\s*/i, "")
+              .replace(/^```\s*/, "")
+              .replace(/\s*```$/, "")
+              .trim();
+            const parsed = JSON.parse(cleanJsonStr);
+            if (parsed.transcript) {
+              transcript = String(parsed.transcript).trim();
+            } else if (typeof parsed === "string") {
+              transcript = parsed;
+            }
+            if (Array.isArray(parsed.segments)) {
+              segments = parsed.segments;
+            }
+          } catch (pErr) {
+            transcript = rawText;
+          }
+
+          // Fallback segment builder if JSON didn't yield granular segments
+          if (!segments || segments.length === 0) {
+            const sentences = transcript.split(/(?<=[.!?\n])\s+/).map(s => s.trim()).filter(Boolean);
+            if (sentences.length > 0) {
+              const totalWords = sentences.reduce((acc, s) => acc + s.split(/\s+/).length, 0);
+              const estDur = Math.min(60, Math.max(10, totalWords * 0.45));
+              let curStart = 0;
+              segments = sentences.map(s => {
+                const w = s.split(/\s+/).length;
+                const d = Math.max(2, (w / (totalWords || 1)) * estDur);
+                const seg = {
+                  start: Math.round(curStart * 100) / 100,
+                  end: Math.round((curStart + d) * 100) / 100,
+                  text: s
+                };
+                curStart += d;
+                return seg;
+              });
+            } else {
+              segments = [{ start: 0, end: 60, text: transcript }];
+            }
+          }
+
+          const vtt = `WEBVTT\n\n` + segments.map((s, idx) => {
+            const pad = (num: number) => String(Math.floor(num)).padStart(2, '0');
+            const ms = (num: number) => String(Math.floor((num % 1) * 1000)).padStart(3, '0');
+            return `${idx + 1}\n${pad(s.start / 60)}:${pad(s.start % 60)}.${ms(s.start)} --> ${pad(s.end / 60)}:${pad(s.end % 60)}.${ms(s.end)}\n${s.text}\n`;
+          }).join('\n');
+
           return {
             transcript,
-            segments: [{ start: 0, end: 60, text: transcript }],
+            segments,
             vtt_content: vtt
           };
         }
       } catch (gemErr) {
-        console.warn("[Transcription] Gemini API fallback error:", gemErr);
+        console.warn("[Transcription] Gemini API speech-to-text error:", gemErr);
       }
     }
 
     return { transcript: "", segments: [], vtt_content: "" };
   }
 
-  // AI Video Speech-to-Text Transcription Endpoint (Local Only)
+  // AI Video Speech-to-Text Transcription Endpoint
   app.post("/api/videos/transcribe", async (req, res) => {
     try {
       const { videoData, mimeType, filename } = req.body;
       if (!videoData || typeof videoData !== "string") {
-        return res.status(200).json({ success: true, transcript: "" });
+        return res.status(200).json({ success: true, transcript: "", segments: [] });
       }
 
       const rawBase64 = videoData.includes("base64,")
@@ -21615,19 +21683,18 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const videoBuffer = Buffer.from(rawBase64, 'base64');
       const safeFilename = filename || `video_${Date.now()}.webm`;
 
-      // Strictly try local transcription (Faster-Whisper)
-      const localResult = await transcribeVideoLocally(videoBuffer, safeFilename);
+      const localResult = await transcribeVideoLocally(videoBuffer, safeFilename, mimeType);
       
       return res.json({ 
         success: true, 
         transcript: localResult.transcript || "",
         segments: localResult.segments || [],
         vtt_content: localResult.vtt_content || "",
-        method: "local"
+        method: "gemini"
       });
     } catch (err: any) {
       console.error("[Transcription] Endpoint error:", err);
-      return res.status(200).json({ success: true, transcript: "" });
+      return res.status(200).json({ success: true, transcript: "", segments: [] });
     }
   });
 

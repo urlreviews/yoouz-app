@@ -347,6 +347,26 @@ export function App() {
                 updatedAt: Date.now()
               };
             });
+          } else if (payload.type === "video_transcribed" && payload.videoId) {
+            const vidId = String(payload.videoId);
+            const transcriptText = payload.transcriptText || "";
+            const segments = payload.segments || [];
+
+            setVideos((prev) => prev.map((v) => {
+              if (String(v.id) !== vidId) return v;
+              return { ...v, transcriptText, segments };
+            }));
+            setPlaces((prev) => prev.map((p) => {
+              if (!p.reviews || !p.reviews.some((r: any) => r && String(r.id) === vidId)) return p;
+              return {
+                ...p,
+                reviews: p.reviews.map((v: any) => v && String(v.id) === vidId ? { ...v, transcriptText, segments } : v)
+              };
+            }));
+            setActiveCommentVideo((currentActive) => {
+              if (!currentActive || String(currentActive.id) !== vidId) return currentActive;
+              return { ...currentActive, transcriptText, segments };
+            });
           } else if (payload.type === "place_updated" && (payload.placeId || payload.place?.id || payload.updates?.id)) {
             const targetId = String(payload.placeId || payload.place?.id || payload.updates?.id || '');
             const targetName = String(payload.placeName || payload.place?.name || payload.updates?.name || '');

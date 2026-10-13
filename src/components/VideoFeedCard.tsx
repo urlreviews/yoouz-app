@@ -1209,6 +1209,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       <SubtitleOverlay 
         currentTime={videoTime} 
         segments={video.segments} 
+        transcriptText={video.transcriptText || video.caption}
+        duration={video.durationSeconds || video.duration || 60}
         isActive={isActive} 
       />
 
