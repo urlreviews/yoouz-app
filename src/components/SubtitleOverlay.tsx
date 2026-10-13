@@ -167,24 +167,30 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (textWords.length === 0) return [];
 
     // Priority 1: Use explicit word timestamps from activeSegment.words if available
-    if (Array.isArray(activeSegment.words) && activeSegment.words.length === textWords.length) {
-      return activeSegment.words.map((wObj: any, idx: number) => ({
-        word: textWords[idx] || wObj.word || '',
-        start: Number(wObj.start ?? 0),
-        end: Number(wObj.end ?? (Number(wObj.start ?? 0) + 0.4))
-      }));
+    if (Array.isArray(activeSegment.words) && activeSegment.words.length > 0) {
+      return activeSegment.words.map((wObj: any, idx: number) => {
+        const rawWord = String(wObj.word || wObj.text || textWords[idx] || '').trim();
+        const wStart = Number(wObj.start ?? wObj.start_time ?? 0);
+        const wEnd = Number(wObj.end ?? wObj.end_time ?? (wStart + 0.35));
+        return {
+          word: rawWord,
+          start: Math.round(wStart * 100) / 100,
+          end: Math.round(Math.max(wStart + 0.1, wEnd) * 100) / 100
+        };
+      }).filter(t => t.word && !isTitleFallbackText(t.word));
     }
 
-    // Priority 2: Derive strict acoustic word token bounds across the segment
+    // Priority 2: Derive strict acoustic word token bounds across the segment (capped to spoken duration so trailing silence does not stretch words)
     const segStart = Number(activeSegment.start ?? 0);
     const segEnd = Number(activeSegment.end ?? (segStart + 3.0));
     const segDuration = Math.max(0.1, segEnd - segStart);
+    const estimatedSpokenDuration = Math.min(segDuration, Math.max(0.8, textWords.length * 0.35));
 
     const totalChars = textWords.reduce((acc, w) => acc + Math.max(1, w.length), 0) || 1;
     let accum = segStart;
 
     return textWords.map((w) => {
-      const wDur = (Math.max(1, w.length) / totalChars) * segDuration;
+      const wDur = (Math.max(1, w.length) / totalChars) * estimatedSpokenDuration;
       const wStart = accum;
       const wEnd = accum + wDur;
       accum = wEnd;
