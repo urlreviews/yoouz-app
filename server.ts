@@ -21600,25 +21600,34 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         const ai = new GoogleGenAI({ apiKey });
         const b64Data = videoBuffer.toString("base64");
         
-        let targetMimeType = mimeTypeInput || "video/webm";
+        let targetMimeType = (mimeTypeInput || "video/webm").split(";")[0].trim();
+        if (!targetMimeType || targetMimeType === "video/x-matroska" || targetMimeType === "application/octet-stream") {
+          targetMimeType = "video/webm";
+        }
         if (filename.endsWith(".mp4") || filename.endsWith(".mov")) {
           targetMimeType = "video/mp4";
         }
 
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-transcribe",
-          contents: [
-            {
-              role: "user",
-              parts: [
+        const modelCandidates = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.5-transcribe"];
+        let rawText = "";
+
+        for (const modelCandidate of modelCandidates) {
+          try {
+            console.log(`[Transcription] Attempting Gemini speech-to-text with model: ${modelCandidate}`);
+            const response = await ai.models.generateContent({
+              model: modelCandidate,
+              contents: [
                 {
-                  inlineData: {
-                    mimeType: targetMimeType,
-                    data: b64Data
-                  }
-                },
-                {
-                  text: `You are an expert video subtitle generator. Transcribe all spoken words in this video review.
+                  role: "user",
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: targetMimeType,
+                        data: b64Data
+                      }
+                    },
+                    {
+                      text: `You are an expert video subtitle generator. Transcribe all spoken words in this video review.
 Return ONLY a valid JSON object with the following schema:
 {
   "transcript": "Full verbatim text transcript of spoken audio",
@@ -21627,14 +21636,23 @@ Return ONLY a valid JSON object with the following schema:
     { "start": 3.0, "end": 6.5, "text": "Next spoken phrase or sentence" }
   ]
 }
-Ensure start and end timestamps are numbers in seconds. Output ONLY raw JSON. Do not include markdown tags, code blocks, or commentary.`
+Ensure start and end timestamps are numbers in seconds matching the audio. Output ONLY raw JSON. Do not include markdown tags, code blocks, or commentary.`
+                    }
+                  ]
                 }
               ]
-            }
-          ]
-        });
+            });
 
-        const rawText = response.text ? response.text.trim() : "";
+            if (response.text && response.text.trim()) {
+              rawText = response.text.trim();
+              console.log(`[Transcription] Success using model ${modelCandidate}! Raw output length: ${rawText.length}`);
+              break;
+            }
+          } catch (candidateErr: any) {
+            console.warn(`[Transcription] Model ${modelCandidate} notice:`, candidateErr?.message || candidateErr);
+          }
+        }
+
         let transcript = "";
         let segments: any[] = [];
 
