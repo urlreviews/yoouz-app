@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getHreflangAlternates } from '../i18n/urlLocalization';
 
 interface SEOTagsProps {
   title: string;
@@ -69,6 +70,19 @@ export function SEOTags({ title, description, image, touchIcon, url, jsonLd, upd
     if (url) {
       updateOGTag('og:url', url);
       updateLinkTag('canonical', url);
+
+      // 4. Update Multilingual Google hreflang alternate links
+      try {
+        document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+        const alternates = getHreflangAlternates(url);
+        alternates.forEach(alt => {
+          const link = document.createElement('link');
+          link.setAttribute('rel', 'alternate');
+          link.setAttribute('hreflang', alt.hreflang);
+          link.setAttribute('href', alt.href);
+          document.head.appendChild(link);
+        });
+      } catch (e) {}
     }
     updateOGTag('og:type', 'website');
 
@@ -80,7 +94,7 @@ export function SEOTags({ title, description, image, touchIcon, url, jsonLd, upd
     updateLinkTag('icon', '/favicon.ico', { type: 'image/x-icon' });
     updateLinkTag('shortcut icon', '/favicon.ico');
 
-    // 4. Update JSON-LD Structured Data
+    // 5. Update JSON-LD Structured Data
     if (jsonLd) {
       let script = document.querySelector('#seo-json-ld');
       if (!script) {
@@ -97,6 +111,9 @@ export function SEOTags({ title, description, image, touchIcon, url, jsonLd, upd
         const script = document.querySelector('#seo-json-ld');
         if (script) script.remove();
       }
+      try {
+        document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+      } catch (e) {}
     };
   }, [title, description, image, touchIcon, url, jsonLd, updateTitle]);
 

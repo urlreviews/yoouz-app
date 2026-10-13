@@ -36,6 +36,8 @@ import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users,
 import { eq, desc, or, like } from "drizzle-orm";
 import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
+import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
+import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
 
 dotenv.config();
 
@@ -27570,6 +27572,15 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: bingbot
+Allow: /
+
 Sitemap: https://www.yoouz.com/sitemap.xml
 Sitemap: https://www.yoouz.com/video-sitemap.xml
 `;
@@ -27682,7 +27693,14 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
     }
   });
 
-  // SEO Dynamic XML Sitemap with Google Video & Image Sitemap Extensions
+  // 301 Permanent Redirect for SEO: /place/* -> /reviews/*
+  app.get(['/place/:slug', '/place/:slug/*'], (req: any, res: any) => {
+    const rawPath = req.originalUrl || req.url;
+    const newPath = rawPath.replace(/^\/place(\/|$)/i, '/reviews$1');
+    return res.redirect(301, newPath);
+  });
+
+  // SEO Dynamic XML Sitemap with Google Video, Image, and Multilingual xhtml Extensions
   app.get('/sitemap.xml', async (_req: any, res: any) => {
     try {
       const baseUrl = 'https://www.yoouz.com';
@@ -27724,7 +27742,8 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
       let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <!-- Core Landing & Discovery Pages -->
   <url>
     <loc>${baseUrl}/</loc>
@@ -27774,12 +27793,37 @@ Sitemap: https://www.yoouz.com/video-sitemap.xml
   </url>
 `;
 
-      // 301 Permanent Redirect for SEO: /place/* -> /reviews/*
-      app.get(['/place/:slug', '/place/:slug/*'], (req: any, res: any) => {
-        const rawPath = req.originalUrl || req.url;
-        const newPath = rawPath.replace(/^\/place(\/|$)/i, '/reviews$1');
-        return res.redirect(301, newPath);
-      });
+      // Multilingual Discovery URLs for Googlebot and Global Search Engines
+      try {
+        SUPPORTED_LANGUAGES.forEach((lang) => {
+          if (lang.code === 'en') return;
+          const code = lang.code.toLowerCase();
+          xml += `  <url>
+    <loc>${baseUrl}/${code}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/${code}/search</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/${code}/business</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/${code}/more</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>\n`;
+        });
+      } catch (e) {}
 
       // Add Places / Local Businesses
       allPlaces.forEach((p) => {
@@ -31311,6 +31355,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     const safeTwitterCard = escapeHtml(meta.twitterCard || "summary_large_image");
 
     let baseUrl = "https://www.yoouz.com";
+    let currentPath = "/";
     try {
       if (meta.url) {
         const u = new URL(meta.url);
@@ -31319,8 +31364,16 @@ function injectOpenGraphTags(html: string, meta: any) {
         } else {
           baseUrl = u.origin;
         }
+        currentPath = u.pathname || "/";
       }
     } catch (e) {}
+
+    const { locale: detectedLocale } = parseLocaleFromPath(currentPath);
+    const htmlLang = detectedLocale ? getStandardHreflangCode(detectedLocale) : "en";
+    const alternates = getHreflangAlternates(currentPath, baseUrl);
+    const hreflangTags = alternates
+      .map(alt => `<link rel="alternate" hreflang="${escapeHtml(alt.hreflang)}" href="${escapeHtml(alt.href)}" />`)
+      .join("\n    ");
 
     let headInject = `
     <title>${safeTitle}</title>
@@ -31328,8 +31381,12 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="keywords" content="${safeKeywords}" />
     ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
     
+    <!-- Multilingual Alternate Links for Googlebot, Bingbot & AI Crawlers -->
+    ${hreflangTags}
+
     <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
     <meta property="og:site_name" content="Yoouz" />
+    <meta property="og:locale" content="${escapeHtml(htmlLang.replace('-', '_'))}" />
     <meta property="og:type" content="${safeType}" />
     <meta property="og:url" content="${safeUrl}" />
     <meta property="og:title" content="${safeTitle}" />
@@ -31394,12 +31451,19 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
 
     // Strip out all existing title, og/twitter meta tags and static link icons so they don't conflict
-    return html
+    let updatedHtml = html
       .replace(/<title>[\s\S]*?<\/title>/gi, '')
       .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '')
       .replace('</head>', `${headInject}</head>`);
+
+    // Dynamically update the html lang attribute to match the requested language
+    if (htmlLang) {
+      updatedHtml = updatedHtml.replace(/<html(?:\s+[^>]*?)?\s+lang=["'][^"']*["']/i, `<html lang="${htmlLang}"`);
+    }
+
+    return updatedHtml;
   }
 
   function injectLiveInitialState(html: string): string {

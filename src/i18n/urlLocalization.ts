@@ -23,7 +23,18 @@ export function parseLocaleFromPath(pathname: string): {
     return { locale: null, pathWithoutLocale: "/" };
   }
 
-  const clean = pathname.startsWith("/") ? pathname : "/" + pathname;
+  // Support full absolute URLs (e.g. "https://www.yoouz.com/lv/more")
+  let pathOnly = pathname;
+  try {
+    if (pathname.includes("://") || pathname.startsWith("//")) {
+      const u = new URL(pathname, "https://www.yoouz.com");
+      pathOnly = u.pathname;
+    }
+  } catch (e) {
+    pathOnly = pathname.replace(/^https?:\/\/[^\/]+/, "");
+  }
+
+  const clean = pathOnly.startsWith("/") ? pathOnly : "/" + pathOnly;
   const segments = clean.split("/").filter(Boolean);
 
   if (segments.length === 0) {
@@ -103,4 +114,42 @@ export function syncUrlWithLanguage(
       console.warn("[i18n URL] Failed to update URL:", e);
     }
   }
+}
+
+/**
+ * Maps internal language codes to standard ISO / BCP 47 hreflang codes recognized by Google.
+ * e.g. "zhTW" -> "zh-Hant", "zh" -> "zh-Hans"
+ */
+export function getStandardHreflangCode(langCode: string): string {
+  const code = (langCode || "en").toLowerCase();
+  if (code === "zhtw" || code === "zh-tw") return "zh-Hant";
+  if (code === "zh" || code === "zh-cn") return "zh-Hans";
+  return code;
+}
+
+/**
+ * Generates an array of hreflang alternate link objects for any given route/path.
+ * Includes x-default (pointing to the canonical root URL) and all supported languages.
+ */
+export function getHreflangAlternates(
+  currentPath: string,
+  baseUrl: string = "https://www.yoouz.com"
+): Array<{ hreflang: string; href: string }> {
+  const { pathWithoutLocale } = parseLocaleFromPath(currentPath);
+  const cleanPath = pathWithoutLocale === "/" ? "" : pathWithoutLocale;
+
+  const alternates: Array<{ hreflang: string; href: string }> = [
+    { hreflang: "x-default", href: `${baseUrl}${cleanPath || "/"}` }
+  ];
+
+  for (const lang of SUPPORTED_LANGUAGES) {
+    const hreflangCode = getStandardHreflangCode(lang.code);
+    const localized = buildLocalizedPath(cleanPath || "/", lang.code);
+    alternates.push({
+      hreflang: hreflangCode,
+      href: `${baseUrl}${localized}`
+    });
+  }
+
+  return alternates;
 }
