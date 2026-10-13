@@ -75,34 +75,52 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       } catch (e) {}
     }
 
+    // Extract all spoken text
+    let fullText = "";
     if (parsed.length > 0) {
-      const refined: { start: number; end: number; text: string }[] = [];
-      for (const s of parsed) {
-        const rawText = String(s.text || s.transcript || '').trim();
-        const start = Number(s.start ?? s.start_time ?? 0);
-        const end = Number(s.end ?? s.end_time ?? (start + 5));
-        const segDuration = Math.max(1.5, end - start);
-
-        if (!rawText || isTitleFallbackText(rawText)) continue;
-
-        // If segment has more than 5 words, split into 3-5 word single-line chunks
-        const wordCount = rawText.split(/\s+/).length;
-        if (wordCount > 5) {
-          const subChunks = buildSegmentsFromTranscript(rawText, segDuration, start);
-          refined.push(...subChunks);
-        } else {
-          refined.push({ start, end, text: rawText });
-        }
+      fullText = parsed
+        .map(s => String(s.text || s.transcript || '').trim())
+        .filter(s => s && !isTitleFallbackText(s))
+        .join(" ");
+    }
+    if (!fullText && transcriptText && transcriptText.trim()) {
+      const clean = transcriptText.trim();
+      if (!isTitleFallbackText(clean)) {
+        fullText = clean;
       }
-      if (refined.length > 0) return refined;
     }
 
-    // Fallback: build short 3-5 word single-line segments on-the-fly from transcriptText
-    if (transcriptText && transcriptText.trim() && !isTitleFallbackText(transcriptText)) {
-      return buildSegmentsFromTranscript(transcriptText, duration);
+    if (!fullText || isTitleFallbackText(fullText)) return [];
+
+    const effectiveDuration = duration && duration > 0 ? duration : 60;
+
+    // If parsed segments already provide granular 2-4 word timed chunks starting near 0.0s, use them
+    if (parsed.length >= 3) {
+      const firstStart = Number(parsed[0].start ?? parsed[0].start_time ?? 0);
+      if (firstStart <= 1.5) {
+        const refined: { start: number; end: number; text: string }[] = [];
+        for (const s of parsed) {
+          const rawText = String(s.text || s.transcript || '').trim();
+          const start = Number(s.start ?? s.start_time ?? 0);
+          const end = Number(s.end ?? s.end_time ?? (start + 4));
+          const segDuration = Math.max(1.2, end - start);
+
+          if (!rawText || isTitleFallbackText(rawText)) continue;
+
+          const wordCount = rawText.split(/\s+/).length;
+          if (wordCount > 4) {
+            const subChunks = buildSegmentsFromTranscript(rawText, segDuration, start);
+            refined.push(...subChunks);
+          } else {
+            refined.push({ start, end, text: rawText });
+          }
+        }
+        if (refined.length > 0) return refined;
+      }
     }
 
-    return [];
+    // Default & Guaranteed Premium Standard: Start at 0.0s (INSTANTLY), chunk into 3-4 word single-line phrases
+    return buildSegmentsFromTranscript(fullText, effectiveDuration, 0);
   }, [segments, transcriptText, duration]);
 
   if (validSegments.length === 0) return null;

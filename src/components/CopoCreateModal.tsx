@@ -28,6 +28,7 @@ import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
+import { buildSegmentsFromTranscript } from "./SubtitleOverlay";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -748,31 +749,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
           recognition.onresult = (event: any) => {
             let fullText = "";
-            const currentSegments: { start: number; end: number; text: string }[] = [];
-
             for (let i = 0; i < event.results.length; i++) {
               const res = event.results[i];
               const transcriptPiece = res[0]?.transcript?.trim();
               if (transcriptPiece) {
                 fullText += (fullText ? " " : "") + transcriptPiece;
-                
-                // Estimate segment timing based on elapsed recording time
-                const elapsedSec = Math.max(0, (Date.now() - recStartTime) / 1000);
-                const approxStart = Math.max(0, Math.round((elapsedSec - 3) * 10) / 10);
-                const approxEnd = Math.max(approxStart + 1.5, Math.round(elapsedSec * 10) / 10);
-
-                currentSegments.push({
-                  start: approxStart,
-                  end: approxEnd,
-                  text: transcriptPiece
-                });
               }
             }
 
             if (fullText) {
               setLiveTranscript(fullText);
-              if (currentSegments.length > 0) {
-                setLiveSegments(currentSegments);
+              const elapsedTotalSec = Math.max(5, (Date.now() - recStartTime) / 1000);
+              const builtSegments = buildSegmentsFromTranscript(fullText, elapsedTotalSec, 0);
+              if (builtSegments.length > 0) {
+                setLiveSegments(builtSegments);
               }
             }
           };
