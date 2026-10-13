@@ -902,7 +902,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     let finalTranscript = liveTranscript || "";
     let finalSegments = liveSegments || [];
 
-    if ((!finalTranscript || finalTranscript.trim() === "") && recordedVideoBlob) {
+    // If no segments exist or transcript is missing, run server transcription on the recorded video blob
+    if ((!finalTranscript || finalTranscript.trim() === "" || !finalSegments || finalSegments.length === 0) && recordedVideoBlob) {
       setPublishingStage("Generating verbatim subtitles...");
       try {
         const base64Data = await new Promise<string>((resolve) => {
@@ -922,17 +923,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.success && data.transcript) {
-              finalTranscript = data.transcript;
-              if (data.segments) finalSegments = data.segments;
-              setLiveTranscript(data.transcript);
-              if (data.segments) setLiveSegments(data.segments);
+            if (data.success) {
+              if (data.transcript) {
+                finalTranscript = data.transcript;
+                setLiveTranscript(data.transcript);
+              }
+              if (data.segments && data.segments.length > 0) {
+                finalSegments = data.segments;
+                setLiveSegments(data.segments);
+              }
             }
           }
         }
       } catch (err) {
         console.warn("Synchronous publish transcription notice:", err);
       }
+    }
+
+    // Fallback: If segments are still empty, build character-weighted timed segments from finalTranscript
+    if ((!finalSegments || finalSegments.length === 0) && finalTranscript) {
+      const effDuration = recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15);
+      finalSegments = buildSegmentsFromTranscript(finalTranscript, effDuration);
     }
 
     const fallbackReview: VideoReview = {

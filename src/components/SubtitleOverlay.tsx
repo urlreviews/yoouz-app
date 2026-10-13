@@ -45,7 +45,7 @@ export const buildSegmentsFromTranscript = (text: string, totalDuration: number 
     const segStart = Math.round((startOffset + chunkStartIdx * secondsPerWord) * 100) / 100;
     const segEnd = Math.round((startOffset + currentWordIdx * secondsPerWord) * 100) / 100;
 
-    // Acoustic character-length weighting (longer words like "recommend" get proportionate spoken duration vs short words like "in")
+    // Acoustic character-length weighting (longer words get proportionate spoken duration vs short words)
     const totalChunkChars = chunkWords.reduce((sum, w) => sum + Math.max(1, w.length), 0) || 1;
     let accumSec = segStart;
     const wordTimings = chunkWords.map((w) => {
@@ -74,8 +74,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   duration = 15,
   isActive
 }) => {
-  if (!isActive) return null;
-
+  // CRITICAL: ALL Hooks MUST execute unconditionally in every render cycle. NO early returns before Hooks!
   const validSegments = useMemo(() => {
     let parsed: any[] = [];
     if (Array.isArray(segments)) {
@@ -140,25 +139,31 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       if (refined.length > 0) return refined;
     }
 
-    // Require explicit acoustic segment timestamps (no guessing/estimating when timestamps are absent)
+    // Priority 2: Build timed segments from fullText if no explicit segment timestamps exist
+    if (fullText) {
+      return buildSegmentsFromTranscript(fullText, effectiveDuration);
+    }
+
     return [];
   }, [segments, transcriptText, duration]);
 
-  if (validSegments.length === 0) return null;
+  const activeSegment = useMemo(() => {
+    if (!validSegments || validSegments.length === 0) return null;
+    return validSegments.find(
+      s => currentTime >= (s.start - 0.05) && currentTime <= s.end
+    ) || null;
+  }, [validSegments, currentTime]);
 
-  const activeSegment = validSegments.find(
-    s => currentTime >= (s.start - 0.05) && currentTime <= s.end
-  );
-
-  if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) {
-    return null;
-  }
-
-  const words = useMemo(() => activeSegment.text.split(/\s+/).filter(Boolean), [activeSegment.text]);
+  const words = useMemo(() => {
+    if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return [];
+    return activeSegment.text.split(/\s+/).filter(Boolean);
+  }, [activeSegment]);
 
   // Compute exact active word index using word-level timestamps or character-weighted acoustic duration
   const activeWordIdx = useMemo(() => {
-    if (words.length <= 1) return 0;
+    if (!words || words.length === 0) return 0;
+    if (words.length === 1) return 0;
+    if (!activeSegment) return 0;
 
     // 1. If explicit word-level timestamps exist on activeSegment.words
     if (Array.isArray(activeSegment.words) && activeSegment.words.length === words.length) {
@@ -192,6 +197,10 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return words.length - 1;
   }, [activeSegment, currentTime, words]);
 
+  // Early returns strictly AFTER ALL HOOKS have run!
+  if (!isActive) return null;
+  if (!activeSegment || words.length === 0) return null;
+
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
       <div className="max-w-[85%] sm:max-w-[78%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
@@ -219,4 +228,3 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     </div>
   );
 };
-
