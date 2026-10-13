@@ -512,10 +512,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           { src: `${origin}/favicon.png`, sizes: "64x64", type: "image/png" }
         ];
 
-        if (video.thumbnailUrl) {
+        if (video.thumbnailUrl && !video.thumbnailUrl.startsWith("data:") && !video.thumbnailUrl.endsWith(".svg")) {
           const fullThumb = video.thumbnailUrl.startsWith("http")
             ? video.thumbnailUrl
-            : `${origin}${video.thumbnailUrl}`;
+            : `${origin}${video.thumbnailUrl.startsWith("/") ? "" : "/"}${video.thumbnailUrl}`;
           artworks.unshift({ src: fullThumb, sizes: "512x512", type: "image/jpeg" });
         }
 

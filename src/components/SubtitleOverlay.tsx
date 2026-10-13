@@ -131,13 +131,35 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return null;
   }
 
+  const words = useMemo(() => activeSegment.text.split(/\s+/).filter(Boolean), [activeSegment.text]);
+  const segStart = activeSegment.start - 0.05;
+  const segEnd = activeSegment.end;
+  const segDuration = Math.max(0.1, segEnd - segStart);
+  const progressRatio = Math.max(0, Math.min(0.99, (currentTime - segStart) / segDuration));
+  const activeWordIdx = Math.min(words.length - 1, Math.floor(progressRatio * words.length));
+
   return (
     <div className="absolute bottom-[165px] sm:bottom-[180px] md:bottom-[195px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[78%] sm:max-w-[72%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
-        <div className="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-[0_6px_24px_rgba(0,0,0,0.85)] text-center">
-          <p className="text-white text-[12px] sm:text-[14px] font-bold leading-tight tracking-normal text-center drop-shadow-md truncate">
-            {activeSegment.text}
-          </p>
+      <div className="max-w-[85%] sm:max-w-[78%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
+        <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.85)] text-center flex items-center justify-center gap-1.5 flex-wrap">
+          {words.map((word, wIdx) => {
+            const isHighlighted = wIdx === activeWordIdx;
+            const isPast = wIdx < activeWordIdx;
+            return (
+              <span
+                key={`${word}-${wIdx}`}
+                className={`transition-all duration-100 leading-tight inline-block ${
+                  isHighlighted
+                    ? "text-[#ffcc00] font-black scale-105 drop-shadow-[0_0_12px_rgba(255,204,0,0.85)]"
+                    : isPast
+                    ? "text-white font-bold opacity-90"
+                    : "text-white/70 font-semibold"
+                } text-[13px] sm:text-[15px]`}
+              >
+                {word}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>

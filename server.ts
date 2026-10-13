@@ -21577,10 +21577,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return res.json(result);
   });
 
-  // Local Transcription Engine (Faster-Whisper local service)
+  // 100% Zero-Cost Local Transcription Engine (Faster-Whisper on localhost:8000)
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
-      // 1. Try local Python Faster-Whisper service on port 8000 if active
+      // Try local Python Faster-Whisper service on port 8000 (100% local, zero external API costs)
       const healthCheck = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(800) }).catch(() => null);
       if (healthCheck && healthCheck.ok) {
         const formData = new FormData();
@@ -21607,6 +21607,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       console.warn("[Transcription] Local Faster-Whisper service notice:", err);
     }
 
+    // 100% zero external paid API calls per project architecture policy
     return { transcript: "", segments: [], vtt_content: "" };
   }
 

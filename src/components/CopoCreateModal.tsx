@@ -898,6 +898,42 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userEmail: currentUser?.email
     }, currentUser);
 
+    let finalTranscript = liveTranscript || "";
+    let finalSegments = liveSegments || [];
+
+    if ((!finalTranscript || finalTranscript.trim() === "") && recordedVideoBlob) {
+      setPublishingStage("Generating verbatim subtitles...");
+      try {
+        const base64Data = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string)?.split(",")[1] || "");
+          reader.readAsDataURL(recordedVideoBlob);
+        });
+        if (base64Data) {
+          const res = await fetch("/api/videos/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              videoData: base64Data,
+              mimeType: recordedVideoBlob.type || "video/webm",
+              filename: `recording_${Date.now()}.webm`
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.transcript) {
+              finalTranscript = data.transcript;
+              if (data.segments) finalSegments = data.segments;
+              setLiveTranscript(data.transcript);
+              if (data.segments) setLiveSegments(data.segments);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Synchronous publish transcription notice:", err);
+      }
+    }
+
     const fallbackReview: VideoReview = {
       id: reviewId,
       userId: currentUser?.email || "guest@yoouz.com",
@@ -929,11 +965,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       rating: rating || 5,
       durationSeconds: recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15),
       videoUrl: defaultStreamUrl,
-      fallbackVideoUrls: [defaultStreamUrl],
+      fallbackVideoUrls: recordedVideoUrl ? [recordedVideoUrl, defaultStreamUrl] : [defaultStreamUrl],
       thumbnailUrl: safeThumbnail,
       caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
-      transcriptText: liveTranscript || "",
-      segments: liveSegments || [],
+      transcriptText: finalTranscript,
+      segments: finalSegments,
       dishOrItem: cleanPlaceName,
       businessName: cleanPlaceName,
       likes: 0,
