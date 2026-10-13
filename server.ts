@@ -21465,26 +21465,56 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   // Reusable background transcription logic
   async function ensureTranscriptionForVideo(videoId: string) {
     try {
-      const [record] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
-      if (!record) return { error: "Video not found" };
-      
-      const video = record.data as VideoReview;
-      if (video.segments && video.segments.length > 0) {
-        return { success: true, alreadyExists: true, segments: video.segments };
+      let video: any = null;
+
+      // 1. Check local JSON index
+      try {
+        const list = readReviewsIndex();
+        const found = list.find((v: any) => v && String(v.id) === String(videoId));
+        if (found) video = found;
+      } catch (e) {}
+
+      // 2. Check memory feed cache
+      if (!video) {
+        try {
+          const found = feedCache.videos.find((v: any) => v && String(v.id) === String(videoId));
+          if (found) video = found;
+        } catch (e) {}
       }
 
-      const videoUrl = video.videoUrl;
-      if (!videoUrl) return { error: "No video URL" };
+      // 3. Check PostgreSQL database
+      if (!video) {
+        try {
+          const [record] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
+          if (record && record.data) {
+            video = record.data;
+          }
+        } catch (e) {}
+      }
 
-      console.log(`[Transcription] Processing video: ${videoId}`);
+      if (!video) return { error: "Video not found" };
+
+      if (video.segments && video.segments.length > 0 && video.transcriptText) {
+        return { success: true, alreadyExists: true, segments: video.segments, transcriptText: video.transcriptText };
+      }
+
+      const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+      const rawVideoUrl = video.videoUrl || video.url || video.src || (video.id ? `/api/videos/stream/${video.id}` : `${pullZoneDomain}/sample-review.mp4`);
+      if (!rawVideoUrl) return { error: "No video URL" };
+
+      console.log(`[Transcription] Processing video: ${videoId} from URL: ${rawVideoUrl}`);
       
-      const fetchResp = await fetch(videoUrl);
-      if (!fetchResp.ok) throw new Error(`Failed to fetch video: ${fetchResp.statusText}`);
+      let fetchUrl = rawVideoUrl;
+      if (fetchUrl.startsWith("/")) {
+        const serverPort = process.env.PORT || 3000;
+        fetchUrl = `http://127.0.0.1:${serverPort}${fetchUrl}`;
+      }
+
+      const fetchResp = await fetch(fetchUrl);
+      if (!fetchResp.ok) throw new Error(`Failed to fetch video stream: ${fetchResp.status} ${fetchResp.statusText}`);
       const arrayBuf = await fetchResp.arrayBuffer();
       const vBuffer = Buffer.from(arrayBuf);
-      const b64 = vBuffer.toString('base64');
 
-      // Gemini transcription removed
       const localResult = await transcribeVideoLocally(vBuffer, `${videoId}.webm`);
       const transcriptText = localResult.transcript || "";
       const segments = localResult.segments || [];
@@ -21494,7 +21524,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       // 1. Sync to local JSON index
       try {
         const list = readReviewsIndex();
-        const idx = list.findIndex(v => v.id === videoId);
+        const idx = list.findIndex((v: any) => v && String(v.id) === String(videoId));
         if (idx !== -1) {
           list[idx] = { ...list[idx], transcriptText, segments };
           writeReviewsIndex(list);
@@ -21503,14 +21533,16 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       // 2. Sync to memory feed cache
       try {
-        const cIdx = feedCache.videos.findIndex(v => v.id === videoId);
+        const cIdx = feedCache.videos.findIndex((v: any) => v && String(v.id) === String(videoId));
         if (cIdx !== -1) {
           feedCache.videos[cIdx] = { ...feedCache.videos[cIdx], transcriptText, segments };
         }
       } catch (e) {}
 
-      // 3. Mirror to PostgreSQL
-      await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
+      // 3. Mirror to PostgreSQL if present
+      try {
+        await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
+      } catch (e) {}
 
       // 4. Real-time broadcast to active players
       try {

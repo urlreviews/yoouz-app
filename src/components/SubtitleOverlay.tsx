@@ -8,20 +8,31 @@ interface SubtitleOverlayProps {
   isActive: boolean;
 }
 
+// Helper to filter out video review title fallbacks so post titles never appear as subtitles
+const isTitleFallbackText = (text: string): boolean => {
+  if (!text) return true;
+  const lower = text.trim().toLowerCase();
+  return (
+    lower.startsWith('video review for') ||
+    lower.startsWith('review for') ||
+    lower.startsWith('video review of') ||
+    lower === 'video review'
+  );
+};
+
 // Helper to build timed segments from plain text transcript if explicit segments are missing
 export const buildSegmentsFromTranscript = (text: string, totalDuration: number = 60) => {
-  if (!text || !text.trim()) return [];
+  if (!text || !text.trim() || isTitleFallbackText(text)) return [];
 
   // Clean and split text by sentence/clause boundaries (. ! ? \n or commas)
   const sentences = text
     .trim()
     .split(/(?<=[.!?\n])\s+/)
     .map(s => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(s => !isTitleFallbackText(s));
 
-  if (sentences.length === 0) {
-    return [{ start: 0, end: Math.max(totalDuration, 10), text: text.trim() }];
-  }
+  if (sentences.length === 0) return [];
 
   // Calculate total words to assign duration proportionally
   const totalWords = sentences.reduce((sum, s) => sum + s.split(/\s+/).length, 0);
@@ -65,15 +76,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     if (parsed.length > 0) {
-      return parsed.map(s => ({
-        start: Number(s.start ?? s.start_time ?? 0),
-        end: Number(s.end ?? s.end_time ?? 9999),
-        text: String(s.text || s.transcript || '').trim()
-      })).filter(s => s.text);
+      return parsed
+        .map(s => ({
+          start: Number(s.start ?? s.start_time ?? 0),
+          end: Number(s.end ?? s.end_time ?? 9999),
+          text: String(s.text || s.transcript || '').trim()
+        }))
+        .filter(s => s.text && !isTitleFallbackText(s.text));
     }
 
     // Fallback: build segments on-the-fly from transcriptText
-    if (transcriptText && transcriptText.trim()) {
+    if (transcriptText && transcriptText.trim() && !isTitleFallbackText(transcriptText)) {
       return buildSegmentsFromTranscript(transcriptText, duration);
     }
 
@@ -86,13 +99,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     s => currentTime >= s.start && currentTime <= s.end
   );
 
-  if (!activeSegment || !activeSegment.text) return null;
+  if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) {
+    return null;
+  }
 
   return (
-    <div className="absolute bottom-[28%] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[92%] animate-in fade-in zoom-in-90 slide-in-from-bottom-2 duration-200">
-        <div className="bg-black/75 backdrop-blur-md px-5 py-2.5 rounded-[22px] border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.7)] text-center">
-          <p className="text-white text-[16px] sm:text-[18px] md:text-[20px] font-black leading-[1.25] tracking-tight [text-shadow:_0_2px_10px_rgb(0_0_0_/_90%)] uppercase italic">
+    <div className="absolute bottom-[115px] sm:bottom-[130px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
+      <div className="max-w-[85%] sm:max-w-[78%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
+        <div className="bg-black/65 backdrop-blur-md px-4 py-2 rounded-full border border-white/15 shadow-[0_4px_20px_rgba(0,0,0,0.6)] text-center">
+          <p className="text-white text-[13px] sm:text-[15px] font-semibold leading-tight tracking-normal text-center drop-shadow-md">
             {activeSegment.text}
           </p>
         </div>
@@ -100,3 +115,4 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     </div>
   );
 };
+

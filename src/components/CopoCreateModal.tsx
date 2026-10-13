@@ -702,6 +702,36 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         extractThumbnailFromVideo(blob).then((thumb) => {
           if (thumb) setVideoThumbnail(thumb);
         });
+
+        // Auto-transcribe recorded video in background during preview step
+        (async () => {
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+              const base64Data = (reader.result as string)?.split(",")[1];
+              if (!base64Data) return;
+              const res = await fetch("/api/videos/transcribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  videoData: base64Data,
+                  mimeType: blob.type || "video/webm",
+                  filename: `recording_${Date.now()}.webm`
+                })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.transcript) {
+                  setLiveTranscript(data.transcript);
+                  if (data.segments) setLiveSegments(data.segments);
+                }
+              }
+            };
+          } catch (err) {
+            console.warn("Auto preview transcription notice:", err);
+          }
+        })();
       };
 
       // Open WebSocket for real-time transcription (Raw PCM)
@@ -917,6 +947,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       fallbackVideoUrls: [defaultStreamUrl],
       thumbnailUrl: safeThumbnail,
       caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
+      transcriptText: liveTranscript || "",
+      segments: liveSegments || [],
       dishOrItem: cleanPlaceName,
       businessName: cleanPlaceName,
       likes: 0,
