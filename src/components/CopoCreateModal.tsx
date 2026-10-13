@@ -594,7 +594,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   // 3-2-1 Countdown Trigger & Shutter Record Start (Desktop & Mobile)
-  const handleStartRecordingInstant = (e?: React.SyntheticEvent) => {
+  const handleStartRecordingInstant = async (e?: React.SyntheticEvent) => {
     if (e) {
       try {
         e.preventDefault();
@@ -621,6 +621,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     // Clear any previous transient warning
     setErrorMessage(null);
+
+    // Verify transcription service health before starting
+    try {
+      const health = await fetch("http://localhost:8000/health", { signal: AbortSignal.timeout(1000) });
+      if (!health.ok) throw new Error("Service down");
+    } catch (e) {
+      console.warn("Transcription service unreachable, subtitles may not be generated.");
+      setErrorMessage("Transcription service is not running. Subtitles will not be generated.");
+    }
 
     // If camera hasn't spun up yet, kick it off immediately
     if (!activeStreamRef.current && (!videoRef.current || !videoRef.current.srcObject)) {

@@ -201,8 +201,9 @@ async def websocket_endpoint(websocket: WebSocket):
             logger.info(f"Final transcription sent: {len(final_segments)} segments")
         except Exception as e:
             logger.error(f"Final transcription error: {str(e)}")
-    finally:
-        pass
+        finally:
+            pass
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))

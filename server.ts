@@ -13,7 +13,7 @@ async function fetchBase64(url: string): Promise<string> {
 import express from "express";
 import opentype from "opentype.js";
 import crypto from "crypto";
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
 import path from "path";
@@ -32739,6 +32739,22 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
+  // Start transcription service
+  console.log("Attempting to start transcription service...");
+  try {
+    const servicePath = fs.existsSync("/app/applet/transcription_service.py")
+      ? "/app/applet/transcription_service.py"
+      : path.join(_dirname, "applet/transcription_service.py");
+    const transcriptionProcess = spawn("python3", [servicePath], {
+      detached: true,
+      stdio: 'inherit'
+    });
+    transcriptionProcess.unref();
+    console.log("Transcription service spawned at:", servicePath);
+  } catch (err) {
+    console.error("Failed to start transcription service:", err);
+  }
+
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
   });
