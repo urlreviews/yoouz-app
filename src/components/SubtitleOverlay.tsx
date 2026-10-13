@@ -166,42 +166,67 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return activeSegment.text.split(/\s+/).filter(Boolean);
   }, [activeSegment]);
 
-  // Compute exact active word index using word-level timestamps or character-weighted acoustic duration
+  // Compute exact active word index using strict audio timestamp boundaries
   const activeWordIdx = useMemo(() => {
-    if (!words || words.length === 0) return 0;
-    if (words.length === 1) return 0;
-    if (!activeSegment) return 0;
+    if (!words || words.length === 0 || !activeSegment) return -1;
 
-    // 1. If explicit word-level timestamps exist on activeSegment.words
+    // 1. Precise Word-Level Timestamps from Faster-Whisper or Acoustic Generator
     if (Array.isArray(activeSegment.words) && activeSegment.words.length === words.length) {
-      const leadTime = currentTime + 0.08; // 80ms audio buffer lead
-      const foundIdx = activeSegment.words.findIndex((wObj: any) => leadTime >= wObj.start && leadTime <= wObj.end);
-      if (foundIdx !== -1) return foundIdx;
-      for (let i = 0; i < activeSegment.words.length; i++) {
-        if (leadTime < activeSegment.words[i].start) return Math.max(0, i - 1);
+      const t = currentTime;
+      const wordList = activeSegment.words;
+
+      // Before speaker says the very first word of this phrase
+      if (t < wordList[0].start) {
+        return -1; // Unhighlighted until speaker hits word 0 start
       }
-      return words.length - 1;
+
+      // Find the exact word currently being spoken or stay parked on the most recent spoken word during pauses
+      let candidate = -1;
+      for (let i = 0; i < wordList.length; i++) {
+        const w = wordList[i];
+        if (t >= w.start) {
+          candidate = i;
+        } else {
+          // t < w.start: Speaker has NOT reached word i yet! Break loop immediately so we NEVER advance ahead.
+          break;
+        }
+      }
+
+      return candidate;
     }
 
-    // 2. Character-length acoustic weighting (accounting for long vs short words)
+    // 2. Derive strict word boundary timestamps for segment without stretching over silent pauses
     const segStart = activeSegment.start;
     const segEnd = activeSegment.end;
     const segDuration = Math.max(0.1, segEnd - segStart);
-    const elapsed = Math.max(0, (currentTime + 0.08) - segStart);
 
+    // If currentTime is before segStart
+    if (currentTime < segStart) return -1;
+
+    // Estimate spoken portion duration (approx 0.35s per word max, capped at actual segDuration)
     const totalChars = words.reduce((acc, w) => acc + Math.max(1, w.length), 0);
+    const estimatedSpokenDuration = Math.min(segDuration, Math.max(1.0, words.length * 0.35));
+
+    const elapsed = currentTime - segStart;
+    
     let cumulativeChars = 0;
+    let candidate = -1;
 
     for (let i = 0; i < words.length; i++) {
-      cumulativeChars += Math.max(1, words[i].length);
-      const thresholdRatio = cumulativeChars / totalChars;
-      const thresholdTime = thresholdRatio * segDuration;
-      if (elapsed <= thresholdTime) {
-        return i;
+      const wLen = Math.max(1, words[i].length);
+      const wordStartRatio = cumulativeChars / totalChars;
+      const wordStartTime = wordStartRatio * estimatedSpokenDuration;
+      cumulativeChars += wLen;
+
+      if (elapsed >= wordStartTime) {
+        candidate = i;
+      } else {
+        // elapsed < wordStartTime: Has not reached word i yet! Stay on candidate and do NOT advance!
+        break;
       }
     }
 
-    return words.length - 1;
+    return candidate;
   }, [activeSegment, currentTime, words]);
 
   // Early returns strictly AFTER ALL HOOKS have run!
