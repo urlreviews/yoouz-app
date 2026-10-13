@@ -31441,6 +31441,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     const urlObj = new URL(fullUrl);
     const params = urlObj.searchParams;
     const pathname = urlObj.pathname;
+    const langPrefixMatch = pathname.match(/^\/([a-zA-Z]{2,3}(?:-[a-zA-Z]{2,4})?)(?:\/|$)/);
+    const cleanPathname = langPrefixMatch ? (pathname.replace(/^\/[a-zA-Z]{2,3}(?:-[a-zA-Z]{2,4})?/, '') || '/') : pathname;
     
     const publicBase = baseUrl;
     let title = "Yoouz - Authentic 60-Second Video Reviews";
@@ -31455,17 +31457,17 @@ function injectOpenGraphTags(html: string, meta: any) {
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
     let robots = "";
     let canonicalVideoUrl = "";
-    if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin/")) {
+    if (cleanPathname === "/yoouzadmin" || cleanPathname.startsWith("/yoouzadmin/")) {
       robots = "noindex, nofollow";
     }
 
-    const revInPath = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
+    const revInPath = cleanPathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
     let detectedVideoId = null;
     let placeDomainFromReviewPath: string | null = null;
     if (revInPath) {
       detectedVideoId = revInPath[1];
-    } else if (pathname.startsWith('/review/')) {
-      const parts = pathname.split('/').filter(Boolean);
+    } else if (cleanPathname.startsWith('/review/')) {
+      const parts = cleanPathname.split('/').filter(Boolean);
       if (parts.length >= 3) {
         detectedVideoId = parts[2];
         placeDomainFromReviewPath = parts[1];
@@ -31505,8 +31507,8 @@ function injectOpenGraphTags(html: string, meta: any) {
           }
         }
       }
-    } else if (pathname.includes('/video/') || pathname.includes('/v/')) {
-      const parts = pathname.split('/').filter(Boolean);
+    } else if (cleanPathname.includes('/video/') || cleanPathname.includes('/v/')) {
+      const parts = cleanPathname.split('/').filter(Boolean);
       if (parts.length >= 2) {
         detectedVideoId = parts[parts.length - 1];
       }
@@ -31538,12 +31540,12 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     const rawVideoId = params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r');
     const videoId = detectedVideoId || (rawVideoId && (rawVideoId.startsWith('rev-') || rawVideoId.length > 3) ? rawVideoId : null);
-    const placeIdMatch = pathname.match(/\/reviews\/([a-zA-Z0-9_\-\.]+)/) || pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
-    const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
-                         pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
-                         pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) ||
-                         pathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
-    let placeId = (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") ? "sample" : (placeIdMatch ? placeIdMatch[1] : (placeDomainFromReviewPath && !videoId ? placeDomainFromReviewPath : (params.get('place') && !videoId ? params.get('place') : null)));
+    const placeIdMatch = cleanPathname.match(/\/reviews\/([a-zA-Z0-9_\-\.]+)/) || cleanPathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
+    const creatorMatch = cleanPathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || 
+                         cleanPathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || 
+                         cleanPathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) ||
+                         cleanPathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
+    let placeId = (cleanPathname === "/sample" || cleanPathname === "/sample/" || cleanPathname === "/reviews/sample" || cleanPathname === "/reviews/sample/" || cleanPathname === "/place/sample" || cleanPathname === "/place/sample/") ? "sample" : (placeIdMatch ? placeIdMatch[1] : (placeDomainFromReviewPath && !videoId ? placeDomainFromReviewPath : (params.get('place') && !videoId ? params.get('place') : null)));
     if (placeId && placeId.startsWith('www-')) {
       placeId = placeId.replace(/^www-/, '');
     }
@@ -32059,7 +32061,7 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
           ]
         };
-    } else if (pathname === '/business' || pathname.startsWith('/business') || pathname === '/claim') {
+    } else if (cleanPathname === '/business' || cleanPathname.startsWith('/business') || cleanPathname === '/claim') {
         title = "Yoouz for Business | Verified Merchant Portal & Video Reviews";
         description = "Claim and verify your official business profile on Yoouz. Showcase authentic 60-second customer video reviews, embed trust widgets, and eliminate fake text reviews.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz for Business")}&subtitle=${encodeURIComponent("Verified Merchant Portal & Video Reviews")}&path=${encodeURIComponent("yoouz.com/business")}&v=25`;
@@ -32081,43 +32083,47 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
           ]
         };
-    } else if (pathname === '/search' || pathname.startsWith('/search')) {
+    } else if (cleanPathname === '/search' || cleanPathname.startsWith('/search')) {
         const queryTerm = params.get('q') || params.get('query') || '';
         title = queryTerm ? `Search Video Reviews for "${queryTerm}" | Yoouz` : "Search Video Reviews | Yoouz";
         description = queryTerm 
           ? `Discover authentic 60-second customer video reviews for "${queryTerm}" on Yoouz.`
           : "Search thousands of authentic 60-second video reviews recorded live by real customers for local businesses and places.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(queryTerm ? `Search: ${queryTerm}` : "Search Video Reviews")}&subtitle=${encodeURIComponent("Explore Authentic 60s Testimonials")}&path=${encodeURIComponent("yoouz.com/search")}&v=25`;
-    } else if (pathname === '/following' || pathname.startsWith('/following')) {
+    } else if (cleanPathname === '/following' || cleanPathname.startsWith('/following')) {
         title = "Following & Community Feed | Yoouz";
         description = "Stay up to date with genuine video reviews from reviewers and creators you follow on Yoouz.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Following Feed")}&subtitle=${encodeURIComponent("Live Video Updates from Creators You Follow")}&path=${encodeURIComponent("yoouz.com/following")}&v=25`;
-    } else if (pathname === '/messages' || pathname.startsWith('/messages') || pathname.startsWith('/chat')) {
+    } else if (cleanPathname === '/messages' || cleanPathname.startsWith('/messages') || cleanPathname.startsWith('/chat')) {
         title = "Messages & Direct Chat | Yoouz";
         description = "Connect directly with video reviewers, local business owners, and community members on Yoouz.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Direct Messages")}&subtitle=${encodeURIComponent("Connect with Reviewers & Merchants")}&path=${encodeURIComponent("yoouz.com/messages")}&v=25`;
-    } else if (pathname === '/map' || pathname.startsWith('/map')) {
+    } else if (cleanPathname === '/map' || cleanPathname.startsWith('/map')) {
         title = "Interactive Video Review Map | Yoouz";
         description = "Explore real 60-second video reviews near you on the interactive Yoouz map.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Video Review Map")}&subtitle=${encodeURIComponent("Discover Nearby Verified Video Reviews")}&path=${encodeURIComponent("yoouz.com/map")}&v=25`;
-    } else if (pathname === '/notifications' || pathname.startsWith('/notifications')) {
+    } else if (cleanPathname === '/notifications' || cleanPathname.startsWith('/notifications')) {
         title = "Notifications & Activity | Yoouz";
         description = "Check your latest video review reactions, comments, followers, and business updates on Yoouz.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Notifications")}&subtitle=${encodeURIComponent("Reactions, Comments & Verified Updates")}&path=${encodeURIComponent("yoouz.com/notifications")}&v=25`;
-    } else if (pathname === '/bookmarks' || pathname.startsWith('/bookmarks') || pathname.startsWith('/saved')) {
+    } else if (cleanPathname === '/bookmarks' || cleanPathname.startsWith('/bookmarks') || cleanPathname.startsWith('/saved')) {
         title = "Saved Video Reviews & Bookmarks | Yoouz";
         description = "View your saved 60-second video reviews and bookmarked local places on Yoouz.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=25`;
-    } else if (pathname === '/privacy' || pathname === '/terms' || pathname === '/faq' || pathname === '/community-guidelines') {
-        const pageName = pathname.replace('/', '').replace(/[-_]/g, ' ').toUpperCase();
+    } else if (cleanPathname === '/more' || cleanPathname.startsWith('/more') || cleanPathname === '/about' || cleanPathname === '/settings') {
+        title = "Settings & Community | Yoouz";
+        description = "Discover Yoouz platform settings, Knowledge Center FAQs, community guidelines, and language options.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Settings & Community")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/more")}&v=25`;
+    } else if (cleanPathname === '/privacy' || cleanPathname === '/terms' || cleanPathname === '/faq' || cleanPathname === '/community-guidelines') {
+        const pageName = cleanPathname.replace('/', '').replace(/[-_]/g, ' ').toUpperCase();
         title = `${pageName} | Yoouz`;
         description = `Official ${pageName} information for Yoouz - Authentic 60-Second Video Reviews.`;
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(pageName)}&subtitle=${encodeURIComponent("Official Policy & Information")}&path=${encodeURIComponent("yoouz.com" + pathname)}&v=25`;
-    } else if (pathname !== '/' && !detectedVideoId && !placeId && !creatorHandle) {
-        const sectionTitle = pathname.replace('/', '').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(pageName)}&subtitle=${encodeURIComponent("Official Policy & Information")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=25`;
+    } else if (cleanPathname !== '/' && !detectedVideoId && !placeId && !creatorHandle) {
+        const sectionTitle = cleanPathname.replace('/', '').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         title = `${sectionTitle} | Yoouz`;
         description = `Explore ${sectionTitle} on Yoouz - Authentic 60-Second Video Reviews.`;
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(sectionTitle)}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com" + pathname)}&v=25`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(sectionTitle)}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=25`;
     }
 
     if (!structuredData) {

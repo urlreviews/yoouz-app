@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
+import { buildLocalizedPath } from "../i18n/urlLocalization";
 import {
   Play,
   Pause,
@@ -153,7 +154,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onOpenOwnerReply,
   onCloseEmbed
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [computedCommentsCount, setComputedCommentsCount] = useState<number>(Number(video.commentsCount || 0));
 
@@ -1025,12 +1026,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     window.location.href = document.referrer;
                   } else {
                     try {
-                      window.history.replaceState(null, "", "/");
+                      window.history.replaceState(null, "", buildLocalizedPath("/", language));
                     } catch (err) {}
                     if (window.history && window.history.length > 1) {
                       window.history.back();
                     } else {
-                      window.location.href = "/";
+                      window.location.href = buildLocalizedPath("/", language);
                     }
                   }
                 }

@@ -45,21 +45,30 @@ export function parseLocaleFromPath(pathname: string): {
 
 /**
  * Builds a localized path keeping or adding the language prefix.
+ * Automatically cleans any existing locale prefix before prepending the new target locale.
  * If locale is "en", returns the clean path (e.g. "/search").
- * If locale is non-English (e.g. "fr", "nl"), returns "/fr/search", "/nl/search".
+ * If locale is non-English (e.g. "fr", "nl", "lv"), returns "/fr/search", "/nl/search", "/lv/search".
  */
 export function buildLocalizedPath(
-  pathWithoutLocale: string,
+  path: string,
   locale: SupportedLanguage | string,
   includeEnPrefix: boolean = false
 ): string {
+  if (!path || typeof path !== "string") {
+    return "/";
+  }
+
+  // 1. Strip any existing locale prefix first to avoid duplicate prefixes (e.g. /lv/lv/more)
+  const { pathWithoutLocale } = parseLocaleFromPath(path);
   const normPath = pathWithoutLocale.startsWith("/") ? pathWithoutLocale : "/" + pathWithoutLocale;
   const targetCode = (locale || "en").toLowerCase();
 
+  // 2. English (default canonical): clean un-prefixed URLs like /search, /notifications, /
   if (targetCode === "en" && !includeEnPrefix) {
     return normPath;
   }
 
+  // 3. For all other languages: prefix with /lang
   if (normPath === "/") {
     return `/${targetCode}`;
   }

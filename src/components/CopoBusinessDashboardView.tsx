@@ -114,6 +114,7 @@ import { locationData } from "../utils/locationData";
 import { Country, State, City } from "country-state-city";
 import { countryDialData, getDialCodeByCountry, getCountryDialInfo } from '../utils/countries';
 import { useLanguage } from '../i18n/LanguageContext';
+import { buildLocalizedPath } from '../i18n/urlLocalization';
 import { derivePlaceFromEmailOrDomain } from '../utils/businessDomainUtils';
 import { getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread, getThreadPartnerKey, getThreadPartnerIdentifiers, deleteChatThreadFromBunnyDB } from '../lib/socialSync';
 
@@ -330,7 +331,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         const domainSource = verifiedBusinessSession.domain || verifiedBusinessSession.website || verifiedBusinessSession.placeId || verifiedBusinessSession.businessEmail || verifiedBusinessSession.placeName;
         const slug = getPlaceSlug(domainSource);
         if (slug && slug !== 'portal') {
-          const expectedPath = `/business/${slug}`;
+          const expectedPath = buildLocalizedPath(`/business/${slug}`, language);
           if (window.location.pathname !== expectedPath) {
             window.history.replaceState(null, "", expectedPath);
           }

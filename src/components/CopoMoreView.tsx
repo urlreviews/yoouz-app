@@ -1150,8 +1150,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         if (isBusinessSuiteEmbedded) {
                           if (onBack) onBack();
                           else if (onNavigate) onNavigate("business");
+                        } else if (onNavigate) {
+                          onNavigate("business");
                         } else {
-                          window.open("/business", "_blank", "noopener,noreferrer");
+                          window.location.href = "/business";
                         }
                       }}
                       className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"

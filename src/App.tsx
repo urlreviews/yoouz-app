@@ -496,13 +496,14 @@ export function App() {
       if (pathname === "/messages" || pathname.startsWith("/messages/")) return "messages";
       if (pathname === "/bookmarks" || pathname === "/saved") return "bookmarks";
       if (pathname === "/record_review") return "record_review";
+      if (pathname === "/more" || pathname === "/about" || pathname === "/faq" || pathname === "/settings") return "more";
       if (pathname === "/profile" || pathname === "/me") return "profile";
       if (pathname.startsWith("/profile/") || pathname.startsWith("/@")) return "home"; // Drawer opens on top of home
       
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
       const sectionParam = params.get("section") || (hash.startsWith("#/") && !hash.startsWith("#/reviews/") && !hash.startsWith("#/place/") && !hash.startsWith("#/creator/") && !hash.startsWith("#/video/") ? hash.replace("#/", "") : null);
-      if (sectionParam && ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "business", "search", "record_review", "following"].includes(sectionParam)) {
+      if (sectionParam && ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "business", "search", "record_review", "following", "more"].includes(sectionParam)) {
         return sectionParam as NavSection;
       }
     } catch (e) {}
@@ -896,6 +897,7 @@ export function App() {
           if (pathname === "/messages" || pathname.startsWith("/messages/")) sectionParam = "messages";
           if (pathname === "/bookmarks" || pathname === "/saved") sectionParam = "bookmarks";
           if (pathname === "/record_review") sectionParam = "record_review";
+          if (pathname === "/more" || pathname === "/about" || pathname === "/faq" || pathname === "/settings") sectionParam = "more";
           if (pathname === "/profile" || pathname === "/me") sectionParam = "profile";
         }
 
@@ -919,7 +921,7 @@ export function App() {
                 const placeObj = (places || []).find(p => p.id === parsed.placeId);
                 const slug = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
                 if (slug && slug !== 'portal') {
-                  const expectedPath = `/business/${slug}`;
+                  const expectedPath = buildLocalizedPath(`/business/${slug}`, language);
                   if (window.location.pathname !== expectedPath) {
                     window.history.replaceState(null, "", expectedPath);
                   }
@@ -939,7 +941,7 @@ export function App() {
           
           if (!isRealDom && !inLocalDb && cleanPlaceId !== "sample") {
             console.warn("[App] Blocking navigation to unverified placeholder profile:", cleanPlaceId);
-            window.history.replaceState(null, "", "/");
+            window.history.replaceState(null, "", buildLocalizedPath("/", language));
             setSelectedPlaceIdForDrawer(null);
             return;
           }
@@ -1009,14 +1011,14 @@ export function App() {
               followersCount: 10000,
             });
             try {
-              window.history.replaceState(null, "", `/@yoouz`);
+              window.history.replaceState(null, "", buildLocalizedPath(`/@yoouz`, language));
             } catch (e) {}
           } else if (matchingPlace || rawParam === "legal500" || rawParam === "legal500.com") {
             const targetPlaceId = matchingPlace ? matchingPlace.id : "legal500.com";
             setSelectedPlaceIdForDrawer(targetPlaceId);
             setSelectedAuthorForDrawer(null);
             try {
-              window.history.replaceState(null, "", `/reviews/${getPlaceSlug(targetPlaceId)}`);
+              window.history.replaceState(null, "", buildLocalizedPath(`/reviews/${getPlaceSlug(targetPlaceId)}`, language));
             } catch (e) {}
           } else {
             // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
@@ -1030,7 +1032,7 @@ export function App() {
             if (isDisallowedSlug) {
               setSelectedAuthorForDrawer(null);
               setSelectedPlaceIdForDrawer(null);
-              try { window.history.replaceState(null, "", "/"); } catch (e) {}
+              try { window.history.replaceState(null, "", buildLocalizedPath("/", language)); } catch (e) {}
               return;
             }
 
@@ -1106,7 +1108,7 @@ export function App() {
                       // No authentic creator found; never fabricate mock pages
                       setSelectedAuthorForDrawer(null);
                       setSelectedPlaceIdForDrawer(null);
-                      try { window.history.replaceState(null, "", "/"); } catch (e) {}
+                      try { window.history.replaceState(null, "", buildLocalizedPath("/", language)); } catch (e) {}
                     }
                   }
                 })
@@ -1121,7 +1123,7 @@ export function App() {
           setSelectedAuthorForDrawer(null);
           if (
             sectionParam &&
-            ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "search", "record_review", "following"].includes(sectionParam)
+            ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "search", "record_review", "following", "more"].includes(sectionParam)
           ) {
             setActiveSection(sectionParam as NavSection);
           }
@@ -1752,23 +1754,26 @@ export function App() {
       // Update Document Meta Title for SEO
       document.title = title;
 
+      // Localize path with the active language prefix (e.g. /lv/notifications, /fr/search, /nl/more)
+      const localizedPath = buildLocalizedPath(path, language);
+
       // Update URL if it differs from current pathname (excluding search query string to avoid infinite loops if it exists)
-      if (window.location.pathname !== path) {
+      if (window.location.pathname !== localizedPath) {
         const isCurrentlyVideo = window.location.pathname.startsWith("/v/") || window.location.pathname.includes("/video/");
-        const isGoingToVideo = path.startsWith("/v/") || path.includes("/video/");
+        const isGoingToVideo = localizedPath.startsWith("/v/") || localizedPath.includes("/video/");
         
         if (isCurrentlyVideo && isGoingToVideo) {
           // Use replaceState while scrolling feed to avoid filling up the history stack
-          window.history.replaceState({}, "", path);
+          window.history.replaceState({}, "", localizedPath);
         } else {
           // Use pushState for actual navigation between different types of views (e.g., Profile -> Video)
-          window.history.pushState({}, "", path);
+          window.history.pushState({}, "", localizedPath);
         }
       }
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language]);
 
   // BunnyDB Auth state listener and multi-tab reactive sync
   useEffect(() => {
@@ -4352,7 +4357,7 @@ export function App() {
                 if (canonicalId && canonicalId !== cleanId && canonicalId.includes('.')) {
                   setSelectedPlaceIdForDrawer(canonicalId);
                   try {
-                    const cleanPath = `/reviews/${encodeURIComponent(canonicalId)}`;
+                    const cleanPath = buildLocalizedPath(`/reviews/${encodeURIComponent(canonicalId)}`, language);
                     if (window.location.pathname !== cleanPath) {
                       window.history.replaceState(null, "", cleanPath);
                     }
@@ -4746,7 +4751,7 @@ export function App() {
       return;
     }
     const handle = currentUser.name || currentUser.email?.split("@")[0] || "me";
-    window.history.pushState(null, "", "/@" + handle);
+    window.history.pushState(null, "", buildLocalizedPath("/@" + handle, language));
     handleOpenCreatorDrawer({
       //handle: handle,
       name: currentUser.name || "Reviewer",
@@ -7000,7 +7005,7 @@ export function App() {
             } else {
               // 3. Otherwise replace URL state synchronously to /
               try {
-                window.history.replaceState(null, "", "/");
+                window.history.replaceState(null, "", buildLocalizedPath("/", language));
               } catch (e) {}
             }
           }}
@@ -7202,7 +7207,7 @@ export function App() {
                 } catch(e) {}
                 return '';
               })();
-              window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
+              window.history.pushState(null, "", buildLocalizedPath(bSlug ? `/business/${bSlug}` : "/business", language));
             } else {
               setEmbedTargetId(null);
               setActiveSection(section);
@@ -7372,7 +7377,7 @@ export function App() {
                 if (embedTargetId) {
                   setEmbedTargetId(null);
                   try {
-                    window.history.replaceState(null, "", "/");
+                    window.history.replaceState(null, "", buildLocalizedPath("/", language));
                   } catch (e) {}
                 }
                 setCurrentVideoIndex(0);
@@ -7399,10 +7404,10 @@ export function App() {
               setSelectedPlaceIdForDrawer(null);
               setSelectedAuthorForDrawer(null);
               setActiveSection("admin");
-              window.history.pushState(null, "", "/yoouzadmin");
+              window.history.pushState(null, "", buildLocalizedPath("/yoouzadmin", language));
               return;
             } else if ((activeSection as string) === "admin" && (section as string) !== "admin") {
-              window.history.pushState(null, "", "/");
+              window.history.pushState(null, "", buildLocalizedPath("/", language));
             }
             if ((section as string) === "business") {
               setSelectedPlaceIdForDrawer(null);
@@ -7426,10 +7431,10 @@ export function App() {
                 } catch(e) {}
                 return '';
               })();
-              window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
+              window.history.pushState(null, "", buildLocalizedPath(bSlug ? `/business/${bSlug}` : "/business", language));
               return;
             } else if ((activeSection as string) === "business" && (section as string) !== "business") {
-              window.history.pushState(null, "", "/");
+              window.history.pushState(null, "", buildLocalizedPath("/", language));
               setBusinessClaimTargetPlace(null);
               setBusinessInitialMode('signin');
             }
@@ -7527,7 +7532,7 @@ export function App() {
                         window.location.href = document.referrer;
                       } else {
                         try {
-                          window.history.replaceState(null, "", "/");
+                          window.history.replaceState(null, "", buildLocalizedPath("/", language));
                         } catch (err) {}
                       }
                     }
@@ -7552,7 +7557,7 @@ export function App() {
                         window.location.href = document.referrer;
                       } else {
                         try {
-                          window.history.replaceState(null, "", "/");
+                          window.history.replaceState(null, "", buildLocalizedPath("/", language));
                         } catch (err) {}
                       }
                     }
@@ -7668,7 +7673,7 @@ export function App() {
                 onExit={() => {
                   setActiveSection("home");
                   try {
-                    window.history.pushState(null, "", "/");
+                    window.history.pushState(null, "", buildLocalizedPath("/", language));
                   } catch (e) {}
                 }}
               />
@@ -7762,7 +7767,7 @@ export function App() {
                 }}
                 onExit={() => {
                   setActiveSection("home");
-                  window.history.pushState(null, "", "/");
+                  window.history.pushState(null, "", buildLocalizedPath("/", language));
                 }}
               />
             )}
@@ -7981,7 +7986,7 @@ export function App() {
               <CopoBusinessDashboardView 
                 onNavigate={(sec) => {
                   if (sec === "home") {
-                    window.history.pushState(null, "", "/");
+                    window.history.pushState(null, "", buildLocalizedPath("/", language));
                     setBusinessClaimTargetPlace(null);
                     setBusinessInitialMode('signin');
                   }
@@ -8281,7 +8286,7 @@ export function App() {
               } catch(e) {}
               return '';
             })();
-            window.history.pushState(null, "", bSlug ? `/business/${bSlug}` : "/business");
+            window.history.pushState(null, "", buildLocalizedPath(bSlug ? `/business/${bSlug}` : "/business", language));
             return;
           } else if ((activeSection as string) === "business" && (section as string) !== "business") {
             setBusinessClaimTargetPlace(null);
