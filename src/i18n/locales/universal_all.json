@@ -377,7 +377,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Solicite la desactivación o eliminación permanente de su cuenta y sus datos personales enviando el formulario de Solicitud de eliminación de cuenta en la aplicación en la configuración de su perfil.",
     "You have the right to:": "Tienes derecho a:",
     "Process, host, and display your live-recorded video reviews on the platform.": "Procese, aloje y muestre sus reseñas de videos grabados en vivo en la plataforma.",
-    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Si tiene alguna pregunta sobre esta Política de privacidad o desea ejercer sus derechos de privacidad de datos, puede enviar una consulta o una solicitud de eliminación de cuenta directamente a través del servicio de soporte técnico y la configuración de la cuenta en la aplicación. Todas las solicitudes se envían de forma segura a nuestros responsables de privacidad y se procesan en un plazo de 24 a 48 horas."
+    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Si tiene alguna pregunta sobre esta Política de privacidad o desea ejercer sus derechos de privacidad de datos, puede enviar una consulta o una solicitud de eliminación de cuenta directamente a través del servicio de soporte técnico y la configuración de la cuenta en la aplicación. Todas las solicitudes se envían de forma segura a nuestros responsables de privacidad y se procesan en un plazo de 24 a 48 horas.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "fr": {
     "Review Any Business": "Examiner n'importe quelle entreprise",
@@ -757,7 +762,12 @@
     "Privacy Officer & In-App Inquiries": "Responsable de la confidentialité et demandes de renseignements dans l'application",
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Retirez votre consentement au traitement des données à tout moment via notre système automatisé de demande de conformité intégré à l'application, sans avoir besoin d'envoyer un e-mail.",
     "Legal Compliance:": "Conformité juridique :",
-    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Si vous avez des questions sur cette politique de confidentialité ou souhaitez exercer vos droits en matière de confidentialité des données, vous pouvez soumettre une demande de renseignements ou de suppression de compte directement via le service d'assistance et les paramètres du compte intégrés à l'application. Toutes les demandes sont acheminées en toute sécurité vers nos responsables de la confidentialité et traitées dans les 24 à 48 heures."
+    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Si vous avez des questions sur cette politique de confidentialité ou souhaitez exercer vos droits en matière de confidentialité des données, vous pouvez soumettre une demande de renseignements ou de suppression de compte directement via le service d'assistance et les paramètres du compte intégrés à l'application. Toutes les demandes sont acheminées en toute sécurité vers nos responsables de la confidentialité et traitées dans les 24 à 48 heures.",
+    "Searching...": "Recherche...",
+    "0 reviews": "0 avis",
+    "Back": "Retour",
+    "Clear": "Effacer",
+    "Remove search": "Supprimer la recherche"
   },
   "de": {
     "Review Any Business": "Überprüfen Sie jedes Unternehmen",
@@ -1137,7 +1147,12 @@
     "Authenticate your identity securely via passwordless email verification.": "Authentifizieren Sie Ihre Identität sicher per passwortloser E-Mail-Verifizierung.",
     "Legal Compliance:": "Rechtskonformität:",
     "Data Sharing and Disclosure": "Datenaustausch und Offenlegung",
-    "Service Providers:": "Dienstleister:"
+    "Service Providers:": "Dienstleister:",
+    "Searching...": "Suchen...",
+    "0 reviews": "0 Bewertungen",
+    "Back": "Zurück",
+    "Clear": "Löschen",
+    "Remove search": "Suche entfernen"
   },
   "it": {
     "Review Any Business": "Recensisci qualsiasi attività commerciale",
@@ -1517,7 +1532,12 @@
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Revoca il tuo consenso al trattamento dei dati in qualsiasi momento attraverso il nostro sistema automatizzato di richiesta di conformità in-app senza bisogno di inviare un'e-mail.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Se hai domande sulla presente Informativa sulla privacy o desideri esercitare i tuoi diritti sulla privacy dei dati, puoi inviare una richiesta o una richiesta di cancellazione dell'account direttamente tramite il Support Desk in-app e le Impostazioni account. Tutte le richieste vengono indirizzate in modo sicuro ai nostri responsabili della privacy ed elaborate entro 24-48 ore.",
     "Service Providers:": "Fornitori di servizi:",
-    "Authenticate your identity securely via passwordless email verification.": "Autentica la tua identità in modo sicuro tramite la verifica e-mail senza password."
+    "Authenticate your identity securely via passwordless email verification.": "Autentica la tua identità in modo sicuro tramite la verifica e-mail senza password.",
+    "Searching...": "Ricerca in corso...",
+    "0 reviews": "0 recensioni",
+    "Back": "Indietro",
+    "Clear": "Cancella",
+    "Remove search": "Rimuovi ricerca"
   },
   "nl": {
     "Review Any Business": "Beoordeel elk bedrijf",
@@ -1897,7 +1917,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Met vertrouwde backend- en hostinginfrastructuurproviders (zoals Bunny.net en PostgreSQL Cloud SQL) die nodig zijn om onze webapplicatie uit te voeren.",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Wij verkopen, verhandelen of verhuren uw persoonlijke gegevens niet aan derden. We kunnen gegevens alleen delen onder de volgende omstandigheden:",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "We implementeren moderne technische en organisatorische beveiligingsmaatregelen (waaronder gecodeerd transport via HTTPS en veilige, op tokens gebaseerde authenticatie) om uw gegevens te beschermen tegen ongeoorloofde toegang, verlies of misbruik.",
-    "You have the right to:": "U heeft het recht om:"
+    "You have the right to:": "U heeft het recht om:",
+    "Searching...": "Zoeken...",
+    "0 reviews": "0 beoordelingen",
+    "Back": "Terug",
+    "Clear": "Wissen",
+    "Remove search": "Zoekopdracht verwijderen"
   },
   "pt": {
     "You aren't following anyone yet": "Você ainda não está seguindo ninguém",
@@ -2277,7 +2302,12 @@
     "You have the right to:": "Você tem o direito de:",
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Retire o seu consentimento para o processamento de dados a qualquer momento através do nosso sistema automatizado de solicitação de conformidade no aplicativo, sem a necessidade de enviar um e-mail.",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Implementamos medidas de segurança técnicas e organizacionais modernas (incluindo transporte criptografado via HTTPS e autenticação segura baseada em token) para proteger seus dados contra acesso não autorizado, perda ou uso indevido.",
-    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Solicite a desativação ou exclusão permanente de sua conta e dados pessoais enviando o formulário de solicitação de exclusão de conta dentro do aplicativo nas configurações do seu perfil."
+    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Solicite a desativação ou exclusão permanente de sua conta e dados pessoais enviando o formulário de solicitação de exclusão de conta dentro do aplicativo nas configurações do seu perfil.",
+    "Searching...": "Pesquisando...",
+    "0 reviews": "0 avaliações",
+    "Back": "Voltar",
+    "Clear": "Limpar",
+    "Remove search": "Remover pesquisa"
   },
   "ru": {
     "Search...": "Поиск...",
@@ -2657,7 +2687,12 @@
     "Authenticate your identity securely via passwordless email verification.": "Надежно подтвердите свою личность с помощью проверки электронной почты без пароля.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Если у вас есть какие-либо вопросы по поводу настоящей Политики конфиденциальности или вы хотите воспользоваться своими правами на конфиденциальность данных, вы можете отправить запрос или запрос на удаление учетной записи непосредственно через службу поддержки в приложении и настройки учетной записи. Все запросы надежно перенаправляются нашим специалистам по конфиденциальности и обрабатываются в течение 24–48 часов.",
     "Your Rights and Choices": "Ваши права и выбор",
-    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Отзовите свое согласие на обработку данных в любое время через нашу автоматизированную систему запросов на соответствие требованиям в приложении без необходимости отправки электронного письма."
+    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Отзовите свое согласие на обработку данных в любое время через нашу автоматизированную систему запросов на соответствие требованиям в приложении без необходимости отправки электронного письма.",
+    "Searching...": "Поиск...",
+    "0 reviews": "0 отзывов",
+    "Back": "Назад",
+    "Clear": "Очистить",
+    "Remove search": "Удалить поиск"
   },
   "uk": {
     "Search followers by name...": "Пошук підписників за іменем...",
@@ -3037,7 +3072,12 @@
     "Legal Compliance:": "Відповідність законодавству:",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Якщо у вас виникли запитання щодо цієї Політики конфіденційності або ви хочете скористатися своїми правами на конфіденційність даних, ви можете надіслати запит або запит на видалення облікового запису безпосередньо через службу підтримки в програмі та налаштування облікового запису. Усі запити безпечно направляються до наших спеціалістів з питань конфіденційності та обробляються протягом 24–48 годин.",
     "Your Rights and Choices": "Ваші права та вибір",
-    "Maintain platform security and prevent fraudulent activity.": "Підтримуйте безпеку платформи та запобігайте шахрайству."
+    "Maintain platform security and prevent fraudulent activity.": "Підтримуйте безпеку платформи та запобігайте шахрайству.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "pl": {
     "TOTAL CHATS": "CAŁOŚĆ CZATÓW",
@@ -3417,7 +3457,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Poproś o dezaktywację lub trwałe usunięcie swojego konta i danych osobowych, przesyłając formularz żądania usunięcia konta w aplikacji w ustawieniach profilu.",
     "Maintain platform security and prevent fraudulent activity.": "Utrzymuj bezpieczeństwo platformy i zapobiegaj oszustwom.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Z zaufanymi dostawcami infrastruktury backendowej i hostingowej (takimi jak bunny.net i PostgreSQL Cloud SQL) wymaganymi do uruchomienia naszej aplikacji internetowej.",
-    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Wycofaj swoją zgodę na przetwarzanie danych w dowolnym momencie za pośrednictwem naszego automatycznego systemu żądań zgodności w aplikacji, bez konieczności wysyłania wiadomości e-mail."
+    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Wycofaj swoją zgodę na przetwarzanie danych w dowolnym momencie za pośrednictwem naszego automatycznego systemu żądań zgodności w aplikacji, bez konieczności wysyłania wiadomości e-mail.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "tr": {
     "Manage businesses and reviewers you follow on Yoouz": "Yoouz'da takip ettiğiniz işletmeleri ve yorumcuları yönetin",
@@ -3797,7 +3842,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Canlı kaydedilen video incelemelerinizi platformda işleyin, barındırın ve görüntüleyin.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Web uygulamamızı çalıştırmak için güvenilir arka uç ve barındırma altyapısı sağlayıcıları (bunny.net ve PostgreSQL Cloud SQL gibi) gerekir.",
     "Data Security": "Veri Güvenliği",
-    "Maintain platform security and prevent fraudulent activity.": "Platform güvenliğini koruyun ve dolandırıcılık faaliyetlerini önleyin."
+    "Maintain platform security and prevent fraudulent activity.": "Platform güvenliğini koruyun ve dolandırıcılık faaliyetlerini önleyin.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ar": {
     "TOTAL CHATS": "إجمالي الدردشات",
@@ -4177,7 +4227,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "اطلب التعطيل أو الحذف الدائم لحسابك وبياناتك الشخصية عن طريق إرسال نموذج طلب حذف الحساب داخل التطبيق في إعدادات ملفك الشخصي.",
     "You have the right to:": "لديك الحق في:",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "نحن لا نبيع أو نتاجر أو نؤجر معلوماتك الشخصية لأطراف ثالثة. لا يجوز لنا مشاركة البيانات إلا في ظل الظروف التالية:",
-    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "نحن ننفذ إجراءات أمنية فنية وتنظيمية حديثة (بما في ذلك النقل المشفر عبر HTTPS والمصادقة الآمنة المستندة إلى الرمز المميز) لحماية بياناتك من الوصول غير المصرح به أو الفقدان أو سوء الاستخدام."
+    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "نحن ننفذ إجراءات أمنية فنية وتنظيمية حديثة (بما في ذلك النقل المشفر عبر HTTPS والمصادقة الآمنة المستندة إلى الرمز المميز) لحماية بياناتك من الوصول غير المصرح به أو الفقدان أو سوء الاستخدام.",
+    "Searching...": "جارٍ البحث...",
+    "0 reviews": "0 تقييمات",
+    "Back": "رجوع",
+    "Clear": "مسح",
+    "Remove search": "إزالة البحث"
   },
   "he": {
     "You aren't following anyone yet": "אתה עדיין לא עוקב אחר אף אחד",
@@ -4557,7 +4612,12 @@
     "Data Security": "אבטחת מידע",
     "If required to comply with applicable laws, regulations, or legal processes.": "אם נדרש לציית לחוקים, תקנות או תהליכים משפטיים החלים.",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "אנו מיישמים אמצעי אבטחה טכניים וארגוניים מודרניים (כולל הובלה מוצפנת באמצעות HTTPS ואימות מבוסס אסימון מאובטח) כדי להגן על הנתונים שלך מפני גישה לא מורשית, אובדן או שימוש לרעה.",
-    "Service Providers:": "ספקי שירות:"
+    "Service Providers:": "ספקי שירות:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "fa": {
     "Review Any Business": "بررسی هر کسب و کاری",
@@ -4937,7 +4997,12 @@
     "Access the personal data we hold about you.": "به داده های شخصی که در مورد شما نگهداری می کنیم دسترسی داشته باشید.",
     "Maintain platform security and prevent fraudulent activity.": "امنیت پلتفرم را حفظ کنید و از فعالیت های تقلبی جلوگیری کنید.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "اگر درباره این خط‌مشی رازداری سؤالی دارید یا می‌خواهید از حقوق حفظ حریم خصوصی داده‌های خود استفاده کنید، می‌توانید درخواست حذف حساب خود را مستقیماً از طریق میز پشتیبانی درون‌برنامه و تنظیمات حساب ارسال کنید. همه درخواست‌ها به طور ایمن به افسران حریم خصوصی ما ارسال می‌شوند و ظرف 24 تا 48 ساعت پردازش می‌شوند.",
-    "Service Providers:": "ارائه دهندگان خدمات:"
+    "Service Providers:": "ارائه دهندگان خدمات:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ur": {
     "TOTAL CHATS": "کل چیٹس",
@@ -5317,7 +5382,12 @@
     "Your Rights and Choices": "آپ کے حقوق اور انتخاب",
     "If required to comply with applicable laws, regulations, or legal processes.": "اگر قابل اطلاق قوانین، ضوابط، یا قانونی عمل کی تعمیل کرنے کی ضرورت ہو۔",
     "Access the personal data we hold about you.": "آپ کے بارے میں ہمارے پاس موجود ذاتی ڈیٹا تک رسائی حاصل کریں۔",
-    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "اگر آپ کے پاس اس پرائیویسی پالیسی کے بارے میں کوئی سوالات ہیں یا آپ اپنے ڈیٹا پرائیویسی کے حقوق استعمال کرنا چاہتے ہیں، تو آپ ان ایپ سپورٹ ڈیسک اور اکاؤنٹ سیٹنگز کے ذریعے براہ راست انکوائری یا اکاؤنٹ ڈیلیٹ کرنے کی درخواست جمع کرا سکتے ہیں۔ تمام درخواستیں ہمارے پرائیویسی افسران کو محفوظ طریقے سے بھیجی جاتی ہیں اور 24-48 گھنٹوں کے اندر اندر کارروائی کی جاتی ہیں۔"
+    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "اگر آپ کے پاس اس پرائیویسی پالیسی کے بارے میں کوئی سوالات ہیں یا آپ اپنے ڈیٹا پرائیویسی کے حقوق استعمال کرنا چاہتے ہیں، تو آپ ان ایپ سپورٹ ڈیسک اور اکاؤنٹ سیٹنگز کے ذریعے براہ راست انکوائری یا اکاؤنٹ ڈیلیٹ کرنے کی درخواست جمع کرا سکتے ہیں۔ تمام درخواستیں ہمارے پرائیویسی افسران کو محفوظ طریقے سے بھیجی جاتی ہیں اور 24-48 گھنٹوں کے اندر اندر کارروائی کی جاتی ہیں۔",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "hi": {
     "Search followers by name...": "अनुयायियों को नाम से खोजें...",
@@ -5697,7 +5767,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "हमारे वेब एप्लिकेशन को चलाने के लिए विश्वसनीय बैकएंड और होस्टिंग इंफ्रास्ट्रक्चर प्रदाताओं (जैसे bunny.net और PostgreSQL क्लाउड SQL) की आवश्यकता होती है।",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "यदि इस गोपनीयता नीति के बारे में आपके कोई प्रश्न हैं या आप अपने डेटा गोपनीयता अधिकारों का प्रयोग करना चाहते हैं, तो आप इन-ऐप सपोर्ट डेस्क और खाता सेटिंग्स के माध्यम से सीधे पूछताछ या खाता हटाने का अनुरोध सबमिट कर सकते हैं। सभी अनुरोध सुरक्षित रूप से हमारे गोपनीयता अधिकारियों को भेजे जाते हैं और 24-48 घंटों के भीतर संसाधित किए जाते हैं।",
     "Data Sharing and Disclosure": "डेटा साझाकरण और प्रकटीकरण",
-    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "ईमेल भेजने की आवश्यकता के बिना किसी भी समय हमारे स्वचालित इन-ऐप अनुपालन अनुरोध प्रणाली के माध्यम से डेटा प्रोसेसिंग के लिए अपनी सहमति वापस लें।"
+    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "ईमेल भेजने की आवश्यकता के बिना किसी भी समय हमारे स्वचालित इन-ऐप अनुपालन अनुरोध प्रणाली के माध्यम से डेटा प्रोसेसिंग के लिए अपनी सहमति वापस लें।",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "bn": {
     "Search business...": "ব্যবসা খুঁজুন...",
@@ -6077,7 +6152,12 @@
     "Privacy Officer & In-App Inquiries": "গোপনীয়তা অফিসার এবং ইন-অ্যাপ অনুসন্ধান",
     "Process, host, and display your live-recorded video reviews on the platform.": "প্ল্যাটফর্মে আপনার লাইভ-রেকর্ড করা ভিডিও পর্যালোচনাগুলি প্রক্রিয়া করুন, হোস্ট করুন এবং প্রদর্শন করুন৷",
     "Legal Compliance:": "আইনি সম্মতি:",
-    "If required to comply with applicable laws, regulations, or legal processes.": "প্রযোজ্য আইন, প্রবিধান, বা আইনি প্রক্রিয়া মেনে চলার প্রয়োজন হলে।"
+    "If required to comply with applicable laws, regulations, or legal processes.": "প্রযোজ্য আইন, প্রবিধান, বা আইনি প্রক্রিয়া মেনে চলার প্রয়োজন হলে।",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "pa": {
     "Search place or URL...": "ਸਥਾਨ ਜਾਂ URL ਖੋਜੋ...",
@@ -6457,7 +6537,12 @@
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "ਈਮੇਲ ਭੇਜਣ ਦੀ ਲੋੜ ਤੋਂ ਬਿਨਾਂ ਸਾਡੇ ਸਵੈਚਲਿਤ ਇਨ-ਐਪ ਅਨੁਪਾਲਨ ਬੇਨਤੀ ਪ੍ਰਣਾਲੀ ਰਾਹੀਂ ਕਿਸੇ ਵੀ ਸਮੇਂ ਡੇਟਾ ਪ੍ਰੋਸੈਸਿੰਗ ਲਈ ਆਪਣੀ ਸਹਿਮਤੀ ਵਾਪਸ ਲੈ ਲਓ।",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "ਅਸੀਂ ਤੁਹਾਡੀ ਨਿੱਜੀ ਜਾਣਕਾਰੀ ਤੀਜੀ ਧਿਰ ਨੂੰ ਵੇਚਦੇ, ਵਪਾਰ ਜਾਂ ਕਿਰਾਏ 'ਤੇ ਨਹੀਂ ਦਿੰਦੇ ਹਾਂ। ਅਸੀਂ ਸਿਰਫ਼ ਨਿਮਨਲਿਖਤ ਸਥਿਤੀਆਂ ਵਿੱਚ ਹੀ ਡੇਟਾ ਸਾਂਝਾ ਕਰ ਸਕਦੇ ਹਾਂ:",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "ਅਸੀਂ ਤੁਹਾਡੇ ਡੇਟਾ ਨੂੰ ਅਣਅਧਿਕਾਰਤ ਪਹੁੰਚ, ਨੁਕਸਾਨ ਜਾਂ ਦੁਰਵਰਤੋਂ ਤੋਂ ਬਚਾਉਣ ਲਈ ਆਧੁਨਿਕ ਤਕਨੀਕੀ ਅਤੇ ਸੰਗਠਨਾਤਮਕ ਸੁਰੱਖਿਆ ਉਪਾਵਾਂ (HTTPS ਦੁਆਰਾ ਏਨਕ੍ਰਿਪਟਡ ਟ੍ਰਾਂਸਪੋਰਟ ਅਤੇ ਸੁਰੱਖਿਅਤ ਟੋਕਨ-ਅਧਾਰਿਤ ਪ੍ਰਮਾਣਿਕਤਾ ਸਮੇਤ) ਨੂੰ ਲਾਗੂ ਕਰਦੇ ਹਾਂ।",
-    "Process, host, and display your live-recorded video reviews on the platform.": "ਪਲੇਟਫਾਰਮ 'ਤੇ ਆਪਣੀਆਂ ਲਾਈਵ-ਰਿਕਾਰਡ ਕੀਤੀਆਂ ਵੀਡੀਓ ਸਮੀਖਿਆਵਾਂ ਦੀ ਪ੍ਰਕਿਰਿਆ ਕਰੋ, ਹੋਸਟ ਕਰੋ ਅਤੇ ਪ੍ਰਦਰਸ਼ਿਤ ਕਰੋ।"
+    "Process, host, and display your live-recorded video reviews on the platform.": "ਪਲੇਟਫਾਰਮ 'ਤੇ ਆਪਣੀਆਂ ਲਾਈਵ-ਰਿਕਾਰਡ ਕੀਤੀਆਂ ਵੀਡੀਓ ਸਮੀਖਿਆਵਾਂ ਦੀ ਪ੍ਰਕਿਰਿਆ ਕਰੋ, ਹੋਸਟ ਕਰੋ ਅਤੇ ਪ੍ਰਦਰਸ਼ਿਤ ਕਰੋ।",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ta": {
     "Following & Followers": "பின்தொடர்பவர்கள் & பின்தொடர்பவர்கள்",
@@ -6837,7 +6922,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "பொருந்தக்கூடிய சட்டங்கள், ஒழுங்குமுறைகள் அல்லது சட்ட செயல்முறைகளுக்கு இணங்கத் தேவைப்பட்டால்.",
     "Process, host, and display your live-recorded video reviews on the platform.": "உங்கள் நேரலையில் பதிவுசெய்யப்பட்ட வீடியோ மதிப்புரைகளை பிளாட்ஃபார்மில் செயலாக்கவும், ஹோஸ்ட் செய்யவும் மற்றும் காண்பிக்கவும்.",
     "Access the personal data we hold about you.": "உங்களைப் பற்றி நாங்கள் வைத்திருக்கும் தனிப்பட்ட தரவை அணுகவும்.",
-    "Legal Compliance:": "சட்ட இணக்கம்:"
+    "Legal Compliance:": "சட்ட இணக்கம்:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "te": {
     "Following & Followers": "అనుసరిస్తున్న & అనుచరులు",
@@ -7217,7 +7307,12 @@
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "మీకు ఈ గోప్యతా విధానం గురించి ఏవైనా ప్రశ్నలు ఉంటే లేదా మీ డేటా గోప్యతా హక్కులను వినియోగించుకోవాలనుకుంటే, మీరు యాప్‌లోని సపోర్ట్ డెస్క్ మరియు ఖాతా సెట్టింగ్‌ల ద్వారా నేరుగా విచారణ లేదా ఖాతా తొలగింపు అభ్యర్థనను సమర్పించవచ్చు. అన్ని అభ్యర్థనలు సురక్షితంగా మా గోప్యతా అధికారులకు పంపబడతాయి మరియు 24–48 గంటల్లో ప్రాసెస్ చేయబడతాయి.",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "మీ డేటాను అనధికారిక యాక్సెస్, నష్టం లేదా దుర్వినియోగం నుండి రక్షించడానికి మేము ఆధునిక సాంకేతిక మరియు సంస్థాగత భద్రతా చర్యలను (HTTPS ద్వారా గుప్తీకరించిన రవాణా మరియు సురక్షిత టోకెన్-ఆధారిత ప్రమాణీకరణతో సహా) అమలు చేస్తాము.",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "మీ ప్రొఫైల్ సెట్టింగ్‌లలో యాప్‌లో ఖాతా తొలగింపు అభ్యర్థన ఫారమ్‌ను సమర్పించడం ద్వారా మీ ఖాతా మరియు వ్యక్తిగత డేటాను నిష్క్రియం చేయడం లేదా శాశ్వతంగా తొలగించడం కోసం అభ్యర్థించండి.",
-    "Data Security": "డేటా భద్రత"
+    "Data Security": "డేటా భద్రత",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "mr": {
     "Search...": "शोधा...",
@@ -7597,7 +7692,12 @@
     "Maintain platform security and prevent fraudulent activity.": "प्लॅटफॉर्म सुरक्षितता राखा आणि फसव्या क्रियाकलापांना प्रतिबंध करा.",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "आम्ही तुमची वैयक्तिक माहिती तृतीय पक्षांना विकत नाही, व्यापार करत नाही किंवा भाड्याने देत नाही. आम्ही फक्त खालील परिस्थितीत डेटा सामायिक करू शकतो:",
     "Data Security": "डेटा सुरक्षा",
-    "You have the right to:": "तुम्हाला याचा अधिकार आहे:"
+    "You have the right to:": "तुम्हाला याचा अधिकार आहे:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "gu": {
     "Search any business to watch authentic video reviews or record your own.": "અધિકૃત વિડિઓ સમીક્ષાઓ જોવા અથવા તમારી પોતાની રેકોર્ડ કરવા માટે કોઈપણ વ્યવસાય શોધો.",
@@ -7977,7 +8077,12 @@
     "Legal Compliance:": "કાનૂની પાલન:",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "અમે તમારા ડેટાને અનધિકૃત ઍક્સેસ, નુકશાન અથવા દુરુપયોગથી બચાવવા માટે આધુનિક તકનીકી અને સંસ્થાકીય સુરક્ષા પગલાં (HTTPS દ્વારા એન્ક્રિપ્ટેડ પરિવહન અને સુરક્ષિત ટોકન-આધારિત પ્રમાણીકરણ સહિત) અમલમાં મૂકીએ છીએ.",
     "Your Rights and Choices": "તમારા અધિકારો અને પસંદગીઓ",
-    "Data Sharing and Disclosure": "ડેટા શેરિંગ અને ડિસ્ક્લોઝર"
+    "Data Sharing and Disclosure": "ડેટા શેરિંગ અને ડિસ્ક્લોઝર",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "kn": {
     "Review Any Business": "ಯಾವುದೇ ವ್ಯವಹಾರವನ್ನು ಪರಿಶೀಲಿಸಿ",
@@ -8357,7 +8462,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಲೈವ್-ರೆಕಾರ್ಡ್ ಮಾಡಿದ ವೀಡಿಯೊ ವಿಮರ್ಶೆಗಳನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ, ಹೋಸ್ಟ್ ಮಾಡಿ ಮತ್ತು ಪ್ರದರ್ಶಿಸಿ.",
     "Your Rights and Choices": "ನಿಮ್ಮ ಹಕ್ಕುಗಳು ಮತ್ತು ಆಯ್ಕೆಗಳು",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "ವಿಶ್ವಾಸಾರ್ಹ ಬ್ಯಾಕೆಂಡ್ ಮತ್ತು ಹೋಸ್ಟಿಂಗ್ ಮೂಲಸೌಕರ್ಯ ಪೂರೈಕೆದಾರರೊಂದಿಗೆ (bunny.net ಮತ್ತು PostgreSQL ಕ್ಲೌಡ್ SQL ನಂತಹ) ನಮ್ಮ ವೆಬ್ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ರನ್ ಮಾಡಲು ಅಗತ್ಯವಿದೆ.",
-    "Access the personal data we hold about you.": "ನಿಮ್ಮ ಬಗ್ಗೆ ನಾವು ಹೊಂದಿರುವ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಪ್ರವೇಶಿಸಿ."
+    "Access the personal data we hold about you.": "ನಿಮ್ಮ ಬಗ್ಗೆ ನಾವು ಹೊಂದಿರುವ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಪ್ರವೇಶಿಸಿ.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ml": {
     "Search...": "തിരയുക...",
@@ -8737,7 +8847,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "ഞങ്ങളുടെ വെബ് ആപ്ലിക്കേഷൻ പ്രവർത്തിപ്പിക്കുന്നതിന് വിശ്വസനീയമായ ബാക്കെൻഡും ഹോസ്റ്റിംഗ് ഇൻഫ്രാസ്ട്രക്ചർ ദാതാക്കളും (bunny.net, PostgreSQL Cloud SQL പോലുള്ളവ) ആവശ്യമാണ്.",
     "Legal Compliance:": "നിയമപരമായ അനുസരണം:",
     "Privacy Officer & In-App Inquiries": "പ്രൈവസി ഓഫീസറും ഇൻ-ആപ്പ് അന്വേഷണങ്ങളും",
-    "Data Security": "ഡാറ്റ സുരക്ഷ"
+    "Data Security": "ഡാറ്റ സുരക്ഷ",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "zh": {
     "Search followers by name...": "按姓名搜索关注者...",
@@ -9117,7 +9232,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "运行我们的 Web 应用程序需要受信任的后端和托管基础设施提供商（例如 bunny.net 和 PostgreSQL Cloud SQL）。",
     "You have the right to:": "您有权：",
     "Access the personal data we hold about you.": "访问我们持有的有关您的个人数据。",
-    "Process, host, and display your live-recorded video reviews on the platform.": "在平台上处理、托管和显示您实时录制的视频评论。"
+    "Process, host, and display your live-recorded video reviews on the platform.": "在平台上处理、托管和显示您实时录制的视频评论。",
+    "Searching...": "搜索中...",
+    "0 reviews": "0条评价",
+    "Back": "返回",
+    "Clear": "清除",
+    "Remove search": "删除搜索"
   },
   "zh-TW": {
     "Manage businesses and reviewers you follow on Yoouz": "管理您在 Yoouz 上關注的企業和評論者",
@@ -9497,7 +9617,12 @@
     "You have the right to:": "您有權：",
     "Authenticate your identity securely via passwordless email verification.": "透過無密碼電子郵件驗證安全地驗證您的身分。",
     "Access the personal data we hold about you.": "存取我們持有的有關您的個人資料。",
-    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "透過在您的個人資料設定中提交應用程式內帳戶刪除請求表，要求停用或永久刪除您的帳戶和個人資料。"
+    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "透過在您的個人資料設定中提交應用程式內帳戶刪除請求表，要求停用或永久刪除您的帳戶和個人資料。",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ja": {
     "Search...": "検索...",
@@ -9877,7 +10002,12 @@
     "Maintain platform security and prevent fraudulent activity.": "プラットフォームのセキュリティを維持し、不正行為を防止します。",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "このプライバシー ポリシーについてご質問がある場合、またはデータ プライバシーの権利を行使したい場合は、アプリ内のサポート デスクおよびアカウント設定を通じて直接お問い合わせまたはアカウント削除リクエストを送信できます。すべてのリクエストは当社のプライバシー担当者に安全に転送され、24 ～ 48 時間以内に処理されます。",
     "Process, host, and display your live-recorded video reviews on the platform.": "ライブ録画したビデオレビューをプラットフォーム上で処理、ホスト、表示します。",
-    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "当社はお客様の個人情報を第三者に販売、取引、または貸与することはありません。当社は、以下の状況下でのみデータを共有することがあります。"
+    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "当社はお客様の個人情報を第三者に販売、取引、または貸与することはありません。当社は、以下の状況下でのみデータを共有することがあります。",
+    "Searching...": "検索中...",
+    "0 reviews": "0件のレビュー",
+    "Back": "戻る",
+    "Clear": "クリア",
+    "Remove search": "検索を削除"
   },
   "ko": {
     "Review Any Business": "모든 비즈니스 검토",
@@ -10257,7 +10387,12 @@
     "Data Sharing and Disclosure": "데이터 공유 및 공개",
     "Maintain platform security and prevent fraudulent activity.": "플랫폼 보안을 유지하고 사기 행위를 방지합니다.",
     "Authenticate your identity securely via passwordless email verification.": "비밀번호 없는 이메일 인증을 통해 안전하게 신원을 인증하세요.",
-    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "당사는 귀하의 개인정보를 제3자에게 판매, 거래, 임대하지 않습니다. 당사는 다음과 같은 상황에서만 데이터를 공유할 수 있습니다."
+    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "당사는 귀하의 개인정보를 제3자에게 판매, 거래, 임대하지 않습니다. 당사는 다음과 같은 상황에서만 데이터를 공유할 수 있습니다.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "id": {
     "No followers yet": "Belum ada pengikut",
@@ -10637,7 +10772,12 @@
     "Privacy Officer & In-App Inquiries": "Petugas Privasi & Pertanyaan Dalam Aplikasi",
     "Legal Compliance:": "Kepatuhan Hukum:",
     "Authenticate your identity securely via passwordless email verification.": "Otentikasi identitas Anda dengan aman melalui verifikasi email tanpa kata sandi.",
-    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini atau ingin menggunakan hak privasi data Anda, Anda dapat mengajukan pertanyaan atau permintaan penghapusan akun secara langsung melalui Meja Dukungan dan Pengaturan Akun dalam aplikasi. Semua permintaan diteruskan dengan aman ke petugas privasi kami dan diproses dalam waktu 24-48 jam."
+    "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini atau ingin menggunakan hak privasi data Anda, Anda dapat mengajukan pertanyaan atau permintaan penghapusan akun secara langsung melalui Meja Dukungan dan Pengaturan Akun dalam aplikasi. Semua permintaan diteruskan dengan aman ke petugas privasi kami dan diproses dalam waktu 24-48 jam.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ms": {
     "When other local reviewers follow your profile, they will appear here.": "Apabila pengulas tempatan lain mengikuti profil anda, mereka akan muncul di sini.",
@@ -11017,7 +11157,12 @@
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Jika anda mempunyai sebarang soalan tentang Dasar Privasi ini atau ingin menggunakan hak privasi data anda, anda boleh menyerahkan pertanyaan atau permintaan pemadaman akaun terus melalui Meja Sokongan dalam apl dan Tetapan Akaun. Semua permintaan disalurkan dengan selamat kepada pegawai privasi kami dan diproses dalam masa 24–48 jam.",
     "Data Security": "Keselamatan Data",
     "You have the right to:": "Anda mempunyai hak untuk:",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Dengan bahagian belakang yang dipercayai dan penyedia infrastruktur pengehosan (seperti bunny.net dan PostgreSQL Cloud SQL) diperlukan untuk menjalankan aplikasi web kami."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Dengan bahagian belakang yang dipercayai dan penyedia infrastruktur pengehosan (seperti bunny.net dan PostgreSQL Cloud SQL) diperlukan untuk menjalankan aplikasi web kami.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "th": {
     "Search...": "ค้นหา...",
@@ -11397,7 +11542,12 @@
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "เราใช้มาตรการรักษาความปลอดภัยด้านเทคนิคและองค์กรที่ทันสมัย ​​​​(รวมถึงการขนส่งที่เข้ารหัสผ่าน HTTPS และการรับรองความถูกต้องโดยใช้โทเค็นที่ปลอดภัย) เพื่อปกป้องข้อมูลของคุณจากการเข้าถึงโดยไม่ได้รับอนุญาต การสูญหาย หรือการใช้ในทางที่ผิด",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "เราไม่ขาย แลกเปลี่ยน หรือให้เช่าข้อมูลส่วนบุคคลของคุณแก่บุคคลที่สาม เราอาจแบ่งปันข้อมูลภายใต้สถานการณ์ต่อไปนี้เท่านั้น:",
     "Authenticate your identity securely via passwordless email verification.": "ตรวจสอบตัวตนของคุณอย่างปลอดภัยผ่านการยืนยันอีเมลแบบไร้รหัสผ่าน",
-    "Maintain platform security and prevent fraudulent activity.": "รักษาความปลอดภัยของแพลตฟอร์มและป้องกันการฉ้อโกง"
+    "Maintain platform security and prevent fraudulent activity.": "รักษาความปลอดภัยของแพลตฟอร์มและป้องกันการฉ้อโกง",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "vi": {
     "Search...": "Tìm kiếm...",
@@ -11777,7 +11927,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Với các nhà cung cấp cơ sở hạ tầng lưu trữ và phụ trợ đáng tin cậy (chẳng hạn như Bunny.net và PostgreSQL Cloud SQL) cần thiết để chạy ứng dụng web của chúng tôi.",
     "Service Providers:": "Nhà cung cấp dịch vụ:",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Yêu cầu vô hiệu hóa hoặc xóa vĩnh viễn tài khoản và dữ liệu cá nhân của bạn bằng cách gửi biểu mẫu Yêu cầu xóa tài khoản trong ứng dụng trong cài đặt hồ sơ của bạn.",
-    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Chúng tôi triển khai các biện pháp bảo mật tổ chức và kỹ thuật hiện đại (bao gồm truyền tải được mã hóa qua HTTPS và xác thực dựa trên mã thông báo an toàn) để bảo vệ dữ liệu của bạn khỏi bị truy cập trái phép, mất mát hoặc sử dụng sai mục đích."
+    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Chúng tôi triển khai các biện pháp bảo mật tổ chức và kỹ thuật hiện đại (bao gồm truyền tải được mã hóa qua HTTPS và xác thực dựa trên mã thông báo an toàn) để bảo vệ dữ liệu của bạn khỏi bị truy cập trái phép, mất mát hoặc sử dụng sai mục đích.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "tl": {
     "Search place or URL...": "Maghanap ng lugar o URL...",
@@ -12157,7 +12312,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Hilingin ang pag-deactivate o permanenteng pagtanggal ng iyong account at personal na data sa pamamagitan ng pagsusumite ng in-app na form ng Kahilingan sa Pagtanggal ng Account sa iyong mga setting ng profile.",
     "If required to comply with applicable laws, regulations, or legal processes.": "Kung kinakailangan na sumunod sa mga naaangkop na batas, regulasyon, o legal na proseso.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Gamit ang pinagkakatiwalaang backend at nagho-host na mga provider ng imprastraktura (gaya ng bunny.net at PostgreSQL Cloud SQL) na kinakailangan upang patakbuhin ang aming web application.",
-    "Process, host, and display your live-recorded video reviews on the platform.": "Iproseso, i-host, at ipakita ang iyong mga live-record na review ng video sa platform."
+    "Process, host, and display your live-recorded video reviews on the platform.": "Iproseso, i-host, at ipakita ang iyong mga live-record na review ng video sa platform.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sv": {
     "Review Any Business": "Granska alla företag",
@@ -12537,7 +12697,12 @@
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Återkalla ditt samtycke till databehandling när som helst genom vårt automatiska system för begäran om efterlevnad i appen utan att behöva skicka ett e-postmeddelande.",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Begär inaktivering eller permanent radering av ditt konto och personuppgifter genom att skicka in formuläret för begäran om borttagning av konto i dina profilinställningar.",
     "Data Security": "Datasäkerhet",
-    "You have the right to:": "Du har rätt att:"
+    "You have the right to:": "Du har rätt att:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "no": {
     "Following & Followers": "Følger og følgere",
@@ -12917,7 +13082,12 @@
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Vi selger, bytter eller leier ikke ut personopplysningene dine til tredjeparter. Vi kan dele data bare under følgende omstendigheter:",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Be om deaktivering eller permanent sletting av kontoen din og personlige data ved å sende inn forespørselsskjemaet for kontosletting i appen i profilinnstillingene dine.",
     "Access the personal data we hold about you.": "Få tilgang til personopplysningene vi har om deg.",
-    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Vi implementerer moderne tekniske og organisatoriske sikkerhetstiltak (inkludert kryptert transport via HTTPS og sikker token-basert autentisering) for å beskytte dataene dine mot uautorisert tilgang, tap eller misbruk."
+    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Vi implementerer moderne tekniske og organisatoriske sikkerhetstiltak (inkludert kryptert transport via HTTPS og sikker token-basert autentisering) for å beskytte dataene dine mot uautorisert tilgang, tap eller misbruk.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "da": {
     "Following": "Følge",
@@ -13297,7 +13467,12 @@
     "Your Rights and Choices": "Dine rettigheder og valg",
     "Privacy Officer & In-App Inquiries": "Privacy Officer og forespørgsler i appen",
     "If required to comply with applicable laws, regulations, or legal processes.": "Hvis det kræves for at overholde gældende love, regler eller juridiske processer.",
-    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Anmod om deaktivering eller permanent sletning af din konto og personlige data ved at indsende formularen til anmodning om kontosletning i appen i dine profilindstillinger."
+    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Anmod om deaktivering eller permanent sletning af din konto og personlige data ved at indsende formularen til anmodning om kontosletning i appen i dine profilindstillinger.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "fi": {
     "1 conversation": "1 keskustelu",
@@ -13677,7 +13852,12 @@
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Emme myy, vaihda tai vuokraa henkilötietojasi kolmansille osapuolille. Voimme jakaa tietoja vain seuraavissa olosuhteissa:",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Pyydä tilisi ja henkilötietojesi deaktivointia tai pysyvää poistamista lähettämällä sovelluksen sisäinen tilin poistopyyntölomake profiilisi asetuksista.",
     "You have the right to:": "Sinulla on oikeus:",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Verkkosovelluksemme suorittamiseen tarvitaan luotettavia tausta- ja isännöintiinfrastruktuurin tarjoajia (kuten bunny.net ja PostgreSQL Cloud SQL)."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Verkkosovelluksemme suorittamiseen tarvitaan luotettavia tausta- ja isännöintiinfrastruktuurin tarjoajia (kuten bunny.net ja PostgreSQL Cloud SQL).",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "el": {
     "Search business...": "Αναζήτηση επιχείρησης...",
@@ -14057,7 +14237,12 @@
     "Legal Compliance:": "Νομική συμμόρφωση:",
     "Maintain platform security and prevent fraudulent activity.": "Διατηρήστε την ασφάλεια της πλατφόρμας και αποτρέψτε τη δόλια δραστηριότητα.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Εάν έχετε οποιεσδήποτε ερωτήσεις σχετικά με αυτήν την Πολιτική Απορρήτου ή επιθυμείτε να ασκήσετε τα δικαιώματα απορρήτου των δεδομένων σας, μπορείτε να υποβάλετε ένα ερώτημα ή αίτημα διαγραφής λογαριασμού απευθείας μέσω του γραφείου υποστήριξης και των ρυθμίσεων λογαριασμού εντός εφαρμογής. Όλα τα αιτήματα δρομολογούνται με ασφάλεια στους υπευθύνους απορρήτου μας και υποβάλλονται σε επεξεργασία εντός 24–48 ωρών.",
-    "You have the right to:": "Έχετε το δικαίωμα να:"
+    "You have the right to:": "Έχετε το δικαίωμα να:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "cs": {
     "Following": "Následující",
@@ -14437,7 +14622,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Je-li to nutné k dodržení platných zákonů, nařízení nebo právních procesů.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Máte-li jakékoli dotazy týkající se těchto Zásad ochrany osobních údajů nebo chcete uplatnit svá práva na ochranu osobních údajů, můžete odeslat dotaz nebo žádost o smazání účtu přímo prostřednictvím oddělení podpory v aplikaci a nastavení účtu. Všechny požadavky jsou bezpečně směrovány k našim úředníkům pro ochranu osobních údajů a zpracovány do 24–48 hodin.",
     "Privacy Officer & In-App Inquiries": "Pověřenec pro ochranu osobních údajů a dotazy v aplikaci",
-    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Vaše osobní údaje neprodáváme, neobchodujeme ani nepronajímáme třetím stranám. Údaje můžeme sdílet pouze za následujících okolností:"
+    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Vaše osobní údaje neprodáváme, neobchodujeme ani nepronajímáme třetím stranám. Údaje můžeme sdílet pouze za následujících okolností:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "hu": {
     "Following & Followers": "Követők és követők",
@@ -14817,7 +15007,12 @@
     "Access the personal data we hold about you.": "Hozzáférés az Önről tárolt személyes adatokhoz.",
     "Maintain platform security and prevent fraudulent activity.": "Fenntartja a platform biztonságát és megakadályozza a csaló tevékenységeket.",
     "Legal Compliance:": "Jogi megfelelőség:",
-    "If required to comply with applicable laws, regulations, or legal processes.": "Ha szükséges, hogy megfeleljen a vonatkozó törvényeknek, előírásoknak vagy jogi eljárásoknak."
+    "If required to comply with applicable laws, regulations, or legal processes.": "Ha szükséges, hogy megfeleljen a vonatkozó törvényeknek, előírásoknak vagy jogi eljárásoknak.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ro": {
     "Search any business to watch authentic video reviews or record your own.": "Căutați orice companie pentru a viziona recenzii video autentice sau pentru a le înregistra pe ale dvs.",
@@ -15197,7 +15392,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Dacă este necesar pentru a respecta legile, reglementările sau procesele legale aplicabile.",
     "Privacy Officer & In-App Inquiries": "Ofițer de confidențialitate și întrebări în aplicație",
     "Process, host, and display your live-recorded video reviews on the platform.": "Procesați, găzduiți și afișați recenziile dvs. video înregistrate live pe platformă.",
-    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Implementăm măsuri de securitate tehnice și organizatorice moderne (inclusiv transport criptat prin HTTPS și autentificare securizată bazată pe token) pentru a vă proteja datele împotriva accesului neautorizat, pierderii sau utilizării greșite."
+    "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Implementăm măsuri de securitate tehnice și organizatorice moderne (inclusiv transport criptat prin HTTPS și autentificare securizată bazată pe token) pentru a vă proteja datele împotriva accesului neautorizat, pierderii sau utilizării greșite.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "bg": {
     "No followers yet": "Все още няма последователи",
@@ -15577,7 +15777,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Обработвайте, хоствайте и показвайте вашите записани на живо видео ревюта в платформата.",
     "Your Rights and Choices": "Вашите права и избори",
     "Authenticate your identity securely via passwordless email verification.": "Удостоверете самоличността си сигурно чрез имейл потвърждение без парола.",
-    "Privacy Officer & In-App Inquiries": "Служител по поверителност и запитвания в приложението"
+    "Privacy Officer & In-App Inquiries": "Служител по поверителност и запитвания в приложението",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "hr": {
     "Following": "Praćenje",
@@ -15957,7 +16162,12 @@
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "S pouzdanim pružateljima pozadinske i hosting infrastrukture (kao što su bunny.net i PostgreSQL Cloud SQL) potrebnih za pokretanje naše web aplikacije.",
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Zatražite deaktivaciju ili trajno brisanje svog računa i osobnih podataka podnošenjem obrasca Zahtjev za brisanje računa u aplikaciji u postavkama vašeg profila.",
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Povucite svoj pristanak za obradu podataka u bilo kojem trenutku putem našeg automatiziranog sustava zahtjeva za usklađenost unutar aplikacije bez potrebe za slanjem e-pošte.",
-    "Legal Compliance:": "Pravna usklađenost:"
+    "Legal Compliance:": "Pravna usklađenost:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sk": {
     "Search place or URL...": "Hľadať miesto alebo URL...",
@@ -16337,7 +16547,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Spracujte, hostite a zobrazte svoje naživo nahrané videorecenzie na platforme.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "S dôveryhodnými poskytovateľmi backendu a hostingovej infraštruktúry (ako je bunny.net a PostgreSQL Cloud SQL), ktorí sú potrební na spustenie našej webovej aplikácie.",
     "Access the personal data we hold about you.": "Získajte prístup k osobným údajom, ktoré o vás uchovávame.",
-    "Legal Compliance:": "Súlad s právnymi predpismi:"
+    "Legal Compliance:": "Súlad s právnymi predpismi:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sl": {
     "Followers": "Sledilci",
@@ -16717,7 +16932,12 @@
     "Data Sharing and Disclosure": "Skupna raba podatkov in razkritje",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Vaših osebnih podatkov ne prodajamo, trgujemo ali dajemo v najem tretjim osebam. Podatke lahko delimo samo v naslednjih okoliščinah:",
     "Legal Compliance:": "Pravna skladnost:",
-    "Process, host, and display your live-recorded video reviews on the platform.": "Obdelajte, gostite in prikažite svoje v živo posnete video ocene na platformi."
+    "Process, host, and display your live-recorded video reviews on the platform.": "Obdelajte, gostite in prikažite svoje v živo posnete video ocene na platformi.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sr": {
     "Search any business to watch authentic video reviews or record your own.": "Претражите било које предузеће да бисте гледали аутентичне видео рецензије или снимили своје.",
@@ -17097,7 +17317,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Обрадите, хостујте и прикажите своје видео рецензије уживо снимљене на платформи.",
     "Service Providers:": "Добављачи услуга:",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Примењујемо савремене техничке и организационе безбедносне мере (укључујући шифровани транспорт преко ХТТПС-а и безбедну аутентификацију засновану на токенима) да бисмо заштитили ваше податке од неовлашћеног приступа, губитка или злоупотребе.",
-    "Access the personal data we hold about you.": "Приступите личним подацима које имамо о вама."
+    "Access the personal data we hold about you.": "Приступите личним подацима које имамо о вама.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "lt": {
     "Review Any Business": "Peržiūrėkite bet kokį verslą",
@@ -17477,7 +17702,12 @@
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Diegiame modernias technines ir organizacines saugumo priemones (įskaitant šifruotą transportavimą per HTTPS ir saugų žetonais pagrįstą autentifikavimą), kad apsaugotume jūsų duomenis nuo neteisėtos prieigos, praradimo ar netinkamo naudojimo.",
     "Service Providers:": "Paslaugų teikėjai:",
     "Privacy Officer & In-App Inquiries": "Privatumo pareigūnas ir užklausos programoje",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Su patikimais vidinės sistemos ir prieglobos infrastruktūros teikėjais (pvz., bunny.net ir PostgreSQL Cloud SQL), kurių reikia mūsų žiniatinklio programai paleisti."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Su patikimais vidinės sistemos ir prieglobos infrastruktūros teikėjais (pvz., bunny.net ir PostgreSQL Cloud SQL), kurių reikia mūsų žiniatinklio programai paleisti.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "lv": {
     "Review Any Business": "Pārskatiet jebkuru uzņēmumu",
@@ -17857,7 +18087,12 @@
     "You have the right to:": "Jums ir tiesības:",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Ar uzticamiem aizmugursistēmas un mitināšanas infrastruktūras nodrošinātājiem (piemēram, bunny.net un PostgreSQL Cloud SQL), kas nepieciešami mūsu tīmekļa lietojumprogrammas palaišanai.",
     "Service Providers:": "Pakalpojumu sniedzēji:",
-    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Mēs nepārdodam, netirgojam un neiznomājam jūsu personisko informāciju trešajām personām. Mēs varam kopīgot datus tikai šādos gadījumos:"
+    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Mēs nepārdodam, netirgojam un neiznomājam jūsu personisko informāciju trešajām personām. Mēs varam kopīgot datus tikai šādos gadījumos:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "et": {
     "Search business...": "Otsi ettevõtet...",
@@ -18237,7 +18472,12 @@
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Võtke oma nõusolek andmetöötluseks igal ajal tagasi meie automatiseeritud rakendusesisese vastavustaotluste süsteemi kaudu, ilma et peaksite meili saatma.",
     "Service Providers:": "Teenusepakkujad:",
     "Authenticate your identity securely via passwordless email verification.": "Autentige oma identiteet turvaliselt paroolita e-posti kinnitusega.",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Meie veebirakenduse käitamiseks on vaja usaldusväärseid tausta- ja hostimistaristu pakkujaid (nt bunny.net ja PostgreSQL Cloud SQL)."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Meie veebirakenduse käitamiseks on vaja usaldusväärseid tausta- ja hostimistaristu pakkujaid (nt bunny.net ja PostgreSQL Cloud SQL).",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "is": {
     "You aren't following anyone yet": "Þú fylgist ekki með neinum ennþá",
@@ -18617,7 +18857,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Ef þess er krafist til að fara að gildandi lögum, reglugerðum eða lagalegum ferlum.",
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Dragðu til baka samþykki þitt fyrir gagnavinnslu hvenær sem er í gegnum sjálfvirka beiðnikerfið okkar í forriti án þess að þurfa að senda tölvupóst.",
     "Your Rights and Choices": "Réttindi þín og val",
-    "Service Providers:": "Þjónustuveitendur:"
+    "Service Providers:": "Þjónustuveitendur:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sq": {
     "Search...": "Kërko...",
@@ -18997,7 +19242,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Kërkoni çaktivizimin ose fshirjen e përhershme të llogarisë tuaj dhe të dhënave personale duke paraqitur formularin e kërkesës për fshirje të llogarisë brenda aplikacionit në cilësimet e profilit tuaj.",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Ne zbatojmë masa moderne teknike dhe organizative të sigurisë (përfshirë transportin e koduar nëpërmjet HTTPS dhe vërtetimin e sigurt të bazuar në token) për të mbrojtur të dhënat tuaja nga qasja, humbja ose keqpërdorimi i paautorizuar.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Nëse keni ndonjë pyetje në lidhje me këtë Politikë të Privatësisë ose dëshironi të ushtroni të drejtat tuaja për privatësinë e të dhënave, mund të paraqisni një kërkesë ose kërkesë për fshirje të llogarisë direkt përmes Tavolinës së Mbështetjes brenda aplikacionit dhe Cilësimet e Llogarisë. Të gjitha kërkesat dërgohen në mënyrë të sigurt te oficerët tanë të privatësisë dhe përpunohen brenda 24-48 orëve.",
-    "Your Rights and Choices": "Të drejtat dhe zgjedhjet tuaja"
+    "Your Rights and Choices": "Të drejtat dhe zgjedhjet tuaja",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ga": {
     "Review Any Business": "Athbhreithniú ar Ghnó ar bith",
@@ -19377,7 +19627,12 @@
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Cuirimid bearta slándála teicniúla agus eagraíochtúla nua-aimseartha i bhfeidhm (lena n-áirítear iompar criptithe trí HTTPS agus fíordheimhniú slán bunaithe ar chomharthaí) chun do shonraí a chosaint ó rochtain neamhúdaraithe, caillteanas nó mí-úsáid.",
     "Data Sharing and Disclosure": "Comhroinnt agus Nochtadh Sonraí",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Ní dhéanaimid do chuid faisnéise pearsanta a dhíol, a thrádáil nó a ligean ar cíos le tríú páirtithe. Ní féidir linn sonraí a roinnt ach amháin sna cúinsí seo a leanas:",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Le hinneal iontaofa agus soláthraithe bonneagair óstála (cosúil le bunny.net agus PostgreSQL Cloud SQL) ag teastáil chun ár bhfeidhmchlár gréasáin a rith."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Le hinneal iontaofa agus soláthraithe bonneagair óstála (cosúil le bunny.net agus PostgreSQL Cloud SQL) ag teastáil chun ár bhfeidhmchlár gréasáin a rith.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ca": {
     "Search business...": "Cerca empresa...",
@@ -19757,7 +20012,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Sol·liciteu la desactivació o la supressió permanent del vostre compte i de les dades personals enviant el formulari de sol·licitud d'eliminació de compte des de l'aplicació a la configuració del vostre perfil.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Amb proveïdors d'infraestructura d'allotjament i backend de confiança (com bunny.net i PostgreSQL Cloud SQL) necessaris per executar la nostra aplicació web.",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "No venem, comercialitzem ni lloguem la vostra informació personal a tercers. Podem compartir dades només en les circumstàncies següents:",
-    "Your Rights and Choices": "Els teus drets i eleccions"
+    "Your Rights and Choices": "Els teus drets i eleccions",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "eu": {
     "Search any business to watch authentic video reviews or record your own.": "Bilatu edozein negozio benetako bideoen iritziak ikusteko edo zurea grabatzeko.",
@@ -20137,7 +20397,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Indarrean dauden legeak, arauak edo prozesu juridikoak bete behar badira.",
     "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Gure web aplikazioa exekutatzeko beharrezkoak diren backend eta ostalaritzako azpiegitura hornitzaile fidagarriekin (bunny.net eta PostgreSQL Cloud SQL adibidez).",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Segurtasun-neurri tekniko eta antolakuntza modernoak ezartzen ditugu (HTTPS bidezko garraio enkriptatua eta token bidezko autentifikazio segurua barne) zure datuak baimenik gabeko sarbideetatik, galeretatik edo erabilera okertik babesteko.",
-    "Access the personal data we hold about you.": "Sar zaitez zuri buruz dauzkagun datu pertsonaletara."
+    "Access the personal data we hold about you.": "Sar zaitez zuri buruz dauzkagun datu pertsonaletara.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "gl": {
     "No followers yet": "Aínda non hai seguidores",
@@ -20517,7 +20782,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Procesa, aloxa e mostra as túas críticas de vídeos gravados en directo na plataforma.",
     "Privacy Officer & In-App Inquiries": "Responsable de privacidade e consultas na aplicación",
     "If required to comply with applicable laws, regulations, or legal processes.": "Se é necesario para cumprir coas leis, regulamentos ou procesos legais aplicables.",
-    "Your Rights and Choices": "Os teus dereitos e opcións"
+    "Your Rights and Choices": "Os teus dereitos e opcións",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "mt": {
     "Search followers by name...": "Fittex is-segwaċi bl-isem...",
@@ -20897,7 +21167,12 @@
     "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Itlob id-diżattivazzjoni jew it-tħassir permanenti tal-kont tiegħek u tad-dejta personali billi tissottometti l-formola tat-Talba għat-Tħassir tal-Kont fl-app fis-settings tal-profil tiegħek.",
     "Access the personal data we hold about you.": "Aċċessa d-dejta personali li nżommu dwarek.",
     "Data Sharing and Disclosure": "Qsim u Żvelar tad-Dejta",
-    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Irtira l-kunsens tiegħek għall-ipproċessar tad-dejta fi kwalunkwe ħin permezz tas-sistema awtomatizzata tagħna ta' talba għall-konformità fl-app mingħajr ma jkollok bżonn tibgħat email."
+    "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "Irtira l-kunsens tiegħek għall-ipproċessar tad-dejta fi kwalunkwe ħin permezz tas-sistema awtomatizzata tagħna ta' talba għall-konformità fl-app mingħajr ma jkollok bżonn tibgħat email.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "ka": {
     "Search followers by name...": "მოძებნეთ მიმდევრები სახელით...",
@@ -21277,7 +21552,12 @@
     "Withdraw your consent to data processing at any time through our automated in-app compliance request system without needing to send an email.": "გააუქმეთ თქვენი თანხმობა მონაცემთა დამუშავებაზე ნებისმიერ დროს ჩვენი ავტომატიზირებული აპს-შიდა შესაბამისობის მოთხოვნის სისტემის მეშვეობით ელფოსტის გაგზავნის საჭიროების გარეშე.",
     "Privacy Officer & In-App Inquiries": "კონფიდენციალურობის ოფიცერი და აპის შიდა მოთხოვნები",
     "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "ჩვენ არ ვყიდით, არ ვაჭრობთ ან ვაქირავებ თქვენს პირად ინფორმაციას მესამე პირებზე. ჩვენ შეგვიძლია გავაზიაროთ მონაცემები მხოლოდ შემდეგ პირობებში:",
-    "Maintain platform security and prevent fraudulent activity.": "შეინარჩუნეთ პლატფორმის უსაფრთხოება და თავიდან აიცილეთ თაღლითური აქტივობა."
+    "Maintain platform security and prevent fraudulent activity.": "შეინარჩუნეთ პლატფორმის უსაფრთხოება და თავიდან აიცილეთ თაღლითური აქტივობა.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "hy": {
     "Search business...": "Որոնել բիզնես...",
@@ -21657,7 +21937,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Եթե ​​պահանջվում է համապատասխանել կիրառելի օրենքներին, կանոնակարգերին կամ իրավական գործընթացներին:",
     "Service Providers:": "Ծառայություններ մատուցողներ.",
     "Privacy Officer & In-App Inquiries": "Գաղտնիության պատասխանատու և հավելվածի հարցումներ",
-    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Մենք չենք վաճառում, առևտուր կամ վարձակալում ձեր անձնական տվյալները երրորդ անձանց: Մենք կարող ենք տվյալների փոխանակում կատարել միայն հետևյալ հանգամանքներում."
+    "We do not sell, trade, or rent your personal information to third parties. We may share data only under the following circumstances:": "Մենք չենք վաճառում, առևտուր կամ վարձակալում ձեր անձնական տվյալները երրորդ անձանց: Մենք կարող ենք տվյալների փոխանակում կատարել միայն հետևյալ հանգամանքներում.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "az": {
     "Following & Followers": "İzləyənlər və İzləyənlər",
@@ -22037,7 +22322,12 @@
     "Data Sharing and Disclosure": "Məlumatların Paylaşılması və Açıqlanması",
     "If required to comply with applicable laws, regulations, or legal processes.": "Mövcud qanunlara, qaydalara və ya hüquqi proseslərə riayət etmək tələb olunarsa.",
     "Your Rights and Choices": "Hüquqlarınız və Seçimləriniz",
-    "Authenticate your identity securely via passwordless email verification.": "Parolsuz e-poçt yoxlaması vasitəsilə şəxsiyyətinizi etibarlı şəkildə təsdiq edin."
+    "Authenticate your identity securely via passwordless email verification.": "Parolsuz e-poçt yoxlaması vasitəsilə şəxsiyyətinizi etibarlı şəkildə təsdiq edin.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "sw": {
     "Following & Followers": "Wafuasi na Wafuasi",
@@ -22417,7 +22707,12 @@
     "Process, host, and display your live-recorded video reviews on the platform.": "Mchakato, mwenyeji na uonyeshe hakiki zako za video zilizorekodiwa moja kwa moja kwenye jukwaa.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Ikiwa una maswali yoyote kuhusu Sera hii ya Faragha au ungependa kutumia haki zako za faragha za data, unaweza kuwasilisha swali au ombi la kufuta akaunti moja kwa moja kupitia Dawati la Usaidizi wa ndani ya programu na Mipangilio ya Akaunti. Maombi yote yanatumwa kwa usalama kwa maafisa wetu wa faragha na kushughulikiwa ndani ya saa 24-48.",
     "Your Rights and Choices": "Haki na Chaguo zako",
-    "Authenticate your identity securely via passwordless email verification.": "Thibitisha utambulisho wako kwa usalama kupitia uthibitishaji wa barua pepe usio na nenosiri."
+    "Authenticate your identity securely via passwordless email verification.": "Thibitisha utambulisho wako kwa usalama kupitia uthibitishaji wa barua pepe usio na nenosiri.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "af": {
     "Review Any Business": "Hersien enige besigheid",
@@ -22797,7 +23092,12 @@
     "Access the personal data we hold about you.": "Toegang tot die persoonlike data wat ons oor jou hou.",
     "Privacy Officer & In-App Inquiries": "Privaatheidsbeampte en inprogram-navrae",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "As jy enige vrae oor hierdie Privaatheidsbeleid het of jou dataprivaatheidsregte wil uitoefen, kan jy 'n navraag of rekeningskrapversoek direk deur die inprogram-ondersteuningstoonbank en rekeninginstellings indien. Alle versoeke word veilig na ons privaatheidsbeamptes gestuur en binne 24–48 uur verwerk.",
-    "Data Sharing and Disclosure": "Datadeling en openbaarmaking"
+    "Data Sharing and Disclosure": "Datadeling en openbaarmaking",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "am": {
     "Review Any Business": "ማንኛውንም ንግድ ይገምግሙ",
@@ -23177,7 +23477,12 @@
     "Privacy Officer & In-App Inquiries": "የግላዊነት ኦፊሰር እና የውስጠ-መተግበሪያ ጥያቄዎች",
     "Service Providers:": "አገልግሎት ሰጪዎች፡-",
     "Access the personal data we hold about you.": "ስለእርስዎ የያዝነውን የግል ውሂብ ይድረሱ።",
-    "If required to comply with applicable laws, regulations, or legal processes.": "የሚመለከታቸው ህጎችን፣ ደንቦችን ወይም ህጋዊ ሂደቶችን ለማክበር ከተፈለገ።"
+    "If required to comply with applicable laws, regulations, or legal processes.": "የሚመለከታቸው ህጎችን፣ ደንቦችን ወይም ህጋዊ ሂደቶችን ለማክበር ከተፈለገ።",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "yo": {
     "Search any business to watch authentic video reviews or record your own.": "Wa eyikeyi iṣowo lati wo awọn atunwo fidio ododo tabi ṣe igbasilẹ tirẹ.",
@@ -23557,7 +23862,12 @@
     "Data Sharing and Disclosure": "Pipin data ati Ifihan",
     "Maintain platform security and prevent fraudulent activity.": "Ṣetọju aabo Syeed ati ṣe idiwọ iṣẹ ṣiṣe arekereke.",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Ti o ba ni awọn ibeere eyikeyi nipa Eto Afihan Aṣiri yii tabi fẹ lati lo awọn ẹtọ ipamọ data rẹ, o le fi ibeere kan silẹ tabi ibeere piparẹ akọọlẹ taara nipasẹ Iduro Atilẹyin in-app ati Awọn Eto Akọọlẹ. Gbogbo awọn ibeere ti wa ni aabo ni aabo si awọn oṣiṣẹ aṣiri wa ati ni ilọsiwaju laarin awọn wakati 24–48.",
-    "Service Providers:": "Awọn olupese iṣẹ:"
+    "Service Providers:": "Awọn olupese iṣẹ:",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "zu": {
     "Review Any Business": "Buyekeza Noma Iliphi Ibhizinisi",
@@ -23937,7 +24247,12 @@
     "If required to comply with applicable laws, regulations, or legal processes.": "Uma kudingeka ukuthi uthobele imithetho esebenzayo, iziqondiso, noma izinqubo zomthetho.",
     "Process, host, and display your live-recorded video reviews on the platform.": "Cubungula, phatha, futhi ubonise ukubuyekezwa kwamavidiyo akho arekhodiwe bukhoma endawenikazi.",
     "Your Rights and Choices": "Amalungelo Nezinqumo Zakho",
-    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Nge-backend ethenjwayo nabahlinzeki bengqalasizinda yokubamba (abafana ne-bunny.net ne-PostgreSQL Cloud SQL) edingekayo ukuze siqalise uhlelo lwethu lokusebenza lwewebhu."
+    "With trusted backend and hosting infrastructure providers (such as bunny.net and PostgreSQL Cloud SQL) required to run our web application.": "Nge-backend ethenjwayo nabahlinzeki bengqalasizinda yokubamba (abafana ne-bunny.net ne-PostgreSQL Cloud SQL) edingekayo ukuze siqalise uhlelo lwethu lokusebenza lwewebhu.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   },
   "so": {
     "Search business...": "Goob ganacsi...",
@@ -24317,6 +24632,11 @@
     "Your Rights and Choices": "Xuquuqdaada iyo Doorashadaada",
     "If you have any questions about this Privacy Policy or wish to exercise your data privacy rights, you can submit an inquiry or account deletion request directly through the in-app Support Desk and Account Settings. All requests are securely routed to our privacy officers and processed within 24–48 hours.": "Haddii aad hayso wax su'aalo ah oo ku saabsan siyaasaddan khaaska ah ama aad rabto inaad isticmaasho xuquuqahaaga khaaska ah ee xogta, waxaad si toos ah ugu soo gudbin kartaa weydiinta ama codsiga tirtirka akoontiga iyada oo loo marayo miiska taageerada gudaha-app iyo Settings Account. Dhammaan codsiyada waxaa si ammaan ah loogu gudbiyaa saraakiishayada sirta waxaana lagu baaraandegaa 24-48 saacadood gudahood.",
     "We implement modern technical and organizational security measures (including encrypted transport via HTTPS and secure token-based authentication) to protect your data from unauthorized access, loss, or misuse.": "Waxaan hirgelineynaa tillaabooyinka amniga farsamada iyo hay'adda casriga ah (ay ku jiraan gaadiidka sirta ah ee loo maro HTTPS iyo sugida calaamad ku saleysan oo sugan) si aan xogtaada uga ilaalino galitaanka, luminta, ama si xun u isticmaalka aan la ogolayn.",
-    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Codso daminta ama tirtirka joogtada ah ee akoonkaaga iyo xogtaada shaqsiyeed adiga oo soo gudbinaya gudaha abka foomka Codsiga Tirtirka Koontada ee goobaha astaantaada."
+    "Request the deactivation or permanent deletion of your account and personal data by submitting the in-app Account Deletion Request form in your profile settings.": "Codso daminta ama tirtirka joogtada ah ee akoonkaaga iyo xogtaada shaqsiyeed adiga oo soo gudbinaya gudaha abka foomka Codsiga Tirtirka Koontada ee goobaha astaantaada.",
+    "Searching...": "Buscando...",
+    "0 reviews": "0 reseñas",
+    "Back": "Atrás",
+    "Clear": "Borrar",
+    "Remove search": "Eliminar búsqueda"
   }
 }

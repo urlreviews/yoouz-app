@@ -143,7 +143,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   bizInputRef.current?.focus();
                 }}
                 className="absolute right-2 p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                title="Clear"
+                title={t("common.clear", "Clear")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -164,7 +164,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
             {isSearching ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                <span className="text-white text-xs md:text-sm font-semibold">Searching...</span>
+                <span className="text-white text-xs md:text-sm font-semibold">{t("search.searching", "Searching...")}</span>
               </>
             ) : (
               <span>{t("common.search", "Search")}</span>
@@ -203,7 +203,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.placeholder", "Search business name or domain...")}
+              placeholder={t("search.placeholder", "Search business...")}
               className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium"
               autoFocus={autoFocus}
             />
@@ -220,7 +220,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                   mobileBizInputRef.current?.focus();
                 }}
                 className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                title="Clear"
+                title={t("common.clear", "Clear")}
               >
                 <X className="w-4 h-4" />
               </button>

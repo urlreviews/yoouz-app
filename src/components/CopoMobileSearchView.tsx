@@ -783,7 +783,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                   businessInputRef.current?.focus();
                 }}
                 className="p-1 text-zinc-400 hover:text-white cursor-pointer shrink-0 rounded-full hover:bg-zinc-800 transition-colors"
-                title="Clear"
+                title={t("common.clear", "Clear")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -795,7 +795,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
             onClick={handleBack}
             className="text-zinc-300 hover:text-white active:scale-95 font-medium text-[15px] px-1.5 py-2 transition-colors cursor-pointer shrink-0"
           >
-            {submittedQuery ? "Back" : "Cancel"}
+            {submittedQuery ? t("common.back", "Back") : t("common.cancel", "Cancel")}
           </button>
         </div>
 
@@ -959,7 +959,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
                           type="button"
                           onClick={(e) => removeRecentSearch(s, e)}
                           className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800/80 transition-colors shrink-0 ml-auto"
-                          title="Remove search"
+                          title={t("common.delete", "Remove search")}
                         >
                           <X className="w-4 h-4" />
                         </button>

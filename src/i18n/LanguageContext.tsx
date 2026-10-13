@@ -8,6 +8,7 @@ import {
 } from "./translations";
 import { UNIVERSAL_PAGE_TRANSLATIONS } from "./locales/universal";
 import universalAllJson from "./locales/universal_all.json";
+import { parseLocaleFromPath, buildLocalizedPath, syncUrlWithLanguage } from "./urlLocalization";
 
 interface LanguageContextType {
   language: SupportedLanguage;
@@ -17,6 +18,7 @@ interface LanguageContextType {
   languages: LanguageMeta[];
   t: (keyPath: string, fallbackOrParams?: string | Record<string, string | number>, params?: Record<string, string | number>) => string;
   translateText: (text: string) => string;
+  localizedPath: (path: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -26,6 +28,12 @@ const ALL_STORAGE_KEYS = ["yoouz_user_language_preference", "copo_language", "yo
 
 function detectBestLanguage(): SupportedLanguage {
   try {
+    // 0. Check URL pathname first (e.g. /fr/search, /nl/search, /es/discover)
+    if (typeof window !== "undefined") {
+      const { locale } = parseLocaleFromPath(window.location.pathname);
+      if (locale) return locale;
+    }
+
     // 1. Check all local storage keys for explicit user selection
     for (const key of ALL_STORAGE_KEYS) {
       const saved = localStorage.getItem(key);
@@ -387,10 +395,28 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [language, flushBatch]);
 
+  // Browser Back/Forward navigation sync with URL language
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === "undefined") return;
+      const { locale } = parseLocaleFromPath(window.location.pathname);
+      const targetLang = locale || "en";
+      if (targetLang !== currentLangRef.current) {
+        setLanguageState(targetLang as SupportedLanguage);
+        currentLangRef.current = targetLang;
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const setLanguage = useCallback((newLang: SupportedLanguage) => {
     if (!SUPPORTED_LANGUAGES.some((l) => l.code === newLang)) return;
     setLanguageState(newLang);
     currentLangRef.current = newLang;
+
+    // 0. Synchronize URL prefix (e.g. /fr/search, /nl/search) for SEO & deep linking
+    syncUrlWithLanguage(newLang);
 
     // 1. Persist across all local storage keys & cookies for instant client retention
     try {
@@ -528,7 +554,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
-      // 2. Dynamic cache lookup by keyPath or by englishText
+      // 2. Dynamic cache lookup by keyPath or by englishText or by fallback
       const langCache = dynamicCache[language] || loadSavedTranslations(language);
       const universalAllDict = (universalAllJson as Record<string, Record<string, string>>)[language];
       if (typeof val !== "string" || !val) {
@@ -536,14 +562,31 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           val = langCache[keyPath];
         } else if (langCache[englishText]) {
           val = langCache[englishText];
+        } else if (fallback && langCache[fallback]) {
+          val = langCache[fallback];
         } else if (universalAllDict?.[englishText]) {
           val = universalAllDict[englishText];
+        } else if (fallback && universalAllDict?.[fallback]) {
+          val = universalAllDict[fallback];
         } else if (universalAllDict?.[keyPath]) {
           val = universalAllDict[keyPath];
         } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[englishText]) {
           val = UNIVERSAL_PAGE_TRANSLATIONS[language][englishText];
+        } else if (fallback && UNIVERSAL_PAGE_TRANSLATIONS[language]?.[fallback]) {
+          val = UNIVERSAL_PAGE_TRANSLATIONS[language][fallback];
         } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[keyPath]) {
           val = UNIVERSAL_PAGE_TRANSLATIONS[language][keyPath];
+        } else if (universalAllDict) {
+          // Case-insensitive / trimmed match across universalAllDict
+          const queryClean = (englishText || fallback || "").trim().toLowerCase();
+          if (queryClean) {
+            for (const [k, v] of Object.entries(universalAllDict)) {
+              if (k.trim().toLowerCase() === queryClean) {
+                val = v;
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -571,6 +614,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return t(text, text);
   }, [t]);
 
+  const localizedPath = useCallback(
+    (path: string) => buildLocalizedPath(path, language),
+    [language]
+  );
+
   return (
     <LanguageContext.Provider
       value={{
@@ -580,7 +628,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         currentLanguageMeta,
         languages: SUPPORTED_LANGUAGES,
         t,
-        translateText
+        translateText,
+        localizedPath
       }}
     >
       {children}

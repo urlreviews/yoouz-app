@@ -68,8 +68,11 @@ import {
 } from "./lib/socialSync";
 import { buildCommentTree } from "./utils/commentUtils";
 import { resolveMessageTimestampMs } from "./utils/dateUtils";
+import { useLanguage } from "./i18n/LanguageContext";
+import { parseLocaleFromPath, buildLocalizedPath } from "./i18n/urlLocalization";
 
 export function App() {
+  const { language } = useLanguage();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
       const saved = localStorage.getItem("copo_user_profile");
@@ -480,7 +483,7 @@ export function App() {
   const [activeSection, setActiveSection] = useState<NavSection>(() => {
     // Immediate sync from URL on boot to prevent flash of home
     try {
-      const pathname = window.location.pathname;
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
       if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
       if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return "testembed";
       if (pathname === "/searchtest" || pathname === "/search-test") return "searchtest";
@@ -570,7 +573,14 @@ export function App() {
   const [activeShareVideo, setActiveShareVideo] = useState<VideoReview | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(() => {
+    try {
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
+      return (pathname === "/search" || pathname.startsWith("/search/")) && typeof window !== "undefined" && window.innerWidth < 768;
+    } catch {
+      return false;
+    }
+  });
   const handleOpenSearchModal = () => {
     setSearchResetKey((prev) => prev + 1);
     setIsSearchModalOpen(true);
@@ -789,7 +799,7 @@ export function App() {
   useEffect(() => {
     const syncFromUrl = () => {
       try {
-        const pathname = window.location.pathname;
+        const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
         const params = new URLSearchParams(window.location.search);
         
         if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") {
@@ -827,7 +837,7 @@ export function App() {
           setEmbedTargetId(null);
         }
 
-        if (window.location.pathname === "/yoouzadmin" || window.location.pathname.startsWith("/yoouzadmin")) {
+        if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) {
           setActiveSection("admin");
           return;
         }

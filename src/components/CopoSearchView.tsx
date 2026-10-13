@@ -781,7 +781,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                             type="button"
                             onClick={(e) => removeRecentSearch(term, e)}
                             className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800/80 transition-colors shrink-0 ml-auto"
-                            title="Remove search"
+                            title={t("common.delete", "Remove search")}
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -1015,7 +1015,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           ))}
                         </div>
                         <span className="text-zinc-400 font-medium text-xs border-l border-zinc-800 pl-2.5">
-                          0 reviews
+                          {t("common.noReviewsYet", "0 reviews")}
                         </span>
                       </>
                     )}
