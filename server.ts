@@ -21710,7 +21710,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         transcript: localResult.transcript || "",
         segments: localResult.segments || [],
         vtt_content: localResult.vtt_content || "",
-        method: "gemini"
+        method: "local_faster_whisper"
       });
     } catch (err: any) {
       console.error("[Transcription] Endpoint error:", err);
