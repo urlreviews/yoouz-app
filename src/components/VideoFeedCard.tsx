@@ -51,11 +51,13 @@ const SubtitleOverlay = ({ currentTime, segments, isActive }: { currentTime: num
   if (!activeSegment) return null;
 
   return (
-    <div className="absolute bottom-[32%] left-0 right-0 flex justify-center px-8 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[90%] animate-in fade-in zoom-in-95 duration-200">
-        <p className="text-white text-[17px] sm:text-[19px] md:text-[21px] font-black text-center leading-tight tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] [text-shadow:_0_1px_4px_rgb(0_0_0_/_100%)] bg-black/25 backdrop-blur-[1px] px-4 py-1.5 rounded-xl uppercase italic">
-          {activeSegment.text.trim()}
-        </p>
+    <div className="absolute bottom-[28%] left-0 right-0 flex justify-center px-8 pointer-events-none z-[48] select-none transition-all duration-300">
+      <div className="max-w-[95%] animate-in fade-in zoom-in-90 slide-in-from-bottom-2 duration-300">
+        <div className="bg-black/60 backdrop-blur-md px-6 py-2.5 rounded-[22px] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <p className="text-white text-[18px] sm:text-[20px] md:text-[22px] font-black text-center leading-[1.1] tracking-tight [text-shadow:_0_2px_8px_rgb(0_0_0_/_80%)] uppercase italic transform hover:scale-105 transition-transform">
+            {activeSegment.text.trim()}
+          </p>
+        </div>
       </div>
     </div>
   );

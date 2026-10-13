@@ -991,7 +991,43 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Save metadata to server review index and memory cache
+    // 5. Transcribe video in background before saving
+    setPublishingStage("Generating captions...");
+    let transcriptText = "";
+    let segments = [];
+
+    try {
+      const transcribeRes = await fetch("/api/videos/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoData: await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(recordedVideoBlob!);
+          }),
+          mimeType: recordedVideoBlob?.type || "video/webm",
+          filename: cleanFileName
+        })
+      });
+      if (transcribeRes.ok) {
+        const transData = await transcribeRes.json();
+        if (transData.success) {
+          transcriptText = transData.transcript;
+          segments = transData.segments || [];
+        }
+      }
+    } catch (e) {
+      console.warn("Transcription notice:", e);
+    }
+
+    const finalReview: VideoReview = {
+      ...newReview,
+      transcriptText,
+      segments
+    } as any;
+
+    // 6. Save metadata to server review index and memory cache
     setUploadProgress(96);
     setPublishingStage("Saving review to feed...");
 
@@ -999,7 +1035,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       await fetch("/api/videos/save-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReview),
+        body: JSON.stringify(finalReview),
         signal: AbortSignal.timeout(12000)
       });
     } catch (saveErr) {
@@ -1009,7 +1045,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         await fetch("/api/videos/save-review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newReview),
+          body: JSON.stringify(finalReview),
           signal: AbortSignal.timeout(12000)
         });
       } catch (retryErr) {}
@@ -1019,7 +1055,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     fetch(`/api/nosql/videoReviews/${reviewId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: newReview, merge: true })
+      body: JSON.stringify({ data: finalReview, merge: true })
     }).catch(() => {});
 
     if (selectedPlace?.id) {
@@ -1049,7 +1085,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setIsPublishing(false);
     isPublishingRef.current = false;
     onClose();
-    onPublishVideoReview(newReview);
+    onPublishVideoReview(finalReview);
   };
 
   const filteredPlaces = React.useMemo(() => {

@@ -18396,7 +18396,13 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Run BunnyDB, PostgreSQL mirroring, and search engine indexing asynchronously in the background
       (async () => {
         try {
-          // 2. Sync to Bunny Database (libSQL cloud)
+          // 2. Transcription Engine: Auto-generate captions in background if missing
+          if (!review.segments || review.segments.length === 0) {
+            console.log(`[Transcription] Background trigger for review: ${review.id}`);
+            ensureTranscriptionForVideo(review.id).catch(e => console.warn("Background transcription error:", e));
+          }
+
+          // 3. Sync to Bunny Database (libSQL cloud)
           const bunnyDb = getBunnyDb();
           if (bunnyDb) {
             try {
@@ -21569,23 +21575,21 @@ ${JSON.stringify(chunk)}`;
     }
   });
 
-  // Ensure Transcription endpoint for on-demand processing (old videos)
-  app.post("/api/videos/:id/ensure-transcript", async (req, res) => {
+  // Reusable background transcription logic
+  async function ensureTranscriptionForVideo(videoId: string) {
     try {
-      const { id } = req.params;
-      
-      const [record] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, id));
-      if (!record) return res.status(404).json({ error: "Video not found" });
+      const [record] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
+      if (!record) return { error: "Video not found" };
       
       const video = record.data as VideoReview;
       if (video.segments && video.segments.length > 0) {
-        return res.json({ success: true, alreadyExists: true, segments: video.segments });
+        return { success: true, alreadyExists: true, segments: video.segments };
       }
 
       const videoUrl = video.videoUrl;
-      if (!videoUrl) return res.status(400).json({ error: "No video URL" });
+      if (!videoUrl) return { error: "No video URL" };
 
-      console.log(`[Transcription] Auto-processing old video: ${id}`);
+      console.log(`[Transcription] Processing video: ${videoId}`);
       
       const fetchResp = await fetch(videoUrl);
       if (!fetchResp.ok) throw new Error(`Failed to fetch video: ${fetchResp.statusText}`);
@@ -21594,7 +21598,7 @@ ${JSON.stringify(chunk)}`;
       const b64 = vBuffer.toString('base64');
 
       const gemini = getGeminiClient();
-      if (!gemini) return res.status(500).json({ error: "Gemini not configured" });
+      if (!gemini) return { error: "Gemini not configured" };
 
       const gResp = await gemini.models.generateContent({
         model: "gemini-1.5-flash",
@@ -21629,13 +21633,19 @@ ${JSON.stringify(chunk)}`;
       } catch (e) {}
 
       const updatedVideo = { ...video, transcriptText, segments };
-      await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, id));
+      await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
 
-      return res.json({ success: true, transcriptText, segments, method: "gemini" });
+      return { success: true, transcriptText, segments, method: "gemini" };
     } catch (err: any) {
-      console.error("[Transcription] Ensure error:", err);
-      return res.status(500).json({ error: err.message });
+      console.error(`[Transcription] ensureTranscriptionForVideo error for ${videoId}:`, err);
+      return { error: err.message };
     }
+  }
+
+  // Ensure Transcription endpoint for on-demand processing (old videos)
+  app.post("/api/videos/:id/ensure-transcript", async (req, res) => {
+    const result = await ensureTranscriptionForVideo(req.params.id);
+    return res.json(result);
   });
 
   // Local Transcription Helper using the Python Faster-Whisper service

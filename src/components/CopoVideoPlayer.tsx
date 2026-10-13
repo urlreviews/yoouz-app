@@ -66,7 +66,7 @@ interface CopoVideoPlayerProps {
   allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
   onPurgeAllVideos?: () => void;
-  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[] }) => void;
+  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string }) => void;
   isPaused?: boolean;
   initialAutoplayPaused?: boolean;
   contextKey?: string;
@@ -198,14 +198,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const activeCardIndexRef = useRef<number>(activeCardIndex);
   activeCardIndexRef.current = activeCardIndex;
 
-  // Sync current video time for subtitle rendering
-  useEffect(() => {
-    const activeVid = feedVideoRef.current;
-    if (!activeVid) return;
-    const handleTimeUpdate = () => setVideoTime(activeVid.currentTime);
-    activeVid.addEventListener('timeupdate', handleTimeUpdate);
-    return () => activeVid.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [currentIndex, activeCardIndex, isPaused]);
 
   // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
   // Maintains strictly 3 hardware video elements across the feed to guarantee 0ms instant playback on swipe
@@ -314,6 +306,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             }
             if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
               setVideoDuration(vid.duration);
+              setVideoTime(vid.currentTime);
               setProgressPercent((vid.currentTime / vid.duration) * 100);
             }
           }
@@ -678,6 +671,25 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const viewTimer = setTimeout(() => {
       if (activeVideo?.id) {
         onRecordView?.(activeVideo.id);
+
+        // Auto-trigger transcription for videos missing segments
+        if (!activeVideo.segments || activeVideo.segments.length === 0) {
+          fetch(`/api/videos/${activeVideo.id}/ensure-transcript`, { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.segments) {
+                // Update parent state to trigger re-render and persist in feed
+                onUpdateVideoReview?.(activeVideo.id, {
+                  segments: data.segments,
+                  transcriptText: data.transcriptText
+                });
+                // Immediate local update fallback
+                activeVideo.segments = data.segments;
+                activeVideo.transcriptText = data.transcriptText;
+              }
+            })
+            .catch(err => console.warn("[Player] Auto-transcription trigger failed:", err));
+        }
       }
     }, 1000);
 
