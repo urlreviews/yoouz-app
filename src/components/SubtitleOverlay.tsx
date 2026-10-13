@@ -139,7 +139,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   const activeWordIdx = Math.min(words.length - 1, Math.floor(progressRatio * words.length));
 
   return (
-    <div className="absolute bottom-[165px] sm:bottom-[180px] md:bottom-[195px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
+    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
       <div className="max-w-[85%] sm:max-w-[78%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
         <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.85)] text-center flex items-center justify-center gap-1.5 flex-wrap">
           {words.map((word, wIdx) => {
@@ -150,7 +150,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
                 key={`${word}-${wIdx}`}
                 className={`transition-all duration-100 leading-tight inline-block ${
                   isHighlighted
-                    ? "text-[#ffcc00] font-black scale-105 drop-shadow-[0_0_12px_rgba(255,204,0,0.85)]"
+                    ? "text-amber-400 font-black scale-105 drop-shadow-[0_0_12px_rgba(250,204,21,0.85)]"
                     : isPast
                     ? "text-white font-bold opacity-90"
                     : "text-white/70 font-semibold"
