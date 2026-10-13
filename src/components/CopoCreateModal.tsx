@@ -109,6 +109,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const speechRecognitionRef = useRef<any>(null);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
 
@@ -734,69 +735,57 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         })();
       };
 
-      // Open WebSocket for real-time transcription (Raw PCM)
+      // Initialize Browser-Native Zero-API Live Speech Recognition Engine
       try {
-        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${wsProtocol}//${window.location.hostname}:8000/ws/transcribe`;
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-        
-        ws.onopen = () => {
-          console.log("[WS] Transcription stream connected");
-          // Initialize AudioContext to capture raw PCM
-          try {
-            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-            const audioCtx = new AudioContextClass({ sampleRate: 16000 });
-            audioContextRef.current = audioCtx;
-            
-            const source = audioCtx.createMediaStreamSource(stream);
-            // ScriptProcessor is widely supported including legacy iOS
-            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-            audioProcessorRef.current = processor;
-            
-            processor.onaudioprocess = (e) => {
-              if (ws.readyState === WebSocket.OPEN) {
-                const inputData = e.inputBuffer.getChannelData(0);
-                // Convert Float32 to Int16 for the Python service
-                const pcm16 = new Int16Array(inputData.length);
-                for (let i = 0; i < inputData.length; i++) {
-                  pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7FFF;
-                }
-                ws.send(pcm16.buffer);
-              }
-            };
-            
-            source.connect(processor);
-            processor.connect(audioCtx.destination);
-          } catch (audioErr) {
-            console.warn("[WS] AudioContext setup failed:", audioErr);
-          }
-        };
+        const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognitionClass) {
+          const recognition = new SpeechRecognitionClass();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = navigator.language || 'en-US';
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === "partial") {
-              if (data.text) {
-                setLiveTranscript(prev => {
-                  if (prev.endsWith(data.text)) return prev;
-                  return prev + " " + data.text;
+          const recStartTime = Date.now();
+
+          recognition.onresult = (event: any) => {
+            let fullText = "";
+            const currentSegments: { start: number; end: number; text: string }[] = [];
+
+            for (let i = 0; i < event.results.length; i++) {
+              const res = event.results[i];
+              const transcriptPiece = res[0]?.transcript?.trim();
+              if (transcriptPiece) {
+                fullText += (fullText ? " " : "") + transcriptPiece;
+                
+                // Estimate segment timing based on elapsed recording time
+                const elapsedSec = Math.max(0, (Date.now() - recStartTime) / 1000);
+                const approxStart = Math.max(0, Math.round((elapsedSec - 3) * 10) / 10);
+                const approxEnd = Math.max(approxStart + 1.5, Math.round(elapsedSec * 10) / 10);
+
+                currentSegments.push({
+                  start: approxStart,
+                  end: approxEnd,
+                  text: transcriptPiece
                 });
               }
-            } else if (data.type === "final") {
-              if (data.segments) {
-                setLiveSegments(data.segments);
-              }
-              if (data.text) {
-                setLiveTranscript(data.text);
-              }
-              // The server will close the connection after 'final'
             }
-          } catch (e) {}
-        };
-        ws.onerror = (e) => console.warn("[WS] Transcription error:", e);
-      } catch (e) {
-        console.warn("[WS] Could not initialize live transcription:", e);
+
+            if (fullText) {
+              setLiveTranscript(fullText);
+              if (currentSegments.length > 0) {
+                setLiveSegments(currentSegments);
+              }
+            }
+          };
+
+          recognition.onerror = (e: any) => {
+            console.warn("[SpeechRecognition] Notice:", e);
+          };
+
+          recognition.start();
+          speechRecognitionRef.current = recognition;
+        }
+      } catch (speechErr) {
+        console.warn("[SpeechRecognition] Setup notice:", speechErr);
       }
 
       // Request data slices periodically (every 500ms for responsiveness)
@@ -835,6 +824,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setIsRecording(false);
       isRecordingRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
+      
+      // Stop SpeechRecognition engine
+      if (speechRecognitionRef.current) {
+        try { speechRecognitionRef.current.stop(); } catch (e) {}
+        speechRecognitionRef.current = null;
+      }
       
       // Stop Audio Processing
       if (audioProcessorRef.current) {

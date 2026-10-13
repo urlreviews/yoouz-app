@@ -21562,7 +21562,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return res.json(result);
   });
 
-  // Local & Fallback Transcription Helper (Faster-Whisper + Gemini API)
+  // Local Transcription Engine (Faster-Whisper local service)
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
       // 1. Try local Python Faster-Whisper service on port 8000 if active
@@ -21589,131 +21589,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
     } catch (err) {
-      console.warn("[Transcription] Local service check note:", err);
-    }
-
-    // 2. High-availability Gemini AI Speech-to-Text Transcription Engine
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-    if (apiKey) {
-      try {
-        const { GoogleGenAI } = await import("@google/genai");
-        const ai = new GoogleGenAI({ apiKey });
-        const b64Data = videoBuffer.toString("base64");
-        
-        let targetMimeType = (mimeTypeInput || "video/webm").split(";")[0].trim();
-        if (!targetMimeType || targetMimeType === "video/x-matroska" || targetMimeType === "application/octet-stream") {
-          targetMimeType = "video/webm";
-        }
-        if (filename.endsWith(".mp4") || filename.endsWith(".mov")) {
-          targetMimeType = "video/mp4";
-        }
-
-        const modelCandidates = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.5-transcribe"];
-        let rawText = "";
-
-        for (const modelCandidate of modelCandidates) {
-          try {
-            console.log(`[Transcription] Attempting Gemini speech-to-text with model: ${modelCandidate}`);
-            const response = await ai.models.generateContent({
-              model: modelCandidate,
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    {
-                      inlineData: {
-                        mimeType: targetMimeType,
-                        data: b64Data
-                      }
-                    },
-                    {
-                      text: `You are an expert video subtitle generator. Transcribe all spoken words in this video review.
-Return ONLY a valid JSON object with the following schema:
-{
-  "transcript": "Full verbatim text transcript of spoken audio",
-  "segments": [
-    { "start": 0.0, "end": 3.0, "text": "First spoken phrase or sentence" },
-    { "start": 3.0, "end": 6.5, "text": "Next spoken phrase or sentence" }
-  ]
-}
-Ensure start and end timestamps are numbers in seconds matching the audio. Output ONLY raw JSON. Do not include markdown tags, code blocks, or commentary.`
-                    }
-                  ]
-                }
-              ]
-            });
-
-            if (response.text && response.text.trim()) {
-              rawText = response.text.trim();
-              console.log(`[Transcription] Success using model ${modelCandidate}! Raw output length: ${rawText.length}`);
-              break;
-            }
-          } catch (candidateErr: any) {
-            console.warn(`[Transcription] Model ${modelCandidate} notice:`, candidateErr?.message || candidateErr);
-          }
-        }
-
-        let transcript = "";
-        let segments: any[] = [];
-
-        if (rawText) {
-          try {
-            const cleanJsonStr = rawText
-              .replace(/^```json\s*/i, "")
-              .replace(/^```\s*/, "")
-              .replace(/\s*```$/, "")
-              .trim();
-            const parsed = JSON.parse(cleanJsonStr);
-            if (parsed.transcript) {
-              transcript = String(parsed.transcript).trim();
-            } else if (typeof parsed === "string") {
-              transcript = parsed;
-            }
-            if (Array.isArray(parsed.segments)) {
-              segments = parsed.segments;
-            }
-          } catch (pErr) {
-            transcript = rawText;
-          }
-
-          // Fallback segment builder if JSON didn't yield granular segments
-          if (!segments || segments.length === 0) {
-            const sentences = transcript.split(/(?<=[.!?\n])\s+/).map(s => s.trim()).filter(Boolean);
-            if (sentences.length > 0) {
-              const totalWords = sentences.reduce((acc, s) => acc + s.split(/\s+/).length, 0);
-              const estDur = Math.min(60, Math.max(10, totalWords * 0.45));
-              let curStart = 0;
-              segments = sentences.map(s => {
-                const w = s.split(/\s+/).length;
-                const d = Math.max(2, (w / (totalWords || 1)) * estDur);
-                const seg = {
-                  start: Math.round(curStart * 100) / 100,
-                  end: Math.round((curStart + d) * 100) / 100,
-                  text: s
-                };
-                curStart += d;
-                return seg;
-              });
-            } else {
-              segments = [{ start: 0, end: 60, text: transcript }];
-            }
-          }
-
-          const vtt = `WEBVTT\n\n` + segments.map((s, idx) => {
-            const pad = (num: number) => String(Math.floor(num)).padStart(2, '0');
-            const ms = (num: number) => String(Math.floor((num % 1) * 1000)).padStart(3, '0');
-            return `${idx + 1}\n${pad(s.start / 60)}:${pad(s.start % 60)}.${ms(s.start)} --> ${pad(s.end / 60)}:${pad(s.end % 60)}.${ms(s.end)}\n${s.text}\n`;
-          }).join('\n');
-
-          return {
-            transcript,
-            segments,
-            vtt_content: vtt
-          };
-        }
-      } catch (gemErr) {
-        console.warn("[Transcription] Gemini API speech-to-text error:", gemErr);
-      }
+      console.warn("[Transcription] Local Faster-Whisper service notice:", err);
     }
 
     return { transcript: "", segments: [], vtt_content: "" };
