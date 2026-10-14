@@ -872,18 +872,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
                   const blocks = voiceBlocksRef.current;
 
-                  // Match closest VAD voice block recorded synchronously by AnalyserNode
+                  // Forward match: find the FIRST voice block starting at or after (prevEnd - 0.35s)
                   let matchedBlock: { start: number; end: number } | null = null;
                   if (blocks.length > 0) {
-                    for (let b = blocks.length - 1; b >= 0; b--) {
-                      if (blocks[b].end <= nowSec + 0.5 && blocks[b].start >= prevEnd - 0.5) {
+                    for (let b = 0; b < blocks.length; b++) {
+                      if (blocks[b].start >= prevEnd - 0.35 && blocks[b].start <= nowSec) {
                         matchedBlock = blocks[b];
                         break;
                       }
                     }
                     if (!matchedBlock) {
                       const lastBlock = blocks[blocks.length - 1];
-                      if (lastBlock && lastBlock.start >= prevEnd - 0.5) {
+                      if (lastBlock && lastBlock.end >= prevEnd - 0.2) {
                         matchedBlock = lastBlock;
                       }
                     }
@@ -896,9 +896,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     segStart = Math.max(prevEnd, matchedBlock.start);
                     segEnd = Math.max(segStart + 0.4, matchedBlock.end);
                   } else {
-                    const LATENCY_OFFSET = 0.7;
+                    const LATENCY_OFFSET = 0.8;
                     const adjustedNow = Math.max(prevEnd + 0.4, nowSec - LATENCY_OFFSET);
-                    const dur = Math.max(0.5, words.length * 0.33);
+                    const dur = Math.max(0.5, words.length * 0.35);
                     const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
                     segStart = Math.max(prevEnd, capturedStart);
                     segEnd = Math.max(segStart + 0.4, adjustedNow);
@@ -937,8 +937,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             }
           };
 
+          recognition.onend = () => {
+            if (isRecordingRef.current && speechRecognitionRef.current) {
+              try {
+                speechRecognitionRef.current.start();
+              } catch (e) {
+                console.warn("[SpeechRecognition] Auto-restart notice:", e);
+              }
+            }
+          };
+
           recognition.onerror = (e: any) => {
             console.warn("[SpeechRecognition] Notice:", e);
+            if (isRecordingRef.current && e.error !== 'aborted') {
+              try {
+                speechRecognitionRef.current.start();
+              } catch (err) {}
+            }
           };
 
           recognition.start();
@@ -1011,19 +1026,30 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             const blocks = voiceBlocksRef.current;
             let matchedBlock: { start: number; end: number } | null = null;
             if (blocks.length > 0) {
-              matchedBlock = blocks[blocks.length - 1];
+              for (let b = 0; b < blocks.length; b++) {
+                if (blocks[b].start >= prevEnd - 0.35 && blocks[b].start <= finalNowSec) {
+                  matchedBlock = blocks[b];
+                  break;
+                }
+              }
+              if (!matchedBlock) {
+                const lastBlock = blocks[blocks.length - 1];
+                if (lastBlock && lastBlock.end >= prevEnd - 0.2) {
+                  matchedBlock = lastBlock;
+                }
+              }
             }
 
             let segStart = 0;
             let segEnd = 0;
 
-            if (matchedBlock && matchedBlock.start >= prevEnd - 0.5) {
+            if (matchedBlock) {
               segStart = Math.max(prevEnd, matchedBlock.start);
               segEnd = Math.max(segStart + 0.4, matchedBlock.end);
             } else {
               const LATENCY_OFFSET = 0.5;
               const adjustedNow = Math.max(prevEnd + 0.4, finalNowSec - LATENCY_OFFSET);
-              const dur = Math.max(0.5, words.length * 0.33);
+              const dur = Math.max(0.5, words.length * 0.35);
               const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
               segStart = Math.max(prevEnd, capturedStart);
               segEnd = Math.max(segStart + 0.4, adjustedNow);
@@ -1050,6 +1076,46 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
         setInterimTranscript("");
       }
+
+      // Ensure liveSegments is populated using VAD voice blocks if Speech Recognition missed anything
+      setLiveSegments((prev) => {
+        if (prev && prev.length > 0) return prev;
+        const blocks = voiceBlocksRef.current;
+        if (!blocks || blocks.length === 0) return prev;
+
+        const fullText = (liveTranscript || interimTranscript || "").trim();
+        if (!fullText) return prev;
+
+        const words = fullText.split(/\s+/).filter(Boolean);
+        if (words.length === 0) return prev;
+
+        const wordsPerBlock = Math.ceil(words.length / blocks.length);
+        const newChunks: any[] = [];
+
+        for (let b = 0; b < blocks.length; b++) {
+          const block = blocks[b];
+          const blockWords = words.slice(b * wordsPerBlock, (b + 1) * wordsPerBlock);
+          if (blockWords.length === 0) break;
+
+          const bDur = Math.max(0.4, block.end - block.start);
+          const secPerW = bDur / blockWords.length;
+
+          for (let j = 0; j < blockWords.length; j += 4) {
+            const subWords = blockWords.slice(j, j + 4);
+            const subText = subWords.join(" ");
+            const subStart = block.start + (j * secPerW);
+            const subEnd = block.start + ((j + subWords.length) * secPerW);
+            newChunks.push({
+              start: Math.round(subStart * 100) / 100,
+              end: Math.round(subEnd * 100) / 100,
+              text: subText,
+              isHardwareTimed: true
+            });
+          }
+        }
+        return newChunks;
+      });
+
       phraseStartRef.current = -1;
       
       // Stop Audio Processing
