@@ -31,7 +31,7 @@ export const buildSegmentsFromTranscript = (text: string, totalDuration: number 
   const maxWordsPerLine = 4; // Strict 3-5 words max per line for premium TikTok/Reels single-line captions
 
   let currentWordIdx = 0;
-  let runningTime = Math.max(0, startOffset);
+  let runningTime = Math.max(0.05, startOffset);
 
   while (currentWordIdx < words.length) {
     const chunkWords = words.slice(currentWordIdx, currentWordIdx + maxWordsPerLine);
@@ -186,16 +186,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   const activeSegment = useMemo(() => {
     if (!validSegments || validSegments.length === 0) return null;
 
-    // 1. If playback time is before the speaker even starts speaking, show nothing
-    if (currentTime < (validSegments[0].start - 0.08)) {
-      return null;
-    }
-
-    // 2. Direct active segment lookup within current time window [start - 0.06s, end + 0.12s]
+    // 1. Direct active segment lookup within current time window [start - 0.10s, end + 0.15s]
     const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.06) && currentTime <= (s.end + 0.12)
+      s => currentTime >= (s.start - 0.10) && currentTime <= (s.end + 0.15)
     );
     if (direct) return direct;
+
+    // 2. ZERO DELAY: If at the very beginning before first segment start, show first segment immediately!
+    // Words will remain in white/semi-white and the first word will highlight yellow the millisecond speech starts.
+    if (currentTime < validSegments[0].start) {
+      return validSegments[0];
+    }
 
     // 3. Pause handling: If currentTime is in a pause AFTER a segment ends but BEFORE the next segment starts,
     // keep the previous segment visible with all spoken words in past (white) state so captions don't flicker away during pauses.
