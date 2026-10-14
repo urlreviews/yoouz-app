@@ -64,84 +64,37 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     const effectiveDuration = duration && duration > 0 ? duration : 60;
 
-    // Priority 1: Use explicit VAD word timestamps if valid segments have them
+    // Priority 1: Use explicit segments from SpeechRecognition or Gemini server transcription if available
     if (parsed.length > 0) {
-      const refined: { start: number; end: number; text: string; words?: any[] }[] = [];
-      let hasValidWordTimings = false;
+      const validArray = parsed.map((s: any) => ({
+        start: Number(s.start ?? s.start_time ?? 0),
+        end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.5)),
+        text: String(s.text || s.transcript || '').trim(),
+        words: Array.isArray(s.words) ? s.words : undefined
+      })).filter(s => s.text && !isTitleFallbackText(s.text));
 
-      for (const s of parsed) {
-        const rawText = String(s.text || s.transcript || '').trim();
-        const start = Number(s.start ?? s.start_time ?? 0);
-        const end = Number(s.end ?? s.end_time ?? (start + 3.5));
+      if (validArray.length > 0) {
+        return validArray.flatMap(s => {
+          const words = s.text.split(/\s+/).filter(Boolean);
+          if (words.length <= 5) return [s];
 
-        if (!rawText || isTitleFallbackText(rawText)) continue;
-
-        const rawWords: any[] = Array.isArray(s.words) && s.words.length > 0
-          ? s.words
-          : (Array.isArray(s.word_timestamps) && s.word_timestamps.length > 0 ? s.word_timestamps : []);
-
-        if (rawWords.length > 0) {
-          hasValidWordTimings = true;
-          const cleanWords = rawWords.map((wObj: any) => ({
-            word: String(wObj.word || wObj.text || '').trim(),
-            start: Number(wObj.start ?? wObj.start_time ?? start),
-            end: Number(wObj.end ?? wObj.end_time ?? (Number(wObj.start ?? start) + 0.35))
-          })).filter(w => w.word && !isTitleFallbackText(w.word));
-
-          if (cleanWords.length > 0) {
-            for (let i = 0; i < cleanWords.length; i += 4) {
-              const subGroup = cleanWords.slice(i, i + 4);
-              const subStart = subGroup[0].start;
-              const subEnd = subGroup[subGroup.length - 1].end;
-              const subText = subGroup.map(w => w.word).join(" ");
-
-              refined.push({
-                start: Math.round(subStart * 100) / 100,
-                end: Math.round(subEnd * 100) / 100,
-                text: subText,
-                words: subGroup
-              });
-            }
+          const segDur = Math.max(0.4, s.end - s.start);
+          const secPerWord = segDur / words.length;
+          const subChunks: any[] = [];
+          for (let i = 0; i < words.length; i += 5) {
+            const subWords = words.slice(i, i + 5);
+            const subText = subWords.join(" ");
+            const subStart = s.start + (i * secPerWord);
+            const subEnd = s.start + ((i + subWords.length) * secPerWord);
+            subChunks.push({
+              start: Math.round(subStart * 100) / 100,
+              end: Math.round(subEnd * 100) / 100,
+              text: subText
+            });
           }
-        }
+          return subChunks;
+        });
       }
-
-      if (hasValidWordTimings && refined.length > 0) {
-        return refined;
-      }
-    }
-
-    // Priority 2: Use high-precision natural speech cadence generator if hardware timed segments exist
-    if (parsed.some(s => s.isHardwareTimed)) {
-      return parsed.flatMap(s => {
-        const text = String(s.text || s.transcript || '').trim();
-        if (!text || isTitleFallbackText(text)) return [];
-        const words = text.split(/\s+/).filter(Boolean);
-        if (words.length <= 5) {
-          return [{
-            ...s,
-            text,
-            words: normalizeWordTimings(s.words || [], s.start, s.end, text)
-          }];
-        }
-        // Sub-divide hardware timed segment into 4-5 word phrase bursts for 1-line display
-        const segDur = Math.max(0.4, s.end - s.start);
-        const secPerWord = segDur / words.length;
-        const subChunks: any[] = [];
-        for (let i = 0; i < words.length; i += 5) {
-          const subWords = words.slice(i, i + 5);
-          const subText = subWords.join(" ");
-          const subStart = s.start + (i * secPerWord);
-          const subEnd = s.start + ((i + subWords.length) * secPerWord);
-          subChunks.push({
-            start: Math.round(subStart * 100) / 100,
-            end: Math.round(subEnd * 100) / 100,
-            text: subText,
-            isHardwareTimed: true
-          });
-        }
-        return subChunks;
-      });
     }
 
     return generatePrecisionSubtitles(fullText, effectiveDuration);

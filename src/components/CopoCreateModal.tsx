@@ -764,13 +764,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           recognition.lang = navigator.language || 'en-US';
 
           // High-precision word-level hardware timing state
-          const recordedWords: { word: string; time: number }[] = [];
-          let lastFullTranscript = "";
-          let lastWordTime = 0;
-          const recStartTime = Date.now();
+          let currentPhraseStart = -1;
+          const recStartTime = performance.now();
 
           recognition.onresult = (event: any) => {
-            const nowSec = (Date.now() - recStartTime) / 1000;
+            const nowSec = Math.max(0, (performance.now() - recStartTime) / 1000);
             let interim = "";
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -786,18 +784,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   const words = transcriptPiece.split(/\s+/).filter(Boolean);
                   if (words.length === 0) return prev;
 
-                  const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.38));
-                  const totalSegStart = Math.round(prevEnd * 100) / 100;
-                  const totalSegEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
-                  const segDur = Math.max(0.4, totalSegEnd - totalSegStart);
+                  const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
+                  const estimatedStart = Math.max(prevEnd, nowSec - (words.length * 0.38));
+                  const segStart = currentPhraseStart >= 0 ? Math.max(prevEnd, currentPhraseStart) : estimatedStart;
+                  const segEnd = Math.max(segStart + 0.5, nowSec);
+                  currentPhraseStart = -1;
+
+                  const segDur = Math.max(0.4, segEnd - segStart);
                   const secPerWord = segDur / words.length;
 
                   const newChunks: any[] = [];
-                  for (let i = 0; i < words.length; i += 5) {
-                    const subWords = words.slice(i, i + 5);
+                  for (let j = 0; j < words.length; j += 5) {
+                    const subWords = words.slice(j, j + 5);
                     const subText = subWords.join(" ");
-                    const subStart = totalSegStart + (i * secPerWord);
-                    const subEnd = totalSegStart + ((i + subWords.length) * secPerWord);
+                    const subStart = segStart + (j * secPerWord);
+                    const subEnd = segStart + ((j + subWords.length) * secPerWord);
                     newChunks.push({
                       start: Math.round(subStart * 100) / 100,
                       end: Math.round(subEnd * 100) / 100,
@@ -809,6 +810,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   return [...prev, ...newChunks];
                 });
               } else {
+                if (currentPhraseStart < 0) {
+                  currentPhraseStart = nowSec;
+                }
                 interim += (interim ? " " : "") + transcriptPiece;
               }
             }
