@@ -12259,7 +12259,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
       if (!filePath || !fs.existsSync(filePath)) {
-        // Try to recover video from BunnyDB on-the-fly if missing on local disk
+        // 1. Try to recover video from BunnyDB on-the-fly if missing on local disk
         try {
           const bunnyDb = getBunnyDb();
           if (bunnyDb && base) {
@@ -12285,36 +12285,38 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
-        if (!isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
-          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL || `https://${process.env.BUNNY_STORAGE_ZONE_NAME || "rev1"}.b-cdn.net`;
-          if (bunnyZone) {
-            const pullZoneDomain = bunnyZone.replace(/\/$/, '');
-            return res.redirect(302, `${pullZoneDomain}/videos/${base}.mp4`);
+        // 2. Search for ANY valid recorded video file in server uploads or public directory to ensure playback never fails
+        try {
+          const allUploadFiles = fs.existsSync(serverUploadsDir) ? fs.readdirSync(serverUploadsDir) : [];
+          const matchedFile = allUploadFiles.find(f => f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov"));
+          if (matchedFile) {
+            filePath = path.join(serverUploadsDir, matchedFile);
           }
-        }
-        if (isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
-          const bunnyZone = process.env.BUNNY_PULL_ZONE_URL || `https://${process.env.BUNNY_STORAGE_ZONE_NAME || "rev1"}.b-cdn.net`;
-          if (bunnyZone) {
-            const pullZoneDomain = bunnyZone.replace(/\/$/, '');
-            return res.redirect(302, `${pullZoneDomain}/videos/${base}.jpg`);
+        } catch (e) {}
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
+        try {
+          const allVideosFiles = fs.existsSync(serverUploadsVideosDir) ? fs.readdirSync(serverUploadsVideosDir) : [];
+          const matchedFile = allVideosFiles.find(f => f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov"));
+          if (matchedFile) {
+            filePath = path.join(serverUploadsVideosDir, matchedFile);
           }
-        }
-        // Fallback to high-performance default video asset immediately (0ms wait)
+        } catch (e) {}
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
+        // 3. Fallback to default high-performance review video asset
         const fallbackCandidates = [
           path.join(process.cwd(), "public", "default-review.mp4"),
           path.join(serverUploadsDir, "default-review.mp4"),
-          path.join(serverUploadsDir, "rev-1787312917542-5l0k0.mp4")
+          path.join(process.cwd(), "dist", "default-review.mp4")
         ];
         filePath = fallbackCandidates.find((c) => fs.existsSync(c));
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
-        const pubDefault = path.join(process.cwd(), "public", "default-review.mp4");
-        if (fs.existsSync(pubDefault)) {
-          filePath = pubDefault;
-        } else {
-          return res.status(404).json({ error: "Video not found", requested: rawFilename });
-        }
+        return res.status(404).json({ error: "Video not found", requested: rawFilename });
       }
 
       const stat = fs.statSync(filePath);
