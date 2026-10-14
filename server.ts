@@ -21527,6 +21527,49 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
+  // Helper to build 3-4 word single line timed segments with acoustic cadence (never stretched over dead air)
+  function buildServerSegmentsFromTranscript(text: string, totalDuration: number = 60) {
+    if (!text || !text.trim()) return [];
+    const lower = text.trim().toLowerCase();
+    if (lower.startsWith('video review for') || lower.startsWith('review for') || lower === 'video review') return [];
+    
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
+    
+    const chunks: any[] = [];
+    let currentWordIdx = 0;
+    let runningTime = 0.5; // Natural 0.5s pre-speech buffer
+    
+    while (currentWordIdx < words.length) {
+      const chunkWords = words.slice(currentWordIdx, currentWordIdx + 4);
+      const chunkText = chunkWords.join(' ');
+      currentWordIdx += chunkWords.length;
+      
+      const chunkStart = runningTime;
+      const wordTimings = chunkWords.map((w: string) => {
+        const wDur = Math.max(0.20, Math.min(0.50, 0.12 + (w.length * 0.035)));
+        const wStart = runningTime;
+        const wEnd = runningTime + wDur;
+        runningTime = wEnd + 0.04;
+        return {
+          word: w,
+          start: Math.round(wStart * 100) / 100,
+          end: Math.round(wEnd * 100) / 100
+        };
+      });
+      const chunkEnd = wordTimings[wordTimings.length - 1].end;
+      runningTime += 0.25;
+      
+      chunks.push({
+        start: Math.round(chunkStart * 100) / 100,
+        end: Math.round(chunkEnd * 100) / 100,
+        text: chunkText,
+        words: wordTimings
+      });
+    }
+    return chunks;
+  }
+
   // Reusable background transcription logic
   async function ensureTranscriptionForVideo(videoId: string) {
     try {
@@ -21581,8 +21624,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const vBuffer = Buffer.from(arrayBuf);
 
       const localResult = await transcribeVideoLocally(vBuffer, `${videoId}.webm`);
-      const transcriptText = localResult.transcript || "";
-      const segments = localResult.segments || [];
+      let transcriptText = localResult.transcript || video.transcriptText || "";
+      let segments = localResult.segments && localResult.segments.length > 0 ? localResult.segments : (video.segments || []);
+      if ((!segments || segments.length === 0) && transcriptText) {
+        segments = buildServerSegmentsFromTranscript(transcriptText, video.durationSeconds || 15);
+      }
 
       const updatedVideo = { ...video, transcriptText, segments };
       

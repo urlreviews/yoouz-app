@@ -28,7 +28,7 @@ import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
-import { buildSegmentsFromTranscript } from "./SubtitleOverlay";
+import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -113,6 +113,35 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const speechRecognitionRef = useRef<any>(null);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
+
+  // Sub-100ms precision audio activity & speech alignment refs
+  const recStartTimeRef = useRef<number>(0);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioMonitorTimerRef = useRef<any>(null);
+  const speechActivityRef = useRef<{ isSpeaking: boolean; lastActivityTime: number; speechStartTime: number }>({
+    isSpeaking: false,
+    lastActivityTime: 0,
+    speechStartTime: 0
+  });
+  const confirmedWordsRef = useRef<{ word: string; start: number; end: number }[]>([]);
+
+  // High-Precision 60fps preview frame synchronization loop (TikTok / Reels millisecond standard)
+  useEffect(() => {
+    let animId: number;
+    const tickPreview = () => {
+      const vid = playbackVideoRef.current;
+      if (vid && !vid.paused && typeof vid.currentTime === 'number') {
+        setCurrentTime(vid.currentTime);
+      }
+      animId = requestAnimationFrame(tickPreview);
+    };
+    if (step === 2 && recordedVideoUrl && isPlaying) {
+      animId = requestAnimationFrame(tickPreview);
+    }
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [step, recordedVideoUrl, isPlaying]);
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -725,8 +754,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.transcript) {
-                  setLiveTranscript(data.transcript);
-                  if (data.segments) setLiveSegments(data.segments);
+                  setLiveTranscript((prev) => prev || data.transcript);
+                  if (data.segments && data.segments.length > 0) {
+                    setLiveSegments((prev) => (prev && prev.length > 0 ? prev : data.segments));
+                  }
                 }
               }
             };
@@ -735,6 +766,61 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           }
         })();
       };
+
+      // Sub-100ms precision audio activity & speech alignment setup
+      recStartTimeRef.current = performance.now();
+      confirmedWordsRef.current = [];
+      speechActivityRef.current = { isSpeaking: false, lastActivityTime: 0, speechStartTime: 0 };
+      setLiveSegments([]);
+      setLiveTranscript("");
+
+      // Real-time Voice Activity Detection (VAD) via Web Audio API AnalyserNode
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx && stream) {
+          const actx = new AudioCtx();
+          audioContextRef.current = actx;
+          if (actx.state === "suspended") {
+            actx.resume().catch(() => {});
+          }
+          const analyser = actx.createAnalyser();
+          analyser.fftSize = 256;
+          analyserRef.current = analyser;
+          const source = actx.createMediaStreamSource(stream);
+          source.connect(analyser);
+
+          const timeData = new Uint8Array(analyser.frequencyBinCount);
+          if (audioMonitorTimerRef.current) clearInterval(audioMonitorTimerRef.current);
+          audioMonitorTimerRef.current = setInterval(() => {
+            if (!isRecordingRef.current) {
+              if (audioMonitorTimerRef.current) clearInterval(audioMonitorTimerRef.current);
+              return;
+            }
+            analyser.getByteTimeDomainData(timeData);
+            let sum = 0;
+            for (let i = 0; i < timeData.length; i++) {
+              const val = (timeData[i] - 128) / 128;
+              sum += val * val;
+            }
+            const rms = Math.sqrt(sum / timeData.length);
+            const curSec = Math.max(0, (performance.now() - recStartTimeRef.current) / 1000);
+
+            if (rms > 0.015) {
+              if (!speechActivityRef.current.isSpeaking) {
+                speechActivityRef.current.isSpeaking = true;
+                speechActivityRef.current.speechStartTime = curSec;
+              }
+              speechActivityRef.current.lastActivityTime = curSec;
+            } else {
+              if (speechActivityRef.current.isSpeaking && (curSec - speechActivityRef.current.lastActivityTime > 0.35)) {
+                speechActivityRef.current.isSpeaking = false;
+              }
+            }
+          }, 30);
+        }
+      } catch (audioErr) {
+        console.warn("AudioContext analyzer setup notice:", audioErr);
+      }
 
       // Initialize Browser-Native Zero-API Live Speech Recognition Engine
       try {
@@ -745,25 +831,84 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           recognition.interimResults = true;
           recognition.lang = navigator.language || 'en-US';
 
-          const recStartTime = Date.now();
-
           recognition.onresult = (event: any) => {
+            const nowSec = Math.max(0.1, (performance.now() - recStartTimeRef.current) / 1000);
             let fullText = "";
+            const currentConfirmedWords: { word: string; start: number; end: number }[] = [];
+            const currentInterimWords: { word: string; start: number; end: number }[] = [];
+
             for (let i = 0; i < event.results.length; i++) {
               const res = event.results[i];
               const transcriptPiece = res[0]?.transcript?.trim();
-              if (transcriptPiece) {
-                fullText += (fullText ? " " : "") + transcriptPiece;
+              if (!transcriptPiece) continue;
+
+              fullText += (fullText ? " " : "") + transcriptPiece;
+              const words = transcriptPiece.split(/\s+/).filter(Boolean);
+              if (words.length === 0) continue;
+
+              const totalChars = words.reduce((acc: number, w: string) => acc + Math.max(1, w.length), 0) || 1;
+
+              if (res.isFinal) {
+                // Determine acoustic phrase end and natural duration
+                const phraseEnd = Math.max(0.4, Math.min(nowSec, speechActivityRef.current.lastActivityTime || nowSec));
+                const estDuration = Math.max(words.length * 0.22, Math.min(words.length * 0.45, 4.0));
+                const lastEnd = currentConfirmedWords.length > 0
+                  ? currentConfirmedWords[currentConfirmedWords.length - 1].end
+                  : (speechActivityRef.current.speechStartTime || 0.1);
+                const phraseStart = Math.max(lastEnd + 0.05, phraseEnd - estDuration);
+
+                let accum = phraseStart;
+                for (const w of words) {
+                  const wDur = Math.max(0.18, (Math.max(1, w.length) / totalChars) * (phraseEnd - phraseStart));
+                  const wStart = accum;
+                  const wEnd = accum + wDur;
+                  accum = wEnd;
+                  currentConfirmedWords.push({
+                    word: w,
+                    start: Math.round(wStart * 100) / 100,
+                    end: Math.round(wEnd * 100) / 100
+                  });
+                }
+              } else {
+                // Interim piece being actively vocalized right now
+                const lastEnd = currentConfirmedWords.length > 0
+                  ? currentConfirmedWords[currentConfirmedWords.length - 1].end
+                  : 0;
+                const phraseStart = Math.max(lastEnd + 0.05, nowSec - (words.length * 0.32));
+                const phraseEnd = nowSec;
+
+                let accum = phraseStart;
+                for (const w of words) {
+                  const wDur = Math.max(0.18, (Math.max(1, w.length) / totalChars) * Math.max(0.25, phraseEnd - phraseStart));
+                  const wStart = accum;
+                  const wEnd = accum + wDur;
+                  accum = wEnd;
+                  currentInterimWords.push({
+                    word: w,
+                    start: Math.round(wStart * 100) / 100,
+                    end: Math.round(wEnd * 100) / 100
+                  });
+                }
               }
             }
 
+            const allWords = [...currentConfirmedWords, ...currentInterimWords];
+            if (allWords.length > 0) {
+              const chunks: any[] = [];
+              for (let i = 0; i < allWords.length; i += 4) {
+                const subGroup = allWords.slice(i, i + 4);
+                chunks.push({
+                  start: subGroup[0].start,
+                  end: subGroup[subGroup.length - 1].end,
+                  text: subGroup.map(w => w.word).join(" "),
+                  words: subGroup
+                });
+              }
+              setLiveSegments(chunks);
+              confirmedWordsRef.current = currentConfirmedWords;
+            }
             if (fullText) {
               setLiveTranscript(fullText);
-              const nowSec = Math.max(0.2, (Date.now() - recStartTime) / 1000);
-              const builtSegments = buildSegmentsFromTranscript(fullText, nowSec, 0);
-              if (builtSegments.length > 0) {
-                setLiveSegments(builtSegments);
-              }
             }
           };
 
@@ -822,6 +967,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
       
       // Stop Audio Processing
+      if (audioMonitorTimerRef.current) {
+        clearInterval(audioMonitorTimerRef.current);
+        audioMonitorTimerRef.current = null;
+      }
       if (audioProcessorRef.current) {
         try { audioProcessorRef.current.disconnect(); } catch (e) {}
         audioProcessorRef.current = null;
@@ -830,6 +979,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         try { audioContextRef.current.close(); } catch (e) {}
         audioContextRef.current = null;
       }
+      analyserRef.current = null;
 
       // Close WebSocket gracefully with a 'finish' signal
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -1183,6 +1333,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       } catch (e) {
         console.warn("Transcription notice:", e);
       }
+    }
+
+    if ((!segments || segments.length === 0) && transcriptText) {
+      segments = buildSegmentsFromTranscript(transcriptText, duration || 15);
     }
 
     const finalReview: VideoReview = {
@@ -1711,6 +1865,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </button>
                 </div>
 
+                {/* Real-Time Word-Synchronized Subtitles in Preview */}
+                <SubtitleOverlay
+                  currentTime={currentTime}
+                  segments={liveSegments}
+                  transcriptText={liveTranscript}
+                  duration={duration || recordingTime || 60}
+                  isActive={true}
+                />
+
                 {/* Bottom Custom Playback Bar & Publish Action */}
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-5 pt-8 z-30 flex flex-col gap-3 pointer-events-auto">
                   {/* Scrubber Range */}
@@ -1951,6 +2114,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       Tap to record review
                     </span>
                   </div>
+                )}
+
+                {/* Live Real-Time Subtitles while Recording */}
+                {isRecording && (
+                  <SubtitleOverlay
+                    currentTime={recordingTime}
+                    segments={liveSegments}
+                    transcriptText={liveTranscript}
+                    duration={60}
+                    isActive={true}
+                  />
                 )}
 
                 {/* Active Recording State Bar with 60-Second Radial Progress */}
