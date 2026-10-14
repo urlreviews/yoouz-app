@@ -24,7 +24,6 @@ const _filename = typeof __filename !== 'undefined' ? __filename : (typeof impor
 const _dirname = typeof __dirname !== 'undefined' ? __dirname : (_filename ? path.dirname(_filename) : process.cwd());
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
-// GoogleGenAI import removed per user request for zero-cost architecture
 // import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import { Resend } from "resend";
@@ -21631,13 +21630,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
 
+
+
       // Build segments if transcriptText exists but segments were empty
       if (transcriptText && (!segments || segments.length === 0)) {
         segments = buildServerSegmentsFromTranscript(transcriptText, video.durationSeconds || video.duration || 15);
-      }
-
-      if (!transcriptText && (!segments || segments.length === 0)) {
-        return { success: true, transcriptText: "", segments: [] };
       }
 
       const updatedVideo = { ...video, transcriptText, segments };
@@ -21728,6 +21725,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return { transcript: "", segments: [], vtt_content: "" };
   }
 
+
+
   // Serves valid WebVTT (.vtt) file with exact HH:MM:SS.mmm timecodes for native HTML5 <track> elements
   app.get("/api/videos/:id/subtitles.vtt", async (req, res) => {
     try {
@@ -21814,11 +21813,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       }
 
       // 2. If client passed live recognized speech text, prefer it if no whisper transcript
-      if (!transcriptText && clientTranscript && typeof clientTranscript === "string") {
-        transcriptText = clientTranscript.trim();
-      }
 
-      // 3. Build exact word-level timed segments starting with zero delay (0.05s) if speech was transcribed
+
+      // 4. Build exact word-level timed segments starting with zero delay (0.05s) if speech was transcribed
       if (transcriptText) {
         const effDur = Number(duration) && Number(duration) > 0 ? Number(duration) : 15;
         segments = buildServerSegmentsFromTranscript(transcriptText, effDur);

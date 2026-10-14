@@ -14,18 +14,13 @@ const isTitleFallbackText = (text: string): boolean => {
   if (!text) return true;
   const trimmed = text.trim();
   const lower = trimmed.toLowerCase();
-  const wordCount = trimmed.split(/\s+/).length;
-  // Only filter out if it's a short header string (<= 5 words) with no review body
-  if (wordCount <= 5) {
-    if (
-      lower.startsWith('video review for') ||
-      lower.startsWith('video review of') ||
-      lower === 'video review' ||
-      lower === 'review'
-    ) {
-      return true;
-    }
+  
+  // Only filter if it's literally just "Video Review" or "Review"
+  // If they say "Video review for..." it means they are talking and we should show it.
+  if (lower === 'video review' || lower === 'review') {
+    return true;
   }
+  
   return false;
 };
 
@@ -266,7 +261,21 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   // Early returns strictly AFTER ALL HOOKS have run!
   if (!isActive) return null;
-  if (!activeSegment || wordTokens.length === 0) return null;
+  
+  if (!activeSegment || wordTokens.length === 0) {
+    // If we have NO transcript but are active (likely on iOS or still processing)
+    // show a subtle "Listening..." indicator so the user knows subtitles are coming
+    return (
+      <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
+        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 animate-pulse">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="text-white/60 text-[10px] font-bold tracking-widest uppercase italic">
+            Listening...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">

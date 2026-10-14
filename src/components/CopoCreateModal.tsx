@@ -705,14 +705,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           if (thumb) setVideoThumbnail(thumb);
         });
 
-        // Verbatim Spoken Subtitles:
-        // Use 100% genuine text recognized from user's voice during recording
-        const recognizedText = (liveTranscriptRef.current || "").trim();
+        let recognizedText = (liveTranscriptRef.current || "").trim();
+
         if (recognizedText) {
           const immediateSegments = buildSegmentsFromTranscript(recognizedText, recordedSeconds, 0.05);
           liveSegmentsRef.current = immediateSegments;
           setLiveSegments(immediateSegments);
           setLiveTranscript(recognizedText);
+          liveTranscriptRef.current = recognizedText;
         } else {
           liveSegmentsRef.current = [];
           setLiveSegments([]);
