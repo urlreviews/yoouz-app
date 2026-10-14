@@ -114,20 +114,20 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
-  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 3. Direct clean local server streaming endpoint (Instant 0ms loading from server disk)
+  // 2. Direct clean local server streaming endpoint (Instant 0ms loading from server disk)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
     if (!sources.includes(serverStream)) {
       sources.push(serverStream);
+    }
+  }
+
+  // 3. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
     }
   }
 
