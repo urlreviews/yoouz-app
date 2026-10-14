@@ -428,9 +428,13 @@ export function App() {
       };
     };
 
-    setupSse();
+    const sseInitTimer = setTimeout(() => {
+      if (active) setupSse();
+    }, 1500);
+
     return () => {
       active = false;
+      clearTimeout(sseInitTimer);
       if (sse) sse.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };

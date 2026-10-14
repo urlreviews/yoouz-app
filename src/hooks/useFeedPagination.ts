@@ -1027,7 +1027,9 @@ export function useFeedPagination() {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
 
-    setupSse();
+    const sseInitTimer = setTimeout(() => {
+      if (active) setupSse();
+    }, 1200);
 
     // 3. Listen for live video, place, and user deletion events in current window
     const handleVideoDeletedEvent = (e: any) => {
@@ -1141,6 +1143,7 @@ export function useFeedPagination() {
 
     return () => {
       active = false;
+      clearTimeout(sseInitTimer);
       clearInterval(interval);
       if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
       if (sse) {

@@ -1033,10 +1033,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Handle messages from embedded widget preview (e.g. clicking logo inside preview)
   useEffect(() => {
     const handleWidgetMessage = (e: MessageEvent) => {
-      if (e.data?.type === 'YOOUZ_OPEN_PLACE') {
-        setWidgetNotice(`✨ Verified widget connected to ${currentPlace?.name || 'your venue'}.`);
-        setTimeout(() => setWidgetNotice(null), 3500);
-      }
+      if (!e.data || typeof e.data !== 'object' || e.data.type !== 'YOOUZ_OPEN_PLACE') return;
+      setWidgetNotice(`✨ Verified widget connected to ${currentPlace?.name || 'your venue'}.`);
+      setTimeout(() => setWidgetNotice(null), 3500);
     };
     window.addEventListener('message', handleWidgetMessage);
     return () => window.removeEventListener('message', handleWidgetMessage);
