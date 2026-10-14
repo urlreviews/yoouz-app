@@ -15,9 +15,13 @@ const isTitleFallbackText = (text: string): boolean => {
   const trimmed = text.trim();
   const lower = trimmed.toLowerCase();
   
-  // Only filter if it's literally just "Video Review" or "Review"
-  // If they say "Video review for..." it means they are talking and we should show it.
+  // Filter out literally just "Video Review" or "Review"
   if (lower === 'video review' || lower === 'review') {
+    return true;
+  }
+
+  // Filter out "Video review for ..." or "Video review of ..."
+  if (lower.startsWith('video review for') || lower.startsWith('video review of')) {
     return true;
   }
   
@@ -196,19 +200,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     );
     if (direct) return direct;
 
-    // 2. ZERO DELAY: If at the very beginning before first segment start, show first segment immediately!
-    // Words will remain in white/semi-white and the first word will highlight yellow the millisecond speech starts.
-    if (currentTime < validSegments[0].start) {
-      return validSegments[0];
-    }
-
-    // 3. Pause handling: If currentTime is in a pause AFTER a segment ends but BEFORE the next segment starts,
+    // 2. Pause handling: If currentTime is in a pause AFTER a segment ends but BEFORE the next segment starts,
     // keep the previous segment visible with all spoken words in past (white) state so captions don't flicker away during pauses.
     const pastSegments = validSegments.filter(s => currentTime >= s.start);
     if (pastSegments.length > 0) {
       const lastPast = pastSegments[pastSegments.length - 1];
       const nextSeg = validSegments.find(s => s.start > currentTime);
-      if (nextSeg ? currentTime < nextSeg.start : currentTime <= (lastPast.end + 2.5)) {
+      if (nextSeg ? currentTime < nextSeg.start : currentTime <= (lastPast.end + 1.5)) {
         return lastPast;
       }
     }
@@ -262,20 +260,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   // Early returns strictly AFTER ALL HOOKS have run!
   if (!isActive) return null;
   
-  if (!activeSegment || wordTokens.length === 0) {
-    // If we have NO transcript but are active (likely on iOS or still processing)
-    // show a subtle "Listening..." indicator so the user knows subtitles are coming
-    return (
-      <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 animate-pulse">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span className="text-white/60 text-[10px] font-bold tracking-widest uppercase italic">
-            Listening...
-          </span>
-        </div>
-      </div>
-    );
-  }
+  if (!activeSegment || wordTokens.length === 0) return null;
 
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
