@@ -641,9 +641,10 @@ export function useFeedPagination() {
         sse.onmessage = (event) => {
           if (!active) return;
           sseRetryDelay = 5000;
-          try {
-            const payload = JSON.parse(event.data);
-            if (payload.type === "new_video" && payload.video) {
+          setTimeout(() => {
+            try {
+              const payload = JSON.parse(event.data);
+              if (payload.type === "new_video" && payload.video) {
               const freshVideo = normalizeReview(payload.video);
               setVideos((prev) => {
                 const filtered = prev.filter((v) => v.id !== freshVideo.id);
@@ -994,7 +995,8 @@ export function useFeedPagination() {
               window.dispatchEvent(new CustomEvent("copo-videos-purged"));
             }
           } catch (e) {}
-        };
+        }, 0);
+      };
 
         sse.onerror = () => {
           if (sse) {

@@ -12132,23 +12132,31 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     }
   });
 
-  // Explicit route handler for Web App Icons and Favicons to guarantee 200 OK
   app.get([
     "/apple-touch-icon.png",
     "/apple-touch-icon-precomposed.png",
     "/icon-512.png",
     "/icon-192.png",
+    "/favicon-512x512.png",
+    "/favicon-192x192.png",
     "/favicon.ico",
     "/favicon.png",
     "/favicon.svg",
-    "/manifest.json"
+    "/manifest.json",
+    "/sw.js"
   ], (req, res) => {
     const filename = req.path.substring(1);
-    const filePath = path.join(process.cwd(), "public", filename);
-    if (fs.existsSync(filePath)) {
+    const publicPath = path.join(process.cwd(), "public", filename);
+    const distPath = path.join(process.cwd(), "dist", filename);
+
+    if (fs.existsSync(publicPath)) {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.sendFile(filePath);
+      return res.sendFile(publicPath);
+    } else if (fs.existsSync(distPath)) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(distPath);
     }
     return res.status(404).end();
   });

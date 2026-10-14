@@ -120,15 +120,17 @@ function setupRealtimeStream(user: UserProfile) {
 
         es.onmessage = (e) => {
           sseRetryDelay = 5000;
-          try {
-            if (!e.data || e.data.trim() === "heartbeat") return;
-            const parsed = JSON.parse(e.data);
-            realtimeListeners.forEach((fn) => {
-              try {
-                fn(parsed);
-              } catch (err) {}
-            });
-          } catch (parseErr) {}
+          setTimeout(() => {
+            try {
+              if (!e.data || e.data.trim() === "heartbeat") return;
+              const parsed = JSON.parse(e.data);
+              realtimeListeners.forEach((fn) => {
+                try {
+                  fn(parsed);
+                } catch (err) {}
+              });
+            } catch (parseErr) {}
+          }, 0);
         };
 
         es.onerror = () => {
