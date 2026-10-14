@@ -748,6 +748,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           // High-precision word-level hardware timing state
           const recordedWords: { word: string; time: number }[] = [];
           let lastFullTranscript = "";
+          let lastWordTime = 0;
           const recStartTime = Date.now();
 
           recognition.onresult = (event: any) => {
@@ -763,22 +764,30 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               const newText = cleanTranscript.substring(lastFullTranscript.length).trim();
               if (newText) {
                 const newWords = newText.split(/\s+/).filter(Boolean);
-                newWords.forEach(w => {
-                  // EXPERT FIX: Acoustic Back-Timing (-0.2s)
-                  // Speech recognition processing takes ~200ms. By subtracting it, we align the highlight
-                  // with the moment the sound actually STARTED.
-                  recordedWords.push({ word: w, time: Math.max(0, nowSec - 0.22) });
+                
+                // EXPERT FIX: Distributed Timing
+                // We spread the new words between the last word's time and current time.
+                // This ensures words in a batch don't highlight all at once.
+                const speechRate = 0.38; // Average seconds per word
+                const batchDur = newWords.length * speechRate;
+                const batchStart = Math.max(lastWordTime + 0.1, nowSec - batchDur);
+                
+                newWords.forEach((w, idx) => {
+                  const wTime = batchStart + (idx * speechRate);
+                  recordedWords.push({ word: w, time: Math.max(0, wTime - 0.2) });
+                  lastWordTime = wTime;
                 });
+
                 lastFullTranscript = cleanTranscript;
                 setLiveTranscript(cleanTranscript);
                 
-                // Construct segments (Strict 2 words per segment for "TikTok/Reels" single-line style)
+                // Construct segments (5 words per line for clean, single-line "Reels" style)
                 const segments: any[] = [];
-                const wordsPerSeg = 2; 
+                const wordsPerSeg = 5; 
                 for (let i = 0; i < recordedWords.length; i += wordsPerSeg) {
                   const chunk = recordedWords.slice(i, i + wordsPerSeg);
                   const start = chunk[0].time;
-                  const end = chunk[chunk.length - 1].time + 0.45;
+                  const end = chunk[chunk.length - 1].time + 0.5;
                   
                   segments.push({
                     start: Math.round(start * 100) / 100,
@@ -788,7 +797,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     words: chunk.map(cw => ({
                       word: cw.word,
                       start: Math.round(cw.time * 100) / 100,
-                      end: Math.round((cw.time + 0.4) * 100) / 100
+                      end: Math.round((cw.time + 0.45) * 100) / 100
                     }))
                   });
                 }
