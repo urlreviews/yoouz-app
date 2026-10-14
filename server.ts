@@ -12622,10 +12622,19 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         console.warn("[Upload] Auto-transcription failed, proceeding without transcript:", tErr);
       }
 
+      let embeddedVideoData = "";
+      try {
+        const vBuf = fs.readFileSync(finalVideoPath);
+        if (vBuf.length > 0 && vBuf.length < 35 * 1024 * 1024) {
+          embeddedVideoData = `data:video/mp4;base64,${vBuf.toString("base64")}`;
+        }
+      } catch (e) {}
+
       res.json({ 
         success: true, 
         url: publicUrl, 
         downloadUrl: publicUrl,
+        videoData: embeddedVideoData,
         bunnyUrl: (bunnyAccessKey && bunnyStorageZone) ? `${pullZoneDomain}/videos/${targetVideoFileName}` : "",
         thumbnailUrl, 
         fileName: targetVideoFileName, 

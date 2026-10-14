@@ -1411,6 +1411,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUploadProgress(88);
       setPublishingStage("Optimizing video & audio...");
 
+      let uploadedVideoData = "";
       if (uploadResult && uploadResult.downloadUrl) {
         uploadedPublicUrl = uploadResult.downloadUrl;
         if (uploadResult.thumbnailUrl) {
@@ -1418,6 +1419,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
         if (uploadResult.bunnyVideoId) {
           finalBunnyId = uploadResult.bunnyVideoId;
+        }
+        if (uploadResult.videoData) {
+          uploadedVideoData = uploadResult.videoData;
         }
       }
     } catch (uploadErr) {
@@ -1434,6 +1438,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       ...fallbackReview,
       videoUrl: uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
+      videoData: uploadedVideoData || (recordedVideoBlob ? undefined : undefined),
       fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
