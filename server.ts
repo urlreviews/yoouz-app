@@ -13597,17 +13597,20 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     if (logo) logo = sanitizeProxyUrl(logo);
 
     const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-    let resolvedVideoUrl = r.videoUrl || r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl;
+    const cleanId = r.id ? String(r.id).replace(/\.[^.]+$/, "") : "";
+    const serverStreamUrl = cleanId ? `/api/videos/stream/${cleanId}.mp4` : "";
+    const cdnUrl = r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : (cleanId ? `${pullZoneDomain}/videos/${cleanId}.mp4` : "");
+
+    let resolvedVideoUrl = serverStreamUrl || r.videoUrl || r.url || cdnUrl;
     if (resolvedVideoUrl && typeof resolvedVideoUrl === "string" && resolvedVideoUrl.startsWith("blob:")) {
-      resolvedVideoUrl = "";
+      resolvedVideoUrl = serverStreamUrl || "/default-review.mp4";
     }
     if (!resolvedVideoUrl) {
-      resolvedVideoUrl = r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : (r.id ? `/api/videos/stream/${r.id}.mp4` : `${pullZoneDomain}/sample-review.mp4`);
+      resolvedVideoUrl = serverStreamUrl || cdnUrl || "/default-review.mp4";
     }
 
-    const cleanFallbacks = Array.isArray(r.fallbackVideoUrls) 
-      ? r.fallbackVideoUrls.filter((u: any) => typeof u === "string" && !u.startsWith("blob:"))
-      : [];
+    const rawFallbacks = Array.isArray(r.fallbackVideoUrls) ? r.fallbackVideoUrls : [];
+    const cleanFallbacks = [serverStreamUrl, r.videoUrl, cdnUrl, ...rawFallbacks].filter((u: any): u is string => typeof u === "string" && Boolean(u) && !u.startsWith("blob:"));
 
     const matchedLoc = KNOWN_ENTITY_LOCATIONS[domain] || (domain ? Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
     const effectivePlaceName = formatBusinessName(r.placeName || r.businessName || domain || r.placeId, domain);
@@ -13617,7 +13620,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       placeName: effectivePlaceName,
       businessName: effectivePlaceName,
       videoUrl: resolvedVideoUrl,
-      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl],
+      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl, cdnUrl, "/default-review.mp4"].filter(Boolean),
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
