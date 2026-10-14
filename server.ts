@@ -12285,6 +12285,31 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
+        // 1.5. Try downloading / fetching old/new video from Bunny CDN on-the-fly if missing locally and in DB
+        try {
+          const cdnPull = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, "");
+          const filenamesToTry = [rawFilename, `${base}.mp4`, `${base}.webm`, `${base}.mov`];
+          for (const fn of filenamesToTry) {
+            const targetCdnUrl = `${cdnPull}/videos/${fn}`;
+            const cdnRes = await fetch(targetCdnUrl, { signal: AbortSignal.timeout(6000) }).catch(() => null);
+            if (cdnRes && cdnRes.ok) {
+              const buf = Buffer.from(await cdnRes.arrayBuffer());
+              if (buf.length > 500) {
+                const savedPath = path.join(serverUploadsDir, fn);
+                fs.writeFileSync(savedPath, buf);
+                if (fs.existsSync(savedPath)) {
+                  filePath = savedPath;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (cdnFetchErr) {
+          // ignore
+        }
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
         // 2. Search for ANY valid recorded video file in server uploads or public directory to ensure playback never fails
         try {
           const allUploadFiles = fs.existsSync(serverUploadsDir) ? fs.readdirSync(serverUploadsDir) : [];
