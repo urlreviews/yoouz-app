@@ -30,7 +30,6 @@ import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNER
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
-import { generateAuthenticReviewTranscript } from "../utils/subtitleSync";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -706,22 +705,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           if (thumb) setVideoThumbnail(thumb);
         });
 
-        // Verbatim Spoken Subtitles or Authentic Place Review Captions:
-        let recognizedText = (liveTranscriptRef.current || "").trim();
-        if (!recognizedText) {
-          recognizedText = generateAuthenticReviewTranscript({
-            placeName: selectedPlace?.name || "",
-            category: selectedPlace?.category || "",
-            rating: rating || 5,
-            authorName: currentUser?.name,
-            duration: recordedSeconds
-          });
+        // Verbatim Spoken Subtitles:
+        // Use 100% genuine text recognized from user's voice during recording
+        const recognizedText = (liveTranscriptRef.current || "").trim();
+        if (recognizedText) {
+          const immediateSegments = buildSegmentsFromTranscript(recognizedText, recordedSeconds, 0.05);
+          liveSegmentsRef.current = immediateSegments;
+          setLiveSegments(immediateSegments);
+          setLiveTranscript(recognizedText);
+        } else {
+          liveSegmentsRef.current = [];
+          setLiveSegments([]);
+          setLiveTranscript("");
         }
-        const immediateSegments = buildSegmentsFromTranscript(recognizedText, recordedSeconds, 0.05);
-        liveTranscriptRef.current = recognizedText;
-        liveSegmentsRef.current = immediateSegments;
-        setLiveSegments(immediateSegments);
-        setLiveTranscript(recognizedText);
 
         // Auto-transcribe recorded video in background during preview step
         (async () => {
@@ -934,19 +930,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const effDuration = Math.max(1, recordingDurationRef.current || recordingTime || duration || 15);
     let finalTranscript = (liveTranscriptRef.current || liveTranscript || "").trim();
-    if (!finalTranscript) {
-      finalTranscript = generateAuthenticReviewTranscript({
-        placeName: selectedPlace?.name || "",
-        category: selectedPlace?.category || "",
-        rating: rating || 5,
-        authorName: currentUser?.name,
-        duration: effDuration
-      });
-    }
-
     let finalSegments = (liveSegmentsRef.current && liveSegmentsRef.current.length > 0)
       ? liveSegmentsRef.current
-      : ((liveSegments && liveSegments.length > 0) ? liveSegments : buildSegmentsFromTranscript(finalTranscript, effDuration, 0.05));
+      : ((liveSegments && liveSegments.length > 0) ? liveSegments : (finalTranscript ? buildSegmentsFromTranscript(finalTranscript, effDuration, 0.05) : []));
 
     const fallbackReview: VideoReview = {
       id: reviewId,
@@ -1160,19 +1146,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     // 5. Finalize verbatim captions before saving
     setPublishingStage("Finalizing captions...");
     let transcriptText = finalTranscript || (liveTranscriptRef.current || liveTranscript || "").trim();
-    if (!transcriptText) {
-      transcriptText = generateAuthenticReviewTranscript({
-        placeName: selectedPlace?.name || "",
-        category: selectedPlace?.category || "",
-        rating: rating || 5,
-        authorName: currentUser?.name,
-        duration: effDuration
-      });
-    }
-
     let segments = (finalSegments && finalSegments.length > 0)
       ? finalSegments
-      : (liveSegmentsRef.current && liveSegmentsRef.current.length > 0 ? liveSegmentsRef.current : buildSegmentsFromTranscript(transcriptText, effDuration, 0.05));
+      : (liveSegmentsRef.current && liveSegmentsRef.current.length > 0 ? liveSegmentsRef.current : (transcriptText ? buildSegmentsFromTranscript(transcriptText, effDuration, 0.05) : []));
 
     const finalReview: VideoReview = {
       ...newReview,

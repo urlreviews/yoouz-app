@@ -21568,47 +21568,6 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return chunks;
   }
 
-  // Server-side authentic review transcript generator for videos missing audio transcription
-  function generateServerAuthenticReviewTranscript(placeName?: string, rating?: number, category?: string): string {
-    const name = (placeName || "this place").trim();
-    const r = rating || 5;
-    const cat = (category || "").toLowerCase();
-
-    if (cat.includes("removals") || cat.includes("moving") || cat.includes("transport") || cat.includes("relocation") || name.toLowerCase().includes("removals") || name.toLowerCase().includes("moving")) {
-      return `Reviewing ${name} today. Fantastic house removals team, super careful with furniture, punctual and extremely hard working. 5 stars all the way!`;
-    }
-
-    if (cat.includes("restaurant") || cat.includes("cafe") || cat.includes("food") || cat.includes("dining") || cat.includes("bistro") || cat.includes("bakery")) {
-      return `Just visited ${name} and honestly the experience was incredible! The flavors were fresh and delicious, the atmosphere was wonderful, and the service was super attentive. Easily 5 stars!`;
-    }
-
-    if (cat.includes("auto") || cat.includes("car") || cat.includes("garage") || cat.includes("repair") || cat.includes("mechanic")) {
-      return `Reviewing ${name} today. Outstanding mechanical service, honest diagnostic advice, and really quick turnaround. Solid 5 stars for the team here!`;
-    }
-
-    if (cat.includes("dentist") || cat.includes("dental") || cat.includes("health") || cat.includes("clinic") || cat.includes("medical") || cat.includes("doctor") || cat.includes("pharmacy")) {
-      return `Checked out ${name} today. Modern spotless clinic, very gentle and professional team, and top quality care from start to finish. Highly recommended!`;
-    }
-
-    if (cat.includes("electric") || cat.includes("plumb") || cat.includes("service") || cat.includes("trade") || cat.includes("contractor")) {
-      return `Reviewing ${name}. Prompt response, professional workmanship, and completely transparent service. Got the job done right, highly recommended!`;
-    }
-
-    if (cat.includes("spa") || cat.includes("wellness") || cat.includes("hotel") || cat.includes("resort") || cat.includes("therapy")) {
-      return `Amazing experience at ${name}! Super relaxing atmosphere, pristine facilities, and friendly hospitality. A fantastic visit, definitely 5 stars!`;
-    }
-
-    if (cat.includes("tech") || cat.includes("software") || cat.includes("digital") || cat.includes("media") || cat.includes("online") || cat.includes("website")) {
-      return `Authentic review for ${name}! Clean experience, high quality execution, and great customer support throughout. Definitely deserving of top marks!`;
-    }
-
-    if (r >= 5) {
-      return `Authentic review for ${name}! Exceeded all expectations with fantastic quality and warm, attentive service. Definitely a 5-star experience!`;
-    } else {
-      return `Visiting ${name} today. Great overall experience, friendly staff, and great attention to detail. Definitely worth checking out!`;
-    }
-  }
-
   // Reusable background transcription logic
   async function ensureTranscriptionForVideo(videoId: string) {
     try {
@@ -21674,10 +21633,13 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
 
-      // Fallback: generate authentic review transcript and timed segments
-      if (!transcriptText || segments.length === 0) {
-        transcriptText = transcriptText || generateServerAuthenticReviewTranscript(video.placeName, video.rating || video.placeRating || 5, video.placeCategory);
+      // Build segments if transcriptText exists but segments were empty
+      if (transcriptText && (!segments || segments.length === 0)) {
         segments = buildServerSegmentsFromTranscript(transcriptText, video.durationSeconds || video.duration || 15);
+      }
+
+      if (!transcriptText && (!segments || segments.length === 0)) {
+        return { success: true, transcriptText: "", segments: [] };
       }
 
       const updatedVideo = { ...video, transcriptText, segments };
@@ -21858,19 +21820,16 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         transcriptText = clientTranscript.trim();
       }
 
-      // 3. Fallback: generate place-tailored authentic review transcript
-      if (!transcriptText) {
-        transcriptText = generateServerAuthenticReviewTranscript(placeName, rating, category);
+      // 3. Build exact word-level timed segments starting with zero delay (0.05s) if speech was transcribed
+      if (transcriptText) {
+        const effDur = Number(duration) && Number(duration) > 0 ? Number(duration) : 15;
+        segments = buildServerSegmentsFromTranscript(transcriptText, effDur);
       }
-
-      // 4. Build exact word-level timed segments starting with zero delay (0.05s)
-      const effDur = Number(duration) && Number(duration) > 0 ? Number(duration) : 15;
-      segments = buildServerSegmentsFromTranscript(transcriptText, effDur);
 
       return res.json({ 
         success: true, 
-        transcript: transcriptText,
-        segments: segments,
+        transcript: transcriptText || "",
+        segments: segments || [],
         vtt_content: "",
         method: "zero_delay_sync"
       });
