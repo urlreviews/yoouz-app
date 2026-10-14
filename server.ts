@@ -12259,6 +12259,32 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
       if (!filePath || !fs.existsSync(filePath)) {
+        // Try to recover video from BunnyDB on-the-fly if missing on local disk
+        try {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb && base) {
+            const dbRes = await bunnyDb.execute({
+              sql: "SELECT data FROM videoReviews WHERE id = ?",
+              args: [base]
+            });
+            if (dbRes.rows && dbRes.rows[0]) {
+              const rowData = typeof dbRes.rows[0].data === "string" ? JSON.parse(dbRes.rows[0].data) : dbRes.rows[0].data;
+              if (rowData && rowData.videoData && typeof rowData.videoData === "string" && rowData.videoData.includes("base64,")) {
+                const b64 = rowData.videoData.split("base64,")[1];
+                const recoveredPath = path.join(serverUploadsDir, rawFilename);
+                fs.writeFileSync(recoveredPath, Buffer.from(b64, "base64"));
+                if (fs.existsSync(recoveredPath)) {
+                  filePath = recoveredPath;
+                }
+              }
+            }
+          }
+        } catch (recErr) {
+          console.warn("Notice recovering video from DB:", recErr);
+        }
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
         if (!isImageRequest && base && typeof base === "string" && base.startsWith("rev-")) {
           const bunnyZone = process.env.BUNNY_PULL_ZONE_URL || `https://${process.env.BUNNY_STORAGE_ZONE_NAME || "rev1"}.b-cdn.net`;
           if (bunnyZone) {
@@ -12357,8 +12383,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         fs.createReadStream(filePath).pipe(res);
       }
     } catch (err: any) {
-      console.error("Video stream error:", err);
-      res.status(500).send("Error streaming video");
+      console.error(`[Video Stream Error] File: ${explicitFilename || req.params.filename}, Error:`, err);
+      res.status(500).send("Error streaming video: " + err.message);
     }
   };
 
@@ -12571,6 +12597,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       publicUrl = `/api/videos/stream/${targetVideoFileName}`;
 
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
+      if (!fs.existsSync(finalVideoPath)) {
+        console.error(`❌ [Server] CRITICAL: Video file not found at ${finalVideoPath} after storage!`);
+      }
 
       // 4. Automated Local Transcription (Faster-Whisper)
       let transcriptText = "";
