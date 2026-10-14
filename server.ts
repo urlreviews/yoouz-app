@@ -21529,8 +21529,6 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   function buildServerSegmentsFromTranscript(text: string, totalDuration: number = 60) {
     if (!text || !text.trim()) return [];
     const lower = text.trim().toLowerCase();
-    if (lower.startsWith('video review for') || lower.startsWith('review for') || lower === 'video review') return [];
-    
     const words = text.trim().split(/\s+/).filter(Boolean);
     if (words.length === 0) return [];
     
