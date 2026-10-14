@@ -112,6 +112,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const wsRef = useRef<WebSocket | null>(null);
   const speechRecognitionRef = useRef<any>(null);
   const recordingStartTimeRef = useRef<number>(0);
+  const phraseStartRef = useRef<number>(-1);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -230,6 +231,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setLiveSegments([]);
     setInterimTranscript("");
     recordingStartTimeRef.current = 0;
+    phraseStartRef.current = -1;
     setRecordingTime(0);
     setCurrentTime(0);
     setDuration(0);
@@ -767,6 +769,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       // Set hardware recording start timestamp baseline for exact 0s alignment
       recordingStartTimeRef.current = performance.now();
+      phraseStartRef.current = -1;
       setLiveTranscript("");
       setLiveSegments([]);
       setInterimTranscript("");
@@ -779,9 +782,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           recognition.continuous = true;
           recognition.interimResults = true;
           recognition.lang = navigator.language || 'en-US';
-
-          // High-precision word-level hardware timing state
-          let currentPhraseStart = -1;
 
           recognition.onresult = (event: any) => {
             const recStart = recordingStartTimeRef.current || performance.now();
@@ -802,17 +802,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   if (words.length === 0) return prev;
 
                   const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-                  const estimatedStart = Math.max(prevEnd, nowSec - (words.length * 0.38));
-                  const segStart = currentPhraseStart >= 0 ? Math.max(prevEnd, currentPhraseStart) : estimatedStart;
-                  const segEnd = Math.max(segStart + 0.5, nowSec);
-                  currentPhraseStart = -1;
+                  const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, nowSec - (words.length * 0.35));
+                  const segStart = Math.max(prevEnd, capturedStart);
+                  const segEnd = Math.max(segStart + 0.4, nowSec);
+                  phraseStartRef.current = -1;
 
-                  const segDur = Math.max(0.4, segEnd - segStart);
+                  const segDur = Math.max(0.3, segEnd - segStart);
                   const secPerWord = segDur / words.length;
 
                   const newChunks: any[] = [];
-                  for (let j = 0; j < words.length; j += 5) {
-                    const subWords = words.slice(j, j + 5);
+                  for (let j = 0; j < words.length; j += 4) {
+                    const subWords = words.slice(j, j + 4);
                     const subText = subWords.join(" ");
                     const subStart = segStart + (j * secPerWord);
                     const subEnd = segStart + ((j + subWords.length) * secPerWord);
@@ -827,8 +827,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   return [...prev, ...newChunks];
                 });
               } else {
-                if (currentPhraseStart < 0) {
-                  currentPhraseStart = nowSec;
+                if (phraseStartRef.current < 0) {
+                  phraseStartRef.current = nowSec;
                 }
                 interim += (interim ? " " : "") + transcriptPiece;
               }
@@ -892,6 +892,44 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         try { speechRecognitionRef.current.stop(); } catch (e) {}
         speechRecognitionRef.current = null;
       }
+
+      // Capture any unfinalized interim transcript at stop time
+      if (interimTranscript && interimTranscript.trim()) {
+        const words = interimTranscript.trim().split(/\s+/).filter(Boolean);
+        if (words.length > 0) {
+          const textToAppend = words.join(" ");
+          setLiveTranscript((prev) => (prev ? prev + " " : "") + textToAppend);
+          const recStart = recordingStartTimeRef.current || performance.now();
+          const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
+
+          setLiveSegments((prev) => {
+            const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
+            const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, finalNowSec - (words.length * 0.35));
+            const segStart = Math.max(prevEnd, capturedStart);
+            const segEnd = Math.max(segStart + 0.4, finalNowSec);
+
+            const segDur = Math.max(0.3, segEnd - segStart);
+            const secPerWord = segDur / words.length;
+
+            const newChunks: any[] = [];
+            for (let j = 0; j < words.length; j += 4) {
+              const subWords = words.slice(j, j + 4);
+              const subText = subWords.join(" ");
+              const subStart = segStart + (j * secPerWord);
+              const subEnd = segStart + ((j + subWords.length) * secPerWord);
+              newChunks.push({
+                start: Math.round(subStart * 100) / 100,
+                end: Math.round(subEnd * 100) / 100,
+                text: subText,
+                isHardwareTimed: true
+              });
+            }
+            return [...prev, ...newChunks];
+          });
+        }
+        setInterimTranscript("");
+      }
+      phraseStartRef.current = -1;
       
       // Stop Audio Processing
       if (audioProcessorRef.current) {

@@ -69,28 +69,34 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
   const allWords = cleanText.split(/\s+/).filter(Boolean);
   if (allWords.length === 0) return [];
 
-  // Speech cadence: ~0.38s per word average
-  const estimatedSpeechDur = allWords.length * 0.38;
-  const dur = totalDuration > 0 ? Math.min(totalDuration, estimatedSpeechDur) : estimatedSpeechDur;
-  const secondsPerWord = dur / allWords.length;
-
+  const maxWordsPerChunk = 4; // Strict single-line limit (max 4 words)
   const chunks: SubtitleSegment[] = [];
-  let currentOffset = startOffset;
-  const maxWordsPerChunk = 5; // Strict single-line phrase limit (max 5 words)
 
-  for (let i = 0; i < allWords.length; i += maxWordsPerChunk) {
+  const totalWords = allWords.length;
+  const effectiveDur = Math.max(1, totalDuration > 0 ? totalDuration : totalWords * 0.38);
+  const timePerWord = effectiveDur / totalWords;
+
+  let currentStart = startOffset;
+  for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
     const subWords = allWords.slice(i, i + maxWordsPerChunk);
-    const pText = subWords.join(' ');
-    const pDur = subWords.length * secondsPerWord;
-    const segStart = Math.round(currentOffset * 100) / 100;
-    const segEnd = Math.round((currentOffset + pDur) * 100) / 100;
+    const chunkText = subWords.join(" ");
+    const chunkDuration = subWords.length * timePerWord;
+    const segStart = Math.round(currentStart * 100) / 100;
+    const segEnd = Math.round((currentStart + chunkDuration) * 100) / 100;
+
+    const wordObjs = subWords.map((w, idx) => ({
+      word: w,
+      start: Math.round((currentStart + (idx * timePerWord)) * 100) / 100,
+      end: Math.round((currentStart + ((idx + 1) * timePerWord)) * 100) / 100
+    }));
 
     chunks.push({
       start: segStart,
       end: segEnd,
-      text: pText
+      text: chunkText,
+      words: wordObjs
     });
-    currentOffset += pDur;
+    currentStart += chunkDuration;
   }
 
   return chunks;

@@ -103,18 +103,18 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   const activeSegment = useMemo(() => {
     if (!validSegments || validSegments.length === 0) return null;
 
-    // 1. Direct active segment lookup within current time window [start - 0.05s, end + 0.15s]
+    // 1. Direct active segment lookup within current time window [start - 0.05s, end + 0.20s]
     const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.05) && currentTime <= (s.end + 0.25)
+      s => currentTime >= (s.start - 0.05) && currentTime <= (s.end + 0.20)
     );
     if (direct) return direct;
 
-    // 2. Pause handling: Keep previous 4-5 word phrase segment visible briefly during speech pauses
+    // 2. Strict pause handling: Hide subtitles during silence gaps (> 0.25s after segment end)
     const pastSegments = validSegments.filter(s => currentTime >= s.start);
     if (pastSegments.length > 0) {
       const lastPast = pastSegments[pastSegments.length - 1];
-      const nextSeg = validSegments.find(s => s.start > currentTime);
-      if (nextSeg ? currentTime < nextSeg.start : currentTime <= (lastPast.end + 1.8)) {
+      // Allow brief 0.25s tail buffer after phrase end for visual smoothness, then hide
+      if (currentTime <= (lastPast.end + 0.25)) {
         return lastPast;
       }
     }
@@ -143,7 +143,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     // Fallback word token timings from precision generator
-    return generatePrecisionSubtitles(activeSegment.text, duration).flatMap(s => s.words);
+    return generatePrecisionSubtitles(activeSegment.text, duration).flatMap(s => s.words || []);
   }, [activeSegment, duration]);
 
   // Early returns strictly AFTER ALL HOOKS have run!
@@ -151,10 +151,10 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-200">
-      <div className="max-w-[90%] sm:max-w-[75%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
-        <div className="bg-black/90 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden">
-          <p className="text-white text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center whitespace-nowrap overflow-hidden text-ellipsis px-1">
+    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-[92%] sm:max-w-[80%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
+        <div className="bg-black/90 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden max-w-full">
+          <p className="text-white text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 max-w-full">
             {activeSegment.text}
           </p>
         </div>
