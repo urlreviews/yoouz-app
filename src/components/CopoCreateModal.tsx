@@ -111,6 +111,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const speechRecognitionRef = useRef<any>(null);
+  const recordingStartTimeRef = useRef<number>(0);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -225,6 +226,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
     setRecordedVideoUrl(null);
     setVideoThumbnail(null);
+    setLiveTranscript("");
+    setLiveSegments([]);
+    setInterimTranscript("");
+    recordingStartTimeRef.current = 0;
     setRecordingTime(0);
     setCurrentTime(0);
     setDuration(0);
@@ -407,6 +412,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
     setRecordedVideoUrl(null);
     setRecordedVideoBlob(null);
+    setLiveTranscript("");
+    setLiveSegments([]);
+    setInterimTranscript("");
+    recordingStartTimeRef.current = 0;
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
@@ -723,7 +732,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           if (thumb) setVideoThumbnail(thumb);
         });
 
-        // Auto-transcribe recorded video in background during preview step
+        // Auto-transcribe recorded video in background as fallback ONLY if live segments are empty
         (async () => {
           try {
             const reader = new FileReader();
@@ -743,8 +752,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.transcript) {
-                  setLiveTranscript(data.transcript);
-                  if (data.segments) setLiveSegments(data.segments);
+                  setLiveTranscript((prev) => prev || data.transcript);
+                  if (data.segments && data.segments.length > 0) {
+                    setLiveSegments((prev) => (prev && prev.length > 0 ? prev : data.segments));
+                  }
                 }
               }
             };
@@ -753,6 +764,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           }
         })();
       };
+
+      // Set hardware recording start timestamp baseline for exact 0s alignment
+      recordingStartTimeRef.current = performance.now();
+      setLiveTranscript("");
+      setLiveSegments([]);
+      setInterimTranscript("");
 
       // Initialize Browser-Native Zero-API Live Speech Recognition Engine
       try {
@@ -765,10 +782,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
           // High-precision word-level hardware timing state
           let currentPhraseStart = -1;
-          const recStartTime = performance.now();
 
           recognition.onresult = (event: any) => {
-            const nowSec = Math.max(0, (performance.now() - recStartTime) / 1000);
+            const recStart = recordingStartTimeRef.current || performance.now();
+            const nowSec = Math.max(0, (performance.now() - recStart) / 1000);
             let interim = "";
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
