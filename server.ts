@@ -12234,7 +12234,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
       const rawParam = explicitFilename || req.params.filename || req.params[0] || (req.params as any).id || "";
       const rawFilename = path.basename(rawParam);
-      const base = rawFilename.replace(/\.[^.]+$/, "");
+      // Ensure base includes the extension if missing, or strip just the extension
+      const base = rawFilename.includes('.') ? rawFilename.replace(/\.[^.]+$/, "") : rawFilename;
+      const ext = rawFilename.includes('.') ? path.extname(rawFilename) : '.mp4';
+      const filenameToSave = rawFilename.includes('.') ? rawFilename : `${rawFilename}.mp4`;
 
       const isImageRequest = rawFilename.endsWith(".jpg") || rawFilename.endsWith(".jpeg") || rawFilename.endsWith(".png") || rawFilename.endsWith(".webp");
       const candidatePaths = [
@@ -12244,8 +12247,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         path.join(serverUploadsDir, `${base}.mp4`),
         path.join(serverUploadsVideosDir, `${base}.mp4`),
         path.join(process.cwd(), "public", `${base}.mp4`),
-        path.join(serverUploadsDir, `${base}.jpg`),
-        path.join(serverUploadsDir, `${base}.png`),
         path.join(serverUploadsDir, `${base}.webm`),
         path.join(serverUploadsVideosDir, `${base}.webm`),
         path.join(process.cwd(), "public", `${base}.webm`),
@@ -12271,7 +12272,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               const rowData = typeof dbRes.rows[0].data === "string" ? JSON.parse(dbRes.rows[0].data) : dbRes.rows[0].data;
               if (rowData && rowData.videoData && typeof rowData.videoData === "string" && rowData.videoData.includes("base64,")) {
                 const b64 = rowData.videoData.split("base64,")[1];
-                const recoveredPath = path.join(serverUploadsDir, rawFilename);
+                const recoveredPath = path.join(serverUploadsDir, filenameToSave);
                 fs.writeFileSync(recoveredPath, Buffer.from(b64, "base64"));
                 if (fs.existsSync(recoveredPath)) {
                   filePath = recoveredPath;
