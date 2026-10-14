@@ -109,6 +109,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const timerRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const audioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const vadIntervalRef = useRef<any>(null);
+  const voiceBlocksRef = useRef<Array<{ start: number; end: number }>>([]);
+  const currentVoiceBlockRef = useRef<{ start: number; end: number } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const speechRecognitionRef = useRef<any>(null);
   const recordingStartTimeRef = useRef<number>(0);
@@ -232,6 +236,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setInterimTranscript("");
     recordingStartTimeRef.current = 0;
     phraseStartRef.current = -1;
+    if (vadIntervalRef.current) {
+      clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+    }
+    voiceBlocksRef.current = [];
+    currentVoiceBlockRef.current = null;
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch (e) {}
+      audioContextRef.current = null;
+    }
     setRecordingTime(0);
     setCurrentTime(0);
     setDuration(0);
@@ -774,6 +788,60 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setLiveSegments([]);
       setInterimTranscript("");
 
+      // Initialize zero-latency Web Audio API AnalyserNode Voice Activity Detector (VAD)
+      try {
+        const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtxClass && stream) {
+          const audioCtx = new AudioCtxClass();
+          const audioSource = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.3;
+          audioSource.connect(analyser);
+
+          audioContextRef.current = audioCtx;
+          audioAnalyserRef.current = analyser;
+          voiceBlocksRef.current = [];
+          currentVoiceBlockRef.current = null;
+
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+          if (vadIntervalRef.current) clearInterval(vadIntervalRef.current);
+          vadIntervalRef.current = setInterval(() => {
+            if (!isRecordingRef.current) return;
+            analyser.getByteFrequencyData(dataArray);
+
+            let sum = 0;
+            for (let k = 0; k < dataArray.length; k++) {
+              sum += dataArray[k];
+            }
+            const avgVolume = sum / dataArray.length; // Live audio energy (0..255)
+            const isSpeaking = avgVolume > 12; // Microphone speech onset threshold
+
+            const recStart = recordingStartTimeRef.current || performance.now();
+            const nowSec = Math.max(0, (performance.now() - recStart) / 1000);
+
+            if (isSpeaking) {
+              if (!currentVoiceBlockRef.current) {
+                const newBlock = { start: Math.max(0, nowSec - 0.15), end: nowSec + 0.3 };
+                currentVoiceBlockRef.current = newBlock;
+                voiceBlocksRef.current.push(newBlock);
+              } else {
+                currentVoiceBlockRef.current.end = Math.max(currentVoiceBlockRef.current.end, nowSec + 0.3);
+              }
+            } else {
+              if (currentVoiceBlockRef.current) {
+                if (nowSec - currentVoiceBlockRef.current.end > 0.35) {
+                  currentVoiceBlockRef.current = null;
+                }
+              }
+            }
+          }, 40); // 25 FPS live hardware audio sampling
+        }
+      } catch (vadErr) {
+        console.warn("[VAD] Setup notice:", vadErr);
+      }
+
       // Initialize Browser-Native Zero-API Live Speech Recognition Engine
       try {
         const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -802,9 +870,39 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   if (words.length === 0) return prev;
 
                   const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-                  const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, nowSec - (words.length * 0.35));
-                  const segStart = Math.max(prevEnd, capturedStart);
-                  const segEnd = Math.max(segStart + 0.4, nowSec);
+                  const blocks = voiceBlocksRef.current;
+
+                  // Match closest VAD voice block recorded synchronously by AnalyserNode
+                  let matchedBlock: { start: number; end: number } | null = null;
+                  if (blocks.length > 0) {
+                    for (let b = blocks.length - 1; b >= 0; b--) {
+                      if (blocks[b].end <= nowSec + 0.5 && blocks[b].start >= prevEnd - 0.5) {
+                        matchedBlock = blocks[b];
+                        break;
+                      }
+                    }
+                    if (!matchedBlock) {
+                      const lastBlock = blocks[blocks.length - 1];
+                      if (lastBlock && lastBlock.start >= prevEnd - 0.5) {
+                        matchedBlock = lastBlock;
+                      }
+                    }
+                  }
+
+                  let segStart = 0;
+                  let segEnd = 0;
+
+                  if (matchedBlock) {
+                    segStart = Math.max(prevEnd, matchedBlock.start);
+                    segEnd = Math.max(segStart + 0.4, matchedBlock.end);
+                  } else {
+                    const LATENCY_OFFSET = 0.7;
+                    const adjustedNow = Math.max(prevEnd + 0.4, nowSec - LATENCY_OFFSET);
+                    const dur = Math.max(0.5, words.length * 0.33);
+                    const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
+                    segStart = Math.max(prevEnd, capturedStart);
+                    segEnd = Math.max(segStart + 0.4, adjustedNow);
+                  }
                   phraseStartRef.current = -1;
 
                   const segDur = Math.max(0.3, segEnd - segStart);
@@ -887,6 +985,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       isRecordingRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
       
+      // Stop VAD audio processing interval
+      if (vadIntervalRef.current) {
+        clearInterval(vadIntervalRef.current);
+        vadIntervalRef.current = null;
+      }
+
       // Stop SpeechRecognition engine
       if (speechRecognitionRef.current) {
         try { speechRecognitionRef.current.stop(); } catch (e) {}
@@ -904,9 +1008,26 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
           setLiveSegments((prev) => {
             const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-            const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, finalNowSec - (words.length * 0.35));
-            const segStart = Math.max(prevEnd, capturedStart);
-            const segEnd = Math.max(segStart + 0.4, finalNowSec);
+            const blocks = voiceBlocksRef.current;
+            let matchedBlock: { start: number; end: number } | null = null;
+            if (blocks.length > 0) {
+              matchedBlock = blocks[blocks.length - 1];
+            }
+
+            let segStart = 0;
+            let segEnd = 0;
+
+            if (matchedBlock && matchedBlock.start >= prevEnd - 0.5) {
+              segStart = Math.max(prevEnd, matchedBlock.start);
+              segEnd = Math.max(segStart + 0.4, matchedBlock.end);
+            } else {
+              const LATENCY_OFFSET = 0.5;
+              const adjustedNow = Math.max(prevEnd + 0.4, finalNowSec - LATENCY_OFFSET);
+              const dur = Math.max(0.5, words.length * 0.33);
+              const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
+              segStart = Math.max(prevEnd, capturedStart);
+              segEnd = Math.max(segStart + 0.4, adjustedNow);
+            }
 
             const segDur = Math.max(0.3, segEnd - segStart);
             const secPerWord = segDur / words.length;

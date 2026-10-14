@@ -76,13 +76,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       if (validArray.length > 0) {
         return validArray.flatMap(s => {
           const words = s.text.split(/\s+/).filter(Boolean);
-          if (words.length <= 5) return [s];
+          if (words.length <= 4) return [s];
 
           const segDur = Math.max(0.4, s.end - s.start);
           const secPerWord = segDur / words.length;
           const subChunks: any[] = [];
-          for (let i = 0; i < words.length; i += 5) {
-            const subWords = words.slice(i, i + 5);
+          for (let i = 0; i < words.length; i += 4) {
+            const subWords = words.slice(i, i + 4);
             const subText = subWords.join(" ");
             const subStart = s.start + (i * secPerWord);
             const subEnd = s.start + ((i + subWords.length) * secPerWord);

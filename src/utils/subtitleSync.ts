@@ -73,21 +73,23 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
   const chunks: SubtitleSegment[] = [];
 
   const totalWords = allWords.length;
-  const effectiveDur = Math.max(1, totalDuration > 0 ? totalDuration : totalWords * 0.38);
-  const timePerWord = effectiveDur / totalWords;
+  // Natural human speaking rate is ~0.35 seconds per word
+  const NATURAL_SEC_PER_WORD = 0.35;
 
-  let currentStart = startOffset;
+  // Start speaking shortly after video begins (e.g. at 0.3s)
+  let currentStart = Math.max(0.3, startOffset);
+
   for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
     const subWords = allWords.slice(i, i + maxWordsPerChunk);
     const chunkText = subWords.join(" ");
-    const chunkDuration = subWords.length * timePerWord;
+    const chunkDuration = Math.max(0.5, subWords.length * NATURAL_SEC_PER_WORD);
     const segStart = Math.round(currentStart * 100) / 100;
     const segEnd = Math.round((currentStart + chunkDuration) * 100) / 100;
 
     const wordObjs = subWords.map((w, idx) => ({
       word: w,
-      start: Math.round((currentStart + (idx * timePerWord)) * 100) / 100,
-      end: Math.round((currentStart + ((idx + 1) * timePerWord)) * 100) / 100
+      start: Math.round((currentStart + (idx * NATURAL_SEC_PER_WORD)) * 100) / 100,
+      end: Math.round((currentStart + ((idx + 1) * NATURAL_SEC_PER_WORD)) * 100) / 100
     }));
 
     chunks.push({
@@ -96,7 +98,8 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
       text: chunkText,
       words: wordObjs
     });
-    currentStart += chunkDuration;
+    // Add brief 0.15s pause between chunks
+    currentStart += chunkDuration + 0.15;
   }
 
   return chunks;
