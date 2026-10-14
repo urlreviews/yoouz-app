@@ -122,21 +122,21 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 3. Direct Bunny CDN Edge URL (instant 0ms loading without 302 redirect)
-  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) {
-      sources.push(cdnUrlMp4);
-    }
-  }
-
-  // 4. Direct clean server streaming endpoint (Fallback for local disk uploads)
+  // 3. Direct clean local server streaming endpoint (Instant 0ms loading from server disk)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
     if (!sources.includes(serverStream)) {
       sources.push(serverStream);
+    }
+  }
+
+  // 4. Direct Bunny CDN Edge URL
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) {
+      sources.push(cdnUrlMp4);
     }
   }
 

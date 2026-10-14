@@ -12519,15 +12519,61 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
       let thumbnailUrl = hasThumb ? `/uploads/${thumbFileName}` : "";
 
+      // 3. Synchronously upload MP4 and Thumbnail to Bunny CDN so file is 100% playable for all users before response
       if (bunnyAccessKey && bunnyStorageZone) {
-        publicUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
-        thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
+        try {
+          const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+
+          // Upload Video MP4 to Bunny CDN Storage
+          const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
+          const fileBuffer = fs.readFileSync(finalVideoPath);
+          console.log(`🐰 [Server Upload] Syncing ${targetVideoFileName} (${fileBuffer.length} bytes) to Bunny CDN storage...`);
+
+          const bunnyVidRes = await fetch(videoBunnyUrl, {
+            method: 'PUT',
+            headers: {
+              'AccessKey': bunnyAccessKey,
+              'Content-Type': 'video/mp4',
+            },
+            body: fileBuffer,
+            signal: AbortSignal.timeout(30000)
+          });
+
+          let bunnyUrl = "";
+          if (bunnyVidRes.ok) {
+            bunnyUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
+            console.log(`✅ 🐰 [Server Upload] Successfully uploaded video to Bunny CDN: ${bunnyUrl}`);
+          } else {
+            console.warn(`⚠️ 🐰 [Server Upload] Bunny CDN upload notice (HTTP ${bunnyVidRes.status}), using server stream URL`);
+          }
+
+          // Upload Thumbnail JPG to Bunny CDN Storage
+          if (hasThumb && fs.existsSync(thumbFilePath)) {
+            const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
+            const thumbBuffer = fs.readFileSync(thumbFilePath);
+            await fetch(thumbBunnyUrl, {
+              method: 'PUT',
+              headers: {
+                'AccessKey': bunnyAccessKey,
+                'Content-Type': 'image/jpeg',
+              },
+              body: thumbBuffer,
+              signal: AbortSignal.timeout(15000)
+            }).then(r => {
+              if (r.ok) thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
+            }).catch(() => {});
+          }
+        } catch (bunnyErr) {
+          console.warn("⚠️ 🐰 [Server Upload] Error uploading to Bunny CDN, using server stream fallback:", bunnyErr);
+        }
       }
+
+      // Always prioritize the local server stream endpoint so EVERY user on EVERY device gets instant 0ms playback
+      publicUrl = `/api/videos/stream/${targetVideoFileName}`;
 
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
 
-      // Respond immediately to client so mobile upload completes in under 1 second without stalling
-      // 3. Automated Local Transcription (Faster-Whisper)
+      // 4. Automated Local Transcription (Faster-Whisper)
       let transcriptText = "";
       let segments = [];
       let vttContent = "";
@@ -12551,6 +12597,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       res.json({ 
         success: true, 
         url: publicUrl, 
+        downloadUrl: publicUrl,
+        bunnyUrl: (bunnyAccessKey && bunnyStorageZone) ? `${pullZoneDomain}/videos/${targetVideoFileName}` : "",
         thumbnailUrl, 
         fileName: targetVideoFileName, 
         bunnyVideoId: base,
@@ -12558,55 +12606,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         segments,
         vttUrl: vttContent ? (bunnyAccessKey && bunnyStorageZone ? `${pullZoneDomain}/videos/${base}.vtt` : `/uploads/${base}.vtt`) : ""
       });
-
-      // Run background Bunny CDN sync asynchronously without holding the HTTP response
-      (async () => {
-        if (bunnyAccessKey && bunnyStorageZone) {
-          try {
-            const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-
-            // 1. Upload Video MP4 to Bunny CDN
-            const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
-            const fileBuffer = fs.readFileSync(finalVideoPath);
-            await fetch(videoBunnyUrl, {
-              method: 'PUT',
-              headers: {
-                'AccessKey': bunnyAccessKey,
-                'Content-Type': 'video/mp4',
-              },
-              body: fileBuffer,
-              signal: AbortSignal.timeout(30000)
-            }).then(async (r) => {
-              if (r.ok) {
-                console.log("🐰 [Server Async] Successfully uploaded video to Bunny CDN:", `${pullZoneDomain}/videos/${targetVideoFileName}`);
-              } else {
-                console.warn("🐰 [Server Async] Bunny CDN video upload notice:", await r.text());
-              }
-            }).catch((err) => console.warn("🐰 [Server Async] Bunny CDN video error:", err?.message || err));
-
-            // 2. Upload Thumbnail JPG to Bunny CDN
-            if (hasThumb && fs.existsSync(thumbFilePath)) {
-              const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
-              const thumbBuffer = fs.readFileSync(thumbFilePath);
-              await fetch(thumbBunnyUrl, {
-                method: 'PUT',
-                headers: {
-                  'AccessKey': bunnyAccessKey,
-                  'Content-Type': 'image/jpeg',
-                },
-                body: thumbBuffer,
-                signal: AbortSignal.timeout(15000)
-              }).then(async (r) => {
-                if (r.ok) {
-                  console.log("🐰 [Server Async] Successfully uploaded thumbnail to Bunny CDN:", `${pullZoneDomain}/videos/${thumbFileName}`);
-                }
-              }).catch((err) => console.warn("🐰 [Server Async] Bunny CDN thumbnail error:", err?.message || err));
-            }
-          } catch (bunnyErr) {
-            console.warn("🐰 [Server Async] Error syncing to Bunny CDN:", bunnyErr);
-          }
-        }
-      })();
     } catch (err: any) {
       console.error("Video upload error:", err);
       systemErrorLogs.unshift({
