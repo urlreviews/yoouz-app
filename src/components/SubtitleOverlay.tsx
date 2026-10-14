@@ -175,27 +175,11 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[90%] sm:max-w-[80%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
-        <div className="bg-black/90 backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/25 shadow-[0_12px_64px_rgba(0,0,0,1)] text-center flex items-center justify-center gap-x-2.5 gap-y-1 flex-wrap">
-          {wordTokens.map((token, index) => {
-            const isActiveWord = currentTime >= token.start && currentTime <= token.end;
-            const isPastWord = currentTime > token.end;
-
-            return (
-              <span
-                key={`${token.word}-${index}`}
-                className={`transition-all duration-200 leading-tight inline-block ${
-                  isActiveWord
-                    ? "text-yellow-400 font-black scale-110 drop-shadow-[0_0_20px_rgba(250,204,21,1)]"
-                    : isPastWord
-                    ? "text-white font-bold opacity-100"
-                    : "text-white/50 font-semibold"
-                } text-[16px] sm:text-[18px] tracking-tight`}
-              >
-                {token.word}
-              </span>
-            );
-          })}
+      <div className="max-w-[95%] sm:max-w-[85%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
+        <div className="bg-black/85 backdrop-blur-2xl px-6 py-3.5 rounded-2xl border border-white/20 shadow-[0_12px_64px_rgba(0,0,0,1)] text-center flex flex-col items-center justify-center min-h-[60px]">
+          <p className="text-white text-[17px] sm:text-[20px] font-bold leading-tight tracking-tight drop-shadow-sm line-clamp-2">
+            {activeSegment.text}
+          </p>
         </div>
       </div>
     </div>

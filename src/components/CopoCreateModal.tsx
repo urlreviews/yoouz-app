@@ -753,56 +753,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
           recognition.onresult = (event: any) => {
             const nowSec = (Date.now() - recStartTime) / 1000;
+            const resultIndex = event.resultIndex;
+            const result = event.results[resultIndex];
+            const transcriptPiece = result[0]?.transcript?.trim();
             
-            let currentFullTranscript = "";
-            for (let i = 0; i < event.results.length; i++) {
-              currentFullTranscript += event.results[i][0].transcript;
-            }
-
-            const cleanTranscript = currentFullTranscript.trim();
-            if (cleanTranscript.length > lastFullTranscript.length) {
-              const newText = cleanTranscript.substring(lastFullTranscript.length).trim();
-              if (newText) {
-                const newWords = newText.split(/\s+/).filter(Boolean);
+            if (transcriptPiece && result.isFinal) {
+              // Hardware Sync: The browser tells us exactly when this phrase was finished.
+              // We use this as the anchor for the entire segment.
+              setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
+              
+              setLiveSegments((prev) => {
+                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
+                const start = Math.max(prevEnd, nowSec - (transcriptPiece.split(" ").length * 0.45));
                 
-                // EXPERT FIX: Distributed Timing
-                // We spread the new words between the last word's time and current time.
-                // This ensures words in a batch don't highlight all at once.
-                const speechRate = 0.38; // Average seconds per word
-                const batchDur = newWords.length * speechRate;
-                const batchStart = Math.max(lastWordTime + 0.1, nowSec - batchDur);
-                
-                newWords.forEach((w, idx) => {
-                  const wTime = batchStart + (idx * speechRate);
-                  recordedWords.push({ word: w, time: Math.max(0, wTime - 0.2) });
-                  lastWordTime = wTime;
-                });
-
-                lastFullTranscript = cleanTranscript;
-                setLiveTranscript(cleanTranscript);
-                
-                // Construct segments (5 words per line for clean, single-line "Reels" style)
-                const segments: any[] = [];
-                const wordsPerSeg = 5; 
-                for (let i = 0; i < recordedWords.length; i += wordsPerSeg) {
-                  const chunk = recordedWords.slice(i, i + wordsPerSeg);
-                  const start = chunk[0].time;
-                  const end = chunk[chunk.length - 1].time + 0.5;
-                  
-                  segments.push({
-                    start: Math.round(start * 100) / 100,
-                    end: Math.round(end * 100) / 100,
-                    text: chunk.map(cw => cw.word).join(" "),
-                    isHardwareTimed: true,
-                    words: chunk.map(cw => ({
-                      word: cw.word,
-                      start: Math.round(cw.time * 100) / 100,
-                      end: Math.round((cw.time + 0.45) * 100) / 100
-                    }))
-                  });
-                }
-                setLiveSegments(segments);
-              }
+                const newSeg = {
+                  start: Math.round(start * 100) / 100,
+                  end: Math.round(nowSec * 100) / 100,
+                  text: transcriptPiece,
+                  isHardwareTimed: true
+                };
+                return [...prev, newSeg];
+              });
             }
           };
 
