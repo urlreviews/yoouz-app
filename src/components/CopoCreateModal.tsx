@@ -113,6 +113,22 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const speechRecognitionRef = useRef<any>(null);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+
+  const activeRecordingSegments = React.useMemo(() => {
+    if (!interimTranscript) return liveSegments;
+    const currentEnd = Math.max(0.8, recordingTime);
+    const currentStart = Math.max(0, recordingTime - 2.0);
+    return [
+      ...liveSegments,
+      {
+        start: Math.round(currentStart * 100) / 100,
+        end: Math.round((currentEnd + 2.0) * 100) / 100,
+        text: interimTranscript,
+        isHardwareTimed: true
+      }
+    ];
+  }, [liveSegments, interimTranscript, recordingTime]);
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -753,46 +769,57 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
           recognition.onresult = (event: any) => {
             const nowSec = (Date.now() - recStartTime) / 1000;
-            const resultIndex = event.resultIndex;
-            const result = event.results[resultIndex];
-            const transcriptPiece = result[0]?.transcript?.trim();
-            
-            if (transcriptPiece && result.isFinal) {
-              setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
-              
-              setLiveSegments((prev) => {
-                const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                if (words.length === 0) return prev;
+            let interim = "";
 
-                // Anchor sentence segment to actual speech burst window [prevEnd, nowSec]
-                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.38));
-                const segStart = Math.round(prevEnd * 100) / 100;
-                const segEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const res = event.results[i];
+              const transcriptPiece = res[0]?.transcript?.trim();
+              if (!transcriptPiece) continue;
 
-                // If sentence is longer than 12 words, split into 2 natural clauses
-                if (words.length > 12) {
-                  const half = Math.ceil(words.length / 2);
-                  const p1Text = words.slice(0, half).join(" ");
-                  const p2Text = words.slice(half).join(" ");
-                  const mid = Math.round(((segStart + segEnd) / 2) * 100) / 100;
+              if (res.isFinal) {
+                setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
+                setInterimTranscript("");
+
+                setLiveSegments((prev) => {
+                  const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                  if (words.length === 0) return prev;
+
+                  // Anchor sentence segment to actual speech burst window [prevEnd, nowSec]
+                  const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.38));
+                  const segStart = Math.round(prevEnd * 100) / 100;
+                  const segEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
+
+                  // If sentence is longer than 12 words, split into 2 natural clauses
+                  if (words.length > 12) {
+                    const half = Math.ceil(words.length / 2);
+                    const p1Text = words.slice(0, half).join(" ");
+                    const p2Text = words.slice(half).join(" ");
+                    const mid = Math.round(((segStart + segEnd) / 2) * 100) / 100;
+
+                    return [
+                      ...prev,
+                      { start: segStart, end: mid, text: p1Text, isHardwareTimed: true },
+                      { start: mid, end: segEnd, text: p2Text, isHardwareTimed: true }
+                    ];
+                  }
 
                   return [
                     ...prev,
-                    { start: segStart, end: mid, text: p1Text, isHardwareTimed: true },
-                    { start: mid, end: segEnd, text: p2Text, isHardwareTimed: true }
+                    {
+                      start: segStart,
+                      end: segEnd,
+                      text: transcriptPiece,
+                      isHardwareTimed: true
+                    }
                   ];
-                }
+                });
+              } else {
+                interim += (interim ? " " : "") + transcriptPiece;
+              }
+            }
 
-                return [
-                  ...prev,
-                  {
-                    start: segStart,
-                    end: segEnd,
-                    text: transcriptPiece,
-                    isHardwareTimed: true
-                  }
-                ];
-              });
+            if (interim) {
+              setInterimTranscript(interim);
             }
           };
 
@@ -1991,20 +2018,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 )}
 
+                {/* Live Subtitle Caption Overlay while speaking directly on camera viewport */}
+                {isRecording && (
+                  <SubtitleOverlay
+                    currentTime={recordingTime}
+                    segments={activeRecordingSegments}
+                    transcriptText={liveTranscript || interimTranscript}
+                    duration={60}
+                    isActive={true}
+                  />
+                )}
+
                 {/* Active Recording State Bar with 60-Second Radial Progress */}
                 {isRecording && (
                   <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-4 z-30 pointer-events-auto">
-                    {/* Live Subtitle Caption Overlay while speaking */}
-                    {liveSegments.length > 0 && (
-                      <div className="max-w-[92%] sm:max-w-[80%] px-4 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="bg-black/90 backdrop-blur-xl px-5 py-2.5 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center">
-                          <p className="text-white text-[15px] sm:text-[17px] font-bold leading-snug tracking-tight drop-shadow-md text-center">
-                            {liveSegments[liveSegments.length - 1].text}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Live REC Timer badge */}
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full font-bold text-xs tracking-wider shadow-2xl border border-red-400 flex items-center gap-2">
