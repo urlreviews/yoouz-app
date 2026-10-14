@@ -748,21 +748,33 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           const recStartTime = Date.now();
 
           recognition.onresult = (event: any) => {
-            let fullText = "";
-            for (let i = 0; i < event.results.length; i++) {
-              const res = event.results[i];
-              const transcriptPiece = res[0]?.transcript?.trim();
-              if (transcriptPiece) {
-                fullText += (fullText ? " " : "") + transcriptPiece;
-              }
-            }
+            const nowSec = (Date.now() - recStartTime) / 1000;
+            const resultIndex = event.resultIndex;
+            const result = event.results[resultIndex];
+            const transcriptPiece = result[0]?.transcript?.trim();
+            
+            if (transcriptPiece) {
+              setLiveTranscript((prev) => {
+                const combined = result.isFinal ? (prev ? prev + " " : "") + transcriptPiece : (prev ? prev + " " : "") + transcriptPiece;
+                return combined;
+              });
 
-            if (fullText) {
-              setLiveTranscript(fullText);
-              const nowSec = Math.max(0.2, (Date.now() - recStartTime) / 1000);
-              const builtSegments = buildSegmentsFromTranscript(fullText, nowSec, 0);
-              if (builtSegments.length > 0) {
-                setLiveSegments(builtSegments);
+              // Hardware Timing: We record the exact second this speech segment was finalized
+              if (result.isFinal) {
+                setLiveSegments((prev) => {
+                  const segWords = transcriptPiece.split(/\s+/).filter(Boolean);
+                  const segDur = Math.max(0.4, segWords.length * 0.45);
+                  const start = Math.max(0, nowSec - segDur);
+                  
+                  const newSeg = {
+                    start: Math.round(start * 100) / 100,
+                    end: Math.round(nowSec * 100) / 100,
+                    text: transcriptPiece,
+                    isHardwareTimed: true
+                  };
+                  
+                  return [...prev, newSeg];
+                });
               }
             }
           };

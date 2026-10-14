@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { generatePrecisionSubtitles } from '../utils/subtitleSync';
+import { generatePrecisionSubtitles, normalizeWordTimings } from '../utils/subtitleSync';
 
 interface SubtitleOverlayProps {
   currentTime: number;
@@ -111,7 +111,14 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    // Priority 2: Use high-precision natural speech cadence generator for 100% accurate word-level synchronization and pause detection
+    // Priority 2: Use high-precision natural speech cadence generator only if NO hardware timing exists
+    if (parsed.some(s => s.isHardwareTimed)) {
+      return parsed.map(s => ({
+        ...s,
+        words: normalizeWordTimings(s.words || [], s.start, s.end, s.text)
+      }));
+    }
+
     return generatePrecisionSubtitles(fullText, effectiveDuration);
   }, [segments, transcriptText, duration]);
 
