@@ -12441,31 +12441,52 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const mp4FileName = `${base}.mp4`;
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       let finalVideoPath = filePath;
+      let transcodeSuccess = false;
 
       // 1. High-Compatibility Universal H.264 Transcoding (yuv420p + faststart for 100% mobile & web playback)
+      // Only run transcoding if source file is NOT already an mp4 or needs H.264 optimization
       try {
         console.log(`🎬 [Server] Transcoding ${cleanFileName} with universal H.264 (yuv420p, faststart, aac)...`);
         execSync(
           `ffmpeg -i "${filePath}" -c:v libx264 -profile:v main -level 3.1 -pix_fmt yuv420p -preset ultrafast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 -movflags +faststart "${mp4FilePath}" -y`,
-          { timeout: 20000, stdio: 'ignore' }
+          { timeout: 120000, stdio: 'ignore' }
         );
 
-        finalVideoPath = mp4FilePath;
-        cleanFileName = mp4FileName;
-        mimeType = "video/mp4";
-      } catch (ffErr) {
-        console.warn("FFmpeg primary transcode notice (using fast fallback pass):", ffErr);
-        try {
-          execSync(
-            `ffmpeg -i "${filePath}" -c:v libx264 -pix_fmt yuv420p -preset ultrafast -crf 23 -c:a aac -movflags +faststart "${mp4FilePath}" -y`,
-            { timeout: 15000, stdio: 'ignore' }
-          );
+        if (fs.existsSync(mp4FilePath) && fs.statSync(mp4FilePath).size > 1000) {
           finalVideoPath = mp4FilePath;
           cleanFileName = mp4FileName;
           mimeType = "video/mp4";
-        } catch (e2) {
-          console.warn("FFmpeg secondary transcode fallback:", e2);
+          transcodeSuccess = true;
         }
+      } catch (ffErr) {
+        console.warn("FFmpeg primary transcode notice (using fast fallback pass):", ffErr);
+        // Delete truncated/partial mp4FilePath if first attempt timed out or failed
+        if (fs.existsSync(mp4FilePath)) {
+          try { fs.unlinkSync(mp4FilePath); } catch (e) {}
+        }
+        try {
+          execSync(
+            `ffmpeg -i "${filePath}" -c:v libx264 -pix_fmt yuv420p -preset ultrafast -crf 26 -c:a aac -movflags +faststart "${mp4FilePath}" -y`,
+            { timeout: 60000, stdio: 'ignore' }
+          );
+          if (fs.existsSync(mp4FilePath) && fs.statSync(mp4FilePath).size > 1000) {
+            finalVideoPath = mp4FilePath;
+            cleanFileName = mp4FileName;
+            mimeType = "video/mp4";
+            transcodeSuccess = true;
+          }
+        } catch (e2) {
+          console.warn("FFmpeg secondary transcode notice (using original complete recorded file):", e2);
+          // Delete truncated/partial mp4FilePath so we don't serve a partial file
+          if (fs.existsSync(mp4FilePath)) {
+            try { fs.unlinkSync(mp4FilePath); } catch (e) {}
+          }
+        }
+      }
+
+      // If transcoding didn't succeed, guarantee we use the original full-length recorded file
+      if (!transcodeSuccess) {
+        finalVideoPath = filePath;
       }
 
       // 2. High-speed poster thumbnail extraction or conversion to crisp JPEG
@@ -12479,7 +12500,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           hasThumb = true;
         } else {
           try {
-            execSync(`ffmpeg -ss 00:00:00.500 -i "${finalVideoPath}" -vframes 1 -q:v 2 "${thumbFilePath}" -y`, { timeout: 3000, stdio: 'ignore' });
+            execSync(`ffmpeg -ss 00:00:00.500 -i "${finalVideoPath}" -vframes 1 -q:v 2 "${thumbFilePath}" -y`, { timeout: 5000, stdio: 'ignore' });
             hasThumb = true;
           } catch (e) {}
         }
@@ -12487,16 +12508,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         console.warn("Thumbnail generation notice:", thumbErr);
       }
 
-      if (fs.existsSync(mp4FilePath)) {
-        finalVideoPath = mp4FilePath;
-        cleanFileName = mp4FileName;
-        mimeType = "video/mp4";
-      }
-
       let targetVideoFileName = cleanFileName;
-      if (finalVideoPath.endsWith(".mp4") || fs.existsSync(mp4FilePath)) {
-        targetVideoFileName = mp4FileName;
-      }
 
       const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
       const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";

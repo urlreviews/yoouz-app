@@ -60,49 +60,67 @@ export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
 }
 
 /**
- * Generates precision subtitles from transcript text.
- * Optimized for fallback when hardware timing is missing.
+ * Generates sentence-based precision subtitles from transcript text.
+ * Groups spoken text into complete natural sentences or clauses.
  */
 export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [];
+  const cleanText = text.trim();
+  
+  // Split by sentence ending punctuation or newlines
+  const sentences = cleanText
+    .split(/(?<=[.?!;])\s+|\n+/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  // Improved cadence: People speak at ~150 words per minute (0.4s per word)
-  // We use the shorter of totalDuration or actual estimated speech time
-  const estimatedSpeechDur = words.length * 0.42; 
+  if (sentences.length === 0) return [];
+
+  const allWordsCount = cleanText.split(/\s+/).filter(Boolean).length;
+  if (allWordsCount === 0) return [];
+
+  // Speech cadence: ~0.38s per word average
+  const estimatedSpeechDur = allWordsCount * 0.38;
   const dur = totalDuration > 0 ? Math.min(totalDuration, estimatedSpeechDur) : estimatedSpeechDur;
-  const secondsPerWord = dur / words.length;
+  const secondsPerWord = dur / allWordsCount;
 
   const chunks: SubtitleSegment[] = [];
-  const maxWordsPerLine = 4;
+  let currentOffset = startOffset;
 
-  let currentWordIdx = 0;
-  while (currentWordIdx < words.length) {
-    const chunkWords = words.slice(currentWordIdx, currentWordIdx + maxWordsPerLine);
-    const chunkText = chunkWords.join(' ');
-    const chunkStartIdx = currentWordIdx;
-    currentWordIdx += chunkWords.length;
+  for (const sentence of sentences) {
+    const sentenceWords = sentence.split(/\s+/).filter(Boolean);
+    if (sentenceWords.length === 0) continue;
 
-    const segStart = Math.round((startOffset + chunkStartIdx * secondsPerWord) * 100) / 100;
-    const segEnd = Math.round((startOffset + currentWordIdx * secondsPerWord) * 100) / 100;
+    // If a single sentence is extremely long (over 12 words), split into 2 natural clauses
+    if (sentenceWords.length > 12) {
+      const half = Math.ceil(sentenceWords.length / 2);
+      const part1Words = sentenceWords.slice(0, half);
+      const part2Words = sentenceWords.slice(half);
 
-    const wordTimings = chunkWords.map((w, idx) => {
-      const wStart = segStart + (idx * secondsPerWord);
-      const wEnd = wStart + secondsPerWord;
-      return { 
-        word: w, 
-        start: Math.round(wStart * 100) / 100, 
-        end: Math.round(wEnd * 100) / 100 
-      };
-    });
+      for (const pWords of [part1Words, part2Words]) {
+        const pText = pWords.join(' ');
+        const pDur = pWords.length * secondsPerWord;
+        const segStart = Math.round(currentOffset * 100) / 100;
+        const segEnd = Math.round((currentOffset + pDur) * 100) / 100;
 
-    chunks.push({
-      start: segStart,
-      end: segEnd,
-      text: chunkText,
-      words: wordTimings
-    });
+        chunks.push({
+          start: segStart,
+          end: segEnd,
+          text: pText
+        });
+        currentOffset += pDur;
+      }
+    } else {
+      const segDur = sentenceWords.length * secondsPerWord;
+      const segStart = Math.round(currentOffset * 100) / 100;
+      const segEnd = Math.round((currentOffset + segDur) * 100) / 100;
+
+      chunks.push({
+        start: segStart,
+        end: segEnd,
+        text: sentence
+      });
+      currentOffset += segDur;
+    }
   }
 
   return chunks;

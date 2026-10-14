@@ -28,7 +28,7 @@ import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
-import { buildSegmentsFromTranscript } from "./SubtitleOverlay";
+import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -764,34 +764,34 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 const words = transcriptPiece.split(/\s+/).filter(Boolean);
                 if (words.length === 0) return prev;
 
-                // Dynamic Acoustic Stretching:
-                // We anchor the end of this speech burst to 'nowSec' (when the mic finished hearing it).
-                // The start respects any natural pauses by starting at the previous segment's end.
-                // We then proportionally stretch/compress word timings to match fast or slow speech.
-                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.35));
-                const totalBurstDuration = Math.max(0.8, nowSec - prevEnd);
-                const timePerWord = totalBurstDuration / words.length;
+                // Anchor sentence segment to actual speech burst window [prevEnd, nowSec]
+                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.38));
+                const segStart = Math.round(prevEnd * 100) / 100;
+                const segEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
 
-                const maxPerChunk = 4; // 4 words per single-line pill
-                const chunks: any[] = [];
-                
-                let chunkStart = prevEnd;
-                
-                for (let i = 0; i < words.length; i += maxPerChunk) {
-                  const chunkWords = words.slice(i, i + maxPerChunk);
-                  const chunkText = chunkWords.join(" ");
-                  const chunkEnd = chunkStart + (chunkWords.length * timePerWord);
-                  
-                  chunks.push({
-                    start: Math.round(chunkStart * 100) / 100,
-                    end: Math.round(chunkEnd * 100) / 100,
-                    text: chunkText,
-                    isHardwareTimed: true
-                  });
-                  chunkStart = chunkEnd;
+                // If sentence is longer than 12 words, split into 2 natural clauses
+                if (words.length > 12) {
+                  const half = Math.ceil(words.length / 2);
+                  const p1Text = words.slice(0, half).join(" ");
+                  const p2Text = words.slice(half).join(" ");
+                  const mid = Math.round(((segStart + segEnd) / 2) * 100) / 100;
+
+                  return [
+                    ...prev,
+                    { start: segStart, end: mid, text: p1Text, isHardwareTimed: true },
+                    { start: mid, end: segEnd, text: p2Text, isHardwareTimed: true }
+                  ];
                 }
-                
-                return [...prev, ...chunks];
+
+                return [
+                  ...prev,
+                  {
+                    start: segStart,
+                    end: segEnd,
+                    text: transcriptPiece,
+                    isHardwareTimed: true
+                  }
+                ];
               });
             }
           };
@@ -1683,6 +1683,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   <source src={recordedVideoUrl} type="video/webm" />
                 </video>
 
+                {/* Subtitle Overlay for Preview */}
+                <SubtitleOverlay
+                  currentTime={currentTime}
+                  segments={liveSegments}
+                  transcriptText={liveTranscript}
+                  duration={duration || 15}
+                  isActive={true}
+                />
+
                 {/* Top Overlay: Place Badge & Close */}
                 <div className="absolute top-3.5 left-3.5 right-3.5 md:top-5 md:left-5 md:right-5 flex items-center justify-between z-30 pointer-events-none gap-2">
                   <div className="flex items-center pointer-events-auto min-w-0 flex-1">
@@ -1985,6 +1994,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {/* Active Recording State Bar with 60-Second Radial Progress */}
                 {isRecording && (
                   <div className="absolute bottom-8 inset-x-0 flex flex-col items-center gap-4 z-30 pointer-events-auto">
+                    {/* Live Subtitle Caption Overlay while speaking */}
+                    {liveSegments.length > 0 && (
+                      <div className="max-w-[92%] sm:max-w-[80%] px-4 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="bg-black/90 backdrop-blur-xl px-5 py-2.5 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center">
+                          <p className="text-white text-[15px] sm:text-[17px] font-bold leading-snug tracking-tight drop-shadow-md text-center">
+                            {liveSegments[liveSegments.length - 1].text}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Live REC Timer badge */}
                     <div className="flex flex-col items-center gap-1.5">
                       <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full font-bold text-xs tracking-wider shadow-2xl border border-red-400 flex items-center gap-2">
