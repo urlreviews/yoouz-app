@@ -8,6 +8,28 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Yoouz" />
+    <script>
+      /* Universal zero-violation passive event enforcer */
+      (function() {
+        if (typeof EventTarget === 'undefined') return;
+        var origAdd = EventTarget.prototype.addEventListener;
+        var passiveTypes = { touchstart: true, touchmove: true, wheel: true, mousewheel: true };
+        EventTarget.prototype.addEventListener = function(type, listener, options) {
+          if (passiveTypes[type]) {
+            if (typeof options === 'boolean') {
+              options = { capture: options, passive: true };
+            } else if (typeof options === 'object' && options !== null) {
+              if (options.passive === undefined) {
+                options = Object.assign({}, options, { passive: true });
+              }
+            } else if (options === undefined) {
+              options = { passive: true };
+            }
+          }
+          return origAdd.call(this, type, listener, options);
+        };
+      })();
+    </script>
     <!-- V6-FIX-CONFIRMED -->
     <title>Yoouz - Authentic 60-Second Video Reviews</title>
     <meta name="description" content="Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews." />
