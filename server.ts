@@ -12139,6 +12139,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     "/icon-192.png",
     "/favicon-512x512.png",
     "/favicon-192x192.png",
+    "/favicon-144x144.png",
+    "/favicon-96x96.png",
+    "/favicon-48x48.png",
+    "/favicon-32x32.png",
     "/favicon.ico",
     "/favicon.png",
     "/favicon.svg",
@@ -12146,18 +12150,50 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     "/sw.js"
   ], (req, res) => {
     const filename = req.path.substring(1);
-    const publicPath = path.join(process.cwd(), "public", filename);
-    const distPath = path.join(process.cwd(), "dist", filename);
+    const candidates = [
+      path.join(process.cwd(), "public", filename),
+      path.join(process.cwd(), "dist", filename),
+      path.join(_dirname, "public", filename),
+      path.join(_dirname, "dist", filename),
+      path.join(process.cwd(), filename),
+      path.join(_dirname, filename)
+    ];
 
-    if (fs.existsSync(publicPath)) {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.sendFile(publicPath);
-    } else if (fs.existsSync(distPath)) {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400");
-      return res.sendFile(distPath);
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Cache-Control", "public, max-age=86400");
+          if (filename.endsWith(".png")) res.setHeader("Content-Type", "image/png");
+          if (filename.endsWith(".svg")) res.setHeader("Content-Type", "image/svg+xml");
+          if (filename.endsWith(".ico")) res.setHeader("Content-Type", "image/x-icon");
+          if (filename.endsWith(".json")) res.setHeader("Content-Type", "application/json");
+          return res.sendFile(p);
+        }
+      } catch (e) {}
     }
+
+    // Dynamic brand image fallback for any requested icon to prevent 404 errors in all deployment environments
+    if (filename.endsWith(".png") || filename.endsWith(".ico")) {
+      const fallbackCandidates = [
+        path.join(process.cwd(), "public", "icon.png"),
+        path.join(process.cwd(), "public", "favicon.png"),
+        path.join(process.cwd(), "public", "yoouz-avatar-white.png"),
+        path.join(process.cwd(), "dist", "icon.png"),
+        path.join(process.cwd(), "dist", "favicon.png")
+      ];
+      for (const fb of fallbackCandidates) {
+        try {
+          if (fs.existsSync(fb) && fs.statSync(fb).isFile()) {
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Cache-Control", "public, max-age=86400");
+            res.setHeader("Content-Type", "image/png");
+            return res.sendFile(fb);
+          }
+        } catch (e) {}
+      }
+    }
+
     return res.status(404).end();
   });
 

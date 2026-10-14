@@ -175,8 +175,9 @@ export function App() {
 
     sse = new EventSource(sseParams ? `/api/sse?${sseParams}` : "/api/sse");
       sse.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
+        setTimeout(() => {
+          try {
+            const payload = JSON.parse(event.data);
           if (payload.type === "place_updated") {
             const rawPlace = payload.place || payload.updates || payload;
             const targetId = payload.placeId || rawPlace?.id;
@@ -419,7 +420,8 @@ export function App() {
             }
           }
         } catch (e) {}
-      };
+      }, 0);
+    };
       sse.onerror = () => {
         if (sse) sse.close();
         reconnectTimeout = setTimeout(setupSse, 5000);
