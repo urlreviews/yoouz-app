@@ -12163,7 +12163,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       try {
         if (fs.existsSync(p) && fs.statSync(p).isFile()) {
           res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=86400");
+          res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
           if (filename.endsWith(".png")) res.setHeader("Content-Type", "image/png");
           if (filename.endsWith(".svg")) res.setHeader("Content-Type", "image/svg+xml");
           if (filename.endsWith(".ico")) res.setHeader("Content-Type", "image/x-icon");
@@ -12186,7 +12186,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         try {
           if (fs.existsSync(fb) && fs.statSync(fb).isFile()) {
             res.setHeader("Access-Control-Allow-Origin", "*");
-            res.setHeader("Cache-Control", "public, max-age=86400");
+            res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
             res.setHeader("Content-Type", "image/png");
             return res.sendFile(fb);
           }
