@@ -20,7 +20,8 @@ import {
   UserX,
   Globe,
   Loader2,
-  Search
+  Search,
+  MessageSquare
 } from "lucide-react";
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
@@ -110,6 +111,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const speechRecognitionRef = useRef<any>(null);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
+  const liveTranscriptRef = useRef<string>("");
+  const liveSegmentsRef = useRef<any[]>([]);
+  const recordingDurationRef = useRef<number>(0);
   const recStartTimeRef = useRef<number>(0);
 
   // High-Precision 60fps preview frame synchronization loop (instant word-by-word yellow highlight tracking)
@@ -566,6 +570,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const playCountdownTone = (count: number) => {
     try {
       triggerHaptic(count === 1 ? "heavy" : "medium");
+      const isIOSDevice = typeof navigator !== "undefined" && (
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      );
+      // On iOS Safari, creating AudioContext right before getUserMedia/MediaRecorder recording
+      // triggers iOS system audio route changes that mute or interrupt the microphone track!
+      if (isIOSDevice) {
+        return;
+      }
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
         const audioCtx = new AudioContextClass();
@@ -684,17 +697,26 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         setCurrentTime(0);
         stopCamera();
 
+        const recordedSeconds = Math.max(1, recordingDurationRef.current || 1);
+        setDuration(recordedSeconds);
+
         // Extract genuine frame snapshot from recorded video
         extractThumbnailFromVideo(blob).then((thumb) => {
           if (thumb) setVideoThumbnail(thumb);
         });
 
-        // If client-side speech recognition already captured words, build zero-delay segments immediately!
-        if (liveTranscript && liveTranscript.trim()) {
-          const immediateSegments = buildSegmentsFromTranscript(liveTranscript.trim(), recordingTime || 15, 0.05);
-          if (immediateSegments.length > 0) {
-            setLiveSegments(immediateSegments);
-          }
+        // Verbatim Spoken Subtitles:
+        // Use genuine text recognized from user's voice (never mock/fake text)
+        const recognizedText = (liveTranscriptRef.current || "").trim();
+        if (recognizedText) {
+          const immediateSegments = buildSegmentsFromTranscript(recognizedText, recordedSeconds, 0.05);
+          liveSegmentsRef.current = immediateSegments;
+          setLiveSegments(immediateSegments);
+          setLiveTranscript(recognizedText);
+        } else {
+          liveSegmentsRef.current = [];
+          setLiveSegments([]);
+          setLiveTranscript("");
         }
 
         // Auto-transcribe recorded video in background during preview step
@@ -714,17 +736,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   filename: `recording_${Date.now()}.webm`,
                   placeName: selectedPlace?.name || "",
                   rating: rating || 5,
-                  duration: recordingTime || 15,
-                  clientTranscript: liveTranscript || ""
+                  duration: recordedSeconds,
+                  clientTranscript: liveTranscriptRef.current || ""
                 })
               });
               if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
-                  if (data.transcript) {
+                  if (data.transcript && !liveTranscriptRef.current) {
+                    liveTranscriptRef.current = data.transcript;
                     setLiveTranscript(data.transcript);
                   }
                   if (data.segments && data.segments.length > 0) {
+                    liveSegmentsRef.current = data.segments;
                     setLiveSegments(data.segments);
                   }
                 }
@@ -736,19 +760,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         })();
       };
 
-      // Reset timers & state
+      // Reset timers, duration & transcript refs
       recStartTimeRef.current = performance.now();
+      recordingDurationRef.current = 0;
+      liveTranscriptRef.current = "";
+      liveSegmentsRef.current = [];
       setLiveSegments([]);
       setLiveTranscript("");
 
-      // On non-iOS devices ONLY, run browser speech recognition silently in the background
-      // (On iOS Safari, speech recognition interrupts media recording and crashes the browser session)
-      const isIOS = typeof navigator !== "undefined" && (
+      // Speech Recognition setup:
+      // CRITICAL FOR IPHONE STABILITY:
+      // On iOS Safari, webkitSpeechRecognition takes exclusive control of the microphone audio session,
+      // which forcibly interrupts the MediaRecorder's getUserMedia audio track, cutting off the recording
+      // after 1-2 seconds and crashing the WebKit process.
+      // Therefore, on iOS devices, SpeechRecognition is NOT run during recording.
+      // On Desktop (Chrome/Edge) & Android, SpeechRecognition runs smoothly in the background.
+      const isIOSDevice = typeof navigator !== "undefined" && (
         /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
       );
 
-      if (!isIOS) {
+      if (!isIOSDevice) {
         try {
           const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
           if (SpeechRecognitionClass) {
@@ -767,23 +799,38 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 }
               }
               if (fullText) {
+                liveTranscriptRef.current = fullText;
                 setLiveTranscript(fullText);
+                const currentElapsed = Math.max(1, Math.round((performance.now() - recStartTimeRef.current) / 1000));
+                const segs = buildSegmentsFromTranscript(fullText, currentElapsed, 0.05);
+                liveSegmentsRef.current = segs;
+                setLiveSegments(segs);
               }
             };
 
-            recognition.onerror = () => {};
-            recognition.onend = () => {};
+            recognition.onerror = (speechErr: any) => {
+              console.warn("Speech recognition notice:", speechErr);
+            };
 
-            recognition.start();
-            speechRecognitionRef.current = recognition;
+            recognition.onend = () => {
+              // Only restart on desktop if still actively recording and not stopped
+              if (isRecordingRef.current && speechRecognitionRef.current) {
+                try { speechRecognitionRef.current.start(); } catch (e) {}
+              }
+            };
+
+            try {
+              recognition.start();
+              speechRecognitionRef.current = recognition;
+            } catch (startErr) {}
           }
         } catch (speechErr) {
           // Gracefully continue without speech recognition
         }
       }
 
-      // Request data slices every 1000ms (1 second standard chunks for rock-solid video headers)
-      mediaRecorder.start(1000);
+      // Collect video slices every 250ms for maximum frame preservation
+      mediaRecorder.start(250);
       setIsRecording(true);
       isRecordingRef.current = true;
       setRecordingTime(0);
@@ -791,11 +838,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       // Max 60 seconds (1 minute) strict limit
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
-          if (prev >= 60) {
+          const next = prev + 1;
+          recordingDurationRef.current = next;
+          if (next >= 60) {
             handleStopRecording();
             return 60;
           }
-          return prev + 1;
+          return next;
         });
       }, 1000);
     } catch (err: any) {
@@ -807,13 +856,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && isRecordingRef.current) {
       triggerHaptic("heavy");
-      try {
-        if (mediaRecorderRef.current.state === "recording") {
-          mediaRecorderRef.current.stop();
-        }
-      } catch (e) {
-        console.warn("Stop recording notice:", e);
-      }
       setIsRecording(false);
       isRecordingRef.current = false;
       if (timerRef.current) {
@@ -825,6 +867,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       if (speechRecognitionRef.current) {
         try { speechRecognitionRef.current.stop(); } catch (e) {}
         speechRecognitionRef.current = null;
+      }
+
+      try {
+        if (mediaRecorderRef.current.state === "recording") {
+          try {
+            mediaRecorderRef.current.requestData();
+          } catch (e) {}
+          mediaRecorderRef.current.stop();
+        }
+      } catch (e) {
+        console.warn("Stop recording notice:", e);
       }
     }
   };
@@ -877,53 +930,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userEmail: currentUser?.email
     }, currentUser);
 
-    let finalTranscript = liveTranscript || "";
-    let finalSegments = liveSegments || [];
+    let finalTranscript = (liveTranscriptRef.current || liveTranscript || "").trim();
+    let finalSegments = (liveSegmentsRef.current && liveSegmentsRef.current.length > 0)
+      ? liveSegmentsRef.current
+      : (liveSegments || []);
 
-    // If no segments exist or transcript is missing, run server transcription on the recorded video blob
-    if ((!finalTranscript || finalTranscript.trim() === "" || !finalSegments || finalSegments.length === 0) && recordedVideoBlob) {
-      setPublishingStage("Generating verbatim subtitles...");
-      try {
-        const base64Data = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve((reader.result as string)?.split(",")[1] || "");
-          reader.readAsDataURL(recordedVideoBlob);
-        });
-        if (base64Data) {
-          const res = await fetch("/api/videos/transcribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              videoData: base64Data,
-              mimeType: recordedVideoBlob.type || "video/webm",
-              filename: `recording_${Date.now()}.webm`
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success) {
-              if (data.transcript) {
-                finalTranscript = data.transcript;
-                setLiveTranscript(data.transcript);
-              }
-              if (data.segments && data.segments.length > 0) {
-                finalSegments = data.segments;
-                setLiveSegments(data.segments);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Synchronous publish transcription notice:", err);
-      }
-    }
+    const effDuration = Math.max(1, recordingDurationRef.current || recordingTime || duration || 15);
 
-    // Fallback: Ensure every published review has verbatim transcript and synchronized segments
-    const effDuration = recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15);
-    if (!finalTranscript) {
-      finalTranscript = `I visited ${cleanPlaceName} today and it was truly remarkable. Exceptional quality and service from start to finish. Giving it a solid ${rating || 5} stars.`;
-    }
-    if (!finalSegments || finalSegments.length === 0) {
+    // If genuine recognized speech was captured, build synced segments starting with zero delay (0.05s)
+    if (finalTranscript && (!finalSegments || finalSegments.length === 0)) {
       finalSegments = buildSegmentsFromTranscript(finalTranscript, effDuration, 0.05);
     }
 
@@ -1135,40 +1150,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Transcribe video in background before saving (Fallback if live stream failed)
+    // 5. Finalize verbatim captions before saving
     setPublishingStage("Finalizing captions...");
-    let transcriptText = liveTranscript || "";
-    let segments = liveSegments || [];
+    let transcriptText = finalTranscript || (liveTranscriptRef.current || liveTranscript || "").trim();
+    let segments = (finalSegments && finalSegments.length > 0)
+      ? finalSegments
+      : (liveSegmentsRef.current && liveSegmentsRef.current.length > 0 ? liveSegmentsRef.current : liveSegments);
 
-    if (!segments.length) {
-      try {
-        const transcribeRes = await fetch("/api/videos/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            videoData: await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-              reader.readAsDataURL(recordedVideoBlob!);
-            }),
-            mimeType: recordedVideoBlob?.type || "video/webm",
-            filename: cleanFileName
-          })
-        });
-        if (transcribeRes.ok) {
-          const transData = await transcribeRes.json();
-          if (transData.success) {
-            transcriptText = transData.transcript;
-            segments = transData.segments || [];
-          }
-        }
-      } catch (e) {
-        console.warn("Transcription notice:", e);
-      }
-    }
-
-    if ((!segments || segments.length === 0) && transcriptText) {
-      segments = buildSegmentsFromTranscript(transcriptText, duration || 15);
+    if (transcriptText && (!segments || segments.length === 0)) {
+      segments = buildSegmentsFromTranscript(transcriptText, effDuration, 0.05);
     }
 
     const finalReview: VideoReview = {

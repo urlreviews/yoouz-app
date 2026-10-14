@@ -21624,12 +21624,17 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const vBuffer = Buffer.from(arrayBuf);
 
       const localResult = await transcribeVideoLocally(vBuffer, `${videoId}.webm`);
+      if (!localResult.transcript && (!video.segments || video.segments.length === 0)) {
+        return { success: false, reason: "No transcription captured" };
+      }
       let transcriptText = localResult.transcript || video.transcriptText || "";
       let segments = localResult.segments && localResult.segments.length > 0 ? localResult.segments : (video.segments || []);
       if ((!segments || segments.length === 0) && transcriptText) {
         segments = buildServerSegmentsFromTranscript(transcriptText, video.durationSeconds || 15);
       }
-
+      if (!transcriptText && (!segments || segments.length === 0)) {
+        return { success: false, reason: "No transcription" };
+      }
       const updatedVideo = { ...video, transcriptText, segments };
       
       // 1. Sync to local JSON index
@@ -21812,19 +21817,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         transcriptText = clientTranscript.trim();
       }
 
-      // 3. Fallback: Generate authentic contextual review speech text if silence or uncaptured speech
-      if (!transcriptText && placeName) {
-        const cleanName = String(placeName).trim();
-        const score = Number(rating) || 5;
-        const templates = [
-          `I stopped by ${cleanName} today and the experience was truly incredible. The service, atmosphere, and quality were top-notch. Definitely a ${score}-star spot.`,
-          `Checking out ${cleanName}. Absolutely blown away by the quality and attention to detail. Easily a ${score}-star experience in my book.`,
-          `Just visited ${cleanName} and had an amazing time. Highly recommend checking them out if you're in the area. Solid ${score} out of 5.`
-        ];
-        transcriptText = templates[Math.floor(Math.random() * templates.length)];
-      }
-
-      // 4. Build exact word-level timed segments starting with zero delay (0.05s)
+      // 3. Build exact word-level timed segments starting with zero delay (0.05s) only if genuine speech was transcribed
       if (transcriptText && (!segments || segments.length === 0)) {
         const effDur = Number(duration) && Number(duration) > 0 ? Number(duration) : 15;
         segments = buildServerSegmentsFromTranscript(transcriptText, effDur);
