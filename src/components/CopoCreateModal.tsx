@@ -758,21 +758,40 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             const transcriptPiece = result[0]?.transcript?.trim();
             
             if (transcriptPiece && result.isFinal) {
-              // Hardware Sync: The browser tells us exactly when this phrase was finished.
-              // We use this as the anchor for the entire segment.
               setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
               
               setLiveSegments((prev) => {
-                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-                const start = Math.max(prevEnd, nowSec - (transcriptPiece.split(" ").length * 0.45));
+                const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                if (words.length === 0) return prev;
+
+                // Dynamic Acoustic Stretching:
+                // We anchor the end of this speech burst to 'nowSec' (when the mic finished hearing it).
+                // The start respects any natural pauses by starting at the previous segment's end.
+                // We then proportionally stretch/compress word timings to match fast or slow speech.
+                const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.35));
+                const totalBurstDuration = Math.max(0.8, nowSec - prevEnd);
+                const timePerWord = totalBurstDuration / words.length;
+
+                const maxPerChunk = 4; // 4 words per single-line pill
+                const chunks: any[] = [];
                 
-                const newSeg = {
-                  start: Math.round(start * 100) / 100,
-                  end: Math.round(nowSec * 100) / 100,
-                  text: transcriptPiece,
-                  isHardwareTimed: true
-                };
-                return [...prev, newSeg];
+                let chunkStart = prevEnd;
+                
+                for (let i = 0; i < words.length; i += maxPerChunk) {
+                  const chunkWords = words.slice(i, i + maxPerChunk);
+                  const chunkText = chunkWords.join(" ");
+                  const chunkEnd = chunkStart + (chunkWords.length * timePerWord);
+                  
+                  chunks.push({
+                    start: Math.round(chunkStart * 100) / 100,
+                    end: Math.round(chunkEnd * 100) / 100,
+                    text: chunkText,
+                    isHardwareTimed: true
+                  });
+                  chunkStart = chunkEnd;
+                }
+                
+                return [...prev, ...chunks];
               });
             }
           };

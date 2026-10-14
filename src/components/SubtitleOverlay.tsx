@@ -175,9 +175,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[95%] sm:max-w-[85%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
-        <div className="bg-black/85 backdrop-blur-2xl px-6 py-3.5 rounded-2xl border border-white/20 shadow-[0_12px_64px_rgba(0,0,0,1)] text-center flex flex-col items-center justify-center min-h-[60px]">
-          <p className="text-white text-[17px] sm:text-[20px] font-bold leading-tight tracking-tight drop-shadow-sm line-clamp-2">
+      <div className="max-w-[90%] sm:max-w-[75%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
+        <div className="bg-black/85 backdrop-blur-xl px-5 py-2 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden">
+          <p className="text-white text-[15px] sm:text-[17px] font-bold leading-tight tracking-tight drop-shadow-md truncate">
             {activeSegment.text}
           </p>
         </div>
