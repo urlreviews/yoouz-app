@@ -745,36 +745,54 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           recognition.interimResults = true;
           recognition.lang = navigator.language || 'en-US';
 
+          // High-precision word-level hardware timing state
+          const recordedWords: { word: string; time: number }[] = [];
+          let lastFullTranscript = "";
           const recStartTime = Date.now();
 
           recognition.onresult = (event: any) => {
             const nowSec = (Date.now() - recStartTime) / 1000;
-            const resultIndex = event.resultIndex;
-            const result = event.results[resultIndex];
-            const transcriptPiece = result[0]?.transcript?.trim();
             
-            if (transcriptPiece) {
-              setLiveTranscript((prev) => {
-                const combined = result.isFinal ? (prev ? prev + " " : "") + transcriptPiece : (prev ? prev + " " : "") + transcriptPiece;
-                return combined;
-              });
+            let currentFullTranscript = "";
+            for (let i = 0; i < event.results.length; i++) {
+              currentFullTranscript += event.results[i][0].transcript;
+            }
 
-              // Hardware Timing: We record the exact second this speech segment was finalized
-              if (result.isFinal) {
-                setLiveSegments((prev) => {
-                  const segWords = transcriptPiece.split(/\s+/).filter(Boolean);
-                  const segDur = Math.max(0.4, segWords.length * 0.45);
-                  const start = Math.max(0, nowSec - segDur);
-                  
-                  const newSeg = {
-                    start: Math.round(start * 100) / 100,
-                    end: Math.round(nowSec * 100) / 100,
-                    text: transcriptPiece,
-                    isHardwareTimed: true
-                  };
-                  
-                  return [...prev, newSeg];
+            const cleanTranscript = currentFullTranscript.trim();
+            if (cleanTranscript.length > lastFullTranscript.length) {
+              const newText = cleanTranscript.substring(lastFullTranscript.length).trim();
+              if (newText) {
+                const newWords = newText.split(/\s+/).filter(Boolean);
+                newWords.forEach(w => {
+                  // EXPERT FIX: Acoustic Back-Timing (-0.2s)
+                  // Speech recognition processing takes ~200ms. By subtracting it, we align the highlight
+                  // with the moment the sound actually STARTED.
+                  recordedWords.push({ word: w, time: Math.max(0, nowSec - 0.22) });
                 });
+                lastFullTranscript = cleanTranscript;
+                setLiveTranscript(cleanTranscript);
+                
+                // Construct segments (Strict 2 words per segment for "TikTok/Reels" single-line style)
+                const segments: any[] = [];
+                const wordsPerSeg = 2; 
+                for (let i = 0; i < recordedWords.length; i += wordsPerSeg) {
+                  const chunk = recordedWords.slice(i, i + wordsPerSeg);
+                  const start = chunk[0].time;
+                  const end = chunk[chunk.length - 1].time + 0.45;
+                  
+                  segments.push({
+                    start: Math.round(start * 100) / 100,
+                    end: Math.round(end * 100) / 100,
+                    text: chunk.map(cw => cw.word).join(" "),
+                    isHardwareTimed: true,
+                    words: chunk.map(cw => ({
+                      word: cw.word,
+                      start: Math.round(cw.time * 100) / 100,
+                      end: Math.round((cw.time + 0.4) * 100) / 100
+                    }))
+                  });
+                }
+                setLiveSegments(segments);
               }
             }
           };

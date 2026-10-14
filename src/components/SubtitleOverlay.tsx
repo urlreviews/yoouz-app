@@ -175,26 +175,22 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   return (
     <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[85%] sm:max-w-[78%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
-        <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.85)] text-center flex items-center justify-center gap-1.5 flex-wrap">
+      <div className="max-w-[90%] sm:max-w-[80%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
+        <div className="bg-black/90 backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/25 shadow-[0_12px_64px_rgba(0,0,0,1)] text-center flex items-center justify-center gap-3 whitespace-nowrap overflow-hidden">
           {wordTokens.map((token, index) => {
-            // STRICT ACOUSTIC BOUNDARY CHECK:
-            // The word becomes yellow ONLY when currentTime is strictly between token.start and token.end.
-            // During pauses or silence, currentTime is not inside [token.start, token.end], so NO word is yellow.
-            // It will NEVER jump ahead during pauses or before the speaker actually says it.
             const isActiveWord = currentTime >= token.start && currentTime <= token.end;
             const isPastWord = currentTime > token.end;
 
             return (
               <span
                 key={`${token.word}-${index}`}
-                className={`transition-all duration-100 leading-tight inline-block ${
+                className={`transition-all duration-200 leading-none inline-block ${
                   isActiveWord
-                    ? "text-amber-400 font-black scale-105 drop-shadow-[0_0_12px_rgba(250,204,21,0.85)]"
+                    ? "text-yellow-400 font-black scale-110 drop-shadow-[0_0_20px_rgba(250,204,21,1)]"
                     : isPastWord
-                    ? "text-white font-bold opacity-90"
-                    : "text-white/70 font-semibold"
-                } text-[13px] sm:text-[15px]`}
+                    ? "text-white font-bold opacity-100"
+                    : "text-white/50 font-semibold"
+                } text-[18px] sm:text-[20px] tracking-tight`}
               >
                 {token.word}
               </span>
