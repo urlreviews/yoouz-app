@@ -66,61 +66,31 @@ export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
 export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
   const cleanText = text.trim();
-  
-  // Split by sentence ending punctuation or newlines
-  const sentences = cleanText
-    .split(/(?<=[.?!;])\s+|\n+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  if (sentences.length === 0) return [];
-
-  const allWordsCount = cleanText.split(/\s+/).filter(Boolean).length;
-  if (allWordsCount === 0) return [];
+  const allWords = cleanText.split(/\s+/).filter(Boolean);
+  if (allWords.length === 0) return [];
 
   // Speech cadence: ~0.38s per word average
-  const estimatedSpeechDur = allWordsCount * 0.38;
+  const estimatedSpeechDur = allWords.length * 0.38;
   const dur = totalDuration > 0 ? Math.min(totalDuration, estimatedSpeechDur) : estimatedSpeechDur;
-  const secondsPerWord = dur / allWordsCount;
+  const secondsPerWord = dur / allWords.length;
 
   const chunks: SubtitleSegment[] = [];
   let currentOffset = startOffset;
+  const maxWordsPerChunk = 5; // Strict single-line phrase limit (max 5 words)
 
-  for (const sentence of sentences) {
-    const sentenceWords = sentence.split(/\s+/).filter(Boolean);
-    if (sentenceWords.length === 0) continue;
+  for (let i = 0; i < allWords.length; i += maxWordsPerChunk) {
+    const subWords = allWords.slice(i, i + maxWordsPerChunk);
+    const pText = subWords.join(' ');
+    const pDur = subWords.length * secondsPerWord;
+    const segStart = Math.round(currentOffset * 100) / 100;
+    const segEnd = Math.round((currentOffset + pDur) * 100) / 100;
 
-    // If a single sentence is extremely long (over 12 words), split into 2 natural clauses
-    if (sentenceWords.length > 12) {
-      const half = Math.ceil(sentenceWords.length / 2);
-      const part1Words = sentenceWords.slice(0, half);
-      const part2Words = sentenceWords.slice(half);
-
-      for (const pWords of [part1Words, part2Words]) {
-        const pText = pWords.join(' ');
-        const pDur = pWords.length * secondsPerWord;
-        const segStart = Math.round(currentOffset * 100) / 100;
-        const segEnd = Math.round((currentOffset + pDur) * 100) / 100;
-
-        chunks.push({
-          start: segStart,
-          end: segEnd,
-          text: pText
-        });
-        currentOffset += pDur;
-      }
-    } else {
-      const segDur = sentenceWords.length * secondsPerWord;
-      const segStart = Math.round(currentOffset * 100) / 100;
-      const segEnd = Math.round((currentOffset + segDur) * 100) / 100;
-
-      chunks.push({
-        start: segStart,
-        end: segEnd,
-        text: sentence
-      });
-      currentOffset += segDur;
-    }
+    chunks.push({
+      start: segStart,
+      end: segEnd,
+      text: pText
+    });
+    currentOffset += pDur;
   }
 
   return chunks;

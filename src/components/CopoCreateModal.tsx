@@ -117,6 +117,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   const activeRecordingSegments = React.useMemo(() => {
     if (!interimTranscript) return liveSegments;
+    const words = interimTranscript.trim().split(/\s+/).filter(Boolean);
+    const shortInterim = words.slice(-5).join(" ");
     const currentEnd = Math.max(0.8, recordingTime);
     const currentStart = Math.max(0, recordingTime - 2.0);
     return [
@@ -124,7 +126,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       {
         start: Math.round(currentStart * 100) / 100,
         end: Math.round((currentEnd + 2.0) * 100) / 100,
-        text: interimTranscript,
+        text: shortInterim,
         isHardwareTimed: true
       }
     ];
@@ -784,34 +786,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   const words = transcriptPiece.split(/\s+/).filter(Boolean);
                   if (words.length === 0) return prev;
 
-                  // Anchor sentence segment to actual speech burst window [prevEnd, nowSec]
                   const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : Math.max(0, nowSec - (words.length * 0.38));
-                  const segStart = Math.round(prevEnd * 100) / 100;
-                  const segEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
+                  const totalSegStart = Math.round(prevEnd * 100) / 100;
+                  const totalSegEnd = Math.round(Math.max(prevEnd + 0.8, nowSec) * 100) / 100;
+                  const segDur = Math.max(0.4, totalSegEnd - totalSegStart);
+                  const secPerWord = segDur / words.length;
 
-                  // If sentence is longer than 12 words, split into 2 natural clauses
-                  if (words.length > 12) {
-                    const half = Math.ceil(words.length / 2);
-                    const p1Text = words.slice(0, half).join(" ");
-                    const p2Text = words.slice(half).join(" ");
-                    const mid = Math.round(((segStart + segEnd) / 2) * 100) / 100;
-
-                    return [
-                      ...prev,
-                      { start: segStart, end: mid, text: p1Text, isHardwareTimed: true },
-                      { start: mid, end: segEnd, text: p2Text, isHardwareTimed: true }
-                    ];
+                  const newChunks: any[] = [];
+                  for (let i = 0; i < words.length; i += 5) {
+                    const subWords = words.slice(i, i + 5);
+                    const subText = subWords.join(" ");
+                    const subStart = totalSegStart + (i * secPerWord);
+                    const subEnd = totalSegStart + ((i + subWords.length) * secPerWord);
+                    newChunks.push({
+                      start: Math.round(subStart * 100) / 100,
+                      end: Math.round(subEnd * 100) / 100,
+                      text: subText,
+                      isHardwareTimed: true
+                    });
                   }
 
-                  return [
-                    ...prev,
-                    {
-                      start: segStart,
-                      end: segEnd,
-                      text: transcriptPiece,
-                      isHardwareTimed: true
-                    }
-                  ];
+                  return [...prev, ...newChunks];
                 });
               } else {
                 interim += (interim ? " " : "") + transcriptPiece;

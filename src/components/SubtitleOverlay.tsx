@@ -111,12 +111,37 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    // Priority 2: Use high-precision natural speech cadence generator only if NO hardware timing exists
+    // Priority 2: Use high-precision natural speech cadence generator if hardware timed segments exist
     if (parsed.some(s => s.isHardwareTimed)) {
-      return parsed.map(s => ({
-        ...s,
-        words: normalizeWordTimings(s.words || [], s.start, s.end, s.text)
-      }));
+      return parsed.flatMap(s => {
+        const text = String(s.text || s.transcript || '').trim();
+        if (!text || isTitleFallbackText(text)) return [];
+        const words = text.split(/\s+/).filter(Boolean);
+        if (words.length <= 5) {
+          return [{
+            ...s,
+            text,
+            words: normalizeWordTimings(s.words || [], s.start, s.end, text)
+          }];
+        }
+        // Sub-divide hardware timed segment into 4-5 word phrase bursts for 1-line display
+        const segDur = Math.max(0.4, s.end - s.start);
+        const secPerWord = segDur / words.length;
+        const subChunks: any[] = [];
+        for (let i = 0; i < words.length; i += 5) {
+          const subWords = words.slice(i, i + 5);
+          const subText = subWords.join(" ");
+          const subStart = s.start + (i * secPerWord);
+          const subEnd = s.start + ((i + subWords.length) * secPerWord);
+          subChunks.push({
+            start: Math.round(subStart * 100) / 100,
+            end: Math.round(subEnd * 100) / 100,
+            text: subText,
+            isHardwareTimed: true
+          });
+        }
+        return subChunks;
+      });
     }
 
     return generatePrecisionSubtitles(fullText, effectiveDuration);
@@ -131,13 +156,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     );
     if (direct) return direct;
 
-    // 2. Pause handling: If currentTime is in a pause AFTER a segment ends but BEFORE the next segment starts,
-    // keep the previous segment visible with all spoken words in past (white) state so captions don't flicker away during pauses.
+    // 2. Pause handling: Keep previous 4-5 word phrase segment visible briefly during speech pauses
     const pastSegments = validSegments.filter(s => currentTime >= s.start);
     if (pastSegments.length > 0) {
       const lastPast = pastSegments[pastSegments.length - 1];
       const nextSeg = validSegments.find(s => s.start > currentTime);
-      if (nextSeg ? currentTime < nextSeg.start : currentTime <= (lastPast.end + 2.0)) {
+      if (nextSeg ? currentTime < nextSeg.start : currentTime <= (lastPast.end + 1.8)) {
         return lastPast;
       }
     }
@@ -174,10 +198,10 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-300">
-      <div className="max-w-[92%] sm:max-w-[80%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
-        <div className="bg-black/90 backdrop-blur-xl px-5 py-2.5 rounded-2xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center">
-          <p className="text-white text-[15px] sm:text-[17px] font-bold leading-snug tracking-tight drop-shadow-md text-center">
+    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-200">
+      <div className="max-w-[90%] sm:max-w-[75%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
+        <div className="bg-black/90 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden">
+          <p className="text-white text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center whitespace-nowrap overflow-hidden text-ellipsis px-1">
             {activeSegment.text}
           </p>
         </div>
