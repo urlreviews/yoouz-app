@@ -8,16 +8,25 @@ interface SubtitleOverlayProps {
   isActive: boolean;
 }
 
-// Helper to filter out video review title fallbacks so post titles never appear as subtitles
+// Helper to filter out bare video review title headers (e.g. "Video review for google.com")
+// so raw post title headers never display as subtitles, while allowing authentic review sentences
 const isTitleFallbackText = (text: string): boolean => {
   if (!text) return true;
-  const lower = text.trim().toLowerCase();
-  return (
-    lower.startsWith('video review for') ||
-    lower.startsWith('review for') ||
-    lower.startsWith('video review of') ||
-    lower === 'video review'
-  );
+  const trimmed = text.trim();
+  const lower = trimmed.toLowerCase();
+  const wordCount = trimmed.split(/\s+/).length;
+  // Only filter out if it's a short header string (<= 5 words) with no review body
+  if (wordCount <= 5) {
+    if (
+      lower.startsWith('video review for') ||
+      lower.startsWith('video review of') ||
+      lower === 'video review' ||
+      lower === 'review'
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 // Helper to build short 3-5 word single-line timed segments from transcript text with natural conversational cadence (approx 0.28s-0.35s per word, never stretched over dead air)
