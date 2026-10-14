@@ -829,8 +829,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
       }
 
-      // Collect video slices every 250ms for maximum frame preservation
-      mediaRecorder.start(250);
+      // Collect standard video slices every 1000ms (1 second) for clean audio/video container headers
+      mediaRecorder.start(1000);
       setIsRecording(true);
       isRecordingRef.current = true;
       setRecordingTime(0);
@@ -871,9 +871,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       try {
         if (mediaRecorderRef.current.state === "recording") {
-          try {
-            mediaRecorderRef.current.requestData();
-          } catch (e) {}
           mediaRecorderRef.current.stop();
         }
       } catch (e) {
@@ -1132,9 +1129,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const newReview: VideoReview = {
       ...fallbackReview,
-      videoUrl: uploadedPublicUrl || defaultStreamUrl,
+      videoUrl: recordedVideoUrl || uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
-      fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      localBlobUrl: recordedVideoUrl || undefined,
+      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
 
