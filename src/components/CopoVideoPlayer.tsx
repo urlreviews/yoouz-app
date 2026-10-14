@@ -1359,10 +1359,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         return;
       }
 
-      e.preventDefault();
       if (isWheeling) return;
 
-      if (Math.abs(e.deltaY) >= 12) {
+      if (Math.abs(e.deltaY) >= 18) {
         if (e.deltaY > 0) {
           isWheeling = true;
           handleNext();
@@ -1371,7 +1370,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           handlePrev();
         } else {
           // Top boundary: At first video (index 0), keep top locked at 0
-          if (containerRef.current) {
+          if (containerRef.current && containerRef.current.scrollTop < 0) {
             containerRef.current.scrollTop = 0;
           }
         }
@@ -1379,18 +1378,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (wheelTimeout) clearTimeout(wheelTimeout);
         wheelTimeout = setTimeout(() => {
           isWheeling = false;
-        }, 500);
+        }, 400);
       }
     };
 
-    mainEl.addEventListener("wheel", handleWheel, { passive: false });
+    mainEl.addEventListener("wheel", handleWheel, { passive: true });
     return () => {
       mainEl.removeEventListener("wheel", handleWheel);
       if (wheelTimeout) clearTimeout(wheelTimeout);
     };
   }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
 
-  // Strict Top Boundary Lock Listener for Touch Drag & Scroll Containers
+  // Strict Top Boundary Lock Listener for Scroll Containers (Zero Violations: 100% Passive)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -1401,34 +1400,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     };
 
-    let startY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        startY = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1 && activeCardIndexRef.current === 0) {
-        const currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY; // positive = pulling down (scrolling up above first video)
-        if (deltaY > 0 && container.scrollTop <= 0) {
-          if (e.cancelable) {
-            e.preventDefault();
-          }
-          container.scrollTop = 0;
-        }
-      }
-    };
-
     container.addEventListener("scroll", handleScroll, { passive: true });
-    container.addEventListener("touchstart", handleTouchStart, { passive: true });
-    container.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
-      container.removeEventListener("touchstart", handleTouchStart);
-      container.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
 

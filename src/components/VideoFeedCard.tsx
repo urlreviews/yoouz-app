@@ -469,12 +469,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       triggerHaptic("selection");
     };
 
-    window.addEventListener("pointermove", onGlobalMove, { passive: false });
-    window.addEventListener("pointerup", onGlobalUp);
-    window.addEventListener("pointercancel", onGlobalUp);
-    window.addEventListener("touchmove", onGlobalTouchMove, { passive: false });
-    window.addEventListener("touchend", onGlobalTouchEnd);
-    window.addEventListener("touchcancel", onGlobalTouchEnd);
+    window.addEventListener("pointermove", onGlobalMove, { passive: true });
+    window.addEventListener("pointerup", onGlobalUp, { passive: true });
+    window.addEventListener("pointercancel", onGlobalUp, { passive: true });
+    window.addEventListener("touchmove", onGlobalTouchMove, { passive: true });
+    window.addEventListener("touchend", onGlobalTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onGlobalTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener("pointermove", onGlobalMove);
@@ -500,23 +500,28 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   useEffect(() => {
     if (isActive && typeof window !== "undefined" && "mediaSession" in navigator) {
       try {
-        const origin = window.location.origin;
         const place = formatBusinessName(video.placeName) || "Business Review";
         const author = video.author?.name || "Verified Reviewer";
         const caption = video.caption || `${video.rating || 5}★ Video Review of ${place}`;
 
-        const artworks: MediaImage[] = [
-          { src: `${origin}/icon-512.png`, sizes: "512x512", type: "image/png" },
-          { src: `${origin}/icon-192.png`, sizes: "192x192", type: "image/png" },
-          { src: `${origin}/apple-touch-icon.png`, sizes: "180x180", type: "image/png" },
-          { src: `${origin}/favicon.png`, sizes: "64x64", type: "image/png" }
-        ];
+        // Only supply high-resolution video thumbnail or zero-network inline SVG artwork (prevents 404 network errors)
+        const artworks: MediaImage[] = [];
 
-        if (video.thumbnailUrl && !video.thumbnailUrl.startsWith("data:") && !video.thumbnailUrl.endsWith(".svg")) {
-          const fullThumb = video.thumbnailUrl.startsWith("http")
-            ? video.thumbnailUrl
-            : `${origin}${video.thumbnailUrl.startsWith("/") ? "" : "/"}${video.thumbnailUrl}`;
-          artworks.unshift({ src: fullThumb, sizes: "512x512", type: "image/jpeg" });
+        const rawThumb = video.thumbnailUrl || resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl;
+        if (rawThumb && typeof rawThumb === "string" && !rawThumb.endsWith(".svg")) {
+          const resolved = rawThumb.startsWith("http")
+            ? rawThumb
+            : rawThumb.startsWith("data:")
+            ? rawThumb
+            : `${window.location.origin}${rawThumb.startsWith("/") ? "" : "/"}${rawThumb}`;
+          artworks.push({ src: resolved, sizes: "512x512", type: "image/jpeg" });
+        } else {
+          // Zero-network inline base64 SVG data URI - loads instantaneously from memory with zero HTTP requests and zero 404s
+          artworks.push({
+            src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiPgogIDxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjYiIGZpbGw9IiMwOTA5MGIiLz4KICA8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjIzIiBoZWlnaHQ9IjIzIiByeD0iNS41IiBzdHJva2U9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xOCkiIHN0cm9rZS13aWR0aD0iMC44Ii8+CiAgPHBhdGggZD0iTTEyIDMuOGwyLjMyIDQuNyA1LjE4IDAuNzUtMy43NSAzLjY1IDAuODggNS4xNkwxMiAxNS42MmwtNC42MyAyLjQ0IDAuODgtNS4xNi0zLjc1LTMuNjUgNS4xOC0wLjc1TDEyIDMuOHoiIGZpbGw9IiNmZmZmZmYiLz4KPC9zdmc+Cg==",
+            sizes: "512x512",
+            type: "image/svg+xml"
+          });
         }
 
         navigator.mediaSession.metadata = new MediaMetadata({

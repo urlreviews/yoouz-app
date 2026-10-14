@@ -329,7 +329,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=9`
     : isBusiness
     ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=20`
-    : `${appOrigin}/apple-touch-icon.png`;
+    : "";
 
   useEffect(() => {
     if (!isModalOpen || !resolvedTouchIcon) return;

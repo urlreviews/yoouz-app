@@ -2239,7 +2239,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const vAuthor = v.author?.name || 'Verified Customer';
       const vCaption = v.caption || `Verified Video Review for ${placeTitle}`;
       const vDate = v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString();
-      const vThumb = v.thumbnailUrl || 'https://www.yoouz.com/favicon.png';
+      const vThumb = v.thumbnailUrl || 'https://yoouz.com/og-banner.png';
       const vUrl = v.videoUrl || `https://www.yoouz.com/api/videos/stream/${v.id}`;
       graphItems.push({
         "@type": "VideoObject",

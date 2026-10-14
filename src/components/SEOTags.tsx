@@ -90,9 +90,8 @@ export function SEOTags({ title, description, image, touchIcon, url, jsonLd, upd
       updateLinkTag('apple-touch-icon', touchIcon, { sizes: '180x180' });
       updateLinkTag('apple-touch-icon', touchIcon);
     }
-    updateLinkTag('icon', '/favicon.svg', { type: 'image/svg+xml' });
-    updateLinkTag('icon', '/favicon.ico', { type: 'image/x-icon' });
-    updateLinkTag('shortcut icon', '/favicon.ico');
+    // High-performance note: Favicons are delivered as instant zero-network Base64 data URIs
+    // in index.html to guarantee 0ms latency and 0 HTTP errors across all proxies and preview domains.
 
     // 5. Update JSON-LD Structured Data
     if (jsonLd) {

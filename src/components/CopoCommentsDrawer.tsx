@@ -353,61 +353,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
-
-    const handleNativeTouchMove = (e: TouchEvent) => {
-      if (commentsListRef.current && commentsListRef.current.contains(e.target as Node)) {
-        return;
-      }
-      if (e.cancelable) {
-        e.preventDefault();
-      }
-    };
-
-    document.addEventListener("touchmove", handleNativeTouchMove, { passive: false });
     
     return () => {
       document.body.style.overflow = originalOverflow;
       document.body.style.touchAction = originalTouchAction;
-      document.removeEventListener("touchmove", handleNativeTouchMove);
     };
   }, [Boolean(video)]);
-
-  // 1b. Prevent overscroll scroll-chaining on comments list boundary
-  useEffect(() => {
-    if (!video) return;
-    const el = commentsListRef.current;
-    if (!el) return;
-
-    let startY = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        startY = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - startY;
-      const { scrollTop, scrollHeight, clientHeight } = el;
-
-      if (scrollTop <= 0 && deltaY > 0) {
-        if (e.cancelable) e.preventDefault();
-      } else if (scrollTop + clientHeight >= scrollHeight - 1 && deltaY < 0) {
-        if (e.cancelable) e.preventDefault();
-      }
-      e.stopPropagation();
-    };
-
-    el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-
-    return () => {
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, []);
 
   // 2. Visual Viewport State (Calculated for precise docking across iOS & Android)
   const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? (window.visualViewport?.height || window.innerHeight) : 0);
