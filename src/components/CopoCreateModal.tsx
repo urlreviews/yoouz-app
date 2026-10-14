@@ -20,8 +20,7 @@ import {
   UserX,
   Globe,
   Loader2,
-  Search,
-  MessageSquare
+  Search
 } from "lucide-react";
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
@@ -29,7 +28,7 @@ import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
-import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
+import { buildSegmentsFromTranscript } from "./SubtitleOverlay";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -108,31 +107,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const activeStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const speechRecognitionRef = useRef<any>(null);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
-  const liveTranscriptRef = useRef<string>("");
-  const liveSegmentsRef = useRef<any[]>([]);
-  const recordingDurationRef = useRef<number>(0);
-  const recStartTimeRef = useRef<number>(0);
-
-  // High-Precision 60fps preview frame synchronization loop (instant word-by-word yellow highlight tracking)
-  useEffect(() => {
-    let animId: number;
-    const tickPreview = () => {
-      const vid = playbackVideoRef.current;
-      if (vid && typeof vid.currentTime === 'number' && !vid.paused) {
-        setCurrentTime(vid.currentTime);
-      }
-      animId = requestAnimationFrame(tickPreview);
-    };
-    if (step === 2 && recordedVideoUrl) {
-      animId = requestAnimationFrame(tickPreview);
-    }
-    return () => {
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [step, recordedVideoUrl]);
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -312,30 +292,38 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       return { mimeType: "", blobType: "video/webm" };
     }
 
-    const isIOS = typeof navigator !== "undefined" && (
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    );
+    const testVideo = document.createElement("video");
 
-    // On iOS Safari, pure video/mp4 is the single rock-solid supported standard
-    if (isIOS) {
-      if (typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported("video/mp4")) {
-        return { mimeType: "video/mp4", blobType: "video/mp4" };
-      }
-      return { mimeType: "", blobType: "video/mp4" };
-    }
-
-    // On Desktop & Android (Chrome, Edge, Firefox), WebM is the high-fidelity native standard
     const candidates = [
+      { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", blob: "video/mp4" },
+      { mime: "video/mp4;codecs=avc1,mp4a.40.2", blob: "video/mp4" },
+      { mime: "video/mp4", blob: "video/mp4" },
       { mime: "video/webm;codecs=vp8,opus", blob: "video/webm" },
       { mime: "video/webm;codecs=vp9,opus", blob: "video/webm" },
+      { mime: "video/webm;codecs=h264,opus", blob: "video/webm" },
       { mime: "video/webm", blob: "video/webm" },
-      { mime: "video/mp4", blob: "video/mp4" }
     ];
 
     for (const c of candidates) {
       try {
-        if (typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(c.mime)) {
+        if (
+          typeof MediaRecorder.isTypeSupported === "function" &&
+          MediaRecorder.isTypeSupported(c.mime)
+        ) {
+          const canPlay = testVideo.canPlayType(c.mime);
+          if (canPlay === "probably" || canPlay === "maybe") {
+            return { mimeType: c.mime, blobType: c.blob };
+          }
+        }
+      } catch {}
+    }
+
+    for (const c of candidates) {
+      try {
+        if (
+          typeof MediaRecorder.isTypeSupported === "function" &&
+          MediaRecorder.isTypeSupported(c.mime)
+        ) {
           return { mimeType: c.mime, blobType: c.blob };
         }
       } catch {}
@@ -546,6 +534,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   const stopCamera = () => {
+    if (audioContextRef.current) {
+      try {
+        if (audioContextRef.current.state !== "closed") {
+          audioContextRef.current.close().catch(() => {});
+        }
+      } catch (e) {}
+      audioContextRef.current = null;
+    }
     if (activeStreamRef.current) {
       activeStreamRef.current.getTracks().forEach((track) => {
         try {
@@ -570,31 +566,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const playCountdownTone = (count: number) => {
     try {
       triggerHaptic(count === 1 ? "heavy" : "medium");
-      const isIOSDevice = typeof navigator !== "undefined" && (
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-      );
-      // On iOS Safari, creating AudioContext right before getUserMedia/MediaRecorder recording
-      // triggers iOS system audio route changes that mute or interrupt the microphone track!
-      if (isIOSDevice) {
-        return;
-      }
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
-        const audioCtx = new AudioContextClass();
+        const audioCtx = audioContextRef.current || new AudioContextClass();
+        audioContextRef.current = audioCtx;
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.type = "sine";
         osc.frequency.setValueAtTime(count === 1 ? 880 : 587, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.10, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
         osc.start(audioCtx.currentTime);
         osc.stop(audioCtx.currentTime + 0.15);
-        setTimeout(() => {
-          try { audioCtx.close(); } catch (e) {}
-        }, 300);
       }
     } catch (e) {}
   };
@@ -619,6 +607,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     if (isRecording || isRecordingRef.current || countdown !== null) {
       return;
     }
+
+    // Warm up / unlock AudioContext synchronously on user gesture (Safari/iOS requirement)
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContextClass();
+        }
+        if (audioContextRef.current.state === "suspended") {
+          audioContextRef.current.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
 
     // Clear any previous transient warning
     setErrorMessage(null);
@@ -673,11 +674,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       mediaRecorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
           chunksRef.current.push(e.data);
+          // Video chunks are collected for the final file
+          // Real-time audio is handled separately via AudioContext
         }
       };
 
       mediaRecorder.onerror = (e: any) => {
-        console.warn("MediaRecorder error notice:", e);
+        console.warn("MediaRecorder error:", e);
       };
 
       mediaRecorder.onstop = () => {
@@ -697,27 +700,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         setCurrentTime(0);
         stopCamera();
 
-        const recordedSeconds = Math.max(1, recordingDurationRef.current || 1);
-        setDuration(recordedSeconds);
-
         // Extract genuine frame snapshot from recorded video
         extractThumbnailFromVideo(blob).then((thumb) => {
           if (thumb) setVideoThumbnail(thumb);
         });
-
-        let recognizedText = (liveTranscriptRef.current || "").trim();
-
-        if (recognizedText) {
-          const immediateSegments = buildSegmentsFromTranscript(recognizedText, recordedSeconds, 0.05);
-          liveSegmentsRef.current = immediateSegments;
-          setLiveSegments(immediateSegments);
-          setLiveTranscript(recognizedText);
-          liveTranscriptRef.current = recognizedText;
-        } else {
-          liveSegmentsRef.current = [];
-          setLiveSegments([]);
-          setLiveTranscript("");
-        }
 
         // Auto-transcribe recorded video in background during preview step
         (async () => {
@@ -733,25 +719,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 body: JSON.stringify({
                   videoData: base64Data,
                   mimeType: blob.type || "video/webm",
-                  filename: `recording_${Date.now()}.webm`,
-                  placeName: selectedPlace?.name || "",
-                  category: selectedPlace?.category || "",
-                  rating: rating || 5,
-                  duration: recordedSeconds,
-                  clientTranscript: liveTranscriptRef.current || ""
+                  filename: `recording_${Date.now()}.webm`
                 })
               });
               if (res.ok) {
                 const data = await res.json();
-                if (data.success) {
-                  if (data.transcript && !liveTranscriptRef.current) {
-                    liveTranscriptRef.current = data.transcript;
-                    setLiveTranscript(data.transcript);
-                  }
-                  if (data.segments && data.segments.length > 0) {
-                    liveSegmentsRef.current = data.segments;
-                    setLiveSegments(data.segments);
-                  }
+                if (data.success && data.transcript) {
+                  setLiveTranscript(data.transcript);
+                  if (data.segments) setLiveSegments(data.segments);
                 }
               }
             };
@@ -761,77 +736,50 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         })();
       };
 
-      // Reset timers, duration & transcript refs
-      recStartTimeRef.current = performance.now();
-      recordingDurationRef.current = 0;
-      liveTranscriptRef.current = "";
-      liveSegmentsRef.current = [];
-      setLiveSegments([]);
-      setLiveTranscript("");
+      // Initialize Browser-Native Zero-API Live Speech Recognition Engine
+      try {
+        const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognitionClass) {
+          const recognition = new SpeechRecognitionClass();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = navigator.language || 'en-US';
 
-      // Speech Recognition setup:
-      // CRITICAL FOR IPHONE STABILITY:
-      // On iOS Safari, webkitSpeechRecognition takes exclusive control of the microphone audio session,
-      // which forcibly interrupts the MediaRecorder's getUserMedia audio track, cutting off the recording
-      // after 1-2 seconds and crashing the WebKit process.
-      // Therefore, on iOS devices, SpeechRecognition is NOT run during recording.
-      // On Desktop (Chrome/Edge) & Android, SpeechRecognition runs smoothly in the background.
-      const isIOSDevice = typeof navigator !== "undefined" && (
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-      );
+          const recStartTime = Date.now();
 
-      if (!isIOSDevice) {
-        try {
-          const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-          if (SpeechRecognitionClass) {
-            const recognition = new SpeechRecognitionClass();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = navigator.language || 'en-US';
-
-            recognition.onresult = (event: any) => {
-              let fullText = "";
-              for (let i = 0; i < event.results.length; i++) {
-                const res = event.results[i];
-                const piece = res[0]?.transcript?.trim();
-                if (piece) {
-                  fullText += (fullText ? " " : "") + piece;
-                }
+          recognition.onresult = (event: any) => {
+            let fullText = "";
+            for (let i = 0; i < event.results.length; i++) {
+              const res = event.results[i];
+              const transcriptPiece = res[0]?.transcript?.trim();
+              if (transcriptPiece) {
+                fullText += (fullText ? " " : "") + transcriptPiece;
               }
-              if (fullText) {
-                liveTranscriptRef.current = fullText;
-                setLiveTranscript(fullText);
-                const currentElapsed = Math.max(1, Math.round((performance.now() - recStartTimeRef.current) / 1000));
-                const segs = buildSegmentsFromTranscript(fullText, currentElapsed, 0.05);
-                liveSegmentsRef.current = segs;
-                setLiveSegments(segs);
+            }
+
+            if (fullText) {
+              setLiveTranscript(fullText);
+              const nowSec = Math.max(0.2, (Date.now() - recStartTime) / 1000);
+              const builtSegments = buildSegmentsFromTranscript(fullText, nowSec, 0);
+              if (builtSegments.length > 0) {
+                setLiveSegments(builtSegments);
               }
-            };
+            }
+          };
 
-            recognition.onerror = (speechErr: any) => {
-              console.warn("Speech recognition notice:", speechErr);
-            };
+          recognition.onerror = (e: any) => {
+            console.warn("[SpeechRecognition] Notice:", e);
+          };
 
-            recognition.onend = () => {
-              // Only restart on desktop if still actively recording and not stopped
-              if (isRecordingRef.current && speechRecognitionRef.current) {
-                try { speechRecognitionRef.current.start(); } catch (e) {}
-              }
-            };
-
-            try {
-              recognition.start();
-              speechRecognitionRef.current = recognition;
-            } catch (startErr) {}
-          }
-        } catch (speechErr) {
-          // Gracefully continue without speech recognition
+          recognition.start();
+          speechRecognitionRef.current = recognition;
         }
+      } catch (speechErr) {
+        console.warn("[SpeechRecognition] Setup notice:", speechErr);
       }
 
-      // Collect standard video slices every 1000ms (1 second) for clean audio/video container headers
-      mediaRecorder.start(1000);
+      // Request data slices periodically (every 500ms for responsiveness)
+      mediaRecorder.start(500);
       setIsRecording(true);
       isRecordingRef.current = true;
       setRecordingTime(0);
@@ -839,17 +787,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       // Max 60 seconds (1 minute) strict limit
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
-          const next = prev + 1;
-          recordingDurationRef.current = next;
-          if (next >= 60) {
+          if (prev >= 60) {
             handleStopRecording();
             return 60;
           }
-          return next;
+          return prev + 1;
         });
       }, 1000);
     } catch (err: any) {
-      console.error("MediaRecorder start error:", err);
+      console.error("MediaRecorder error:", err);
       setErrorMessage("Recording could not start on this browser. Please check camera permissions.");
     }
   };
@@ -857,25 +803,49 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && isRecordingRef.current) {
       triggerHaptic("heavy");
+      try {
+        if (mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.requestData();
+        }
+      } catch (e) {
+        console.warn("requestData error:", e);
+      }
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
       isRecordingRef.current = false;
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
       
-      // Stop SpeechRecognition engine if active
+      // Stop SpeechRecognition engine
       if (speechRecognitionRef.current) {
         try { speechRecognitionRef.current.stop(); } catch (e) {}
         speechRecognitionRef.current = null;
       }
+      
+      // Stop Audio Processing
+      if (audioProcessorRef.current) {
+        try { audioProcessorRef.current.disconnect(); } catch (e) {}
+        audioProcessorRef.current = null;
+      }
+      if (audioContextRef.current) {
+        try { audioContextRef.current.close(); } catch (e) {}
+        audioContextRef.current = null;
+      }
 
-      try {
-        if (mediaRecorderRef.current.state === "recording") {
-          mediaRecorderRef.current.stop();
+      // Close WebSocket gracefully with a 'finish' signal
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        try {
+          wsRef.current.send(JSON.stringify({ type: "finish" }));
+          // We let it close naturally after receiving 'final' or timeout
+          setTimeout(() => {
+            if (wsRef.current) wsRef.current.close();
+            wsRef.current = null;
+          }, 2000);
+        } catch (e) {
+          wsRef.current.close();
+          wsRef.current = null;
         }
-      } catch (e) {
-        console.warn("Stop recording notice:", e);
+      } else {
+        wsRef.current = null;
       }
     }
   };
@@ -928,11 +898,52 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userEmail: currentUser?.email
     }, currentUser);
 
-    const effDuration = Math.max(1, recordingDurationRef.current || recordingTime || duration || 15);
-    let finalTranscript = (liveTranscriptRef.current || liveTranscript || "").trim();
-    let finalSegments = (liveSegmentsRef.current && liveSegmentsRef.current.length > 0)
-      ? liveSegmentsRef.current
-      : ((liveSegments && liveSegments.length > 0) ? liveSegments : (finalTranscript ? buildSegmentsFromTranscript(finalTranscript, effDuration, 0.05) : []));
+    let finalTranscript = liveTranscript || "";
+    let finalSegments = liveSegments || [];
+
+    // If no segments exist or transcript is missing, run server transcription on the recorded video blob
+    if ((!finalTranscript || finalTranscript.trim() === "" || !finalSegments || finalSegments.length === 0) && recordedVideoBlob) {
+      setPublishingStage("Generating verbatim subtitles...");
+      try {
+        const base64Data = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string)?.split(",")[1] || "");
+          reader.readAsDataURL(recordedVideoBlob);
+        });
+        if (base64Data) {
+          const res = await fetch("/api/videos/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              videoData: base64Data,
+              mimeType: recordedVideoBlob.type || "video/webm",
+              filename: `recording_${Date.now()}.webm`
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              if (data.transcript) {
+                finalTranscript = data.transcript;
+                setLiveTranscript(data.transcript);
+              }
+              if (data.segments && data.segments.length > 0) {
+                finalSegments = data.segments;
+                setLiveSegments(data.segments);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Synchronous publish transcription notice:", err);
+      }
+    }
+
+    // Fallback: If segments are still empty, build character-weighted timed segments from finalTranscript
+    if ((!finalSegments || finalSegments.length === 0) && finalTranscript) {
+      const effDuration = recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15);
+      finalSegments = buildSegmentsFromTranscript(finalTranscript, effDuration);
+    }
 
     const fallbackReview: VideoReview = {
       id: reviewId,
@@ -1124,10 +1135,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const newReview: VideoReview = {
       ...fallbackReview,
-      videoUrl: recordedVideoUrl || uploadedPublicUrl || defaultStreamUrl,
+      videoUrl: uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
-      localBlobUrl: recordedVideoUrl || undefined,
-      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
 
@@ -1143,12 +1153,37 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Finalize verbatim captions before saving
+    // 5. Transcribe video in background before saving (Fallback if live stream failed)
     setPublishingStage("Finalizing captions...");
-    let transcriptText = finalTranscript || (liveTranscriptRef.current || liveTranscript || "").trim();
-    let segments = (finalSegments && finalSegments.length > 0)
-      ? finalSegments
-      : (liveSegmentsRef.current && liveSegmentsRef.current.length > 0 ? liveSegmentsRef.current : (transcriptText ? buildSegmentsFromTranscript(transcriptText, effDuration, 0.05) : []));
+    let transcriptText = liveTranscript || "";
+    let segments = liveSegments || [];
+
+    if (!segments.length) {
+      try {
+        const transcribeRes = await fetch("/api/videos/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoData: await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+              reader.readAsDataURL(recordedVideoBlob!);
+            }),
+            mimeType: recordedVideoBlob?.type || "video/webm",
+            filename: cleanFileName
+          })
+        });
+        if (transcribeRes.ok) {
+          const transData = await transcribeRes.json();
+          if (transData.success) {
+            transcriptText = transData.transcript;
+            segments = transData.segments || [];
+          }
+        }
+      } catch (e) {
+        console.warn("Transcription notice:", e);
+      }
+    }
 
     const finalReview: VideoReview = {
       ...newReview,
@@ -1676,15 +1711,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </button>
                 </div>
 
-                {/* Real-Time Word-Synchronized Subtitles in Preview */}
-                <SubtitleOverlay
-                  currentTime={currentTime}
-                  segments={liveSegments}
-                  transcriptText={liveTranscript}
-                  duration={duration || recordingTime || 60}
-                  isActive={true}
-                />
-
                 {/* Bottom Custom Playback Bar & Publish Action */}
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/80 to-transparent p-5 pt-8 z-30 flex flex-col gap-3 pointer-events-auto">
                   {/* Scrubber Range */}
@@ -1911,6 +1937,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       id="record-shutter-button"
                       type="button"
                       onClick={handleStartRecordingInstant}
+                      onTouchStart={handleStartRecordingInstant}
                       className="w-22 h-22 rounded-full border-[6px] border-white/50 p-1.5 flex items-center justify-center bg-transparent transition-transform active:scale-90 cursor-pointer group touch-manipulation select-none pointer-events-auto"
                       title="Tap to start 3-2-1 countdown"
                       aria-label="Tap to start 3-2-1 countdown"

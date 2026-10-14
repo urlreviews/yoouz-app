@@ -68,9 +68,7 @@
     "shares": 1,
     "reviewsCount": 2,
     "reviewCount": 2,
-    "totalReviews": 2,
-    "transcriptText": "",
-    "segments": []
+    "totalReviews": 2
   },
   {
     "id": "rev-1791494959785-27pap",
@@ -141,9 +139,7 @@
     "shares": 0,
     "reviewsCount": 2,
     "reviewCount": 2,
-    "totalReviews": 2,
-    "transcriptText": "",
-    "segments": []
+    "totalReviews": 2
   },
   {
     "id": "rev-1791485919882-l8av6",
@@ -247,30 +243,7 @@
     "shares": 3,
     "reviewsCount": 1,
     "reviewCount": 1,
-    "totalReviews": 1,
-    "transcriptText": "Hi, I'm Ben Blue, and today I'm reviewing First Strike Electrical. Their service was absolutely top-notch, highly recommended for everyone in London!",
-    "segments": [
-      {
-        "start": 0,
-        "end": 2,
-        "text": "Hi, I'm Ben Blue,"
-      },
-      {
-        "start": 2,
-        "end": 4.5,
-        "text": "and today I'm reviewing First Strike Electrical."
-      },
-      {
-        "start": 4.5,
-        "end": 7,
-        "text": "Their service was absolutely top-notch,"
-      },
-      {
-        "start": 7,
-        "end": 10,
-        "text": "highly recommended for everyone in London!"
-      }
-    ]
+    "totalReviews": 1
   },
   {
     "id": "rev-1790368898192-sw74n",
@@ -342,9 +315,7 @@
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "logoUrl": "https://www.izci.be/themes/custom/bosch/logo.svg",
-    "transcriptText": "",
-    "segments": []
+    "logoUrl": "https://www.izci.be/themes/custom/bosch/logo.svg"
   },
   {
     "id": "rev-1790363378621-w65oy",
@@ -416,9 +387,7 @@
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fautowerkplaatsbrugge.be%2Fassets%2Fimg%2FAutoWerkplaatsBrugge_Garage.png",
-    "transcriptText": "",
-    "segments": []
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fautowerkplaatsbrugge.be%2Fassets%2Fimg%2FAutoWerkplaatsBrugge_Garage.png"
   },
   {
     "id": "rev-1790353801035-1rlp8",
@@ -490,8 +459,6 @@
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg",
-    "transcriptText": "",
-    "segments": []
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg"
   }
 ]
