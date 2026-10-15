@@ -12637,6 +12637,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
       let streamError = "";
 
+      console.log(`📡 [Bunny Stream] Check - Key: ${bunnyStreamKey ? 'PRESENT (starts with ' + bunnyStreamKey.substring(0, 4) + ')' : 'MISSING'}, Lib: ${bunnyLibraryId || 'MISSING'}`);
+
       if (bunnyStreamKey && bunnyLibraryId) {
         try {
           console.log(`🎬 🐰 [Bunny Stream] Creating entry for ${targetVideoFileName} (Lib: ${bunnyLibraryId})...`);
@@ -12657,7 +12659,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             console.log(`✅ 🐰 [Bunny Stream] GUID: ${bunnyVideoId}`);
 
             const fileBuffer = fs.readFileSync(finalVideoPath);
-            console.log(`📤 🐰 [Bunny Stream] Uploading binary (${fileBuffer.length} bytes)...`);
+            console.log(`📤 🐰 [Bunny Stream] Uploading binary (${fileBuffer.length} bytes) to ${bunnyVideoId}...`);
             const uploadResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}`, {
               method: 'PUT',
               headers: {
@@ -12669,19 +12671,18 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             });
 
             if (uploadResp.ok) {
-              // Standard Bunny Stream delivery uses a dedicated pull zone: vz-<libraryId>.b-cdn.net
-              // fallback to the provided pull zone if derivation fails
               const streamPullZone = bunnyLibraryId ? `https://vz-${bunnyLibraryId}.b-cdn.net` : (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-              
               bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
             } else {
-              streamError = `Upload failed (HTTP ${uploadResp.status})`;
+              const errBody = await uploadResp.text().catch(() => "N/A");
+              streamError = `Upload failed (HTTP ${uploadResp.status}: ${errBody})`;
               console.warn(`⚠️ 🐰 [Bunny Stream] ${streamError}`);
             }
           } else {
-            streamError = `Create entry failed (HTTP ${createResp.status})`;
+            const errBody = await createResp.text().catch(() => "N/A");
+            streamError = `Create entry failed (HTTP ${createResp.status}: ${errBody})`;
             console.warn(`⚠️ 🐰 [Bunny Stream] ${streamError}`);
           }
         } catch (err: any) {
@@ -21784,24 +21785,41 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         const rawVideoUrl = video.videoUrl || video.url || video.src || (video.id ? `/api/videos/stream/${video.id}` : `${pullZoneDomain}/sample-review.mp4`);
         if (rawVideoUrl) {
           try {
-            let fetchUrl = rawVideoUrl;
-            if (fetchUrl.startsWith("/")) {
-              const serverPort = process.env.PORT || 3000;
-              fetchUrl = `http://127.0.0.1:${serverPort}${fetchUrl}`;
+            let vBuffer: Buffer | null = null;
+            if (rawVideoUrl.startsWith("/api/videos/stream/")) {
+              const filename = rawVideoUrl.split("/api/videos/stream/")[1];
+              const localPath = path.join(serverUploadsDir, filename);
+              if (fs.existsSync(localPath)) {
+                vBuffer = fs.readFileSync(localPath);
+                console.log(`📂 [Bunny Sync] Loading local video for transcription: ${localPath}`);
+              }
             }
-            const fetchResp = await fetch(fetchUrl);
-            if (fetchResp.ok) {
-              const arrayBuf = await fetchResp.arrayBuffer();
-              const vBuffer = Buffer.from(arrayBuf);
-              
-              // 1. Try local service
+
+            if (!vBuffer) {
+              let fetchUrl = rawVideoUrl;
+              if (fetchUrl.startsWith("/")) {
+                const serverPort = process.env.PORT || 3000;
+                fetchUrl = `http://127.0.0.1:${serverPort}${fetchUrl}`;
+              }
+              console.log(`🌐 [Bunny Sync] Fetching video for transcription: ${fetchUrl}`);
+              const fetchResp = await fetch(fetchUrl);
+              if (fetchResp.ok) {
+                const arrayBuf = await fetchResp.arrayBuffer();
+                vBuffer = Buffer.from(arrayBuf);
+              }
+            }
+
+            if (vBuffer) {
               const streamResult = await transcribeVideoLocally(vBuffer, `${videoId}.webm`);
               if (streamResult && streamResult.segments && streamResult.segments.length > 0) {
                 transcriptText = streamResult.transcript || transcriptText;
                 segments = streamResult.segments;
+                console.log(`✅ [Bunny Sync] Local transcription success for ${videoId} (${segments.length} segments)`);
               }
             }
-          } catch (e) {}
+          } catch (e) {
+            console.warn(`⚠️ [Bunny Sync] Fallback transcription failed for ${videoId}:`, e.message);
+          }
         }
       }
 
