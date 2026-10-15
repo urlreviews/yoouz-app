@@ -1858,17 +1858,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 const activeUser = currentUser || localProfile;
 
                 const isMyVideo = Boolean(
-                  moreMenuVideo &&
+                  activeUser && moreMenuVideo &&
                     (
-                      (activeUser && (
-                        isAuthorMatch(moreMenuVideo, activeUser) ||
-                        (activeUser.email && (moreMenuVideo?.userId === activeUser.email || (moreMenuVideo as any)?.userEmail === activeUser.email)) ||
-                        (activeUser.id && (moreMenuVideo?.userId === activeUser.id || (moreMenuVideo as any)?.uid === activeUser.id)) ||
-                        moreMenuVideo.author?.name === activeUser.name ||
-                        moreMenuVideo.author?.name === "me" ||
-                        moreMenuVideo.userId === "me"
-                      )) ||
-                      (localStorage.getItem("copo_my_videos") && JSON.parse(localStorage.getItem("copo_my_videos") || "[]").includes(moreMenuVideo.id))
+                      isAuthorMatch(moreMenuVideo, activeUser) ||
+                      (activeUser.email && (moreMenuVideo?.userId === activeUser.email || (moreMenuVideo as any)?.userEmail === activeUser.email)) ||
+                      (activeUser.id && (moreMenuVideo?.userId === activeUser.id || (moreMenuVideo as any)?.uid === activeUser.id)) ||
+                      (activeUser.name && moreMenuVideo.author?.name && moreMenuVideo.author.name.toLowerCase() === activeUser.name.toLowerCase() && moreMenuVideo.author.name.toLowerCase() !== "reviewer" && moreMenuVideo.author.name.toLowerCase() !== "guest")
                     )
                 );
                 
