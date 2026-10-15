@@ -126,7 +126,7 @@ export function resolvePlayableVideoSourcesCascade(
     return (hyphens === 4 && id.length === 36) || id.length > 30;
   };
 
-  const bunnyLibId = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
+  const bunnyLibId = (typeof import.meta !== "undefined" && import.meta.env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
   
   const guid = video.bunnyVideoId || video.id;
   if (isStreamGuid(guid)) {

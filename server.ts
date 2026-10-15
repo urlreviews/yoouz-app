@@ -14,7 +14,6 @@ import express from "express";
 import opentype from "opentype.js";
 import crypto from "crypto";
 import { execSync, spawn } from "child_process";
-import { v2 as cloudinary } from 'cloudinary';
 import * as cheerio from 'cheerio';
 import path from "path";
 import fs from "fs";
@@ -26,7 +25,6 @@ import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { Resend } from "resend";
-import { GoogleGenAI } from "@google/genai";
 import sharp from "sharp";
 import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
 import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/avatar.ts";
@@ -539,12 +537,6 @@ const multerStorage = multer.diskStorage({
 });
 const multerUpload = multer({ storage: multerStorage, limits: { fileSize: 100 * 1024 * 1024 } });
 const searchCache = new Map<string, { places: any[]; source: string; timestamp: number }>();
-let cachedGeminiClient: GoogleGenAI | null = null;
-function getGeminiClient(): GoogleGenAI | null {
-  // Gemini AI disabled per user policy (Bunny-Only)
-  return null;
-}
-
 function getResendClient(): Resend | null {
   const rawKey = (
     process.env.RESEND_API_KEY ||
@@ -12257,14 +12249,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
   }));
 
   // Cloudinary disabled per user policy (Bunny-Only)
-  /*
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-  */
-
   // Fast in-memory recovery cache to prevent slow repeated queries
   const failedRecoveryCache = new Set<string>();
 

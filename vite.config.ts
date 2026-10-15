@@ -8,7 +8,8 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GOOGLE_MAPS_PLATFORM_KEY': JSON.stringify(process.env.GOOGLE_MAPS_PLATFORM_KEY || ''),
-      'import.meta.env.VITE_BUNNY_PULL_ZONE_URL': JSON.stringify(process.env.BUNNY_PULL_ZONE_URL || '')
+      'import.meta.env.VITE_BUNNY_PULL_ZONE_URL': JSON.stringify(process.env.BUNNY_PULL_ZONE_URL || ''),
+      'import.meta.env.VITE_BUNNY_STREAM_LIBRARY_ID': JSON.stringify(process.env.BUNNY_STREAM_LIBRARY_ID || '733814')
     },
     resolve: {
       alias: {

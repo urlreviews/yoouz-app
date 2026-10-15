@@ -258,6 +258,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.autoplay = false;
         vid.preload = "auto";
         vid.disablePictureInPicture = true;
+        vid.crossOrigin = "anonymous";
         vid.className = "w-full h-full object-cover absolute inset-0 z-0 pointer-events-none";
 
         vid.addEventListener("playing", () => {
@@ -368,6 +369,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     return () => {
       videoPoolRef.current.forEach((v) => {
+        const hls = hlsPoolRef.current.get(v);
+        if (hls) {
+          hls.destroy();
+          hlsPoolRef.current.delete(v);
+        }
         try {
           v.pause();
           v.removeAttribute("src");
@@ -764,6 +770,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
         (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
       ) {
+        const hls = hlsPoolRef.current.get(v);
+        if (hls) {
+          hls.destroy();
+          hlsPoolRef.current.delete(v);
+        }
         v.muted = true;
         try { v.pause(); } catch (e) {}
         v.remove();
