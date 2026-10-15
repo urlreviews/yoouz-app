@@ -37,6 +37,20 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 }) => {
   // CRITICAL: ALL Hooks MUST execute unconditionally in every render cycle. NO early returns before Hooks!
   const { validSegments, fullText } = useMemo(() => {
+    if (isLiveRecording) {
+      const cleanTranscript = (transcriptText || "").trim();
+      if (cleanTranscript) {
+        const words = cleanTranscript.split(/\s+/).filter(Boolean);
+        const recentWords = words.slice(-7);
+        if (recentWords.length > 0) {
+          const recentText = recentWords.join(" ");
+          const precision = generatePrecisionSubtitles(recentText, 3);
+          return { validSegments: precision, fullText: recentText };
+        }
+      }
+      return { validSegments: [], fullText: "" };
+    }
+
     let parsed: any[] = [];
     if (Array.isArray(segments)) {
       parsed = segments;
