@@ -29,7 +29,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNER
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
-import { alignWordsToTimeWindow, normalizeWordTimings } from "../utils/subtitleSync";
+import { alignWordsToTimeWindow, normalizeWordTimings, buildSingleLineSegments, splitWordsIntoSingleLineChunks, SubtitleSegment } from "../utils/subtitleSync";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -854,14 +854,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               sum += dataArray[k];
             }
             const avgVolume = sum / dataArray.length; // Live audio energy (0..255)
-            const isSpeaking = avgVolume > 12; // Microphone speech onset threshold
+            const isSpeaking = avgVolume > 14; // Microphone speech onset threshold
 
             const recStart = recordingStartTimeRef.current || performance.now();
             const nowSec = Math.max(0, (performance.now() - recStart) / 1000);
 
+            // Allow initial 0.25s for mic hardware connection to settle before recording speech onset
+            if (nowSec < 0.25) return;
+
             if (isSpeaking) {
               if (!currentVoiceBlockRef.current) {
-                const newBlock = { start: Math.max(0, nowSec - 0.15), end: nowSec + 0.3 };
+                const newBlock = { start: Math.max(0.25, nowSec - 0.15), end: nowSec + 0.3 };
                 currentVoiceBlockRef.current = newBlock;
                 voiceBlocksRef.current.push(newBlock);
               } else {
@@ -900,36 +903,38 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               if (!transcriptPiece) continue;
 
               if (res.isFinal) {
+                const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                if (words.length === 0) continue;
+
                 // Determine strict acoustic window [segStart, segEnd] for finalized sentence
                 const prevEnd = liveSegmentsRef.current.length > 0 
                   ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
                   : 0;
 
+                const estimatedMinDur = Math.max(0.7, words.length * 0.35);
+
                 let segStart = phraseStartRef.current >= 0 
                   ? phraseStartRef.current 
-                  : Math.max(prevEnd, nowSec - 1.2);
+                  : Math.max(prevEnd, nowSec - estimatedMinDur - 0.2);
                 
                 if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.start >= prevEnd - 0.25) {
                   segStart = Math.max(prevEnd, currentVoiceBlockRef.current.start);
                 }
+
+                // If this is the beginning of the video, ensure speech doesn't start prematurely at 0.0s before speaker speaks
+                if (prevEnd === 0 && segStart < 0.4 && nowSec > 0.9) {
+                  segStart = Math.max(0.4, nowSec - estimatedMinDur - 0.25);
+                }
                 
-                let segEnd = Math.max(segStart + 0.4, nowSec);
+                let segEnd = Math.max(segStart + estimatedMinDur, nowSec);
                 if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.end > segStart) {
-                  segEnd = Math.max(segStart + 0.4, currentVoiceBlockRef.current.end);
+                  segEnd = Math.max(segStart + estimatedMinDur, currentVoiceBlockRef.current.end);
                 }
 
-                const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                const wordTimings = alignWordsToTimeWindow(words, segStart, segEnd);
+                // Split into strictly single-line segments (max 6-8 words per line) that start over when finished
+                const singleLineSegments = buildSingleLineSegments(words, segStart, segEnd);
 
-                const finalizedSegment = {
-                  start: Math.round(segStart * 100) / 100,
-                  end: Math.round(segEnd * 100) / 100,
-                  text: transcriptPiece,
-                  words: wordTimings,
-                  isHardwareTimed: true
-                };
-
-                liveSegmentsRef.current.push(finalizedSegment);
+                liveSegmentsRef.current.push(...singleLineSegments);
                 setLiveSegments([...liveSegmentsRef.current]);
                 setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
                 
@@ -941,21 +946,27 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   const prevEnd = liveSegmentsRef.current.length > 0 
                     ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
                     : 0;
-                  phraseStartRef.current = currentVoiceBlockRef.current 
+                  let onset = currentVoiceBlockRef.current 
                     ? Math.max(prevEnd, currentVoiceBlockRef.current.start) 
-                    : Math.max(prevEnd, nowSec - 0.15);
+                    : Math.max(prevEnd, nowSec - 0.25);
+                  if (prevEnd === 0 && onset < 0.4 && nowSec > 0.8) {
+                    onset = Math.max(0.4, nowSec - 0.45);
+                  }
+                  phraseStartRef.current = onset;
                 }
 
                 interim = transcriptPiece;
                 const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                // During live camera view, always display only the current single line (last 6-7 words)
+                const displayWords = words.length > 7 ? words.slice(-7) : words;
                 const segStart = phraseStartRef.current;
-                const segEnd = Math.max(segStart + 0.35, nowSec + 0.25);
-                const wordTimings = alignWordsToTimeWindow(words, segStart, segEnd);
+                const segEnd = Math.max(segStart + (displayWords.length * 0.35), nowSec + 0.3);
+                const wordTimings = alignWordsToTimeWindow(displayWords, segStart, segEnd);
 
                 currentActivePhraseRef.current = {
                   start: Math.round(segStart * 100) / 100,
                   end: Math.round(segEnd * 100) / 100,
-                  text: transcriptPiece,
+                  text: displayWords.join(" "),
                   words: wordTimings,
                   isHardwareTimed: true
                 };
@@ -1050,10 +1061,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       // Capture any unfinalized interim transcript at stop time
       if (currentActivePhraseRef.current && currentActivePhraseRef.current.text) {
-        const activePhrase = currentActivePhraseRef.current;
-        liveSegmentsRef.current.push(activePhrase);
-        setLiveSegments([...liveSegmentsRef.current]);
-        setLiveTranscript((prev) => (prev ? prev + " " : "") + activePhrase.text);
+        const activeWords = currentActivePhraseRef.current.text.split(/\s+/).filter(Boolean);
+        if (activeWords.length > 0) {
+          const recStart = recordingStartTimeRef.current || performance.now();
+          const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
+          const start = currentActivePhraseRef.current.start || Math.max(0, finalNowSec - 1.2);
+          const end = Math.max(start + (activeWords.length * 0.35), finalNowSec);
+          const singleLineSegments = buildSingleLineSegments(activeWords, start, end);
+          liveSegmentsRef.current.push(...singleLineSegments);
+          setLiveSegments([...liveSegmentsRef.current]);
+          setLiveTranscript((prev) => (prev ? prev + " " : "") + currentActivePhraseRef.current.text);
+        }
       }
       currentActivePhraseRef.current = null;
       setInterimTranscript("");

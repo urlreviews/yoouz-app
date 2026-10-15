@@ -1,6 +1,7 @@
 /**
  * Subtitle Synchronization & VAD Word Timing Utilities
  * Ensures 100% precise acoustic alignment between video playback time and spoken words.
+ * Strictly enforces single-line captions (max 6-8 words per line) with natural human speech pacing.
  */
 
 export interface SubtitleWord {
@@ -18,24 +19,79 @@ export interface SubtitleSegment {
 }
 
 /**
+ * Splits an array of words into single-line chunks of 5 to 7 words (maximum 8 words).
+ * Starts over with a new line when the line finishes.
+ */
+export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 7): string[][] {
+  const clean = words.map(w => w.trim()).filter(Boolean);
+  if (clean.length === 0) return [];
+  if (clean.length <= maxWordsPerLine) return [clean];
+
+  const lines: string[][] = [];
+  let currentLine: string[] = [];
+
+  for (let i = 0; i < clean.length; i++) {
+    const w = clean[i];
+    currentLine.push(w);
+
+    const hasPunctuation = /[.,!?;:]$/.test(w);
+    const reachedTarget = currentLine.length >= 6;
+    const reachedMax = currentLine.length >= maxWordsPerLine;
+    const remaining = clean.length - (i + 1);
+
+    if ((reachedMax || (hasPunctuation && currentLine.length >= 4) || (reachedTarget && remaining >= 4)) && remaining > 0) {
+      lines.push(currentLine);
+      currentLine = [];
+    }
+  }
+
+  if (currentLine.length > 0) {
+    if (lines.length > 0 && currentLine.length <= 2) {
+      const prev = lines[lines.length - 1];
+      if (prev.length + currentLine.length <= 8) {
+        lines[lines.length - 1] = [...prev, ...currentLine];
+      } else {
+        lines.push(currentLine);
+      }
+    } else {
+      lines.push(currentLine);
+    }
+  }
+
+  return lines;
+}
+
+/**
  * Aligns words proportionally to a known acoustic time window [startTime, endTime].
- * Longer words (more characters/syllables) naturally take proportionally longer to speak.
+ * Enforces natural human speech pacing:
+ * - Greetings & common words (e.g. "Good", "morning", "hello") receive natural spoken duration
+ * - Minimum word duration prevents the highlight from rushing too fast at the beginning
  */
 export function alignWordsToTimeWindow(rawWords: string[], startTime: number, endTime: number): SubtitleWord[] {
   const words = rawWords.map(w => w.trim()).filter(Boolean);
   if (words.length === 0) return [];
 
-  const totalDuration = Math.max(0.25, endTime - startTime);
+  // Human vocal rate: natural speech is ~0.35s to 0.45s per word
+  const minRequiredDuration = words.length * 0.32;
+  const totalDuration = Math.max(minRequiredDuration, endTime - startTime);
+
   if (words.length === 1) {
     return [{
       word: words[0],
       start: Math.round(startTime * 100) / 100,
-      end: Math.round(endTime * 100) / 100
+      end: Math.round((startTime + totalDuration) * 100) / 100
     }];
   }
 
-  // Weight each word by character count + 1 (for inter-word pause/vowel weight)
-  const weights = words.map(w => Math.max(2, w.length + 1));
+  // Weight words by phonetic complexity and length
+  const weights = words.map((w, idx) => {
+    const lower = w.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Greetings / intro words at index 0-2 (e.g. "good", "morning", "hello", "today") get generous natural weight
+    if (idx <= 2 && (lower === 'good' || lower === 'morning' || lower === 'hello' || lower === 'welcome' || lower === 'hey')) {
+      return Math.max(6, w.length + 3);
+    }
+    return Math.max(3, w.length + 1);
+  });
   const totalWeight = weights.reduce((a, b) => a + b, 0);
 
   let currentStart = startTime;
@@ -43,22 +99,82 @@ export function alignWordsToTimeWindow(rawWords: string[], startTime: number, en
 
   for (let i = 0; i < words.length; i++) {
     const isLast = i === words.length - 1;
-    const wordDur = (weights[i] / totalWeight) * totalDuration;
+    // Ensure each word receives at least 0.28s (or 0.38s for longer words)
+    const proportionalDur = (weights[i] / totalWeight) * totalDuration;
+    const wordDur = Math.max(0.28, proportionalDur);
     const wStart = Math.round(currentStart * 100) / 100;
     const wEnd = isLast
-      ? Math.round(endTime * 100) / 100
+      ? Math.round(Math.max(wStart + 0.28, startTime + totalDuration) * 100) / 100
       : Math.round((currentStart + wordDur) * 100) / 100;
 
     wordTimings.push({
       word: words[i],
       start: wStart,
-      end: Math.max(wStart + 0.08, wEnd)
+      end: Math.max(wStart + 0.12, wEnd)
     });
 
     currentStart += wordDur;
   }
 
   return wordTimings;
+}
+
+/**
+ * Builds strictly single-line subtitle segments (max 6-8 words per line).
+ * Starts over with a new line when the line finishes.
+ */
+export function buildSingleLineSegments(rawWords: string[], startTime: number, endTime: number): SubtitleSegment[] {
+  const words = rawWords.map(w => w.trim()).filter(Boolean);
+  if (words.length === 0) return [];
+
+  const chunks = splitWordsIntoSingleLineChunks(words, 7);
+  if (chunks.length <= 1) {
+    const wordObjs = alignWordsToTimeWindow(words, startTime, endTime);
+    const segEnd = wordObjs.length > 0 ? wordObjs[wordObjs.length - 1].end : endTime;
+    return [{
+      start: Math.round(startTime * 100) / 100,
+      end: Math.round(segEnd * 100) / 100,
+      text: words.join(" "),
+      words: wordObjs,
+      isHardwareTimed: true
+    }];
+  }
+
+  // Calculate weights for each single-line chunk
+  const chunkWeights = chunks.map(c => {
+    return c.reduce((sum, w) => sum + Math.max(3, w.length + 1), 0);
+  });
+  const totalWeight = chunkWeights.reduce((a, b) => a + b, 0);
+
+  const minTotalDur = chunks.reduce((acc, c) => acc + (c.length * 0.34), 0);
+  const effectiveTotalDur = Math.max(minTotalDur, endTime - startTime);
+
+  let curStart = startTime;
+  const segments: SubtitleSegment[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const isLast = i === chunks.length - 1;
+    const chunkWords = chunks[i];
+    const chunkDur = isLast
+      ? Math.max(chunkWords.length * 0.32, (startTime + effectiveTotalDur) - curStart)
+      : Math.max(chunkWords.length * 0.32, (chunkWeights[i] / totalWeight) * effectiveTotalDur);
+
+    const chunkEnd = curStart + chunkDur;
+    const wordObjs = alignWordsToTimeWindow(chunkWords, curStart, chunkEnd);
+    const finalChunkEnd = wordObjs.length > 0 ? wordObjs[wordObjs.length - 1].end : chunkEnd;
+
+    segments.push({
+      start: Math.round(curStart * 100) / 100,
+      end: Math.round(finalChunkEnd * 100) / 100,
+      text: chunkWords.join(" "),
+      words: wordObjs,
+      isHardwareTimed: true
+    });
+
+    curStart = finalChunkEnd;
+  }
+
+  return segments;
 }
 
 /**
@@ -78,7 +194,7 @@ export function normalizeWordTimings(words: any[], segmentStart: number, segment
       return {
         word: rawWord,
         start: Math.round(wStart * 100) / 100,
-        end: Math.round(Math.max(wStart + 0.06, wEnd) * 100) / 100
+        end: Math.round(Math.max(wStart + 0.08, wEnd) * 100) / 100
       };
     }).filter(t => t.word);
   }
@@ -97,7 +213,7 @@ export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
 
 /**
  * Generates sentence-based precision subtitles from transcript text.
- * Groups spoken text into complete natural sentences or clauses (3-6 words).
+ * Strictly breaks into single-line segments of 5 to 7 words (max 8).
  */
 export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
@@ -105,34 +221,9 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
   const allWords = cleanText.split(/\s+/).filter(Boolean);
   if (allWords.length === 0) return [];
 
-  const maxWordsPerChunk = 5; // Natural phrase limit (3-5 words)
-  const chunks: SubtitleSegment[] = [];
+  const start = Math.max(0.4, startOffset);
+  const end = Math.max(start + (allWords.length * 0.35), totalDuration);
 
-  const totalWords = allWords.length;
-  const NATURAL_SEC_PER_WORD = 0.34;
-
-  let currentStart = Math.max(0.2, startOffset);
-
-  for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
-    const subWords = allWords.slice(i, i + maxWordsPerChunk);
-    const chunkText = subWords.join(" ");
-    const chunkDuration = Math.max(0.6, subWords.length * NATURAL_SEC_PER_WORD);
-    const segStart = Math.round(currentStart * 100) / 100;
-    const segEnd = Math.round((currentStart + chunkDuration) * 100) / 100;
-
-    const wordObjs = alignWordsToTimeWindow(subWords, segStart, segEnd);
-
-    chunks.push({
-      start: segStart,
-      end: segEnd,
-      text: chunkText,
-      words: wordObjs,
-      isHardwareTimed: true
-    });
-
-    currentStart += chunkDuration + 0.18;
-  }
-
-  return chunks;
+  return buildSingleLineSegments(allWords, start, end);
 }
 

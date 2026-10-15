@@ -112,18 +112,18 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[175px] xs:bottom-[190px] sm:bottom-[210px] md:bottom-[225px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[92%] sm:max-w-[84%] animate-in fade-in zoom-in-95 duration-100">
-        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full">
+    <div className="absolute bottom-[175px] xs:bottom-[190px] sm:bottom-[210px] md:bottom-[225px] left-0 right-0 flex justify-center px-3 sm:px-4 pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-[96%] sm:max-w-[90%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
+        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden max-w-full">
           {wordTokens.length > 0 ? (
-            <p className="text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+            <p className="text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full flex items-center justify-center whitespace-nowrap overflow-hidden text-ellipsis gap-x-1.5">
               {wordTokens.map((w, idx) => {
                 const isCurrent = currentTime >= (w.start - 0.04) && currentTime <= (w.end + 0.04);
                 const isSpoken = currentTime > (w.end + 0.04);
                 return (
                   <span
                     key={`${w.word}-${idx}`}
-                    className={`inline-block transition-all duration-75 ${
+                    className={`inline-block whitespace-nowrap transition-all duration-75 ${
                       isCurrent
                         ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]'
                         : isSpoken
@@ -137,7 +137,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               })}
             </p>
           ) : (
-            <p className="text-white text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full">
+            <p className="text-white text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis">
               {activeSegment.text}
             </p>
           )}
