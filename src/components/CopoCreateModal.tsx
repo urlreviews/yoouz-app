@@ -2045,14 +2045,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   onClick={togglePlay}
                 />
 
-                {/* Subtitle Overlay for Preview */}
-                <SubtitleOverlay
-                  currentTime={currentTime}
-                  segments={liveSegments}
-                  transcriptText={liveTranscript}
-                  duration={duration || 15}
-                  isActive={true}
-                />
+
 
                 {/* Top Overlay: Place Badge & Close */}
                 <div className="absolute top-3.5 left-3.5 right-3.5 md:top-5 md:left-5 md:right-5 flex items-center justify-between z-30 pointer-events-none gap-2">
@@ -2362,17 +2355,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 )}
 
-                {/* Live Subtitle Caption Overlay while speaking directly on camera viewport */}
-                {isRecording && (
-                  <SubtitleOverlay
-                    currentTime={liveVideoTime}
-                    segments={activeRecordingSegments}
-                    transcriptText={liveTranscript || interimTranscript}
-                    duration={60}
-                    isActive={true}
-                    isLiveRecording={true}
-                  />
-                )}
+
 
                 {/* Active Recording State Bar with 60-Second Radial Progress */}
                 {isRecording && (
