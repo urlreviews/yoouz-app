@@ -14,6 +14,51 @@ export interface SubtitleSegment {
   end: number;
   text: string;
   words?: SubtitleWord[];
+  isHardwareTimed?: boolean;
+}
+
+/**
+ * Aligns words proportionally to a known acoustic time window [startTime, endTime].
+ * Longer words (more characters/syllables) naturally take proportionally longer to speak.
+ */
+export function alignWordsToTimeWindow(rawWords: string[], startTime: number, endTime: number): SubtitleWord[] {
+  const words = rawWords.map(w => w.trim()).filter(Boolean);
+  if (words.length === 0) return [];
+
+  const totalDuration = Math.max(0.25, endTime - startTime);
+  if (words.length === 1) {
+    return [{
+      word: words[0],
+      start: Math.round(startTime * 100) / 100,
+      end: Math.round(endTime * 100) / 100
+    }];
+  }
+
+  // Weight each word by character count + 1 (for inter-word pause/vowel weight)
+  const weights = words.map(w => Math.max(2, w.length + 1));
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+  let currentStart = startTime;
+  const wordTimings: SubtitleWord[] = [];
+
+  for (let i = 0; i < words.length; i++) {
+    const isLast = i === words.length - 1;
+    const wordDur = (weights[i] / totalWeight) * totalDuration;
+    const wStart = Math.round(currentStart * 100) / 100;
+    const wEnd = isLast
+      ? Math.round(endTime * 100) / 100
+      : Math.round((currentStart + wordDur) * 100) / 100;
+
+    wordTimings.push({
+      word: words[i],
+      start: wStart,
+      end: Math.max(wStart + 0.08, wEnd)
+    });
+
+    currentStart += wordDur;
+  }
+
+  return wordTimings;
 }
 
 /**
@@ -25,7 +70,7 @@ export function normalizeWordTimings(words: any[], segmentStart: number, segment
   if (textWords.length === 0) return [];
 
   // If we have actual word-level hardware timestamps, use them strictly
-  if (Array.isArray(words) && words.length >= textWords.length) {
+  if (Array.isArray(words) && words.length >= textWords.length && words[0]?.start !== undefined) {
     return words.map((wObj, idx) => {
       const rawWord = String(wObj.word || wObj.text || textWords[idx] || '').trim();
       const wStart = Number(wObj.start ?? wObj.start_time ?? segmentStart);
@@ -33,21 +78,13 @@ export function normalizeWordTimings(words: any[], segmentStart: number, segment
       return {
         word: rawWord,
         start: Math.round(wStart * 100) / 100,
-        end: Math.round(Math.max(wStart + 0.05, wEnd) * 100) / 100
+        end: Math.round(Math.max(wStart + 0.06, wEnd) * 100) / 100
       };
     }).filter(t => t.word);
   }
 
-  // Fallback: If no hardware word timings, divide the segment duration
-  // But we still respect the segment boundaries which are hardware-timed
-  const segDuration = Math.max(0.3, segmentEnd - segmentStart);
-  const timePerWord = segDuration / textWords.length;
-  
-  return textWords.map((w, idx) => ({
-    word: w,
-    start: Math.round((segmentStart + (idx * timePerWord)) * 100) / 100,
-    end: Math.round((segmentStart + ((idx + 1) * timePerWord)) * 100) / 100
-  }));
+  // Character-weighted acoustic alignment within the exact hardware segment window
+  return alignWordsToTimeWindow(textWords, segmentStart, segmentEnd);
 }
 
 /**
@@ -55,13 +92,12 @@ export function normalizeWordTimings(words: any[], segmentStart: number, segment
  * Strict boundary check to ensure yellow highlight only appears when spoken.
  */
 export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
-  // 50ms lead time for visual smoothness, but strict end time
-  return currentTime >= (word.start - 0.05) && currentTime <= word.end;
+  return currentTime >= (word.start - 0.03) && currentTime <= (word.end + 0.03);
 }
 
 /**
  * Generates sentence-based precision subtitles from transcript text.
- * Groups spoken text into complete natural sentences or clauses.
+ * Groups spoken text into complete natural sentences or clauses (3-6 words).
  */
 export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
@@ -69,37 +105,32 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
   const allWords = cleanText.split(/\s+/).filter(Boolean);
   if (allWords.length === 0) return [];
 
-  const maxWordsPerChunk = 4; // Strict single-line limit (max 4 words)
+  const maxWordsPerChunk = 5; // Natural phrase limit (3-5 words)
   const chunks: SubtitleSegment[] = [];
 
   const totalWords = allWords.length;
-  // Natural human speaking rate is ~0.35 seconds per word
-  const NATURAL_SEC_PER_WORD = 0.35;
+  const NATURAL_SEC_PER_WORD = 0.34;
 
-  // Start speaking shortly after video begins (e.g. at 0.3s)
-  let currentStart = Math.max(0.3, startOffset);
+  let currentStart = Math.max(0.2, startOffset);
 
   for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
     const subWords = allWords.slice(i, i + maxWordsPerChunk);
     const chunkText = subWords.join(" ");
-    const chunkDuration = Math.max(0.5, subWords.length * NATURAL_SEC_PER_WORD);
+    const chunkDuration = Math.max(0.6, subWords.length * NATURAL_SEC_PER_WORD);
     const segStart = Math.round(currentStart * 100) / 100;
     const segEnd = Math.round((currentStart + chunkDuration) * 100) / 100;
 
-    const wordObjs = subWords.map((w, idx) => ({
-      word: w,
-      start: Math.round((currentStart + (idx * NATURAL_SEC_PER_WORD)) * 100) / 100,
-      end: Math.round((currentStart + ((idx + 1) * NATURAL_SEC_PER_WORD)) * 100) / 100
-    }));
+    const wordObjs = alignWordsToTimeWindow(subWords, segStart, segEnd);
 
     chunks.push({
       start: segStart,
       end: segEnd,
       text: chunkText,
-      words: wordObjs
+      words: wordObjs,
+      isHardwareTimed: true
     });
-    // Add brief 0.15s pause between chunks
-    currentStart += chunkDuration + 0.15;
+
+    currentStart += chunkDuration + 0.18;
   }
 
   return chunks;

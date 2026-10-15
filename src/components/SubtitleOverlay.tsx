@@ -64,36 +64,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     const effectiveDuration = duration && duration > 0 ? duration : 60;
 
-    // Priority 1: Use explicit segments from SpeechRecognition or Gemini server transcription if available
+    // Priority 1: Use explicit hardware-timed segments from SpeechRecognition if available
     if (parsed.length > 0) {
       const validArray = parsed.map((s: any) => ({
         start: Number(s.start ?? s.start_time ?? 0),
-        end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.5)),
+        end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.2)),
         text: String(s.text || s.transcript || '').trim(),
         words: Array.isArray(s.words) ? s.words : undefined
       })).filter(s => s.text && !isTitleFallbackText(s.text));
 
       if (validArray.length > 0) {
-        return validArray.flatMap(s => {
-          const words = s.text.split(/\s+/).filter(Boolean);
-          if (words.length <= 4) return [s];
-
-          const segDur = Math.max(0.4, s.end - s.start);
-          const secPerWord = segDur / words.length;
-          const subChunks: any[] = [];
-          for (let i = 0; i < words.length; i += 4) {
-            const subWords = words.slice(i, i + 4);
-            const subText = subWords.join(" ");
-            const subStart = s.start + (i * secPerWord);
-            const subEnd = s.start + ((i + subWords.length) * secPerWord);
-            subChunks.push({
-              start: Math.round(subStart * 100) / 100,
-              end: Math.round(subEnd * 100) / 100,
-              text: subText
-            });
-          }
-          return subChunks;
-        });
+        return validArray;
       }
     }
 
@@ -103,23 +84,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   const activeSegment = useMemo(() => {
     if (!validSegments || validSegments.length === 0) return null;
 
-    // 1. Direct active segment lookup within current time window [start - 0.05s, end + 0.20s]
+    // Strict YouTube CC timing: active strictly when currentTime is within [start - 0.04s, end + 0.08s]
+    // Zero bleed into pauses/silence so no word appears before or after the sentence
     const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.05) && currentTime <= (s.end + 0.20)
+      s => currentTime >= (s.start - 0.04) && currentTime <= (s.end + 0.08)
     );
-    if (direct) return direct;
-
-    // 2. Strict pause handling: Hide subtitles during silence gaps (> 0.25s after segment end)
-    const pastSegments = validSegments.filter(s => currentTime >= s.start);
-    if (pastSegments.length > 0) {
-      const lastPast = pastSegments[pastSegments.length - 1];
-      // Allow brief 0.25s tail buffer after phrase end for visual smoothness, then hide
-      if (currentTime <= (lastPast.end + 0.25)) {
-        return lastPast;
-      }
-    }
-
-    return null;
+    return direct || null;
   }, [validSegments, currentTime]);
 
   // Extract strict word tokens with exact start and end timestamps
@@ -130,33 +100,47 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (textWords.length === 0) return [];
 
     if (Array.isArray(activeSegment.words) && activeSegment.words.length > 0) {
-      return activeSegment.words.map((wObj: any, idx: number) => {
-        const rawWord = String(wObj.word || wObj.text || textWords[idx] || '').trim();
-        const wStart = Number(wObj.start ?? wObj.start_time ?? 0);
-        const wEnd = Number(wObj.end ?? wObj.end_time ?? (wStart + 0.35));
-        return {
-          word: rawWord,
-          start: Math.round(wStart * 100) / 100,
-          end: Math.round(Math.max(wStart + 0.08, wEnd) * 100) / 100
-        };
-      }).filter(t => t.word && !isTitleFallbackText(t.word));
+      return normalizeWordTimings(activeSegment.words, activeSegment.start, activeSegment.end, activeSegment.text);
     }
 
     // Fallback word token timings from precision generator
-    return generatePrecisionSubtitles(activeSegment.text, duration).flatMap(s => s.words || []);
-  }, [activeSegment, duration]);
+    return normalizeWordTimings([], activeSegment.start, activeSegment.end, activeSegment.text);
+  }, [activeSegment]);
 
   // Early returns strictly AFTER ALL HOOKS have run!
   if (!isActive) return null;
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[180px] xs:bottom-[195px] sm:bottom-[215px] md:bottom-[230px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[92%] sm:max-w-[80%] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150">
-        <div className="bg-black/90 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden max-w-full">
-          <p className="text-white text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center whitespace-nowrap overflow-hidden text-ellipsis px-1 max-w-full">
-            {activeSegment.text}
-          </p>
+    <div className="absolute bottom-[175px] xs:bottom-[190px] sm:bottom-[210px] md:bottom-[225px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-[92%] sm:max-w-[84%] animate-in fade-in zoom-in-95 duration-100">
+        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full">
+          {wordTokens.length > 0 ? (
+            <p className="text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+              {wordTokens.map((w, idx) => {
+                const isCurrent = currentTime >= (w.start - 0.04) && currentTime <= (w.end + 0.04);
+                const isSpoken = currentTime > (w.end + 0.04);
+                return (
+                  <span
+                    key={`${w.word}-${idx}`}
+                    className={`inline-block transition-all duration-75 ${
+                      isCurrent
+                        ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]'
+                        : isSpoken
+                        ? 'text-white font-extrabold'
+                        : 'text-white/80 font-bold'
+                    }`}
+                  >
+                    {w.word}
+                  </span>
+                );
+              })}
+            </p>
+          ) : (
+            <p className="text-white text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full">
+              {activeSegment.text}
+            </p>
+          )}
         </div>
       </div>
     </div>

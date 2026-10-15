@@ -29,6 +29,7 @@ import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNER
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
+import { alignWordsToTimeWindow, normalizeWordTimings } from "../utils/subtitleSync";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -117,26 +118,35 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const speechRecognitionRef = useRef<any>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const phraseStartRef = useRef<number>(-1);
+  const liveSegmentsRef = useRef<any[]>([]);
+  const currentActivePhraseRef = useRef<any>(null);
+  const liveTimeRafRef = useRef<number | null>(null);
+  const [liveVideoTime, setLiveVideoTime] = useState(0);
   const [liveSegments, setLiveSegments] = useState<any[]>([]);
   const [liveTranscript, setLiveTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
 
   const activeRecordingSegments = React.useMemo(() => {
-    if (!interimTranscript) return liveSegments;
-    const words = interimTranscript.trim().split(/\s+/).filter(Boolean);
-    const shortInterim = words.slice(-5).join(" ");
-    const currentEnd = Math.max(0.8, recordingTime);
-    const currentStart = Math.max(0, recordingTime - 2.0);
-    return [
-      ...liveSegments,
-      {
-        start: Math.round(currentStart * 100) / 100,
-        end: Math.round((currentEnd + 2.0) * 100) / 100,
-        text: shortInterim,
-        isHardwareTimed: true
+    if (!interimTranscript || !currentActivePhraseRef.current) return liveSegments;
+    return [...liveSegments, currentActivePhraseRef.current];
+  }, [liveSegments, interimTranscript]);
+
+  // High-precision 60 FPS RequestAnimationFrame sync for Preview Video Playback
+  useEffect(() => {
+    let animId: number;
+    const loop = () => {
+      if (playbackVideoRef.current && !playbackVideoRef.current.paused) {
+        setCurrentTime(playbackVideoRef.current.currentTime);
       }
-    ];
-  }, [liveSegments, interimTranscript, recordingTime]);
+      animId = requestAnimationFrame(loop);
+    };
+    if (recordedVideoUrl && isPlaying) {
+      animId = requestAnimationFrame(loop);
+    }
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [recordedVideoUrl, isPlaying]);
 
   // Global cleanup on tab switch, lock, or navigation away from website
   useEffect(() => {
@@ -234,6 +244,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setLiveTranscript("");
     setLiveSegments([]);
     setInterimTranscript("");
+    liveSegmentsRef.current = [];
+    currentActivePhraseRef.current = null;
+    if (liveTimeRafRef.current) {
+      cancelAnimationFrame(liveTimeRafRef.current);
+      liveTimeRafRef.current = null;
+    }
+    setLiveVideoTime(0);
     recordingStartTimeRef.current = 0;
     phraseStartRef.current = -1;
     if (vadIntervalRef.current) {
@@ -431,6 +448,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setLiveTranscript("");
     setLiveSegments([]);
     setInterimTranscript("");
+    liveSegmentsRef.current = [];
+    currentActivePhraseRef.current = null;
+    if (liveTimeRafRef.current) {
+      cancelAnimationFrame(liveTimeRafRef.current);
+      liveTimeRafRef.current = null;
+    }
+    setLiveVideoTime(0);
     recordingStartTimeRef.current = 0;
     setIsPlaying(false);
     setCurrentTime(0);
@@ -784,9 +808,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       // Set hardware recording start timestamp baseline for exact 0s alignment
       recordingStartTimeRef.current = performance.now();
       phraseStartRef.current = -1;
+      liveSegmentsRef.current = [];
+      currentActivePhraseRef.current = null;
       setLiveTranscript("");
       setLiveSegments([]);
       setInterimTranscript("");
+      setLiveVideoTime(0);
+
+      // Start continuous 60 FPS timeline tracker for live subtitle synchronization
+      if (liveTimeRafRef.current) cancelAnimationFrame(liveTimeRafRef.current);
+      const updateLiveTime = () => {
+        if (isRecordingRef.current) {
+          const elapsed = Math.max(0, (performance.now() - recordingStartTimeRef.current) / 1000);
+          setLiveVideoTime(elapsed);
+          liveTimeRafRef.current = requestAnimationFrame(updateLiveTime);
+        }
+      };
+      liveTimeRafRef.current = requestAnimationFrame(updateLiveTime);
 
       // Initialize zero-latency Web Audio API AnalyserNode Voice Activity Detector (VAD)
       try {
@@ -862,73 +900,65 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               if (!transcriptPiece) continue;
 
               if (res.isFinal) {
+                // Determine strict acoustic window [segStart, segEnd] for finalized sentence
+                const prevEnd = liveSegmentsRef.current.length > 0 
+                  ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
+                  : 0;
+
+                let segStart = phraseStartRef.current >= 0 
+                  ? phraseStartRef.current 
+                  : Math.max(prevEnd, nowSec - 1.2);
+                
+                if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.start >= prevEnd - 0.25) {
+                  segStart = Math.max(prevEnd, currentVoiceBlockRef.current.start);
+                }
+                
+                let segEnd = Math.max(segStart + 0.4, nowSec);
+                if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.end > segStart) {
+                  segEnd = Math.max(segStart + 0.4, currentVoiceBlockRef.current.end);
+                }
+
+                const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                const wordTimings = alignWordsToTimeWindow(words, segStart, segEnd);
+
+                const finalizedSegment = {
+                  start: Math.round(segStart * 100) / 100,
+                  end: Math.round(segEnd * 100) / 100,
+                  text: transcriptPiece,
+                  words: wordTimings,
+                  isHardwareTimed: true
+                };
+
+                liveSegmentsRef.current.push(finalizedSegment);
+                setLiveSegments([...liveSegmentsRef.current]);
                 setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
+                
+                currentActivePhraseRef.current = null;
                 setInterimTranscript("");
-
-                setLiveSegments((prev) => {
-                  const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                  if (words.length === 0) return prev;
-
-                  const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-                  const blocks = voiceBlocksRef.current;
-
-                  // Forward match: find the FIRST voice block starting at or after (prevEnd - 0.35s)
-                  let matchedBlock: { start: number; end: number } | null = null;
-                  if (blocks.length > 0) {
-                    for (let b = 0; b < blocks.length; b++) {
-                      if (blocks[b].start >= prevEnd - 0.35 && blocks[b].start <= nowSec) {
-                        matchedBlock = blocks[b];
-                        break;
-                      }
-                    }
-                    if (!matchedBlock) {
-                      const lastBlock = blocks[blocks.length - 1];
-                      if (lastBlock && lastBlock.end >= prevEnd - 0.2) {
-                        matchedBlock = lastBlock;
-                      }
-                    }
-                  }
-
-                  let segStart = 0;
-                  let segEnd = 0;
-
-                  if (matchedBlock) {
-                    segStart = Math.max(prevEnd, matchedBlock.start);
-                    segEnd = Math.max(segStart + 0.4, matchedBlock.end);
-                  } else {
-                    const LATENCY_OFFSET = 0.8;
-                    const adjustedNow = Math.max(prevEnd + 0.4, nowSec - LATENCY_OFFSET);
-                    const dur = Math.max(0.5, words.length * 0.35);
-                    const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
-                    segStart = Math.max(prevEnd, capturedStart);
-                    segEnd = Math.max(segStart + 0.4, adjustedNow);
-                  }
-                  phraseStartRef.current = -1;
-
-                  const segDur = Math.max(0.3, segEnd - segStart);
-                  const secPerWord = segDur / words.length;
-
-                  const newChunks: any[] = [];
-                  for (let j = 0; j < words.length; j += 4) {
-                    const subWords = words.slice(j, j + 4);
-                    const subText = subWords.join(" ");
-                    const subStart = segStart + (j * secPerWord);
-                    const subEnd = segStart + ((j + subWords.length) * secPerWord);
-                    newChunks.push({
-                      start: Math.round(subStart * 100) / 100,
-                      end: Math.round(subEnd * 100) / 100,
-                      text: subText,
-                      isHardwareTimed: true
-                    });
-                  }
-
-                  return [...prev, ...newChunks];
-                });
+                phraseStartRef.current = -1;
               } else {
                 if (phraseStartRef.current < 0) {
-                  phraseStartRef.current = nowSec;
+                  const prevEnd = liveSegmentsRef.current.length > 0 
+                    ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
+                    : 0;
+                  phraseStartRef.current = currentVoiceBlockRef.current 
+                    ? Math.max(prevEnd, currentVoiceBlockRef.current.start) 
+                    : Math.max(prevEnd, nowSec - 0.15);
                 }
-                interim += (interim ? " " : "") + transcriptPiece;
+
+                interim = transcriptPiece;
+                const words = transcriptPiece.split(/\s+/).filter(Boolean);
+                const segStart = phraseStartRef.current;
+                const segEnd = Math.max(segStart + 0.35, nowSec + 0.25);
+                const wordTimings = alignWordsToTimeWindow(words, segStart, segEnd);
+
+                currentActivePhraseRef.current = {
+                  start: Math.round(segStart * 100) / 100,
+                  end: Math.round(segEnd * 100) / 100,
+                  text: transcriptPiece,
+                  words: wordTimings,
+                  isHardwareTimed: true
+                };
               }
             }
 
@@ -1000,6 +1030,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       isRecordingRef.current = false;
       if (timerRef.current) clearInterval(timerRef.current);
       
+      // Stop continuous live timeline loop
+      if (liveTimeRafRef.current) {
+        cancelAnimationFrame(liveTimeRafRef.current);
+        liveTimeRafRef.current = null;
+      }
+
       // Stop VAD audio processing interval
       if (vadIntervalRef.current) {
         clearInterval(vadIntervalRef.current);
@@ -1013,77 +1049,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
 
       // Capture any unfinalized interim transcript at stop time
-      if (interimTranscript && interimTranscript.trim()) {
-        const words = interimTranscript.trim().split(/\s+/).filter(Boolean);
-        if (words.length > 0) {
-          const textToAppend = words.join(" ");
-          setLiveTranscript((prev) => (prev ? prev + " " : "") + textToAppend);
-          const recStart = recordingStartTimeRef.current || performance.now();
-          const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
-
-          setLiveSegments((prev) => {
-            const prevEnd = prev.length > 0 ? prev[prev.length - 1].end : 0;
-            const blocks = voiceBlocksRef.current;
-            let matchedBlock: { start: number; end: number } | null = null;
-            if (blocks.length > 0) {
-              for (let b = 0; b < blocks.length; b++) {
-                if (blocks[b].start >= prevEnd - 0.35 && blocks[b].start <= finalNowSec) {
-                  matchedBlock = blocks[b];
-                  break;
-                }
-              }
-              if (!matchedBlock) {
-                const lastBlock = blocks[blocks.length - 1];
-                if (lastBlock && lastBlock.end >= prevEnd - 0.2) {
-                  matchedBlock = lastBlock;
-                }
-              }
-            }
-
-            let segStart = 0;
-            let segEnd = 0;
-
-            if (matchedBlock) {
-              segStart = Math.max(prevEnd, matchedBlock.start);
-              segEnd = Math.max(segStart + 0.4, matchedBlock.end);
-            } else {
-              const LATENCY_OFFSET = 0.5;
-              const adjustedNow = Math.max(prevEnd + 0.4, finalNowSec - LATENCY_OFFSET);
-              const dur = Math.max(0.5, words.length * 0.35);
-              const capturedStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(prevEnd, adjustedNow - dur);
-              segStart = Math.max(prevEnd, capturedStart);
-              segEnd = Math.max(segStart + 0.4, adjustedNow);
-            }
-
-            const segDur = Math.max(0.3, segEnd - segStart);
-            const secPerWord = segDur / words.length;
-
-            const newChunks: any[] = [];
-            for (let j = 0; j < words.length; j += 4) {
-              const subWords = words.slice(j, j + 4);
-              const subText = subWords.join(" ");
-              const subStart = segStart + (j * secPerWord);
-              const subEnd = segStart + ((j + subWords.length) * secPerWord);
-              newChunks.push({
-                start: Math.round(subStart * 100) / 100,
-                end: Math.round(subEnd * 100) / 100,
-                text: subText,
-                isHardwareTimed: true
-              });
-            }
-            return [...prev, ...newChunks];
-          });
-        }
-        setInterimTranscript("");
+      if (currentActivePhraseRef.current && currentActivePhraseRef.current.text) {
+        const activePhrase = currentActivePhraseRef.current;
+        liveSegmentsRef.current.push(activePhrase);
+        setLiveSegments([...liveSegmentsRef.current]);
+        setLiveTranscript((prev) => (prev ? prev + " " : "") + activePhrase.text);
       }
+      currentActivePhraseRef.current = null;
+      setInterimTranscript("");
+      phraseStartRef.current = -1;
 
-      // Ensure liveSegments is populated using VAD voice blocks if Speech Recognition missed anything
+      // Fallback only if liveSegments is completely empty and voice blocks exist
       setLiveSegments((prev) => {
         if (prev && prev.length > 0) return prev;
         const blocks = voiceBlocksRef.current;
         if (!blocks || blocks.length === 0) return prev;
 
-        const fullText = (liveTranscript || interimTranscript || "").trim();
+        const fullText = (liveTranscript || "").trim();
         if (!fullText) return prev;
 
         const words = fullText.split(/\s+/).filter(Boolean);
@@ -1097,26 +1079,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           const blockWords = words.slice(b * wordsPerBlock, (b + 1) * wordsPerBlock);
           if (blockWords.length === 0) break;
 
-          const bDur = Math.max(0.4, block.end - block.start);
-          const secPerW = bDur / blockWords.length;
+          const wordTimings = alignWordsToTimeWindow(blockWords, block.start, block.end);
 
-          for (let j = 0; j < blockWords.length; j += 4) {
-            const subWords = blockWords.slice(j, j + 4);
-            const subText = subWords.join(" ");
-            const subStart = block.start + (j * secPerW);
-            const subEnd = block.start + ((j + subWords.length) * secPerW);
-            newChunks.push({
-              start: Math.round(subStart * 100) / 100,
-              end: Math.round(subEnd * 100) / 100,
-              text: subText,
-              isHardwareTimed: true
-            });
-          }
+          newChunks.push({
+            start: Math.round(block.start * 100) / 100,
+            end: Math.round(block.end * 100) / 100,
+            text: blockWords.join(" "),
+            words: wordTimings,
+            isHardwareTimed: true
+          });
         }
+        liveSegmentsRef.current = newChunks;
         return newChunks;
       });
-
-      phraseStartRef.current = -1;
       
       // Stop Audio Processing
       if (audioProcessorRef.current) {
@@ -2279,7 +2254,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {/* Live Subtitle Caption Overlay while speaking directly on camera viewport */}
                 {isRecording && (
                   <SubtitleOverlay
-                    currentTime={recordingTime}
+                    currentTime={liveVideoTime}
                     segments={activeRecordingSegments}
                     transcriptText={liveTranscript || interimTranscript}
                     duration={60}
