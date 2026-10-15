@@ -12656,10 +12656,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       // 3. Synchronously upload to Bunny Stream for Automated AI Captions & Global HLS Delivery
       const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
       const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+      let streamError = "";
 
       if (bunnyStreamKey && bunnyLibraryId) {
         try {
-          console.log(`🎬 🐰 [Bunny Stream] Creating video entry for ${targetVideoFileName}...`);
+          console.log(`🎬 🐰 [Bunny Stream] Creating entry for ${targetVideoFileName} (Lib: ${bunnyLibraryId})...`);
           const createResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`, {
             method: 'POST',
             headers: {
@@ -12667,13 +12668,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               'Content-Type': 'application/json',
               'accept': 'application/json'
             },
-            body: JSON.stringify({ title: targetVideoFileName })
+            body: JSON.stringify({ title: targetVideoFileName }),
+            signal: AbortSignal.timeout(15000)
           });
 
           if (createResp.ok) {
             const createData: any = await createResp.json();
             bunnyVideoId = createData.guid;
-            console.log(`✅ 🐰 [Bunny Stream] Entry created: ${bunnyVideoId}`);
+            console.log(`✅ 🐰 [Bunny Stream] GUID: ${bunnyVideoId}`);
 
             const fileBuffer = fs.readFileSync(finalVideoPath);
             console.log(`📤 🐰 [Bunny Stream] Uploading binary (${fileBuffer.length} bytes)...`);
@@ -12683,22 +12685,26 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                 'AccessKey': bunnyStreamKey,
                 'Content-Type': 'application/octet-stream'
               },
-              body: fileBuffer
+              body: fileBuffer,
+              signal: AbortSignal.timeout(120000) // 2 minutes for video upload
             });
 
             if (uploadResp.ok) {
               const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
               bunnyUrl = `${pullZoneDomain}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
-              console.log(`✅ 🐰 [Bunny Stream] Successfully uploaded! Stream URL: ${bunnyUrl}`);
+              console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
             } else {
-              console.warn(`⚠️ 🐰 [Bunny Stream] Upload failed (HTTP ${uploadResp.status})`);
+              streamError = `Upload failed (HTTP ${uploadResp.status})`;
+              console.warn(`⚠️ 🐰 [Bunny Stream] ${streamError}`);
             }
           } else {
-            console.warn(`⚠️ 🐰 [Bunny Stream] Create entry failed (HTTP ${createResp.status})`);
+            streamError = `Create entry failed (HTTP ${createResp.status})`;
+            console.warn(`⚠️ 🐰 [Bunny Stream] ${streamError}`);
           }
-        } catch (streamErr) {
-          console.warn("⚠️ 🐰 [Bunny Stream] Error:", streamErr);
+        } catch (err: any) {
+          streamError = err.message || "Unknown stream error";
+          console.warn("⚠️ 🐰 [Bunny Stream] Exception:", streamError);
         }
       }
 
@@ -12768,7 +12774,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         fileName: targetVideoFileName,
         transcriptText: transcriptText,
         segments: segments,
-        vttUrl: vttContent ? (bunnyAccessKey && bunnyStorageZone ? `${pullZoneDomain}/videos/${base}.vtt` : `/uploads/${base}.vtt`) : ""
+        vttUrl: vttContent ? (bunnyAccessKey && bunnyStorageZone ? `${pullZoneDomain}/videos/${base}.vtt` : `/uploads/${base}.vtt`) : "",
+        streamError: streamError
       });
     } catch (err: any) {
       console.error("Video upload error:", err);
