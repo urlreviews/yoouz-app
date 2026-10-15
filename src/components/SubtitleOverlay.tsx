@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { generatePrecisionSubtitles, normalizeWordTimings } from '../utils/subtitleSync';
+import { generatePrecisionSubtitles, normalizeWordTimings, alignWordsToTimeWindow, buildSingleLineSegments } from '../utils/subtitleSync';
 
 interface SubtitleOverlayProps {
   currentTime: number;
@@ -51,19 +51,40 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     const hasValidTimedSegments = parsed.length > 0 && parsed.every(s => typeof s?.start === 'number' && s?.text);
 
     if (hasValidTimedSegments) {
-      // Clean and normalize timed segments
-      const cleanedTimed: any[] = [];
+      // Extract all word tokens and re-chunk into strict 5 to 7 word single-line sentence segments
+      const cleanedWords: { word: string; start: number; end: number }[] = [];
       for (const seg of parsed) {
         const segText = String(seg.text || seg.transcript || '').trim();
         if (!segText || isTitleFallbackText(segText)) continue;
-        cleanedTimed.push({
-          ...seg,
-          text: segText
-        });
+        const segStart = Number(seg.start || 0);
+        const segEnd = Number(seg.end || (segStart + 2));
+        
+        if (Array.isArray(seg.words) && seg.words.length > 0) {
+          seg.words.forEach((wObj: any) => {
+            const wStr = String(wObj.word || wObj.text || '').trim();
+            if (wStr && !isTitleFallbackText(wStr)) {
+              cleanedWords.push({
+                word: wStr,
+                start: Number(wObj.start ?? segStart),
+                end: Number(wObj.end ?? segEnd)
+              });
+            }
+          });
+        } else {
+          const wordsArr = segText.split(/\s+/).filter(Boolean);
+          const aligned = alignWordsToTimeWindow(wordsArr, segStart, segEnd);
+          cleanedWords.push(...aligned);
+        }
       }
-      if (cleanedTimed.length > 0) {
-        const joinedText = cleanedTimed.map(s => s.text).join(" ");
-        return { validSegments: cleanedTimed, fullText: joinedText };
+
+      if (cleanedWords.length > 0) {
+        const rawWordsOnly = cleanedWords.map(w => w.word);
+        const startTime = cleanedWords[0].start;
+        const endTime = Math.max(startTime + (rawWordsOnly.length * 0.35), cleanedWords[cleanedWords.length - 1].end);
+        const fullJoined = rawWordsOnly.join(" ");
+
+        const normalizedSegments = buildSingleLineSegments(rawWordsOnly, startTime, endTime);
+        return { validSegments: normalizedSegments, fullText: fullJoined };
       }
     }
 
