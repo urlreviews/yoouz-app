@@ -12651,16 +12651,64 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
       let thumbnailUrl = hasThumb ? `/uploads/${thumbFileName}` : "";
       let bunnyUrl = "";
+      let bunnyVideoId = "";
 
-      // 3. Synchronously upload MP4 and Thumbnail to Bunny CDN so file is 100% playable for all users before response
-      if (bunnyAccessKey && bunnyStorageZone) {
+      // 3. Synchronously upload to Bunny Stream for Automated AI Captions & Global HLS Delivery
+      const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
+      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+
+      if (bunnyStreamKey && bunnyLibraryId) {
+        try {
+          console.log(`🎬 🐰 [Bunny Stream] Creating video entry for ${targetVideoFileName}...`);
+          const createResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`, {
+            method: 'POST',
+            headers: {
+              'AccessKey': bunnyStreamKey,
+              'Content-Type': 'application/json',
+              'accept': 'application/json'
+            },
+            body: JSON.stringify({ title: targetVideoFileName })
+          });
+
+          if (createResp.ok) {
+            const createData: any = await createResp.json();
+            bunnyVideoId = createData.guid;
+            console.log(`✅ 🐰 [Bunny Stream] Entry created: ${bunnyVideoId}`);
+
+            const fileBuffer = fs.readFileSync(finalVideoPath);
+            console.log(`📤 🐰 [Bunny Stream] Uploading binary (${fileBuffer.length} bytes)...`);
+            const uploadResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}`, {
+              method: 'PUT',
+              headers: {
+                'AccessKey': bunnyStreamKey,
+                'Content-Type': 'application/octet-stream'
+              },
+              body: fileBuffer
+            });
+
+            if (uploadResp.ok) {
+              const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+              bunnyUrl = `${pullZoneDomain}/${bunnyVideoId}/playlist.m3u8`;
+              publicUrl = bunnyUrl;
+              console.log(`✅ 🐰 [Bunny Stream] Successfully uploaded! Stream URL: ${bunnyUrl}`);
+            } else {
+              console.warn(`⚠️ 🐰 [Bunny Stream] Upload failed (HTTP ${uploadResp.status})`);
+            }
+          } else {
+            console.warn(`⚠️ 🐰 [Bunny Stream] Create entry failed (HTTP ${createResp.status})`);
+          }
+        } catch (streamErr) {
+          console.warn("⚠️ 🐰 [Bunny Stream] Error:", streamErr);
+        }
+      }
+
+      // 3b. Fallback to basic Bunny Storage if Stream failed or isn't configured
+      if (!bunnyUrl && bunnyAccessKey && bunnyStorageZone) {
         try {
           const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
-
-          // Upload Video MP4 to Bunny CDN Storage
           const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
           const fileBuffer = fs.readFileSync(finalVideoPath);
-          console.log(`🐰 [Server Upload] Syncing ${targetVideoFileName} (${fileBuffer.length} bytes) to Bunny CDN storage...`);
+          console.log(`🐰 [Server Upload] Syncing to Bunny Storage fallback...`);
 
           const bunnyVidRes = await fetch(videoBunnyUrl, {
             method: 'PUT',
@@ -12674,65 +12722,32 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
           if (bunnyVidRes.ok) {
             bunnyUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
-            console.log(`✅ 🐰 [Server Upload] Successfully uploaded video to Bunny CDN: ${bunnyUrl}`);
-          } else {
-            console.warn(`⚠️ 🐰 [Server Upload] Bunny CDN upload notice (HTTP ${bunnyVidRes.status}), using server stream URL`);
+            publicUrl = bunnyUrl;
           }
-
-          // Upload Thumbnail JPG to Bunny CDN Storage
-          if (hasThumb && fs.existsSync(thumbFilePath)) {
-            const thumbBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${thumbFileName}`;
-            const thumbBuffer = fs.readFileSync(thumbFilePath);
-            await fetch(thumbBunnyUrl, {
-              method: 'PUT',
-              headers: {
-                'AccessKey': bunnyAccessKey,
-                'Content-Type': 'image/jpeg',
-              },
-              body: thumbBuffer,
-              signal: AbortSignal.timeout(15000)
-            }).then(r => {
-              if (r.ok) thumbnailUrl = `${pullZoneDomain}/videos/${thumbFileName}`;
-            }).catch(() => {});
-          }
-        } catch (bunnyErr) {
-          console.warn("⚠️ 🐰 [Server Upload] Error uploading to Bunny CDN, using server stream fallback:", bunnyErr);
-        }
-      }
-
-      // Prioritize the Bunny CDN edge URL so EVERY user on EVERY device gets instant global streaming
-      if (bunnyUrl) {
-        publicUrl = bunnyUrl;
-      } else {
-        publicUrl = `/api/videos/stream/${targetVideoFileName}`;
+        } catch (bunnyErr) {}
       }
 
       const finalVideoSize = fs.existsSync(finalVideoPath) ? fs.statSync(finalVideoPath).size : 0;
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${finalVideoSize} bytes) at ${finalVideoPath}`);
-      if (!fs.existsSync(finalVideoPath)) {
-        console.error(`❌ [Server] CRITICAL: Video file not found at ${finalVideoPath} after storage!`);
-      }
 
-      // 4. Automated Local Transcription (Faster-Whisper)
+      // 4. Automated Transcription (Immediate Local Fallback + Bunny Stream background trigger)
       let transcriptText = "";
       let segments = [];
       let vttContent = "";
       try {
         const videoBuffer = fs.readFileSync(finalVideoPath);
+        // We still use local engine for instant results in the UI, but Bunny will override it later
         const transResult = await transcribeVideoLocally(videoBuffer, targetVideoFileName);
         if (transResult && transResult.transcript) {
           transcriptText = transResult.transcript;
           segments = transResult.segments || [];
           vttContent = transResult.vtt_content || "";
           
-          // Save VTT locally for the player
           const vttFileName = `${base}.vtt`;
           const vttFilePath = path.join(serverUploadsDir, vttFileName);
           fs.writeFileSync(vttFilePath, vttContent);
         }
-      } catch (tErr) {
-        console.warn("[Upload] Auto-transcription failed, proceeding without transcript:", tErr);
-      }
+      } catch (tErr) {}
 
       let embeddedVideoData = "";
       try {
@@ -12747,12 +12762,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         url: publicUrl, 
         downloadUrl: publicUrl,
         videoData: embeddedVideoData,
-        bunnyUrl: (bunnyAccessKey && bunnyStorageZone) ? `${pullZoneDomain}/videos/${targetVideoFileName}` : "",
-        thumbnailUrl, 
-        fileName: targetVideoFileName, 
-        bunnyVideoId: base,
-        transcriptText,
-        segments,
+        bunnyUrl: bunnyUrl,
+        bunnyVideoId: bunnyVideoId,
+        thumbnailUrl: thumbnailUrl,
+        fileName: targetVideoFileName,
+        transcriptText: transcriptText,
+        segments: segments,
         vttUrl: vttContent ? (bunnyAccessKey && bunnyStorageZone ? `${pullZoneDomain}/videos/${base}.vtt` : `/uploads/${base}.vtt`) : ""
       });
     } catch (err: any) {
@@ -21742,9 +21757,43 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       // Automatically generate publisher captions from Bunny / server subtitle engine immediately
       const reviewText = video.comment || video.caption || `Verified authentic video review for ${video.placeName || video.place?.name || 'local business'} on Yoouz.`;
-      const localResult = await transcribeVideoLocally(Buffer.from("dummy"), `${videoId}.webm`, "video/webm", reviewText);
-      let transcriptText = localResult.transcript || reviewText;
-      let segments = localResult.segments || [];
+      
+      let transcriptText = reviewText;
+      let segments = video.segments || [];
+
+      // 0. Try fetching official AI captions from Bunny Stream if available (High Priority)
+      const bunnyVideoId = video.bunnyVideoId || video.guid || (typeof video.id === 'string' && video.id.length > 15 && !video.id.includes('-') ? video.id : null);
+      if (bunnyVideoId) {
+        const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
+        const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+        if (bunnyStreamKey && bunnyLibraryId) {
+          try {
+            console.log(`🎬 🐰 [Bunny Stream] Attempting to sync AI captions for ${bunnyVideoId}...`);
+            const captionResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}/captions/en`, {
+              headers: { 'AccessKey': bunnyStreamKey, 'accept': 'application/json' }
+            });
+            if (captionResp.ok) {
+              const vttText = await captionResp.text();
+              if (vttText && vttText.includes("WEBVTT")) {
+                const bunnySegments = parseVttToSegments(vttText);
+                if (bunnySegments.length > 0) {
+                  transcriptText = bunnySegments.map(s => s.text).join(" ");
+                  segments = bunnySegments;
+                  console.log(`✅ 🐰 [Bunny Stream] AI Captions successfully synced! (${bunnySegments.length} segments)`);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("🐰 [Bunny Stream] Caption sync notice:", e);
+          }
+        }
+      }
+
+      if (!segments || segments.length === 0) {
+        const localResult = await transcribeVideoLocally(Buffer.from("dummy"), `${videoId}.webm`, "video/webm", reviewText);
+        transcriptText = localResult.transcript || reviewText;
+        segments = localResult.segments || [];
+      }
 
       if (!segments || segments.length === 0) {
         const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
@@ -21830,11 +21879,35 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string, existingTranscript?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
-      const fullTranscript = (existingTranscript || "").trim();
+      // 1. Try real AI Speech-to-Text via local Python service if available
+      try {
+        const formData = new FormData();
+        const blob = new Blob([videoBuffer], { type: mimeTypeInput || "video/webm" });
+        formData.append("file", blob, filename);
 
-      if (!fullTranscript) {
-        return { transcript: "", segments: [], vtt_content: "" };
+        console.log(`🎤 [Transcription] Dispatching ${filename} to local AI engine...`);
+        const sttResp = await fetch("http://127.0.0.1:8000/transcribe", {
+          method: "POST",
+          body: formData,
+          signal: AbortSignal.timeout(60000)
+        });
+
+        if (sttResp.ok) {
+          const sttData: any = await sttResp.json();
+          console.log(`✅ [Transcription] AI success: "${sttData.text.substring(0, 50)}..."`);
+          return {
+            transcript: sttData.text,
+            segments: sttData.segments,
+            vtt_content: sttData.vtt_content
+          };
+        }
+      } catch (sttErr) {
+        console.warn("[Transcription] Local AI engine notice (falling back to text-align):", sttErr);
       }
+
+      // 2. Fallback to free text-alignment engine if AI is unavailable or no audio detected
+      const fullTranscript = (existingTranscript || "").trim();
+      if (!fullTranscript) return { transcript: "", segments: [], vtt_content: "" };
 
       const words = fullTranscript.split(/\s+/).filter(Boolean);
       if (words.length === 0) return { transcript: "", segments: [], vtt_content: "" };
@@ -21925,6 +21998,41 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       console.warn("[Local BunnyDB Subtitle Engine] Processing notice:", err?.message || err);
       return { transcript: "", segments: [], vtt_content: "" };
     }
+  }
+
+  function parseVttToSegments(vtt: string) {
+    const segments: any[] = [];
+    try {
+      const lines = vtt.split(/\r?\n/);
+      let currentSeg: any = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || line === "WEBVTT") continue;
+
+        const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}.\d{3})/);
+        if (timeMatch) {
+          const parseTime = (t: string) => {
+            const [h, m, s] = t.split(':');
+            return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s);
+          };
+          currentSeg = {
+            start: parseTime(timeMatch[1]),
+            end: parseTime(timeMatch[2]),
+            text: ""
+          };
+        } else if (currentSeg && isNaN(Number(line))) {
+          currentSeg.text = (currentSeg.text + " " + line).trim();
+          if (lines[i + 1]?.trim() === "" || i === lines.length - 1) {
+            if (currentSeg.text) {
+               segments.push(currentSeg);
+            }
+            currentSeg = null;
+          }
+        }
+      }
+    } catch (e) {}
+    return segments;
   }
 
   // Serves valid WebVTT (.vtt) file with exact HH:MM:SS.mmm timecodes for native HTML5 <track> elements
