@@ -127,7 +127,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [interimTranscript, setInterimTranscript] = useState("");
 
   const activeRecordingSegments = React.useMemo(() => {
-    if (!interimTranscript || !currentActivePhraseRef.current) return liveSegments;
+    if (!interimTranscript || !currentActivePhraseRef.current || !currentActivePhraseRef.current.text) {
+      return liveSegments;
+    }
     return [...liveSegments, currentActivePhraseRef.current];
   }, [liveSegments, interimTranscript]);
 
@@ -401,6 +403,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         if (vid.ended) {
           vid.currentTime = 0;
         }
+        // User explicitly tapped play/video -> unmute audio safely
+        if (isMuted) {
+          vid.muted = false;
+          setIsMuted(false);
+        }
         const playPromise = vid.play();
         if (playPromise !== undefined) {
           await playPromise;
@@ -414,6 +421,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       console.warn("Standard play error, attempting fallback:", err);
       try {
         vid.load();
+        vid.muted = false;
+        setIsMuted(false);
         const retryPromise = vid.play();
         if (retryPromise !== undefined) {
           await retryPromise;
@@ -1061,16 +1070,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       // Capture any unfinalized interim transcript at stop time
       if (currentActivePhraseRef.current && currentActivePhraseRef.current.text) {
-        const activeWords = currentActivePhraseRef.current.text.split(/\s+/).filter(Boolean);
+        const activePhrase = currentActivePhraseRef.current;
+        const activeText = activePhrase.text || "";
+        const activeWords = activeText.split(/\s+/).filter(Boolean);
         if (activeWords.length > 0) {
           const recStart = recordingStartTimeRef.current || performance.now();
           const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
-          const start = currentActivePhraseRef.current.start || Math.max(0, finalNowSec - 1.2);
+          const start = activePhrase.start || Math.max(0, finalNowSec - 1.2);
           const end = Math.max(start + (activeWords.length * 0.35), finalNowSec);
           const singleLineSegments = buildSingleLineSegments(activeWords, start, end);
           liveSegmentsRef.current.push(...singleLineSegments);
           setLiveSegments([...liveSegmentsRef.current]);
-          setLiveTranscript((prev) => (prev ? prev + " " : "") + currentActivePhraseRef.current.text);
+          setLiveTranscript((prev) => (prev ? prev + " " : "") + activeText);
         }
       }
       currentActivePhraseRef.current = null;
@@ -1936,7 +1947,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   onLoadedMetadata={() => {
                     if (playbackVideoRef.current) {
                       setDuration(playbackVideoRef.current.duration || 0);
-                      playbackVideoRef.current.play().catch(() => {});
+                      playbackVideoRef.current.play().catch((err) => {
+                        console.warn("Autoplay with sound restricted, playing muted fallback:", err);
+                        if (playbackVideoRef.current) {
+                          playbackVideoRef.current.muted = true;
+                          setIsMuted(true);
+                          playbackVideoRef.current.play().catch(() => {});
+                        }
+                      });
                     }
                   }}
                   onCanPlay={() => {
@@ -1956,10 +1974,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     }
                   }}
                   onClick={togglePlay}
-                >
-                  <source src={recordedVideoUrl} type={recordedVideoBlob?.type || "video/mp4"} />
-                  <source src={recordedVideoUrl} type="video/webm" />
-                </video>
+                />
 
                 {/* Subtitle Overlay for Preview */}
                 <SubtitleOverlay
@@ -2061,17 +2076,31 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         if (playbackVideoRef.current) {
-                          playbackVideoRef.current.muted = !isMuted;
-                          setIsMuted(!isMuted);
+                          const nextMuted = !isMuted;
+                          playbackVideoRef.current.muted = nextMuted;
+                          setIsMuted(nextMuted);
+                          if (!nextMuted && playbackVideoRef.current.paused) {
+                            playbackVideoRef.current.play().catch(() => {});
+                          }
                         }
                       }}
-                      className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                      title={isMuted ? "Unmute" : "Mute"}
+                      className={`px-3 py-1.5 rounded-full backdrop-blur-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isMuted
+                          ? "bg-amber-500/20 border-amber-400/50 text-amber-300 font-bold animate-pulse"
+                          : "bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium"
+                      }`}
+                      title={isMuted ? "Tap to Unmute Sound" : "Mute Sound"}
                     >
                       {isMuted ? (
-                        <VolumeX className="w-4 h-4 text-red-400" />
+                        <>
+                          <VolumeX className="w-4 h-4 text-amber-300 shrink-0" />
+                          <span className="text-xs font-extrabold tracking-tight">Tap for Sound</span>
+                        </>
                       ) : (
-                        <Volume2 className="w-4 h-4 text-white" />
+                        <>
+                          <Volume2 className="w-4 h-4 text-white shrink-0" />
+                          <span className="text-xs font-semibold">Sound On</span>
+                        </>
                       )}
                     </button>
                   </div>
