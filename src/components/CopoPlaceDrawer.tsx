@@ -1195,7 +1195,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             contentRef.current.scrollTop += e.deltaY;
           }
         }}
-        onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           e.stopPropagation();
           if (contentRef.current) {

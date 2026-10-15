@@ -874,7 +874,6 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         id="copo-comments-panel"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
         style={{
@@ -971,9 +970,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         {/* Comments Scrollable Feed */}
         <div
           ref={commentsListRef}
-          className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4 overscroll-contain bg-zinc-950 md:bg-zinc-900"
+          className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4 overscroll-contain bg-zinc-950 md:bg-zinc-900 touch-pan-y"
           onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
         >
           {/* 1. Official Verified Business Owner Response (Pinned Banner - Google Maps Standard) */}
           {video.ownerResponse && (

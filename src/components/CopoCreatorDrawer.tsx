@@ -873,7 +873,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             contentRef.current.scrollTop += e.deltaY;
           }
         }}
-        onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           e.stopPropagation();
           if (contentRef.current) {

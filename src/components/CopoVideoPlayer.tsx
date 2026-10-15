@@ -1814,25 +1814,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => setMoreMenuVideo(null)}
           onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
         >
           <div
             id="copo-more-options-modal"
-            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain"
+            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain flex flex-col max-h-[85vh] sm:max-h-[80vh] pb-safe"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-200">
+            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-200 shrink-0">
                   <MoreHorizontal className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold text-sm text-zinc-100 line-clamp-1">
                     {formatBusinessName(moreMenuVideo?.placeName || moreMenuVideo?.dishOrItem || moreMenuVideo?.placeId) || t("common.businessPlace", "Business Place")}
                   </h3>
-                  <p className="text-xs text-zinc-200">
+                  <p className="text-xs text-zinc-200 truncate">
                     {moreMenuVideo?.author?.name || t("common.verifiedReviewer", "Verified Reviewer")}
                   </p>
                 </div>
@@ -1840,7 +1838,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <button
                 id="btn-close-more-options"
                 onClick={() => setMoreMenuVideo(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer shrink-0"
                 title={t("common.close", "Close")}
               >
                 <X className="w-4 h-4" />
@@ -1848,9 +1846,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             </div>
 
             <div
-              className="p-3 space-y-1.5 max-h-[70vh] overflow-y-auto overscroll-contain"
+              className="p-3 space-y-1.5 flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pb-12 sm:pb-6"
               onWheel={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
             >
               {(() => {
                 const isVerifiedOwnerOfThisPlace = Boolean(isBusinessOwnerView);
@@ -2095,16 +2092,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {editingReviewVideo && (
         <div
           id="copo-edit-rating-backdrop"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in overscroll-contain"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => !isSavingEdit && setEditingReviewVideo(null)}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div
             id="copo-edit-rating-modal"
-            className="w-full max-w-md bg-zinc-900 border border-zinc-700/80 rounded-3xl shadow-2xl overflow-hidden text-white animate-in zoom-in-95 duration-200"
+            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] sm:max-h-[90vh] pb-safe"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40">
+            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
@@ -2123,14 +2122,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-close-edit-rating"
                 disabled={isSavingEdit}
                 onClick={() => setEditingReviewVideo(null)}
-                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer disabled:opacity-50 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto touch-pan-y pb-12 sm:pb-6">
               {/* Target Place Information */}
               <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/50">
                 <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shrink-0">

@@ -294,14 +294,12 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain select-none"
       onClick={handleClose}
       onWheel={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
       <div
         id="yoouz-report-modal-dialog"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           paddingTop: "env(safe-area-inset-top, 0px)", transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
@@ -354,9 +352,8 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
 
         {/* Content Body */}
         <div 
-          className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain scroll-smooth"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain scroll-smooth touch-pan-y pb-12 sm:pb-6"
           onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
         >
           {/* Target Preview Context Banner */}
           {!isSubmitted && (
