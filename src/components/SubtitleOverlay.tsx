@@ -47,7 +47,27 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       } catch (e) {}
     }
 
-    // Extract all spoken text
+    // Check if we have pre-built hardware or live timed segments
+    const hasValidTimedSegments = parsed.length > 0 && parsed.every(s => typeof s?.start === 'number' && s?.text);
+
+    if (hasValidTimedSegments) {
+      // Clean and normalize timed segments
+      const cleanedTimed: any[] = [];
+      for (const seg of parsed) {
+        const segText = String(seg.text || seg.transcript || '').trim();
+        if (!segText || isTitleFallbackText(segText)) continue;
+        cleanedTimed.push({
+          ...seg,
+          text: segText
+        });
+      }
+      if (cleanedTimed.length > 0) {
+        const joinedText = cleanedTimed.map(s => s.text).join(" ");
+        return { validSegments: cleanedTimed, fullText: joinedText };
+      }
+    }
+
+    // Extract all spoken text cleanly if timed segments are not present
     let text = "";
     if (parsed.length > 0) {
       text = parsed
@@ -64,25 +84,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     if (!text || isTitleFallbackText(text)) return { validSegments: [], fullText: "" };
 
-    const effectiveDuration = duration && duration > 0 ? duration : 60;
+    const effectiveDuration = duration && duration > 0 ? duration : 15;
 
-    // Priority 1: Use explicit hardware-timed segments if available
-    if (parsed.length > 0) {
-      const validArray = parsed
-        .filter(s => s && (s.text || s.transcript) && !isTitleFallbackText(s.text || s.transcript))
-        .map((s: any) => ({
-          start: Number(s.start ?? s.start_time ?? 0),
-          end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.2)),
-          text: String(s.text || s.transcript || '').trim(),
-          words: Array.isArray(s.words) ? s.words : undefined
-        }));
-
-      if (validArray.length > 0) {
-        validArray.sort((a, b) => a.start - b.start);
-        return { validSegments: validArray, fullText: text };
-      }
-    }
-
+    // Generate uniform 5 to 7 word single-line segments from fullText
     const precision = generatePrecisionSubtitles(text, effectiveDuration);
     return { validSegments: precision, fullText: text };
   }, [segments, transcriptText, duration]);
@@ -91,29 +95,25 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (!validSegments || validSegments.length === 0) return null;
 
     if (isLiveRecording) {
-      // Live recording teleprompter view: pick active phrase matching currentTime or hold current spoken phrase
+      // Live recording view: pick active 5-7 word phrase matching currentTime, or latest spoken phrase
       const direct = validSegments.find(
-        s => currentTime >= (s.start - 0.1) && currentTime <= (s.end + 1.2)
+        s => currentTime >= (s.start - 0.2) && currentTime <= (s.end + 0.8)
       );
       if (direct) return direct;
 
+      // Fallback to the latest spoken phrase so the teleprompter line stays visible as user speaks
       const last = validSegments[validSegments.length - 1];
-      if (last && currentTime >= (last.start - 0.3)) return last;
+      if (last) return last;
       return validSegments[0] || null;
     }
 
-    // Playback view: strict CC timing with minimal 0.3s hold-over so old lines disappear immediately
-    const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.05) && currentTime <= (s.end + 0.05)
-    );
-    if (direct) return direct;
-
+    // Playback view: strict CC timing with hold-over so old lines transition smoothly when speech pauses
     for (let i = 0; i < validSegments.length; i++) {
       const seg = validSegments[i];
       const nextSeg = validSegments[i + 1];
-      const maxHold = nextSeg ? Math.min(seg.end + 0.3, nextSeg.start) : seg.end + 0.3;
+      const maxHold = nextSeg ? Math.min(seg.end + 0.2, nextSeg.start) : seg.end + 0.3;
 
-      if (currentTime >= seg.start && currentTime <= maxHold) {
+      if (currentTime >= (seg.start - 0.1) && currentTime <= maxHold) {
         return seg;
       }
     }
@@ -150,19 +150,19 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       <div className="max-w-[95%] sm:max-w-[88%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
         <div
           dir={isRTL ? "rtl" : "ltr"}
-          className="bg-black/85 backdrop-blur-xl px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full overflow-hidden"
+          className="bg-black/85 backdrop-blur-2xl px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.9)] text-center flex items-center justify-center max-w-full overflow-hidden"
         >
           {wordTokens.length > 0 ? (
-            <p className="text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-0.5 max-w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+            <p className="text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
               {wordTokens.map((w, idx) => {
-                const isCurrent = currentTime >= (w.start - 0.05) && currentTime <= (w.end + 0.05);
-                const isSpoken = currentTime > (w.end + 0.05);
+                const isCurrent = currentTime >= (w.start - 0.08) && currentTime <= (w.end + 0.08);
+                const isSpoken = currentTime > (w.end + 0.08);
                 return (
                   <span
                     key={`${w.word}-${idx}`}
                     className={`inline-block whitespace-nowrap transition-all duration-75 ${
                       isCurrent
-                        ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]'
+                        ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_10px_rgba(251,191,36,0.9)]'
                         : isSpoken || isLiveRecording
                         ? 'text-white font-extrabold'
                         : 'text-white/80 font-bold'
@@ -174,7 +174,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               })}
             </p>
           ) : (
-            <p className="text-white text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-0.5 max-w-full flex items-center justify-center">
+            <p className="text-white text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full flex items-center justify-center">
               {activeSegment.text}
             </p>
           )}

@@ -252,18 +252,15 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
               <button
                 type="button"
                 onClick={toggleMute}
-                className={`rounded-full bg-black/75 hover:bg-black active:scale-95 backdrop-blur-md text-white flex items-center justify-center border transition-all cursor-pointer ${
+                className={`w-7 h-7 rounded-full bg-black/75 hover:bg-black active:scale-95 backdrop-blur-md text-white flex items-center justify-center border transition-all cursor-pointer ${
                   isMuted || !isSessionAudioUnlocked || isActualMuted
-                    ? "px-2 py-1 gap-1 border-white/40 animate-pulse-subtle"
-                    : "w-7 h-7 border-white/20"
+                    ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
+                    : "border-white/20"
                 }`}
-                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute"}
+                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
               >
                 {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5 text-white shrink-0" />
-                    <span className="text-[9px] font-bold">Unmute</span>
-                  </>
+                  <VolumeX className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 ) : (
                   <Volume2 className="w-3.5 h-3.5 text-white" />
                 )}

@@ -400,21 +400,16 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 onClick={handleToggleMute}
                 onTouchStart={(e) => e.stopPropagation()}
                 onTouchEnd={(e) => e.stopPropagation()}
-                className={`h-10 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+                className={`w-10 h-10 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
                   isMuted || !isSessionAudioUnlocked || isActualMuted
-                    ? "px-3.5 gap-2 border-white/50 animate-pulse-subtle bg-black/90"
-                    : "w-10 border-white/35"
+                    ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
+                    : "border-white/35"
                 }`}
-                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
-                aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Tap to unmute" : "Mute sound"}
+                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
+                aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
               >
                 {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                  <>
-                    <VolumeX className="w-4 h-4 text-white stroke-[2.2] shrink-0" />
-                    <span className="text-xs font-bold tracking-wide select-none whitespace-nowrap">
-                      Tap to Unmute
-                    </span>
-                  </>
+                  <VolumeX className="w-4 h-4 text-amber-300 stroke-[2.2] shrink-0" />
                 ) : (
                   <Volume2 className="w-4 h-4 text-white stroke-[2.2]" />
                 )}

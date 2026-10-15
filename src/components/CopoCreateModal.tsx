@@ -116,6 +116,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const currentVoiceBlockRef = useRef<{ start: number; end: number } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const speechRecognitionRef = useRef<any>(null);
+  const isCancellingRef = useRef<boolean>(false);
   const recordingStartTimeRef = useRef<number>(0);
   const phraseStartRef = useRef<number>(-1);
   const liveSegmentsRef = useRef<any[]>([]);
@@ -199,6 +200,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   }, [isPublishing]);
 
   const handleAttemptClose = () => {
+    isCancellingRef.current = true;
     stopCamera();
     resetState();
     setStep(1);
@@ -766,6 +768,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       return;
     }
     triggerHaptic("heavy");
+    isCancellingRef.current = false;
     chunksRef.current = [];
     try {
       const config = getOptimalVideoRecorderConfig();
@@ -786,6 +789,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       };
 
       mediaRecorder.onstop = () => {
+        if (isCancellingRef.current) {
+          chunksRef.current = [];
+          stopCamera();
+          return;
+        }
         if (chunksRef.current.length === 0) {
           console.warn("No video chunks collected");
           setErrorMessage("Recording was empty. Please try recording again.");
@@ -994,16 +1002,40 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 }
 
                 interim = transcriptPiece;
-                const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                if (words.length > 0) {
-                  const segStart = phraseStartRef.current;
-                  const segEnd = Math.max(segStart + (words.length * 0.35), nowSec + 0.4);
-                  const interimSingleLineSegments = buildSingleLineSegments(words, segStart, segEnd);
+                let words = transcriptPiece.split(/\s+/).filter(Boolean);
 
+                // When live interim speech exceeds 6 words, commit the first 6-word sentence line smoothly
+                if (words.length >= 7) {
+                  const firstChunkWords = words.slice(0, 6);
+                  const remainingWords = words.slice(6);
+                  
+                  const segStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(0, nowSec - 2.0);
+                  const segEnd = nowSec;
+                  const committedSegs = buildSingleLineSegments(firstChunkWords, segStart, segEnd);
+                  
+                  liveSegmentsRef.current.push(...committedSegs);
+                  setLiveSegments([...liveSegmentsRef.current]);
+                  
+                  words = remainingWords;
+                  phraseStartRef.current = nowSec;
+                  interim = remainingWords.join(" ");
+                }
+
+                if (words.length > 0) {
+                  const segStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(0, nowSec - 0.3);
+                  const segEnd = Math.max(segStart + (words.length * 0.35), nowSec + 0.5);
+                  const activeText = words.join(" ");
+                  
                   currentActivePhraseRef.current = {
-                    fullText: transcriptPiece,
-                    text: transcriptPiece,
-                    segments: interimSingleLineSegments,
+                    fullText: activeText,
+                    text: activeText,
+                    segments: [{
+                      start: Math.round(segStart * 100) / 100,
+                      end: Math.round(segEnd * 100) / 100,
+                      text: activeText,
+                      words: alignWordsToTimeWindow(words, segStart, segEnd),
+                      isHardwareTimed: true
+                    }],
                     start: Math.round(segStart * 100) / 100,
                     end: Math.round(segEnd * 100) / 100,
                     isHardwareTimed: true
