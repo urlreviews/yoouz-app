@@ -12286,27 +12286,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
-        // 1.5. Try downloading / fetching old/new video from Bunny CDN on-the-fly if missing locally and in DB
-        try {
-          const cdnPull = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, "");
-          const filenamesToTry = [rawFilename, `${base}.mp4`, `${base}.webm`, `${base}.mov`];
-          for (const fn of filenamesToTry) {
-            const targetCdnUrl = `${cdnPull}/videos/${fn}`;
-            const cdnRes = await fetch(targetCdnUrl, { signal: AbortSignal.timeout(6000) }).catch(() => null);
-            if (cdnRes && cdnRes.ok) {
-              const buf = Buffer.from(await cdnRes.arrayBuffer());
-              if (buf.length > 500) {
-                const savedPath = path.join(serverUploadsDir, fn);
-                fs.writeFileSync(savedPath, buf);
-                if (fs.existsSync(savedPath)) {
-                  filePath = savedPath;
-                  break;
-                }
-              }
-            }
-          }
-        } catch (cdnFetchErr) {
-          // ignore
+        // 1.5. If missing locally on disk, immediately redirect to Bunny CDN edge for zero-latency direct streaming
+        const cdnPull = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, "");
+        const targetFilename = rawFilename.includes(".") ? rawFilename : `${base}.mp4`;
+        const targetCdnUrl = `${cdnPull}/videos/${targetFilename}`;
+
+        // If this is a review video (rev-*), Bunny CDN is authoritative - redirect client directly to CDN edge
+        if (rawFilename.startsWith("rev-") || base.startsWith("rev-")) {
+          return res.redirect(307, targetCdnUrl);
         }
       }
 
@@ -12585,6 +12572,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
       let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
       let thumbnailUrl = hasThumb ? `/uploads/${thumbFileName}` : "";
+      let bunnyUrl = "";
 
       // 3. Synchronously upload MP4 and Thumbnail to Bunny CDN so file is 100% playable for all users before response
       if (bunnyAccessKey && bunnyStorageZone) {
@@ -12606,7 +12594,6 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             signal: AbortSignal.timeout(30000)
           });
 
-          let bunnyUrl = "";
           if (bunnyVidRes.ok) {
             bunnyUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
             console.log(`✅ 🐰 [Server Upload] Successfully uploaded video to Bunny CDN: ${bunnyUrl}`);
@@ -12635,8 +12622,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         }
       }
 
-      // Always prioritize the local server stream endpoint so EVERY user on EVERY device gets instant 0ms playback
-      publicUrl = `/api/videos/stream/${targetVideoFileName}`;
+      // Prioritize the Bunny CDN edge URL so EVERY user on EVERY device gets instant global streaming
+      if (bunnyUrl) {
+        publicUrl = bunnyUrl;
+      } else {
+        publicUrl = `/api/videos/stream/${targetVideoFileName}`;
+      }
 
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${fs.statSync(finalVideoPath).size} bytes) at ${finalVideoPath}`);
       if (!fs.existsSync(finalVideoPath)) {
@@ -13641,16 +13632,20 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     const serverStreamUrl = cleanId ? `/api/videos/stream/${cleanId}.mp4` : "";
     const cdnUrl = r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : (cleanId ? `${pullZoneDomain}/videos/${cleanId}.mp4` : "");
 
-    let resolvedVideoUrl = serverStreamUrl || r.videoUrl || r.url || cdnUrl;
-    if (resolvedVideoUrl && typeof resolvedVideoUrl === "string" && resolvedVideoUrl.startsWith("blob:")) {
-      resolvedVideoUrl = serverStreamUrl || "/default-review.mp4";
-    }
-    if (!resolvedVideoUrl) {
-      resolvedVideoUrl = serverStreamUrl || cdnUrl || "/default-review.mp4";
+    // Prioritize direct Bunny CDN edge URL so viewers worldwide stream with zero server overhead
+    let resolvedVideoUrl = "";
+    if (r.videoUrl && typeof r.videoUrl === "string" && !r.videoUrl.startsWith("blob:") && (r.videoUrl.includes("b-cdn.net") || r.videoUrl.startsWith("http"))) {
+      resolvedVideoUrl = r.videoUrl;
+    } else if (cdnUrl) {
+      resolvedVideoUrl = cdnUrl;
+    } else if (serverStreamUrl) {
+      resolvedVideoUrl = serverStreamUrl;
+    } else {
+      resolvedVideoUrl = "/default-review.mp4";
     }
 
     const rawFallbacks = Array.isArray(r.fallbackVideoUrls) ? r.fallbackVideoUrls : [];
-    const cleanFallbacks = [serverStreamUrl, r.videoUrl, cdnUrl, ...rawFallbacks].filter((u: any): u is string => typeof u === "string" && Boolean(u) && !u.startsWith("blob:"));
+    const cleanFallbacks = Array.from(new Set([cdnUrl, resolvedVideoUrl, serverStreamUrl, r.videoUrl, ...rawFallbacks].filter((u: any): u is string => typeof u === "string" && Boolean(u) && !u.startsWith("blob:"))));
 
     const matchedLoc = KNOWN_ENTITY_LOCATIONS[domain] || (domain ? Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
     const effectivePlaceName = formatBusinessName(r.placeName || r.businessName || domain || r.placeId, domain);

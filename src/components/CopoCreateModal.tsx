@@ -1391,6 +1391,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     let uploadedPublicUrl = defaultStreamUrl;
     let finalBunnyId: string | undefined = undefined;
+    let uploadedVideoData = "";
 
     try {
       const [modResult, uploadResult] = await Promise.all([moderationPromise, uploadPromise]);
@@ -1411,7 +1412,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUploadProgress(88);
       setPublishingStage("Optimizing video & audio...");
 
-      let uploadedVideoData = "";
       if (uploadResult && uploadResult.downloadUrl) {
         uploadedPublicUrl = uploadResult.downloadUrl;
         if (uploadResult.thumbnailUrl) {
@@ -1420,8 +1420,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         if (uploadResult.bunnyVideoId) {
           finalBunnyId = uploadResult.bunnyVideoId;
         }
-        if (uploadResult.videoData) {
-          uploadedVideoData = uploadResult.videoData;
+        if ((uploadResult as any).videoData) {
+          uploadedVideoData = (uploadResult as any).videoData;
         }
       }
     } catch (uploadErr) {

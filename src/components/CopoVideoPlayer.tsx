@@ -221,6 +221,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Local blob URLs for instant 0ms playback of newly recorded reviews
   const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
   const localBlobUrlsRef = useRef<Record<string, string>>({});
+  // Persistent record of broken video source URLs per video ID to prevent reverting back to bad URLs
+  const failedSourcesRef = useRef<Map<string, Set<string>>>(new Map());
 
   // Grace period state: prevents brief 1-frame pop-up of "No Video Reviews Yet" during feed hydration
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
@@ -325,10 +327,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             if (active) {
               const currentSrc = vid.currentSrc || vid.src;
               console.warn(`[Video Playback Error] Failed to play video ${active.id} (code: ${vid.error?.code}, src: ${currentSrc})`);
+
+              if (!failedSourcesRef.current.has(active.id)) {
+                failedSourcesRef.current.set(active.id, new Set());
+              }
+              const failedSet = failedSourcesRef.current.get(active.id)!;
+              if (currentSrc) failedSet.add(currentSrc);
+              if (vid.src) failedSet.add(vid.src);
+
               const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
               const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
               const nextCandidate = cascade.find(
-                (s) => s && s !== currentSrc && !currentSrc.endsWith(s)
+                (s) => s && !failedSet.has(s) && s !== currentSrc && !currentSrc.endsWith(s)
               );
               if (nextCandidate && nextCandidate !== currentSrc) {
                 console.warn(`[CopoVideoPlayer] Auto-recovering playback for ${active.id} with candidate: ${nextCandidate}`);
@@ -491,12 +501,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     };
 
-    // Load active source if not matching (prioritizing local blob if available)
+    // Load active source if not matching (prioritizing local blob if available and respecting failedSources)
     const localBlob = localBlobUrlsRef.current[activeVideo.id] || localBlobUrls[activeVideo.id] || (activeVideo as any)?.localBlobUrl || (activeVideo as any)?.blobUrl;
-    const activeSrc = resolvePlayableVideoSource(activeVideo, localBlob);
+    const cascade = resolvePlayableVideoSourcesCascade(activeVideo, localBlob);
+    const failedSet = failedSourcesRef.current.get(activeVideo.id) || new Set();
+    const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
     activeVid.preload = "auto";
-    if (!isSameSrc(activeVid.src, activeSrc)) {
-      activeVid.src = activeSrc;
+
+    const currentVidSrc = activeVid.currentSrc || activeVid.src;
+    const isAlreadyUsingWorkingCascadeSrc = currentVidSrc && cascade.some(s => isSameSrc(currentVidSrc, s) && !failedSet.has(s));
+
+    if (isNewVideo || !isAlreadyUsingWorkingCascadeSrc) {
+      if (!isSameSrc(activeVid.src, activeSrc)) {
+        activeVid.src = activeSrc;
+      }
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
     if (activeVid.poster !== activePoster) {
@@ -1278,6 +1296,39 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const vid = feedVideoRef.current;
     if (!vid) return;
 
+    const active = activeVideoRef.current;
+
+    // Check if element is currently in an error state or has no valid source
+    if (active && (vid.error || vid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE)) {
+      if (!failedSourcesRef.current.has(active.id)) {
+        failedSourcesRef.current.set(active.id, new Set());
+      }
+      const failedSet = failedSourcesRef.current.get(active.id)!;
+      const currentSrc = vid.currentSrc || vid.src;
+      if (currentSrc) failedSet.add(currentSrc);
+
+      const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
+      const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
+      const nextCandidate = cascade.find(s => s && !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
+
+      console.warn(`[CopoVideoPlayer] User tapped errored video ${active.id}; recovering with source: ${nextCandidate}`);
+      vid.src = nextCandidate;
+      vid.load();
+      isManuallyPausedRef.current = false;
+      setIsManuallyPaused(false);
+      if (isSessionAudioUnlocked && !isMuted) {
+        vid.muted = false;
+        safeSetVolume(vid, 1);
+        setIsActualMuted(false);
+      }
+      vid.play().then(() => {
+        setIsPlaying(true);
+        setIsBuffering(false);
+        setFirstFrameRenderedId(active.id);
+      }).catch(() => {});
+      return;
+    }
+
     if (vid.paused || isManuallyPausedRef.current) {
       // Resume / Play (only blocked if a modal is actively open)
       if (isPaused) return;
@@ -1288,8 +1339,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         safeSetVolume(vid, 1);
         setIsActualMuted(false);
       }
-      vid.play().catch(() => {});
-      setIsPlaying(true);
+      vid.play().then(() => {
+        setIsPlaying(true);
+        setIsBuffering(false);
+        if (active?.id) setFirstFrameRenderedId(active.id);
+      }).catch((playErr) => {
+        console.warn(`[CopoVideoPlayer] play() rejected on click:`, playErr);
+        // Fallback to muted playback
+        vid.muted = true;
+        setIsActualMuted(true);
+        vid.play().then(() => {
+          setIsPlaying(true);
+          setIsBuffering(false);
+          if (active?.id) setFirstFrameRenderedId(active.id);
+        }).catch(() => {});
+      });
     } else {
       // STOP / PAUSE immediately (always permitted!)
       isManuallyPausedRef.current = true;

@@ -98,7 +98,7 @@ export function normalizeVideoUrl(url?: string | null): string {
 }
 
 /**
- * Resolves the prioritized list of playable video sources for instant failover (Local Blob -> Direct videoUrl -> Local Server -> Bunny CDN -> Fallback MP4).
+ * Resolves the prioritized list of playable video sources for instant failover (Local Blob -> Direct Bunny CDN Edge -> Direct videoUrl -> Local Server Stream -> Fallback MP4).
  */
 export function resolvePlayableVideoSourcesCascade(
   video?: VideoReview | null,
@@ -114,12 +114,12 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(cachedLocalBlobUrl);
   }
 
-  // 2. Direct clean local server streaming endpoint (Instant 0ms loading from server disk)
-  if (video.id && typeof video.id === "string") {
+  // 2. Direct Bunny CDN Edge URL (Instant global edge playback without proxying through server)
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
+    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) {
+      sources.push(cdnUrlMp4);
     }
   }
 
@@ -131,12 +131,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Direct Bunny CDN Edge URL
-  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+  // 4. Direct clean local server streaming endpoint (Server proxy fallback)
+  if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) {
-      sources.push(cdnUrlMp4);
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
     }
   }
 
