@@ -19,13 +19,16 @@ export interface SubtitleSegment {
 }
 
 /**
- * Splits an array of words into single-line chunks of maximum 3-4 words per line.
+ * Splits an array of words into single-line chunks of 4 to 7 words per line max.
  * Resets and starts over on the exact same line position when the line finishes.
  */
-export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 4): string[][] {
+export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 6): string[][] {
   const clean = words.map(w => w.trim()).filter(Boolean);
   if (clean.length === 0) return [];
-  if (clean.length <= maxWordsPerLine) return [clean];
+  
+  // Upper limit strictly capped at 7 words per line
+  const maxCap = Math.min(Math.max(maxWordsPerLine, 4), 7);
+  if (clean.length <= maxCap) return [clean];
 
   const lines: string[][] = [];
   let currentLine: string[] = [];
@@ -35,19 +38,20 @@ export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine 
     currentLine.push(w);
 
     const hasPunctuation = /[.,!?;:]$/.test(w);
-    const reachedMax = currentLine.length >= maxWordsPerLine;
+    const reachedMax = currentLine.length >= maxCap;
     const remaining = clean.length - (i + 1);
 
-    if ((reachedMax || (hasPunctuation && currentLine.length >= 2)) && remaining > 0) {
+    // End chunk if capped out or if punctuation reached after at least 3 words
+    if ((reachedMax || (hasPunctuation && currentLine.length >= 3)) && remaining > 0) {
       lines.push(currentLine);
       currentLine = [];
     }
   }
 
   if (currentLine.length > 0) {
-    if (lines.length > 0 && currentLine.length <= 1) {
+    if (lines.length > 0 && currentLine.length <= 2) {
       const prev = lines[lines.length - 1];
-      if (prev.length < 5) {
+      if (prev.length <= 5) {
         lines[lines.length - 1] = [...prev, ...currentLine];
       } else {
         lines.push(currentLine);
@@ -72,7 +76,7 @@ export function alignWordsToTimeWindow(rawWords: string[], startTime: number, en
   if (words.length === 0) return [];
 
   const start = Math.max(0, startTime);
-  const end = Math.max(start + 0.35, endTime);
+  const end = Math.max(start + 0.3, endTime);
   const totalDur = end - start;
 
   if (words.length === 1) {
@@ -114,14 +118,14 @@ export function alignWordsToTimeWindow(rawWords: string[], startTime: number, en
 }
 
 /**
- * Builds strictly single-line subtitle segments (max 3-4 words per line).
- * Starts over on the same line when the segment finishes.
+ * Builds strictly single-line subtitle segments (4 to 7 words per line max).
+ * Resets line display completely when moving to the next segment.
  */
 export function buildSingleLineSegments(rawWords: string[], startTime: number, endTime: number): SubtitleSegment[] {
   const words = rawWords.map(w => w.trim()).filter(Boolean);
   if (words.length === 0) return [];
 
-  const chunks = splitWordsIntoSingleLineChunks(words, 4);
+  const chunks = splitWordsIntoSingleLineChunks(words, 6);
   if (chunks.length <= 1) {
     const wordObjs = alignWordsToTimeWindow(words, startTime, endTime);
     const segEnd = wordObjs.length > 0 ? wordObjs[wordObjs.length - 1].end : endTime;
@@ -134,13 +138,13 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
     }];
   }
 
-  // Calculate proportional time slices for each 3-4 word chunk
+  // Calculate proportional time slices for each 4-7 word chunk
   const chunkWeights = chunks.map(c => {
     return c.reduce((sum, w) => sum + Math.max(2, w.length), 0);
   });
   const totalWeight = chunkWeights.reduce((a, b) => a + b, 0);
 
-  const minTotalDur = chunks.reduce((acc, c) => acc + (c.length * 0.32), 0);
+  const minTotalDur = chunks.reduce((acc, c) => acc + (c.length * 0.3), 0);
   const effectiveTotalDur = Math.max(minTotalDur, endTime - startTime);
 
   let curStart = startTime;
@@ -150,8 +154,8 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
     const isLast = i === chunks.length - 1;
     const chunkWords = chunks[i];
     const chunkDur = isLast
-      ? Math.max(chunkWords.length * 0.30, (startTime + effectiveTotalDur) - curStart)
-      : Math.max(chunkWords.length * 0.30, (chunkWeights[i] / totalWeight) * effectiveTotalDur);
+      ? Math.max(chunkWords.length * 0.28, (startTime + effectiveTotalDur) - curStart)
+      : Math.max(chunkWords.length * 0.28, (chunkWeights[i] / totalWeight) * effectiveTotalDur);
 
     const chunkEnd = curStart + chunkDur;
     const wordObjs = alignWordsToTimeWindow(chunkWords, curStart, chunkEnd);
@@ -205,16 +209,16 @@ export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
 
 /**
  * Generates sentence-based precision subtitles from transcript text.
- * Strictly breaks into single-line segments of 3 to 4 words.
+ * Strictly breaks into single-line segments of 4 to 7 words.
  */
-export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
+export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0.2): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
   const cleanText = text.trim();
   const allWords = cleanText.split(/\s+/).filter(Boolean);
   if (allWords.length === 0) return [];
 
-  const start = Math.max(0.4, startOffset);
-  const end = Math.max(start + (allWords.length * 0.35), totalDuration);
+  const start = Math.max(0.2, startOffset);
+  const end = Math.max(start + (allWords.length * 0.32), totalDuration);
 
   return buildSingleLineSegments(allWords, start, end);
 }

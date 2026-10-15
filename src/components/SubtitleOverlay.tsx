@@ -91,27 +91,27 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (!validSegments || validSegments.length === 0) return null;
 
     if (isLiveRecording) {
-      // Live recording teleprompter view: pick current active phrase or hold last spoken phrase
+      // Live recording teleprompter view: pick active phrase matching currentTime or hold current spoken phrase
       const direct = validSegments.find(
-        s => currentTime >= (s.start - 0.2) && currentTime <= (s.end + 1.5)
+        s => currentTime >= (s.start - 0.1) && currentTime <= (s.end + 1.2)
       );
       if (direct) return direct;
 
       const last = validSegments[validSegments.length - 1];
-      if (last && currentTime >= (last.start - 0.5)) return last;
+      if (last && currentTime >= (last.start - 0.3)) return last;
       return validSegments[0] || null;
     }
 
-    // Playback view: strict YouTube CC timing with 2.0s hold-over to bridge pauses so captions never vanish mid-video
+    // Playback view: strict CC timing with minimal 0.3s hold-over so old lines disappear immediately
     const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.1) && currentTime <= (s.end + 0.1)
+      s => currentTime >= (s.start - 0.05) && currentTime <= (s.end + 0.05)
     );
     if (direct) return direct;
 
     for (let i = 0; i < validSegments.length; i++) {
       const seg = validSegments[i];
       const nextSeg = validSegments[i + 1];
-      const maxHold = nextSeg ? Math.min(seg.end + 2.0, nextSeg.start) : seg.end + 2.0;
+      const maxHold = nextSeg ? Math.min(seg.end + 0.3, nextSeg.start) : seg.end + 0.3;
 
       if (currentTime >= seg.start && currentTime <= maxHold) {
         return seg;
@@ -150,10 +150,10 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       <div className="max-w-[95%] sm:max-w-[88%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
         <div
           dir={isRTL ? "rtl" : "ltr"}
-          className="bg-black/85 backdrop-blur-xl px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full overflow-hidden"
+          className="bg-black/85 backdrop-blur-xl px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full overflow-hidden"
         >
           {wordTokens.length > 0 ? (
-            <p className="text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis flex flex-nowrap items-center justify-center gap-x-1.5">
+            <p className="text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-0.5 max-w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
               {wordTokens.map((w, idx) => {
                 const isCurrent = currentTime >= (w.start - 0.05) && currentTime <= (w.end + 0.05);
                 const isSpoken = currentTime > (w.end + 0.05);
@@ -174,7 +174,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               })}
             </p>
           ) : (
-            <p className="text-white text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis flex items-center justify-center">
+            <p className="text-white text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-0.5 max-w-full flex items-center justify-center">
               {activeSegment.text}
             </p>
           )}
