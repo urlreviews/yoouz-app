@@ -40,6 +40,7 @@ import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { CopoStarRating } from "./CopoStarRating";
+import { SubtitleOverlay } from "./SubtitleOverlay";
 
 
 interface VideoFeedCardProps {
@@ -980,6 +981,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTapLike}
         aria-label="Toggle Play/Pause"
+      />
+
+      {/* Subtitle Overlay (TikTok / CapCut 60Hz synchronized word highlight captions) */}
+      <SubtitleOverlay
+        currentTime={isActive ? videoTime : 0}
+        segments={video.segments}
+        transcriptText={video.transcriptText || video.caption}
+        duration={video.durationSeconds || 15}
+        isActive={isActive}
+        isLiveRecording={false}
       />
 
       {/* Scrubbing Centered HUD */}

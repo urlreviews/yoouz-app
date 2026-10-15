@@ -18578,6 +18578,26 @@ app.post("/api/videos/save-review", async (req, res) => {
             ensureTranscriptionForVideo(review.id).catch(e => console.warn("Background transcription error:", e));
           }
 
+          // Upload video to Bunny Stream Library (733814 / rev) so dashboard shows videos and auto-transcribes
+          try {
+            let vBuffer: Buffer | null = null;
+            if (review.videoData && typeof review.videoData === 'string') {
+              const b64 = review.videoData.includes("base64,") ? review.videoData.split("base64,")[1] : review.videoData;
+              vBuffer = Buffer.from(b64, 'base64');
+            } else if (review.videoUrl && review.videoUrl.startsWith("/api/videos/stream/")) {
+              const fname = review.videoUrl.split("/api/videos/stream/")[1];
+              const fpath = path.join(serverUploadsDir, fname);
+              if (fs.existsSync(fpath)) {
+                vBuffer = fs.readFileSync(fpath);
+              }
+            }
+            if (vBuffer && vBuffer.length > 0) {
+              await uploadVideoToBunnyStream(review, vBuffer);
+            }
+          } catch (bunnyErr) {
+            console.warn("Bunny Stream upload background notice:", bunnyErr);
+          }
+
           // 3. Sync to Bunny Database (libSQL cloud)
           const bunnyDb = getBunnyDb();
           if (bunnyDb) {
@@ -21693,6 +21713,58 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       return res.status(200).json({ translations: {} });
     }
   });
+
+  // Automatically upload recorded video review to Bunny Stream Library (733814 / rev)
+  async function uploadVideoToBunnyStream(review: any, videoBuffer: Buffer) {
+    const apiKey = process.env.BUNNY_STREAM_API_KEY;
+    const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
+    if (!apiKey || !videoBuffer || videoBuffer.length === 0) return;
+
+    try {
+      console.log(`🐰 [Bunny Stream] Uploading video ${review.id} to Bunny Library ${libraryId}...`);
+      const createRes = await fetch(`https://video.bunnycdn.net/library/${libraryId}/videos`, {
+        method: "POST",
+        headers: {
+          "AccessKey": apiKey,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          title: `${review.author?.name || 'Reviewer'} - ${review.placeName || 'Review'}`
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!createRes.ok) {
+        console.warn(`[Bunny Stream] Create video failed: ${createRes.status}`);
+        return;
+      }
+
+      const videoData = await createRes.json();
+      const bunnyVideoGuid = videoData.guid;
+      if (!bunnyVideoGuid) return;
+
+      const uploadRes = await fetch(`https://video.bunnycdn.net/library/${libraryId}/videos/${bunnyVideoGuid}`, {
+        method: "PUT",
+        headers: {
+          "AccessKey": apiKey,
+          "Content-Type": "application/octet-stream"
+        },
+        body: videoBuffer,
+        signal: AbortSignal.timeout(60000)
+      });
+
+      if (uploadRes.ok) {
+        console.log(`✅ [Bunny Stream] Successfully uploaded video ${review.id} (Guid: ${bunnyVideoGuid}) to Bunny Stream! Library will now auto-transcribe & generate subtitles.`);
+        const pullZone = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+        review.bunnyGuid = bunnyVideoGuid;
+        review.videoUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${bunnyVideoGuid}`;
+        review.hlsUrl = `${pullZone}/${bunnyVideoGuid}/playlist.m3u8`;
+      }
+    } catch (err: any) {
+      console.warn("[Bunny Stream] Upload error:", err?.message || err);
+    }
+  }
 
   // Reusable background transcription logic
   async function ensureTranscriptionForVideo(videoId: string) {
