@@ -1069,8 +1069,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
 
       // Capture any unfinalized interim transcript at stop time
-      if (currentActivePhraseRef.current && currentActivePhraseRef.current.text) {
-        const activePhrase = currentActivePhraseRef.current;
+      const activePhrase = currentActivePhraseRef.current;
+      if (activePhrase && activePhrase.text) {
         const activeText = activePhrase.text || "";
         const activeWords = activeText.split(/\s+/).filter(Boolean);
         if (activeWords.length > 0) {

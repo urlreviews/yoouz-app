@@ -22,7 +22,7 @@ export interface SubtitleSegment {
  * Splits an array of words into single-line chunks of 5 to 7 words (maximum 8 words).
  * Starts over with a new line when the line finishes.
  */
-export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 7): string[][] {
+export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 4): string[][] {
   const clean = words.map(w => w.trim()).filter(Boolean);
   if (clean.length === 0) return [];
   if (clean.length <= maxWordsPerLine) return [clean];
