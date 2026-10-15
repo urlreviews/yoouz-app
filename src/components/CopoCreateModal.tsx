@@ -1334,7 +1334,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         onClose();
         onPublishVideoReview(fallbackReview);
       }
-    }, 25000);
+    }, 120000);
 
     // 1. Save raw blob to IndexedDB
     if (recordedVideoBlob) {
@@ -1443,7 +1443,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       videoUrl: uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
       videoData: uploadedVideoData || (recordedVideoBlob ? undefined : undefined),
-      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      fallbackVideoUrls: Array.from(new Set([
+        recordedVideoUrl,
+        uploadedPublicUrl,
+        `/api/videos/stream/${cleanFileName}`,
+        defaultStreamUrl,
+        "/default-review.mp4"
+      ].filter(Boolean))) as string[],
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
 

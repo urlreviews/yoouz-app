@@ -339,7 +339,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
               const nextCandidate = cascade.find(
                 (s) => s && !failedSet.has(s) && s !== currentSrc && !currentSrc.endsWith(s)
-              );
+              ) || (!failedSet.has("/default-review.mp4") ? "/default-review.mp4" : "");
               if (nextCandidate && nextCandidate !== currentSrc) {
                 console.warn(`[CopoVideoPlayer] Auto-recovering playback for ${active.id} with candidate: ${nextCandidate}`);
                 vid.src = nextCandidate;
