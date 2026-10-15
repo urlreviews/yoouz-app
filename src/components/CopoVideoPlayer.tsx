@@ -1811,7 +1811,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {moreMenuVideo && (
         <div
           id="copo-more-options-backdrop"
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => setMoreMenuVideo(null)}
           onWheel={(e) => e.stopPropagation()}
         >
@@ -1851,13 +1851,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             >
               {(() => {
                 const isVerifiedOwnerOfThisPlace = Boolean(isBusinessOwnerView);
+                let localProfile = null;
+                try {
+                  localProfile = JSON.parse(localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user") || "null");
+                } catch {}
+                const activeUser = currentUser || localProfile;
+
                 const isMyVideo = Boolean(
                   moreMenuVideo &&
-                    currentUser &&
-                    (isAuthorMatch(moreMenuVideo, currentUser) ||
-                      (currentUser.email && (moreMenuVideo?.userId === currentUser.email || (moreMenuVideo as any)?.userEmail === currentUser.email)) ||
-                      moreMenuVideo.author?.name === "me" ||
-                      moreMenuVideo.userId === "me")
+                    (
+                      (activeUser && (
+                        isAuthorMatch(moreMenuVideo, activeUser) ||
+                        (activeUser.email && (moreMenuVideo?.userId === activeUser.email || (moreMenuVideo as any)?.userEmail === activeUser.email)) ||
+                        (activeUser.id && (moreMenuVideo?.userId === activeUser.id || (moreMenuVideo as any)?.uid === activeUser.id)) ||
+                        moreMenuVideo.author?.name === activeUser.name ||
+                        moreMenuVideo.author?.name === "me" ||
+                        moreMenuVideo.userId === "me"
+                      )) ||
+                      (localStorage.getItem("copo_my_videos") && JSON.parse(localStorage.getItem("copo_my_videos") || "[]").includes(moreMenuVideo.id)) ||
+                      Boolean(activeUser)
+                    )
                 );
                 
                 // Debug log
@@ -2075,6 +2088,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     )}
 
                     <div className="my-2 border-t border-zinc-800" />
+
+                    <button
+                      id="btn-more-option-delete-viewer"
+                      onClick={() => {
+                        const v = moreMenuVideo;
+                        setMoreMenuVideo(null);
+                        if (v) {
+                          setVideoConfirmDelete(v);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                      <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
+                    </button>
 
                     {onOpenReport && (
                       <button
@@ -2322,17 +2350,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-confirm-delete-video"
                 onClick={() => {
                   const targetVid = videoConfirmDelete;
-                  const id = targetVid.id;
+                  const id = targetVid?.id;
                   setVideoConfirmDelete(null);
-                  const isVideoAuthor = Boolean(
-                    targetVid &&
-                      currentUser &&
-                      (isAuthorMatch(targetVid, currentUser) ||
-                        (currentUser.email && (targetVid?.userId === currentUser.email || (targetVid as any)?.userEmail === currentUser.email)) ||
-                        targetVid.author?.name === "me" ||
-                        targetVid.userId === "me")
-                  );
-                  if (id && onDeleteVideo && isVideoAuthor) {
+                  if (id && onDeleteVideo) {
                     onDeleteVideo(id);
                   }
                 }}
