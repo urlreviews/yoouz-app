@@ -969,10 +969,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                 interim = transcriptPiece;
                 const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                // Display full interim words so nothing disappears while speaking
-                const displayWords = words;
+                // Keep active single-line chunk strictly at max 4 words for clean teleprompter reading
+                const displayWords = words.length > 4 ? words.slice(-4) : words;
                 const segStart = phraseStartRef.current;
-                const segEnd = Math.max(segStart + (displayWords.length * 0.38), nowSec + 0.5);
+                const segEnd = Math.max(segStart + (displayWords.length * 0.35), nowSec + 0.4);
                 const wordTimings = alignWordsToTimeWindow(displayWords, segStart, segEnd);
 
                 currentActivePhraseRef.current = {

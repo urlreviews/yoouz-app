@@ -134,23 +134,32 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return normalizeWordTimings([], activeSegment.start, activeSegment.end, activeSegment.text);
   }, [activeSegment]);
 
+  // Detect Right-to-Left languages (Arabic, Hebrew, Persian, Urdu, etc.)
+  const isRTL = useMemo(() => {
+    if (!activeSegment?.text) return false;
+    return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(activeSegment.text);
+  }, [activeSegment]);
+
   // Early returns strictly AFTER ALL HOOKS have run!
   if (!isActive) return null;
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[160px] xs:bottom-[175px] sm:bottom-[195px] md:bottom-[210px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[92%] sm:max-w-[85%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
-        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full">
+    <div className="absolute bottom-[160px] xs:bottom-[175px] sm:bottom-[195px] md:bottom-[210px] left-0 right-0 flex justify-center px-3 pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-[95%] sm:max-w-[88%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
+        <div
+          dir={isRTL ? "rtl" : "ltr"}
+          className="bg-black/85 backdrop-blur-xl px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full overflow-hidden"
+        >
           {wordTokens.length > 0 ? (
-            <p className="text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+            <p className="text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis flex flex-nowrap items-center justify-center gap-x-1.5">
               {wordTokens.map((w, idx) => {
                 const isCurrent = currentTime >= (w.start - 0.05) && currentTime <= (w.end + 0.05);
                 const isSpoken = currentTime > (w.end + 0.05);
                 return (
                   <span
                     key={`${w.word}-${idx}`}
-                    className={`inline-block transition-all duration-75 ${
+                    className={`inline-block whitespace-nowrap transition-all duration-75 ${
                       isCurrent
                         ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]'
                         : isSpoken || isLiveRecording
@@ -164,7 +173,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               })}
             </p>
           ) : (
-            <p className="text-white text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center">
+            <p className="text-white text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-0.5 max-w-full whitespace-nowrap overflow-hidden text-ellipsis flex items-center justify-center">
               {activeSegment.text}
             </p>
           )}
@@ -173,3 +182,4 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     </div>
   );
 };
+

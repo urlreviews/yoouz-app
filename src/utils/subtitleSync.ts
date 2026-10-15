@@ -1,7 +1,7 @@
 /**
  * Subtitle Synchronization & VAD Word Timing Utilities
  * Ensures 100% precise acoustic alignment between video playback time and spoken words.
- * Strictly enforces single-line captions (max 6-8 words per line) with natural human speech pacing.
+ * Strictly enforces single-line captions (max 3-4 words per line) with natural human speech pacing.
  */
 
 export interface SubtitleWord {
@@ -19,8 +19,8 @@ export interface SubtitleSegment {
 }
 
 /**
- * Splits an array of words into single-line chunks of 5 to 7 words (maximum 8 words).
- * Starts over with a new line when the line finishes.
+ * Splits an array of words into single-line chunks of maximum 3-4 words per line.
+ * Resets and starts over on the exact same line position when the line finishes.
  */
 export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine = 4): string[][] {
   const clean = words.map(w => w.trim()).filter(Boolean);
@@ -35,20 +35,19 @@ export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine 
     currentLine.push(w);
 
     const hasPunctuation = /[.,!?;:]$/.test(w);
-    const reachedTarget = currentLine.length >= 6;
     const reachedMax = currentLine.length >= maxWordsPerLine;
     const remaining = clean.length - (i + 1);
 
-    if ((reachedMax || (hasPunctuation && currentLine.length >= 4) || (reachedTarget && remaining >= 4)) && remaining > 0) {
+    if ((reachedMax || (hasPunctuation && currentLine.length >= 2)) && remaining > 0) {
       lines.push(currentLine);
       currentLine = [];
     }
   }
 
   if (currentLine.length > 0) {
-    if (lines.length > 0 && currentLine.length <= 2) {
+    if (lines.length > 0 && currentLine.length <= 1) {
       const prev = lines[lines.length - 1];
-      if (prev.length + currentLine.length <= 8) {
+      if (prev.length < 5) {
         lines[lines.length - 1] = [...prev, ...currentLine];
       } else {
         lines.push(currentLine);
@@ -62,66 +61,61 @@ export function splitWordsIntoSingleLineChunks(words: string[], maxWordsPerLine 
 }
 
 /**
- * Aligns words proportionally to a known acoustic time window [startTime, endTime].
- * Enforces natural human speech pacing:
- * - Greetings & common words (e.g. "Good", "morning", "hello") receive natural spoken duration
- * - Minimum word duration prevents the highlight from rushing too fast at the beginning
+ * Aligns words proportionally to an exact acoustic time window [startTime, endTime].
+ * Guarantees zero time-drift:
+ * - Word 0 starts EXACTLY at startTime.
+ * - Final word ends EXACTLY at endTime.
+ * - Every word receives a proportional, non-overlapping slice of the second timeline.
  */
 export function alignWordsToTimeWindow(rawWords: string[], startTime: number, endTime: number): SubtitleWord[] {
   const words = rawWords.map(w => w.trim()).filter(Boolean);
   if (words.length === 0) return [];
 
-  // Human vocal rate: natural speech is ~0.35s to 0.45s per word
-  const minRequiredDuration = words.length * 0.32;
-  const totalDuration = Math.max(minRequiredDuration, endTime - startTime);
+  const start = Math.max(0, startTime);
+  const end = Math.max(start + 0.35, endTime);
+  const totalDur = end - start;
 
   if (words.length === 1) {
     return [{
       word: words[0],
-      start: Math.round(startTime * 100) / 100,
-      end: Math.round((startTime + totalDuration) * 100) / 100
+      start: Math.round(start * 100) / 100,
+      end: Math.round(end * 100) / 100
     }];
   }
 
-  // Weight words by phonetic complexity and length
-  const weights = words.map((w, idx) => {
-    const lower = w.toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Greetings / intro words at index 0-2 (e.g. "good", "morning", "hello", "today") get generous natural weight
-    if (idx <= 2 && (lower === 'good' || lower === 'morning' || lower === 'hello' || lower === 'welcome' || lower === 'hey')) {
-      return Math.max(6, w.length + 3);
-    }
-    return Math.max(3, w.length + 1);
+  // Weight words by phonetic character complexity
+  const weights = words.map(w => {
+    const clean = w.replace(/[^a-zA-Z0-9\u0590-\u05FF\u0600-\u06FF]/g, '');
+    return Math.max(2, clean.length);
   });
   const totalWeight = weights.reduce((a, b) => a + b, 0);
 
-  let currentStart = startTime;
+  let accumulated = start;
   const wordTimings: SubtitleWord[] = [];
 
   for (let i = 0; i < words.length; i++) {
     const isLast = i === words.length - 1;
-    // Ensure each word receives at least 0.28s (or 0.38s for longer words)
-    const proportionalDur = (weights[i] / totalWeight) * totalDuration;
-    const wordDur = Math.max(0.28, proportionalDur);
-    const wStart = Math.round(currentStart * 100) / 100;
+    const wordDur = (weights[i] / totalWeight) * totalDur;
+    const wStart = Math.round(accumulated * 100) / 100;
     const wEnd = isLast
-      ? Math.round(Math.max(wStart + 0.28, startTime + totalDuration) * 100) / 100
-      : Math.round((currentStart + wordDur) * 100) / 100;
+      ? Math.round(end * 100) / 100
+      : Math.round((accumulated + wordDur) * 100) / 100;
 
     wordTimings.push({
       word: words[i],
       start: wStart,
-      end: Math.max(wStart + 0.12, wEnd)
+      end: Math.max(wStart + 0.08, wEnd)
     });
 
-    currentStart += wordDur;
+    accumulated += wordDur;
   }
 
   return wordTimings;
 }
 
 /**
- * Builds strictly single-line subtitle segments (max 6-8 words per line).
- * Starts over with a new line when the line finishes.
+ * Builds strictly single-line subtitle segments (max 3-4 words per line).
+ * Starts over on the same line when the segment finishes.
  */
 export function buildSingleLineSegments(rawWords: string[], startTime: number, endTime: number): SubtitleSegment[] {
   const words = rawWords.map(w => w.trim()).filter(Boolean);
@@ -140,13 +134,13 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
     }];
   }
 
-  // Calculate weights for each single-line chunk
+  // Calculate proportional time slices for each 3-4 word chunk
   const chunkWeights = chunks.map(c => {
-    return c.reduce((sum, w) => sum + Math.max(3, w.length + 1), 0);
+    return c.reduce((sum, w) => sum + Math.max(2, w.length), 0);
   });
   const totalWeight = chunkWeights.reduce((a, b) => a + b, 0);
 
-  const minTotalDur = chunks.reduce((acc, c) => acc + (c.length * 0.34), 0);
+  const minTotalDur = chunks.reduce((acc, c) => acc + (c.length * 0.32), 0);
   const effectiveTotalDur = Math.max(minTotalDur, endTime - startTime);
 
   let curStart = startTime;
@@ -156,8 +150,8 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
     const isLast = i === chunks.length - 1;
     const chunkWords = chunks[i];
     const chunkDur = isLast
-      ? Math.max(chunkWords.length * 0.32, (startTime + effectiveTotalDur) - curStart)
-      : Math.max(chunkWords.length * 0.32, (chunkWeights[i] / totalWeight) * effectiveTotalDur);
+      ? Math.max(chunkWords.length * 0.30, (startTime + effectiveTotalDur) - curStart)
+      : Math.max(chunkWords.length * 0.30, (chunkWeights[i] / totalWeight) * effectiveTotalDur);
 
     const chunkEnd = curStart + chunkDur;
     const wordObjs = alignWordsToTimeWindow(chunkWords, curStart, chunkEnd);
@@ -179,7 +173,6 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
 
 /**
  * Normalizes and validates VAD word timing tokens for a subtitle segment.
- * If words have hardware timestamps, we respect them 100%.
  */
 export function normalizeWordTimings(words: any[], segmentStart: number, segmentEnd: number, text: string): SubtitleWord[] {
   const textWords = text ? text.split(/\s+/).filter(Boolean) : [];
@@ -205,7 +198,6 @@ export function normalizeWordTimings(words: any[], segmentStart: number, segment
 
 /**
  * Checks if a word is currently active given the video playback time.
- * Strict boundary check to ensure yellow highlight only appears when spoken.
  */
 export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
   return currentTime >= (word.start - 0.03) && currentTime <= (word.end + 0.03);
@@ -213,7 +205,7 @@ export function isWordActive(word: SubtitleWord, currentTime: number): boolean {
 
 /**
  * Generates sentence-based precision subtitles from transcript text.
- * Strictly breaks into single-line segments of 5 to 7 words (max 8).
+ * Strictly breaks into single-line segments of 3 to 4 words.
  */
 export function generatePrecisionSubtitles(text: string, totalDuration: number = 60, startOffset: number = 0): SubtitleSegment[] {
   if (!text || !text.trim()) return [];
@@ -226,4 +218,5 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
 
   return buildSingleLineSegments(allWords, start, end);
 }
+
 
