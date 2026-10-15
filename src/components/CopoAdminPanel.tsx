@@ -69,7 +69,7 @@ import {
   CheckSquare,
   Square
 } from "lucide-react";
-import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted, getSafeAvatarUrl, extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
+import { isAuthorMatch, recordDeletedUsersInLocalStorage, isUserDeleted, getSafeAvatarUrl, extractCleanDomain, formatBusinessName, KNOWN_OFFICIAL_NAMES, isClientDeletedVideo, purgeVideoIdFromClientStorage } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getPlaceLogoUrl, YOOUZ_LOGO_DATA_URI, getProxiedImageUrl } from "../utils/logoUtils";
 import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
@@ -1416,10 +1416,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const activeVideos = useMemo(() => {
     const map = new Map<string, VideoReview>();
     (videos || []).forEach((v) => {
-      if (v && v.id) map.set(v.id, v);
+      if (v && v.id && !isClientDeletedVideo(v.id)) {
+        map.set(String(v.id), v);
+      }
     });
     (dbVideos || []).forEach((v) => {
-      if (v && v.id) map.set(v.id, v);
+      if (v && v.id && !isClientDeletedVideo(v.id)) {
+        map.set(String(v.id), v);
+      }
     });
     return Array.from(map.values());
   }, [videos, dbVideos]);
@@ -2491,21 +2495,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Execution Handlers
   const executeDeleteVideo = async (id: string) => {
     if (!id) return;
-    const strId = String(id);
+    const strId = String(id).trim();
 
-    // 1. Immediately remove from internal dbVideos and active selection
-    setDbVideos((prev) => prev.filter((v) => String(v.id) !== strId));
-    setSelectedVideoIds((prev) => prev.filter((vId) => String(vId) !== strId));
+    // 1. Immediately purge client storage and add to permanent blacklist
+    purgeVideoIdFromClientStorage(strId);
+
+    // 2. Immediately remove from internal dbVideos and active selection
+    setDbVideos((prev) => prev.filter((v) => String(v.id).trim() !== strId && String(v.id).trim().toLowerCase() !== strId.toLowerCase()));
+    setSelectedVideoIds((prev) => prev.filter((vId) => String(vId).trim() !== strId && String(vId).trim().toLowerCase() !== strId.toLowerCase()));
     setConfirmDeleteVideoId(null);
-    if (previewVideo?.id === strId) setPreviewVideo(null);
+    if (previewVideo && (String(previewVideo.id).trim() === strId || String(previewVideo.id).trim().toLowerCase() === strId.toLowerCase())) setPreviewVideo(null);
 
-    // 2. Call parent onDeleteVideo prop (updates App.tsx state & client storage)
+    // 3. Call parent onDeleteVideo prop (updates App.tsx state & client storage)
     onDeleteVideo(strId);
 
-    // 3. Show instant feedback
+    // 4. Show instant feedback
     showToast("Video review removed permanently from feed and database.");
 
-    // 4. Guarantee backend deletion across all endpoints
+    // 5. Guarantee backend deletion across all endpoints
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/delete", {
@@ -2527,17 +2534,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const executeBulkDeleteVideos = async () => {
     if (selectedVideoIds.length === 0) return;
-    const idsToDelete = selectedVideoIds.map(String);
+    const idsToDelete = selectedVideoIds.map((id) => String(id).trim());
     const count = idsToDelete.length;
-    const idSet = new Set(idsToDelete);
+    const idSet = new Set(idsToDelete.flatMap((id) => [id, id.toLowerCase()]));
 
-    // 1. Instantly remove from internal dbVideos
-    setDbVideos((prev) => prev.filter((v) => !idSet.has(String(v.id))));
+    // 1. Immediately purge client storage and blacklist all IDs
+    idsToDelete.forEach((id) => purgeVideoIdFromClientStorage(id));
+
+    // 2. Instantly remove from internal dbVideos
+    setDbVideos((prev) => prev.filter((v) => !idSet.has(String(v.id).trim()) && !idSet.has(String(v.id).trim().toLowerCase())));
     setSelectedVideoIds([]);
     setConfirmBulkDeleteVideos(false);
-    if (previewVideo && idSet.has(String(previewVideo.id))) setPreviewVideo(null);
+    if (previewVideo && (idSet.has(String(previewVideo.id).trim()) || idSet.has(String(previewVideo.id).trim().toLowerCase()))) setPreviewVideo(null);
 
-    // 2. Call parent prop
+    // 3. Call parent prop
     if (onBulkDeleteVideos) {
       onBulkDeleteVideos(idsToDelete);
     } else {
@@ -2546,7 +2556,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     showToast(`Deleted ${count} selected video reviews.`);
 
-    // 3. Direct backend endpoints
+    // 4. Direct backend endpoints
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/bulk-delete", {

@@ -3549,21 +3549,48 @@ export const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
 ]);
 
 /**
+ * Case-insensitive check if a video ID is marked as deleted on the client.
+ */
+export function isClientDeletedVideo(videoId: string | undefined | null): boolean {
+  if (!videoId || typeof window === "undefined" || !window.localStorage) return false;
+  const strId = String(videoId).trim();
+  if (!strId) return false;
+  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId.toLowerCase())) {
+    return false;
+  }
+  try {
+    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+    const deletedVideos: string[] = JSON.parse(deletedStr);
+    if (Array.isArray(deletedVideos)) {
+      const lowerId = strId.toLowerCase();
+      return deletedVideos.some((id) => {
+        const s = String(id).trim();
+        return s === strId || s.toLowerCase() === lowerId;
+      });
+    }
+  } catch (e) {}
+  return false;
+}
+
+/**
  * Comprehensive client-side storage scrubber for deleted video reviews.
  * Eradicates all traces from localStorage, likes, bookmarks, saves, comments, and caches.
  */
 export function purgeVideoIdFromClientStorage(videoId: string): void {
   if (!videoId || typeof window === "undefined" || !window.localStorage) return;
-  const strId = String(videoId);
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) return;
+  const strId = String(videoId).trim();
+  const lowerId = strId.toLowerCase();
+  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) return;
 
   // 1. Add to permanent client blacklist copo_deleted_videos
   try {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     let deletedVideos: string[] = [];
     try { deletedVideos = JSON.parse(deletedStr); } catch (e) {}
-    if (!deletedVideos.includes(strId)) {
-      deletedVideos.push(strId);
+    let dirty = false;
+    if (!deletedVideos.includes(strId)) { deletedVideos.push(strId); dirty = true; }
+    if (!deletedVideos.includes(lowerId)) { deletedVideos.push(lowerId); dirty = true; }
+    if (dirty) {
       localStorage.setItem("copo_deleted_videos", JSON.stringify(deletedVideos));
     }
   } catch (e) {}
@@ -3574,7 +3601,7 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
     if (likedStr) {
       const parsed = JSON.parse(likedStr);
       if (Array.isArray(parsed)) {
-        localStorage.setItem("copo_liked_video_ids", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+        localStorage.setItem("copo_liked_video_ids", JSON.stringify(parsed.filter((id: any) => String(id).trim() !== strId && String(id).trim().toLowerCase() !== lowerId)));
       }
     }
   } catch (e) {}
@@ -3585,7 +3612,7 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
     if (savedStr) {
       const parsed = JSON.parse(savedStr);
       if (Array.isArray(parsed)) {
-        localStorage.setItem("copo_saved_video_ids", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+        localStorage.setItem("copo_saved_video_ids", JSON.stringify(parsed.filter((id: any) => String(id).trim() !== strId && String(id).trim().toLowerCase() !== lowerId)));
       }
     }
   } catch (e) {}
@@ -3595,7 +3622,7 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
     if (bkmkStr) {
       const parsed = JSON.parse(bkmkStr);
       if (Array.isArray(parsed)) {
-        localStorage.setItem("yoouz_bookmarked_reviews", JSON.stringify(parsed.filter((id: any) => String(id) !== strId)));
+        localStorage.setItem("yoouz_bookmarked_reviews", JSON.stringify(parsed.filter((id: any) => String(id).trim() !== strId && String(id).trim().toLowerCase() !== lowerId)));
       }
     }
   } catch (e) {}
@@ -3613,7 +3640,7 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          const cleaned = parsed.filter((item: any) => item && String(item.id) !== strId && String(item.videoId) !== strId);
+          const cleaned = parsed.filter((item: any) => item && String(item.id).trim() !== strId && String(item.id).trim().toLowerCase() !== lowerId && String(item.videoId).trim() !== strId && String(item.videoId).trim().toLowerCase() !== lowerId);
           localStorage.setItem(key, JSON.stringify(cleaned));
         }
       }
@@ -3625,7 +3652,7 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const k = localStorage.key(i);
       if (!k) continue;
-      if (k.includes(strId)) {
+      if (k.includes(strId) || k.includes(lowerId)) {
         try { localStorage.removeItem(k); } catch (e) {}
       } else if (k.startsWith("yoouz_cached_videos_") && k !== YOOUZ_VIDEOS_CACHE_KEY) {
         try { localStorage.removeItem(k); } catch (e) {}
@@ -3633,5 +3660,6 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
     }
   } catch (e) {}
 }
+
 
 

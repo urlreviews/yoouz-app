@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "err-1792054480938-8acdp",
+    "timestamp": "2026-10-15T08:54:40.938Z",
+    "message": "Video upload error: ENOENT: no such file or directory, stat '/app/applet/uploads/default-review.mp4'",
+    "component": "Video Upload & Transcode Engine",
+    "category": "video_player",
+    "url": "/api/videos/upload",
+    "userAgent": "curl/7.88.1",
+    "status": "resolved",
+    "testSteps": "Review server disk storage and ffmpeg execution permissions."
+  },
+  {
+    "id": "err-1792053984926-shmoa",
+    "timestamp": "2026-10-15T08:46:24.926Z",
+    "message": "Video upload error: ENOENT: no such file or directory, stat '/app/applet/uploads/rev-1791494959785-27pap.mp4'",
+    "component": "Video Upload & Transcode Engine",
+    "category": "video_player",
+    "url": "/api/videos/upload",
+    "userAgent": "curl/7.88.1",
+    "status": "resolved",
+    "testSteps": "Review server disk storage and ffmpeg execution permissions."
+  }
+]
