@@ -514,6 +514,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       } else {
         vid.src = activeSrc;
       }
+
+      // Attach native Bunny Stream WebVTT subtitle track for official YouTube-style captions
+      let track = vid.querySelector("track");
+      if (!track) {
+        track = document.createElement("track");
+        track.kind = "captions";
+        track.srclang = "en";
+        track.label = "English";
+        track.default = true;
+        vid.appendChild(track);
+      }
+      const vttUrl = video.vttUrl || `/api/videos/${video.id}/subtitles.vtt`;
+      if (track.src !== vttUrl) {
+        track.src = vttUrl;
+        try {
+          if (vid.textTracks && vid.textTracks[0]) {
+            vid.textTracks[0].mode = "showing";
+          }
+        } catch (e) {}
+      }
     };
 
     // 1. Resolve which element hosts activeVideo
