@@ -22126,7 +22126,31 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       }
 
       const dur = video.durationSeconds || video.duration || 60;
-      let segments = video.segments || [];
+      let rawSegments = video.segments || [];
+      if (!Array.isArray(rawSegments) || rawSegments.length === 0) {
+        const text = (video.transcriptText || video.caption || "").trim();
+        if (text) {
+          const words = text.split(/\s+/).filter(Boolean);
+          const dedupWords: string[] = [];
+          for (let i = 0; i < words.length; i++) {
+            if (i === 0 || words[i].toLowerCase() !== words[i-1].toLowerCase()) {
+              dedupWords.push(words[i]);
+            }
+          }
+          const chunks: string[] = [];
+          for (let i = 0; i < dedupWords.length; i += 6) {
+            chunks.push(dedupWords.slice(i, i + 6).join(" "));
+          }
+          let curr = 0.2;
+          rawSegments = chunks.map(chunk => {
+            const duration = Math.max(2.0, chunk.split(/\s+/).length * 0.4);
+            const start = curr;
+            const end = curr + duration;
+            curr = end;
+            return { start, end, text: chunk };
+          });
+        }
+      }
 
       const formatVttTimecode = (seconds: number): string => {
         const totalMs = Math.round(seconds * 1000);
@@ -22140,17 +22164,29 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       };
 
       const vttLines = ["WEBVTT\n"];
-      if (Array.isArray(segments) && segments.length > 0) {
-        segments.forEach((s: any, idx: number) => {
-          const start = Number(s.start ?? s.start_time ?? 0);
-          const end = Number(s.end ?? s.end_time ?? (start + 3));
+      const seenTexts = new Set<string>();
+      let lastEnd = 0.0;
+      let cueIndex = 1;
+
+      if (Array.isArray(rawSegments) && rawSegments.length > 0) {
+        const sorted = [...rawSegments].sort((a, b) => Number(a.start || 0) - Number(b.start || 0));
+        for (const s of sorted) {
           const text = String(s.text || s.transcript || '').trim();
-          if (text) {
-            vttLines.push(`${idx + 1}`);
-            vttLines.push(`${formatVttTimecode(start)} --> ${formatVttTimecode(end)}`);
-            vttLines.push(`${text}\n`);
-          }
-        });
+          if (!text || text.startsWith("Video review for") || seenTexts.has(text.toLowerCase())) continue;
+          seenTexts.add(text.toLowerCase());
+
+          const origStart = Number(s.start ?? s.start_time ?? lastEnd);
+          const origEnd = Number(s.end ?? s.end_time ?? (origStart + 3));
+          const duration = Math.max(1.8, Math.min(5.5, origEnd - origStart));
+
+          const start = Math.max(lastEnd, origStart);
+          const end = start + duration;
+          lastEnd = end;
+
+          vttLines.push(`${cueIndex++}`);
+          vttLines.push(`${formatVttTimecode(start)} --> ${formatVttTimecode(end)}`);
+          vttLines.push(`${text}\n`);
+        }
       }
 
       res.setHeader("Content-Type", "text/vtt; charset=utf-8");
