@@ -1817,7 +1817,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           <div
             id="copo-more-options-modal"
-            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain flex flex-col max-h-[85vh] sm:max-h-[80vh] pb-safe"
+            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain flex flex-col max-h-[70vh] sm:max-h-[80vh] pb-safe"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
@@ -1859,6 +1859,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       moreMenuVideo.author?.name === "me" ||
                       moreMenuVideo.userId === "me")
                 );
+                
+                // Debug log
+                if (moreMenuVideo && !isMyVideo) {
+                    console.log("DEBUG: MoreMenuVideo isMyVideo=false", { 
+                        moreMenuVideoUserId: moreMenuVideo.userId, 
+                        moreMenuVideoEmail: moreMenuVideo.userEmail,
+                        currentUserId: currentUser?.userId,
+                        currentUserEmail: currentUser?.email
+                    });
+                }
 
                 return isMyVideo ? (
                   /* OWNER ACTIONS: Edit Star Rating & Review, Share, View Place, Delete */
