@@ -451,8 +451,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (nextVideo) neededVideoIds.add(nextVideo.id);
     if (prevVideo) neededVideoIds.add(prevVideo.id);
 
-    const loadVideoSource = (vid: HTMLVideoElement, src: string) => {
-      if (!vid || !src) return;
+    const loadVideoSource = (vid: HTMLVideoElement, video: VideoReview, cachedLocalBlobUrl?: string) => {
+      if (!vid || !video) return;
+
+      const localBlob = cachedLocalBlobUrl || localBlobUrlsRef.current[video.id] || localBlobUrls[video.id] || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
+      const cascade = resolvePlayableVideoSourcesCascade(video, localBlob);
+      const failedSet = failedSourcesRef.current.get(video.id) || new Set<string>();
+      
+      const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[cascade.length - 1];
+      if (!activeSrc) return;
       
       // Cleanup existing HLS if any
       const existingHls = hlsPoolRef.current.get(vid);
@@ -461,32 +468,45 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         hlsPoolRef.current.delete(vid);
       }
 
-      if (src.includes(".m3u8")) {
+      const triggerFallback = (failedSrc: string) => {
+        console.warn(`🎬 [Video Player] Source failed: ${failedSrc}. Attempting fallback for ${video.id}`);
+        const currentFailed = failedSourcesRef.current.get(video.id) || new Set<string>();
+        currentFailed.add(failedSrc);
+        failedSourcesRef.current.set(video.id, currentFailed);
+        
+        // Safety: only retry if there are other sources left to try
+        const remaining = cascade.filter(s => !currentFailed.has(s));
+        if (remaining.length > 0) {
+          loadVideoSource(vid, video, cachedLocalBlobUrl);
+        }
+      };
+
+      if (activeSrc.includes(".m3u8")) {
         if (Hls.isSupported()) {
           const hls = new Hls({
             capLevelToPlayerSize: true,
             autoStartLoad: true,
-            maxMaxBufferLength: 30, // Limit buffer for feed performance
+            maxMaxBufferLength: 15,
+            manifestLoadingMaxRetry: 1,
+            levelLoadingMaxRetry: 1
           });
-          hls.loadSource(src);
+          hls.loadSource(activeSrc);
           hls.attachMedia(vid);
           hlsPoolRef.current.set(vid, hls);
           
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
-              console.warn("HLS fatal error, falling back:", data);
-              // Fallback logic could be added here if needed
+              triggerFallback(activeSrc);
             }
           });
         } else if (vid.canPlayType("application/vnd.apple.mpegurl")) {
-          // Native HLS support (Safari/iOS)
-          vid.src = src;
+          // Native Safari HLS
+          vid.src = activeSrc;
         } else {
-          // No HLS support at all
-          vid.src = src;
+          triggerFallback(activeSrc);
         }
       } else {
-        vid.src = src;
+        vid.src = activeSrc;
       }
     };
 
@@ -554,7 +574,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     if (isNewVideo || !isAlreadyUsingWorkingCascadeSrc) {
       if (!isSameSrc(activeVid.src, activeSrc)) {
-        loadVideoSource(activeVid, activeSrc);
+        loadVideoSource(activeVid, activeVideo, localBlob);
       }
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
@@ -690,7 +710,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
           const nextSrc = resolvePlayableVideoSource(nextVideo);
           if (!isSameSrc(nextVid.src, nextSrc)) {
-            loadVideoSource(nextVid, nextSrc);
+            loadVideoSource(nextVid, nextVideo);
             nextVid.preload = "auto";
             try { nextVid.load(); } catch (e) {}
           }
@@ -725,7 +745,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
           const prevSrc = resolvePlayableVideoSource(prevVideo);
           if (!isSameSrc(prevVid.src, prevSrc)) {
-            loadVideoSource(prevVid, prevSrc);
+            loadVideoSource(prevVid, prevVideo);
             prevVid.preload = "auto";
             try { prevVid.load(); } catch (e) {}
           }

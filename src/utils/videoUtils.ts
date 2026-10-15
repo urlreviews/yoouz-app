@@ -121,15 +121,15 @@ export function resolvePlayableVideoSourcesCascade(
   // 2. Direct Bunny Stream HLS Playlist (Adaptive Bitrate + Captions Support)
   // GUID detection: Standard GUIDs are 36 chars with 4 hyphens. Legacy IDs usually have 2 hyphens.
   const isStreamGuid = (id?: string) => {
-    if (!id || typeof id !== 'string') return false;
+    if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
     const hyphens = (id.match(/-/g) || []).length;
-    return (hyphens === 4 && id.length === 36) || (id.length > 30 && !id.startsWith('rev-'));
+    return (hyphens === 4 && id.length === 36) || id.length > 30;
   };
 
   const bunnyLibId = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
   
-  if (video.bunnyVideoId || isStreamGuid(video.id)) {
-    const guid = video.bunnyVideoId || video.id;
+  const guid = video.bunnyVideoId || video.id;
+  if (isStreamGuid(guid)) {
     // Standard Bunny Stream pull zone derivation: vz-<libraryId>.b-cdn.net
     const streamPullZone = `https://vz-${bunnyLibId}.b-cdn.net`;
     const streamHlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;

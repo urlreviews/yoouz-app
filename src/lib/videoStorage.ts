@@ -238,8 +238,8 @@ export async function uploadVideoToServerWithProgress(
               ? `/api/videos/stream/${data.url.split("/api/videos/stream/")[1]}`
               : data.url;
             
-            // Extract the official Bunny GUID or fallback to videoId
-            const bunnyId = data.bunnyVideoId || (data.fileName ? data.fileName.split('.')[0] : videoId);
+            // Extract the official Bunny GUID ONLY if returned by server
+            const bunnyId = data.bunnyVideoId || undefined;
 
             resolve({ url: finalUrl, thumbnailUrl: data.thumbnailUrl, bunnyVideoId: bunnyId });
             return;

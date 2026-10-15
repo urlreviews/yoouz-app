@@ -12646,7 +12646,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       let publicUrl = `/api/videos/stream/${targetVideoFileName}`;
       let thumbnailUrl = hasThumb ? `/uploads/${thumbFileName}` : "";
       let bunnyUrl = "";
-      let bunnyVideoId = "";
+      let bunnyVideoId: string | null = null;
 
       // 3. Synchronously upload to Bunny Stream for Automated AI Captions & Global HLS Delivery
       const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
@@ -21741,7 +21741,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       if (!video) return { error: "Video not found" };
 
-      if (video.segments && video.segments.length > 0 && video.transcriptText) {
+      const hasSegments = video.segments && video.segments.length > 0;
+      const isFallbackSegments = hasSegments && !!video.segments[0]?.isHardwareTimed;
+      const bunnyVideoId = video.bunnyVideoId || video.guid || (typeof video.id === 'string' && video.id.length > 15 && !video.id.startsWith('rev-') ? video.id : null);
+
+      if (hasSegments && video.transcriptText && (!isFallbackSegments || !bunnyVideoId)) {
         return { success: true, alreadyExists: true, segments: video.segments, transcriptText: video.transcriptText };
       }
 
@@ -21752,8 +21756,6 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       let segments = video.segments || [];
 
       // 0. Try fetching official AI captions from Bunny Stream if available (High Priority)
-      const bunnyVideoId = video.bunnyVideoId || video.guid || (typeof video.id === 'string' && video.id.length > 15 && !video.id.startsWith('rev-') ? video.id : null);
-      
       if (bunnyVideoId) {
         const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
         const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
