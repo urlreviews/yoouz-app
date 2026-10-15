@@ -112,17 +112,34 @@ export function resolvePlayableVideoSourcesCascade(
   // 1. Fresh active session IndexedDB blob URL (from local browser IndexedDB or video object in current session)
   const localBlobCandidate = cachedLocalBlobUrl || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
   if (localBlobCandidate && typeof localBlobCandidate === "string" && localBlobCandidate.startsWith("blob:")) {
+    // Only add if not previously failed in this session
     if (!sources.includes(localBlobCandidate)) {
       sources.push(localBlobCandidate);
     }
   }
 
-  // 2. Direct Bunny CDN Edge URL (Instant global edge playback without proxying through server)
-  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) {
-      sources.push(cdnUrlMp4);
+  // 2. Direct Bunny Stream HLS Playlist (Adaptive Bitrate + Captions Support)
+  // GUID detection: Standard GUIDs are 36 chars with 4 hyphens. Legacy IDs usually have 2 hyphens.
+  const isStreamGuid = (id?: string) => {
+    if (!id || typeof id !== 'string') return false;
+    const hyphens = (id.match(/-/g) || []).length;
+    return (hyphens === 4 && id.length === 36) || (id.length > 30 && !id.startsWith('rev-'));
+  };
+
+  const bunnyLibId = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
+  
+  if (video.bunnyVideoId || isStreamGuid(video.id)) {
+    const guid = video.bunnyVideoId || video.id;
+    // Standard Bunny Stream pull zone derivation: vz-<libraryId>.b-cdn.net
+    const streamPullZone = `https://vz-${bunnyLibId}.b-cdn.net`;
+    const streamHlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
+    if (!sources.includes(streamHlsUrl)) {
+      sources.push(streamHlsUrl);
+    }
+    // Direct edge fallback
+    const directEdgeHls = `https://video.bunnycdn.com/play/${bunnyLibId}/${guid}`;
+    if (!sources.includes(directEdgeHls)) {
+      sources.push(directEdgeHls);
     }
   }
 
@@ -134,7 +151,16 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Direct clean local server streaming endpoint (Server proxy fallback)
+  // 4. Direct Bunny CDN Storage MP4 (Progressive Download Fallback)
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) {
+      sources.push(cdnUrlMp4);
+    }
+  }
+
+  // 5. Direct clean local server streaming endpoint (Server proxy fallback)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
@@ -143,7 +169,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 5. Fallback video URLs from document (excluding any foreign blob URLs)
+  // 6. Fallback video URLs from document (excluding any foreign blob URLs)
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
@@ -155,12 +181,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Base64 data URI (if present)
+  // 7. Base64 data URI (if present)
   if (video.videoData && video.videoData.startsWith("data:video/")) {
     sources.push(video.videoData);
   }
 
-  // 7. Static default MP4 asset
+  // 8. Static default MP4 asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }

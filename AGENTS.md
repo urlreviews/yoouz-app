@@ -3,6 +3,7 @@
 ## Database & Infrastructure Policy
 
 - **Strict No-Firebase Policy**: Mentioning, implementing, or suggesting Firebase, Firestore, or any Google Cloud database service is **strictly forbidden**. The project has migrated entirely to **bunny.net** and a custom **Cloud SQL (PostgreSQL)** backend.
+- **Strict Bunny-Only Transcription Policy**: Using Gemini AI, Google Speech-to-Text, or any other external AI service for video transcription is **strictly forbidden**. Subtitles and captions must rely exclusively on **Bunny Stream Smart Captions**.
 - **Data Persistence**: Always use the custom `/api/nosql/*` endpoints or the `bunnydb_` table aliases in `src/db/schema.ts` for data persistence. Never attempt to import or use Firebase SDKs.
 - **Communication**: When discussing data storage, always refer to **bunny.net** or the local database. Treat the existence of Firebase as a legacy error that has been fully purged.
 

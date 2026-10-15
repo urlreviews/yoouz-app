@@ -24,6 +24,7 @@
         "esbuild": "^0.25.0",
         "express": "^4.21.2",
         "googleapis": "^174.0.1",
+        "hls.js": "^1.7.3",
         "i18next": "^26.4.2",
         "leaflet": "^1.9.4",
         "lucide-react": "^0.546.0",
@@ -442,6 +443,8 @@
     "has-symbols": ["has-symbols@1.1.0", "", {}, ""],
 
     "hasown": ["hasown@2.0.4", "", { "dependencies": { "function-bind": "^1.1.2" } }, ""],
+
+    "hls.js": ["hls.js@1.7.3", "", {}, "sha512-MsPlx6yVW4Qv4C7mEVou4/gk/5cN2dVxOTnrNjPSmyH2f0Ln+/UkG10Ax1PE6OvrmTVPKgQYozTtBaPOuCzq7A=="],
 
     "html-parse-stringify": ["html-parse-stringify@4.0.1", "", {}, ""],
 

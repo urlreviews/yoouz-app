@@ -85,7 +85,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   // Camera settings (Strict Front Camera Only)
   const [cameraActive, setCameraActive] = useState(true);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Video playback states
@@ -266,7 +265,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
 
     if (recordedVideoUrl) {
-      try { URL.revokeObjectURL(recordedVideoUrl); } catch (e) {}
+      // We no longer revoke here because the feed might be using this URL for instant playback
+      // Browser will garbage collect when the blob is no longer referenced and IndexedDB is cleared
     }
     setRecordedVideoBlob(null);
     setRecordedVideoUrl(null);
@@ -2230,7 +2230,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   autoPlay
                   playsInline
                   muted
-                  style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
+                  style={{ transform: "scaleX(-1)" }}
                   className={`w-full h-full object-cover ${cameraActive ? "block" : "hidden"}`}
                 />
 

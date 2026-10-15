@@ -33,6 +33,7 @@ import {
   Repeat
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
+import Hls from "hls.js";
 import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 import { isPurgedItem, normalizeReview } from "../hooks/useFeedPagination";
 import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
@@ -204,6 +205,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // and eliminate any 2-second audio latency while strictly preventing decoder exhaustion on mobile.
   const feedVideoRef = useRef<HTMLVideoElement | null>(null);
   const videoPoolRef = useRef<HTMLVideoElement[]>([]);
+  const hlsPoolRef = useRef<Map<HTMLVideoElement, Hls>>(new Map());
   const slotBindingRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
@@ -449,6 +451,45 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (nextVideo) neededVideoIds.add(nextVideo.id);
     if (prevVideo) neededVideoIds.add(prevVideo.id);
 
+    const loadVideoSource = (vid: HTMLVideoElement, src: string) => {
+      if (!vid || !src) return;
+      
+      // Cleanup existing HLS if any
+      const existingHls = hlsPoolRef.current.get(vid);
+      if (existingHls) {
+        existingHls.destroy();
+        hlsPoolRef.current.delete(vid);
+      }
+
+      if (src.includes(".m3u8")) {
+        if (Hls.isSupported()) {
+          const hls = new Hls({
+            capLevelToPlayerSize: true,
+            autoStartLoad: true,
+            maxMaxBufferLength: 30, // Limit buffer for feed performance
+          });
+          hls.loadSource(src);
+          hls.attachMedia(vid);
+          hlsPoolRef.current.set(vid, hls);
+          
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              console.warn("HLS fatal error, falling back:", data);
+              // Fallback logic could be added here if needed
+            }
+          });
+        } else if (vid.canPlayType("application/vnd.apple.mpegurl")) {
+          // Native HLS support (Safari/iOS)
+          vid.src = src;
+        } else {
+          // No HLS support at all
+          vid.src = src;
+        }
+      } else {
+        vid.src = src;
+      }
+    };
+
     // 1. Resolve which element hosts activeVideo
     let activeVid = slotBindingRef.current.get(activeVideo.id);
 
@@ -513,7 +554,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     if (isNewVideo || !isAlreadyUsingWorkingCascadeSrc) {
       if (!isSameSrc(activeVid.src, activeSrc)) {
-        activeVid.src = activeSrc;
+        loadVideoSource(activeVid, activeSrc);
       }
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
@@ -649,7 +690,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
           const nextSrc = resolvePlayableVideoSource(nextVideo);
           if (!isSameSrc(nextVid.src, nextSrc)) {
-            nextVid.src = nextSrc;
+            loadVideoSource(nextVid, nextSrc);
             nextVid.preload = "auto";
             try { nextVid.load(); } catch (e) {}
           }
@@ -684,7 +725,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
           const prevSrc = resolvePlayableVideoSource(prevVideo);
           if (!isSameSrc(prevVid.src, prevSrc)) {
-            prevVid.src = prevSrc;
+            loadVideoSource(prevVid, prevSrc);
             prevVid.preload = "auto";
             try { prevVid.load(); } catch (e) {}
           }

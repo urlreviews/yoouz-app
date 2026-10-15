@@ -541,15 +541,8 @@ const multerUpload = multer({ storage: multerStorage, limits: { fileSize: 100 * 
 const searchCache = new Map<string, { places: any[]; source: string; timestamp: number }>();
 let cachedGeminiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
-  if (cachedGeminiClient) return cachedGeminiClient;
-  const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "").trim();
-  if (!apiKey) return null;
-  try {
-    cachedGeminiClient = new GoogleGenAI({ apiKey });
-    return cachedGeminiClient;
-  } catch (e) {
-    return null;
-  }
+  // Gemini AI disabled per user policy (Bunny-Only)
+  return null;
 }
 
 function getResendClient(): Resend | null {
@@ -12263,12 +12256,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     }
   }));
 
-  // Configure Cloudinary
+  // Cloudinary disabled per user policy (Bunny-Only)
+  /*
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
+  */
 
   // Fast in-memory recovery cache to prevent slow repeated queries
   const failedRecoveryCache = new Set<string>();
@@ -12690,8 +12685,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             });
 
             if (uploadResp.ok) {
-              const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-              bunnyUrl = `${pullZoneDomain}/${bunnyVideoId}/playlist.m3u8`;
+              // Standard Bunny Stream delivery uses a dedicated pull zone: vz-<libraryId>.b-cdn.net
+              // fallback to the provided pull zone if derivation fails
+              const streamPullZone = bunnyLibraryId ? `https://vz-${bunnyLibraryId}.b-cdn.net` : (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+              
+              bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
             } else {
@@ -21692,33 +21690,18 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
   app.post("/api/translate", express.json({ limit: "5mb" }), async (req, res) => {
     try {
-      const { texts, targetLang, targetLangName } = req.body;
-      if (!Array.isArray(texts) || texts.length === 0 || !targetLang || targetLang === "en") {
+      const { texts } = req.body;
+      if (!Array.isArray(texts) || texts.length === 0) {
         return res.json({ translations: {} });
       }
 
       const results: Record<string, string> = {};
-      const missingTexts: string[] = [];
-
-      for (const rawText of texts) {
-        if (typeof rawText !== "string") continue;
-        const text = rawText.trim();
-        if (!text) continue;
-        const cacheKey = `${targetLang}:::${text}`;
-        if (serverTranslationCache.has(cacheKey)) {
-          results[text] = serverTranslationCache.get(cacheKey)!;
-        } else {
-          missingTexts.push(text);
+      // Local translation logic placeholder (Gemini disabled per policy)
+      for (const text of texts) {
+        if (typeof text === "string") {
+          results[text] = text; 
         }
       }
-
-      if (missingTexts.length === 0) {
-        return res.json({ translations: results });
-      }
-
-      // Deduplicate missing texts
-      const uniqueMissing = Array.from(new Set(missingTexts));
-      // Gemini translation disabled
       return res.json({ translations: results });
     } catch (err: any) {
       console.error("[Translate API] Error:", err);
@@ -21769,15 +21752,18 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       let segments = video.segments || [];
 
       // 0. Try fetching official AI captions from Bunny Stream if available (High Priority)
-      const bunnyVideoId = video.bunnyVideoId || video.guid || (typeof video.id === 'string' && video.id.length > 15 && !video.id.includes('-') ? video.id : null);
+      const bunnyVideoId = video.bunnyVideoId || video.guid || (typeof video.id === 'string' && video.id.length > 15 && !video.id.startsWith('rev-') ? video.id : null);
+      
       if (bunnyVideoId) {
         const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
         const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
         if (bunnyStreamKey && bunnyLibraryId) {
           try {
-            console.log(`🎬 🐰 [Bunny Stream] Attempting to sync AI captions for ${bunnyVideoId}...`);
+            console.log(`🎬 🐰 [Bunny Sync] Syncing captions for ${bunnyVideoId} (Video: ${videoId})...`);
+            // Check for EN captions (default)
             const captionResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}/captions/en`, {
-              headers: { 'AccessKey': bunnyStreamKey, 'accept': 'application/json' }
+              headers: { 'AccessKey': bunnyStreamKey, 'accept': 'application/json' },
+              signal: AbortSignal.timeout(10000)
             });
             if (captionResp.ok) {
               const vttText = await captionResp.text();
@@ -21786,17 +21772,22 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 if (bunnySegments.length > 0) {
                   transcriptText = bunnySegments.map(s => s.text).join(" ");
                   segments = bunnySegments;
-                  console.log(`✅ 🐰 [Bunny Stream] AI Captions successfully synced! (${bunnySegments.length} segments)`);
+                  console.log(`✅ 🐰 [Bunny Sync] SUCCESS! Synced ${bunnySegments.length} segments for ${videoId}`);
+                } else {
+                   console.log(`⚠️ 🐰 [Bunny Sync] VTT fetched but no segments parsed for ${videoId}`);
                 }
               }
+            } else {
+              console.log(`⏳ 🐰 [Bunny Sync] Captions not ready (HTTP ${captionResp.status}) for ${videoId}. Ensure 'Smart Captions' is enabled in Bunny dashboard.`);
             }
           } catch (e) {
-            console.warn("🐰 [Bunny Stream] Caption sync notice:", e);
+            console.warn("🐰 [Bunny Sync] Sync notice:", e);
           }
         }
       }
 
       if (!segments || segments.length === 0) {
+        console.log(`🎙️ [Bunny Sync] Falling back to text-alignment for ${videoId}`);
         const localResult = await transcribeVideoLocally(Buffer.from("dummy"), `${videoId}.webm`, "video/webm", reviewText);
         transcriptText = localResult.transcript || reviewText;
         segments = localResult.segments || [];
@@ -21816,6 +21807,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             if (fetchResp.ok) {
               const arrayBuf = await fetchResp.arrayBuffer();
               const vBuffer = Buffer.from(arrayBuf);
+              
+              // 1. Try local service
               const streamResult = await transcribeVideoLocally(vBuffer, `${videoId}.webm`);
               if (streamResult && streamResult.segments && streamResult.segments.length > 0) {
                 transcriptText = streamResult.transcript || transcriptText;
@@ -21886,31 +21879,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string, existingTranscript?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
     try {
-      // 1. Try real AI Speech-to-Text via local Python service if available
-      try {
-        const formData = new FormData();
-        const blob = new Blob([videoBuffer], { type: mimeTypeInput || "video/webm" });
-        formData.append("file", blob, filename);
-
-        console.log(`🎤 [Transcription] Dispatching ${filename} to local AI engine...`);
-        const sttResp = await fetch("http://127.0.0.1:8000/transcribe", {
-          method: "POST",
-          body: formData,
-          signal: AbortSignal.timeout(60000)
-        });
-
-        if (sttResp.ok) {
-          const sttData: any = await sttResp.json();
-          console.log(`✅ [Transcription] AI success: "${sttData.text.substring(0, 50)}..."`);
-          return {
-            transcript: sttData.text,
-            segments: sttData.segments,
-            vtt_content: sttData.vtt_content
-          };
-        }
-      } catch (sttErr) {
-        console.warn("[Transcription] Local AI engine notice (falling back to text-align):", sttErr);
-      }
+      // Local AI Engine disabled per user policy (Bunny-Only)
 
       // 2. Fallback to free text-alignment engine if AI is unavailable or no audio detected
       const fullTranscript = (existingTranscript || "").trim();
@@ -22009,36 +21978,54 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
   function parseVttToSegments(vtt: string) {
     const segments: any[] = [];
+    if (!vtt || !vtt.includes("WEBVTT")) return segments;
+    
     try {
-      const lines = vtt.split(/\r?\n/);
-      let currentSeg: any = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || line === "WEBVTT") continue;
-
-        const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}.\d{3})/);
-        if (timeMatch) {
-          const parseTime = (t: string) => {
-            const [h, m, s] = t.split(':');
-            return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s);
-          };
-          currentSeg = {
-            start: parseTime(timeMatch[1]),
-            end: parseTime(timeMatch[2]),
-            text: ""
-          };
-        } else if (currentSeg && isNaN(Number(line))) {
-          currentSeg.text = (currentSeg.text + " " + line).trim();
-          if (lines[i + 1]?.trim() === "" || i === lines.length - 1) {
-            if (currentSeg.text) {
-               segments.push(currentSeg);
+      const blocks = vtt.split(/\r?\n\r?\n/);
+      for (const block of blocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length < 2) continue;
+        
+        let timeLine = "";
+        let textLines: string[] = [];
+        
+        for (const line of lines) {
+          if (line.includes("-->")) {
+            timeLine = line;
+          } else if (line !== "WEBVTT") {
+            textLines.push(line);
+          }
+        }
+        
+        if (timeLine) {
+          const match = timeLine.match(/(\d{1,2}:)?(\d{1,2}):(\d{1,2})[.,](\d{3})\s+-->\s+(\d{1,2}:)?(\d{1,2}):(\d{1,2})[.,](\d{3})/);
+          if (match) {
+            const parseTime = (hStr: string, mStr: string, sStr: string, msStr: string) => {
+              const h = parseInt(hStr?.replace(':', '') || "0");
+              const m = parseInt(mStr);
+              const s = parseInt(sStr);
+              const ms = parseInt(msStr);
+              return h * 3600 + m * 60 + s + ms / 1000;
+            };
+            
+            // match[1..4] is start, match[5..8] is end
+            const start = parseTime(match[1], match[2], match[3], match[4]);
+            const end = parseTime(match[5], match[6], match[7], match[8]);
+            const text = textLines.join(" ");
+            
+            if (text) {
+              segments.push({
+                start: Math.round(start * 100) / 100,
+                end: Math.round(end * 100) / 100,
+                text
+              });
             }
-            currentSeg = null;
           }
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("VTT parse error:", e);
+    }
     return segments;
   }
 
@@ -33276,24 +33263,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
-  // Start transcription service if python3 is present
-  console.log("Attempting to start local transcription service...");
-  try {
-    const servicePath = fs.existsSync("/app/applet/transcription_service.py")
-      ? "/app/applet/transcription_service.py"
-      : path.join(_dirname, "applet/transcription_service.py");
-    const transcriptionProcess = spawn("python3", [servicePath], {
-      detached: true,
-      stdio: 'inherit'
-    });
-    transcriptionProcess.on('error', (err) => {
-      console.warn("[Transcription Service] python3 process unavailable on host environment:", err.message);
-    });
-    transcriptionProcess.unref();
-    console.log("Transcription service spawn initiated at:", servicePath);
-  } catch (err: any) {
-    console.warn("[Transcription Service] Could not spawn local transcription service:", err?.message || err);
-  }
+  // Transcription service disabled - relying on Bunny Stream AI Captions + Browser STT
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
