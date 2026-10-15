@@ -1199,8 +1199,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   useEffect(() => {
     const currentFirstId = videos[0]?.id || null;
     if (currentFirstId && currentFirstId !== prevFirstVideoIdRef.current) {
+      const isInitialMount = prevFirstVideoIdRef.current === null;
       prevFirstVideoIdRef.current = currentFirstId;
-      if (activeCardIndexRef.current === 0) {
+
+      // Register local blob URL immediately if present on the new review
+      const firstVid = videos[0];
+      const localBlob = (firstVid as any)?.localBlobUrl || (firstVid as any)?.blobUrl;
+      if (localBlob) {
+        localBlobUrlsRef.current[currentFirstId] = localBlob;
+        setLocalBlobUrls((prev) => ({ ...prev, [currentFirstId]: localBlob }));
+      }
+
+      // If active card was at top, or whenever a newly recorded video is added, snap to index 0
+      if (!isInitialMount || activeCardIndexRef.current === 0) {
         lastObserverIndexRef.current = 0;
         activeCardIndexRef.current = 0;
         setActiveCardIndex(0);
@@ -1290,9 +1301,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     // Strict top boundary: Never wrap or scroll up when at index 0 (first video)
   }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
 
-  // Toggle Play / Pause (Stop / Resume) for the active video
-  const handleTogglePlayPause = useCallback((e?: React.MouseEvent) => {
+  // Toggle Play / Pause (Stop / Resume) for the active video, or activate and play clicked card
+  const handleTogglePlayPause = useCallback((e?: React.SyntheticEvent | Event, targetCardIndex?: number) => {
     e?.stopPropagation();
+
+    // If user clicked a card in the feed that is not currently active, immediately scroll to it, mount it, and start playing!
+    if (typeof targetCardIndex === "number" && targetCardIndex >= 0 && targetCardIndex !== activeCardIndexRef.current) {
+      scrollToCard(targetCardIndex, "smooth");
+      return;
+    }
+
     const vid = feedVideoRef.current;
     if (!vid) return;
 
@@ -1352,7 +1370,28 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           setIsPlaying(true);
           setIsBuffering(false);
           if (active?.id) setFirstFrameRenderedId(active.id);
-        }).catch(() => {});
+        }).catch(() => {
+          // Both play attempts failed: trigger source failover to ensure video plays
+          if (active) {
+            if (!failedSourcesRef.current.has(active.id)) {
+              failedSourcesRef.current.set(active.id, new Set());
+            }
+            const failedSet = failedSourcesRef.current.get(active.id)!;
+            const currentSrc = vid.currentSrc || vid.src;
+            if (currentSrc) failedSet.add(currentSrc);
+            const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
+            const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
+            const nextCandidate = cascade.find(s => s && !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
+            console.warn(`[CopoVideoPlayer] Play rejected, cascading video ${active.id} to: ${nextCandidate}`);
+            vid.src = nextCandidate;
+            vid.load();
+            vid.play().then(() => {
+              setIsPlaying(true);
+              setIsBuffering(false);
+              setFirstFrameRenderedId(active.id);
+            }).catch(() => {});
+          }
+        });
       });
     } else {
       // STOP / PAUSE immediately (always permitted!)
@@ -1363,7 +1402,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       } catch (e) {}
       setIsPlaying(false);
     }
-  }, [isSessionAudioUnlocked, isMuted, isPaused]);
+  }, [isSessionAudioUnlocked, isMuted, isPaused, scrollToCard]);
 
   const handlePauseVideo = useCallback(() => {
     isManuallyPausedRef.current = true;
@@ -1672,7 +1711,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isActualMuted={isActualMuted}
                 isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
                 hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
-                onTogglePlayPause={handleTogglePlayPause}
+                onTogglePlayPause={(e, targetIdx) => handleTogglePlayPause(e, targetIdx ?? idx)}
+                onActivateCard={(targetIdx) => scrollToCard(targetIdx, "smooth")}
                 onPauseVideo={handlePauseVideo}
                 allUsers={allUsers}
                 currentUser={currentUser}

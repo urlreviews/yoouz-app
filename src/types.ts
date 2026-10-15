@@ -169,6 +169,8 @@ export interface VideoReview {
   videoUrl: string;
   bunnyVideoId?: string;
   localVideoUrl?: string;
+  localBlobUrl?: string;
+  blobUrl?: string;
   fallbackVideoUrls?: string[];
   videoData?: string;
   thumbnailUrl: string;

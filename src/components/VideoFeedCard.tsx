@@ -66,7 +66,8 @@ interface VideoFeedCardProps {
   onSelectSubTab?: (tab: FeedSubTab) => void;
   onToggleMute: (e?: React.SyntheticEvent | Event) => void;
   onForceMute?: () => void;
-  onTogglePlayPause?: (e?: React.SyntheticEvent | Event) => void;
+  onTogglePlayPause?: (e?: React.SyntheticEvent | Event, targetCardIndex?: number) => void;
+  onActivateCard?: (cardIndex: number) => void;
   onPauseVideo?: () => void;
   onOpenComments: (video: VideoReview) => void;
   onOpenPlace: (placeId: string) => void;
@@ -125,6 +126,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onToggleMute,
   onForceMute,
   onTogglePlayPause,
+  onActivateCard,
   onPauseVideo,
   onOpenComments,
   onOpenPlace,
@@ -541,12 +543,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
   }, [isActive, video, onTogglePlayPause]);
 
-  // Click card to toggle Play / Pause (Stop / Resume)
+  // Click card to toggle Play / Pause (Stop / Resume) or activate clicked card
   const togglePlayPause = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     triggerHaptic("light");
     ensureSharedAudioContextUnlocked();
-    onTogglePlayPause?.(e);
+    if (!isActive) {
+      if (onActivateCard) {
+        onActivateCard(index);
+      } else {
+        onTogglePlayPause?.(e, index);
+      }
+      return;
+    }
+    onTogglePlayPause?.(e, index);
   };
 
   // Sound toggle button - immediately handles user gesture on both touch and click without delay
@@ -588,6 +598,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     }
 
     const now = Date.now();
+
+    // If card is not active, clicking it immediately activates this card and begins playback
+    if (!isActive) {
+      lastTapTimeRef.current = now;
+      triggerHaptic("selection");
+      ensureSharedAudioContextUnlocked();
+      if (onActivateCard) {
+        onActivateCard(index);
+      } else {
+        onTogglePlayPause?.(e, index);
+      }
+      return;
+    }
+
     const diff = now - lastTapTimeRef.current;
     
     if (diff < 340 && diff > 0) {
@@ -1170,8 +1194,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       </div>
 
       {/* Center Video Player Symbol (Natural Play/Pause in the middle of the video) */}
-      {isActive && isManuallyPaused && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto animate-in zoom-in-75 fade-in duration-200">
+      {((isActive && isManuallyPaused) || (!isActive && !isPlaying)) && (
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto transition-all duration-200 ${
+          !isActive ? "opacity-85 group-hover:opacity-100 scale-95 group-hover:scale-105" : "animate-in zoom-in-75 fade-in duration-200"
+        }`}>
           <button
             type="button"
             id={`copo-play-center-btn-${video.id}`}

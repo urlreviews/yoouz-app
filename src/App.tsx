@@ -368,6 +368,31 @@ export function App() {
               if (!currentActive || String(currentActive.id) !== vidId) return currentActive;
               return { ...currentActive, transcriptText, segments };
             });
+          } else if (payload.type === "new_video" && payload.video) {
+            const incomingVideo = payload.video;
+            setVideos((prev) => {
+              if (prev.some((v) => v.id === incomingVideo.id)) {
+                return prev.map((v) => v.id === incomingVideo.id ? { ...v, ...incomingVideo } : v);
+              }
+              return [incomingVideo, ...prev];
+            });
+            if (incomingVideo.placeId) {
+              setPlaces((prev) => prev.map((p) => {
+                if (p.id !== incomingVideo.placeId && p.name !== incomingVideo.placeName) return p;
+                const existingReviews = Array.isArray(p.reviews) ? p.reviews : [];
+                if (existingReviews.some((r: any) => r && r.id === incomingVideo.id)) {
+                  return {
+                    ...p,
+                    reviews: existingReviews.map((r: any) => r && r.id === incomingVideo.id ? { ...r, ...incomingVideo } : r)
+                  };
+                }
+                return {
+                  ...p,
+                  totalReviews: (p.totalReviews || 0) + 1,
+                  reviews: [incomingVideo, ...existingReviews]
+                };
+              }));
+            }
           } else if (payload.type === "place_updated" && (payload.placeId || payload.place?.id || payload.updates?.id)) {
             const targetId = String(payload.placeId || payload.place?.id || payload.updates?.id || '');
             const targetName = String(payload.placeName || payload.place?.name || payload.updates?.name || '');

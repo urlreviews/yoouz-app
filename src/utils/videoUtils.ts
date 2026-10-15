@@ -109,9 +109,12 @@ export function resolvePlayableVideoSourcesCascade(
   const sources: string[] = [];
   const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
-  // 1. Fresh active session IndexedDB blob URL (ONLY if explicitly passed from local browser IndexedDB in current session)
-  if (cachedLocalBlobUrl && typeof cachedLocalBlobUrl === "string" && cachedLocalBlobUrl.startsWith("blob:")) {
-    sources.push(cachedLocalBlobUrl);
+  // 1. Fresh active session IndexedDB blob URL (from local browser IndexedDB or video object in current session)
+  const localBlobCandidate = cachedLocalBlobUrl || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
+  if (localBlobCandidate && typeof localBlobCandidate === "string" && localBlobCandidate.startsWith("blob:")) {
+    if (!sources.includes(localBlobCandidate)) {
+      sources.push(localBlobCandidate);
+    }
   }
 
   // 2. Direct Bunny CDN Edge URL (Instant global edge playback without proxying through server)

@@ -1248,6 +1248,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userEmail: currentUser?.email || "guest@yoouz.com",
       createdAtMs: Date.now(),
       isLocalUpload: true,
+      localBlobUrl: recordedVideoUrl || undefined,
+      blobUrl: recordedVideoUrl || undefined,
       placeId: selectedPlace.id,
       placeName: cleanPlaceName,
       placeCategory: selectedPlace.category || "General",
@@ -1436,10 +1438,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const newReview: VideoReview = {
       ...fallbackReview,
+      localBlobUrl: recordedVideoUrl || fallbackReview.localBlobUrl || undefined,
+      blobUrl: recordedVideoUrl || fallbackReview.blobUrl || undefined,
       videoUrl: uploadedPublicUrl || defaultStreamUrl,
       bunnyVideoId: finalBunnyId,
       videoData: uploadedVideoData || (recordedVideoBlob ? undefined : undefined),
-      fallbackVideoUrls: [uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
+      fallbackVideoUrls: [recordedVideoUrl, uploadedPublicUrl, defaultStreamUrl].filter(Boolean) as string[],
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
 
@@ -1489,6 +1493,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const finalReview: VideoReview = {
       ...newReview,
+      localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
+      blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
       transcriptText,
       segments
     } as any;
