@@ -127,10 +127,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [interimTranscript, setInterimTranscript] = useState("");
 
   const activeRecordingSegments = React.useMemo(() => {
-    if (!interimTranscript || !currentActivePhraseRef.current || !currentActivePhraseRef.current.text) {
+    if (!interimTranscript || !currentActivePhraseRef.current) {
       return liveSegments;
     }
-    return [...liveSegments, currentActivePhraseRef.current];
+    const interimSegments = currentActivePhraseRef.current.segments;
+    if (Array.isArray(interimSegments) && interimSegments.length > 0) {
+      return [...liveSegments, ...interimSegments];
+    }
+    if (currentActivePhraseRef.current.text) {
+      return [...liveSegments, currentActivePhraseRef.current];
+    }
+    return liveSegments;
   }, [liveSegments, interimTranscript]);
 
   // High-precision 60 FPS RequestAnimationFrame sync for Preview Video Playback
@@ -969,19 +976,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                 interim = transcriptPiece;
                 const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                // Keep active single-line chunk strictly at max 4 words for clean teleprompter reading
-                const displayWords = words.length > 4 ? words.slice(-4) : words;
-                const segStart = phraseStartRef.current;
-                const segEnd = Math.max(segStart + (displayWords.length * 0.35), nowSec + 0.4);
-                const wordTimings = alignWordsToTimeWindow(displayWords, segStart, segEnd);
+                if (words.length > 0) {
+                  const segStart = phraseStartRef.current;
+                  const segEnd = Math.max(segStart + (words.length * 0.35), nowSec + 0.4);
+                  const interimSingleLineSegments = buildSingleLineSegments(words, segStart, segEnd);
 
-                currentActivePhraseRef.current = {
-                  start: Math.round(segStart * 100) / 100,
-                  end: Math.round(segEnd * 100) / 100,
-                  text: displayWords.join(" "),
-                  words: wordTimings,
-                  isHardwareTimed: true
-                };
+                  currentActivePhraseRef.current = {
+                    fullText: transcriptPiece,
+                    text: transcriptPiece,
+                    segments: interimSingleLineSegments,
+                    start: Math.round(segStart * 100) / 100,
+                    end: Math.round(segEnd * 100) / 100,
+                    isHardwareTimed: true
+                  };
+                }
               }
             }
 
@@ -1073,18 +1081,25 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       // Capture any unfinalized interim transcript at stop time
       const activePhrase = currentActivePhraseRef.current;
-      if (activePhrase && activePhrase.text) {
-        const activeText = activePhrase.text || "";
-        const activeWords = activeText.split(/\s+/).filter(Boolean);
-        if (activeWords.length > 0) {
-          const recStart = recordingStartTimeRef.current || performance.now();
-          const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
-          const start = activePhrase.start || Math.max(0, finalNowSec - 1.2);
-          const end = Math.max(start + (activeWords.length * 0.35), finalNowSec);
-          const singleLineSegments = buildSingleLineSegments(activeWords, start, end);
-          liveSegmentsRef.current.push(...singleLineSegments);
+      if (activePhrase) {
+        const activeText = activePhrase.fullText || activePhrase.text || "";
+        const activeSegments = activePhrase.segments;
+        if (Array.isArray(activeSegments) && activeSegments.length > 0) {
+          liveSegmentsRef.current.push(...activeSegments);
           setLiveSegments([...liveSegmentsRef.current]);
           setLiveTranscript((prev) => (prev ? prev + " " : "") + activeText);
+        } else if (activeText) {
+          const activeWords = activeText.split(/\s+/).filter(Boolean);
+          if (activeWords.length > 0) {
+            const recStart = recordingStartTimeRef.current || performance.now();
+            const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
+            const start = activePhrase.start || Math.max(0, finalNowSec - 1.2);
+            const end = Math.max(start + (activeWords.length * 0.35), finalNowSec);
+            const singleLineSegments = buildSingleLineSegments(activeWords, start, end);
+            liveSegmentsRef.current.push(...singleLineSegments);
+            setLiveSegments([...liveSegmentsRef.current]);
+            setLiveTranscript((prev) => (prev ? prev + " " : "") + activeText);
+          }
         }
       }
       currentActivePhraseRef.current = null;

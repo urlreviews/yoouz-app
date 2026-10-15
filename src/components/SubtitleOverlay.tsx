@@ -78,6 +78,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         }));
 
       if (validArray.length > 0) {
+        validArray.sort((a, b) => a.start - b.start);
         return { validSegments: validArray, fullText: text };
       }
     }
