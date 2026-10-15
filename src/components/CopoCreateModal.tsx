@@ -2121,23 +2121,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                           }
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-full backdrop-blur-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`w-9 h-9 rounded-full backdrop-blur-xl border transition-all cursor-pointer flex items-center justify-center shadow-lg active:scale-95 shrink-0 ${
                         isMuted
-                          ? "bg-amber-500/20 border-amber-400/50 text-amber-300 font-bold animate-pulse"
-                          : "bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium"
+                          ? "bg-amber-500/20 border-amber-400/50 text-amber-300 animate-pulse"
+                          : "bg-black/60 hover:bg-black/80 border-white/20 text-white"
                       }`}
-                      title={isMuted ? "Tap to Unmute Sound" : "Mute Sound"}
+                      title={isMuted ? "Unmute sound" : "Mute sound"}
+                      aria-label={isMuted ? "Unmute sound" : "Mute sound"}
                     >
                       {isMuted ? (
-                        <>
-                          <VolumeX className="w-4 h-4 text-amber-300 shrink-0" />
-                          <span className="text-xs font-extrabold tracking-tight">Tap for Sound</span>
-                        </>
+                        <VolumeX className="w-4.5 h-4.5 text-amber-300 stroke-[2.2] shrink-0" />
                       ) : (
-                        <>
-                          <Volume2 className="w-4 h-4 text-white shrink-0" />
-                          <span className="text-xs font-semibold">Sound On</span>
-                        </>
+                        <Volume2 className="w-4.5 h-4.5 text-white stroke-[2.2] shrink-0" />
                       )}
                     </button>
                   </div>
