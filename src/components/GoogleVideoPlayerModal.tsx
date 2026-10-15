@@ -25,7 +25,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlo
 import { getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoStarRating } from "./CopoStarRating";
-import { SubtitleOverlay } from "./SubtitleOverlay";
+
 
 interface GoogleVideoPlayerModalProps {
   reviews: VideoReview[];
@@ -399,13 +399,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/85 pointer-events-none" />
 
           {/* Subtitle Overlay (YouTube-grade sentence captions) */}
-          <SubtitleOverlay
-            currentTime={currentTime}
-            segments={currentReview.segments}
-            transcriptText={currentReview.transcriptText}
-            duration={duration || currentReview.durationSeconds || 15}
-            isActive={showSubtitles}
-          />
+          {/* Subtitle overlay removed for clean video playback */}
 
           {/* Top Bar Header */}
           <div className="relative z-10 p-4 flex items-center justify-between">

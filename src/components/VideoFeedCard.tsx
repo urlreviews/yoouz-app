@@ -40,7 +40,6 @@ import { preloadBusinessAssets } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { CopoStarRating } from "./CopoStarRating";
-import { SubtitleOverlay } from "./SubtitleOverlay";
 
 
 interface VideoFeedCardProps {
@@ -1237,13 +1236,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       )}
 
       {/* Sync Captions Subtitle Overlay */}
-      <SubtitleOverlay 
-        currentTime={videoTime} 
-        segments={video.segments} 
-        transcriptText={video.transcriptText}
-        duration={video.durationSeconds || video.duration || 60}
-        isActive={isActive} 
-      />
+      {/* Subtitle overlay removed for clean video playback */}
 
       {/* Bottom Area: Metadata & Actions Container - sits cleanly above the bottom progress bar on mobile and desktop */}
       <div 
