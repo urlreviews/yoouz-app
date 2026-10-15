@@ -7198,19 +7198,7 @@ export function App() {
           onBlockOrHide={handleBlockOrHide}
         />
 
-        <CopoCreateModal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setPreselectedPlaceForRecording(null);
-          }}
-          places={places}
-          videos={videos}
-          preselectedPlace={preselectedPlaceForRecording}
-          onPublishVideoReview={handlePublishVideoReview}
-          currentUser={currentUser}
-          onAddPlace={handleUpdatePlace}
-        />
+
 
         <CopoGoogleAuthModal
           isOpen={isAuthModalOpen}

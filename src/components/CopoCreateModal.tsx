@@ -199,16 +199,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   }, [isPublishing]);
 
   const handleAttemptClose = () => {
-    // Allow closing the record modal and continuing in-app navigation while upload proceeds in background
+    stopCamera();
+    resetState();
+    setStep(1);
+    if (!preselectedPlace) {
+      setSelectedPlace(null);
+    }
+    setRating(0);
     onClose();
   };
 
   useEffect(() => {
     if (preselectedPlace) {
       setSelectedPlace(preselectedPlace);
-      if (isOpen) setStep(1);
     }
-  }, [preselectedPlace, isOpen]);
+  }, [preselectedPlace]);
 
   useEffect(() => {
     setRating(0);
@@ -219,7 +224,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       stopCamera();
       resetState();
       setStep(1);
+      if (!preselectedPlace) {
+        setSelectedPlace(null);
+      }
+      setRating(0);
     } else {
+      // Whenever modal opens afresh, guarantee zero leftover recorded video memory
+      resetState();
+      if (preselectedPlace) {
+        setSelectedPlace(preselectedPlace);
+      }
       setRating(0);
     }
     return () => {
@@ -244,10 +258,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setCountdown(null);
     setIsRecording(false);
     isRecordingRef.current = false;
-    setRecordedVideoBlob(null);
-    if (recordedVideoUrl) {
-      URL.revokeObjectURL(recordedVideoUrl);
+    
+    if (playbackVideoRef.current) {
+      try { playbackVideoRef.current.pause(); } catch (e) {}
     }
+
+    if (recordedVideoUrl) {
+      try { URL.revokeObjectURL(recordedVideoUrl); } catch (e) {}
+    }
+    setRecordedVideoBlob(null);
     setRecordedVideoUrl(null);
     setVideoThumbnail(null);
     setLiveTranscript("");
