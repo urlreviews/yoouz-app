@@ -43,7 +43,7 @@ jobs:
         run: |
           # Sanitize repo name to strictly lowercase for Docker / GHCR compliance
           IMAGE_NAME="ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
-          echo "🔨 Building and pushing Docker image: $IMAGE_NAME:latest..."
+          echo "🔨 Building and pushing Docker image: $IMAGE_NAME:latest and $IMAGE_NAME:${{ github.sha }}..."
           
           # Enable BuildKit to push layers atomically and disable provenance attestations to prevent GHCR 'unknown blob' error
           export DOCKER_BUILDKIT=1
@@ -51,6 +51,7 @@ jobs:
             --provenance=false \
             --push \
             -t "$IMAGE_NAME:latest" \
+            -t "$IMAGE_NAME:${{ github.sha }}" \
             .
 
       - name: Trigger Bunny Magic Containers Auto-Deploy (API / Webhook)
@@ -59,6 +60,8 @@ jobs:
           BUNNY_APP_ID: ${{ secrets.BUNNY_APP_ID || 'YEbe6RV5vr3sq3I' }}
           BUNNY_WEBHOOK: ${{ secrets.BUNNY_DEPLOY_WEBHOOK }}
         run: |
+          echo "🚀 Waiting 5 seconds for GHCR registry indexing..."
+          sleep 5
           echo "🚀 Triggering Bunny Magic Containers Auto-Deploy..."
           
           # 1. Trigger via Bunny Magic Containers REST API (/mc/apps)
