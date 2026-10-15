@@ -801,9 +801,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.transcript) {
-                  setLiveTranscript((prev) => prev || data.transcript);
+                  const serverTranscript = String(data.transcript || '').trim();
+                  if (serverTranscript) {
+                    setLiveTranscript((prev) => (!prev || serverTranscript.length >= prev.length * 0.7 ? serverTranscript : prev));
+                  }
                   if (data.segments && data.segments.length > 0) {
-                    setLiveSegments((prev) => (prev && prev.length > 0 ? prev : data.segments));
+                    setLiveSegments((prev) => (!prev || prev.length === 0 || data.segments.length >= prev.length ? data.segments : prev));
                   }
                 }
               }
@@ -966,10 +969,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
                 interim = transcriptPiece;
                 const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                // During live camera view, always display only the current single line (last 6-7 words)
-                const displayWords = words.length > 7 ? words.slice(-7) : words;
+                // Display full interim words so nothing disappears while speaking
+                const displayWords = words;
                 const segStart = phraseStartRef.current;
-                const segEnd = Math.max(segStart + (displayWords.length * 0.35), nowSec + 0.3);
+                const segEnd = Math.max(segStart + (displayWords.length * 0.38), nowSec + 0.5);
                 const wordTimings = alignWordsToTimeWindow(displayWords, segStart, segEnd);
 
                 currentActivePhraseRef.current = {
@@ -2306,6 +2309,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     transcriptText={liveTranscript || interimTranscript}
                     duration={60}
                     isActive={true}
+                    isLiveRecording={true}
                   />
                 )}
 

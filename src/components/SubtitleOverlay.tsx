@@ -7,6 +7,7 @@ interface SubtitleOverlayProps {
   transcriptText?: string;
   duration?: number;
   isActive: boolean;
+  isLiveRecording?: boolean;
 }
 
 // Helper to filter out video review title fallbacks so post titles never appear as subtitles
@@ -31,10 +32,11 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   segments,
   transcriptText,
   duration = 15,
-  isActive
+  isActive,
+  isLiveRecording = false
 }) => {
   // CRITICAL: ALL Hooks MUST execute unconditionally in every render cycle. NO early returns before Hooks!
-  const validSegments = useMemo(() => {
+  const { validSegments, fullText } = useMemo(() => {
     let parsed: any[] = [];
     if (Array.isArray(segments)) {
       parsed = segments;
@@ -46,51 +48,77 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     // Extract all spoken text
-    let fullText = "";
+    let text = "";
     if (parsed.length > 0) {
-      fullText = parsed
-        .map(s => String(s.text || s.transcript || '').trim())
+      text = parsed
+        .map(s => String(s?.text || s?.transcript || '').trim())
         .filter(s => s && !isTitleFallbackText(s))
         .join(" ");
     }
-    if (!fullText && transcriptText && transcriptText.trim()) {
+    if (!text && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isTitleFallbackText(clean)) {
-        fullText = clean;
+        text = clean;
       }
     }
 
-    if (!fullText || isTitleFallbackText(fullText)) return [];
+    if (!text || isTitleFallbackText(text)) return { validSegments: [], fullText: "" };
 
     const effectiveDuration = duration && duration > 0 ? duration : 60;
 
-    // Priority 1: Use explicit hardware-timed segments from SpeechRecognition if available
+    // Priority 1: Use explicit hardware-timed segments if available
     if (parsed.length > 0) {
-      const validArray = parsed.map((s: any) => ({
-        start: Number(s.start ?? s.start_time ?? 0),
-        end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.2)),
-        text: String(s.text || s.transcript || '').trim(),
-        words: Array.isArray(s.words) ? s.words : undefined
-      })).filter(s => s.text && !isTitleFallbackText(s.text));
+      const validArray = parsed
+        .filter(s => s && (s.text || s.transcript) && !isTitleFallbackText(s.text || s.transcript))
+        .map((s: any) => ({
+          start: Number(s.start ?? s.start_time ?? 0),
+          end: Number(s.end ?? s.end_time ?? (Number(s.start ?? 0) + 1.2)),
+          text: String(s.text || s.transcript || '').trim(),
+          words: Array.isArray(s.words) ? s.words : undefined
+        }));
 
       if (validArray.length > 0) {
-        return validArray;
+        return { validSegments: validArray, fullText: text };
       }
     }
 
-    return generatePrecisionSubtitles(fullText, effectiveDuration);
+    const precision = generatePrecisionSubtitles(text, effectiveDuration);
+    return { validSegments: precision, fullText: text };
   }, [segments, transcriptText, duration]);
 
   const activeSegment = useMemo(() => {
     if (!validSegments || validSegments.length === 0) return null;
 
-    // Strict YouTube CC timing: active strictly when currentTime is within [start - 0.04s, end + 0.08s]
-    // Zero bleed into pauses/silence so no word appears before or after the sentence
+    if (isLiveRecording) {
+      // Live recording teleprompter view: pick current active phrase or hold last spoken phrase
+      const direct = validSegments.find(
+        s => currentTime >= (s.start - 0.2) && currentTime <= (s.end + 1.5)
+      );
+      if (direct) return direct;
+
+      const last = validSegments[validSegments.length - 1];
+      if (last && currentTime >= (last.start - 0.5)) return last;
+      return validSegments[0] || null;
+    }
+
+    // Playback view: strict YouTube CC timing with 2.0s hold-over to bridge pauses so captions never vanish mid-video
     const direct = validSegments.find(
-      s => currentTime >= (s.start - 0.04) && currentTime <= (s.end + 0.08)
+      s => currentTime >= (s.start - 0.1) && currentTime <= (s.end + 0.1)
     );
-    return direct || null;
-  }, [validSegments, currentTime]);
+    if (direct) return direct;
+
+    for (let i = 0; i < validSegments.length; i++) {
+      const seg = validSegments[i];
+      const nextSeg = validSegments[i + 1];
+      const maxHold = nextSeg ? Math.min(seg.end + 2.0, nextSeg.start) : seg.end + 2.0;
+
+      if (currentTime >= seg.start && currentTime <= maxHold) {
+        return seg;
+      }
+    }
+
+    return null;
+  }, [validSegments, currentTime, isLiveRecording]);
 
   // Extract strict word tokens with exact start and end timestamps
   const wordTokens = useMemo(() => {
@@ -103,7 +131,6 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       return normalizeWordTimings(activeSegment.words, activeSegment.start, activeSegment.end, activeSegment.text);
     }
 
-    // Fallback word token timings from precision generator
     return normalizeWordTimings([], activeSegment.start, activeSegment.end, activeSegment.text);
   }, [activeSegment]);
 
@@ -112,21 +139,21 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!activeSegment || !activeSegment.text || isTitleFallbackText(activeSegment.text)) return null;
 
   return (
-    <div className="absolute bottom-[175px] xs:bottom-[190px] sm:bottom-[210px] md:bottom-[225px] left-0 right-0 flex justify-center px-3 sm:px-4 pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[96%] sm:max-w-[90%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
-        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center whitespace-nowrap overflow-hidden max-w-full">
+    <div className="absolute bottom-[160px] xs:bottom-[175px] sm:bottom-[195px] md:bottom-[210px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-[92%] sm:max-w-[85%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
+        <div className="bg-black/85 backdrop-blur-xl px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl sm:rounded-3xl border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full">
           {wordTokens.length > 0 ? (
-            <p className="text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full flex items-center justify-center whitespace-nowrap overflow-hidden text-ellipsis gap-x-1.5">
+            <p className="text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
               {wordTokens.map((w, idx) => {
-                const isCurrent = currentTime >= (w.start - 0.04) && currentTime <= (w.end + 0.04);
-                const isSpoken = currentTime > (w.end + 0.04);
+                const isCurrent = currentTime >= (w.start - 0.05) && currentTime <= (w.end + 0.05);
+                const isSpoken = currentTime > (w.end + 0.05);
                 return (
                   <span
                     key={`${w.word}-${idx}`}
-                    className={`inline-block whitespace-nowrap transition-all duration-75 ${
+                    className={`inline-block transition-all duration-75 ${
                       isCurrent
                         ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]'
-                        : isSpoken
+                        : isSpoken || isLiveRecording
                         ? 'text-white font-extrabold'
                         : 'text-white/80 font-bold'
                     }`}
@@ -137,7 +164,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               })}
             </p>
           ) : (
-            <p className="text-white text-[13px] xs:text-[14px] sm:text-[16px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="text-white text-[14px] xs:text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 max-w-full flex flex-wrap items-center justify-center">
               {activeSegment.text}
             </p>
           )}
