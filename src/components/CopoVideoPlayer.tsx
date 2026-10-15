@@ -1868,8 +1868,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         moreMenuVideo.author?.name === "me" ||
                         moreMenuVideo.userId === "me"
                       )) ||
-                      (localStorage.getItem("copo_my_videos") && JSON.parse(localStorage.getItem("copo_my_videos") || "[]").includes(moreMenuVideo.id)) ||
-                      Boolean(activeUser)
+                      (localStorage.getItem("copo_my_videos") && JSON.parse(localStorage.getItem("copo_my_videos") || "[]").includes(moreMenuVideo.id))
                     )
                 );
                 
