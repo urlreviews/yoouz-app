@@ -77,10 +77,20 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         }
       }
 
-      if (cleanedWords.length > 0) {
-        const rawWordsOnly = cleanedWords.map(w => w.word);
-        const startTime = cleanedWords[0].start;
-        const endTime = Math.max(startTime + (rawWordsOnly.length * 0.35), cleanedWords[cleanedWords.length - 1].end);
+      // Deduplicate consecutive duplicate words caused by speech recognition overlaps
+      const uniqueCleanedWords: { word: string; start: number; end: number }[] = [];
+      for (const cw of cleanedWords) {
+        const last = uniqueCleanedWords[uniqueCleanedWords.length - 1];
+        if (last && last.word.toLowerCase() === cw.word.toLowerCase() && (cw.start - last.start) < 1.0) {
+          continue;
+        }
+        uniqueCleanedWords.push(cw);
+      }
+
+      if (uniqueCleanedWords.length > 0) {
+        const rawWordsOnly = uniqueCleanedWords.map(w => w.word);
+        const startTime = uniqueCleanedWords[0].start;
+        const endTime = Math.max(startTime + (rawWordsOnly.length * 0.35), uniqueCleanedWords[uniqueCleanedWords.length - 1].end);
         const fullJoined = rawWordsOnly.join(" ");
 
         const normalizedSegments = buildSingleLineSegments(rawWordsOnly, startTime, endTime);
@@ -91,10 +101,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     // Extract all spoken text cleanly if timed segments are not present
     let text = "";
     if (parsed.length > 0) {
-      text = parsed
+      const rawTexts = parsed
         .map(s => String(s?.text || s?.transcript || '').trim())
-        .filter(s => s && !isTitleFallbackText(s))
-        .join(" ");
+        .filter(s => s && !isTitleFallbackText(s));
+      
+      const uniqueTexts: string[] = [];
+      for (const t of rawTexts) {
+        if (uniqueTexts.length === 0 || uniqueTexts[uniqueTexts.length - 1].toLowerCase() !== t.toLowerCase()) {
+          uniqueTexts.push(t);
+        }
+      }
+      text = uniqueTexts.join(" ");
     }
     if (!text && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
@@ -104,6 +121,19 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     if (!text || isTitleFallbackText(text)) return { validSegments: [], fullText: "" };
+
+    // Clean up consecutive word repetitions in text
+    const wordsList = text.split(/\s+/).filter(Boolean);
+    const dedupWords: string[] = [];
+    for (let i = 0; i < wordsList.length; i++) {
+      const w = wordsList[i];
+      const prevW = dedupWords[dedupWords.length - 1];
+      if (prevW && prevW.toLowerCase() === w.toLowerCase() && i > 0 && wordsList[i-1].toLowerCase() === w.toLowerCase()) {
+        continue;
+      }
+      dedupWords.push(w);
+    }
+    text = dedupWords.join(" ");
 
     const effectiveDuration = duration && duration > 0 ? duration : 15;
 
@@ -116,30 +146,23 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (!validSegments || validSegments.length === 0) return null;
 
     if (isLiveRecording) {
-      // Live recording view: pick active 5-7 word phrase matching currentTime, or latest spoken phrase
-      const direct = validSegments.find(
-        s => currentTime >= (s.start - 0.2) && currentTime <= (s.end + 0.8)
-      );
-      if (direct) return direct;
-
-      // Fallback to the latest spoken phrase so the teleprompter line stays visible as user speaks
-      const last = validSegments[validSegments.length - 1];
-      if (last) return last;
-      return validSegments[0] || null;
+      // Live recording view: always display the newest, latest spoken sentence instantly as user speaks
+      return validSegments[validSegments.length - 1] || null;
     }
 
     // Playback view: strict CC timing with hold-over so old lines transition smoothly when speech pauses
     for (let i = 0; i < validSegments.length; i++) {
       const seg = validSegments[i];
       const nextSeg = validSegments[i + 1];
-      const maxHold = nextSeg ? Math.min(seg.end + 0.2, nextSeg.start) : seg.end + 0.3;
+      const maxHold = nextSeg ? Math.min(seg.end + 0.5, nextSeg.start) : seg.end + 1.0;
 
-      if (currentTime >= (seg.start - 0.1) && currentTime <= maxHold) {
+      if (currentTime >= (seg.start - 0.2) && currentTime <= maxHold) {
         return seg;
       }
     }
 
-    return null;
+    // Fallback for playback if currentTime is near end or between segments
+    return validSegments[validSegments.length - 1] || null;
   }, [validSegments, currentTime, isLiveRecording]);
 
   // Extract strict word tokens with exact start and end timestamps
