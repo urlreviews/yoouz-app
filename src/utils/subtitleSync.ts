@@ -127,7 +127,7 @@ export function buildSingleLineSegments(rawWords: string[], startTime: number, e
   const words = rawWords.map(w => w.trim()).filter(Boolean);
   if (words.length === 0) return [];
 
-  const chunks = splitWordsIntoSingleLineChunks(words, 7);
+  const chunks = splitWordsIntoSingleLineChunks(words, 4);
   if (chunks.length <= 1) {
     const wordObjs = alignWordsToTimeWindow(words, startTime, endTime);
     const segEnd = wordObjs.length > 0 ? wordObjs[wordObjs.length - 1].end : endTime;
