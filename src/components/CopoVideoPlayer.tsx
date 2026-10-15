@@ -1860,10 +1860,34 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 const isMyVideo = Boolean(
                   activeUser && moreMenuVideo &&
                     (
-                      isAuthorMatch(moreMenuVideo, activeUser) ||
-                      (activeUser.email && (moreMenuVideo?.userId === activeUser.email || (moreMenuVideo as any)?.userEmail === activeUser.email)) ||
-                      (activeUser.id && (moreMenuVideo?.userId === activeUser.id || (moreMenuVideo as any)?.uid === activeUser.id)) ||
-                      (activeUser.name && moreMenuVideo.author?.name && moreMenuVideo.author.name.toLowerCase() === activeUser.name.toLowerCase() && moreMenuVideo.author.name.toLowerCase() !== "reviewer" && moreMenuVideo.author.name.toLowerCase() !== "guest")
+                      // 1. Explicit Email Match
+                      (activeUser.email && (
+                        moreMenuVideo?.userId === activeUser.email || 
+                        (moreMenuVideo as any)?.userEmail === activeUser.email ||
+                        moreMenuVideo.author?.email === activeUser.email
+                      )) ||
+                      // 2. Explicit User ID/UID Match
+                      ((activeUser.id || (activeUser as any).uid) && (
+                        moreMenuVideo?.userId === (activeUser.id || (activeUser as any).uid) || 
+                        (moreMenuVideo as any)?.uid === (activeUser.id || (activeUser as any).uid) ||
+                        moreMenuVideo.author?.id === (activeUser.id || (activeUser as any).uid)
+                      )) ||
+                      // 3. Strict handle/author match via isAuthorMatch (excluding generic branding/placeholder names)
+                      (
+                        isAuthorMatch(moreMenuVideo, activeUser) &&
+                        !["yoouz", "yoouz user", "guest", "reviewer", "anonymous", "verified reviewer"].includes((moreMenuVideo.author?.name || "").toLowerCase()) &&
+                        !["yoouz", "yoouz user", "guest", "reviewer", "anonymous", "verified reviewer"].includes((activeUser.name || "").toLowerCase())
+                      ) ||
+                      // 4. Recorded locally by this exact user in this browser
+                      (
+                        typeof localStorage !== "undefined" &&
+                        localStorage.getItem("yoouz_local_created_reviews") &&
+                        JSON.parse(localStorage.getItem("yoouz_local_created_reviews") || "[]").some(
+                          (r: any) => r && r.id === moreMenuVideo.id && (
+                            !r.userId || r.userId === activeUser.id || r.userId === activeUser.email || isAuthorMatch(r, activeUser)
+                          )
+                        )
+                      )
                     )
                 );
                 
@@ -2080,23 +2104,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         <span>{t("video.viewCreatorProfile", "View Creator Profile")} ({moreMenuVideo.author.name})</span>
                       </button>
                     )}
-
-                    <div className="my-2 border-t border-zinc-800" />
-
-                    <button
-                      id="btn-more-option-delete-viewer"
-                      onClick={() => {
-                        const v = moreMenuVideo;
-                        setMoreMenuVideo(null);
-                        if (v) {
-                          setVideoConfirmDelete(v);
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                      <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
-                    </button>
 
                     {onOpenReport && (
                       <button
