@@ -25,6 +25,7 @@ import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlo
 import { getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoStarRating } from "./CopoStarRating";
+import { SubtitleOverlay } from "./SubtitleOverlay";
 
 interface GoogleVideoPlayerModalProps {
   reviews: VideoReview[];
@@ -59,6 +60,9 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   const [isActualMuted, setIsActualMuted] = useState<boolean>(isMuted || !isSessionAudioUnlocked);
   const [newComment, setNewComment] = useState("");
   const [activeVideoSrc, setActiveVideoSrc] = useState<string>("");
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(currentReview?.durationSeconds || 15);
+  const [showSubtitles, setShowSubtitles] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const currentIndex = reviews.findIndex((r) => r.id === currentReview.id);
@@ -346,9 +350,18 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             }}
             onTimeUpdate={(e) => {
               const t = e.currentTarget;
-              // Safety catch: force pause if it should be stopped but is moving
+              setCurrentTime(t.currentTime);
+              if (t.duration && !isNaN(t.duration)) {
+                setDuration(t.duration);
+              }
               if ((!hasStarted || !isPlaying) && !t.paused) {
                 t.pause();
+              }
+            }}
+            onLoadedMetadata={(e) => {
+              const t = e.currentTarget;
+              if (t.duration && !isNaN(t.duration)) {
+                setDuration(t.duration);
               }
             }}
             onPause={() => setIsPlaying(false)}
@@ -385,6 +398,15 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
           {/* Vignette Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/85 pointer-events-none" />
 
+          {/* Subtitle Overlay (YouTube-grade sentence captions) */}
+          <SubtitleOverlay
+            currentTime={currentTime}
+            segments={currentReview.segments}
+            transcriptText={currentReview.transcriptText}
+            duration={duration || currentReview.durationSeconds || 15}
+            isActive={showSubtitles}
+          />
+
           {/* Top Bar Header */}
           <div className="relative z-10 p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -395,6 +417,20 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* YouTube-style CC Subtitles Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setShowSubtitles(prev => !prev)}
+                className={`px-2.5 h-9 rounded-full backdrop-blur-2xl border flex items-center justify-center text-xs font-bold transition-all cursor-pointer shadow-xl ${
+                  showSubtitles
+                    ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                    : "bg-black/60 border-white/20 text-white/70 hover:text-white"
+                }`}
+                title={showSubtitles ? "Disable Subtitles" : "Enable Subtitles"}
+              >
+                CC
+              </button>
+
               <button
                 type="button"
                 onClick={handleToggleMute}
