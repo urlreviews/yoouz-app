@@ -134,14 +134,10 @@ export function resolvePlayableVideoSourcesCascade(
 
   const guid = video.bunnyVideoId || (video as any).bunnyGuid || (video.id && !video.id.startsWith('rev-') ? video.id : null);
   if (guid && isStreamGuid(guid)) {
-    // Official Bunny Stream pull zone
-    const streamHlsUrl = `https://vz-dcd9e101-437.b-cdn.net/${guid}/playlist.m3u8`;
+    // Official Bunny Stream pull zone matching library ID
+    const streamHlsUrl = `https://vz-${bunnyLibId}.b-cdn.net/${guid}/playlist.m3u8`;
     if (!sources.includes(streamHlsUrl)) {
       sources.push(streamHlsUrl);
-    }
-    const legacyStreamHls = `https://vz-${bunnyLibId}.b-cdn.net/${guid}/playlist.m3u8`;
-    if (!sources.includes(legacyStreamHls)) {
-      sources.push(legacyStreamHls);
     }
   }
 

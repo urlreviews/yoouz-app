@@ -12710,7 +12710,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             });
 
             if (uploadResp.ok) {
-              const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
+              const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || `https://vz-${bunnyLibraryId}.b-cdn.net`;
               bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
@@ -21910,7 +21910,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       if (bunnyVideoGuid) {
         review.bunnyVideoId = bunnyVideoGuid;
         review.bunnyGuid = bunnyVideoGuid;
-        const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
+        const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || `https://vz-${libraryId}.b-cdn.net`;
         review.hlsUrl = `${streamPullZone}/${bunnyVideoGuid}/playlist.m3u8`;
         review.vttUrl = `${streamPullZone}/${bunnyVideoGuid}/captions/en-auto.vtt`;
 
@@ -21971,7 +21971,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       } catch (e) {}
 
       if (!captionsPath) {
-        captionsPath = `https://vz-dcd9e101-437.b-cdn.net/${bunnyVideoId}/captions/`;
+        captionsPath = `https://vz-${libraryId}.b-cdn.net/${bunnyVideoId}/captions/`;
       }
 
       const vttUrl = `${captionsPath.replace(/\/?$/, '/')}${srclang}.vtt`;
