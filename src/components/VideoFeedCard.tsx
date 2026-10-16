@@ -1286,8 +1286,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 emptyColorClass="fill-zinc-600/70 text-zinc-200/80"
               />
               {(video.recordedAt || video.createdAtMs) && (
-                <span className="text-white/90 text-[11.5px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-white/80 shrink-0" />
+                <span className="text-white/95 text-[11.5px] font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-white shrink-0" />
                   <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                 </span>
               )}
@@ -1308,11 +1308,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               return (
                 <div className="flex flex-col gap-0.5 mt-0.5">
                   {!isGenericCaption && (
-                    <p className="text-white/95 text-xs font-semibold line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                    <p className="text-white text-xs font-bold line-clamp-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
                       {displayHeadline}
                     </p>
                   )}
-                  <p className="text-white/80 text-[11.5px] font-normal drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                  <p className="text-white/90 text-[11.5px] font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
                     Video review for {cleanDomain}
                   </p>
                 </div>
