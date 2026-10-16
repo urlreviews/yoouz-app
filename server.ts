@@ -12634,7 +12634,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
       // 3. Synchronously upload to Bunny Stream for Automated AI Captions & Global HLS Delivery
       const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
-      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
       let streamError = "";
 
       console.log(`📡 [Bunny Stream] Check - Key: ${bunnyStreamKey ? 'PRESENT (starts with ' + bunnyStreamKey.substring(0, 4) + ')' : 'MISSING'}, Lib: ${bunnyLibraryId || 'MISSING'}`);
@@ -18564,13 +18564,37 @@ app.post("/api/videos/save-review", async (req, res) => {
             if (review.videoData && typeof review.videoData === 'string') {
               const b64 = review.videoData.includes("base64,") ? review.videoData.split("base64,")[1] : review.videoData;
               vBuffer = Buffer.from(b64, 'base64');
-            } else if (review.videoUrl && review.videoUrl.startsWith("/api/videos/stream/")) {
-              const fname = review.videoUrl.split("/api/videos/stream/")[1];
-              const fpath = path.join(serverUploadsDir, fname);
-              if (fs.existsSync(fpath)) {
-                vBuffer = fs.readFileSync(fpath);
+            }
+            if (!vBuffer) {
+              const candidateNames = [
+                review.id,
+                review.videoUrl ? path.basename(review.videoUrl) : null,
+                review.id ? `${review.id}.mp4` : null,
+                review.id ? `${review.id}.webm` : null
+              ].filter(Boolean) as string[];
+
+              const searchDirs = [serverUploadsDir, uploadsDir, path.join(uploadsDir, "videos")];
+              for (const dir of searchDirs) {
+                for (const name of candidateNames) {
+                  const p = path.join(dir, name);
+                  if (fs.existsSync(p) && fs.statSync(p).size > 1000) {
+                    vBuffer = fs.readFileSync(p);
+                    break;
+                  }
+                }
+                if (vBuffer) break;
               }
             }
+
+            if (!vBuffer && review.videoUrl && review.videoUrl.startsWith("http")) {
+              try {
+                const fetchRes = await fetch(review.videoUrl, { signal: AbortSignal.timeout(20000) });
+                if (fetchRes.ok) {
+                  vBuffer = Buffer.from(await fetchRes.arrayBuffer());
+                }
+              } catch (e) {}
+            }
+
             await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
           } catch (bunnyErr) {
             console.warn("Bunny Stream upload background notice:", bunnyErr);
@@ -21710,10 +21734,57 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       const title = `${review.authorName || review.author?.name || 'Reviewer'} - ${review.placeName || review.dishOrItem || 'Review'}`;
 
-      // 1. If direct URL available on Bunny CDN / public web, use fast server-side fetch ingestion
+      // 1. If binary buffer is missing but targetUrl is reachable, download buffer first for instant encoding
       const targetUrl = directUrl || (review.videoUrl && review.videoUrl.startsWith("http") ? review.videoUrl : null);
-      if (targetUrl) {
-        console.log(`🐰 [Bunny Stream] Requesting fetch ingest for ${review.id} from ${targetUrl}...`);
+      if ((!videoBuffer || videoBuffer.length === 0) && targetUrl) {
+        try {
+          const dlResp = await fetch(targetUrl, { signal: AbortSignal.timeout(15000) });
+          if (dlResp.ok) {
+            videoBuffer = Buffer.from(await dlResp.arrayBuffer());
+          }
+        } catch (e) {}
+      }
+
+      // 2. Direct binary buffer upload (guarantees ~10s instant transcode and AI Smart Captions generation)
+      if (videoBuffer && videoBuffer.length > 0) {
+        console.log(`🐰 [Bunny Stream] Uploading binary buffer (${videoBuffer.length} bytes) for ${review.id} to Library ${libraryId}...`);
+        const createRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos`, {
+          method: "POST",
+          headers: {
+            "AccessKey": apiKey,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            title: `${review.author?.name || 'Reviewer'} - ${review.placeName || 'Review'}`
+          }),
+          signal: AbortSignal.timeout(15000)
+        });
+
+        if (createRes.ok) {
+          const videoData: any = await createRes.json();
+          bunnyVideoGuid = videoData.guid;
+          if (bunnyVideoGuid) {
+            const uploadRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${bunnyVideoGuid}`, {
+              method: "PUT",
+              headers: {
+                "AccessKey": apiKey,
+                "Content-Type": "application/octet-stream"
+              },
+              body: videoBuffer,
+              signal: AbortSignal.timeout(120000)
+            });
+
+            if (uploadRes.ok) {
+              console.log(`✅ [Bunny Stream] Successfully uploaded buffer for ${review.id} (Guid: ${bunnyVideoGuid})`);
+            }
+          }
+        }
+      }
+
+      // 3. Fallback: If buffer upload was impossible, queue remote fetch ingest
+      if (!bunnyVideoGuid && targetUrl) {
+        console.log(`🐰 [Bunny Stream] Fallback: Requesting fetch ingest for ${review.id} from ${targetUrl}...`);
         try {
           const fetchRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/fetch`, {
             method: "POST",
@@ -21733,46 +21804,6 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             }
           }
         } catch (fErr) {}
-      }
-
-      // 2. If no ingest GUID and binary buffer available, create video and PUT binary
-      if (!bunnyVideoGuid && videoBuffer && videoBuffer.length > 0) {
-        console.log(`🐰 [Bunny Stream] Uploading binary buffer (${videoBuffer.length} bytes) for ${review.id} to Library ${libraryId}...`);
-        const createRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos`, {
-          method: "POST",
-          headers: {
-            "AccessKey": apiKey,
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({
-            title: `${review.author?.name || 'Reviewer'} - ${review.placeName || 'Review'}`
-          }),
-          signal: AbortSignal.timeout(15000)
-        });
-
-        if (!createRes.ok) {
-          console.warn(`[Bunny Stream] Create video failed: ${createRes.status}`);
-          return;
-        }
-
-        const videoData: any = await createRes.json();
-        bunnyVideoGuid = videoData.guid;
-        if (!bunnyVideoGuid) return;
-
-        const uploadRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${bunnyVideoGuid}`, {
-          method: "PUT",
-          headers: {
-            "AccessKey": apiKey,
-            "Content-Type": "application/octet-stream"
-          },
-          body: videoBuffer,
-          signal: AbortSignal.timeout(120000)
-        });
-
-        if (uploadRes.ok) {
-          console.log(`✅ [Bunny Stream] Successfully uploaded buffer for ${review.id} (Guid: ${bunnyVideoGuid})`);
-        }
       }
 
       if (bunnyVideoGuid) {

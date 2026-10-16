@@ -112,8 +112,8 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         let s = item.start >= 0 ? item.start : i * 2.5;
         let e = item.end > s ? item.end : s + 2.0;
 
-        if (e - s < 1.2) e = s + 1.2;
-        if (e - s > 6.0) e = s + 6.0;
+        if (e - s < 0.8) e = s + 0.8;
+        if (e - s > 12.0) e = s + 12.0;
 
         cleanCues.push({
           id: cueId++,
