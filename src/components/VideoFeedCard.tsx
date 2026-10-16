@@ -1294,9 +1294,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               )}
             </div>
 
-            {/* AI Review Title (Clean white typography matching user name and rating) */}
+            {/* AI Review Title (Clean white typography matching user name and rating - Icon removed for minimalist premium feel) */}
             {(() => {
-              const aiTitleText = (() => {
+              const rawTitleText = (() => {
                 if (video.aiTitle) return video.aiTitle;
                 if (video.title && !video.title.endsWith('.mp4') && !video.title.startsWith('rev-') && video.title.length > 5) return video.title;
                 if (video.transcriptText && video.transcriptText.trim().length > 8) {
@@ -1311,13 +1311,26 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 return null;
               })();
 
-              if (!aiTitleText) return null;
+              if (!rawTitleText) return null;
+
+              // Clean title string: strip trailing "| EN", "| EN-US", "| AUTO", "| English", ".mp4", etc.
+              const cleanTitle = rawTitleText
+                .replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "")
+                .replace(/\s*\|.*$/i, "")
+                .trim();
+
+              if (!cleanTitle) return null;
+
+              // Ensure clean, elegant quotation marks at the start and end of the review title
+              const unquotedTitle = cleanTitle.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
+              if (!unquotedTitle) return null;
+
+              const formattedTitle = `“${unquotedTitle}”`;
 
               return (
-                <div className="flex items-baseline gap-1.5 text-white font-semibold text-[13px] sm:text-[14px] leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] mt-0.5 line-clamp-2">
-                  <Sparkles className="w-3.5 h-3.5 text-white shrink-0 inline-block align-middle opacity-90 -translate-y-0.5" />
-                  <span className="text-white tracking-normal">{aiTitleText}</span>
-                </div>
+                <p className="text-white font-semibold text-[13px] sm:text-[14px] leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] mt-0.5 line-clamp-2 tracking-normal">
+                  {formattedTitle}
+                </p>
               );
             })()}
 

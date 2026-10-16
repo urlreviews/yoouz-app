@@ -21989,8 +21989,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (vttText && vttText.includes("WEBVTT")) {
           const segments = parseVttToSegments(vttText);
           if (segments.length > 0) {
-            const transcriptText = segments.map(s => s.text).join(" ");
-            const aiTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
+            const rawTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
+            const aiTitle = rawTitle ? rawTitle.replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "").replace(/\s*\|.*$/i, "").trim() : undefined;
             console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions for ${bunnyVideoId}`);
             return { segments, transcriptText, vttText, aiTitle };
           }
