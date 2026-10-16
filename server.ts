@@ -21989,6 +21989,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (vttText && vttText.includes("WEBVTT")) {
           const segments = parseVttToSegments(vttText);
           if (segments.length > 0) {
+            const transcriptText = segments.map((s: any) => s.text).join(" ");
             const rawTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
             let cleanTitle = rawTitle ? rawTitle.replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "").replace(/\s*\|.*$/i, "").trim() : undefined;
             if (cleanTitle && cleanTitle.includes(":")) {
