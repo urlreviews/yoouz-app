@@ -132,8 +132,8 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.hlsUrl);
   }
 
-  const guid = video.bunnyVideoId || (video as any).bunnyGuid || video.id;
-  if (isStreamGuid(guid)) {
+  const guid = video.bunnyVideoId || (video as any).bunnyGuid || (video.id && !video.id.startsWith('rev-') ? video.id : null);
+  if (guid && isStreamGuid(guid)) {
     // Official Bunny Stream pull zone
     const streamHlsUrl = `https://vz-dcd9e101-437.b-cdn.net/${guid}/playlist.m3u8`;
     if (!sources.includes(streamHlsUrl)) {
