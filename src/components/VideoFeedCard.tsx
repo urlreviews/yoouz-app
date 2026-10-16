@@ -1204,18 +1204,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         </div>
       </div>
 
-      {/* AI-Generated Summary Title Pill (Bunny Stream AI Title) */}
-      {(video.aiTitle || (video.title && !video.title.endsWith('.mp4') && !video.title.startsWith('rev-') && video.title.length > 5)) && (
-        <div className="absolute top-[68px] sm:top-[74px] left-3 right-[68px] z-30 pointer-events-none transition-all duration-300">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-amber-400/30 shadow-[0_4px_16px_rgba(0,0,0,0.7)] max-w-full">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-            <span className="text-[12px] sm:text-[13px] font-semibold text-amber-100 tracking-tight leading-snug truncate">
-              {video.aiTitle || video.title}
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Center Video Player Symbol (Natural Play/Pause in the middle of the video) */}
       {((isActive && isManuallyPaused) || (!isActive && !isPlaying)) && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-auto transition-all duration-200 ${
@@ -1305,6 +1293,33 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 </span>
               )}
             </div>
+
+            {/* AI Review Title (Clean white typography matching user name and rating) */}
+            {(() => {
+              const aiTitleText = (() => {
+                if (video.aiTitle) return video.aiTitle;
+                if (video.title && !video.title.endsWith('.mp4') && !video.title.startsWith('rev-') && video.title.length > 5) return video.title;
+                if (video.transcriptText && video.transcriptText.trim().length > 8) {
+                  const cleanSpeech = video.transcriptText.trim();
+                  const firstSentence = cleanSpeech.split(/(?<=[.?!])\s+/)[0] || cleanSpeech;
+                  const truncated = firstSentence.length > 60 ? firstSentence.slice(0, 57) + "..." : firstSentence;
+                  return `${(video.rating || 5) >= 4 ? "Positive Review" : "Review"}: ${truncated}`;
+                }
+                if (video.placeName) {
+                  return `${(video.rating || 5) >= 4 ? "5★ Verified Review" : "Verified Review"}: ${video.placeName}`;
+                }
+                return null;
+              })();
+
+              if (!aiTitleText) return null;
+
+              return (
+                <div className="flex items-baseline gap-1.5 text-white font-semibold text-[13px] sm:text-[14px] leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] mt-0.5 line-clamp-2">
+                  <Sparkles className="w-3.5 h-3.5 text-white shrink-0 inline-block align-middle opacity-90 -translate-y-0.5" />
+                  <span className="text-white tracking-normal">{aiTitleText}</span>
+                </div>
+              );
+            })()}
 
             {video.caption && video.caption.trim().length > 0 && (
               <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">

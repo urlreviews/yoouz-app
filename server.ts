@@ -12568,12 +12568,40 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       const tempTranscodePath = path.join(serverUploadsDir, `temp_enc_${Date.now()}_${base}.mp4`);
       let finalVideoPath = filePath;
-      if (filePath !== mp4FilePath && fs.existsSync(filePath)) {
-        try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
-        if (fs.existsSync(mp4FilePath)) {
-          finalVideoPath = mp4FilePath;
-          cleanFileName = mp4FileName;
-          mimeType = "video/mp4";
+      if (fs.existsSync(filePath)) {
+        let isTranscoded = false;
+        try {
+          // Remux browser WebM/MOV recording into standard MP4 with faststart headers (preserves 100% video duration)
+          execSync(`ffmpeg -i "${filePath}" -c copy -movflags +faststart "${tempTranscodePath}" -y`, { timeout: 12000, stdio: 'ignore' });
+          if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
+            fs.renameSync(tempTranscodePath, mp4FilePath);
+            finalVideoPath = mp4FilePath;
+            cleanFileName = mp4FileName;
+            mimeType = "video/mp4";
+            isTranscoded = true;
+          }
+        } catch (e1) {}
+
+        if (!isTranscoded) {
+          try {
+            execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -c:a aac -movflags +faststart "${tempTranscodePath}" -y`, { timeout: 18000, stdio: 'ignore' });
+            if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
+              fs.renameSync(tempTranscodePath, mp4FilePath);
+              finalVideoPath = mp4FilePath;
+              cleanFileName = mp4FileName;
+              mimeType = "video/mp4";
+              isTranscoded = true;
+            }
+          } catch (e2) {}
+        }
+
+        if (!isTranscoded && filePath !== mp4FilePath) {
+          try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
+          if (fs.existsSync(mp4FilePath)) {
+            finalVideoPath = mp4FilePath;
+            cleanFileName = mp4FileName;
+            mimeType = "video/mp4";
+          }
         }
       }
 
@@ -18606,7 +18634,10 @@ app.post("/api/videos/save-review", async (req, res) => {
               } catch (e) {}
             }
 
-            await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
+            // Only upload if video is not already in Bunny Stream Library
+            if (!review.bunnyVideoId && !review.bunnyGuid) {
+              await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
+            }
           } catch (bunnyErr) {
             console.warn("Bunny Stream upload background notice:", bunnyErr);
           }

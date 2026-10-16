@@ -196,13 +196,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive || !activeCue || !activeCue.text) return null;
 
   return (
-    <div className="absolute bottom-[170px] xs:bottom-[180px] sm:bottom-[210px] left-3 right-[72px] sm:left-0 sm:right-0 flex justify-start sm:justify-center pointer-events-none z-[48] select-none transition-all duration-200">
-      <div className="w-full sm:w-auto max-w-full sm:max-w-[85%] md:max-w-[620px] flex justify-start sm:justify-center">
+    <div className="absolute bottom-[135px] xs:bottom-[145px] sm:bottom-[165px] left-3 right-[70px] md:left-4 md:right-4 flex justify-center pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-full md:max-w-[440px] flex justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-md px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl border border-amber-500/25 border-t-amber-400/80 shadow-[0_8px_28px_rgba(0,0,0,0.9)] text-left sm:text-center flex items-center justify-start sm:justify-center max-w-full"
+          className="bg-black/75 backdrop-blur-2xl px-4 py-1.5 rounded-full border border-white/20 shadow-2xl text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[13px] xs:text-[14px] sm:text-[16px] md:text-[18px] font-semibold tracking-normal leading-snug px-0.5 text-amber-50 break-words max-w-full drop-shadow-md">
+          <p className="text-[13px] sm:text-[14px] font-bold tracking-normal text-center leading-snug px-1 text-white break-words max-w-full drop-shadow-md">
             {activeCue.text}
           </p>
         </div>
