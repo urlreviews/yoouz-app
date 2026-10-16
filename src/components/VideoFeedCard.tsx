@@ -1341,23 +1341,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className="copo-video-scrubber-position absolute left-0 right-0 z-40 h-9 sm:h-10 flex items-end pb-1 cursor-pointer select-none px-0 group touch-none"
         >
-          {/* Desktop Hover Floating Time Badge */}
-          {isHovering && !isScrubbing && (
-            <div 
-              className="absolute bottom-6 sm:bottom-7 flex flex-col items-center pointer-events-none drop-shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
-              style={{ 
-                left: `${clampedPreviewLeftPct}%`,
-                transform: 'translateX(-50%)'
-              }}
-            >
-              <div className="px-2.5 py-1 rounded-full bg-black/90 backdrop-blur-md border border-white/30 shadow-lg">
-                <span className="text-white text-xs font-bold font-mono tracking-wider select-none">
-                  {scrubTimeText}
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Background Track - Expands smoothly from 2px hairline to 5px/6px tactile bar on touch/hover */}
           <div 
             className={`w-full relative transition-all duration-150 ease-out ${

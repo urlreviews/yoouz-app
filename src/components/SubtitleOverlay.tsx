@@ -34,7 +34,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Build clean, discrete, non-overlapping sentence segments perfectly scaled to video duration
+  // Build clean, semantic, natural 1-to-2 line sentence chunks (YouTube Standard)
   const discreteSegments = useMemo<DiscreteSegment[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -72,39 +72,52 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (!fullSpokenText || isTitleFallbackText(fullSpokenText)) return [];
 
     // Clean up consecutive word repetitions in fullSpokenText
-    const wordsList = fullSpokenText.split(/\s+/).filter(Boolean);
-    const dedupWords: string[] = [];
-    for (let i = 0; i < wordsList.length; i++) {
-      const w = wordsList[i];
-      const prevW = dedupWords[dedupWords.length - 1];
-      if (prevW && prevW.toLowerCase() === w.toLowerCase() && i > 0 && wordsList[i - 1].toLowerCase() === w.toLowerCase()) {
+    const rawWords = fullSpokenText.split(/\s+/).filter(Boolean);
+    const wordsList: string[] = [];
+    for (let i = 0; i < rawWords.length; i++) {
+      const w = rawWords[i];
+      const prevW = wordsList[wordsList.length - 1];
+      if (prevW && prevW.toLowerCase() === w.toLowerCase() && i > 0 && rawWords[i - 1].toLowerCase() === w.toLowerCase()) {
         continue;
       }
-      dedupWords.push(w);
+      wordsList.push(w);
     }
 
-    if (dedupWords.length === 0) return [];
+    if (wordsList.length === 0) return [];
 
-    // Group words into balanced 4 to 6 word chunks, ensuring NO dangling single words
-    const targetChunkSize = 5;
+    // Chunk words into semantic thought units of 6 to 9 words (allowing natural 1 to 2 lines without truncation)
+    const targetChunkSize = 7;
     const wordChunks: string[][] = [];
-    for (let i = 0; i < dedupWords.length; i += targetChunkSize) {
-      wordChunks.push(dedupWords.slice(i, i + targetChunkSize));
-    }
+    let currentChunk: string[] = [];
 
-    // Merge trailing chunk if it has 1 or 2 words into preceding chunk
-    if (wordChunks.length > 1) {
-      const lastChunk = wordChunks[wordChunks.length - 1];
-      if (lastChunk.length <= 2) {
-        wordChunks[wordChunks.length - 2].push(...lastChunk);
-        wordChunks.pop();
+    for (let i = 0; i < wordsList.length; i++) {
+      const word = wordsList[i];
+      currentChunk.push(word);
+
+      const hasPunctuation = /[.,!?;:]$/.test(word);
+      const isChunkFull = currentChunk.length >= targetChunkSize;
+      const isMinimumReached = currentChunk.length >= 5;
+      const remainingWords = wordsList.length - (i + 1);
+
+      if ((isChunkFull || (isMinimumReached && hasPunctuation)) && remainingWords >= 4) {
+        wordChunks.push(currentChunk);
+        currentChunk = [];
       }
     }
 
-    // Mathematically scale start and end times across video duration [0.2s, totalDuration - 0.2s]
+    if (currentChunk.length > 0) {
+      if (wordChunks.length > 0 && currentChunk.length <= 3) {
+        // Merge short remainder into preceding chunk so no sentence ever has dangling words
+        wordChunks[wordChunks.length - 1].push(...currentChunk);
+      } else {
+        wordChunks.push(currentChunk);
+      }
+    }
+
+    // Mathematically scale start and end times across video duration [0.2s, totalDuration - 0.3s]
     const effectiveDur = duration && duration > 0 ? duration : 15;
-    const totalWords = dedupWords.length;
-    const availableDur = Math.max(2.0, effectiveDur - 0.4);
+    const totalWords = wordsList.length;
+    const availableDur = Math.max(2.0, effectiveDur - 0.5);
     
     let currentStart = 0.2;
     const result: DiscreteSegment[] = [];
@@ -124,7 +137,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         text: chunkText
       });
 
-      currentStart = segEnd;
+      currentStart = segEnd; // Next sentence starts right when this one finishes
     }
 
     return result;
@@ -138,14 +151,14 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       return discreteSegments[discreteSegments.length - 1] || null;
     }
 
-    // Strict time window matching: appears ONLY during [start, end] and clears when finished
+    // Strict time window: appears ONLY during [start, end] and clears when finished
     for (const seg of discreteSegments) {
       if (currentTime >= seg.start && currentTime <= seg.end) {
         return seg;
       }
     }
 
-    return null; // Clears completely at end of sentence or near video loop
+    return null; // Clears completely between sentences and at end of video loop
   }, [discreteSegments, currentTime, isActive, isLiveRecording]);
 
   // Detect Right-to-Left languages
@@ -158,12 +171,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   return (
     <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[220px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[92%] sm:max-w-[85%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
+      <div className="max-w-[90%] sm:max-w-[82%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
         <div
           dir={isRTL ? "rtl" : "ltr"}
-          className="bg-black/85 backdrop-blur-2xl px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full overflow-hidden"
+          className="bg-black/85 backdrop-blur-2xl px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+          <p className="text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-snug px-1 text-white break-words line-clamp-2 max-w-full">
             {activeSegment.text}
           </p>
         </div>
