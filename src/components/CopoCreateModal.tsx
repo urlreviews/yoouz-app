@@ -1513,8 +1513,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       vttUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/captions/en-auto.vtt` : newReview.vttUrl,
       localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
-      transcriptText: "",
-      segments: []
+      transcriptText: finalTranscript || newReview.transcriptText || "",
+      segments: (finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])
     } as any;
 
     // 6. Save metadata to server review index and memory cache
