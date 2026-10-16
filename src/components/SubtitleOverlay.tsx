@@ -32,11 +32,63 @@ const isIgnoredTitle = (text: string): boolean => {
 };
 
 /**
- * Standard YouTube Subtitle Engine (Rebuilt from scratch)
- * 1. Precision time-window matching: A subtitle cue is shown ONLY during [cue.start, cue.end].
- * 2. Instant disappear: When speech ends or between sentences, the subtitle disappears completely.
- * 3. Strict anti-repetition: Collapses identical consecutive lines into single sequential cues.
- * 4. YouTube visual aesthetics: Black 75% translucent backdrop, crisp white font, responsive sizing.
+ * Helper to split a longer subtitle cue into short 4-5 word 1-line phrase chunks with proportional timing.
+ * Guarantees that subtitles stay on 1 clean line and advance smoothly as the video plays.
+ */
+const chunkCueTo1Line = (
+  start: number,
+  end: number,
+  text: string,
+  maxWordsPerChunk = 5
+): { start: number; end: number; text: string }[] => {
+  const cleanText = text.trim();
+  if (!cleanText) return [];
+
+  const words = cleanText.split(/\s+/).filter(Boolean);
+  if (words.length <= maxWordsPerChunk) {
+    return [{ start, end, text: cleanText }];
+  }
+
+  const chunks: { start: number; end: number; text: string }[] = [];
+  const totalWords = words.length;
+  const totalDuration = Math.max(0.8, end - start);
+
+  const wordGroups: string[][] = [];
+  for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
+    wordGroups.push(words.slice(i, i + maxWordsPerChunk));
+  }
+
+  const numGroups = wordGroups.length;
+  let currentStart = start;
+
+  for (let idx = 0; idx < numGroups; idx++) {
+    const group = wordGroups[idx];
+    const groupText = group.join(' ');
+    const groupRatio = group.length / totalWords;
+    const groupDuration = totalDuration * groupRatio;
+    
+    const groupEnd = idx === numGroups - 1 
+      ? end 
+      : Math.round((currentStart + groupDuration) * 100) / 100;
+
+    chunks.push({
+      start: Math.round(currentStart * 100) / 100,
+      end: Math.max(currentStart + 0.4, groupEnd),
+      text: groupText
+    });
+
+    currentStart = groupEnd;
+  }
+
+  return chunks;
+};
+
+/**
+ * Standard YouTube Subtitle Engine (Rebuilt with 1-Line CapCut / TikTok Phrase Chunking)
+ * 1. Short 4-5 word phrase chunking: Guarantees subtitles fit on 1 clean line.
+ * 2. Precision time-window matching: A subtitle cue is shown ONLY during [cue.start, cue.end].
+ * 3. Instant disappear: When speech ends or between sentences, the subtitle disappears completely.
+ * 4. Strict anti-repetition: Collapses identical consecutive lines into single sequential cues.
  */
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime = 0,
@@ -46,7 +98,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Parse and build clean, non-repeating subtitle cues
+  // Parse and build clean 1-line phrase subtitle cues
   const cues = useMemo<SubtitleCue[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -76,7 +128,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         candidateList.push({ start: s, end: e, text: txt });
       }
 
-      // Step 2: Strict Deduplication (Fixes old bad data where the same sentence was repeated dozens of times)
+      // Step 2: Strict Deduplication
       const mergedList: { start: number; end: number; text: string }[] = [];
 
       for (const item of candidateList) {
@@ -89,14 +141,11 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const prevNorm = prev.text.toLowerCase().replace(/[^a-z0-9]/g, '');
         const currNorm = item.text.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        // If consecutive identical phrases (e.g. "one time it was a person" repeated 40 times in old data)
         if (prevNorm === currNorm) {
-          // Extend previous cue end time to cover the full duration
           if (item.end > prev.end) prev.end = item.end;
           continue;
         }
 
-        // If one is a strict substring/extension within close time
         if (currNorm.startsWith(prevNorm) && item.start <= prev.end + 0.5) {
           prev.text = item.text;
           if (item.end > prev.end) prev.end = item.end;
@@ -106,7 +155,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         mergedList.push({ ...item });
       }
 
-      // Step 3: Normalize cue durations (minimum 1.2s so user can read it, maximum 6.0s)
+      // Step 3: Normalize cue durations and split long segments into 1-line 4-5 word phrase chunks
       for (let i = 0; i < mergedList.length; i++) {
         const item = mergedList[i];
         let s = item.start >= 0 ? item.start : i * 2.5;
@@ -115,12 +164,16 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         if (e - s < 0.8) e = s + 0.8;
         if (e - s > 12.0) e = s + 12.0;
 
-        cleanCues.push({
-          id: cueId++,
-          start: Math.round(s * 100) / 100,
-          end: Math.round(e * 100) / 100,
-          text: item.text
-        });
+        // Apply 1-line phrase chunker
+        const phraseChunks = chunkCueTo1Line(s, e, item.text, 5);
+        for (const chunk of phraseChunks) {
+          cleanCues.push({
+            id: cueId++,
+            start: chunk.start,
+            end: chunk.end,
+            text: chunk.text
+          });
+        }
       }
     }
 
@@ -128,13 +181,11 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     if (cleanCues.length === 0 && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isIgnoredTitle(clean)) {
-        // Split by sentences or natural punctuation
         const rawSentences = clean
           .split(/(?<=[.?!])\s+/)
           .map(s => s.trim())
           .filter(Boolean);
 
-        // Deduplicate any repeated sentences
         const uniqueSentences: string[] = [];
         for (const s of rawSentences) {
           const norm = s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -153,12 +204,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
           for (let i = 0; i < totalSentences; i++) {
             const sText = uniqueSentences[i];
             const sEnd = Math.min(videoDur, curStart + perSentence);
-            cleanCues.push({
-              id: cueId++,
-              start: Math.round(curStart * 100) / 100,
-              end: Math.round(sEnd * 100) / 100,
-              text: sText
-            });
+            
+            // Apply 1-line phrase chunker
+            const phraseChunks = chunkCueTo1Line(curStart, sEnd, sText, 5);
+            for (const chunk of phraseChunks) {
+              cleanCues.push({
+                id: cueId++,
+                start: chunk.start,
+                end: chunk.end,
+                text: chunk.text
+              });
+            }
             curStart = sEnd + 0.2;
           }
         }
