@@ -12715,9 +12715,33 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
             } else {
-              const errBody = await uploadResp.text().catch(() => "N/A");
-              streamError = `Upload failed (HTTP ${uploadResp.status}: ${errBody})`;
-              console.warn(`⚠️ 🐰 [Bunny Stream] ${streamError}`);
+              console.warn(`⚠️ 🐰 [Bunny Stream] PUT failed, attempting fetch ingest fallback...`);
+              try {
+                const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+                const videoBunnyUrl = `https://${hostname}/${bunnyStorageZone}/videos/${targetVideoFileName}`;
+                await fetch(videoBunnyUrl, {
+                  method: 'PUT',
+                  headers: { 'AccessKey': bunnyAccessKey || "", 'Content-Type': 'video/mp4' },
+                  body: fileBuffer,
+                  signal: AbortSignal.timeout(30000)
+                });
+                const publicStorageUrl = `${pullZoneDomain}/videos/${targetVideoFileName}`;
+
+                const fetchRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/fetch`, {
+                  method: 'POST',
+                  headers: { 'AccessKey': bunnyStreamKey, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                  body: JSON.stringify({ url: publicStorageUrl, title: targetVideoFileName }),
+                  signal: AbortSignal.timeout(20000)
+                });
+                if (fetchRes.ok) {
+                  const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
+                  bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
+                  publicUrl = bunnyUrl;
+                  console.log(`✅ 🐰 [Bunny Stream] Fetch ingest SUCCESS! Stream URL: ${bunnyUrl}`);
+                }
+              } catch (fErr) {
+                console.warn("Bunny Stream fetch ingest fallback notice:", fErr);
+              }
             }
           } else {
             const errBody = await createResp.text().catch(() => "N/A");
