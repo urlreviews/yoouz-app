@@ -168,6 +168,7 @@ export interface VideoReview {
   durationSeconds?: number;
   videoUrl: string;
   bunnyVideoId?: string;
+  bunnyGuid?: string;
   localVideoUrl?: string;
   localBlobUrl?: string;
   blobUrl?: string;

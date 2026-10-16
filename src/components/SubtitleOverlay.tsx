@@ -229,4 +229,4 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   );
 };
 
-export const buildSegmentsFromTranscript = () => [];
+export const buildSegmentsFromTranscript = (_text?: string, _duration?: number): any[] => [];
