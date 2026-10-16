@@ -4437,7 +4437,7 @@ export function App() {
 
   const displayedDrawerPlaceName = useMemo(() => {
     if (!drawerPlace) return undefined;
-    if ((drawerPlace as any).selectedName) return toTitleCase((drawerPlace as any).selectedName);
+    if ((drawerPlace as any).selectedName) return (drawerPlace as any).selectedName;
     const dom = (drawerPlace.brandDomain || drawerPlace.id || "").toLowerCase().replace(/^www\./, "");
     if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
     if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com")) {

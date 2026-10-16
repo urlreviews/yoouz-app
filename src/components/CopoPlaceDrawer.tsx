@@ -567,7 +567,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanRawLower = raw.toLowerCase().trim();
     if (KNOWN_OFFICIAL_NAMES[cleanRawLower]) return KNOWN_OFFICIAL_NAMES[cleanRawLower];
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) return KNOWN_OFFICIAL_NAMES[drawerDomain];
-    return raw.toUpperCase();
+    return raw;
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
@@ -1689,7 +1689,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           {/* Bottom Meta Info */}
                           <div className="absolute bottom-2.5 left-2.5 right-2.5 flex flex-col gap-0.5 pointer-events-none">
                             <span className="text-[9px] text-zinc-100 font-bold drop-shadow-md truncate">
-                              @{v.author?.handle || v.authorName || "Reviewer"}
+                              {getDisplayUrlAsDomain(v) || getDisplayUrlAsDomain(place) || place.brandDomain || place.id || "yoouz.com"}
                             </span>
                             <div className="flex items-center gap-1 text-white text-[9px] font-black">
                               <Play className="w-2 h-2 fill-current" />
