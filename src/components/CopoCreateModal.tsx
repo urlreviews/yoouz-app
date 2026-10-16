@@ -1538,44 +1538,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Transcribe video in background before saving (Fallback if live stream failed)
-    setPublishingStage("Finalizing captions...");
-    let transcriptText = liveTranscript || "";
-    let segments = liveSegments || [];
-
-    if (!segments.length) {
-      try {
-        const transcribeRes = await fetch("/api/videos/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            videoData: await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-              reader.readAsDataURL(recordedVideoBlob!);
-            }),
-            mimeType: recordedVideoBlob?.type || "video/webm",
-            filename: cleanFileName
-          })
-        });
-        if (transcribeRes.ok) {
-          const transData = await transcribeRes.json();
-          if (transData.success) {
-            transcriptText = transData.transcript;
-            segments = transData.segments || [];
-          }
-        }
-      } catch (e) {
-        console.warn("Transcription notice:", e);
-      }
-    }
+    // 5. Connect to Bunny Stream Smart Captions pipeline
+    setPublishingStage("Connecting Smart Captions...");
+    const streamPullZone = "https://vz-dcd9e101-437.b-cdn.net";
+    const assignedBunnyId = finalBunnyId || newReview.bunnyVideoId;
 
     const finalReview: VideoReview = {
       ...newReview,
+      bunnyVideoId: assignedBunnyId,
+      bunnyGuid: assignedBunnyId,
+      hlsUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/playlist.m3u8` : newReview.hlsUrl,
+      vttUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/captions/en-auto.vtt` : newReview.vttUrl,
       localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
-      transcriptText,
-      segments
+      transcriptText: "",
+      segments: []
     } as any;
 
     // 6. Save metadata to server review index and memory cache

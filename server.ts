@@ -12671,7 +12671,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             });
 
             if (uploadResp.ok) {
-              const streamPullZone = bunnyLibraryId ? `https://vz-${bunnyLibraryId}.b-cdn.net` : (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+              const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
               bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
@@ -12719,24 +12719,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const finalVideoSize = fs.existsSync(finalVideoPath) ? fs.statSync(finalVideoPath).size : 0;
       console.log(`✅ [Server] Stored video ${targetVideoFileName} (${finalVideoSize} bytes) at ${finalVideoPath}`);
 
-      // 4. Automated Transcription (Immediate Local Fallback + Bunny Stream background trigger)
+      // 4. Automated Bunny Stream Smart Captions (Bunny-Only Policy)
       let transcriptText = "";
-      let segments = [];
+      let segments: any[] = [];
       let vttContent = "";
-      try {
-        const videoBuffer = fs.readFileSync(finalVideoPath);
-        // We still use local engine for instant results in the UI, but Bunny will override it later
-        const transResult = await transcribeVideoLocally(videoBuffer, targetVideoFileName);
-        if (transResult && transResult.transcript) {
-          transcriptText = transResult.transcript;
-          segments = transResult.segments || [];
-          vttContent = transResult.vtt_content || "";
-          
-          const vttFileName = `${base}.vtt`;
-          const vttFilePath = path.join(serverUploadsDir, vttFileName);
-          fs.writeFileSync(vttFilePath, vttContent);
-        }
-      } catch (tErr) {}
 
       let embeddedVideoData = "";
       try {
@@ -21749,6 +21735,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         } catch (fErr) {}
       }
 
+      // 2. If no ingest GUID and binary buffer available, create video and PUT binary
       if (!bunnyVideoGuid && videoBuffer && videoBuffer.length > 0) {
         console.log(`🐰 [Bunny Stream] Uploading binary buffer (${videoBuffer.length} bytes) for ${review.id} to Library ${libraryId}...`);
         const createRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos`, {
@@ -21769,30 +21756,31 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           return;
         }
 
-        const videoData = await createRes.json();
+        const videoData: any = await createRes.json();
         bunnyVideoGuid = videoData.guid;
         if (!bunnyVideoGuid) return;
-      }
 
-      const uploadRes = await fetch(`https://video.bunnycdn.net/library/${libraryId}/videos/${bunnyVideoGuid}`, {
-        method: "PUT",
-        headers: {
-          "AccessKey": apiKey,
-          "Content-Type": "application/octet-stream"
-        },
-        body: videoBuffer,
-        signal: AbortSignal.timeout(60000)
-      });
+        const uploadRes = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${bunnyVideoGuid}`, {
+          method: "PUT",
+          headers: {
+            "AccessKey": apiKey,
+            "Content-Type": "application/octet-stream"
+          },
+          body: videoBuffer,
+          signal: AbortSignal.timeout(120000)
+        });
 
-      if (uploadRes.ok) {
-        console.log(`✅ [Bunny Stream] Successfully uploaded buffer for ${review.id} (Guid: ${bunnyVideoGuid})`);
+        if (uploadRes.ok) {
+          console.log(`✅ [Bunny Stream] Successfully uploaded buffer for ${review.id} (Guid: ${bunnyVideoGuid})`);
+        }
       }
 
       if (bunnyVideoGuid) {
         review.bunnyVideoId = bunnyVideoGuid;
         review.bunnyGuid = bunnyVideoGuid;
-        const pullZone = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-        review.hlsUrl = `${pullZone}/${bunnyVideoGuid}/playlist.m3u8`;
+        const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
+        review.hlsUrl = `${streamPullZone}/${bunnyVideoGuid}/playlist.m3u8`;
+        review.vttUrl = `${streamPullZone}/${bunnyVideoGuid}/captions/en-auto.vtt`;
 
         try {
           const list = readReviewsIndex();
@@ -21800,6 +21788,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           if (idx !== -1) {
             list[idx].bunnyVideoId = bunnyVideoGuid;
             list[idx].bunnyGuid = bunnyVideoGuid;
+            list[idx].hlsUrl = review.hlsUrl;
+            list[idx].vttUrl = review.vttUrl;
             writeReviewsIndex(list);
           }
         } catch (e) {}
@@ -22000,14 +21990,24 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
           return { success: true, transcriptText, segments, method: "bunny_stream" };
         } else {
-          // Captions might be processing in Bunny Stream, schedule automated background poll
-          setTimeout(() => {
-            fetchBunnyStreamSmartCaptions(bunnyVideoId).then(res => {
-              if (res && res.segments.length > 0) {
-                ensureTranscriptionForVideo(videoId);
-              }
-            }).catch(() => {});
-          }, 6000);
+          // Captions might be encoding in Bunny Stream, schedule automated background polling
+          const pollDelays = [4000, 8000, 15000, 25000, 40000];
+          pollDelays.forEach((delay, attemptIdx) => {
+            setTimeout(async () => {
+              try {
+                const list = readReviewsIndex();
+                const curr = list.find((v: any) => v && String(v.id) === String(videoId));
+                if (curr && Array.isArray(curr.segments) && curr.segments.length > 0 && curr.bunnyVideoId === bunnyVideoId) {
+                  return; // already synced
+                }
+                const res = await fetchBunnyStreamSmartCaptions(bunnyVideoId);
+                if (res && res.segments.length > 0) {
+                  console.log(`🎬 🐰 [Bunny Smart Captions] Poll attempt ${attemptIdx + 1} succeeded for ${videoId}!`);
+                  await ensureTranscriptionForVideo(videoId);
+                }
+              } catch (e) {}
+            }, delay);
+          });
         }
       }
 
@@ -22124,8 +22124,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   }
 
   function parseVttToSegments(vtt: string) {
-    const segments: any[] = [];
-    if (!vtt || !vtt.includes("WEBVTT")) return segments;
+    const rawSegments: any[] = [];
+    if (!vtt || !vtt.includes("WEBVTT")) return rawSegments;
 
     try {
       const lines = vtt.split(/\r?\n/).map(l => l.trim());
@@ -22153,7 +22153,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           if (currentStart >= 0 && currentText.length > 0) {
             const txt = currentText.join(" ").trim();
             if (txt) {
-              segments.push({
+              rawSegments.push({
                 start: Math.round(currentStart * 100) / 100,
                 end: Math.round(currentEnd * 100) / 100,
                 text: txt
@@ -22173,17 +22173,39 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       if (currentStart >= 0 && currentText.length > 0) {
         const txt = currentText.join(" ").trim();
         if (txt) {
-          segments.push({
+          rawSegments.push({
             start: Math.round(currentStart * 100) / 100,
             end: Math.round(currentEnd * 100) / 100,
             text: txt
           });
         }
       }
+
+      // Deduplicate consecutive identical/overlapping cues
+      const cleanSegments: any[] = [];
+      for (const seg of rawSegments) {
+        if (cleanSegments.length === 0) {
+          cleanSegments.push(seg);
+          continue;
+        }
+        const last = cleanSegments[cleanSegments.length - 1];
+        const lastNorm = last.text.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const segNorm = seg.text.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        if (lastNorm === segNorm) {
+          last.end = Math.max(last.end, seg.end);
+        } else if (segNorm.startsWith(lastNorm) && seg.start <= last.end + 0.5) {
+          last.text = seg.text;
+          last.end = Math.max(last.end, seg.end);
+        } else {
+          cleanSegments.push(seg);
+        }
+      }
+      return cleanSegments;
     } catch (e) {
       console.warn("VTT parse error:", e);
+      return rawSegments;
     }
-    return segments;
   }
 
   // Serves valid WebVTT (.vtt) file with exact HH:MM:SS.mmm timecodes for native HTML5 <track> elements

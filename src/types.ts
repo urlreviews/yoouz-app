@@ -167,6 +167,7 @@ export interface VideoReview {
   rating: number; // 1-5 stars
   durationSeconds?: number;
   videoUrl: string;
+  hlsUrl?: string;
   bunnyVideoId?: string;
   bunnyGuid?: string;
   localVideoUrl?: string;
