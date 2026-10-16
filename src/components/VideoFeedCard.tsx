@@ -1294,7 +1294,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </div>
 
             {(() => {
-              const rawHeadline = (video.title || (video as any).videoTitle || (video as any).bunnyTitle || "").trim();
+              const rawHeadline = (video.title || (video as any).videoTitle || (video as any).bunnyTitle || (video.placeName ? `Great Review for ${video.placeName}` : "") || (video.businessName ? `Great Review for ${video.businessName}` : "") || "Great Video Review - Highly Recommended!").trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
               const isGenericCaption = !rawHeadline || /^video review (for|of)\b/i.test(rawHeadline);
 
