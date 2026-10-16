@@ -12568,40 +12568,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       const tempTranscodePath = path.join(serverUploadsDir, `temp_enc_${Date.now()}_${base}.mp4`);
       let finalVideoPath = filePath;
-      if (fs.existsSync(filePath)) {
-        let isTranscoded = false;
-        try {
-          // Remux browser WebM/MOV recording into standard MP4 with faststart headers (preserves 100% video duration)
-          execSync(`ffmpeg -i "${filePath}" -c copy -movflags +faststart "${tempTranscodePath}" -y`, { timeout: 12000, stdio: 'ignore' });
-          if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
-            fs.renameSync(tempTranscodePath, mp4FilePath);
-            finalVideoPath = mp4FilePath;
-            cleanFileName = mp4FileName;
-            mimeType = "video/mp4";
-            isTranscoded = true;
-          }
-        } catch (e1) {}
-
-        if (!isTranscoded) {
-          try {
-            execSync(`ffmpeg -i "${filePath}" -c:v libx264 -preset ultrafast -c:a aac -movflags +faststart "${tempTranscodePath}" -y`, { timeout: 18000, stdio: 'ignore' });
-            if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
-              fs.renameSync(tempTranscodePath, mp4FilePath);
-              finalVideoPath = mp4FilePath;
-              cleanFileName = mp4FileName;
-              mimeType = "video/mp4";
-              isTranscoded = true;
-            }
-          } catch (e2) {}
-        }
-
-        if (!isTranscoded && filePath !== mp4FilePath) {
-          try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
-          if (fs.existsSync(mp4FilePath)) {
-            finalVideoPath = mp4FilePath;
-            cleanFileName = mp4FileName;
-            mimeType = "video/mp4";
-          }
+      if (filePath !== mp4FilePath && fs.existsSync(filePath)) {
+        try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
+        if (fs.existsSync(mp4FilePath)) {
+          finalVideoPath = mp4FilePath;
+          cleanFileName = mp4FileName;
+          mimeType = "video/mp4";
         }
       }
 
@@ -18634,10 +18606,7 @@ app.post("/api/videos/save-review", async (req, res) => {
               } catch (e) {}
             }
 
-            // Only upload if video is not already in Bunny Stream Library
-            if (!review.bunnyVideoId && !review.bunnyGuid) {
-              await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
-            }
+            await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
           } catch (bunnyErr) {
             console.warn("Bunny Stream upload background notice:", bunnyErr);
           }
@@ -21989,18 +21958,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (vttText && vttText.includes("WEBVTT")) {
           const segments = parseVttToSegments(vttText);
           if (segments.length > 0) {
-            const transcriptText = segments.map((s: any) => s.text).join(" ");
-            const rawTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
-            let cleanTitle = rawTitle ? rawTitle.replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "").replace(/\s*\|.*$/i, "").trim() : undefined;
-            if (cleanTitle && cleanTitle.includes(":")) {
-              const parts = cleanTitle.split(":");
-              if (parts[1] && parts[1].trim().length > 3) {
-                cleanTitle = parts.slice(1).join(":").trim();
-              }
-            }
-            const aiTitle = cleanTitle ? cleanTitle.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim() : undefined;
+            const transcriptText = segments.map(s => s.text).join(" ");
             console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions for ${bunnyVideoId}`);
-            return { segments, transcriptText, vttText, aiTitle };
+            return { segments, transcriptText, vttText };
           }
         }
       } else {
@@ -22095,16 +22055,15 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (bunnyResult && bunnyResult.segments.length > 0) {
           const transcriptText = bunnyResult.transcriptText;
           const segments = bunnyResult.segments;
-          const aiTitle = bunnyResult.aiTitle || video.aiTitle;
 
-          const updatedVideo = { ...video, bunnyVideoId, transcriptText, segments, ...(aiTitle ? { aiTitle } : {}), hasBunnySmartCaptions: true };
+          const updatedVideo = { ...video, bunnyVideoId, transcriptText, segments, hasBunnySmartCaptions: true };
 
           // 1. Sync to local JSON index
           try {
             const list = readReviewsIndex();
             const idx = list.findIndex((v: any) => v && String(v.id) === String(videoId));
             if (idx !== -1) {
-              list[idx] = { ...list[idx], bunnyVideoId, transcriptText, segments, ...(aiTitle ? { aiTitle } : {}), hasBunnySmartCaptions: true };
+              list[idx] = { ...list[idx], bunnyVideoId, transcriptText, segments, hasBunnySmartCaptions: true };
               writeReviewsIndex(list);
             }
           } catch (e) {}

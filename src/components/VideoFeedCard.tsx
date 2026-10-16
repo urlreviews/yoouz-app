@@ -24,7 +24,6 @@ import {
   RotateCw,
   CornerDownLeft,
   ShieldCheck,
-  Sparkles,
   X
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
@@ -1293,51 +1292,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 </span>
               )}
             </div>
-
-            {/* AI Review Title (Clean white typography matching user name and rating - Minimalist, unquoted, no company prefix) */}
-            {(() => {
-              const rawTitleText = (() => {
-                if (video.aiTitle) return video.aiTitle;
-                if (video.title && !video.title.endsWith('.mp4') && !video.title.startsWith('rev-') && video.title.length > 5) return video.title;
-                if (video.transcriptText && video.transcriptText.trim().length > 8) {
-                  const cleanSpeech = video.transcriptText.trim();
-                  const firstSentence = cleanSpeech.split(/(?<=[.?!])\s+/)[0] || cleanSpeech;
-                  return firstSentence.length > 60 ? firstSentence.slice(0, 57) + "..." : firstSentence;
-                }
-                return null;
-              })();
-
-              if (!rawTitleText) return null;
-
-              // 1. Strip surrounding quotes
-              let clean = rawTitleText.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
-
-              // 2. Strip language tags like "| EN", "| EN-US", "| AUTO"
-              clean = clean
-                .replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "")
-                .replace(/\s*\|.*$/i, "")
-                .trim();
-
-              // 3. Strip company name prefix or "Positive Review:" prefix before colon (e.g. "Level 15 Moving: Fast, Excellent Service..." -> "Fast, Excellent Service...")
-              if (clean.includes(":")) {
-                const parts = clean.split(":");
-                if (parts[1] && parts[1].trim().length > 3) {
-                  clean = parts.slice(1).join(":").trim();
-                }
-              }
-
-              // 4. Final quote trim & capitalization
-              clean = clean.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
-              if (!clean) return null;
-
-              const finalTitle = clean.charAt(0).toUpperCase() + clean.slice(1);
-
-              return (
-                <p className="text-white font-semibold text-[13px] sm:text-[14px] leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] mt-0.5 line-clamp-2 tracking-normal">
-                  {finalTitle}
-                </p>
-              );
-            })()}
 
             {video.caption && video.caption.trim().length > 0 && (
               <p className="text-white/95 text-xs font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] mt-0.5">
