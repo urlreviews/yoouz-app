@@ -188,15 +188,10 @@ html, body, #root {
   animation: pulse-subtle 1.5s infinite ease-in-out;
 }
 
-/* Bunny Stream Native Video Captions (YouTube-style VTT styling) */
+/* Hide native video::cue elements to prevent duplicate subtitles behind bottom metadata */
 video::cue {
-  background-color: rgba(0, 0, 0, 0.85);
-  color: #ffffff;
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-weight: 800;
-  font-size: 16px;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
-  line-height: 1.4;
-  padding: 4px 12px;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
