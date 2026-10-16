@@ -2512,7 +2512,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // 4. Show instant feedback
     showToast("Video review removed permanently from feed and database.");
 
-    // 5. Guarantee backend deletion across all endpoints
+    // 5. Guarantee backend deletion across all endpoints and sync Bunny Stream library
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/delete", {
@@ -2525,7 +2525,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: strId })
         }),
-        fetch(`/api/nosql/videoReviews/${encodeURIComponent(strId)}`, { method: "DELETE" })
+        fetch(`/api/nosql/videoReviews/${encodeURIComponent(strId)}`, { method: "DELETE" }),
+        fetch("/api/admin/bunny/sync-library", { method: "POST" })
       ]);
     } catch (e) {}
 
@@ -2556,7 +2557,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     showToast(`Deleted ${count} selected video reviews.`);
 
-    // 4. Direct backend endpoints
+    // 4. Direct backend endpoints & Bunny sync
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/bulk-delete", {
@@ -2566,7 +2567,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         }),
         ...idsToDelete.map((id) =>
           fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
-        )
+        ),
+        fetch("/api/admin/bunny/sync-library", { method: "POST" })
       ]);
     } catch (e) {}
 
@@ -2587,9 +2589,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     showToast("All video reviews purged completely from storage and database.");
 
-    // 3. Direct backend call
+    // 3. Direct backend call & Bunny sync
     try {
-      await fetch("/api/admin/videos/purge-all", { method: "POST" });
+      await Promise.allSettled([
+        fetch("/api/admin/videos/purge-all", { method: "POST" }),
+        fetch("/api/admin/bunny/sync-library", { method: "POST" })
+      ]);
     } catch (e) {}
 
     setTimeout(fetchLiveStats, 300);
@@ -2731,6 +2736,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     }
     showToast(fixedCount > 0 ? `Synced and verified ${fixedCount} review business names!` : "All review business names are authentic and in sync.");
+  };
+
+  const handleSyncBunnyLibrary = async () => {
+    try {
+      const res = await fetch("/api/admin/bunny/sync-library", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || `Synchronized! Purged ${data.purgedCount} orphaned videos.`);
+        setTimeout(fetchLiveStats, 500);
+      } else {
+        showToast(data.error || "Failed to synchronize Bunny Stream library.");
+      }
+    } catch (e: any) {
+      showToast("Error synchronizing Bunny Stream library: " + e.message);
+    }
   };
 
   const handleSendBroadcast = async (e?: React.FormEvent) => {
@@ -4709,6 +4729,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     title="Scan and synchronize all video review business names with verified official brand names"
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Sync Business Names
+                  </button>
+
+                  {/* Sync Bunny Library */}
+                  <button
+                    onClick={handleSyncBunnyLibrary}
+                    className="px-3 py-1.5 bg-zinc-950 hover:bg-blue-950/50 text-zinc-300 hover:text-blue-300 border border-zinc-800 hover:border-blue-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    title="Purge orphaned videos from Bunny Stream so library matches active admin reviews count"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Sync Bunny Library
                   </button>
                 </div>
               </div>

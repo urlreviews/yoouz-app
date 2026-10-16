@@ -5302,6 +5302,45 @@ async function purgeVideoFromAllStores(videoId: string) {
     await Promise.allSettled(deletePromises);
   }
 
+  // 8.5. Delete from Bunny Stream Library (733814) if bunnyVideoId / bunnyGuid exists or by searching Bunny library for videoId
+  try {
+    const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
+    const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
+    let bGuid = existingVideoObj?.bunnyVideoId || existingVideoObj?.bunnyGuid;
+    if (bunnyStreamKey && bunnyLibraryId) {
+      if (!bGuid || bGuid.length <= 20) {
+        try {
+          const listResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos?page=1&itemsPerPage=100`, {
+            headers: { "AccessKey": bunnyStreamKey, "Accept": "application/json" },
+            signal: AbortSignal.timeout(10000)
+          });
+          if (listResp.ok) {
+            const listData: any = await listResp.json();
+            const items = Array.isArray(listData.items) ? listData.items : [];
+            const matched = items.find((bv: any) => bv.title && (bv.title.includes(videoId) || bv.title.toLowerCase().includes(String(videoId).toLowerCase())));
+            if (matched && matched.guid) {
+              bGuid = matched.guid;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (bGuid && bGuid.length > 20) {
+        console.log(`🐰 [Bunny Stream] Deleting video ${bGuid} (for review ${videoId}) from library ${bunnyLibraryId}...`);
+        const delRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bGuid}`, {
+          method: 'DELETE',
+          headers: { 'AccessKey': bunnyStreamKey },
+          signal: AbortSignal.timeout(15000)
+        });
+        if (delRes.ok || delRes.status === 404) {
+          console.log(`✅ [Bunny Stream] Successfully deleted video ${bGuid} from library.`);
+        }
+      }
+    }
+  } catch (bStreamErr) {
+    console.warn("Bunny Stream video delete warning:", bStreamErr);
+  }
+
   // 9. Instant Live Real-Time Broadcast to all connected clients & devices
   broadcastSseEvent({ type: "video_deleted", videoId: String(videoId) });
 
@@ -21525,6 +21564,68 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       return res.json({ success: true, message: `Video ${videoId} deleted successfully without affecting user account` });
     } catch (err: any) {
       console.error("Admin video delete error:", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin Endpoint to Synchronize Bunny Stream Library with Active App Reviews (Purges Orphaned Videos)
+  app.post("/api/admin/bunny/sync-library", async (req, res) => {
+    try {
+      const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY;
+      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
+      if (!bunnyStreamKey) {
+        return res.status(400).json({ error: "Missing BUNNY_STREAM_API_KEY" });
+      }
+
+      // 1. Get all active review GUIDs
+      const activeReviews = readReviewsIndex();
+      const activeGuids = new Set<string>();
+      activeReviews.forEach((r: any) => {
+        if (r?.bunnyVideoId) activeGuids.add(String(r.bunnyVideoId));
+        if (r?.bunnyGuid) activeGuids.add(String(r.bunnyGuid));
+      });
+
+      // 2. Fetch all videos from Bunny Stream Library
+      const listResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos?page=1&itemsPerPage=200`, {
+        headers: { "AccessKey": bunnyStreamKey, "Accept": "application/json" },
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!listResp.ok) {
+        return res.status(500).json({ error: `Failed to fetch Bunny Stream library: ${listResp.status}` });
+      }
+      const listData: any = await listResp.json();
+      const bunnyVideos = Array.isArray(listData.items) ? listData.items : [];
+
+      let purgedCount = 0;
+      const remainingGuids: string[] = [];
+
+      for (const bv of bunnyVideos) {
+        const g = bv.guid;
+        if (g && !activeGuids.has(g)) {
+          // Orphaned video in Bunny Stream! Delete it.
+          try {
+            console.log(`🗑️ [Bunny Stream Sync] Purging orphaned video ${g} ("${bv.title}") from Bunny Stream...`);
+            const delRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${g}`, {
+              method: "DELETE",
+              headers: { "AccessKey": bunnyStreamKey },
+              signal: AbortSignal.timeout(10000)
+            });
+            if (delRes.ok || delRes.status === 404) purgedCount++;
+          } catch (e) {}
+        } else if (g) {
+          remainingGuids.push(g);
+        }
+      }
+
+      console.log(`✅ [Bunny Stream Sync] Purged ${purgedCount} orphaned videos. Remaining active in library: ${remainingGuids.length}`);
+      return res.json({
+        success: true,
+        purgedCount,
+        remainingCount: remainingGuids.length,
+        message: `Successfully synchronized library. Purged ${purgedCount} orphaned videos from Bunny Stream.`
+      });
+    } catch (err: any) {
+      console.error("Bunny Stream sync library error:", err);
       return res.status(500).json({ error: err.message });
     }
   });
