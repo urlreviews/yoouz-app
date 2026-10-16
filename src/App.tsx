@@ -8589,9 +8589,9 @@ export function App() {
         }}
       />
 
-      {/* Background Upload Bottom Progress Bar with Clear Guidance */}
+      {/* Background Upload Top Progress Bar (Non-blocking for video captions & text) */}
       {backgroundUpload?.isPublishing && (
-        <div className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[420px] z-50 bg-zinc-950/95 backdrop-blur-xl text-white rounded-2xl p-4 border border-zinc-800 shadow-2xl animate-in slide-in-from-bottom-3 duration-300 space-y-3">
+        <div className="fixed top-20 md:top-6 left-4 right-4 md:left-auto md:right-6 md:w-[420px] z-50 bg-zinc-950/95 backdrop-blur-xl text-white rounded-2xl p-4 border border-zinc-800 shadow-2xl animate-in slide-in-from-top-3 duration-300 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
