@@ -345,7 +345,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place, isAddressUrl, rawPlaceVideos]);
 
   const [selectedLocationIndex, setSelectedLocationIndex] = useState<number>(0);
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // Reset selected branch index when drawer opens a new place
   useEffect(() => {
@@ -1171,9 +1170,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const { dragOffsetY, swipeProps } = useSwipeDownToDismiss({
     onDismiss: onClose,
-    threshold: 60,
-    isExpanded,
-    onToggleExpand: setIsExpanded
+    threshold: 60
   });
 
   return (
@@ -1191,7 +1188,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         id="google-maps-business-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[350px] lg:w-[430px] ${isExpanded ? 'h-[100dvh] rounded-none' : 'h-[85dvh] md:h-[100dvh] rounded-t-3xl md:rounded-none'} max-h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-all ${isEditModalOpen ? "z-[90]" : "z-50 md:z-20"}`}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-zinc-950 md:bg-zinc-900 rounded-none text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1217,11 +1214,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Mobile Pull Handle Indicator */}
         <div 
           {...swipeProps}
-          onClick={() => {
-            triggerHaptic("light");
-            setIsExpanded(!isExpanded);
-          }}
-          className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center z-30 md:hidden cursor-pointer active:cursor-grabbing touch-none"
+          className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center z-30 md:hidden cursor-grab active:cursor-grabbing touch-none"
         >
           <div className="w-12 h-1.5 bg-white/60 rounded-full shadow-md mix-blend-difference" />
         </div>
