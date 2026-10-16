@@ -9,17 +9,10 @@ interface SubtitleOverlayProps {
   isLiveRecording?: boolean;
 }
 
-interface TimedWord {
-  word: string;
-  start: number;
-  end: number;
-}
-
 interface DiscreteSegment {
   start: number;
   end: number;
   text: string;
-  words: TimedWord[];
 }
 
 const isTitleFallbackText = (text: string): boolean => {
@@ -41,7 +34,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Build clean, discrete, non-overlapping sentence segments with word timings
+  // Build clean, discrete, non-overlapping sentence segments perfectly scaled to video duration
   const discreteSegments = useMemo<DiscreteSegment[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -53,14 +46,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       } catch (e) {}
     }
 
-    // Extract all spoken text cleanly if rawList lacks valid timed entries
+    // Extract full spoken text cleanly
     let fullSpokenText = "";
     if (rawList.length > 0) {
       const texts = rawList
         .map(s => String(s?.text || s?.transcript || '').trim())
         .filter(t => t && !isTitleFallbackText(t));
       
-      // Deduplicate consecutive identical texts
       const dedupTexts: string[] = [];
       for (const t of texts) {
         if (dedupTexts.length === 0 || dedupTexts[dedupTexts.length - 1].toLowerCase() !== t.toLowerCase()) {
@@ -93,72 +85,52 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     if (dedupWords.length === 0) return [];
 
-    // Chunk into discrete, non-overlapping sentence blocks of 5 to 7 words
-    const minWords = 5;
-    const maxWords = 7;
+    // Group words into balanced 4 to 6 word chunks, ensuring NO dangling single words
+    const targetChunkSize = 5;
     const wordChunks: string[][] = [];
-    let currentChunk: string[] = [];
-
-    for (let i = 0; i < dedupWords.length; i++) {
-      const w = dedupWords[i];
-      currentChunk.push(w);
-      const hasPunctuation = /[.,!?;:]$/.test(w);
-      const reachMax = currentChunk.length >= maxWords;
-      const reachMin = currentChunk.length >= minWords;
-      const remaining = dedupWords.length - (i + 1);
-
-      if ((reachMax || (reachMin && hasPunctuation) || (reachMin && remaining > 0 && remaining < 4)) && remaining > 0) {
-        wordChunks.push(currentChunk);
-        currentChunk = [];
-      }
+    for (let i = 0; i < dedupWords.length; i += targetChunkSize) {
+      wordChunks.push(dedupWords.slice(i, i + targetChunkSize));
     }
-    if (currentChunk.length > 0) {
-      if (wordChunks.length > 0 && currentChunk.length <= 2) {
-        wordChunks[wordChunks.length - 1].push(...currentChunk);
-      } else {
-        wordChunks.push(currentChunk);
+
+    // Merge trailing chunk if it has 1 or 2 words into preceding chunk
+    if (wordChunks.length > 1) {
+      const lastChunk = wordChunks[wordChunks.length - 1];
+      if (lastChunk.length <= 2) {
+        wordChunks[wordChunks.length - 2].push(...lastChunk);
+        wordChunks.pop();
       }
     }
 
-    // Assign strictly sequential, non-overlapping time windows [start, end]
+    // Mathematically scale start and end times across video duration [0.2s, totalDuration - 0.2s]
     const effectiveDur = duration && duration > 0 ? duration : 15;
-    const secPerWord = 0.38;
-    let currStart = 0.2;
+    const totalWords = dedupWords.length;
+    const availableDur = Math.max(2.0, effectiveDur - 0.4);
+    
+    let currentStart = 0.2;
     const result: DiscreteSegment[] = [];
 
     for (let i = 0; i < wordChunks.length; i++) {
       const chunkWords = wordChunks[i];
       const chunkText = chunkWords.join(" ");
-      const chunkDur = Math.max(1.5, chunkWords.length * secPerWord);
-      const segStart = Math.round(currStart * 100) / 100;
-      const segEnd = Math.round((currStart + chunkDur) * 100) / 100;
-
-      // Calculate word-level timestamps for active word yellow glow
-      const timedWords: TimedWord[] = [];
-      const wordDur = (segEnd - segStart) / chunkWords.length;
-      let wAcc = segStart;
-
-      chunkWords.forEach((w, wIdx) => {
-        const wS = Math.round(wAcc * 100) / 100;
-        const wE = wIdx === chunkWords.length - 1 ? segEnd : Math.round((wAcc + wordDur) * 100) / 100;
-        timedWords.push({ word: w, start: wS, end: Math.max(wS + 0.08, wE) });
-        wAcc += wordDur;
-      });
+      const chunkProportion = chunkWords.length / totalWords;
+      const chunkDur = availableDur * chunkProportion;
+      
+      const segStart = Math.round(currentStart * 100) / 100;
+      const segEnd = Math.round((currentStart + chunkDur) * 100) / 100;
 
       result.push({
         start: segStart,
         end: segEnd,
-        text: chunkText,
-        words: timedWords
+        text: chunkText
       });
 
-      currStart = segEnd; // Next sentence starts EXACTLY where this sentence ends (0ms overlap)
+      currentStart = segEnd;
     }
 
     return result;
   }, [segments, transcriptText, duration]);
 
-  // Find the single active discrete segment for the current time
+  // Find the single active discrete segment for current video time
   const activeSegment = useMemo(() => {
     if (!isActive || discreteSegments.length === 0) return null;
 
@@ -166,14 +138,14 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       return discreteSegments[discreteSegments.length - 1] || null;
     }
 
-    // Strict time window matching: segment appears ONLY during [start, end] and clears when finished
+    // Strict time window matching: appears ONLY during [start, end] and clears when finished
     for (const seg of discreteSegments) {
       if (currentTime >= seg.start && currentTime <= seg.end) {
         return seg;
       }
     }
 
-    return null; // Sentence clears completely when time window ends
+    return null; // Clears completely at end of sentence or near video loop
   }, [discreteSegments, currentTime, isActive, isLiveRecording]);
 
   // Detect Right-to-Left languages
@@ -189,28 +161,10 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       <div className="max-w-[92%] sm:max-w-[85%] animate-in fade-in zoom-in-95 duration-100 flex justify-center">
         <div
           dir={isRTL ? "rtl" : "ltr"}
-          className="bg-black/85 backdrop-blur-2xl px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.9)] text-center flex items-center justify-center max-w-full overflow-hidden"
+          className="bg-black/85 backdrop-blur-2xl px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full overflow-hidden"
         >
-          <p className="text-[15px] sm:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 max-w-full flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            {activeSegment.words.map((w, idx) => {
-              const isCurrent = currentTime >= (w.start - 0.05) && currentTime <= (w.end + 0.05);
-              const isSpoken = currentTime > (w.end + 0.05);
-
-              return (
-                <span
-                  key={`${w.word}-${idx}`}
-                  className={`inline-block whitespace-nowrap transition-all duration-75 ${
-                    isCurrent
-                      ? 'text-amber-300 font-black scale-105 drop-shadow-[0_2px_10px_rgba(251,191,36,0.9)]'
-                      : isSpoken || isLiveRecording
-                      ? 'text-white font-extrabold'
-                      : 'text-white/80 font-bold'
-                  }`}
-                >
-                  {w.word}
-                </span>
-              );
-            })}
+          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-extrabold tracking-tight drop-shadow-md text-center leading-none px-1 text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+            {activeSegment.text}
           </p>
         </div>
       </div>
