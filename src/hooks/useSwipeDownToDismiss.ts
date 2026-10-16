@@ -3,12 +3,16 @@ import { triggerHaptic } from "../utils/haptics";
 
 interface UseSwipeDownToDismissOptions {
   onDismiss: () => void;
-  threshold?: number; // pixels required to trigger dismiss, default 70
+  threshold?: number; // pixels required to trigger dismiss/expand, default 70
+  isExpanded?: boolean;
+  onToggleExpand?: (expanded: boolean) => void;
 }
 
 export function useSwipeDownToDismiss({
   onDismiss,
-  threshold = 70
+  threshold = 70,
+  isExpanded = false,
+  onToggleExpand
 }: UseSwipeDownToDismissOptions) {
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -30,24 +34,33 @@ export function useSwipeDownToDismiss({
     const diffY = currentY - touchStartY.current;
     const diffX = Math.abs(currentX - touchStartX.current);
 
-    // Only handle if dragging primarily downward
-    if (diffY > 0 && diffY > diffX) {
+    // Allow vertical movement if vertical > horizontal
+    if (Math.abs(diffY) > diffX) {
       setDragOffsetY(diffY);
     }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     if (isDragging.current) {
-      if (dragOffsetY >= threshold) {
+      if (dragOffsetY <= -threshold) {
+        // Swiped up -> Expand
+        triggerHaptic("light");
+        if (onToggleExpand) onToggleExpand(true);
+      } else if (dragOffsetY >= threshold) {
+        // Swiped down -> if expanded, collapse; else dismiss
         triggerHaptic("medium");
-        onDismiss();
+        if (isExpanded && onToggleExpand) {
+          onToggleExpand(false);
+        } else {
+          onDismiss();
+        }
       }
       setDragOffsetY(0);
       isDragging.current = false;
       touchStartY.current = null;
       touchStartX.current = null;
     }
-  }, [dragOffsetY, onDismiss, threshold]);
+  }, [dragOffsetY, isExpanded, onDismiss, onToggleExpand, threshold]);
 
   return {
     dragOffsetY,
