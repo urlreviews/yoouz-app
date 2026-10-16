@@ -12568,62 +12568,10 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const mp4FilePath = path.join(serverUploadsDir, mp4FileName);
       const tempTranscodePath = path.join(serverUploadsDir, `temp_enc_${Date.now()}_${base}.mp4`);
       let finalVideoPath = filePath;
-      let transcodeSuccess = false;
-
-      // 1. High-Compatibility Universal H.264 Transcoding (yuv420p + faststart for 100% mobile & web playback)
-      // Always write to a distinct temporary transcode file to strictly avoid in-place truncation
-      try {
-        console.log(`🎬 [Server] Transcoding ${cleanFileName} with universal H.264 (yuv420p, faststart, aac)...`);
-        execSync(
-          `ffmpeg -i "${filePath}" -c:v libx264 -profile:v main -level 3.1 -pix_fmt yuv420p -preset ultrafast -crf 23 -c:a aac -b:a 128k -ar 44100 -ac 2 -movflags +faststart "${tempTranscodePath}" -y`,
-          { timeout: 90000, stdio: 'ignore' }
-        );
-
-        if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
-          if (filePath !== mp4FilePath && fs.existsSync(filePath)) {
-            try { fs.unlinkSync(filePath); } catch (e) {}
-          }
-          fs.renameSync(tempTranscodePath, mp4FilePath);
-          finalVideoPath = mp4FilePath;
-          cleanFileName = mp4FileName;
-          mimeType = "video/mp4";
-          transcodeSuccess = true;
-        }
-      } catch (ffErr) {
-        console.warn("FFmpeg primary transcode notice (using fast fallback pass):", ffErr);
-        if (fs.existsSync(tempTranscodePath)) {
-          try { fs.unlinkSync(tempTranscodePath); } catch (e) {}
-        }
-        try {
-          execSync(
-            `ffmpeg -i "${filePath}" -c:v libx264 -pix_fmt yuv420p -preset ultrafast -crf 26 -c:a aac -movflags +faststart "${tempTranscodePath}" -y`,
-            { timeout: 45000, stdio: 'ignore' }
-          );
-          if (fs.existsSync(tempTranscodePath) && fs.statSync(tempTranscodePath).size > 1000) {
-            if (filePath !== mp4FilePath && fs.existsSync(filePath)) {
-              try { fs.unlinkSync(filePath); } catch (e) {}
-            }
-            fs.renameSync(tempTranscodePath, mp4FilePath);
-            finalVideoPath = mp4FilePath;
-            cleanFileName = mp4FileName;
-            mimeType = "video/mp4";
-            transcodeSuccess = true;
-          }
-        } catch (e2) {
-          console.warn("FFmpeg secondary transcode notice (using original complete recorded file):", e2);
-          if (fs.existsSync(tempTranscodePath)) {
-            try { fs.unlinkSync(tempTranscodePath); } catch (e) {}
-          }
-        }
-      }
-
-      // If transcoding didn't succeed, guarantee we preserve and use the original complete recorded file
-      if (!transcodeSuccess) {
-        if (!fs.existsSync(mp4FilePath) && fs.existsSync(filePath)) {
-          try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
-        }
-        finalVideoPath = fs.existsSync(mp4FilePath) ? mp4FilePath : filePath;
+      if (filePath !== mp4FilePath && fs.existsSync(filePath)) {
+        try { fs.copyFileSync(filePath, mp4FilePath); } catch (e) {}
         if (fs.existsSync(mp4FilePath)) {
+          finalVideoPath = mp4FilePath;
           cleanFileName = mp4FileName;
           mimeType = "video/mp4";
         }
