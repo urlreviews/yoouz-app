@@ -1271,45 +1271,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     let finalTranscript = liveTranscript || "";
     let finalSegments = liveSegments || [];
 
-    // If no segments exist or transcript is missing, run server transcription on the recorded video blob
-    if ((!finalTranscript || finalTranscript.trim() === "" || !finalSegments || finalSegments.length === 0) && recordedVideoBlob) {
-      setPublishingStage("Generating verbatim subtitles...");
-      try {
-        const base64Data = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve((reader.result as string)?.split(",")[1] || "");
-          reader.readAsDataURL(recordedVideoBlob);
-        });
-        if (base64Data) {
-          const res = await fetch("/api/videos/transcribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              videoData: base64Data,
-              mimeType: recordedVideoBlob.type || "video/webm",
-              filename: `recording_${Date.now()}.webm`
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success) {
-              if (data.transcript) {
-                finalTranscript = data.transcript;
-                setLiveTranscript(data.transcript);
-              }
-              if (data.segments && data.segments.length > 0) {
-                finalSegments = data.segments;
-                setLiveSegments(data.segments);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Synchronous publish transcription notice:", err);
-      }
-    }
-
-    // Fallback: If segments are still empty, build character-weighted timed segments from finalTranscript
+    // Character-weighted timed segments if live segments were not generated during recording
     if ((!finalSegments || finalSegments.length === 0) && finalTranscript) {
       const effDuration = recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15);
       finalSegments = buildSegmentsFromTranscript(finalTranscript, effDuration);

@@ -1,5 +1,41 @@
 [
   {
+    "id": "rev-1792160861770-testp",
+    "userId": "test@yoouz.com",
+    "userEmail": "test@yoouz.com",
+    "placeId": "first-strike-electrical",
+    "placeName": "First Strike Electrical",
+    "rating": 5,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/e70186d8-4588-4f48-873b-5d791fb6db66/playlist.m3u8",
+    "bunnyVideoId": "e70186d8-4588-4f48-873b-5d791fb6db66",
+    "bunnyGuid": "e70186d8-4588-4f48-873b-5d791fb6db66",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/e70186d8-4588-4f48-873b-5d791fb6db66/playlist.m3u8",
+    "vttUrl": "",
+    "caption": "Test Video Review 1792160863542",
+    "author": {
+      "name": "Test Reviewer",
+      "handle": "@test"
+    },
+    "businessName": "First Strike Electrical",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/e70186d8-4588-4f48-873b-5d791fb6db66/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/e70186d8-4588-4f48-873b-5d791fb6db66.mp4",
+      "/api/videos/stream/rev-1792160861770-testp.mp4",
+      "/default-review.mp4"
+    ],
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placeWebsite": "",
+    "placeAddress": "",
+    "placeCity": "",
+    "placeCountry": "",
+    "placePhone": "",
+    "placeCategory": "",
+    "thumbnailUrl": "https://rev1.b-cdn.net/videos/rev-1792160861770-testp.jpg"
+  },
+  {
     "id": "rev-1792149988398-y1m39",
     "userId": "aouisesmee@gmail.com",
     "userEmail": "aouisesmee@gmail.com",
@@ -71,7 +107,11 @@
     "shares": 0,
     "reviewsCount": 25,
     "reviewCount": 25,
-    "totalReviews": 25
+    "totalReviews": 25,
+    "bunnyVideoId": "c085902d-ce0f-4b0c-8b02-eb320e2bfad4",
+    "bunnyGuid": "c085902d-ce0f-4b0c-8b02-eb320e2bfad4",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c085902d-ce0f-4b0c-8b02-eb320e2bfad4/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c085902d-ce0f-4b0c-8b02-eb320e2bfad4/captions/en-auto.vtt"
   },
   {
     "id": "rev-1792147088540-hkfbr",
