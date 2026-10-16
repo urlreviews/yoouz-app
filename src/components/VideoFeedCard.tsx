@@ -1260,7 +1260,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         <footer
           id={`copo-video-bottom-info-${video.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2"
+          className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-10 pb-2 px-3 -mx-3 rounded-b-3xl"
         >
           <div className="flex flex-col gap-1 w-full">
             <button
@@ -1269,7 +1269,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 onPauseVideo?.();
                 onOpenCreator(safeAuthor);
               }}
-              className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+              className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
               title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
             >
               <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
@@ -1286,7 +1286,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 emptyColorClass="fill-zinc-600/70 text-zinc-200/80"
               />
               {(video.recordedAt || video.createdAtMs) && (
-                <span className="text-white/95 text-[11.5px] font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] flex items-center gap-1">
+                <span className="text-white text-[11.5px] font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1">
                   <Clock className="w-3 h-3 text-white shrink-0" />
                   <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                 </span>
@@ -1308,11 +1308,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               return (
                 <div className="flex flex-col gap-0.5 mt-0.5">
                   {!isGenericCaption && (
-                    <p className="text-white text-xs font-bold line-clamp-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
+                    <p className="text-white text-xs font-bold line-clamp-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                       {displayHeadline}
                     </p>
                   )}
-                  <p className="text-white/90 text-[11.5px] font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
+                  <p className="text-white/95 text-[11.5px] font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                     Video review for {cleanDomain}
                   </p>
                 </div>

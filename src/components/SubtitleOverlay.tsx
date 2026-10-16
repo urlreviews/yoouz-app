@@ -256,9 +256,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       <div className="max-w-full md:max-w-[620px] flex justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-sm px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-lg border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/75 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[14px] sm:text-[16px] md:text-[18px] font-semibold tracking-normal text-center leading-snug px-1 text-white break-words max-w-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+          <p className="text-[14px] sm:text-[16px] md:text-[18px] font-bold tracking-tight text-center leading-snug px-1 text-white break-words max-w-full drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
             {activeCue.text}
           </p>
         </div>
