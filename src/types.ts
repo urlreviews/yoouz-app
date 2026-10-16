@@ -177,6 +177,9 @@ export interface VideoReview {
   videoData?: string;
   thumbnailUrl: string;
   caption?: string;
+  title?: string;
+  bunnyTitle?: string;
+  videoTitle?: string;
   dishOrItem?: string;
   likes?: number;
   likesCount?: number;
