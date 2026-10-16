@@ -21990,7 +21990,14 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           const segments = parseVttToSegments(vttText);
           if (segments.length > 0) {
             const rawTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
-            const aiTitle = rawTitle ? rawTitle.replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "").replace(/\s*\|.*$/i, "").trim() : undefined;
+            let cleanTitle = rawTitle ? rawTitle.replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "").replace(/\s*\|.*$/i, "").trim() : undefined;
+            if (cleanTitle && cleanTitle.includes(":")) {
+              const parts = cleanTitle.split(":");
+              if (parts[1] && parts[1].trim().length > 3) {
+                cleanTitle = parts.slice(1).join(":").trim();
+              }
+            }
+            const aiTitle = cleanTitle ? cleanTitle.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim() : undefined;
             console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions for ${bunnyVideoId}`);
             return { segments, transcriptText, vttText, aiTitle };
           }

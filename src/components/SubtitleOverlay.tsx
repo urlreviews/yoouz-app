@@ -106,7 +106,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         mergedList.push({ ...item });
       }
 
-      // Step 3: Normalize cue durations & split any multi-line phrases into strict 1-line sub-cues (max 5-6 words)
+      // Step 3: Normalize cue durations (minimum 1.0s so user can read it)
       for (let i = 0; i < mergedList.length; i++) {
         const item = mergedList[i];
         let s = item.start >= 0 ? item.start : i * 2.5;
@@ -115,32 +115,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         if (e - s < 0.8) e = s + 0.8;
         if (e - s > 12.0) e = s + 12.0;
 
-        const words = item.text.trim().split(/\s+/).filter(Boolean);
-        const maxWordsPerLine = 6;
-
-        if (words.length <= maxWordsPerLine) {
-          cleanCues.push({
-            id: cueId++,
-            start: Math.round(s * 100) / 100,
-            end: Math.round(e * 100) / 100,
-            text: item.text
-          });
-        } else {
-          // Split longer sentences into sequential 1-line chunks
-          const numChunks = Math.ceil(words.length / maxWordsPerLine);
-          const chunkDur = (e - s) / numChunks;
-          for (let k = 0; k < numChunks; k++) {
-            const chunkWords = words.slice(k * maxWordsPerLine, (k + 1) * maxWordsPerLine);
-            const cs = s + (k * chunkDur);
-            const ce = Math.min(e, cs + chunkDur);
-            cleanCues.push({
-              id: cueId++,
-              start: Math.round(cs * 100) / 100,
-              end: Math.round(ce * 100) / 100,
-              text: chunkWords.join(" ")
-            });
-          }
-        }
+        cleanCues.push({
+          id: cueId++,
+          start: Math.round(s * 100) / 100,
+          end: Math.round(e * 100) / 100,
+          text: item.text
+        });
       }
     }
 
@@ -173,31 +153,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
           for (let i = 0; i < totalSentences; i++) {
             const sText = uniqueSentences[i];
             const sEnd = Math.min(videoDur, curStart + perSentence);
-            const words = sText.split(/\s+/).filter(Boolean);
-            const maxWordsPerLine = 6;
-
-            if (words.length <= maxWordsPerLine) {
-              cleanCues.push({
-                id: cueId++,
-                start: Math.round(curStart * 100) / 100,
-                end: Math.round(sEnd * 100) / 100,
-                text: sText
-              });
-            } else {
-              const numChunks = Math.ceil(words.length / maxWordsPerLine);
-              const chunkDur = (sEnd - curStart) / numChunks;
-              for (let k = 0; k < numChunks; k++) {
-                const chunkWords = words.slice(k * maxWordsPerLine, (k + 1) * maxWordsPerLine);
-                const cs = curStart + (k * chunkDur);
-                const ce = Math.min(sEnd, cs + chunkDur);
-                cleanCues.push({
-                  id: cueId++,
-                  start: Math.round(cs * 100) / 100,
-                  end: Math.round(ce * 100) / 100,
-                  text: chunkWords.join(" ")
-                });
-              }
-            }
+            cleanCues.push({
+              id: cueId++,
+              start: Math.round(curStart * 100) / 100,
+              end: Math.round(sEnd * 100) / 100,
+              text: sText
+            });
             curStart = sEnd + 0.2;
           }
         }
@@ -235,13 +196,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive || !activeCue || !activeCue.text) return null;
 
   return (
-    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[280px] md:bottom-[300px] left-3 right-[72px] md:left-4 md:right-4 flex justify-center pointer-events-none z-[48] select-none transition-all duration-150">
-      <div className="max-w-[calc(100vw-80px)] md:max-w-[420px] flex justify-center">
+    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[230px] left-3 right-[70px] md:left-4 md:right-4 flex justify-center pointer-events-none z-[48] select-none transition-all duration-150">
+      <div className="max-w-full md:max-w-[440px] flex justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-2xl px-4 py-1.5 rounded-full border border-white/20 shadow-2xl text-center flex items-center justify-center max-w-full overflow-hidden"
+          className="bg-black/75 backdrop-blur-2xl px-4 py-1.5 rounded-2xl border border-white/20 shadow-2xl text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[12px] xs:text-[13px] sm:text-[14px] font-bold tracking-normal text-center text-white whitespace-nowrap truncate leading-tight px-0.5 drop-shadow-md">
+          <p className="text-[13px] sm:text-[14px] font-bold tracking-normal text-center leading-snug px-1 text-white break-words max-w-full drop-shadow-md">
             {activeCue.text}
           </p>
         </div>

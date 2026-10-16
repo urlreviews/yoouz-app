@@ -1294,7 +1294,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               )}
             </div>
 
-            {/* AI Review Title (Clean white typography matching user name and rating - Icon removed for minimalist premium feel) */}
+            {/* AI Review Title (Clean white typography matching user name and rating - Minimalist, unquoted, no company prefix) */}
             {(() => {
               const rawTitleText = (() => {
                 if (video.aiTitle) return video.aiTitle;
@@ -1302,34 +1302,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 if (video.transcriptText && video.transcriptText.trim().length > 8) {
                   const cleanSpeech = video.transcriptText.trim();
                   const firstSentence = cleanSpeech.split(/(?<=[.?!])\s+/)[0] || cleanSpeech;
-                  const truncated = firstSentence.length > 60 ? firstSentence.slice(0, 57) + "..." : firstSentence;
-                  return `${(video.rating || 5) >= 4 ? "Positive Review" : "Review"}: ${truncated}`;
-                }
-                if (video.placeName) {
-                  return `${(video.rating || 5) >= 4 ? "5★ Verified Review" : "Verified Review"}: ${video.placeName}`;
+                  return firstSentence.length > 60 ? firstSentence.slice(0, 57) + "..." : firstSentence;
                 }
                 return null;
               })();
 
               if (!rawTitleText) return null;
 
-              // Clean title string: strip trailing "| EN", "| EN-US", "| AUTO", "| English", ".mp4", etc.
-              const cleanTitle = rawTitleText
+              // 1. Strip surrounding quotes
+              let clean = rawTitleText.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
+
+              // 2. Strip language tags like "| EN", "| EN-US", "| AUTO"
+              clean = clean
                 .replace(/\s*[\Rot\s|\\/-]*\b(EN|EN-US|EN_AUTO|FR|ES|DE|IT|PT|RU|ZH|JA|KO|AR|AUTO|ALL|English)\b\s*$/i, "")
                 .replace(/\s*\|.*$/i, "")
                 .trim();
 
-              if (!cleanTitle) return null;
+              // 3. Strip company name prefix or "Positive Review:" prefix before colon (e.g. "Level 15 Moving: Fast, Excellent Service..." -> "Fast, Excellent Service...")
+              if (clean.includes(":")) {
+                const parts = clean.split(":");
+                if (parts[1] && parts[1].trim().length > 3) {
+                  clean = parts.slice(1).join(":").trim();
+                }
+              }
 
-              // Ensure clean, elegant quotation marks at the start and end of the review title
-              const unquotedTitle = cleanTitle.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
-              if (!unquotedTitle) return null;
+              // 4. Final quote trim & capitalization
+              clean = clean.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim();
+              if (!clean) return null;
 
-              const formattedTitle = `“${unquotedTitle}”`;
+              const finalTitle = clean.charAt(0).toUpperCase() + clean.slice(1);
 
               return (
                 <p className="text-white font-semibold text-[13px] sm:text-[14px] leading-snug drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] mt-0.5 line-clamp-2 tracking-normal">
-                  {formattedTitle}
+                  {finalTitle}
                 </p>
               );
             })()}
