@@ -40,6 +40,14 @@ export function normalizeVideoUrl(url?: string | null): string {
     trimmed.includes("video.bunnycdn.com") ||
     trimmed.includes("cloudinary.com")
   ) {
+    if (trimmed.includes("/videos/rev-") && trimmed.endsWith(".mp4")) {
+      const match = trimmed.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.mp4)?)/);
+      if (match && match[1]) {
+        let filename = match[1];
+        if (!filename.includes(".")) filename += ".mp4";
+        return `/api/videos/stream/${filename}`;
+      }
+    }
     return trimmed;
   }
 
@@ -126,14 +134,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 3. Direct Bunny CDN Storage MP4 (Progressive Download Fallback for instant playback)
-  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) {
-      sources.push(cdnUrlMp4);
-    }
-  }
+
 
   // 4. Direct clean local server streaming endpoint (Server proxy instant playback)
   if (video.id && typeof video.id === "string") {
