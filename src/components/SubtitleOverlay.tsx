@@ -27,42 +27,43 @@ const isTitleFallbackText = (text: string): boolean => {
 };
 
 /**
- * Deduplicates raw transcript segment lists.
- * If a segment is an updated draft of an earlier segment (e.g. "hello everybody I like to share service" vs "hello everybody I like to share my opinion..."),
- * the newer, complete draft REPLACES the earlier partial draft.
+ * Deduplicates raw segments using real speech acoustic timestamps.
+ * Replaces partial speech hypotheses with final transcripts while preserving exact start/end seconds.
  */
-const deduplicateRawSegments = (rawSegments: any[]): string[] => {
-  const result: string[] = [];
+const processAcousticSegments = (rawSegments: any[], fallbackText?: string, videoDuration = 15): DiscreteSegment[] => {
+  const normalized: { start: number; end: number; text: string }[] = [];
 
   for (const item of rawSegments) {
     const text = String(item?.text || item?.transcript || '').trim();
     if (!text || isTitleFallbackText(text)) continue;
 
-    if (result.length === 0) {
-      result.push(text);
+    const start = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : 0;
+    const end = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(start + 0.5, item.end) : start + 2.0;
+
+    if (normalized.length === 0) {
+      normalized.push({ start, end, text });
       continue;
     }
 
-    const prevText = result[result.length - 1];
-    const prevWords = prevText.toLowerCase().split(/\s+/).filter(Boolean);
+    const prev = normalized[normalized.length - 1];
+    const prevWords = prev.text.toLowerCase().split(/\s+/).filter(Boolean);
     const currWords = text.toLowerCase().split(/\s+/).filter(Boolean);
 
-    // Check if current segment starts with the same 2+ words as the previous segment
-    // (e.g., "good morning I'm..." or "hello everybody I...")
+    // Case 1: Current segment is an updated draft of previous segment (same opening words)
     if (prevWords.length >= 2 && currWords.length >= 2) {
       const matchLen = 2;
       const prevOpening = prevWords.slice(0, matchLen).join(' ');
       const currOpening = currWords.slice(0, matchLen).join(' ');
 
       if (prevOpening === currOpening) {
-        // Current segment is an updated/extended draft of the previous partial segment.
-        // Replace previous draft with current complete text!
-        result[result.length - 1] = text;
+        // Replace previous partial draft with current complete text and extend end time
+        prev.text = text;
+        prev.end = Math.max(prev.end, end);
         continue;
       }
     }
 
-    // Check suffix/prefix overlap
+    // Case 2: Suffix/prefix sliding window overlap
     let bestOverlap = 0;
     const maxOverlap = Math.min(prevWords.length, currWords.length);
     for (let k = 1; k <= maxOverlap; k++) {
@@ -74,65 +75,103 @@ const deduplicateRawSegments = (rawSegments: any[]): string[] => {
     }
 
     if (bestOverlap > 0) {
-      const originalWords = text.split(/\s+/).filter(Boolean);
-      const remaining = originalWords.slice(bestOverlap);
+      const origWords = text.split(/\s+/).filter(Boolean);
+      const remaining = origWords.slice(bestOverlap);
       if (remaining.length > 0) {
-        result.push(remaining.join(' '));
+        normalized.push({
+          start: Math.max(prev.end, start),
+          end: Math.max(prev.end + 0.6, end),
+          text: remaining.join(' ')
+        });
       }
       continue;
     }
 
-    if (prevText.toLowerCase() === text.toLowerCase()) {
+    // Case 3: Duplicate text check
+    if (prev.text.toLowerCase() === text.toLowerCase()) {
       continue;
     }
 
-    result.push(text);
+    normalized.push({ start, end, text });
   }
 
-  return result;
-};
-
-/**
- * Breaks a clean spoken transcript into 6-to-7 word 2-line YouTube subtitle chunks.
- * Guarantee: Maximum 7 words per chunk ensures text NEVER overflows 2 lines and NEVER shows "..."
- */
-const chunkIntoYoutube2LineSubtitles = (fullText: string): string[] => {
-  if (!fullText) return [];
-
-  const text = fullText.trim();
-  if (!text || isTitleFallbackText(text)) return [];
-
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [];
-
-  const maxWordsPerChunk = 7;
-  const chunks: string[] = [];
-  let currentChunk: string[] = [];
-
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    currentChunk.push(word);
-
-    const hasPunctuation = /[.,!?;:]$/.test(word);
-    const reachMax = currentChunk.length >= maxWordsPerChunk;
-    const reachMin = currentChunk.length >= 5;
-    const remaining = words.length - (i + 1);
-
-    if ((reachMax || (reachMin && hasPunctuation)) && remaining >= 2) {
-      chunks.push(currentChunk.join(' '));
-      currentChunk = [];
+  // Fallback: If no segments exist but transcript text is provided
+  if (normalized.length === 0 && fallbackText && fallbackText.trim()) {
+    const cleanText = fallbackText.trim();
+    if (!isTitleFallbackText(cleanText)) {
+      const words = cleanText.split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        const secPerWord = 0.35;
+        let curSec = 0.5;
+        for (let i = 0; i < words.length; i += 7) {
+          const chunkWords = words.slice(i, i + 7);
+          const dur = Math.max(1.5, chunkWords.length * secPerWord);
+          normalized.push({
+            start: Math.round(curSec * 100) / 100,
+            end: Math.round((curSec + dur) * 100) / 100,
+            text: chunkWords.join(' ')
+          });
+          curSec += dur;
+        }
+      }
     }
   }
 
-  if (currentChunk.length > 0) {
-    if (chunks.length > 0 && currentChunk.length <= 2) {
-      chunks[chunks.length - 1] += ' ' + currentChunk.join(' ');
-    } else {
-      chunks.push(currentChunk.join(' '));
+  // Step 2: Split any segment longer than 7 words into 2-line YouTube subtitle chunks
+  // proportionally distributed across THAT segment's exact acoustic [start, end] window
+  const finalChunks: DiscreteSegment[] = [];
+
+  for (const seg of normalized) {
+    const words = seg.text.split(/\s+/).filter(Boolean);
+    if (words.length <= 7) {
+      finalChunks.push(seg);
+      continue;
+    }
+
+    // Split long segment into sub-chunks of max 7 words
+    const subChunks: string[][] = [];
+    let curWords: string[] = [];
+    for (let i = 0; i < words.length; i++) {
+      curWords.push(words[i]);
+      const reachMax = curWords.length >= 7;
+      const reachMin = curWords.length >= 5;
+      const hasPunc = /[.,!?;:]$/.test(words[i]);
+      const rem = words.length - (i + 1);
+
+      if ((reachMax || (reachMin && hasPunc)) && rem >= 2) {
+        subChunks.push(curWords);
+        curWords = [];
+      }
+    }
+    if (curWords.length > 0) {
+      if (subChunks.length > 0 && curWords.length <= 2) {
+        subChunks[subChunks.length - 1].push(...curWords);
+      } else {
+        subChunks.push(curWords);
+      }
+    }
+
+    // Proportionally scale each sub-chunk across the segment's actual acoustic time [seg.start, seg.end]
+    const segDuration = Math.max(1.2, seg.end - seg.start);
+    let chunkStart = seg.start;
+
+    for (let j = 0; j < subChunks.length; j++) {
+      const cWords = subChunks[j];
+      const chunkDur = (cWords.length / words.length) * segDuration;
+      const cStart = Math.round(chunkStart * 100) / 100;
+      const cEnd = j === subChunks.length - 1 ? seg.end : Math.round((chunkStart + chunkDur) * 100) / 100;
+
+      finalChunks.push({
+        start: cStart,
+        end: cEnd,
+        text: cWords.join(' ')
+      });
+
+      chunkStart = cEnd;
     }
   }
 
-  return chunks;
+  return finalChunks;
 };
 
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
@@ -143,61 +182,19 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Build clean, deduplicated, non-overlapping 2-line sentence segments
+  // Build clean, acoustic-synced 2-line YouTube subtitles
   const discreteSegments = useMemo<DiscreteSegment[]>(() => {
-    let cleanPhrases: string[] = [];
-
+    let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
-      cleanPhrases = deduplicateRawSegments(segments);
+      rawList = segments;
     } else if (typeof segments === 'string') {
       try {
         const parsed = JSON.parse(segments);
-        if (Array.isArray(parsed)) {
-          cleanPhrases = deduplicateRawSegments(parsed);
-        }
+        if (Array.isArray(parsed)) rawList = parsed;
       } catch (e) {}
     }
 
-    if (cleanPhrases.length === 0 && transcriptText && transcriptText.trim()) {
-      const clean = transcriptText.trim();
-      if (!isTitleFallbackText(clean)) {
-        cleanPhrases = [clean];
-      }
-    }
-
-    if (cleanPhrases.length === 0) return [];
-
-    const fullSpokenText = cleanPhrases.join(' ');
-    const chunks = chunkIntoYoutube2LineSubtitles(fullSpokenText);
-    if (chunks.length === 0) return [];
-
-    // Scale start/end time windows precisely across video duration
-    const totalWords = fullSpokenText.split(/\s+/).filter(Boolean).length;
-    const effectiveDur = duration && duration > 0 ? duration : 15;
-    const availableDur = Math.max(2.0, effectiveDur - 0.5);
-
-    let currentStart = 0.2;
-    const result: DiscreteSegment[] = [];
-
-    for (let i = 0; i < chunks.length; i++) {
-      const text = chunks[i];
-      const cWords = text.split(/\s+/).length;
-      const proportion = totalWords > 0 ? cWords / totalWords : 1 / chunks.length;
-      const chunkDur = availableDur * proportion;
-
-      const segStart = Math.round(currentStart * 100) / 100;
-      const segEnd = Math.round((currentStart + chunkDur) * 100) / 100;
-
-      result.push({
-        start: segStart,
-        end: segEnd,
-        text
-      });
-
-      currentStart = segEnd; // Next sentence chunk appears right when previous finishes
-    }
-
-    return result;
+    return processAcousticSegments(rawList, transcriptText, duration);
   }, [segments, transcriptText, duration]);
 
   // Find active discrete segment for current video time
@@ -208,14 +205,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       return discreteSegments[discreteSegments.length - 1] || null;
     }
 
-    // Strict time window: appears ONLY during [start, end] and vanishes completely when done
+    // Strict time window: appears ONLY during [start, end] when the speaker is actually speaking!
+    // When the speaker pauses or stops speaking, activeSegment becomes null and disappears!
     for (const seg of discreteSegments) {
       if (currentTime >= seg.start && currentTime <= seg.end) {
         return seg;
       }
     }
 
-    return null; // Clears completely between sentence chunks
+    return null; // Clears completely when speaker is not speaking
   }, [discreteSegments, currentTime, isActive, isLiveRecording]);
 
   // Detect Right-to-Left languages
