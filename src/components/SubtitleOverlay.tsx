@@ -27,91 +27,112 @@ const isTitleFallbackText = (text: string): boolean => {
 };
 
 /**
- * Splits transcript into natural spoken sentences/clauses.
- * Never cuts a sentence mid-phrase (e.g. "good morning" is never split into "good" in line 1 and "morning" in line 2).
+ * Deduplicates raw transcript segment lists.
+ * If a segment is an updated draft of an earlier segment (e.g. "hello everybody I like to share service" vs "hello everybody I like to share my opinion..."),
+ * the newer, complete draft REPLACES the earlier partial draft.
  */
-const parseNaturalSentences = (fullText: string): string[] => {
+const deduplicateRawSegments = (rawSegments: any[]): string[] => {
+  const result: string[] = [];
+
+  for (const item of rawSegments) {
+    const text = String(item?.text || item?.transcript || '').trim();
+    if (!text || isTitleFallbackText(text)) continue;
+
+    if (result.length === 0) {
+      result.push(text);
+      continue;
+    }
+
+    const prevText = result[result.length - 1];
+    const prevWords = prevText.toLowerCase().split(/\s+/).filter(Boolean);
+    const currWords = text.toLowerCase().split(/\s+/).filter(Boolean);
+
+    // Check if current segment starts with the same 2+ words as the previous segment
+    // (e.g., "good morning I'm..." or "hello everybody I...")
+    if (prevWords.length >= 2 && currWords.length >= 2) {
+      const matchLen = 2;
+      const prevOpening = prevWords.slice(0, matchLen).join(' ');
+      const currOpening = currWords.slice(0, matchLen).join(' ');
+
+      if (prevOpening === currOpening) {
+        // Current segment is an updated/extended draft of the previous partial segment.
+        // Replace previous draft with current complete text!
+        result[result.length - 1] = text;
+        continue;
+      }
+    }
+
+    // Check suffix/prefix overlap
+    let bestOverlap = 0;
+    const maxOverlap = Math.min(prevWords.length, currWords.length);
+    for (let k = 1; k <= maxOverlap; k++) {
+      const prevSuffix = prevWords.slice(-k).join(' ');
+      const currPrefix = currWords.slice(0, k).join(' ');
+      if (prevSuffix === currPrefix) {
+        bestOverlap = k;
+      }
+    }
+
+    if (bestOverlap > 0) {
+      const originalWords = text.split(/\s+/).filter(Boolean);
+      const remaining = originalWords.slice(bestOverlap);
+      if (remaining.length > 0) {
+        result.push(remaining.join(' '));
+      }
+      continue;
+    }
+
+    if (prevText.toLowerCase() === text.toLowerCase()) {
+      continue;
+    }
+
+    result.push(text);
+  }
+
+  return result;
+};
+
+/**
+ * Breaks a clean spoken transcript into 6-to-7 word 2-line YouTube subtitle chunks.
+ * Guarantee: Maximum 7 words per chunk ensures text NEVER overflows 2 lines and NEVER shows "..."
+ */
+const chunkIntoYoutube2LineSubtitles = (fullText: string): string[] => {
   if (!fullText) return [];
 
   const text = fullText.trim();
   if (!text || isTitleFallbackText(text)) return [];
 
-  // Step 1: Detect explicit sentence boundaries (punctuation) OR repeated sentence restarts (e.g. "good morning ... good morning")
-  // Regex matches sentence ending punctuation OR looks for common restarts
-  const sentences: string[] = [];
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
 
-  // Split on punctuation first: ., !, ?, ;, or newline
-  const rawPunctuationSplits = text.split(/(?<=[.!?;\n])\s+/).filter(Boolean);
+  const maxWordsPerChunk = 7;
+  const chunks: string[] = [];
+  let currentChunk: string[] = [];
 
-  for (const part of rawPunctuationSplits) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    currentChunk.push(word);
 
-    // Check if within this part there is a repeated phrase restart (e.g. "good morning ... good morning")
-    // Find if a 2+ word sequence repeats later in the same part
-    const words = trimmed.split(/\s+/).filter(Boolean);
-    let currentSentenceWords: string[] = [];
+    const hasPunctuation = /[.,!?;:]$/.test(word);
+    const reachMax = currentChunk.length >= maxWordsPerChunk;
+    const reachMin = currentChunk.length >= 5;
+    const remaining = words.length - (i + 1);
 
-    for (let i = 0; i < words.length; i++) {
-      const w = words[i];
-
-      // Check if starting at i, the next 2 words match an earlier phrase in currentSentenceWords
-      if (currentSentenceWords.length >= 4 && i + 1 < words.length) {
-        const wordA = words[i].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const wordB = words[i + 1].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const firstWordPrev = currentSentenceWords[0]?.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const secondWordPrev = currentSentenceWords[1]?.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-        if (wordA && wordB && firstWordPrev && secondWordPrev && wordA === firstWordPrev && wordB === secondWordPrev) {
-          // Found a sentence restart! Flush currentSentenceWords as a completed sentence
-          sentences.push(currentSentenceWords.join(' '));
-          currentSentenceWords = [];
-        }
-      }
-
-      currentSentenceWords.push(w);
-    }
-
-    if (currentSentenceWords.length > 0) {
-      sentences.push(currentSentenceWords.join(' '));
+    if ((reachMax || (reachMin && hasPunctuation)) && remaining >= 2) {
+      chunks.push(currentChunk.join(' '));
+      currentChunk = [];
     }
   }
 
-  // Step 2: For any sentence that is still longer than 11 words, split cleanly at natural clause conjunctions (and, but, because, so, or, then)
-  const finalClauses: string[] = [];
-
-  for (const sent of sentences) {
-    const sWords = sent.split(/\s+/).filter(Boolean);
-    if (sWords.length <= 11) {
-      finalClauses.push(sent);
-      continue;
-    }
-
-    // Split long sentence at clause conjunctions
-    let clauseAcc: string[] = [];
-    for (let i = 0; i < sWords.length; i++) {
-      const w = sWords[i];
-      const lowerW = w.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const isConjunction = ['and', 'but', 'because', 'so', 'then', 'or', 'which', 'where'].includes(lowerW);
-
-      if (clauseAcc.length >= 6 && isConjunction && (sWords.length - i) >= 3) {
-        finalClauses.push(clauseAcc.join(' '));
-        clauseAcc = [w];
-      } else {
-        clauseAcc.push(w);
-      }
-    }
-
-    if (clauseAcc.length > 0) {
-      if (finalClauses.length > 0 && clauseAcc.length <= 3) {
-        finalClauses[finalClauses.length - 1] += ' ' + clauseAcc.join(' ');
-      } else {
-        finalClauses.push(clauseAcc.join(' '));
-      }
+  if (currentChunk.length > 0) {
+    if (chunks.length > 0 && currentChunk.length <= 2) {
+      chunks[chunks.length - 1] += ' ' + currentChunk.join(' ');
+    } else {
+      chunks.push(currentChunk.join(' '));
     }
   }
 
-  return finalClauses;
+  return chunks;
 };
 
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
@@ -124,58 +145,44 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 }) => {
   // Build clean, deduplicated, non-overlapping 2-line sentence segments
   const discreteSegments = useMemo<DiscreteSegment[]>(() => {
-    let fullText = '';
+    let cleanPhrases: string[] = [];
 
     if (Array.isArray(segments) && segments.length > 0) {
-      const textList = segments
-        .map(s => String(s?.text || s?.transcript || '').trim())
-        .filter(t => t && !isTitleFallbackText(t));
-      
-      // Deduplicate consecutive identical segment strings
-      const dedupList: string[] = [];
-      for (const t of textList) {
-        if (dedupList.length === 0 || dedupList[dedupList.length - 1].toLowerCase() !== t.toLowerCase()) {
-          dedupList.push(t);
-        }
-      }
-      fullText = dedupList.join(' ');
+      cleanPhrases = deduplicateRawSegments(segments);
     } else if (typeof segments === 'string') {
       try {
         const parsed = JSON.parse(segments);
         if (Array.isArray(parsed)) {
-          const textList = parsed
-            .map(s => String(s?.text || s?.transcript || '').trim())
-            .filter(t => t && !isTitleFallbackText(t));
-          fullText = textList.join(' ');
+          cleanPhrases = deduplicateRawSegments(parsed);
         }
       } catch (e) {}
     }
 
-    if (!fullText && transcriptText && transcriptText.trim()) {
+    if (cleanPhrases.length === 0 && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isTitleFallbackText(clean)) {
-        fullText = clean;
+        cleanPhrases = [clean];
       }
     }
 
-    if (!fullText || isTitleFallbackText(fullText)) return [];
+    if (cleanPhrases.length === 0) return [];
 
-    // Step 1: Parse into natural sentences without breaking mid-phrase
-    const sentenceClauses = parseNaturalSentences(fullText);
-    if (sentenceClauses.length === 0) return [];
+    const fullSpokenText = cleanPhrases.join(' ');
+    const chunks = chunkIntoYoutube2LineSubtitles(fullSpokenText);
+    if (chunks.length === 0) return [];
 
-    // Step 2: Scale start/end time windows precisely across video duration
-    const totalWords = fullText.split(/\s+/).filter(Boolean).length;
+    // Scale start/end time windows precisely across video duration
+    const totalWords = fullSpokenText.split(/\s+/).filter(Boolean).length;
     const effectiveDur = duration && duration > 0 ? duration : 15;
     const availableDur = Math.max(2.0, effectiveDur - 0.5);
 
     let currentStart = 0.2;
     const result: DiscreteSegment[] = [];
 
-    for (let i = 0; i < sentenceClauses.length; i++) {
-      const text = sentenceClauses[i];
+    for (let i = 0; i < chunks.length; i++) {
+      const text = chunks[i];
       const cWords = text.split(/\s+/).length;
-      const proportion = totalWords > 0 ? cWords / totalWords : 1 / sentenceClauses.length;
+      const proportion = totalWords > 0 ? cWords / totalWords : 1 / chunks.length;
       const chunkDur = availableDur * proportion;
 
       const segStart = Math.round(currentStart * 100) / 100;
@@ -187,7 +194,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         text
       });
 
-      currentStart = segEnd; // Next sentence appears right when previous finishes
+      currentStart = segEnd; // Next sentence chunk appears right when previous finishes
     }
 
     return result;
@@ -208,7 +215,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    return null; // Clears completely between sentences
+    return null; // Clears completely between sentence chunks
   }, [discreteSegments, currentTime, isActive, isLiveRecording]);
 
   // Detect Right-to-Left languages
@@ -226,7 +233,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
           dir={isRTL ? "rtl" : "ltr"}
           className="bg-black/85 backdrop-blur-md px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg border border-white/10 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[15px] sm:text-[17px] md:text-[18px] font-medium tracking-normal drop-shadow-md text-center leading-snug px-1 text-white break-words line-clamp-2 max-w-full">
+          <p className="text-[15px] sm:text-[17px] md:text-[18px] font-medium tracking-normal drop-shadow-md text-center leading-snug px-1 text-white break-words max-w-full">
             {activeSegment.text}
           </p>
         </div>
