@@ -1500,10 +1500,40 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
-    // 5. Connect to Bunny Stream Smart Captions pipeline
-    setPublishingStage("Connecting Smart Captions...");
+    // 5. Connect to Bunny Stream Smart Captions pipeline & wait for AI Captions
+    setPublishingStage("Generating AI Smart Captions...");
+    setUploadProgress(90);
     const streamPullZone = "https://vz-dcd9e101-437.b-cdn.net";
     const assignedBunnyId = finalBunnyId || newReview.bunnyVideoId;
+
+    let bunnySegments: any[] = [];
+    let bunnyTranscriptText = "";
+
+    if (assignedBunnyId) {
+      // Poll server for official Bunny Stream Smart Captions (up to 5 attempts, ~1.5s delay)
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          const capRes = await fetch(`/api/videos/${reviewId}/ensure-transcript`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bunnyVideoId: assignedBunnyId }),
+            signal: AbortSignal.timeout(6000)
+          });
+          if (capRes.ok) {
+            const capData = await capRes.json();
+            if (capData && Array.isArray(capData.segments) && capData.segments.length > 0) {
+              bunnySegments = capData.segments;
+              bunnyTranscriptText = capData.transcriptText || "";
+              console.log(`🎬 🐰 [Modal] Official Bunny Smart Captions ready on attempt ${attempt}!`);
+              break;
+            }
+          }
+        } catch (e) {}
+
+        setPublishingStage(`Processing AI Captions (${attempt}/5)...`);
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
 
     const finalReview: VideoReview = {
       ...newReview,
@@ -1513,8 +1543,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       vttUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/captions/en-auto.vtt` : newReview.vttUrl,
       localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
-      transcriptText: finalTranscript || newReview.transcriptText || "",
-      segments: (finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])
+      transcriptText: bunnySegments.length > 0 ? bunnyTranscriptText : (finalTranscript || newReview.transcriptText || ""),
+      segments: bunnySegments.length > 0 ? bunnySegments : ((finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])),
+      hasBunnySmartCaptions: bunnySegments.length > 0
     } as any;
 
     // 6. Save metadata to server review index and memory cache

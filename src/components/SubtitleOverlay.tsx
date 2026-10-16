@@ -196,13 +196,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive || !activeCue || !activeCue.text) return null;
 
   return (
-    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[220px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none transition-opacity duration-150">
-      <div className="max-w-[92%] sm:max-w-[85%] md:max-w-[620px] flex justify-center">
+    <div className="absolute bottom-[170px] xs:bottom-[180px] sm:bottom-[210px] left-3 right-[72px] sm:left-0 sm:right-0 flex justify-start sm:justify-center pointer-events-none z-[48] select-none transition-all duration-200">
+      <div className="w-full sm:w-auto max-w-full sm:max-w-[85%] md:max-w-[620px] flex justify-start sm:justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-sm px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/85 backdrop-blur-md px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl border border-amber-500/25 border-t-amber-400/80 shadow-[0_8px_28px_rgba(0,0,0,0.9)] text-left sm:text-center flex items-center justify-start sm:justify-center max-w-full"
         >
-          <p className="text-[15px] sm:text-[17px] md:text-[18px] font-medium tracking-normal text-center leading-snug px-1 text-white break-words max-w-full drop-shadow">
+          <p className="text-[13px] xs:text-[14px] sm:text-[16px] md:text-[18px] font-semibold tracking-normal leading-snug px-0.5 text-amber-50 break-words max-w-full drop-shadow-md">
             {activeCue.text}
           </p>
         </div>

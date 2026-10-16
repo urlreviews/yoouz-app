@@ -21959,8 +21959,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           const segments = parseVttToSegments(vttText);
           if (segments.length > 0) {
             const transcriptText = segments.map(s => s.text).join(" ");
+            const aiTitle = vidData?.title && !vidData.title.endsWith('.mp4') && !vidData.title.startsWith('rev-') ? vidData.title : undefined;
             console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions for ${bunnyVideoId}`);
-            return { segments, transcriptText, vttText };
+            return { segments, transcriptText, vttText, aiTitle };
           }
         }
       } else {
@@ -21973,7 +21974,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   }
 
   // Reusable background transcription logic using Bunny Stream Smart Captions
-  async function ensureTranscriptionForVideo(videoId: string) {
+  async function ensureTranscriptionForVideo(videoId: string, overrideBunnyVideoId?: string) {
     try {
       let video: any = null;
 
@@ -22002,7 +22003,13 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         } catch (e) {}
       }
 
-      if (!video) return { error: "Video not found" };
+      if (!video) {
+        if (overrideBunnyVideoId) {
+          video = { id: videoId, bunnyVideoId: overrideBunnyVideoId };
+        } else {
+          return { error: "Video not found" };
+        }
+      }
 
       let bunnyVideoId = video.bunnyVideoId || video.bunnyGuid || video.guid;
       if (!bunnyVideoId) {
@@ -22049,15 +22056,16 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (bunnyResult && bunnyResult.segments.length > 0) {
           const transcriptText = bunnyResult.transcriptText;
           const segments = bunnyResult.segments;
+          const aiTitle = bunnyResult.aiTitle || video.aiTitle;
 
-          const updatedVideo = { ...video, bunnyVideoId, transcriptText, segments, hasBunnySmartCaptions: true };
+          const updatedVideo = { ...video, bunnyVideoId, transcriptText, segments, ...(aiTitle ? { aiTitle } : {}), hasBunnySmartCaptions: true };
 
           // 1. Sync to local JSON index
           try {
             const list = readReviewsIndex();
             const idx = list.findIndex((v: any) => v && String(v.id) === String(videoId));
             if (idx !== -1) {
-              list[idx] = { ...list[idx], bunnyVideoId, transcriptText, segments, hasBunnySmartCaptions: true };
+              list[idx] = { ...list[idx], bunnyVideoId, transcriptText, segments, ...(aiTitle ? { aiTitle } : {}), hasBunnySmartCaptions: true };
               writeReviewsIndex(list);
             }
           } catch (e) {}
@@ -22127,7 +22135,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
   // Ensure Transcription endpoint for on-demand processing (old videos)
   app.post("/api/videos/:id/ensure-transcript", async (req, res) => {
-    const result = await ensureTranscriptionForVideo(req.params.id);
+    const overrideBunnyId = req.body?.bunnyVideoId || req.query?.bunnyVideoId;
+    const result = await ensureTranscriptionForVideo(req.params.id, overrideBunnyId);
     return res.json(result);
   });
 
