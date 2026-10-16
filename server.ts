@@ -21934,7 +21934,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       if (bunnyVideoGuid) {
         review.bunnyVideoId = bunnyVideoGuid;
         review.bunnyGuid = bunnyVideoGuid;
-        const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net";
+        const streamPullZone = process.env.BUNNY_STREAM_CDN_URL || `https://vz-${libraryId}.b-cdn.net`;
         review.hlsUrl = `${streamPullZone}/${bunnyVideoGuid}/playlist.m3u8`;
         review.vttUrl = `${streamPullZone}/${bunnyVideoGuid}/captions/en-auto.vtt`;
 
@@ -22001,7 +22001,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const vttUrl = `${captionsPath.replace(/\/?$/, '/')}${srclang}.vtt`;
       console.log(`🎬 🐰 [Bunny Smart Captions] Fetching VTT from: ${vttUrl}`);
 
-      const vttResp = await fetch(vttUrl, { signal: AbortSignal.timeout(10000) });
+      const vttResp = await fetch(vttUrl, { 
+        headers: { "Referer": "https://yoouz.com/" }, 
+        signal: AbortSignal.timeout(10000) 
+      });
       if (vttResp.ok) {
         const vttText = await vttResp.text();
         if (vttText && vttText.includes("WEBVTT")) {

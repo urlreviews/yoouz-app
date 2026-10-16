@@ -118,8 +118,33 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 2. Direct Bunny Stream HLS Playlist (Adaptive Bitrate + Captions Support)
-  // GUID detection: Standard GUIDs are 36 chars with 4 hyphens. Legacy IDs usually have 2 hyphens.
+  // 2. Direct specified videoUrl on the video review (if valid non-blob)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes("playlist.m3u8")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
+    }
+  }
+
+  // 3. Direct Bunny CDN Storage MP4 (Progressive Download Fallback for instant playback)
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnUrlMp4)) {
+      sources.push(cdnUrlMp4);
+    }
+  }
+
+  // 4. Direct clean local server streaming endpoint (Server proxy instant playback)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
+    }
+  }
+
+  // 5. Bunny Stream HLS Playlist (Adaptive Bitrate + Captions Support when ready)
   const isStreamGuid = (id?: string) => {
     if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
     const hyphens = (id.match(/-/g) || []).length;
@@ -134,7 +159,6 @@ export function resolvePlayableVideoSourcesCascade(
 
   const guid = video.bunnyVideoId || (video as any).bunnyGuid || (video.id && !video.id.startsWith('rev-') ? video.id : null);
   if (guid && isStreamGuid(guid)) {
-    // Official Bunny Stream pull zone matching user dashboard screenshot
     const streamPullZone = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_CDN_URL) || "https://vz-dcd9e101-437.b-cdn.net";
     const streamHlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
     if (!sources.includes(streamHlsUrl)) {
@@ -143,32 +167,6 @@ export function resolvePlayableVideoSourcesCascade(
     const legacyStreamHls = `https://vz-${bunnyLibId}.b-cdn.net/${guid}/playlist.m3u8`;
     if (!sources.includes(legacyStreamHls)) {
       sources.push(legacyStreamHls);
-    }
-  }
-
-  // 3. Direct specified videoUrl on the video review (if it is a valid non-blob http/https/relative URL)
-  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 4. Direct Bunny CDN Storage MP4 (Progressive Download Fallback)
-  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnUrlMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnUrlMp4)) {
-      sources.push(cdnUrlMp4);
-    }
-  }
-
-  // 5. Direct clean local server streaming endpoint (Server proxy fallback)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
     }
   }
 
