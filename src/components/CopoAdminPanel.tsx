@@ -9212,7 +9212,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   onClick={() => {
                     setHasVideoStarted(true);
                     setIsVideoPlaying(true);
-                    videoPlayerRef.current?.play();
+                    videoPlayerRef.current?.play().catch(e => {
+                      if (e.name !== 'AbortError') console.error("Playback error:", e);
+                    });
                   }}
                   className="absolute inset-0 w-full h-full z-20 flex items-center justify-center bg-black/20 group hover:bg-black/30 transition-all cursor-pointer"
                 >
@@ -9229,7 +9231,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     if (videoPlayerRef.current) {
                       if (!hasVideoStarted) setHasVideoStarted(true);
                       if (isVideoPlaying) videoPlayerRef.current.pause();
-                      else videoPlayerRef.current.play();
+                      else videoPlayerRef.current.play().catch(e => {
+                        if (e.name !== 'AbortError') console.error("Playback error:", e);
+                      });
                       setIsVideoPlaying(!isVideoPlaying);
                     }
                   }}
