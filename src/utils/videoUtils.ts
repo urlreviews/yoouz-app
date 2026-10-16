@@ -128,18 +128,20 @@ export function resolvePlayableVideoSourcesCascade(
 
   const bunnyLibId = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
   
-  const guid = video.bunnyVideoId || video.id;
+  if (video.hlsUrl && typeof video.hlsUrl === 'string' && !sources.includes(video.hlsUrl)) {
+    sources.push(video.hlsUrl);
+  }
+
+  const guid = video.bunnyVideoId || (video as any).bunnyGuid || video.id;
   if (isStreamGuid(guid)) {
-    // Standard Bunny Stream pull zone derivation: vz-<libraryId>.b-cdn.net
-    const streamPullZone = `https://vz-${bunnyLibId}.b-cdn.net`;
-    const streamHlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
+    // Official Bunny Stream pull zone
+    const streamHlsUrl = `https://vz-dcd9e101-437.b-cdn.net/${guid}/playlist.m3u8`;
     if (!sources.includes(streamHlsUrl)) {
       sources.push(streamHlsUrl);
     }
-    // Direct edge fallback
-    const directEdgeHls = `https://video.bunnycdn.com/play/${bunnyLibId}/${guid}`;
-    if (!sources.includes(directEdgeHls)) {
-      sources.push(directEdgeHls);
+    const legacyStreamHls = `https://vz-${bunnyLibId}.b-cdn.net/${guid}/playlist.m3u8`;
+    if (!sources.includes(legacyStreamHls)) {
+      sources.push(legacyStreamHls);
     }
   }
 
