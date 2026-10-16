@@ -1100,6 +1100,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && isRecordingRef.current) {
       triggerHaptic("heavy");
+      const recStart = recordingStartTimeRef.current || performance.now();
+      const actualDuration = Math.max(1, Math.round((performance.now() - recStart) / 1000));
+      setRecordingTime(actualDuration);
+
       try {
         if (mediaRecorderRef.current.state === "recording") {
           mediaRecorderRef.current.requestData();
@@ -1221,6 +1225,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   const handlePublish = async () => {
+    if (isPublishing || isPublishingRef.current) return;
+
     if (!selectedPlace) {
       setErrorMessage("Please select a place for your video review.");
       return;

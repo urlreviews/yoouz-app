@@ -16,7 +16,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "caption": "Test Video Review 1792160863542",
     "author": {
       "name": "Test Reviewer",
-      "handle": "@test"
+      "handle": "@test",
+      "avatar": ""
     },
     "businessName": "First Strike Electrical",
     "fallbackVideoUrls": [
