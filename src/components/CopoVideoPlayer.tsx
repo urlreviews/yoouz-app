@@ -1901,7 +1901,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {moreMenuVideo && (
         <div
           id="copo-more-options-backdrop"
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => setMoreMenuVideo(null)}
           onWheel={(e) => e.stopPropagation()}
         >
@@ -2221,13 +2221,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {editingReviewVideo && (
         <div
           id="copo-edit-rating-backdrop"
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 animate-in fade-in overscroll-contain"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => !isSavingEdit && setEditingReviewVideo(null)}
           onWheel={(e) => e.stopPropagation()}
         >
           <div
             id="copo-edit-rating-modal"
-            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in zoom-in-95 duration-200 flex flex-col max-h-[75vh] sm:max-h-[90vh]"
+            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] sm:max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
@@ -2359,7 +2359,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             </div>
 
             {/* Sticky Footer Action Buttons */}
-            <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md shrink-0 flex items-center gap-3 pb-[calc(env(safe-area-inset-bottom,16px)+16px)] z-20">
+            <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md shrink-0 flex items-center gap-3 pb-[max(16px,calc(env(safe-area-inset-bottom,0px)+16px))] z-20">
               <button
                 type="button"
                 id="btn-cancel-edit-rating"
