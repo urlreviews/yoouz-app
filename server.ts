@@ -12353,7 +12353,10 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
 
       let allVideos: any[] = [];
       try {
-        if (db) {
+        if (feedCache.videos && feedCache.videos.length > 0) {
+          allVideos = feedCache.videos.filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+        }
+        if (allVideos.length === 0 && db) {
           const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
           const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
           const mergedVideos = [...dbVideos, ...localVideos];
@@ -12472,14 +12475,19 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
           mergedPlaces.forEach(p => placeMap.set(p.id, p));
           allPlaces = Array.from(placeMap.values());
           
-          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
-          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const mergedVideos = [...dbVideos, ...localVideos];
-          const videoMap = new Map();
-          mergedVideos.forEach(v => {
-            if (v && v.id && !isDeletedReviewServer(v.id)) videoMap.set(v.id, v);
-          });
-          allVideos = Array.from(videoMap.values());
+          if (feedCache.videos && feedCache.videos.length > 0) {
+            allVideos = feedCache.videos.filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+          }
+          if (allVideos.length === 0) {
+            const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
+            const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+            const mergedVideos = [...dbVideos, ...localVideos];
+            const videoMap = new Map();
+            mergedVideos.forEach(v => {
+              if (v && v.id && !isDeletedReviewServer(v.id)) videoMap.set(v.id, v);
+            });
+            allVideos = Array.from(videoMap.values());
+          }
         }
       } catch (err) {
         console.warn('Sitemap generation data fetch warning:', err);

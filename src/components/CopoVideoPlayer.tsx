@@ -2258,7 +2258,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto touch-pan-y pb-12 sm:pb-6">
+            <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto touch-pan-y">
               {/* Target Place Information */}
               <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/50">
                 <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shrink-0">
@@ -2356,59 +2356,59 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   {t("video.recalculationNote", "Changing your rating will automatically recalculate the overall average score for this business across all verified reviews.")}
                 </p>
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  id="btn-cancel-edit-rating"
-                  disabled={isSavingEdit}
-                  onClick={() => setEditingReviewVideo(null)}
-                  className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-750 text-zinc-200 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {t("common.cancel", "Cancel")}
-                </button>
-                <button
-                  type="button"
-                  id="btn-save-edit-rating"
-                  disabled={isSavingEdit}
-                  onClick={async () => {
-                    if (!editingReviewVideo || !onUpdateVideoReview) return;
-                    setIsSavingEdit(true);
-                    try {
-                      await onUpdateVideoReview(editingReviewVideo.id, {
-                        rating: editRating
-                      });
-                      setSaveSuccess(true);
-                      setTimeout(() => {
-                        setIsSavingEdit(false);
-                        setEditingReviewVideo(null);
-                        setSaveSuccess(false);
-                      }, 500);
-                    } catch (err) {
+            {/* Sticky Footer Action Buttons */}
+            <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md shrink-0 flex items-center gap-3 pb-safe z-20">
+              <button
+                type="button"
+                id="btn-cancel-edit-rating"
+                disabled={isSavingEdit}
+                onClick={() => setEditingReviewVideo(null)}
+                className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-750 text-zinc-200 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {t("common.cancel", "Cancel")}
+              </button>
+              <button
+                type="button"
+                id="btn-save-edit-rating"
+                disabled={isSavingEdit}
+                onClick={async () => {
+                  if (!editingReviewVideo || !onUpdateVideoReview) return;
+                  setIsSavingEdit(true);
+                  try {
+                    await onUpdateVideoReview(editingReviewVideo.id, {
+                      rating: editRating
+                    });
+                    setSaveSuccess(true);
+                    setTimeout(() => {
                       setIsSavingEdit(false);
-                    }
-                  }}
-                  className="flex-1 py-3.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingEdit ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      <span>{t("common.saving", "Saving...")}</span>
-                    </>
-                  ) : saveSuccess ? (
-                    <>
-                      <Check className="w-4 h-4 text-black" />
-                      <span>{t("common.updated", "Updated!")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Star className="w-4 h-4 fill-black text-black" />
-                      <span>{t("video.saveRating", "Save Rating")}</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                      setEditingReviewVideo(null);
+                      setSaveSuccess(false);
+                    }, 500);
+                  } catch (err) {
+                    setIsSavingEdit(false);
+                  }
+                }}
+                className="flex-1 py-3.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isSavingEdit ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <span>{t("common.saving", "Saving...")}</span>
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-black" />
+                    <span>{t("common.updated", "Updated!")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-4 h-4 fill-black text-black" />
+                    <span>{t("video.saveRating", "Save Rating")}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
