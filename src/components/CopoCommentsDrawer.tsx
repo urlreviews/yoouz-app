@@ -1104,11 +1104,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                 const hasReplies = Array.isArray(comment.replies) && comment.replies.length > 0;
                 const isExpanded = expandedReplies[comment.id];
-                const isCurrentUserComment =
-                  currentUser?.email &&
-                  comment.authorHandle &&
-                  comment.authorHandle.toLowerCase().trim() ===
-                    currentUser.email.split("@")[0].toLowerCase().trim();
+                const isCurrentUserComment = Boolean(
+                  currentUser &&
+                  (
+                    (currentUser.email && (comment.authorEmail === currentUser.email || comment.userEmail === currentUser.email || (comment.authorHandle && comment.authorHandle.toLowerCase().trim() === currentUser.email.split("@")[0].toLowerCase().trim()))) ||
+                    ((currentUser.id || currentUser.uid) && (comment.userId === (currentUser.id || currentUser.uid) || comment.uid === (currentUser.id || currentUser.uid))) ||
+                    (currentUser.name && (comment.authorName === currentUser.name || (comment.authorHandle && comment.authorHandle.toLowerCase().trim() === currentUser.name.toLowerCase().trim()))) ||
+                    currentUser.isAdmin ||
+                    currentUser.role === 'admin'
+                  )
+                );
 
                 const commentUserMeta = resolveCommentUserMeta(comment, allUsers, currentUser);
                 const displayName = commentUserMeta.name;
@@ -1206,11 +1211,12 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                           {(isCurrentUserComment || isUserOwner || isUserCreator) &&
                             onDeleteComment && (
                               <button
+                                type="button"
                                 onClick={() => handleDeleteCommentAction(video.id, comment.id)}
-                                className="text-zinc-200 hover:text-red-500 transition-colors ml-auto opacity-0 group-hover:opacity-100 p-1"
+                                className="text-zinc-400 hover:text-red-400 transition-colors ml-auto opacity-90 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 cursor-pointer flex items-center gap-1"
                                 title="Delete comment"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-3.5 h-3.5 text-red-400" />
                               </button>
                             )}
                         </div>
@@ -1257,11 +1263,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                   reply.authorName.toLowerCase().trim() ===
                                     video.author.name.toLowerCase().trim());
 
-                              const isCurrentReplyUser =
-                                currentUser?.email &&
-                                reply.authorHandle &&
-                                reply.authorHandle.toLowerCase().trim() ===
-                                  currentUser.email.split("@")[0].toLowerCase().trim();
+                              const isCurrentReplyUser = Boolean(
+                                currentUser &&
+                                (
+                                  (currentUser.email && (reply.authorEmail === currentUser.email || reply.userEmail === currentUser.email || (reply.authorHandle && reply.authorHandle.toLowerCase().trim() === currentUser.email.split("@")[0].toLowerCase().trim()))) ||
+                                  ((currentUser.id || (currentUser as any).uid) && (reply.userId === (currentUser.id || (currentUser as any).uid) || reply.uid === (currentUser.id || (currentUser as any).uid))) ||
+                                  (currentUser.name && (reply.authorName === currentUser.name || (reply.authorHandle && reply.authorHandle.toLowerCase().trim() === currentUser.name.toLowerCase().trim()))) ||
+                                  (currentUser as any).isAdmin ||
+                                  (currentUser as any).role === 'admin'
+                                )
+                              );
 
                               const replyUserMeta = resolveCommentUserMeta(reply, allUsers, currentUser);
                               const replyDisplayName = replyUserMeta.name;
