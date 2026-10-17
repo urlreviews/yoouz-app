@@ -40,13 +40,14 @@ export function normalizeVideoUrl(url?: string | null): string {
     trimmed.includes("video.bunnycdn.com") ||
     trimmed.includes("cloudinary.com")
   ) {
-    if (trimmed.includes("rev-")) {
-      const match = trimmed.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?)/);
-      if (match && match[1]) {
-        let filename = match[1];
-        if (!filename.includes(".")) filename += ".mp4";
-        return `/api/videos/stream/${filename}`;
-      }
+    if (trimmed.includes("/banners/") || trimmed.includes("brand_banner")) {
+      return trimmed;
+    }
+    const match = trimmed.match(/\/([a-zA-Z0-9_\-]+)\.(mp4|webm|mov|m3u8)/i) || trimmed.match(/\/videos\/([a-zA-Z0-9_\-]+)/i) || trimmed.match(/([a-zA-Z0-9_\-]+)$/);
+    if (match && match[1] && match[1] !== "playlist" && match[1] !== "videos" && match[1] !== "uploads") {
+      let filename = match[1];
+      if (!filename.includes(".")) filename += ".mp4";
+      return `/api/videos/stream/${filename}`;
     }
     return trimmed;
   }
@@ -55,12 +56,14 @@ export function normalizeVideoUrl(url?: string | null): string {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     const secureUrl = trimmed.replace("http://", "https://");
     
-    if (secureUrl.includes("rev-")) {
-      const match = secureUrl.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?)/);
-      if (match && match[1]) {
-        let filename = match[1];
-        if (!filename.includes(".")) filename += ".mp4";
-        return `/api/videos/stream/${filename}`;
+    if (secureUrl.includes("b-cdn.net") || secureUrl.includes("bunnycdn.com")) {
+      if (!secureUrl.includes("/banners/") && !secureUrl.includes("brand_banner")) {
+        const match = secureUrl.match(/\/([a-zA-Z0-9_\-]+)\.(mp4|webm|mov|m3u8)/i) || secureUrl.match(/\/videos\/([a-zA-Z0-9_\-]+)/i) || secureUrl.match(/([a-zA-Z0-9_\-]+)$/);
+        if (match && match[1] && match[1] !== "playlist" && match[1] !== "videos" && match[1] !== "uploads") {
+          let filename = match[1];
+          if (!filename.includes(".")) filename += ".mp4";
+          return `/api/videos/stream/${filename}`;
+        }
       }
     }
 
