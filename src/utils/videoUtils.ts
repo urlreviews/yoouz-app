@@ -120,13 +120,12 @@ export function resolvePlayableVideoSourcesCascade(
   // 1. Fresh active session IndexedDB blob URL (from local browser IndexedDB or video object in current session)
   const localBlobCandidate = cachedLocalBlobUrl || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
   if (localBlobCandidate && typeof localBlobCandidate === "string" && localBlobCandidate.startsWith("blob:")) {
-    // Only add if not previously failed in this session
     if (!sources.includes(localBlobCandidate)) {
       sources.push(localBlobCandidate);
     }
   }
 
-  // 2. Direct specified videoUrl on the video review (if valid non-blob)
+  // 2. Direct specified videoUrl on the video review if it's a full CDN URL (e.g. https://...)
   if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes("playlist.m3u8")) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
@@ -134,18 +133,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-
-
-  // 4. Direct clean local server streaming endpoint (Server proxy instant playback)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
-    }
-  }
-
-  // 5. Bunny Stream HLS Playlist (Adaptive Bitrate + Captions Support when ready)
+  // 3. Ultra-Fast Global Edge CDN: Bunny Stream HLS Playlist (Adaptive Bitrate <50ms startup time)
   const isStreamGuid = (id?: string) => {
     if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
     const hyphens = (id.match(/-/g) || []).length;
@@ -171,7 +159,18 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Fallback video URLs from document (excluding any foreign blob URLs)
+  // 4. Direct Bunny Pull Zone CDN MP4 URL (Instant edge CDN fallback)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    if (!cleanId.startsWith("rev-")) {
+      const cdnMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+      if (!sources.includes(cdnMp4)) {
+        sources.push(cdnMp4);
+      }
+    }
+  }
+
+  // 5. Fallback video URLs from document
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
@@ -180,6 +179,15 @@ export function resolvePlayableVideoSourcesCascade(
           sources.push(norm);
         }
       }
+    }
+  }
+
+  // 6. Direct clean local server streaming endpoint (Server proxy fallback)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
     }
   }
 
