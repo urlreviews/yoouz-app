@@ -71,8 +71,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 73,
-    "viewsCount": 73,
+    "views": 74,
+    "viewsCount": 74,
     "sharesCount": 0,
     "tags": [
       "Real Estate"

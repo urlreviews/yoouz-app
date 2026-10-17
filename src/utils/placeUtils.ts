@@ -3555,9 +3555,6 @@ export function isClientDeletedVideo(videoId: string | undefined | null): boolea
   if (!videoId || typeof window === "undefined" || !window.localStorage) return false;
   const strId = String(videoId).trim();
   if (!strId) return false;
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId.toLowerCase())) {
-    return false;
-  }
   try {
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     const deletedVideos: string[] = JSON.parse(deletedStr);
@@ -3580,7 +3577,6 @@ export function purgeVideoIdFromClientStorage(videoId: string): void {
   if (!videoId || typeof window === "undefined" || !window.localStorage) return;
   const strId = String(videoId).trim();
   const lowerId = strId.toLowerCase();
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) return;
 
   // 1. Add to permanent client blacklist copo_deleted_videos
   try {

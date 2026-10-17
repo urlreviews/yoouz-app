@@ -193,13 +193,12 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   if (!v || !v.id) return true;
   const id = String(v.id).trim();
   if (!id || id.length < 3) return true;
-  if (AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) return false;
-  if (HARD_DELETED_IDS.includes(id)) return true;
 
   if (extraDeletedIds) {
-    if (extraDeletedIds instanceof Set && extraDeletedIds.has(id)) return true;
-    if (Array.isArray(extraDeletedIds) && extraDeletedIds.some(item => item && String(item).trim() === id)) return true;
+    if (extraDeletedIds instanceof Set && (extraDeletedIds.has(id) || extraDeletedIds.has(id.toLowerCase()))) return true;
+    if (Array.isArray(extraDeletedIds) && extraDeletedIds.some(item => item && (String(item).trim() === id || String(item).trim().toLowerCase() === id.toLowerCase()))) return true;
   }
+  if (HARD_DELETED_IDS.includes(id) || HARD_DELETED_IDS.includes(id.toLowerCase())) return true;
   if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
 
   const uId = (v.userId || "").toLowerCase().trim();
@@ -255,29 +254,20 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
 
 export function useFeedPagination() {
   const [videos, setVideos] = useState<VideoReview[]>(() => {
-    // Clear legacy purge flags and un-blacklist authentic reviews from localStorage
+    // Clear legacy purge flags from localStorage
     if (typeof localStorage !== "undefined") {
       try {
         localStorage.removeItem("copo_all_videos_purged");
         localStorage.removeItem("copo_all_videos_purged_time");
-        const deletedRaw = localStorage.getItem("copo_deleted_videos");
-        if (deletedRaw) {
-          const parsed = JSON.parse(deletedRaw);
-          if (Array.isArray(parsed)) {
-            const cleaned = parsed.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(String(id)));
-            localStorage.setItem("copo_deleted_videos", JSON.stringify(cleaned));
-          }
-        }
       } catch (e) {}
     }
 
     const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
     let deletedIds: string[] = [];
     try { deletedIds = JSON.parse(deletedStr); } catch (e) {}
-    deletedIds = deletedIds.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id));
 
     HARD_DELETED_IDS.forEach(id => {
-      if (!deletedIds.includes(id) && !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) deletedIds.push(id);
+      if (!deletedIds.includes(id)) deletedIds.push(id);
     });
 
     try {
@@ -389,7 +379,6 @@ export function useFeedPagination() {
         const parsed = JSON.parse(deletedStr); 
         if (Array.isArray(parsed)) deletedIds = parsed;
       } catch (e) {}
-      deletedIds = deletedIds.filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id));
 
       try {
         // 1. Fetch from Server API (with fresh cache-busting)
@@ -416,14 +405,13 @@ export function useFeedPagination() {
           ];
           const serverDeletedIds: string[] = Array.isArray(data?.deletedIds) ? data.deletedIds : [];
           const allDeletedSet = new Set(
-            [...deletedIds, ...serverDeletedIds, ...hardBannedIds].filter(id => !AUTHENTIC_PROTECTED_REVIEW_IDS.has(id))
+            [...deletedIds, ...serverDeletedIds, ...hardBannedIds].map(String)
           );
 
           const isPurgedVideo = (v: any) => {
             if (!v || !v.id) return true;
             const id = String(v.id);
-            if (AUTHENTIC_PROTECTED_REVIEW_IDS.has(id)) return false;
-            if (allDeletedSet.has(id)) return true;
+            if (allDeletedSet.has(id) || allDeletedSet.has(id.toLowerCase())) return true;
             if (v.placeId === "avis.com" || v.placeId === "hertz.com") return true;
             if (v.placeName === "Hertz" || v.placeName === "Car Rentals from Avis") return true;
             return false;

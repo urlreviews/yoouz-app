@@ -785,10 +785,10 @@ function readDeletedReviewsIndex(): string[] {
           if (id) {
             const strId = String(id).trim();
             const lowerId = strId.toLowerCase();
-            if (!AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) && !AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) {
-              inMemoryDeletedReviewsSet.add(strId);
-              inMemoryDeletedReviewsSet.add(lowerId);
-            }
+            inMemoryDeletedReviewsSet.add(strId);
+            inMemoryDeletedReviewsSet.add(lowerId);
+            AUTHENTIC_CANONICAL_REVIEW_IDS.delete(strId);
+            AUTHENTIC_CANONICAL_REVIEW_IDS.delete(lowerId);
           }
         });
       }
@@ -802,10 +802,10 @@ function readDeletedReviewsIndex(): string[] {
           if (id) {
             const strId = String(id).trim();
             const lowerId = strId.toLowerCase();
-            if (!AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) && !AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) {
-              inMemoryDeletedReviewsSet.add(strId);
-              inMemoryDeletedReviewsSet.add(lowerId);
-            }
+            inMemoryDeletedReviewsSet.add(strId);
+            inMemoryDeletedReviewsSet.add(lowerId);
+            AUTHENTIC_CANONICAL_REVIEW_IDS.delete(strId);
+            AUTHENTIC_CANONICAL_REVIEW_IDS.delete(lowerId);
           }
         });
       }
@@ -819,9 +819,6 @@ function isDeletedReviewServer(videoId: any): boolean {
   const strId = String(videoId).trim();
   if (!strId) return false;
   const lowerId = strId.toLowerCase();
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) {
-    return false;
-  }
   readDeletedReviewsIndex();
   return inMemoryDeletedReviewsSet.has(strId) || inMemoryDeletedReviewsSet.has(lowerId);
 }
@@ -831,7 +828,8 @@ function recordDeletedReviewId(id: string): void {
   const strId = String(id).trim();
   if (!strId) return;
   const lowerId = strId.toLowerCase();
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) return;
+  AUTHENTIC_CANONICAL_REVIEW_IDS.delete(strId);
+  AUTHENTIC_CANONICAL_REVIEW_IDS.delete(lowerId);
   try {
     inMemoryDeletedReviewsSet.add(strId);
     inMemoryDeletedReviewsSet.add(lowerId);
@@ -1404,26 +1402,16 @@ function readReviewsIndex(): any[] {
         let processed = parsed
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet));
 
-        // Ensure authentic protected reviews are present and never dropped
-        const AUTHENTIC_PROTECTED_REVIEW_IDS = Array.from(AUTHENTIC_CANONICAL_REVIEW_IDS);
-        const existingIds = new Set(processed.map((r: any) => String(r.id)));
-        const missingProtected = AUTHENTIC_PROTECTED_REVIEW_IDS.filter(id => !existingIds.has(id));
-        if (missingProtected.length > 0) {
+        // Only on a completely fresh initial deployment (0 reviews loaded AND 0 deleted reviews) do we initialize from seeds
+        if (processed.length === 0 && deletedSet.size === 0) {
           try {
-            const seedPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
+            const seedPath = path.join(process.cwd(), "public", "seeds", "reviews_index.json");
             if (fs.existsSync(seedPath)) {
-              const seedCode = fs.readFileSync(seedPath, "utf8");
-              const eqIdx = seedCode.indexOf("= [");
-              const endIdx = seedCode.lastIndexOf("]");
-              if (eqIdx !== -1 && endIdx !== -1) {
-                const parsedSeeds = JSON.parse(seedCode.substring(eqIdx + 2, endIdx + 1));
-                parsedSeeds.forEach((s: any) => {
-                  if (s && s.id && missingProtected.includes(s.id) && !existingIds.has(s.id)) {
-                    processed.push(s);
-                    existingIds.add(s.id);
-                    dirty = true;
-                  }
-                });
+              const rawSeeds = fs.readFileSync(seedPath, "utf8");
+              const parsedSeeds = JSON.parse(rawSeeds);
+              if (Array.isArray(parsedSeeds)) {
+                processed = parsedSeeds.filter((s: any) => s && s.id && !isDeletedReviewServer(s.id));
+                dirty = true;
               }
             }
           } catch (seedErr) {}
@@ -5014,11 +5002,9 @@ const getNoSqlTable = (col: string) => {
 
 async function purgeVideoFromAllStores(videoId: string) {
   if (!videoId) return { success: false, error: "Missing videoId" };
-  const strId = String(videoId);
-  if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId)) {
-    console.warn(`🛡️ [Server] Attempt to delete authentic canonical review ${strId} was rejected.`);
-    return { success: false, error: "Authentic canonical review cannot be deleted" };
-  }
+  const strId = String(videoId).trim();
+  AUTHENTIC_CANONICAL_REVIEW_IDS.delete(strId);
+  AUTHENTIC_CANONICAL_REVIEW_IDS.delete(strId.toLowerCase());
 
   console.log(`🗑️ [Server] Live purging video review ${videoId} from all databases and storage...`);
 
