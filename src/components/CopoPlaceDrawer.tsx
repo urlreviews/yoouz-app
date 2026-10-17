@@ -1214,7 +1214,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y overflow-hidden"
+          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
         >
           {/* Mobile Pull Handle Indicator Overlay */}
           <div 
