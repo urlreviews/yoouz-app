@@ -4073,6 +4073,10 @@ async function startServer() {
     const rawHost = (req.headers['x-forwarded-host'] || req.headers.host || '').toString().toLowerCase();
     const host = rawHost.split(':')[0];
     if (host === 'yoouz.com') {
+      const cleanPath = (req.path || '').toLowerCase();
+      if (cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
+        return next();
+      }
       return res.redirect(301, `https://www.yoouz.com${req.originalUrl || req.url}`);
     }
     next();
@@ -32107,9 +32111,12 @@ function injectOpenGraphTags(html: string, meta: any) {
     <link rel="canonical" href="${safeUrl}" />
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
     <link rel="apple-touch-icon" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
-    <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="${baseUrl}/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="${baseUrl}/favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="${baseUrl}/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="144x144" href="${baseUrl}/favicon-144x144.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="${baseUrl}/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="${baseUrl}/icon-512.png" />
+    <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="${baseUrl}/favicon.ico" />
     <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
     `;

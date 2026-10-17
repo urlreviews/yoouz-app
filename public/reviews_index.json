@@ -1,5 +1,4541 @@
 [
   {
+    "id": "rev-1792172427752-d6g7q",
+    "userId": "avr6566gd@gmail.com",
+    "userEmail": "avr6566gd@gmail.com",
+    "createdAtMs": 1792172427753,
+    "isLocalUpload": true,
+    "placeId": "shirleysremovals.com",
+    "placeName": "Shirleys Removals London",
+    "placeCategory": "Real Estate",
+    "placeAddress": "20-22 Wenlock Road, N1 7GU London",
+    "placeCity": "London",
+    "placeCountry": "GB",
+    "placePhone": "+44 20 3874 1307",
+    "placeEmail": "hello@shirleysremovals.com",
+    "placeRating": 5,
+    "placeWebsite": "https://shirleysremovals.com/",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fshirleysremovals.com%2Fwp-content%2Fuploads%2F2025%2F10%2FRED-copy-1-300x300.webp",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fshirleysremovals.com%2Fwp-content%2Fuploads%2F2025%2F08%2Fhappy-family-with-child-moving-to-new-home-2023-11-27-05-15-19-utc-copy-1.webp",
+    "placeDescription": "Female-founded London removals company, trusted since 1988. House and office moves, packing, storage and man and van, with upfront quotes. 5-star rated.",
+    "author": {
+      "name": "Steven Akan",
+      "handle": "@stevenakan",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "state": "Florida",
+      "country": "United States"
+    },
+    "rating": 5,
+    "durationSeconds": 14,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a098ddb8-8ba7-4a85-a473-05c9aa1ae04f/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a098ddb8-8ba7-4a85-a473-05c9aa1ae04f/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a098ddb8-8ba7-4a85-a473-05c9aa1ae04f.mp4",
+      "/api/videos/stream/rev-1792172427752-d6g7q.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "/uploads/rev-1792172427752-d6g7q.jpg",
+    "caption": "Video review for shirleysremovals.com",
+    "transcriptText": "Hello everybody, Sheelys did a great job. They are a good company with removals in London. I highly recommend, I'm sure we'll come back and tell all my friends for the great customer service.",
+    "segments": [
+      {
+        "start": 1,
+        "end": 3.48,
+        "text": "Hello everybody, Sheelys did a great job."
+      },
+      {
+        "start": 3.9,
+        "end": 6.49,
+        "text": "They are a good company with removals in London."
+      },
+      {
+        "start": 6.53,
+        "end": 13.4,
+        "text": "I highly recommend, I'm sure we'll come back and tell all my friends for the great customer service."
+      }
+    ],
+    "dishOrItem": "Shirleys Removals London",
+    "businessName": "Shirleys Removals London",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 71,
+    "viewsCount": 71,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "a098ddb8-8ba7-4a85-a473-05c9aa1ae04f",
+    "bunnyGuid": "a098ddb8-8ba7-4a85-a473-05c9aa1ae04f",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a098ddb8-8ba7-4a85-a473-05c9aa1ae04f/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a098ddb8-8ba7-4a85-a473-05c9aa1ae04f/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fshirleysremovals.com%2Fwp-content%2Fuploads%2F2025%2F08%2Fhappy-family-with-child-moving-to-new-home-2023-11-27-05-15-19-utc-copy-1.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fshirleysremovals.com%2Fwp-content%2Fuploads%2F2025%2F08%2Fhappy-family-with-child-moving-to-new-home-2023-11-27-05-15-19-utc-copy-1.webp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fshirleysremovals.com%2Fwp-content%2Fuploads%2F2025%2F10%2FRED-copy-1-300x300.webp",
+    "authorName": "Steven Akan",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 14,
+    "createdAt": "2026-10-16T17:40:27.753Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1
+  },
+  {
+    "id": "rev-1792171873846-dj6oy",
+    "userId": "avr6566gd@gmail.com",
+    "userEmail": "avr6566gd@gmail.com",
+    "createdAtMs": 1792171873847,
+    "isLocalUpload": true,
+    "placeId": "fivestarmovingllc.com",
+    "placeName": "Five Star Moving Las Vegas",
+    "placeCategory": "Legal Services",
+    "placeAddress": "Family Owned and Operated Since 2002",
+    "placeCity": "Las Vegas",
+    "placeCountry": "United States",
+    "placePhone": "+1 (702) 936-0152",
+    "placeEmail": "%66%69%76%65%73%74%61%72%6d%6f%76%69%6e%67%6c%61%73%76%65%67%61%73@%67%6d%61%69%6c.%63%6f%6d",
+    "placeRating": 5,
+    "placeWebsite": "https://fivestarmovingllc.com/",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fd14tal8bchn59o.cloudfront.net%2F7Wml1hIj_jjj-_1shZNV448B8gU5W5zyPojYrGM3CEk%2Fw%3A1920%2Ffn%3AFive_Star_Moving_LLC_Logo_PNG%2Fplain%2Fs3%3A%2F%2Fmultisiteadmin-production%2F1ypwhmpt06icanqgqn80nxm4z5bt",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fd14tal8bchn59o.cloudfront.net%2FSeEQ3DEaHneQmF9YcQKVL7yKi9eSjzexIRUbyDnGks0%2Fw%3A2000%2Ffn%3ADesert_House%2Fplain%2Fs3%3A%2F%2Fmultisiteadmin-production%2F6l2fr6dld5ogdji7qpt39lw6iw51",
+    "placeDescription": "Five Star Moving is a top-rated moving and storage service in Las Vegas, NV. We offer safe, professional and reliable moving services for your home or business.",
+    "author": {
+      "name": "Steven Akan",
+      "handle": "@stevenakan",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "state": "Florida",
+      "country": "United States"
+    },
+    "rating": 5,
+    "durationSeconds": 13,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a3470c2a-0712-4d2d-a180-59451c5a1c3c/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a3470c2a-0712-4d2d-a180-59451c5a1c3c/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a3470c2a-0712-4d2d-a180-59451c5a1c3c.mp4",
+      "/api/videos/stream/rev-1792171873846-dj6oy.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "/uploads/rev-1792171873846-dj6oy.jpg",
+    "caption": "Video review for fivestarmovingllc.com",
+    "transcriptText": "Yes, Five Star did a great job. I'm sure I am going to recommend more people, I will sure also come back.",
+    "segments": [
+      {
+        "start": 1.34,
+        "end": 3.12,
+        "text": "Yes, Five Star did a great job."
+      },
+      {
+        "start": 3.22,
+        "end": 7.46,
+        "text": "I'm sure I am going to recommend more people, I will sure also come back."
+      }
+    ],
+    "dishOrItem": "Five Star Moving Las Vegas",
+    "businessName": "Five Star Moving Las Vegas",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 25,
+    "viewsCount": 25,
+    "sharesCount": 0,
+    "tags": [
+      "Legal Services"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "a3470c2a-0712-4d2d-a180-59451c5a1c3c",
+    "bunnyGuid": "a3470c2a-0712-4d2d-a180-59451c5a1c3c",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a3470c2a-0712-4d2d-a180-59451c5a1c3c/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a3470c2a-0712-4d2d-a180-59451c5a1c3c/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fd14tal8bchn59o.cloudfront.net%2FSeEQ3DEaHneQmF9YcQKVL7yKi9eSjzexIRUbyDnGks0%2Fw%3A2000%2Ffn%3ADesert_House%2Fplain%2Fs3%3A%2F%2Fmultisiteadmin-production%2F6l2fr6dld5ogdji7qpt39lw6iw51",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fd14tal8bchn59o.cloudfront.net%2FSeEQ3DEaHneQmF9YcQKVL7yKi9eSjzexIRUbyDnGks0%2Fw%3A2000%2Ffn%3ADesert_House%2Fplain%2Fs3%3A%2F%2Fmultisiteadmin-production%2F6l2fr6dld5ogdji7qpt39lw6iw51",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fd14tal8bchn59o.cloudfront.net%2F7Wml1hIj_jjj-_1shZNV448B8gU5W5zyPojYrGM3CEk%2Fw%3A1920%2Ffn%3AFive_Star_Moving_LLC_Logo_PNG%2Fplain%2Fs3%3A%2F%2Fmultisiteadmin-production%2F1ypwhmpt06icanqgqn80nxm4z5bt",
+    "authorName": "Steven Akan",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 60,
+    "createdAt": "2026-10-16T17:31:13.847Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1
+  },
+  {
+    "id": "rev-1792169706193-v5rko",
+    "userId": "avr6566gd@gmail.com",
+    "userEmail": "avr6566gd@gmail.com",
+    "createdAtMs": 1792169706194,
+    "isLocalUpload": true,
+    "placeId": "level15moving.com",
+    "placeName": "Level15 Moving",
+    "placeCategory": "Website",
+    "placeAddress": "15 Min",
+    "placeCity": "Las vegas",
+    "placeCountry": "United States",
+    "placePhone": "(702)%20972-8298%20",
+    "placeEmail": "level15moving@gmail.com",
+    "placeRating": 5,
+    "placeWebsite": "https://level15moving.com/",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "placeDescription": "Level15 Moving · Official business profile for level15moving.com",
+    "author": {
+      "name": "Steven Akan",
+      "handle": "@stevenakan",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "country": "United States"
+    },
+    "rating": 5,
+    "durationSeconds": 12,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/edf11846-b280-4ebd-8cde-ab4c280a78ed.mp4",
+      "/api/videos/stream/rev-1792169706193-v5rko.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "/uploads/rev-1792169706193-v5rko.jpg",
+    "caption": "Video review for level15moving.com",
+    "transcriptText": "to share my opinion but level 15 they really helped me so I highly recommend I'm sure it will come back great people and the great great job Hello everybody so today I'm going to share my opinion but level 15 they really helped me so I highly recommend I'm sure it will come back great people and the creative great job",
+    "segments": [
+      {
+        "start": 1.58,
+        "end": 3.91,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 1.58,
+            "end": 1.99
+          },
+          {
+            "word": "everybody",
+            "start": 1.99,
+            "end": 2.74
+          },
+          {
+            "word": "so",
+            "start": 2.74,
+            "end": 2.91
+          },
+          {
+            "word": "today",
+            "start": 2.91,
+            "end": 3.32
+          },
+          {
+            "word": "I'm",
+            "start": 3.32,
+            "end": 3.49
+          },
+          {
+            "word": "going",
+            "start": 3.49,
+            "end": 3.91
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.91,
+        "end": 4.38,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 3.91,
+            "end": 3.99
+          },
+          {
+            "word": "everybody",
+            "start": 3.99,
+            "end": 4.14
+          },
+          {
+            "word": "so",
+            "start": 4.14,
+            "end": 4.22
+          },
+          {
+            "word": "today",
+            "start": 4.18,
+            "end": 4.26
+          },
+          {
+            "word": "I'm",
+            "start": 4.26,
+            "end": 4.34
+          },
+          {
+            "word": "going",
+            "start": 4.3,
+            "end": 4.38
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.38,
+        "end": 4.71,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 4.38,
+            "end": 4.46
+          },
+          {
+            "word": "everybody",
+            "start": 4.44,
+            "end": 4.53
+          },
+          {
+            "word": "so",
+            "start": 4.53,
+            "end": 4.61
+          },
+          {
+            "word": "today",
+            "start": 4.55,
+            "end": 4.63
+          },
+          {
+            "word": "I'm",
+            "start": 4.61,
+            "end": 4.69
+          },
+          {
+            "word": "going",
+            "start": 4.63,
+            "end": 4.71
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.62,
+        "end": 4.95,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 4.62,
+            "end": 4.7
+          },
+          {
+            "word": "everybody",
+            "start": 4.68,
+            "end": 4.77
+          },
+          {
+            "word": "so",
+            "start": 4.77,
+            "end": 4.85
+          },
+          {
+            "word": "today",
+            "start": 4.79,
+            "end": 4.87
+          },
+          {
+            "word": "I'm",
+            "start": 4.85,
+            "end": 4.93
+          },
+          {
+            "word": "going",
+            "start": 4.87,
+            "end": 4.95
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.91,
+        "end": 5.27,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 4.91,
+            "end": 4.99
+          },
+          {
+            "word": "everybody",
+            "start": 4.97,
+            "end": 5.08
+          },
+          {
+            "word": "so",
+            "start": 5.08,
+            "end": 5.16
+          },
+          {
+            "word": "today",
+            "start": 5.1,
+            "end": 5.18
+          },
+          {
+            "word": "I'm",
+            "start": 5.16,
+            "end": 5.24
+          },
+          {
+            "word": "going",
+            "start": 5.19,
+            "end": 5.2700000000000005
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.25,
+        "end": 5.57,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.25,
+            "end": 5.33
+          },
+          {
+            "word": "everybody",
+            "start": 5.3,
+            "end": 5.4
+          },
+          {
+            "word": "so",
+            "start": 5.4,
+            "end": 5.48
+          },
+          {
+            "word": "today",
+            "start": 5.42,
+            "end": 5.5
+          },
+          {
+            "word": "I'm",
+            "start": 5.47,
+            "end": 5.55
+          },
+          {
+            "word": "going",
+            "start": 5.49,
+            "end": 5.57
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.35,
+        "end": 5.88,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.35,
+            "end": 5.45
+          },
+          {
+            "word": "everybody",
+            "start": 5.45,
+            "end": 5.62
+          },
+          {
+            "word": "so",
+            "start": 5.62,
+            "end": 5.7
+          },
+          {
+            "word": "today",
+            "start": 5.65,
+            "end": 5.75
+          },
+          {
+            "word": "I'm",
+            "start": 5.75,
+            "end": 5.83
+          },
+          {
+            "word": "going",
+            "start": 5.78,
+            "end": 5.88
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.88,
+        "end": 6.34,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.88,
+            "end": 5.96
+          },
+          {
+            "word": "everybody",
+            "start": 5.96,
+            "end": 6.11
+          },
+          {
+            "word": "so",
+            "start": 6.11,
+            "end": 6.19
+          },
+          {
+            "word": "today",
+            "start": 6.14,
+            "end": 6.23
+          },
+          {
+            "word": "I'm",
+            "start": 6.23,
+            "end": 6.3100000000000005
+          },
+          {
+            "word": "going",
+            "start": 6.26,
+            "end": 6.34
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.34,
+        "end": 6.67,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.34,
+            "end": 6.42
+          },
+          {
+            "word": "everybody",
+            "start": 6.4,
+            "end": 6.49
+          },
+          {
+            "word": "so",
+            "start": 6.49,
+            "end": 6.57
+          },
+          {
+            "word": "today",
+            "start": 6.51,
+            "end": 6.59
+          },
+          {
+            "word": "I'm",
+            "start": 6.57,
+            "end": 6.65
+          },
+          {
+            "word": "going",
+            "start": 6.59,
+            "end": 6.67
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.39,
+        "end": 6.71,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.39,
+            "end": 6.47
+          },
+          {
+            "word": "everybody",
+            "start": 6.44,
+            "end": 6.54
+          },
+          {
+            "word": "so",
+            "start": 6.54,
+            "end": 6.62
+          },
+          {
+            "word": "today",
+            "start": 6.56,
+            "end": 6.64
+          },
+          {
+            "word": "I'm",
+            "start": 6.61,
+            "end": 6.69
+          },
+          {
+            "word": "going",
+            "start": 6.63,
+            "end": 6.71
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.55,
+        "end": 6.87,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.55,
+            "end": 6.63
+          },
+          {
+            "word": "everybody",
+            "start": 6.6,
+            "end": 6.7
+          },
+          {
+            "word": "so",
+            "start": 6.7,
+            "end": 6.78
+          },
+          {
+            "word": "today",
+            "start": 6.72,
+            "end": 6.8
+          },
+          {
+            "word": "I'm",
+            "start": 6.77,
+            "end": 6.85
+          },
+          {
+            "word": "going",
+            "start": 6.79,
+            "end": 6.87
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.78,
+        "end": 7.1,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.78,
+            "end": 6.86
+          },
+          {
+            "word": "everybody",
+            "start": 6.83,
+            "end": 6.93
+          },
+          {
+            "word": "so",
+            "start": 6.93,
+            "end": 7.01
+          },
+          {
+            "word": "today",
+            "start": 6.95,
+            "end": 7.03
+          },
+          {
+            "word": "I'm",
+            "start": 7,
+            "end": 7.08
+          },
+          {
+            "word": "going",
+            "start": 7.02,
+            "end": 7.1
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.79,
+        "end": 7.12,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.79,
+            "end": 6.87
+          },
+          {
+            "word": "everybody",
+            "start": 6.84,
+            "end": 6.94
+          },
+          {
+            "word": "so",
+            "start": 6.94,
+            "end": 7.0200000000000005
+          },
+          {
+            "word": "today",
+            "start": 6.96,
+            "end": 7.04
+          },
+          {
+            "word": "I'm",
+            "start": 7.02,
+            "end": 7.1
+          },
+          {
+            "word": "going",
+            "start": 7.04,
+            "end": 7.12
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.02,
+        "end": 7.35,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.02,
+            "end": 7.1
+          },
+          {
+            "word": "everybody",
+            "start": 7.07,
+            "end": 7.17
+          },
+          {
+            "word": "so",
+            "start": 7.17,
+            "end": 7.25
+          },
+          {
+            "word": "today",
+            "start": 7.19,
+            "end": 7.2700000000000005
+          },
+          {
+            "word": "I'm",
+            "start": 7.25,
+            "end": 7.33
+          },
+          {
+            "word": "going",
+            "start": 7.27,
+            "end": 7.35
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.26,
+        "end": 7.59,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.26,
+            "end": 7.34
+          },
+          {
+            "word": "everybody",
+            "start": 7.32,
+            "end": 7.41
+          },
+          {
+            "word": "so",
+            "start": 7.41,
+            "end": 7.49
+          },
+          {
+            "word": "today",
+            "start": 7.44,
+            "end": 7.5200000000000005
+          },
+          {
+            "word": "I'm",
+            "start": 7.49,
+            "end": 7.57
+          },
+          {
+            "word": "going",
+            "start": 7.51,
+            "end": 7.59
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.27,
+        "end": 7.6,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.27,
+            "end": 7.35
+          },
+          {
+            "word": "everybody",
+            "start": 7.32,
+            "end": 7.42
+          },
+          {
+            "word": "so",
+            "start": 7.42,
+            "end": 7.5
+          },
+          {
+            "word": "today",
+            "start": 7.44,
+            "end": 7.5200000000000005
+          },
+          {
+            "word": "I'm",
+            "start": 7.5,
+            "end": 7.58
+          },
+          {
+            "word": "going",
+            "start": 7.52,
+            "end": 7.6
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.49,
+        "end": 7.82,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.49,
+            "end": 7.57
+          },
+          {
+            "word": "everybody",
+            "start": 7.54,
+            "end": 7.64
+          },
+          {
+            "word": "so",
+            "start": 7.64,
+            "end": 7.72
+          },
+          {
+            "word": "today",
+            "start": 7.66,
+            "end": 7.74
+          },
+          {
+            "word": "I'm",
+            "start": 7.71,
+            "end": 7.79
+          },
+          {
+            "word": "going",
+            "start": 7.74,
+            "end": 7.82
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.74,
+        "end": 8.06,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.74,
+            "end": 7.82
+          },
+          {
+            "word": "everybody",
+            "start": 7.79,
+            "end": 7.89
+          },
+          {
+            "word": "so",
+            "start": 7.89,
+            "end": 7.97
+          },
+          {
+            "word": "today",
+            "start": 7.91,
+            "end": 7.99
+          },
+          {
+            "word": "I'm",
+            "start": 7.96,
+            "end": 8.04
+          },
+          {
+            "word": "going",
+            "start": 7.98,
+            "end": 8.06
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.74,
+        "end": 8.22,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.74,
+            "end": 7.82
+          },
+          {
+            "word": "everybody",
+            "start": 7.82,
+            "end": 7.98
+          },
+          {
+            "word": "so",
+            "start": 7.98,
+            "end": 8.06
+          },
+          {
+            "word": "today",
+            "start": 8.01,
+            "end": 8.1
+          },
+          {
+            "word": "I'm",
+            "start": 8.1,
+            "end": 8.18
+          },
+          {
+            "word": "going",
+            "start": 8.13,
+            "end": 8.22
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.22,
+        "end": 8.54,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.22,
+            "end": 8.3
+          },
+          {
+            "word": "everybody",
+            "start": 8.27,
+            "end": 8.37
+          },
+          {
+            "word": "so",
+            "start": 8.37,
+            "end": 8.45
+          },
+          {
+            "word": "today",
+            "start": 8.39,
+            "end": 8.47
+          },
+          {
+            "word": "I'm",
+            "start": 8.44,
+            "end": 8.52
+          },
+          {
+            "word": "going",
+            "start": 8.46,
+            "end": 8.540000000000001
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.22,
+        "end": 8.55,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.22,
+            "end": 8.3
+          },
+          {
+            "word": "everybody",
+            "start": 8.27,
+            "end": 8.37
+          },
+          {
+            "word": "so",
+            "start": 8.37,
+            "end": 8.45
+          },
+          {
+            "word": "today",
+            "start": 8.39,
+            "end": 8.47
+          },
+          {
+            "word": "I'm",
+            "start": 8.45,
+            "end": 8.53
+          },
+          {
+            "word": "going",
+            "start": 8.47,
+            "end": 8.55
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.46,
+        "end": 8.79,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.46,
+            "end": 8.540000000000001
+          },
+          {
+            "word": "everybody",
+            "start": 8.52,
+            "end": 8.61
+          },
+          {
+            "word": "so",
+            "start": 8.61,
+            "end": 8.69
+          },
+          {
+            "word": "today",
+            "start": 8.63,
+            "end": 8.71
+          },
+          {
+            "word": "I'm",
+            "start": 8.69,
+            "end": 8.77
+          },
+          {
+            "word": "going",
+            "start": 8.71,
+            "end": 8.790000000000001
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.7,
+        "end": 9.03,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.7,
+            "end": 8.78
+          },
+          {
+            "word": "everybody",
+            "start": 8.75,
+            "end": 8.85
+          },
+          {
+            "word": "so",
+            "start": 8.85,
+            "end": 8.93
+          },
+          {
+            "word": "today",
+            "start": 8.87,
+            "end": 8.95
+          },
+          {
+            "word": "I'm",
+            "start": 8.93,
+            "end": 9.01
+          },
+          {
+            "word": "going",
+            "start": 8.95,
+            "end": 9.03
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.72,
+        "end": 9.05,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.72,
+            "end": 8.8
+          },
+          {
+            "word": "everybody",
+            "start": 8.77,
+            "end": 8.87
+          },
+          {
+            "word": "so",
+            "start": 8.87,
+            "end": 8.95
+          },
+          {
+            "word": "today",
+            "start": 8.89,
+            "end": 8.97
+          },
+          {
+            "word": "I'm",
+            "start": 8.95,
+            "end": 9.03
+          },
+          {
+            "word": "going",
+            "start": 8.97,
+            "end": 9.05
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.72,
+        "end": 9.05,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.72,
+            "end": 8.8
+          },
+          {
+            "word": "everybody",
+            "start": 8.78,
+            "end": 8.87
+          },
+          {
+            "word": "so",
+            "start": 8.87,
+            "end": 8.95
+          },
+          {
+            "word": "today",
+            "start": 8.89,
+            "end": 8.97
+          },
+          {
+            "word": "I'm",
+            "start": 8.95,
+            "end": 9.03
+          },
+          {
+            "word": "going",
+            "start": 8.97,
+            "end": 9.05
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.95,
+        "end": 9.27,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.95,
+            "end": 9.03
+          },
+          {
+            "word": "everybody",
+            "start": 9,
+            "end": 9.1
+          },
+          {
+            "word": "so",
+            "start": 9.1,
+            "end": 9.18
+          },
+          {
+            "word": "today",
+            "start": 9.12,
+            "end": 9.2
+          },
+          {
+            "word": "I'm",
+            "start": 9.17,
+            "end": 9.25
+          },
+          {
+            "word": "going",
+            "start": 9.19,
+            "end": 9.27
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.19,
+        "end": 10.14,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 9.19,
+            "end": 9.36
+          },
+          {
+            "word": "everybody",
+            "start": 9.36,
+            "end": 9.66
+          },
+          {
+            "word": "so",
+            "start": 9.66,
+            "end": 9.74
+          },
+          {
+            "word": "today",
+            "start": 9.73,
+            "end": 9.9
+          },
+          {
+            "word": "I'm",
+            "start": 9.9,
+            "end": 9.98
+          },
+          {
+            "word": "going",
+            "start": 9.97,
+            "end": 10.14
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.14,
+        "end": 10.47,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.14,
+            "end": 10.22
+          },
+          {
+            "word": "everybody",
+            "start": 10.2,
+            "end": 10.29
+          },
+          {
+            "word": "so",
+            "start": 10.29,
+            "end": 10.37
+          },
+          {
+            "word": "today",
+            "start": 10.31,
+            "end": 10.39
+          },
+          {
+            "word": "I'm",
+            "start": 10.37,
+            "end": 10.45
+          },
+          {
+            "word": "going",
+            "start": 10.39,
+            "end": 10.47
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.39,
+        "end": 10.89,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.39,
+            "end": 10.48
+          },
+          {
+            "word": "everybody",
+            "start": 10.48,
+            "end": 10.64
+          },
+          {
+            "word": "so",
+            "start": 10.64,
+            "end": 10.72
+          },
+          {
+            "word": "today",
+            "start": 10.67,
+            "end": 10.76
+          },
+          {
+            "word": "I'm",
+            "start": 10.76,
+            "end": 10.84
+          },
+          {
+            "word": "going",
+            "start": 10.8,
+            "end": 10.89
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.89,
+        "end": 11.21,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.89,
+            "end": 10.97
+          },
+          {
+            "word": "everybody",
+            "start": 10.94,
+            "end": 11.04
+          },
+          {
+            "word": "so",
+            "start": 11.04,
+            "end": 11.12
+          },
+          {
+            "word": "today",
+            "start": 11.06,
+            "end": 11.14
+          },
+          {
+            "word": "I'm",
+            "start": 11.11,
+            "end": 11.19
+          },
+          {
+            "word": "going",
+            "start": 11.13,
+            "end": 11.21
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.13,
+        "end": 11.45,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.13,
+            "end": 11.21
+          },
+          {
+            "word": "everybody",
+            "start": 11.18,
+            "end": 11.28
+          },
+          {
+            "word": "so",
+            "start": 11.28,
+            "end": 11.36
+          },
+          {
+            "word": "today",
+            "start": 11.3,
+            "end": 11.38
+          },
+          {
+            "word": "I'm",
+            "start": 11.35,
+            "end": 11.43
+          },
+          {
+            "word": "going",
+            "start": 11.37,
+            "end": 11.45
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.18,
+        "end": 11.5,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.18,
+            "end": 11.26
+          },
+          {
+            "word": "everybody",
+            "start": 11.23,
+            "end": 11.33
+          },
+          {
+            "word": "so",
+            "start": 11.33,
+            "end": 11.41
+          },
+          {
+            "word": "today",
+            "start": 11.35,
+            "end": 11.43
+          },
+          {
+            "word": "I'm",
+            "start": 11.4,
+            "end": 11.48
+          },
+          {
+            "word": "going",
+            "start": 11.42,
+            "end": 11.5
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.34,
+        "end": 11.66,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.34,
+            "end": 11.42
+          },
+          {
+            "word": "everybody",
+            "start": 11.39,
+            "end": 11.49
+          },
+          {
+            "word": "so",
+            "start": 11.49,
+            "end": 11.57
+          },
+          {
+            "word": "today",
+            "start": 11.51,
+            "end": 11.59
+          },
+          {
+            "word": "I'm",
+            "start": 11.56,
+            "end": 11.64
+          },
+          {
+            "word": "going",
+            "start": 11.58,
+            "end": 11.66
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.61,
+        "end": 11.93,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.61,
+            "end": 11.69
+          },
+          {
+            "word": "everybody",
+            "start": 11.66,
+            "end": 11.76
+          },
+          {
+            "word": "so",
+            "start": 11.76,
+            "end": 11.84
+          },
+          {
+            "word": "today",
+            "start": 11.78,
+            "end": 11.86
+          },
+          {
+            "word": "I'm",
+            "start": 11.83,
+            "end": 11.91
+          },
+          {
+            "word": "going",
+            "start": 11.85,
+            "end": 11.93
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.64,
+        "end": 11.96,
+        "text": "Hello everybody so today I'm going",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.64,
+            "end": 11.72
+          },
+          {
+            "word": "everybody",
+            "start": 11.69,
+            "end": 11.79
+          },
+          {
+            "word": "so",
+            "start": 11.79,
+            "end": 11.87
+          },
+          {
+            "word": "today",
+            "start": 11.81,
+            "end": 11.89
+          },
+          {
+            "word": "I'm",
+            "start": 11.86,
+            "end": 11.94
+          },
+          {
+            "word": "going",
+            "start": 11.88,
+            "end": 11.96
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.81,
+        "end": 21.61,
+        "text": "to share my opinion but level 15 they really helped me so I highly recommend I'm sure it will come back great people and the great great job",
+        "words": [
+          {
+            "word": "to",
+            "start": 11.81,
+            "end": 11.98
+          },
+          {
+            "word": "share",
+            "start": 11.98,
+            "end": 12.42
+          },
+          {
+            "word": "my",
+            "start": 12.42,
+            "end": 12.59
+          },
+          {
+            "word": "opinion",
+            "start": 12.59,
+            "end": 13.2
+          },
+          {
+            "word": "but",
+            "start": 13.2,
+            "end": 13.46
+          },
+          {
+            "word": "level",
+            "start": 13.46,
+            "end": 13.89
+          },
+          {
+            "word": "15",
+            "start": 13.89,
+            "end": 14.06
+          },
+          {
+            "word": "they",
+            "start": 14.06,
+            "end": 14.41
+          },
+          {
+            "word": "really",
+            "start": 14.41,
+            "end": 14.93
+          },
+          {
+            "word": "helped",
+            "start": 14.93,
+            "end": 15.45
+          },
+          {
+            "word": "me",
+            "start": 15.45,
+            "end": 15.62
+          },
+          {
+            "word": "so",
+            "start": 15.62,
+            "end": 15.8
+          },
+          {
+            "word": "I",
+            "start": 15.8,
+            "end": 15.97
+          },
+          {
+            "word": "highly",
+            "start": 15.97,
+            "end": 16.49
+          },
+          {
+            "word": "recommend",
+            "start": 16.49,
+            "end": 17.27
+          },
+          {
+            "word": "I'm",
+            "start": 17.27,
+            "end": 17.45
+          },
+          {
+            "word": "sure",
+            "start": 17.45,
+            "end": 17.79
+          },
+          {
+            "word": "it",
+            "start": 17.79,
+            "end": 17.97
+          },
+          {
+            "word": "will",
+            "start": 17.97,
+            "end": 18.31
+          },
+          {
+            "word": "come",
+            "start": 18.31,
+            "end": 18.66
+          },
+          {
+            "word": "back",
+            "start": 18.66,
+            "end": 19.01
+          },
+          {
+            "word": "great",
+            "start": 19.01,
+            "end": 19.44
+          },
+          {
+            "word": "people",
+            "start": 19.44,
+            "end": 19.96
+          },
+          {
+            "word": "and",
+            "start": 19.96,
+            "end": 20.22
+          },
+          {
+            "word": "the",
+            "start": 20.22,
+            "end": 20.48
+          },
+          {
+            "word": "great",
+            "start": 20.48,
+            "end": 20.92
+          },
+          {
+            "word": "great",
+            "start": 20.92,
+            "end": 21.35
+          },
+          {
+            "word": "job",
+            "start": 21.35,
+            "end": 21.61
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 21.61,
+        "end": 24.14,
+        "text": "Hello everybody so today I'm going to",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 21.61,
+            "end": 22.03
+          },
+          {
+            "word": "everybody",
+            "start": 22.03,
+            "end": 22.79
+          },
+          {
+            "word": "so",
+            "start": 22.79,
+            "end": 22.96
+          },
+          {
+            "word": "today",
+            "start": 22.96,
+            "end": 23.38
+          },
+          {
+            "word": "I'm",
+            "start": 23.38,
+            "end": 23.55
+          },
+          {
+            "word": "going",
+            "start": 23.55,
+            "end": 23.97
+          },
+          {
+            "word": "to",
+            "start": 23.97,
+            "end": 24.14
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.14,
+        "end": 26.42,
+        "text": "share my opinion but level 15 they",
+        "words": [
+          {
+            "word": "share",
+            "start": 24.14,
+            "end": 24.55
+          },
+          {
+            "word": "my",
+            "start": 24.55,
+            "end": 24.71
+          },
+          {
+            "word": "opinion",
+            "start": 24.71,
+            "end": 25.28
+          },
+          {
+            "word": "but",
+            "start": 25.28,
+            "end": 25.53
+          },
+          {
+            "word": "level",
+            "start": 25.53,
+            "end": 25.93
+          },
+          {
+            "word": "15",
+            "start": 25.93,
+            "end": 26.1
+          },
+          {
+            "word": "they",
+            "start": 26.1,
+            "end": 26.42
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.42,
+        "end": 29.11,
+        "text": "really helped me so I highly recommend",
+        "words": [
+          {
+            "word": "really",
+            "start": 26.42,
+            "end": 26.91
+          },
+          {
+            "word": "helped",
+            "start": 26.91,
+            "end": 27.4
+          },
+          {
+            "word": "me",
+            "start": 27.4,
+            "end": 27.56
+          },
+          {
+            "word": "so",
+            "start": 27.56,
+            "end": 27.72
+          },
+          {
+            "word": "I",
+            "start": 27.72,
+            "end": 27.89
+          },
+          {
+            "word": "highly",
+            "start": 27.89,
+            "end": 28.38
+          },
+          {
+            "word": "recommend",
+            "start": 28.38,
+            "end": 29.11
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 29.11,
+        "end": 31.23,
+        "text": "I'm sure it will come back great",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 29.11,
+            "end": 29.28
+          },
+          {
+            "word": "sure",
+            "start": 29.28,
+            "end": 29.62
+          },
+          {
+            "word": "it",
+            "start": 29.62,
+            "end": 29.79
+          },
+          {
+            "word": "will",
+            "start": 29.79,
+            "end": 30.13
+          },
+          {
+            "word": "come",
+            "start": 30.13,
+            "end": 30.47
+          },
+          {
+            "word": "back",
+            "start": 30.47,
+            "end": 30.81
+          },
+          {
+            "word": "great",
+            "start": 30.81,
+            "end": 31.23
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 31.23,
+        "end": 33.51,
+        "text": "people and the creative great job",
+        "words": [
+          {
+            "word": "people",
+            "start": 31.23,
+            "end": 31.72
+          },
+          {
+            "word": "and",
+            "start": 31.72,
+            "end": 31.96
+          },
+          {
+            "word": "the",
+            "start": 31.96,
+            "end": 32.21
+          },
+          {
+            "word": "creative",
+            "start": 32.21,
+            "end": 32.86
+          },
+          {
+            "word": "great",
+            "start": 32.86,
+            "end": 33.27
+          },
+          {
+            "word": "job",
+            "start": 33.27,
+            "end": 33.51
+          }
+        ],
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Level15 Moving",
+    "businessName": "Level15 Moving",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 9,
+    "viewsCount": 9,
+    "sharesCount": 0,
+    "tags": [
+      "Website"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "edf11846-b280-4ebd-8cde-ab4c280a78ed",
+    "bunnyGuid": "edf11846-b280-4ebd-8cde-ab4c280a78ed",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": false,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "authorName": "Steven Akan",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 60,
+    "createdAt": "2026-10-16T16:55:06.194Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2
+  },
+  {
+    "id": "rev-1792168311201-mc11u",
+    "userId": "avr6566gd@gmail.com",
+    "userEmail": "avr6566gd@gmail.com",
+    "createdAtMs": 1792168311202,
+    "isLocalUpload": true,
+    "placeId": "level15moving.com",
+    "placeName": "Level15 Moving",
+    "placeCategory": "Website",
+    "placeAddress": "15 Min",
+    "placeCity": "Las vegas",
+    "placeCountry": "United States",
+    "placePhone": "(702)%20972-8298%20",
+    "placeEmail": "level15moving@gmail.com",
+    "placeRating": 5,
+    "placeWebsite": "https://level15moving.com/",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "placeDescription": "Level15 Moving · Official business profile for level15moving.com",
+    "author": {
+      "name": "Steven Akan",
+      "handle": "@stevenakan",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "state": "Florida",
+      "country": "United States"
+    },
+    "rating": 5,
+    "durationSeconds": 20,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9.mp4",
+      "/api/videos/stream/rev-1792168311201-mc11u.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "/uploads/rev-1792168311201-mc11u.jpg",
+    "caption": "Video review for level15moving.com",
+    "transcriptText": "opinion about level 15 moving they really helped me they did a very good job they came very fast also the customer service are very very nice dancer on time I'm sure I'm sure we'll definitely come back and we recommend my friends How are you I'd like to share my opinion about level 15 moving they really helped me they did a very good job they came very fast also the customer service are very very nice dancer on time I'm sure I'm sure we'll definitely come back and we recommend my friends",
+    "segments": [
+      {
+        "start": 1.59,
+        "end": 3.64,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 1.59,
+            "end": 2.1
+          },
+          {
+            "word": "I'd",
+            "start": 2.1,
+            "end": 2.31
+          },
+          {
+            "word": "like",
+            "start": 2.31,
+            "end": 2.72
+          },
+          {
+            "word": "to",
+            "start": 2.72,
+            "end": 2.92
+          },
+          {
+            "word": "share",
+            "start": 2.92,
+            "end": 3.44
+          },
+          {
+            "word": "my",
+            "start": 3.44,
+            "end": 3.64
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.64,
+        "end": 4.16,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 3.64,
+            "end": 3.76
+          },
+          {
+            "word": "I'd",
+            "start": 3.76,
+            "end": 3.84
+          },
+          {
+            "word": "like",
+            "start": 3.81,
+            "end": 3.91
+          },
+          {
+            "word": "to",
+            "start": 3.91,
+            "end": 3.99
+          },
+          {
+            "word": "share",
+            "start": 3.96,
+            "end": 4.08
+          },
+          {
+            "word": "my",
+            "start": 4.08,
+            "end": 4.16
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.13,
+        "end": 4.63,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 4.13,
+            "end": 4.25
+          },
+          {
+            "word": "I'd",
+            "start": 4.25,
+            "end": 4.33
+          },
+          {
+            "word": "like",
+            "start": 4.29,
+            "end": 4.39
+          },
+          {
+            "word": "to",
+            "start": 4.39,
+            "end": 4.47
+          },
+          {
+            "word": "share",
+            "start": 4.43,
+            "end": 4.55
+          },
+          {
+            "word": "my",
+            "start": 4.55,
+            "end": 4.63
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.6,
+        "end": 5.11,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 4.6,
+            "end": 4.72
+          },
+          {
+            "word": "I'd",
+            "start": 4.72,
+            "end": 4.8
+          },
+          {
+            "word": "like",
+            "start": 4.77,
+            "end": 4.86
+          },
+          {
+            "word": "to",
+            "start": 4.86,
+            "end": 4.94
+          },
+          {
+            "word": "share",
+            "start": 4.91,
+            "end": 5.03
+          },
+          {
+            "word": "my",
+            "start": 5.03,
+            "end": 5.11
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.08,
+        "end": 5.43,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.08,
+            "end": 5.16
+          },
+          {
+            "word": "I'd",
+            "start": 5.16,
+            "end": 5.24
+          },
+          {
+            "word": "like",
+            "start": 5.19,
+            "end": 5.2700000000000005
+          },
+          {
+            "word": "to",
+            "start": 5.25,
+            "end": 5.33
+          },
+          {
+            "word": "share",
+            "start": 5.28,
+            "end": 5.36
+          },
+          {
+            "word": "my",
+            "start": 5.35,
+            "end": 5.43
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.32,
+        "end": 5.84,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.32,
+            "end": 5.45
+          },
+          {
+            "word": "I'd",
+            "start": 5.45,
+            "end": 5.53
+          },
+          {
+            "word": "like",
+            "start": 5.49,
+            "end": 5.59
+          },
+          {
+            "word": "to",
+            "start": 5.59,
+            "end": 5.67
+          },
+          {
+            "word": "share",
+            "start": 5.64,
+            "end": 5.76
+          },
+          {
+            "word": "my",
+            "start": 5.76,
+            "end": 5.84
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.81,
+        "end": 6.16,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 5.81,
+            "end": 5.89
+          },
+          {
+            "word": "I'd",
+            "start": 5.88,
+            "end": 5.96
+          },
+          {
+            "word": "like",
+            "start": 5.91,
+            "end": 5.99
+          },
+          {
+            "word": "to",
+            "start": 5.97,
+            "end": 6.05
+          },
+          {
+            "word": "share",
+            "start": 6,
+            "end": 6.08
+          },
+          {
+            "word": "my",
+            "start": 6.08,
+            "end": 6.16
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.05,
+        "end": 6.4,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.05,
+            "end": 6.13
+          },
+          {
+            "word": "I'd",
+            "start": 6.13,
+            "end": 6.21
+          },
+          {
+            "word": "like",
+            "start": 6.16,
+            "end": 6.24
+          },
+          {
+            "word": "to",
+            "start": 6.22,
+            "end": 6.3
+          },
+          {
+            "word": "share",
+            "start": 6.25,
+            "end": 6.33
+          },
+          {
+            "word": "my",
+            "start": 6.32,
+            "end": 6.4
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.28,
+        "end": 6.63,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.28,
+            "end": 6.36
+          },
+          {
+            "word": "I'd",
+            "start": 6.36,
+            "end": 6.44
+          },
+          {
+            "word": "like",
+            "start": 6.39,
+            "end": 6.47
+          },
+          {
+            "word": "to",
+            "start": 6.45,
+            "end": 6.53
+          },
+          {
+            "word": "share",
+            "start": 6.48,
+            "end": 6.5600000000000005
+          },
+          {
+            "word": "my",
+            "start": 6.55,
+            "end": 6.63
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.29,
+        "end": 6.64,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.29,
+            "end": 6.37
+          },
+          {
+            "word": "I'd",
+            "start": 6.36,
+            "end": 6.44
+          },
+          {
+            "word": "like",
+            "start": 6.39,
+            "end": 6.47
+          },
+          {
+            "word": "to",
+            "start": 6.45,
+            "end": 6.53
+          },
+          {
+            "word": "share",
+            "start": 6.48,
+            "end": 6.5600000000000005
+          },
+          {
+            "word": "my",
+            "start": 6.56,
+            "end": 6.64
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.52,
+        "end": 6.87,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.52,
+            "end": 6.6
+          },
+          {
+            "word": "I'd",
+            "start": 6.59,
+            "end": 6.67
+          },
+          {
+            "word": "like",
+            "start": 6.62,
+            "end": 6.7
+          },
+          {
+            "word": "to",
+            "start": 6.68,
+            "end": 6.76
+          },
+          {
+            "word": "share",
+            "start": 6.71,
+            "end": 6.79
+          },
+          {
+            "word": "my",
+            "start": 6.79,
+            "end": 6.87
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.77,
+        "end": 7.12,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 6.77,
+            "end": 6.85
+          },
+          {
+            "word": "I'd",
+            "start": 6.84,
+            "end": 6.92
+          },
+          {
+            "word": "like",
+            "start": 6.87,
+            "end": 6.95
+          },
+          {
+            "word": "to",
+            "start": 6.93,
+            "end": 7.01
+          },
+          {
+            "word": "share",
+            "start": 6.96,
+            "end": 7.04
+          },
+          {
+            "word": "my",
+            "start": 7.04,
+            "end": 7.12
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.01,
+        "end": 7.36,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.01,
+            "end": 7.09
+          },
+          {
+            "word": "I'd",
+            "start": 7.08,
+            "end": 7.16
+          },
+          {
+            "word": "like",
+            "start": 7.11,
+            "end": 7.19
+          },
+          {
+            "word": "to",
+            "start": 7.17,
+            "end": 7.25
+          },
+          {
+            "word": "share",
+            "start": 7.2,
+            "end": 7.28
+          },
+          {
+            "word": "my",
+            "start": 7.28,
+            "end": 7.36
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.26,
+        "end": 7.61,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.26,
+            "end": 7.34
+          },
+          {
+            "word": "I'd",
+            "start": 7.34,
+            "end": 7.42
+          },
+          {
+            "word": "like",
+            "start": 7.37,
+            "end": 7.45
+          },
+          {
+            "word": "to",
+            "start": 7.43,
+            "end": 7.51
+          },
+          {
+            "word": "share",
+            "start": 7.46,
+            "end": 7.54
+          },
+          {
+            "word": "my",
+            "start": 7.53,
+            "end": 7.61
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.51,
+        "end": 7.86,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.51,
+            "end": 7.59
+          },
+          {
+            "word": "I'd",
+            "start": 7.58,
+            "end": 7.66
+          },
+          {
+            "word": "like",
+            "start": 7.61,
+            "end": 7.69
+          },
+          {
+            "word": "to",
+            "start": 7.67,
+            "end": 7.75
+          },
+          {
+            "word": "share",
+            "start": 7.7,
+            "end": 7.78
+          },
+          {
+            "word": "my",
+            "start": 7.78,
+            "end": 7.86
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.51,
+        "end": 7.86,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.51,
+            "end": 7.59
+          },
+          {
+            "word": "I'd",
+            "start": 7.58,
+            "end": 7.66
+          },
+          {
+            "word": "like",
+            "start": 7.61,
+            "end": 7.69
+          },
+          {
+            "word": "to",
+            "start": 7.67,
+            "end": 7.75
+          },
+          {
+            "word": "share",
+            "start": 7.7,
+            "end": 7.78
+          },
+          {
+            "word": "my",
+            "start": 7.78,
+            "end": 7.86
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.74,
+        "end": 8.09,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.74,
+            "end": 7.82
+          },
+          {
+            "word": "I'd",
+            "start": 7.81,
+            "end": 7.89
+          },
+          {
+            "word": "like",
+            "start": 7.84,
+            "end": 7.92
+          },
+          {
+            "word": "to",
+            "start": 7.9,
+            "end": 7.98
+          },
+          {
+            "word": "share",
+            "start": 7.93,
+            "end": 8.01
+          },
+          {
+            "word": "my",
+            "start": 8.01,
+            "end": 8.09
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.74,
+        "end": 8.46,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 7.74,
+            "end": 7.92
+          },
+          {
+            "word": "I'd",
+            "start": 7.92,
+            "end": 8
+          },
+          {
+            "word": "like",
+            "start": 7.99,
+            "end": 8.13
+          },
+          {
+            "word": "to",
+            "start": 8.13,
+            "end": 8.21
+          },
+          {
+            "word": "share",
+            "start": 8.2,
+            "end": 8.38
+          },
+          {
+            "word": "my",
+            "start": 8.38,
+            "end": 8.46
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.45,
+        "end": 8.8,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.45,
+            "end": 8.53
+          },
+          {
+            "word": "I'd",
+            "start": 8.52,
+            "end": 8.6
+          },
+          {
+            "word": "like",
+            "start": 8.55,
+            "end": 8.63
+          },
+          {
+            "word": "to",
+            "start": 8.61,
+            "end": 8.69
+          },
+          {
+            "word": "share",
+            "start": 8.64,
+            "end": 8.72
+          },
+          {
+            "word": "my",
+            "start": 8.72,
+            "end": 8.8
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.68,
+        "end": 9.03,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.68,
+            "end": 8.76
+          },
+          {
+            "word": "I'd",
+            "start": 8.75,
+            "end": 8.83
+          },
+          {
+            "word": "like",
+            "start": 8.78,
+            "end": 8.86
+          },
+          {
+            "word": "to",
+            "start": 8.84,
+            "end": 8.92
+          },
+          {
+            "word": "share",
+            "start": 8.87,
+            "end": 8.95
+          },
+          {
+            "word": "my",
+            "start": 8.95,
+            "end": 9.03
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.92,
+        "end": 9.43,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 8.92,
+            "end": 9.04
+          },
+          {
+            "word": "I'd",
+            "start": 9.04,
+            "end": 9.12
+          },
+          {
+            "word": "like",
+            "start": 9.09,
+            "end": 9.19
+          },
+          {
+            "word": "to",
+            "start": 9.19,
+            "end": 9.27
+          },
+          {
+            "word": "share",
+            "start": 9.23,
+            "end": 9.35
+          },
+          {
+            "word": "my",
+            "start": 9.35,
+            "end": 9.43
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.4,
+        "end": 9.75,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 9.4,
+            "end": 9.48
+          },
+          {
+            "word": "I'd",
+            "start": 9.48,
+            "end": 9.56
+          },
+          {
+            "word": "like",
+            "start": 9.51,
+            "end": 9.59
+          },
+          {
+            "word": "to",
+            "start": 9.57,
+            "end": 9.65
+          },
+          {
+            "word": "share",
+            "start": 9.6,
+            "end": 9.68
+          },
+          {
+            "word": "my",
+            "start": 9.67,
+            "end": 9.75
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.64,
+        "end": 10.15,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 9.64,
+            "end": 9.76
+          },
+          {
+            "word": "I'd",
+            "start": 9.76,
+            "end": 9.84
+          },
+          {
+            "word": "like",
+            "start": 9.81,
+            "end": 9.9
+          },
+          {
+            "word": "to",
+            "start": 9.9,
+            "end": 9.98
+          },
+          {
+            "word": "share",
+            "start": 9.95,
+            "end": 10.07
+          },
+          {
+            "word": "my",
+            "start": 10.07,
+            "end": 10.15
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.12,
+        "end": 10.47,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.12,
+            "end": 10.2
+          },
+          {
+            "word": "I'd",
+            "start": 10.19,
+            "end": 10.27
+          },
+          {
+            "word": "like",
+            "start": 10.22,
+            "end": 10.3
+          },
+          {
+            "word": "to",
+            "start": 10.28,
+            "end": 10.36
+          },
+          {
+            "word": "share",
+            "start": 10.31,
+            "end": 10.39
+          },
+          {
+            "word": "my",
+            "start": 10.39,
+            "end": 10.47
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.37,
+        "end": 10.87,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.37,
+            "end": 10.49
+          },
+          {
+            "word": "I'd",
+            "start": 10.49,
+            "end": 10.57
+          },
+          {
+            "word": "like",
+            "start": 10.53,
+            "end": 10.63
+          },
+          {
+            "word": "to",
+            "start": 10.63,
+            "end": 10.71
+          },
+          {
+            "word": "share",
+            "start": 10.67,
+            "end": 10.79
+          },
+          {
+            "word": "my",
+            "start": 10.79,
+            "end": 10.87
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.84,
+        "end": 11.36,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 10.84,
+            "end": 10.96
+          },
+          {
+            "word": "I'd",
+            "start": 10.96,
+            "end": 11.040000000000001
+          },
+          {
+            "word": "like",
+            "start": 11.01,
+            "end": 11.11
+          },
+          {
+            "word": "to",
+            "start": 11.11,
+            "end": 11.19
+          },
+          {
+            "word": "share",
+            "start": 11.15,
+            "end": 11.28
+          },
+          {
+            "word": "my",
+            "start": 11.28,
+            "end": 11.36
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.33,
+        "end": 11.68,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.33,
+            "end": 11.41
+          },
+          {
+            "word": "I'd",
+            "start": 11.4,
+            "end": 11.48
+          },
+          {
+            "word": "like",
+            "start": 11.43,
+            "end": 11.51
+          },
+          {
+            "word": "to",
+            "start": 11.49,
+            "end": 11.57
+          },
+          {
+            "word": "share",
+            "start": 11.52,
+            "end": 11.6
+          },
+          {
+            "word": "my",
+            "start": 11.6,
+            "end": 11.68
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.57,
+        "end": 11.92,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.57,
+            "end": 11.65
+          },
+          {
+            "word": "I'd",
+            "start": 11.64,
+            "end": 11.72
+          },
+          {
+            "word": "like",
+            "start": 11.67,
+            "end": 11.75
+          },
+          {
+            "word": "to",
+            "start": 11.73,
+            "end": 11.81
+          },
+          {
+            "word": "share",
+            "start": 11.76,
+            "end": 11.84
+          },
+          {
+            "word": "my",
+            "start": 11.84,
+            "end": 11.92
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.8,
+        "end": 12.15,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 11.8,
+            "end": 11.88
+          },
+          {
+            "word": "I'd",
+            "start": 11.88,
+            "end": 11.96
+          },
+          {
+            "word": "like",
+            "start": 11.91,
+            "end": 11.99
+          },
+          {
+            "word": "to",
+            "start": 11.97,
+            "end": 12.05
+          },
+          {
+            "word": "share",
+            "start": 12,
+            "end": 12.08
+          },
+          {
+            "word": "my",
+            "start": 12.07,
+            "end": 12.15
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.05,
+        "end": 13.24,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 12.05,
+            "end": 12.34
+          },
+          {
+            "word": "I'd",
+            "start": 12.34,
+            "end": 12.46
+          },
+          {
+            "word": "like",
+            "start": 12.46,
+            "end": 12.7
+          },
+          {
+            "word": "to",
+            "start": 12.7,
+            "end": 12.82
+          },
+          {
+            "word": "share",
+            "start": 12.82,
+            "end": 13.12
+          },
+          {
+            "word": "my",
+            "start": 13.12,
+            "end": 13.24
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.24,
+        "end": 13.59,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 13.24,
+            "end": 13.32
+          },
+          {
+            "word": "I'd",
+            "start": 13.31,
+            "end": 13.39
+          },
+          {
+            "word": "like",
+            "start": 13.34,
+            "end": 13.42
+          },
+          {
+            "word": "to",
+            "start": 13.4,
+            "end": 13.48
+          },
+          {
+            "word": "share",
+            "start": 13.43,
+            "end": 13.51
+          },
+          {
+            "word": "my",
+            "start": 13.51,
+            "end": 13.59
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.48,
+        "end": 13.83,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 13.48,
+            "end": 13.56
+          },
+          {
+            "word": "I'd",
+            "start": 13.55,
+            "end": 13.63
+          },
+          {
+            "word": "like",
+            "start": 13.58,
+            "end": 13.66
+          },
+          {
+            "word": "to",
+            "start": 13.64,
+            "end": 13.72
+          },
+          {
+            "word": "share",
+            "start": 13.67,
+            "end": 13.75
+          },
+          {
+            "word": "my",
+            "start": 13.75,
+            "end": 13.83
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.72,
+        "end": 14.07,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 13.72,
+            "end": 13.8
+          },
+          {
+            "word": "I'd",
+            "start": 13.8,
+            "end": 13.88
+          },
+          {
+            "word": "like",
+            "start": 13.83,
+            "end": 13.91
+          },
+          {
+            "word": "to",
+            "start": 13.89,
+            "end": 13.97
+          },
+          {
+            "word": "share",
+            "start": 13.92,
+            "end": 14
+          },
+          {
+            "word": "my",
+            "start": 13.99,
+            "end": 14.07
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.96,
+        "end": 14.69,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 13.96,
+            "end": 14.14
+          },
+          {
+            "word": "I'd",
+            "start": 14.14,
+            "end": 14.22
+          },
+          {
+            "word": "like",
+            "start": 14.21,
+            "end": 14.36
+          },
+          {
+            "word": "to",
+            "start": 14.36,
+            "end": 14.44
+          },
+          {
+            "word": "share",
+            "start": 14.43,
+            "end": 14.61
+          },
+          {
+            "word": "my",
+            "start": 14.61,
+            "end": 14.69
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.68,
+        "end": 15.03,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 14.68,
+            "end": 14.76
+          },
+          {
+            "word": "I'd",
+            "start": 14.76,
+            "end": 14.84
+          },
+          {
+            "word": "like",
+            "start": 14.78,
+            "end": 14.86
+          },
+          {
+            "word": "to",
+            "start": 14.85,
+            "end": 14.93
+          },
+          {
+            "word": "share",
+            "start": 14.87,
+            "end": 14.95
+          },
+          {
+            "word": "my",
+            "start": 14.95,
+            "end": 15.03
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.93,
+        "end": 15.44,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 14.93,
+            "end": 15.05
+          },
+          {
+            "word": "I'd",
+            "start": 15.05,
+            "end": 15.13
+          },
+          {
+            "word": "like",
+            "start": 15.09,
+            "end": 15.19
+          },
+          {
+            "word": "to",
+            "start": 15.19,
+            "end": 15.27
+          },
+          {
+            "word": "share",
+            "start": 15.24,
+            "end": 15.36
+          },
+          {
+            "word": "my",
+            "start": 15.36,
+            "end": 15.44
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.4,
+        "end": 15.75,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 15.4,
+            "end": 15.48
+          },
+          {
+            "word": "I'd",
+            "start": 15.48,
+            "end": 15.56
+          },
+          {
+            "word": "like",
+            "start": 15.51,
+            "end": 15.59
+          },
+          {
+            "word": "to",
+            "start": 15.57,
+            "end": 15.65
+          },
+          {
+            "word": "share",
+            "start": 15.6,
+            "end": 15.68
+          },
+          {
+            "word": "my",
+            "start": 15.67,
+            "end": 15.75
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.64,
+        "end": 16.16,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 15.64,
+            "end": 15.76
+          },
+          {
+            "word": "I'd",
+            "start": 15.76,
+            "end": 15.84
+          },
+          {
+            "word": "like",
+            "start": 15.81,
+            "end": 15.91
+          },
+          {
+            "word": "to",
+            "start": 15.91,
+            "end": 15.99
+          },
+          {
+            "word": "share",
+            "start": 15.96,
+            "end": 16.08
+          },
+          {
+            "word": "my",
+            "start": 16.08,
+            "end": 16.159999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.13,
+        "end": 16.48,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 16.13,
+            "end": 16.209999999999997
+          },
+          {
+            "word": "I'd",
+            "start": 16.2,
+            "end": 16.279999999999998
+          },
+          {
+            "word": "like",
+            "start": 16.23,
+            "end": 16.31
+          },
+          {
+            "word": "to",
+            "start": 16.29,
+            "end": 16.369999999999997
+          },
+          {
+            "word": "share",
+            "start": 16.32,
+            "end": 16.4
+          },
+          {
+            "word": "my",
+            "start": 16.4,
+            "end": 16.479999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.13,
+        "end": 16.48,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 16.13,
+            "end": 16.21
+          },
+          {
+            "word": "I'd",
+            "start": 16.21,
+            "end": 16.29
+          },
+          {
+            "word": "like",
+            "start": 16.24,
+            "end": 16.319999999999997
+          },
+          {
+            "word": "to",
+            "start": 16.3,
+            "end": 16.38
+          },
+          {
+            "word": "share",
+            "start": 16.33,
+            "end": 16.409999999999997
+          },
+          {
+            "word": "my",
+            "start": 16.4,
+            "end": 16.479999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.14,
+        "end": 16.49,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 16.14,
+            "end": 16.22
+          },
+          {
+            "word": "I'd",
+            "start": 16.22,
+            "end": 16.299999999999997
+          },
+          {
+            "word": "like",
+            "start": 16.25,
+            "end": 16.33
+          },
+          {
+            "word": "to",
+            "start": 16.31,
+            "end": 16.389999999999997
+          },
+          {
+            "word": "share",
+            "start": 16.34,
+            "end": 16.419999999999998
+          },
+          {
+            "word": "my",
+            "start": 16.41,
+            "end": 16.49
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.36,
+        "end": 16.88,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 16.36,
+            "end": 16.49
+          },
+          {
+            "word": "I'd",
+            "start": 16.49,
+            "end": 16.569999999999997
+          },
+          {
+            "word": "like",
+            "start": 16.54,
+            "end": 16.63
+          },
+          {
+            "word": "to",
+            "start": 16.63,
+            "end": 16.709999999999997
+          },
+          {
+            "word": "share",
+            "start": 16.68,
+            "end": 16.8
+          },
+          {
+            "word": "my",
+            "start": 16.8,
+            "end": 16.88
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.85,
+        "end": 17.2,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 16.85,
+            "end": 16.93
+          },
+          {
+            "word": "I'd",
+            "start": 16.93,
+            "end": 17.009999999999998
+          },
+          {
+            "word": "like",
+            "start": 16.96,
+            "end": 17.04
+          },
+          {
+            "word": "to",
+            "start": 17.02,
+            "end": 17.099999999999998
+          },
+          {
+            "word": "share",
+            "start": 17.05,
+            "end": 17.13
+          },
+          {
+            "word": "my",
+            "start": 17.12,
+            "end": 17.2
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.08,
+        "end": 18.04,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 17.08,
+            "end": 17.32
+          },
+          {
+            "word": "I'd",
+            "start": 17.32,
+            "end": 17.42
+          },
+          {
+            "word": "like",
+            "start": 17.42,
+            "end": 17.61
+          },
+          {
+            "word": "to",
+            "start": 17.61,
+            "end": 17.71
+          },
+          {
+            "word": "share",
+            "start": 17.71,
+            "end": 17.95
+          },
+          {
+            "word": "my",
+            "start": 17.95,
+            "end": 18.04
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.04,
+        "end": 18.39,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 18.04,
+            "end": 18.12
+          },
+          {
+            "word": "I'd",
+            "start": 18.12,
+            "end": 18.2
+          },
+          {
+            "word": "like",
+            "start": 18.15,
+            "end": 18.229999999999997
+          },
+          {
+            "word": "to",
+            "start": 18.21,
+            "end": 18.29
+          },
+          {
+            "word": "share",
+            "start": 18.24,
+            "end": 18.319999999999997
+          },
+          {
+            "word": "my",
+            "start": 18.31,
+            "end": 18.389999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.29,
+        "end": 18.64,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 18.29,
+            "end": 18.37
+          },
+          {
+            "word": "I'd",
+            "start": 18.37,
+            "end": 18.45
+          },
+          {
+            "word": "like",
+            "start": 18.4,
+            "end": 18.479999999999997
+          },
+          {
+            "word": "to",
+            "start": 18.46,
+            "end": 18.54
+          },
+          {
+            "word": "share",
+            "start": 18.49,
+            "end": 18.569999999999997
+          },
+          {
+            "word": "my",
+            "start": 18.56,
+            "end": 18.639999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.52,
+        "end": 18.87,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 18.52,
+            "end": 18.6
+          },
+          {
+            "word": "I'd",
+            "start": 18.6,
+            "end": 18.68
+          },
+          {
+            "word": "like",
+            "start": 18.63,
+            "end": 18.709999999999997
+          },
+          {
+            "word": "to",
+            "start": 18.69,
+            "end": 18.77
+          },
+          {
+            "word": "share",
+            "start": 18.72,
+            "end": 18.799999999999997
+          },
+          {
+            "word": "my",
+            "start": 18.79,
+            "end": 18.869999999999997
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.53,
+        "end": 19.04,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 18.53,
+            "end": 18.65
+          },
+          {
+            "word": "I'd",
+            "start": 18.65,
+            "end": 18.729999999999997
+          },
+          {
+            "word": "like",
+            "start": 18.7,
+            "end": 18.79
+          },
+          {
+            "word": "to",
+            "start": 18.79,
+            "end": 18.869999999999997
+          },
+          {
+            "word": "share",
+            "start": 18.84,
+            "end": 18.96
+          },
+          {
+            "word": "my",
+            "start": 18.96,
+            "end": 19.04
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.01,
+        "end": 19.36,
+        "text": "Hello I'd like to share my",
+        "words": [
+          {
+            "word": "Hello",
+            "start": 19.01,
+            "end": 19.09
+          },
+          {
+            "word": "I'd",
+            "start": 19.08,
+            "end": 19.159999999999997
+          },
+          {
+            "word": "like",
+            "start": 19.11,
+            "end": 19.189999999999998
+          },
+          {
+            "word": "to",
+            "start": 19.17,
+            "end": 19.25
+          },
+          {
+            "word": "share",
+            "start": 19.2,
+            "end": 19.28
+          },
+          {
+            "word": "my",
+            "start": 19.28,
+            "end": 19.36
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.02,
+        "end": 34.07,
+        "text": "opinion about level 15 moving they really helped me they did a very good job they came very fast also the customer service are very very nice dancer on time I'm sure I'm sure we'll definitely come back and we recommend my friends",
+        "words": [
+          {
+            "word": "opinion",
+            "start": 19.02,
+            "end": 19.59
+          },
+          {
+            "word": "about",
+            "start": 19.59,
+            "end": 20
+          },
+          {
+            "word": "level",
+            "start": 20,
+            "end": 20.4
+          },
+          {
+            "word": "15",
+            "start": 20.4,
+            "end": 20.57
+          },
+          {
+            "word": "moving",
+            "start": 20.57,
+            "end": 21.05
+          },
+          {
+            "word": "they",
+            "start": 21.05,
+            "end": 21.38
+          },
+          {
+            "word": "really",
+            "start": 21.38,
+            "end": 21.87
+          },
+          {
+            "word": "helped",
+            "start": 21.87,
+            "end": 22.36
+          },
+          {
+            "word": "me",
+            "start": 22.36,
+            "end": 22.52
+          },
+          {
+            "word": "they",
+            "start": 22.52,
+            "end": 22.84
+          },
+          {
+            "word": "did",
+            "start": 22.84,
+            "end": 23.09
+          },
+          {
+            "word": "a",
+            "start": 23.09,
+            "end": 23.25
+          },
+          {
+            "word": "very",
+            "start": 23.25,
+            "end": 23.58
+          },
+          {
+            "word": "good",
+            "start": 23.58,
+            "end": 23.9
+          },
+          {
+            "word": "job",
+            "start": 23.9,
+            "end": 24.15
+          },
+          {
+            "word": "they",
+            "start": 24.15,
+            "end": 24.47
+          },
+          {
+            "word": "came",
+            "start": 24.47,
+            "end": 24.8
+          },
+          {
+            "word": "very",
+            "start": 24.8,
+            "end": 25.12
+          },
+          {
+            "word": "fast",
+            "start": 25.12,
+            "end": 25.45
+          },
+          {
+            "word": "also",
+            "start": 25.45,
+            "end": 25.77
+          },
+          {
+            "word": "the",
+            "start": 25.77,
+            "end": 26.02
+          },
+          {
+            "word": "customer",
+            "start": 26.02,
+            "end": 26.67
+          },
+          {
+            "word": "service",
+            "start": 26.67,
+            "end": 27.24
+          },
+          {
+            "word": "are",
+            "start": 27.24,
+            "end": 27.48
+          },
+          {
+            "word": "very",
+            "start": 27.48,
+            "end": 27.81
+          },
+          {
+            "word": "very",
+            "start": 27.81,
+            "end": 28.13
+          },
+          {
+            "word": "nice",
+            "start": 28.13,
+            "end": 28.46
+          },
+          {
+            "word": "dancer",
+            "start": 28.46,
+            "end": 28.95
+          },
+          {
+            "word": "on",
+            "start": 28.95,
+            "end": 29.11
+          },
+          {
+            "word": "time",
+            "start": 29.11,
+            "end": 29.43
+          },
+          {
+            "word": "I'm",
+            "start": 29.43,
+            "end": 29.6
+          },
+          {
+            "word": "sure",
+            "start": 29.6,
+            "end": 29.92
+          },
+          {
+            "word": "I'm",
+            "start": 29.92,
+            "end": 30.08
+          },
+          {
+            "word": "sure",
+            "start": 30.08,
+            "end": 30.41
+          },
+          {
+            "word": "we'll",
+            "start": 30.41,
+            "end": 30.74
+          },
+          {
+            "word": "definitely",
+            "start": 30.74,
+            "end": 31.55
+          },
+          {
+            "word": "come",
+            "start": 31.55,
+            "end": 31.87
+          },
+          {
+            "word": "back",
+            "start": 31.87,
+            "end": 32.2
+          },
+          {
+            "word": "and",
+            "start": 32.2,
+            "end": 32.44
+          },
+          {
+            "word": "we",
+            "start": 32.44,
+            "end": 32.61
+          },
+          {
+            "word": "recommend",
+            "start": 32.61,
+            "end": 33.34
+          },
+          {
+            "word": "my",
+            "start": 33.34,
+            "end": 33.5
+          },
+          {
+            "word": "friends",
+            "start": 33.5,
+            "end": 34.07
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 34.07,
+        "end": 36.17,
+        "text": "How are you I'd like to share",
+        "words": [
+          {
+            "word": "How",
+            "start": 34.07,
+            "end": 34.36
+          },
+          {
+            "word": "are",
+            "start": 34.36,
+            "end": 34.64
+          },
+          {
+            "word": "you",
+            "start": 34.64,
+            "end": 34.93
+          },
+          {
+            "word": "I'd",
+            "start": 34.93,
+            "end": 35.12
+          },
+          {
+            "word": "like",
+            "start": 35.12,
+            "end": 35.5
+          },
+          {
+            "word": "to",
+            "start": 35.5,
+            "end": 35.69
+          },
+          {
+            "word": "share",
+            "start": 35.69,
+            "end": 36.17
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 36.17,
+        "end": 38.77,
+        "text": "my opinion about level 15 moving they",
+        "words": [
+          {
+            "word": "my",
+            "start": 36.17,
+            "end": 36.34
+          },
+          {
+            "word": "opinion",
+            "start": 36.34,
+            "end": 36.92
+          },
+          {
+            "word": "about",
+            "start": 36.92,
+            "end": 37.34
+          },
+          {
+            "word": "level",
+            "start": 37.34,
+            "end": 37.76
+          },
+          {
+            "word": "15",
+            "start": 37.76,
+            "end": 37.93
+          },
+          {
+            "word": "moving",
+            "start": 37.93,
+            "end": 38.43
+          },
+          {
+            "word": "they",
+            "start": 38.43,
+            "end": 38.77
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 38.77,
+        "end": 41.03,
+        "text": "really helped me they did a very",
+        "words": [
+          {
+            "word": "really",
+            "start": 38.77,
+            "end": 39.27
+          },
+          {
+            "word": "helped",
+            "start": 39.27,
+            "end": 39.78
+          },
+          {
+            "word": "me",
+            "start": 39.78,
+            "end": 39.94
+          },
+          {
+            "word": "they",
+            "start": 39.94,
+            "end": 40.28
+          },
+          {
+            "word": "did",
+            "start": 40.28,
+            "end": 40.53
+          },
+          {
+            "word": "a",
+            "start": 40.53,
+            "end": 40.7
+          },
+          {
+            "word": "very",
+            "start": 40.7,
+            "end": 41.03
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 41.03,
+        "end": 43.29,
+        "text": "good job they came very fast also",
+        "words": [
+          {
+            "word": "good",
+            "start": 41.03,
+            "end": 41.37
+          },
+          {
+            "word": "job",
+            "start": 41.37,
+            "end": 41.62
+          },
+          {
+            "word": "they",
+            "start": 41.62,
+            "end": 41.95
+          },
+          {
+            "word": "came",
+            "start": 41.95,
+            "end": 42.29
+          },
+          {
+            "word": "very",
+            "start": 42.29,
+            "end": 42.62
+          },
+          {
+            "word": "fast",
+            "start": 42.62,
+            "end": 42.96
+          },
+          {
+            "word": "also",
+            "start": 42.96,
+            "end": 43.29
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 43.29,
+        "end": 46.06,
+        "text": "the customer service are very very nice",
+        "words": [
+          {
+            "word": "the",
+            "start": 43.29,
+            "end": 43.54
+          },
+          {
+            "word": "customer",
+            "start": 43.54,
+            "end": 44.21
+          },
+          {
+            "word": "service",
+            "start": 44.21,
+            "end": 44.8
+          },
+          {
+            "word": "are",
+            "start": 44.8,
+            "end": 45.05
+          },
+          {
+            "word": "very",
+            "start": 45.05,
+            "end": 45.39
+          },
+          {
+            "word": "very",
+            "start": 45.39,
+            "end": 45.72
+          },
+          {
+            "word": "nice",
+            "start": 45.72,
+            "end": 46.06
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 46.06,
+        "end": 48.24,
+        "text": "dancer on time I'm sure I'm sure",
+        "words": [
+          {
+            "word": "dancer",
+            "start": 46.06,
+            "end": 46.6
+          },
+          {
+            "word": "on",
+            "start": 46.6,
+            "end": 46.79
+          },
+          {
+            "word": "time",
+            "start": 46.79,
+            "end": 47.15
+          },
+          {
+            "word": "I'm",
+            "start": 47.15,
+            "end": 47.33
+          },
+          {
+            "word": "sure",
+            "start": 47.33,
+            "end": 47.69
+          },
+          {
+            "word": "I'm",
+            "start": 47.69,
+            "end": 47.88
+          },
+          {
+            "word": "sure",
+            "start": 47.88,
+            "end": 48.24
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 48.24,
+        "end": 50.59,
+        "text": "we'll definitely come back and we",
+        "words": [
+          {
+            "word": "we'll",
+            "start": 48.24,
+            "end": 48.59
+          },
+          {
+            "word": "definitely",
+            "start": 48.59,
+            "end": 49.46
+          },
+          {
+            "word": "come",
+            "start": 49.46,
+            "end": 49.8
+          },
+          {
+            "word": "back",
+            "start": 49.8,
+            "end": 50.15
+          },
+          {
+            "word": "and",
+            "start": 50.15,
+            "end": 50.41
+          },
+          {
+            "word": "we",
+            "start": 50.41,
+            "end": 50.59
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 50.59,
+        "end": 51.92,
+        "text": "recommend my friends",
+        "words": [
+          {
+            "word": "recommend",
+            "start": 50.59,
+            "end": 51.26
+          },
+          {
+            "word": "my",
+            "start": 51.26,
+            "end": 51.4
+          },
+          {
+            "word": "friends",
+            "start": 51.4,
+            "end": 51.92
+          }
+        ],
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Level15 Moving",
+    "businessName": "Level15 Moving",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 9,
+    "viewsCount": 9,
+    "sharesCount": 0,
+    "tags": [
+      "Website"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9",
+    "bunnyGuid": "4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": false,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "authorName": "Steven Akan",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 60,
+    "createdAt": "2026-10-16T16:31:51.202Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2
+  },
+  {
+    "id": "rev-1792163491053-v36vs",
+    "userId": "aouisesmee@gmail.com",
+    "userEmail": "aouisesmee@gmail.com",
+    "createdAtMs": 1792163491053,
+    "isLocalUpload": true,
+    "placeId": "firststrikeelectrical.co.uk",
+    "placeName": "First Strike Electrical",
+    "placeCategory": "Verified Business",
+    "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
+    "placeCity": "Online",
+    "placeCountry": "United Kingdom",
+    "placePhone": "+44 793 138 8466",
+    "placeEmail": "alex@firststrikeelectrical.co.uk",
+    "placeRating": 5,
+    "placeWebsite": "https://firststrikeelectrical.co.uk/",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fapple-touch-icon.png",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "placeDescription": "first strike electrical ltd london · Official business profile for firststrikeelectrical.co.uk",
+    "author": {
+      "name": "Ben Blue",
+      "handle": "@benblue",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "London, City of London, United Kingdom",
+      "city": "London",
+      "state": "City of London",
+      "country": "United Kingdom"
+    },
+    "rating": 5,
+    "durationSeconds": 12,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/ee06f40f-773f-4c2f-827c-48105dd5259b/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/ee06f40f-773f-4c2f-827c-48105dd5259b/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/ee06f40f-773f-4c2f-827c-48105dd5259b.mp4",
+      "/api/videos/stream/rev-1792163491053-v36vs.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "/uploads/rev-1792163491053-v36vs.jpg",
+    "caption": "Video review for firststrikeelectrical.co.uk",
+    "transcriptText": "Hello everybody, I'd like to share my opinion about First. They did a great job, highly appreciated, good customer service, very friendly. I am sure I will definitely come back.",
+    "segments": [
+      {
+        "start": 1.17,
+        "end": 4.31,
+        "text": "Hello everybody, I'd like to share my opinion about First."
+      },
+      {
+        "start": 4.49,
+        "end": 9.72,
+        "text": "They did a great job, highly appreciated, good customer service, very friendly."
+      },
+      {
+        "start": 9.88,
+        "end": 11.84,
+        "text": "I am sure I will definitely come back."
+      }
+    ],
+    "dishOrItem": "First Strike Electrical",
+    "businessName": "First Strike Electrical",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 8,
+    "viewsCount": 8,
+    "sharesCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "ee06f40f-773f-4c2f-827c-48105dd5259b",
+    "bunnyGuid": "ee06f40f-773f-4c2f-827c-48105dd5259b",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/ee06f40f-773f-4c2f-827c-48105dd5259b/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/ee06f40f-773f-4c2f-827c-48105dd5259b/captions/en-auto.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fapple-touch-icon.png",
+    "authorName": "Ben Blue",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 60,
+    "createdAt": "2026-10-16T15:11:31.053Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
+    "hasBunnySmartCaptions": true
+  },
+  {
     "id": "rev-1792160861770-testp",
     "userId": "test@yoouz.com",
     "userEmail": "test@yoouz.com",
@@ -14,7 +4550,11 @@
     "caption": "Test Video Review 1792160863542",
     "author": {
       "name": "Test Reviewer",
-      "handle": "@test"
+      "handle": "@test",
+      "avatar": "",
+      "location": "",
+      "city": "",
+      "country": ""
     },
     "businessName": "First Strike Electrical",
     "fallbackVideoUrls": [
@@ -23,29 +4563,52 @@
       "/api/videos/stream/rev-1792160861770-testp.mp4",
       "/default-review.mp4"
     ],
-    "placeBannerUrl": "",
-    "bannerUrl": "",
-    "ogImage": "",
-    "placeLogoUrl": "",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fog-image.jpg",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fapple-touch-icon.png",
     "placeWebsite": "",
-    "placeAddress": "",
-    "placeCity": "",
-    "placeCountry": "",
-    "placePhone": "",
+    "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
+    "placeCity": "Online",
+    "placeCountry": "United Kingdom",
+    "placePhone": "+44 793 138 8466",
     "placeCategory": "",
-    "thumbnailUrl": "https://rev1.b-cdn.net/videos/rev-1792160861770-testp.jpg"
+    "thumbnailUrl": "https://rev1.b-cdn.net/videos/rev-1792160861770-testp.jpg",
+    "createdAtMs": 1792160861770,
+    "isLocalUpload": false,
+    "likesCount": 0,
+    "likes": 0,
+    "bookmarksCount": 0,
+    "bookmarks": 0,
+    "sharesCount": 0,
+    "shares": 0,
+    "commentsCount": 0,
+    "createdAt": "2026-10-16T14:27:41.770Z",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fapple-touch-icon.png",
+    "placeEmail": "alex@firststrikeelectrical.co.uk",
+    "placeRating": 5,
+    "authorName": "Test Reviewer",
+    "duration": 60,
+    "viewsCount": 2,
+    "views": 2,
+    "comments": [],
+    "isBookmarked": false,
+    "isLiked": false,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1
   },
   {
     "id": "rev-1792149988398-y1m39",
     "userId": "aouisesmee@gmail.com",
     "userEmail": "aouisesmee@gmail.com",
     "createdAtMs": 1792149988399,
-    "isLocalUpload": true,
+    "isLocalUpload": false,
     "placeId": "firststrikeelectrical.co.uk",
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -72,6 +4635,7 @@
     "videoUrl": "https://rev1.b-cdn.net/videos/rev-1792149988398-y1m39.mp4",
     "fallbackVideoUrls": [
       "https://rev1.b-cdn.net/videos/rev-1792149988398-y1m39.mp4",
+      "https://rev1.b-cdn.net/videos/c085902d-ce0f-4b0c-8b02-eb320e2bfad4.mp4",
       "/api/videos/stream/rev-1792149988398-y1m39.mp4",
       "/default-review.mp4"
     ],
@@ -88,8 +4652,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 2,
-    "viewsCount": 2,
+    "views": 5,
+    "viewsCount": 5,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -100,14 +4664,14 @@
     "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ffirststrikeelectrical.co.uk%2Fapple-touch-icon.png",
     "authorName": "Ben Blue",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 60,
+    "duration": 15,
     "createdAt": "2026-10-16T11:26:28.399Z",
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "c085902d-ce0f-4b0c-8b02-eb320e2bfad4",
     "bunnyGuid": "c085902d-ce0f-4b0c-8b02-eb320e2bfad4",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c085902d-ce0f-4b0c-8b02-eb320e2bfad4/playlist.m3u8",
@@ -123,7 +4687,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -173,8 +4737,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 6,
-    "viewsCount": 6,
+    "views": 8,
+    "viewsCount": 8,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -190,9 +4754,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "d816af33-8a6e-4061-9ace-ba1cfd134cd1",
     "bunnyGuid": "d816af33-8a6e-4061-9ace-ba1cfd134cd1",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/d816af33-8a6e-4061-9ace-ba1cfd134cd1/playlist.m3u8",
@@ -208,7 +4772,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -263,8 +4827,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 5,
-    "viewsCount": 5,
+    "views": 6,
+    "viewsCount": 6,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -280,9 +4844,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "5f8c135c-aa4e-4000-baa3-8d6e6c72e0a9",
     "bunnyGuid": "5f8c135c-aa4e-4000-baa3-8d6e6c72e0a9",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/5f8c135c-aa4e-4000-baa3-8d6e6c72e0a9/playlist.m3u8",
@@ -298,7 +4862,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -353,8 +4917,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 4,
-    "viewsCount": 4,
+    "views": 5,
+    "viewsCount": 5,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -370,9 +4934,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "08d1f45e-de8f-4d9b-87e6-f268ce311cc5",
     "bunnyGuid": "08d1f45e-de8f-4d9b-87e6-f268ce311cc5",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/08d1f45e-de8f-4d9b-87e6-f268ce311cc5/playlist.m3u8",
@@ -388,7 +4952,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -461,9 +5025,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "85ee2067-eaa2-4b7e-8484-ddc9c12a7387",
     "bunnyGuid": "85ee2067-eaa2-4b7e-8484-ddc9c12a7387",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/85ee2067-eaa2-4b7e-8484-ddc9c12a7387/playlist.m3u8",
@@ -479,7 +5043,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -577,9 +5141,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "57fbb43f-0fc6-4cac-826c-05303e610e2b",
     "bunnyGuid": "57fbb43f-0fc6-4cac-826c-05303e610e2b",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/57fbb43f-0fc6-4cac-826c-05303e610e2b/playlist.m3u8",
@@ -595,7 +5159,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -1962,9 +6526,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "e16dde0a-0ac6-4056-9662-a6a026ab3f0a",
     "bunnyGuid": "e16dde0a-0ac6-4056-9662-a6a026ab3f0a"
   },
@@ -1978,7 +6542,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2066,9 +6630,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "df90a57a-e8ad-466f-99d4-eead3b4ed2b4",
     "bunnyGuid": "df90a57a-e8ad-466f-99d4-eead3b4ed2b4",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/df90a57a-e8ad-466f-99d4-eead3b4ed2b4/playlist.m3u8",
@@ -2084,7 +6648,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2172,9 +6736,9 @@
     "createdAt": "2026-10-16T07:33:30.313Z",
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "6a12a5ee-6340-4a57-9e7d-b348fdc94afc",
     "bunnyGuid": "6a12a5ee-6340-4a57-9e7d-b348fdc94afc",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/6a12a5ee-6340-4a57-9e7d-b348fdc94afc/playlist.m3u8",
@@ -2190,7 +6754,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2263,9 +6827,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "4ebdf1d9-4dd4-43c7-bd69-fc474da3321c",
     "bunnyGuid": "4ebdf1d9-4dd4-43c7-bd69-fc474da3321c",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/4ebdf1d9-4dd4-43c7-bd69-fc474da3321c/playlist.m3u8",
@@ -2281,7 +6845,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2354,9 +6918,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "80a71648-adc5-4f62-96c9-29fd97f2b674",
     "bunnyGuid": "80a71648-adc5-4f62-96c9-29fd97f2b674",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/80a71648-adc5-4f62-96c9-29fd97f2b674/playlist.m3u8",
@@ -2372,7 +6936,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2450,9 +7014,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "b522fb30-ec98-4d35-a60d-96a702d9259f",
     "bunnyGuid": "b522fb30-ec98-4d35-a60d-96a702d9259f",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b522fb30-ec98-4d35-a60d-96a702d9259f/playlist.m3u8",
@@ -2468,7 +7032,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2541,9 +7105,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "67cad22e-10d7-4ddf-8692-f797a5f769fa",
     "bunnyGuid": "67cad22e-10d7-4ddf-8692-f797a5f769fa",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/67cad22e-10d7-4ddf-8692-f797a5f769fa/playlist.m3u8",
@@ -2559,7 +7123,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2627,9 +7191,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "401d9601-76c5-4758-a533-91c12af2d7c3",
     "bunnyGuid": "401d9601-76c5-4758-a533-91c12af2d7c3",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/401d9601-76c5-4758-a533-91c12af2d7c3/playlist.m3u8",
@@ -2645,7 +7209,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2713,9 +7277,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "29a4f0e5-30ae-4a6c-abf7-2c333e206a3f",
     "bunnyGuid": "29a4f0e5-30ae-4a6c-abf7-2c333e206a3f",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/29a4f0e5-30ae-4a6c-abf7-2c333e206a3f/playlist.m3u8",
@@ -2731,7 +7295,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2799,9 +7363,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "34bed163-89fb-4884-a08d-59c41184239b",
     "bunnyGuid": "34bed163-89fb-4884-a08d-59c41184239b",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/34bed163-89fb-4884-a08d-59c41184239b/playlist.m3u8",
@@ -2817,7 +7381,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -2900,9 +7464,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "37069780-b32f-4933-9425-a55066fdc3ea",
     "bunnyGuid": "37069780-b32f-4933-9425-a55066fdc3ea",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/37069780-b32f-4933-9425-a55066fdc3ea/playlist.m3u8",
@@ -2918,7 +7482,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -3345,9 +7909,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "de68e10a-5f76-42f6-9e4b-81ebe008f18d",
     "bunnyGuid": "de68e10a-5f76-42f6-9e4b-81ebe008f18d"
   },
@@ -3361,7 +7925,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -3788,9 +8352,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "9c2f516f-3ee2-48b7-b07e-8619cb00a2d6",
     "bunnyGuid": "9c2f516f-3ee2-48b7-b07e-8619cb00a2d6"
   },
@@ -3804,7 +8368,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -3882,9 +8446,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyVideoId": "ff9aeebf-a200-455e-a28f-579b2076df11",
     "bunnyGuid": "ff9aeebf-a200-455e-a28f-579b2076df11",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/ff9aeebf-a200-455e-a28f-579b2076df11/playlist.m3u8",
@@ -3900,7 +8464,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -6081,9 +10645,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyGuid": "c7f3ede6-dc2c-4db8-8992-84bd6daf6599",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c7f3ede6-dc2c-4db8-8992-84bd6daf6599/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c7f3ede6-dc2c-4db8-8992-84bd6daf6599/captions/en-auto.vtt"
@@ -6098,7 +10662,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -7629,9 +12193,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyGuid": "1e2eb0b5-3abd-4049-93c0-fd5005282ee0",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/1e2eb0b5-3abd-4049-93c0-fd5005282ee0/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/1e2eb0b5-3abd-4049-93c0-fd5005282ee0/captions/en-auto.vtt"
@@ -7646,7 +12210,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -9359,9 +13923,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyGuid": "5b4fe4f3-4033-4b98-b9be-d01eb2adc238",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/5b4fe4f3-4033-4b98-b9be-d01eb2adc238/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/5b4fe4f3-4033-4b98-b9be-d01eb2adc238/captions/en-auto.vtt"
@@ -9376,7 +13940,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -10744,9 +15308,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "bunnyGuid": "071b9ef6-0947-4ce2-b710-4a9d94da893f",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/071b9ef6-0947-4ce2-b710-4a9d94da893f/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/071b9ef6-0947-4ce2-b710-4a9d94da893f/captions/en-auto.vtt"
@@ -10937,8 +15501,8 @@
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 308,
-    "viewsCount": 308,
+    "views": 309,
+    "viewsCount": 309,
     "sharesCount": 1,
     "tags": [
       "Technology"
@@ -11077,7 +15641,7 @@
     "placeName": "First Strike Electrical",
     "placeCategory": "Website",
     "placeAddress": "19-21 Crawford St, W1H 1PJ Marylebone",
-    "placeCity": "Marylebone",
+    "placeCity": "Online",
     "placeCountry": "United Kingdom",
     "placePhone": "+44 793 138 8466",
     "placeEmail": "alex@firststrikeelectrical.co.uk",
@@ -11152,8 +15716,8 @@
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 105,
-    "viewsCount": 105,
+    "views": 108,
+    "viewsCount": 108,
     "sharesCount": 7,
     "tags": [
       "Website"
@@ -11170,9 +15734,9 @@
     "likesCount": 1,
     "bookmarks": 1,
     "shares": 7,
-    "reviewsCount": 25,
-    "reviewCount": 25,
-    "totalReviews": 25,
+    "reviewsCount": 26,
+    "reviewCount": 26,
+    "totalReviews": 26,
     "transcriptText": "I highly recommend they give you a five-star",
     "segments": [
       {
