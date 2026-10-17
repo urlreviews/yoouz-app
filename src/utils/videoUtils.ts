@@ -117,7 +117,7 @@ export function resolvePlayableVideoSourcesCascade(
   const sources: string[] = [];
   const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
-  // 1. Fresh active session IndexedDB blob URL (only from active session in-memory cachedLocalBlobUrl)
+  // 1. In-Memory Session IndexedDB Blob URL (Instant playback during upload session)
   const localBlobCandidate = cachedLocalBlobUrl;
   if (localBlobCandidate && typeof localBlobCandidate === "string" && localBlobCandidate.startsWith("blob:")) {
     if (!sources.includes(localBlobCandidate)) {
@@ -125,52 +125,57 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 2. Direct specified videoUrl on the video review if it's a full CDN URL (e.g. https://...)
-  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes("playlist.m3u8")) {
+  // 2. Direct Explicit videoUrl on Document (e.g. https://rev1.b-cdn.net/... or /api/videos/stream/...)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
       sources.push(norm);
     }
   }
 
-  // 3. Ultra-Fast Global Edge CDN: Bunny Stream HLS Playlist (Adaptive Bitrate <50ms startup time)
+  // 3. Direct Edge CDN MP4 for rev- IDs (e.g. https://rev1.b-cdn.net/videos/rev-12345.mp4)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const cdnMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
+    if (!sources.includes(cdnMp4)) {
+      sources.push(cdnMp4);
+    }
+    const cdnUploadMp4 = `${cleanZone}/uploads/${cleanId}.mp4`;
+    if (!sources.includes(cdnUploadMp4)) {
+      sources.push(cdnUploadMp4);
+    }
+  }
+
+  // 4. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id)
+  if (video.id && typeof video.id === "string") {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
+    if (!sources.includes(serverStream)) {
+      sources.push(serverStream);
+    }
+  }
+
+  // 5. Valid Verified Bunny Stream HLS Playlist (If explicitly available)
+  if (video.hlsUrl && typeof video.hlsUrl === 'string' && !sources.includes(video.hlsUrl)) {
+    sources.push(video.hlsUrl);
+  }
+
   const isStreamGuid = (id?: string) => {
     if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
     const hyphens = (id.match(/-/g) || []).length;
     return (hyphens === 4 && id.length === 36) || id.length > 30;
   };
 
-  const bunnyLibId = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_LIBRARY_ID) || "733814";
-  
-  if (video.hlsUrl && typeof video.hlsUrl === 'string' && !sources.includes(video.hlsUrl)) {
-    sources.push(video.hlsUrl);
-  }
-
-  const guid = video.bunnyVideoId || (video as any).bunnyGuid || (video.id && !video.id.startsWith('rev-') ? video.id : null);
-  if (guid && isStreamGuid(guid)) {
+  const bunnyGuid = video.bunnyVideoId || (video as any).bunnyGuid;
+  if (bunnyGuid && isStreamGuid(bunnyGuid)) {
     const streamPullZone = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_CDN_URL) || "https://vz-dcd9e101-437.b-cdn.net";
-    const streamHlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
+    const streamHlsUrl = `${streamPullZone}/${bunnyGuid}/playlist.m3u8`;
     if (!sources.includes(streamHlsUrl)) {
       sources.push(streamHlsUrl);
     }
-    const legacyStreamHls = `https://vz-${bunnyLibId}.b-cdn.net/${guid}/playlist.m3u8`;
-    if (!sources.includes(legacyStreamHls)) {
-      sources.push(legacyStreamHls);
-    }
   }
 
-  // 4. Direct Bunny Pull Zone CDN MP4 URL (Instant edge CDN fallback)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    if (!cleanId.startsWith("rev-")) {
-      const cdnMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-      if (!sources.includes(cdnMp4)) {
-        sources.push(cdnMp4);
-      }
-    }
-  }
-
-  // 5. Fallback video URLs from document
+  // 6. Fallback Video URLs Array
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
       if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
@@ -182,21 +187,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 6. Direct clean local server streaming endpoint (Server proxy fallback)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const serverStream = `/api/videos/stream/${cleanId}.mp4`;
-    if (!sources.includes(serverStream)) {
-      sources.push(serverStream);
-    }
-  }
-
-  // 7. Base64 data URI (if present)
+  // 7. Base64 Data URI (if present)
   if (video.videoData && video.videoData.startsWith("data:video/")) {
     sources.push(video.videoData);
   }
 
-  // 8. Static default MP4 asset
+  // 8. Static Bulletproof Fallback Asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }
