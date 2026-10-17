@@ -508,13 +508,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         } else if (vid.canPlayType("application/vnd.apple.mpegurl")) {
           // Native Safari HLS
           vid.src = activeSrc;
-          vid.load();
+          vid.onerror = () => triggerFallback(activeSrc);
         } else {
           triggerFallback(activeSrc);
         }
       } else {
         vid.src = activeSrc;
-        vid.load();
+        vid.onerror = () => triggerFallback(activeSrc);
       }
 
       // Clean up any native track elements and ensure textTracks are disabled to prevent duplicate bottom captions
@@ -572,6 +572,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     activeVideoRef.current = activeVideo;
     const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
 
+    // Strict Guard: If this video is already playing cleanly, DO NOT reload or interrupt it
+    if (!isNewVideo && activeVid.currentTime > 0.05 && !activeVid.paused) {
+      return;
+    }
+
     const isSameSrc = (elSrc: string, targetSrc: string) => {
       if (!elSrc) return false;
       try {
@@ -582,7 +587,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
 
     // Load active source if not matching (prioritizing local blob if available and respecting failedSources)
-    const localBlob = localBlobUrlsRef.current[activeVideo.id] || localBlobUrls[activeVideo.id] || (activeVideo as any)?.localBlobUrl || (activeVideo as any)?.blobUrl;
+    const localBlob = localBlobUrlsRef.current[activeVideo.id] || localBlobUrls[activeVideo.id];
     const cascade = resolvePlayableVideoSourcesCascade(activeVideo, localBlob);
     const failedSet = failedSourcesRef.current.get(activeVideo.id) || new Set();
     const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
@@ -1287,9 +1292,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const isInitialMount = prevFirstVideoIdRef.current === null;
       prevFirstVideoIdRef.current = currentFirstId;
 
-      // Register local blob URL immediately if present on the new review
+      // Register local blob URL immediately if present on the new review from the active session
       const firstVid = videos[0];
-      const localBlob = (firstVid as any)?.localBlobUrl || (firstVid as any)?.blobUrl;
+      const localBlob = (firstVid as any)?.isCurrentSessionBlob ? ((firstVid as any)?.localBlobUrl || (firstVid as any)?.blobUrl) : null;
       if (localBlob) {
         localBlobUrlsRef.current[currentFirstId] = localBlob;
         setLocalBlobUrls((prev) => ({ ...prev, [currentFirstId]: localBlob }));

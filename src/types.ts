@@ -173,6 +173,7 @@ export interface VideoReview {
   localVideoUrl?: string;
   localBlobUrl?: string;
   blobUrl?: string;
+  isCurrentSessionBlob?: boolean;
   fallbackVideoUrls?: string[];
   videoData?: string;
   thumbnailUrl: string;

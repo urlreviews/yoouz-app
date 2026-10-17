@@ -117,8 +117,8 @@ export function resolvePlayableVideoSourcesCascade(
   const sources: string[] = [];
   const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
-  // 1. Fresh active session IndexedDB blob URL (from local browser IndexedDB or video object in current session)
-  const localBlobCandidate = cachedLocalBlobUrl || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
+  // 1. Fresh active session IndexedDB blob URL (only from active session in-memory cachedLocalBlobUrl)
+  const localBlobCandidate = cachedLocalBlobUrl;
   if (localBlobCandidate && typeof localBlobCandidate === "string" && localBlobCandidate.startsWith("blob:")) {
     if (!sources.includes(localBlobCandidate)) {
       sources.push(localBlobCandidate);
