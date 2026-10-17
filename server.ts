@@ -762,6 +762,13 @@ function writePlacesIndex(list: any[]): void {
 const inMemoryDeletedReviewsSet = new Set<string>();
 
 const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
+  "rev-1792172427752-d6g7q",
+  "rev-1792171873846-dj6oy",
+  "rev-1792169706193-v5rko",
+  "rev-1792168311201-mc11u",
+  "rev-1792053448121-182jk",
+  "rev-1791495006783-jy6ld",
+  "rev-1791494959785-27pap",
   "rev-1791485919882-l8av6",
   "rev-1790368898192-sw74n",
   "rev-1790363378621-w65oy",
@@ -784,7 +791,23 @@ function readDeletedReviewsIndex(): string[] {
             }
           }
         });
-        return Array.from(inMemoryDeletedReviewsSet);
+      }
+    }
+    const pubPath = path.join(process.cwd(), "public", "deleted_reviews_index.json");
+    if (fs.existsSync(pubPath)) {
+      const raw = fs.readFileSync(pubPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((id) => {
+          if (id) {
+            const strId = String(id).trim();
+            const lowerId = strId.toLowerCase();
+            if (!AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) && !AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) {
+              inMemoryDeletedReviewsSet.add(strId);
+              inMemoryDeletedReviewsSet.add(lowerId);
+            }
+          }
+        });
       }
     }
   } catch (e) {}
@@ -799,9 +822,8 @@ function isDeletedReviewServer(videoId: any): boolean {
   if (AUTHENTIC_CANONICAL_REVIEW_IDS.has(strId) || AUTHENTIC_CANONICAL_REVIEW_IDS.has(lowerId)) {
     return false;
   }
-  const deletedList = readDeletedReviewsIndex();
-  const set = new Set(deletedList.flatMap(id => [String(id).trim(), String(id).trim().toLowerCase()]));
-  return set.has(strId) || set.has(lowerId);
+  readDeletedReviewsIndex();
+  return inMemoryDeletedReviewsSet.has(strId) || inMemoryDeletedReviewsSet.has(lowerId);
 }
 
 function recordDeletedReviewId(id: string): void {
@@ -1383,12 +1405,7 @@ function readReviewsIndex(): any[] {
           .filter((r: any) => r && r.id && !deletedSet.has(String(r.id)) && !isDeactivatedUserServer(r.author || r.userId || r.userEmail, deactivatedSet));
 
         // Ensure authentic protected reviews are present and never dropped
-        const AUTHENTIC_PROTECTED_REVIEW_IDS = [
-          "rev-1791485919882-l8av6",
-          "rev-1790368898192-sw74n",
-          "rev-1790363378621-w65oy",
-          "rev-1790353801035-1rlp8"
-        ];
+        const AUTHENTIC_PROTECTED_REVIEW_IDS = Array.from(AUTHENTIC_CANONICAL_REVIEW_IDS);
         const existingIds = new Set(processed.map((r: any) => String(r.id)));
         const missingProtected = AUTHENTIC_PROTECTED_REVIEW_IDS.filter(id => !existingIds.has(id));
         if (missingProtected.length > 0) {
@@ -1592,26 +1609,14 @@ function readReviewsIndex(): any[] {
 
 function writeReviewsIndex(list: any[]): void {
   try {
-    const deletedSet = new Set(readDeletedReviewsIndex());
-    const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+    const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !isDeletedReviewServer(r.id));
     if (!fs.existsSync(globalUploadsDir)) {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
     fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
 
-    // Keep memory feedCache instantly synchronized without dropping existing videos
-    const existingMap = new Map<string, any>();
-    (feedCache.videos || []).forEach((v: any) => {
-      if (v && v.id && !deletedSet.has(String(v.id))) {
-        existingMap.set(String(v.id), v);
-      }
-    });
-    sanitized.forEach((v: any) => {
-      if (v && v.id && !deletedSet.has(String(v.id))) {
-        existingMap.set(String(v.id), v);
-      }
-    });
-    feedCache.videos = Array.from(existingMap.values());
+    // Replace memory feedCache directly with sanitized list so deleted videos are permanently gone
+    feedCache.videos = sanitized;
     feedCache.lastFetched = Date.now();
 
     const seedCandidates = [
@@ -6805,6 +6810,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               }
 
               const itemKey = String(row.id).toLowerCase().trim();
+              if ((colName === 'videoReviews' || colName === 'videos' || colName === 'video_reviews') && isDeletedReviewServer(itemKey)) {
+                return;
+              }
               itemMap.set(itemKey, { id: itemKey, ...parsedData });
             }
           });
@@ -6822,7 +6830,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       try {
         const localList = readReviewsIndex();
         localList.forEach((r: any) => {
-          if (r && r.id) {
+          if (r && r.id && !isDeletedReviewServer(r.id)) {
             const existing = itemMap.get(r.id) || itemMap.get(String(r.id).toLowerCase().trim()) || {};
             const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
             const localAuthor = (typeof r.author === 'object' && r.author) ? r.author : {};
@@ -7052,8 +7060,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         }
       }
 
-      const deletedSet = new Set(readDeletedReviewsIndex());
-      items = items.filter((v: any) => v && v.id && !deletedSet.has(String(v.id)));
+      items = items.filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
     }
 
     if (colName === 'likes') {
@@ -14725,8 +14732,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         try {
           const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC");
           bunnyRows.rows.forEach((r: any) => {
-            if (r && r.id && !deletedSet.has(String(r.id))) {
+            if (r && r.id && !isDeletedReviewServer(r.id)) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+              if (parsedData && parsedData.id && isDeletedReviewServer(parsedData.id)) return;
               const existing = map.get(r.id) || {};
               const mergedAuthor = {
                 ...(typeof existing.author === 'object' ? existing.author : {}),
@@ -14801,9 +14809,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 
       // If BunnyDB is empty or unavailable, fallback to local reviews index
       if (!bunnyFetchSuccess || map.size === 0) {
-        const localList = readReviewsIndex().filter((r: any) => r && r.id && !deletedSet.has(String(r.id)));
+        const localList = readReviewsIndex().filter((r: any) => r && r.id && !isDeletedReviewServer(r.id));
         localList.forEach((r: any) => {
-          if (r && r.id && !deletedSet.has(String(r.id))) map.set(r.id, r);
+          if (r && r.id && !isDeletedReviewServer(r.id)) map.set(r.id, r);
         });
       }
 
@@ -14812,7 +14820,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         try {
           const dbRecords = await db.select().from(BunnyDB_video_reviews);
           dbRecords.forEach((r: any) => {
-            if (r && r.id && r.data && !deletedSet.has(String(r.id))) {
+            if (r && r.id && r.data && !isDeletedReviewServer(r.id)) {
               const existing = map.get(r.id) || {};
               const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
               const incomingAuthor = (typeof r.data.author === 'object' && r.data.author) ? r.data.author : {};
@@ -15037,8 +15045,9 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         feedCache.lastFetched = now - CACHE_TTL_MS + (60 * 1000);
       }
 
-      const paginated = merged.slice(startIndex, endIndex);
-      return res.json({ success: true, videos: paginated, total: merged.length, deletedIds });
+      const filteredMerged = merged.filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+      const paginated = filteredMerged.slice(startIndex, endIndex);
+      return res.json({ success: true, videos: paginated, total: filteredMerged.length, deletedIds: readDeletedReviewsIndex() });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

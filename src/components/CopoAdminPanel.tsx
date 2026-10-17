@@ -1476,7 +1476,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (videosRes.status === "fulfilled" && videosRes.value.ok) {
         const videosData = await videosRes.value.json();
         if (Array.isArray(videosData)) {
-          setDbVideos(videosData);
+          const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+          let localDel: string[] = [];
+          try { localDel = JSON.parse(deletedStr); } catch (e) {}
+          const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
+          const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
+          setDbVideos(cleanVideos);
         }
       }
 
@@ -1512,8 +1517,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const handleDeleted = (e: any) => {
       const vidId = e?.detail?.videoId;
       if (vidId) {
-        setDbVideos((prev) => prev.filter((v) => String(v.id) !== String(vidId)));
-        setSelectedVideoIds((prev) => prev.filter((id) => String(id) !== String(vidId)));
+        const vidIdLower = String(vidId).toLowerCase().trim();
+        setDbVideos((prev) => prev.filter((v) => String(v.id).toLowerCase().trim() !== vidIdLower));
+        setSelectedVideoIds((prev) => prev.filter((id) => String(id).toLowerCase().trim() !== vidIdLower));
       }
     };
     const handlePurged = () => {
