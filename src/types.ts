@@ -178,6 +178,8 @@ export interface VideoReview {
   videoData?: string;
   thumbnailUrl: string;
   caption?: string;
+  description?: string;
+  bunnyDescription?: string;
   title?: string;
   bunnyTitle?: string;
   videoTitle?: string;

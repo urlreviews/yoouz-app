@@ -700,7 +700,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     "video": {
       "@type": "VideoObject",
       "name": `${video.author.name} reviews ${formatBusinessName(video.placeName)}`,
-      "description": video.caption || `Video review of ${formatBusinessName(video.placeName)} by ${video.author.name}`,
+      "description": video.bunnyDescription || video.description || video.caption || `Video review of ${formatBusinessName(video.placeName)} by ${video.author.name}`,
+      "transcript": video.transcriptText || video.caption || undefined,
       "thumbnailUrl": resolveVideoPosterUrl(video),
       "uploadDate": (video.createdAtMs && !isNaN(new Date(video.createdAtMs).getTime())) ? new Date(video.createdAtMs).toISOString() : new Date().toISOString(),
       "contentUrl": video.videoUrl,
@@ -927,7 +928,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {isActive && isExplicitVideoUrl && (
         <SEOTags 
           title={`${video.author.name} at ${formatBusinessName(video.placeName)} | Yoouz`}
-          description={video.caption || `Check out ${video.author.name}'s video review of ${formatBusinessName(video.placeName)} on Yoouz.`}
+          description={video.bunnyDescription || video.description || video.caption || `Check out ${video.author.name}'s video review of ${formatBusinessName(video.placeName)} on Yoouz.`}
           image={resolveVideoPosterUrl(video)}
           jsonLd={videoJsonLd}
           updateTitle={false}
