@@ -24,6 +24,7 @@ import {
   RotateCw,
   CornerDownLeft,
   ShieldCheck,
+  Globe,
   X
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
@@ -1263,36 +1264,34 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-10 pb-2 px-3 -mx-3 rounded-b-3xl"
         >
           <div className="flex flex-col gap-1 w-full">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPauseVideo?.();
-                onOpenCreator(safeAuthor);
-              }}
-              className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-              title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
-            >
-              <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
-              {safeAuthor.isVerified && (
-                <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
-              )}
-            </button>
-
-            <div className="flex items-center gap-2">
-              <CopoStarRating
-                rating={video.rating || 5}
-                starClassName="w-3.5 h-3.5"
-                filledColorClass="fill-amber-400 text-amber-400 drop-shadow-sm"
-                emptyColorClass="fill-zinc-600/70 text-zinc-200/80"
-              />
+            {/* Line 1: Reviewer Name + Verified Badge + Timing */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPauseVideo?.();
+                  onOpenCreator(safeAuthor);
+                }}
+                className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
+              >
+                <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
+                {safeAuthor.isVerified && (
+                  <CheckCircle className="w-4 h-4 fill-white text-black inline shrink-0" />
+                )}
+              </button>
               {(video.recordedAt || video.createdAtMs) && (
-                <span className="text-white text-[11.5px] font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-white shrink-0" />
-                  <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
-                </span>
+                <>
+                  <span className="text-zinc-400 text-xs select-none">•</span>
+                  <span className="text-zinc-300 text-xs sm:text-[13px] font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                    {formatRecordedDate(video.recordedAt, video.createdAtMs)}
+                  </span>
+                </>
               )}
             </div>
 
+            {/* Line 2: Star Rating + Globe Icon + Business URL & Line 3: Review Title */}
             {(() => {
               const rawHeadline = (video.title || (video as any).videoTitle || (video as any).bunnyTitle || "").trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
@@ -1307,18 +1306,39 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
               return (
                 <div className="flex flex-col gap-0.5 mt-0.5">
-                  {!isGenericCaption && (
-                    <p className="text-white text-xs font-bold line-clamp-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                  <div className="flex items-center gap-2">
+                    <CopoStarRating
+                      rating={video.rating || 5}
+                      starClassName="w-3.5 h-3.5"
+                      filledColorClass="fill-amber-400 text-amber-400 drop-shadow-sm"
+                      emptyColorClass="fill-zinc-600/70 text-zinc-200/80"
+                    />
+                    {cleanDomain && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || cleanDomain || video.id;
+                          onOpenPlace(targetPlaceId);
+                        }}
+                        className="inline-flex items-center gap-1 text-white hover:text-white/80 active:opacity-75 transition-colors cursor-pointer text-[12px] sm:text-[13px] font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate"
+                        title={`${cleanDomain}`}
+                      >
+                        <Globe className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                        <span className="truncate">{cleanDomain}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Line 3: Review Headline / Title */}
+                  {!isGenericCaption && displayHeadline && (
+                    <p className="text-white text-[14px] sm:text-[15px] font-semibold leading-snug line-clamp-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] mt-1">
                       {displayHeadline}
                     </p>
                   )}
-                  <p className="text-white/95 text-[11.5px] font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
-                    Video review for {cleanDomain}
-                  </p>
                 </div>
               );
             })()}
-
           </div>
         </footer>
 
