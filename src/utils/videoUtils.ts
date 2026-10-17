@@ -40,8 +40,8 @@ export function normalizeVideoUrl(url?: string | null): string {
     trimmed.includes("video.bunnycdn.com") ||
     trimmed.includes("cloudinary.com")
   ) {
-    if (trimmed.includes("/videos/rev-") && trimmed.endsWith(".mp4")) {
-      const match = trimmed.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.mp4)?)/);
+    if (trimmed.includes("rev-")) {
+      const match = trimmed.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?)/);
       if (match && match[1]) {
         let filename = match[1];
         if (!filename.includes(".")) filename += ".mp4";
@@ -55,6 +55,15 @@ export function normalizeVideoUrl(url?: string | null): string {
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     const secureUrl = trimmed.replace("http://", "https://");
     
+    if (secureUrl.includes("rev-")) {
+      const match = secureUrl.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?)/);
+      if (match && match[1]) {
+        let filename = match[1];
+        if (!filename.includes(".")) filename += ".mp4";
+        return `/api/videos/stream/${filename}`;
+      }
+    }
+
     if (secureUrl.includes("/api/videos/stream/")) {
       const filename = secureUrl.split("/api/videos/stream/")[1];
       if (filename) return `/api/videos/stream/${filename}`;
@@ -93,6 +102,14 @@ export function normalizeVideoUrl(url?: string | null): string {
   }
 
   if (trimmed.startsWith("/uploads/")) {
+    if (trimmed.includes("rev-")) {
+      const match = trimmed.match(/(rev-\d+-[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9]+)?)/);
+      if (match && match[1]) {
+        let filename = match[1];
+        if (!filename.includes(".")) filename += ".mp4";
+        return `/api/videos/stream/${filename}`;
+      }
+    }
     const filename = trimmed.replace(/^\/uploads\/(videos\/)?/, "");
     return `/api/videos/stream/${filename}`;
   }
@@ -106,7 +123,7 @@ export function normalizeVideoUrl(url?: string | null): string {
 }
 
 /**
- * Resolves the prioritized list of playable video sources for instant failover (Local Blob -> Direct Bunny CDN Edge -> Direct videoUrl -> Local Server Stream -> Fallback MP4).
+ * Resolves the prioritized list of playable video sources for instant failover (Local Blob -> Server Stream -> Fallback MP4).
  */
 export function resolvePlayableVideoSourcesCascade(
   video?: VideoReview | null,
@@ -115,7 +132,6 @@ export function resolvePlayableVideoSourcesCascade(
   if (!video) return ["/default-review.mp4"];
 
   const sources: string[] = [];
-  const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
 
   // 1. In-Memory Session IndexedDB Blob URL (Instant playback during upload session)
   const localBlobCandidate = cachedLocalBlobUrl;
@@ -125,20 +141,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 2. Direct Guaranteed Edge CDN MP4 for rev- IDs (e.g. https://rev1.b-cdn.net/videos/rev-12345.mp4)
-  if (video.id && typeof video.id === "string") {
-    const cleanId = video.id.replace(/\.[^.]+$/, "");
-    const cdnMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
-    if (!sources.includes(cdnMp4)) {
-      sources.push(cdnMp4);
-    }
-    const cdnUploadMp4 = `${cleanZone}/uploads/${cleanId}.mp4`;
-    if (!sources.includes(cdnUploadMp4)) {
-      sources.push(cdnUploadMp4);
-    }
-  }
-
-  // 3. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id)
+  // 2. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id) - ALWAYS FIRST for rev- IDs
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
