@@ -4067,7 +4067,7 @@ async function startServer() {
     const host = rawHost.split(':')[0];
     if (host === 'yoouz.com') {
       const cleanPath = (req.path || '').toLowerCase();
-      if (cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
+      if (cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/sitemap-video.xml' || cleanPath === '/sitemap-index.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
         return next();
       }
       return res.redirect(301, `https://www.yoouz.com${req.originalUrl || req.url}`);
@@ -12404,8 +12404,14 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         if (!thumb) {
           thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
         }
+        if (thumb && thumb.startsWith('/')) {
+          thumb = `${baseUrl}${thumb}`;
+        }
         
-        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        let contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        if (contentUrl && contentUrl.startsWith('/')) {
+          contentUrl = `${baseUrl}${contentUrl}`;
+        }
         const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
         const pubDate = v.createdAt 
           ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
@@ -12565,7 +12571,10 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       allPlaces.forEach((p) => {
         if (!p || !p.id) return;
         const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(p.id)}`;
-        const photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
+        let photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
+        if (photo && photo.startsWith('/')) {
+          photo = `${baseUrl}${photo}`;
+        }
         xml += `  <url>
     <loc>${escapeXml(placeUrl)}</loc>
     <lastmod>${now}</lastmod>
@@ -12598,8 +12607,14 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         if (!thumb) {
           thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
         }
+        if (thumb && thumb.startsWith('/')) {
+          thumb = `${baseUrl}${thumb}`;
+        }
 
-        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        let contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        if (contentUrl && contentUrl.startsWith('/')) {
+          contentUrl = `${baseUrl}${contentUrl}`;
+        }
         const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
 
         xml += `  <url>
