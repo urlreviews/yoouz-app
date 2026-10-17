@@ -508,11 +508,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         } else if (vid.canPlayType("application/vnd.apple.mpegurl")) {
           // Native Safari HLS
           vid.src = activeSrc;
+          vid.load();
         } else {
           triggerFallback(activeSrc);
         }
       } else {
         vid.src = activeSrc;
+        vid.load();
       }
 
       // Clean up any native track elements and ensure textTracks are disabled to prevent duplicate bottom captions
