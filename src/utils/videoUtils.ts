@@ -125,15 +125,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 2. Direct Explicit videoUrl on Document (e.g. https://rev1.b-cdn.net/... or /api/videos/stream/...)
-  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 3. Direct Edge CDN MP4 for rev- IDs (e.g. https://rev1.b-cdn.net/videos/rev-12345.mp4)
+  // 2. Direct Guaranteed Edge CDN MP4 for rev- IDs (e.g. https://rev1.b-cdn.net/videos/rev-12345.mp4)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const cdnMp4 = `${cleanZone}/videos/${cleanId}.mp4`;
@@ -146,7 +138,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id)
+  // 3. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
@@ -155,11 +147,27 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 5. Valid Verified Bunny Stream HLS Playlist (If explicitly available)
+  // 4. Direct Explicit MP4 videoUrl on Document (if present and non-m3u8)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes(".m3u8")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
+    }
+  }
+
+  // 5. Verified Bunny Stream HLS Playlist (Secondary adaptive bitrate stream)
   if (video.hlsUrl && typeof video.hlsUrl === 'string' && !sources.includes(video.hlsUrl)) {
     sources.push(video.hlsUrl);
   }
 
+  if (video.videoUrl && typeof video.videoUrl === "string" && video.videoUrl.includes(".m3u8")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
+    }
+  }
+
+  // 6. Speculative Bunny Stream HLS GUID Playlist
   const isStreamGuid = (id?: string) => {
     if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
     const hyphens = (id.match(/-/g) || []).length;
