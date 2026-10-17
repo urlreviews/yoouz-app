@@ -150,7 +150,7 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 4. Direct Explicit MP4 videoUrl on Document (if present and non-m3u8)
+  // 3. Direct Explicit MP4 videoUrl on Document (if present and non-m3u8)
   if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes(".m3u8")) {
     const norm = normalizeVideoUrl(video.videoUrl);
     if (norm && !sources.includes(norm)) {
@@ -158,38 +158,10 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 5. Verified Bunny Stream HLS Playlist (Secondary adaptive bitrate stream)
-  if (video.hlsUrl && typeof video.hlsUrl === 'string' && !sources.includes(video.hlsUrl)) {
-    sources.push(video.hlsUrl);
-  }
-
-  if (video.videoUrl && typeof video.videoUrl === "string" && video.videoUrl.includes(".m3u8")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 6. Speculative Bunny Stream HLS GUID Playlist
-  const isStreamGuid = (id?: string) => {
-    if (!id || typeof id !== 'string' || id.startsWith('rev-')) return false;
-    const hyphens = (id.match(/-/g) || []).length;
-    return (hyphens === 4 && id.length === 36) || id.length > 30;
-  };
-
-  const bunnyGuid = video.bunnyVideoId || (video as any).bunnyGuid;
-  if (bunnyGuid && isStreamGuid(bunnyGuid)) {
-    const streamPullZone = (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_BUNNY_STREAM_CDN_URL) || "https://vz-dcd9e101-437.b-cdn.net";
-    const streamHlsUrl = `${streamPullZone}/${bunnyGuid}/playlist.m3u8`;
-    if (!sources.includes(streamHlsUrl)) {
-      sources.push(streamHlsUrl);
-    }
-  }
-
-  // 6. Fallback Video URLs Array
+  // 4. Fallback Video URLs Array (non-m3u8 only)
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
-      if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
+      if (fb && typeof fb === "string" && !fb.startsWith("blob:") && !fb.includes(".m3u8")) {
         const norm = normalizeVideoUrl(fb);
         if (norm && !sources.includes(norm)) {
           sources.push(norm);
@@ -198,12 +170,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 7. Base64 Data URI (if present)
+  // 5. Base64 Data URI (if present)
   if (video.videoData && video.videoData.startsWith("data:video/")) {
     sources.push(video.videoData);
   }
 
-  // 8. Static Bulletproof Fallback Asset
+  // 6. Static Bulletproof Fallback Asset
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }
