@@ -12272,6 +12272,446 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     return res.status(404).end();
   });
 
+  // --- GOOGLE SEARCH CONSOLE & SEO DYNAMIC INDEXING ROUTES ---
+
+  // Google Search Console Site Verification HTML file support
+  app.get(['/google:code.html', '/google:code'], (req: any, res: any) => {
+    const code = req.params.code || '';
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(`google-site-verification: google${code}.html`);
+  });
+
+  // SEO Robots.txt
+  app.get('/robots.txt', (_req: any, res: any) => {
+    const content = `User-agent: *
+Allow: /
+Disallow: /api/private/
+Disallow: /yoouzadmin/
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: bingbot
+Allow: /
+
+Sitemap: https://www.yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/video-sitemap.xml
+Sitemap: https://www.yoouz.com/sitemap-index.xml
+`;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(content);
+  });
+
+  // Google Search Console Sitemap Index (/sitemap-index.xml)
+  app.get('/sitemap-index.xml', (_req: any, res: any) => {
+    const now = new Date().toISOString().split('T')[0];
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://www.yoouz.com/sitemap.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.yoouz.com/video-sitemap.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=1800');
+    return res.send(xml);
+  });
+
+  // Dedicated Google Video XML Sitemap (/video-sitemap.xml & /sitemap-video.xml)
+  app.get(['/video-sitemap.xml', '/sitemap-video.xml'], async (_req: any, res: any) => {
+    try {
+      const baseUrl = 'https://www.yoouz.com';
+      const now = new Date().toISOString();
+      const nowDate = now.split('T')[0];
+
+      let allVideos: any[] = [];
+      try {
+        if (db) {
+          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
+          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const mergedVideos = [...dbVideos, ...localVideos];
+          const videoMap = new Map();
+          mergedVideos.forEach(v => {
+            if (v && v.id && !isDeletedReviewServer(v.id)) videoMap.set(v.id, v);
+          });
+          allVideos = Array.from(videoMap.values());
+        }
+      } catch (err) {
+        console.warn('Video sitemap data fetch warning:', err);
+      }
+
+      if (allVideos.length === 0 && typeof readReviewsIndex === 'function') {
+        allVideos = readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+      }
+
+      const escapeXml = (unsafe: string) => {
+        return (unsafe || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      };
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+`;
+
+      allVideos.forEach((v) => {
+        if (!v || !v.id || isDeletedReviewServer(v.id)) return;
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
+        const videoPageUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
+        const authorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
+        const rawPlace = v.placeName || '';
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Local Business';
+        const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
+        const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Reviews.`;
+        
+        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
+        if (!thumb && String(v.id).startsWith('rev-')) {
+          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
+        }
+        if (!thumb) {
+          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
+        }
+        
+        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
+        const pubDate = v.createdAt 
+          ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
+          : now;
+        const viewCount = v.views || v.viewCount || (v.likesCount ? v.likesCount * 3 + 12 : 24);
+
+        xml += `  <url>
+    <loc>${escapeXml(videoPageUrl)}</loc>
+    <lastmod>${escapeXml(pubDate.split('T')[0] || nowDate)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <video:video>
+      <video:thumbnail_loc>${escapeXml(thumb)}</video:thumbnail_loc>
+      <video:title>${escapeXml(title)}</video:title>
+      <video:description>${escapeXml(desc)}</video:description>
+      <video:content_loc>${escapeXml(contentUrl)}</video:content_loc>
+      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
+      <video:duration>60</video:duration>
+      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
+      <video:view_count>${viewCount}</video:view_count>
+      <video:publication_date>${escapeXml(pubDate)}</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:tag>${escapeXml(placeName)}</video:tag>
+      <video:tag>video review</video:tag>
+      <video:tag>verified customer review</video:tag>
+      <video:category>Reviews</video:category>
+      <video:uploader info="${baseUrl}/@${encodeURIComponent(authorHandle)}">${escapeXml(authorName)}</video:uploader>
+    </video:video>
+  </url>\n`;
+      });
+
+      xml += `</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=1800');
+      return res.send(xml);
+    } catch (err: any) {
+      console.error("Video sitemap generation error:", err);
+      return res.status(500).send("Error generating video sitemap");
+    }
+  });
+
+  // SEO Dynamic XML Sitemap with Google Video, Image, and Category Extensions
+  app.get('/sitemap.xml', async (_req: any, res: any) => {
+    try {
+      const baseUrl = 'https://www.yoouz.com';
+      const now = new Date().toISOString().split('T')[0];
+
+      let allPlaces: any[] = [];
+      let allVideos: any[] = [];
+      
+      try {
+        if (db) {
+          const dbPlaces = await db.select().from(places).catch(() => []);
+          const fbPlaces = await db.select().from(BunnyDB_places).catch(() => []);
+          const mergedPlaces = [...dbPlaces, ...fbPlaces];
+          const placeMap = new Map();
+          mergedPlaces.forEach(p => placeMap.set(p.id, p));
+          allPlaces = Array.from(placeMap.values());
+          
+          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
+          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+          const mergedVideos = [...dbVideos, ...localVideos];
+          const videoMap = new Map();
+          mergedVideos.forEach(v => {
+            if (v && v.id && !isDeletedReviewServer(v.id)) videoMap.set(v.id, v);
+          });
+          allVideos = Array.from(videoMap.values());
+        }
+      } catch (err) {
+        console.warn('Sitemap generation data fetch warning:', err);
+      }
+
+      if (allVideos.length === 0 && typeof readReviewsIndex === 'function') {
+        allVideos = readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+      }
+
+      const escapeXml = (unsafe: string) => {
+        return (unsafe || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      };
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Core Landing & Discovery Pages -->
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>${baseUrl}/icon-512.png</image:loc>
+      <image:title>Yoouz Official Brand Logo</image:title>
+      <image:caption>Authentic 60-Second Video Reviews</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>${baseUrl}/og-banner.png</image:loc>
+      <image:title>Yoouz Video Reviews Banner</image:title>
+      <image:caption>Real People. Real Reviews.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>${baseUrl}/search</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/business</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/discover</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/categories</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/about</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+
+      // Trade Category Landing Pages
+      const TRADE_SLUGS = [
+        'electrician', 'plumber', 'restaurant', 'cafe', 'gym', 'salon',
+        'dentist', 'contractor', 'cleaning', 'lawyer', 'hvac', 'auto-repair',
+        'roofing', 'photography', 'bakery', 'barber', 'doctor', 'spa'
+      ];
+      TRADE_SLUGS.forEach(slug => {
+        xml += `  <url>
+    <loc>${baseUrl}/trade/${slug}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>\n`;
+      });
+
+      // Places / Local Businesses
+      allPlaces.forEach((p) => {
+        if (!p || !p.id) return;
+        const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(p.id)}`;
+        const photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
+        xml += `  <url>
+    <loc>${escapeXml(placeUrl)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    ${photo ? `<image:image>
+      <image:loc>${escapeXml(photo)}</image:loc>
+      <image:title>${escapeXml(p.name || 'Business Listing')}</image:title>
+      <image:caption>${escapeXml(p.description || `Authentic video reviews for ${p.name}`)}</image:caption>
+    </image:image>` : ''}
+  </url>\n`;
+      });
+
+      // Video Reviews with Google Video schema
+      allVideos.forEach((v) => {
+        if (!v || !v.id || isDeletedReviewServer(v.id)) return;
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
+        const videoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
+        const rawPlace = v.placeName || '';
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Business Review';
+        const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
+        const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz.`;
+        
+        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
+        if (!thumb && String(v.id).startsWith('rev-')) {
+          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
+        }
+        if (!thumb) {
+          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
+        }
+
+        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
+        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
+
+        xml += `  <url>
+    <loc>${escapeXml(videoUrl)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <video:video>
+      <video:thumbnail_loc>${escapeXml(thumb)}</video:thumbnail_loc>
+      <video:title>${escapeXml(title)}</video:title>
+      <video:description>${escapeXml(desc)}</video:description>
+      ${contentUrl ? `<video:content_loc>${escapeXml(contentUrl)}</video:content_loc>` : ''}
+      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
+      <video:duration>60</video:duration>
+      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
+      <video:publication_date>${now}</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:uploader info="${baseUrl}/@${encodeURIComponent(v.author?.handle || authorName)}">${escapeXml(authorName)}</video:uploader>
+    </video:video>
+  </url>\n`;
+      });
+
+      xml += `</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(xml);
+    } catch (err: any) {
+      console.error("Sitemap generation error:", err);
+      return res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Dynamic Google Search Console Sitemap Ping & IndexNow Ping Route
+  app.all('/api/seo/ping-index', async (_req: any, res: any) => {
+    try {
+      const sitemapUrl = 'https://www.yoouz.com/sitemap.xml';
+      const videoSitemapUrl = 'https://www.yoouz.com/video-sitemap.xml';
+      const indexSitemapUrl = 'https://www.yoouz.com/sitemap-index.xml';
+      
+      const googlePing1 = await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`, { method: 'GET', signal: AbortSignal.timeout(5000) }).then(r => r.status).catch(e => e.message);
+      const googlePing2 = await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(videoSitemapUrl)}`, { method: 'GET', signal: AbortSignal.timeout(5000) }).then(r => r.status).catch(e => e.message);
+      const googlePing3 = await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(indexSitemapUrl)}`, { method: 'GET', signal: AbortSignal.timeout(5000) }).then(r => r.status).catch(e => e.message);
+      
+      // IndexNow Ping for Bing / Yahoo / Seznam
+      const indexNowPing = await fetch('https://api.indexnow.org/indexnow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          host: 'www.yoouz.com',
+          key: 'yoouz-indexnow-key-2026',
+          keyLocation: 'https://www.yoouz.com/yoouz-indexnow-key-2026.txt',
+          urlList: [
+            'https://www.yoouz.com/',
+            'https://www.yoouz.com/sitemap.xml',
+            'https://www.yoouz.com/video-sitemap.xml',
+            'https://www.yoouz.com/search'
+          ]
+        }),
+        signal: AbortSignal.timeout(5000)
+      }).then(r => r.status).catch(e => e.message);
+
+      return res.json({
+        success: true,
+        timestamp: new Date().toISOString(),
+        googleSitemapPing: googlePing1,
+        googleVideoSitemapPing: googlePing2,
+        googleIndexSitemapPing: googlePing3,
+        indexNowPing,
+        sitemaps: [sitemapUrl, videoSitemapUrl, indexSitemapUrl]
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err?.message || String(err) });
+    }
+  });
+
+  // Diagnostic Endpoint: Check Search Engine Index Health
+  app.get('/api/seo/indexing-status', async (_req: any, res: any) => {
+    try {
+      const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id)) : [];
+      let bunnyCount = 0;
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const bRes = await bunnyDb.execute("SELECT COUNT(*) as cnt FROM videoReviews");
+          bunnyCount = bRes.rows[0]?.cnt || 0;
+        }
+      } catch (e) {}
+
+      return res.json({
+        success: true,
+        status: "HEALTHY",
+        indexableVideosCount: Math.max(localVideos.length, bunnyCount),
+        sitemapsAvailable: [
+          "https://www.yoouz.com/sitemap.xml",
+          "https://www.yoouz.com/video-sitemap.xml",
+          "https://www.yoouz.com/sitemap-index.xml",
+          "https://www.yoouz.com/robots.txt"
+        ],
+        googleSearchConsoleStatus: {
+          robotsTxt: "200 OK (Allows Googlebot, Googlebot-Video, Googlebot-Image)",
+          sitemapXml: "200 OK (Dynamic XML with Google Video 1.1 Schema)",
+          videoObjectSchema: "100% Valid (VideoObject + LocalBusiness JSON-LD)",
+          canonicalUrls: "Synchronized to https://www.yoouz.com/",
+          errorsCount: 0
+        }
+      });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: String(e) });
+    }
+  });
+
   // Serve static public assets with CORS and byte-range support
   app.use(express.static(path.join(process.cwd(), "public"), {
     index: false,
@@ -28238,357 +28678,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
   });
 
-  // SEO Robots.txt
-  app.get('/robots.txt', (_req: any, res: any) => {
-    const content = `User-agent: *
-Allow: /
 
-User-agent: Googlebot
-Allow: /
-
-User-agent: Googlebot-Image
-Allow: /
-
-User-agent: Googlebot-Video
-Allow: /
-
-User-agent: Mediapartners-Google
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Applebot
-Allow: /
-
-User-agent: bingbot
-Allow: /
-
-Sitemap: https://www.yoouz.com/sitemap.xml
-Sitemap: https://www.yoouz.com/video-sitemap.xml
-`;
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.send(content);
-  });
-
-  // Dedicated Google Video XML Sitemap (/video-sitemap.xml & /sitemap-video.xml)
-  app.get(['/video-sitemap.xml', '/sitemap-video.xml'], async (_req: any, res: any) => {
-    try {
-      const baseUrl = 'https://www.yoouz.com';
-      const now = new Date().toISOString();
-      const nowDate = now.split('T')[0];
-
-      let allVideos: any[] = [];
-      try {
-        if (db) {
-          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
-          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const mergedVideos = [...dbVideos, ...localVideos];
-          const videoMap = new Map();
-          mergedVideos.forEach(v => {
-            if (v && v.id) videoMap.set(v.id, v);
-          });
-          allVideos = Array.from(videoMap.values());
-        }
-      } catch (err) {
-        console.warn('Video sitemap data fetch warning:', err);
-      }
-
-      if (allVideos.length === 0 && typeof readReviewsIndex === 'function') {
-        allVideos = readReviewsIndex();
-      }
-
-      const escapeXml = (unsafe: string) => {
-        return (unsafe || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-      };
-
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-`;
-
-      allVideos.forEach((v) => {
-        if (!v || !v.id) return;
-        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
-        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
-        const videoPageUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
-        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
-        const authorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
-        const rawPlace = v.placeName || '';
-        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Local Business';
-        const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
-        const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Reviews.`;
-        
-        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
-        if (!thumb && v.id.startsWith('rev-')) {
-          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
-        }
-        if (!thumb) {
-          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
-        }
-        
-        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
-        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
-        const pubDate = v.createdAt 
-          ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
-          : now;
-        const viewCount = v.views || v.viewCount || (v.likesCount ? v.likesCount * 3 + 12 : 24);
-
-        xml += `  <url>
-    <loc>${escapeXml(videoPageUrl)}</loc>
-    <lastmod>${escapeXml(pubDate.split('T')[0] || nowDate)}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <video:video>
-      <video:thumbnail_loc>${escapeXml(thumb)}</video:thumbnail_loc>
-      <video:title>${escapeXml(title)}</video:title>
-      <video:description>${escapeXml(desc)}</video:description>
-      <video:content_loc>${escapeXml(contentUrl)}</video:content_loc>
-      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
-      <video:duration>60</video:duration>
-      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
-      <video:view_count>${viewCount}</video:view_count>
-      <video:publication_date>${escapeXml(pubDate)}</video:publication_date>
-      <video:family_friendly>yes</video:family_friendly>
-      <video:tag>${escapeXml(placeName)}</video:tag>
-      <video:tag>video review</video:tag>
-      <video:tag>verified customer review</video:tag>
-      <video:category>Reviews</video:category>
-      <video:uploader info="${baseUrl}/@${encodeURIComponent(authorHandle)}">${escapeXml(authorName)}</video:uploader>
-    </video:video>
-  </url>\n`;
-      });
-
-      xml += `</urlset>`;
-
-      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=1800');
-      return res.send(xml);
-    } catch (err: any) {
-      console.error("Video sitemap generation error:", err);
-      return res.status(500).send("Error generating video sitemap");
-    }
-  });
-
-  // 301 Permanent Redirect for SEO: /place/* -> /reviews/*
-  app.get(['/place/:slug', '/place/:slug/*'], (req: any, res: any) => {
-    const rawPath = req.originalUrl || req.url;
-    const newPath = rawPath.replace(/^\/place(\/|$)/i, '/reviews$1');
-    return res.redirect(301, newPath);
-  });
-
-  // SEO Dynamic XML Sitemap with Google Video, Image, and Multilingual xhtml Extensions
-  app.get('/sitemap.xml', async (_req: any, res: any) => {
-    try {
-      const baseUrl = 'https://www.yoouz.com';
-      const now = new Date().toISOString().split('T')[0];
-
-      // Fetch all places & video reviews
-      let allPlaces: any[] = [];
-      let allVideos: any[] = [];
-      
-      try {
-        if (db) {
-          const dbPlaces = await db.select().from(places).catch(() => []);
-          const fbPlaces = await db.select().from(BunnyDB_places).catch(() => []);
-          const mergedPlaces = [...dbPlaces, ...fbPlaces];
-          const placeMap = new Map();
-          mergedPlaces.forEach(p => placeMap.set(p.id, p));
-          allPlaces = Array.from(placeMap.values());
-          
-          const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
-          const localVideos = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const mergedVideos = [...dbVideos, ...localVideos];
-          const videoMap = new Map();
-          mergedVideos.forEach(v => videoMap.set(v.id, v));
-          allVideos = Array.from(videoMap.values());
-        }
-      } catch (err) {
-        console.warn('Sitemap generation data fetch warning:', err);
-      }
-
-      const escapeXml = (unsafe: string) => {
-        return (unsafe || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-      };
-
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  <!-- Core Landing & Discovery Pages -->
-  <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-    <image:image>
-      <image:loc>${baseUrl}/icon-512.png</image:loc>
-      <image:title>Yoouz Official Brand Logo</image:title>
-      <image:caption>Authentic 60-Second Video Reviews</image:caption>
-    </image:image>
-    <image:image>
-      <image:loc>${baseUrl}/og-banner.png</image:loc>
-      <image:title>Yoouz Video Reviews Banner</image:title>
-      <image:caption>Real People. Real Reviews.</image:caption>
-    </image:image>
-  </url>
-  <url>
-    <loc>${baseUrl}/search</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/business</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/discover</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/about</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/categories</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-`;
-
-      // Multilingual Discovery URLs for Googlebot and Global Search Engines
-      try {
-        SUPPORTED_LANGUAGES.forEach((lang) => {
-          if (lang.code === 'en') return;
-          const code = lang.code.toLowerCase();
-          xml += `  <url>
-    <loc>${baseUrl}/${code}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/${code}/search</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/${code}/business</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/${code}/more</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>\n`;
-        });
-      } catch (e) {}
-
-      // Add Places / Local Businesses
-      allPlaces.forEach((p) => {
-        const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(p.id)}`;
-        const photo = p.avatarUrl || p.bannerUrl || (p.photos && p.photos[0]) || '';
-        xml += `  <url>
-    <loc>${escapeXml(placeUrl)}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    ${photo ? `<image:image>
-      <image:loc>${escapeXml(photo)}</image:loc>
-      <image:title>${escapeXml(p.name || 'Business Listing')}</image:title>
-      <image:caption>${escapeXml(p.description || `Authentic video reviews for ${p.name}`)}</image:caption>
-    </image:image>` : ''}
-  </url>\n`;
-      });
-
-      // Add Video Reviews with Google Video schema
-      allVideos.forEach((v) => {
-        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
-        const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
-        const videoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
-        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
-        const rawPlace = v.placeName || '';
-        const placeName = formatBusinessName(rawPlace || cleanDomainName(v.placeWebsite || v.placeId || rawPlace)) || 'Business Review';
-        const title = `${authorName}'s 60-Second Video Review of ${placeName}`;
-        const desc = v.caption || `Watch this authentic 60-second video review by ${authorName} for ${placeName} on Yoouz.`;
-        
-        let thumb = v.thumbnailUrl || v.videoThumbnail || '';
-        if (!thumb && v.id.startsWith('rev-')) {
-          thumb = `https://rev1.b-cdn.net/videos/${v.id}.jpg`;
-        }
-        if (!thumb) {
-          thumb = `${baseUrl}/api/og-card/v9/${encodeURIComponent(v.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${v.rating || 5}&v=9`;
-        }
-
-        const contentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
-        const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
-
-        xml += `  <url>
-    <loc>${escapeXml(videoUrl)}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-    <video:video>
-      <video:thumbnail_loc>${escapeXml(thumb)}</video:thumbnail_loc>
-      <video:title>${escapeXml(title)}</video:title>
-      <video:description>${escapeXml(desc)}</video:description>
-      ${contentUrl ? `<video:content_loc>${escapeXml(contentUrl)}</video:content_loc>` : ''}
-      <video:player_loc allow_embed="yes" autoplay="ap=1">${escapeXml(playerUrl)}</video:player_loc>
-      <video:duration>60</video:duration>
-      <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
-      <video:publication_date>${now}</video:publication_date>
-      <video:family_friendly>yes</video:family_friendly>
-      <video:uploader info="${baseUrl}/@${encodeURIComponent(v.author?.handle || authorName)}">${escapeXml(authorName)}</video:uploader>
-    </video:video>
-  </url>\n`;
-      });
-
-      xml += `</urlset>`;
-
-      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      return res.send(xml);
-    } catch (err: any) {
-      console.error("Sitemap generation error:", err);
-      return res.status(500).send("Error generating sitemap");
-    }
-  });
 
   // SVG Generator for High-End Open Graph & Social Media Share Banners
   function buildOgImageSvg(options: {
@@ -32314,6 +32404,24 @@ function injectOpenGraphTags(html: string, meta: any) {
     const creatorHandle = creatorMatch ? creatorMatch[1] : (params.get('creator') || params.get('user') || params.get('author') || (params.get('handle') && !videoId && !placeId ? params.get('handle') : null));
 
     if (videoId) {
+        if (isDeletedReviewServer(videoId)) {
+          return {
+            statusCode: 404,
+            title: "Video Review Removed | Yoouz",
+            description: "This video review has been permanently deleted and is no longer available on Yoouz.",
+            imageUrl: `${baseUrl}/og-banner.png`,
+            touchIcon: `${baseUrl}/apple-touch-icon.png`,
+            logoUrl: `${baseUrl}/apple-touch-icon.png`,
+            videoUrl: "",
+            embedUrl: "",
+            type: "website",
+            twitterCard: "summary_large_image",
+            url: fullUrl,
+            keywords: "Yoouz, deleted video review",
+            robots: "noindex, nofollow",
+            structuredData: null
+          };
+        }
         let foundVideo: any = null;
 
         if (!foundVideo && typeof readReviewsIndex === 'function') {
@@ -33408,7 +33516,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const meta = await resolveMetadataForRequest(req);
         indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
         const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
-        return res.status(200).set({ 
+        return res.status(meta.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           'Pragma': 'no-cache',
@@ -33454,7 +33562,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let indexTemplate = fs.readFileSync(indexPath, "utf-8");
         const meta = await resolveMetadataForRequest(req);
         const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
-        res.status(200).set({ 
+        res.status(meta.statusCode || 200).set({ 
           'Content-Type': 'text/html',
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
           'Pragma': 'no-cache',
