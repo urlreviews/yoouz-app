@@ -199,7 +199,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive || !activeCue || !activeCue.text) return null;
 
   return (
-    <div className="absolute bottom-[160px] xs:bottom-[170px] sm:bottom-[180px] md:bottom-[140px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
       <div className="max-w-[85%] flex justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}

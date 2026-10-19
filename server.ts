@@ -23100,22 +23100,62 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const processSegment = (start: number, end: number, textLines: string[]) => {
         const fullText = textLines.join(" ");
         const words: any[] = [];
-        const matches = Array.from(fullText.matchAll(/<(\d{1,2}:)?(\d{2}):(\d{2})[.,](\d{3})>/g));
-        if (matches.length > 0) {
-          const parts = fullText.split(/<[^>]+>/);
-          let lastTime = start;
-          parts.forEach((part, idx) => {
-            const wordText = part.trim();
-            if (!wordText) return;
-            let wordEnd = end;
-            if (idx < matches.length) {
-              const m = matches[idx];
-              wordEnd = parseTime(m[1], m[2], m[3], m[4]);
-            }
-            words.push({ text: wordText, start: Math.round(lastTime * 100) / 100, end: Math.round(wordEnd * 100) / 100 });
-            lastTime = wordEnd;
+        
+        // Regex to find timestamps like <00:00:01.000> or <00:01.000>
+        const timestampRegex = /<((?:(\d{1,2}):)?(\d{1,2}):(\d{1,2})[.,](\d{3}))>/g;
+        let lastTimestamp = start;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = timestampRegex.exec(fullText)) !== null) {
+          const timestampStr = match[1];
+          // Text BEFORE this timestamp belongs to the interval [lastTimestamp, currentTimestamp]
+          const textBetween = fullText.substring(lastIndex, match.index).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+          
+          // Parse current timestamp
+          const parts = timestampStr.split(/[.:]/);
+          let currentTimestamp;
+          if (parts.length === 4) { // HH:MM:SS.mmm
+            currentTimestamp = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10) + parseInt(parts[3], 10) / 1000;
+          } else { // MM:SS.mmm
+            currentTimestamp = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10) + parseInt(parts[2], 10) / 1000;
+          }
+
+          if (textBetween) {
+            // Split multiple words if they appear in one interval (usually Bunny does 1 word per interval, but safety first)
+            const splitWords = textBetween.split(/\s+/);
+            const intervalDur = currentTimestamp - lastTimestamp;
+            splitWords.forEach((sw, idx) => {
+              const wStart = lastTimestamp + (idx / splitWords.length) * intervalDur;
+              const wEnd = lastTimestamp + ((idx + 1) / splitWords.length) * intervalDur;
+              words.push({
+                text: sw,
+                start: Math.round(wStart * 100) / 100,
+                end: Math.round(wEnd * 100) / 100
+              });
+            });
+          }
+
+          lastTimestamp = currentTimestamp;
+          lastIndex = match.index + match[0].length;
+        }
+
+        // Handle remaining text after the last timestamp
+        const remainingText = fullText.substring(lastIndex).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        if (remainingText) {
+          const splitWords = remainingText.split(/\s+/);
+          const intervalDur = Math.max(0.1, end - lastTimestamp);
+          splitWords.forEach((sw, idx) => {
+            const wStart = lastTimestamp + (idx / splitWords.length) * intervalDur;
+            const wEnd = lastTimestamp + ((idx + 1) / splitWords.length) * intervalDur;
+            words.push({
+              text: sw,
+              start: Math.round(wStart * 100) / 100,
+              end: Math.round(wEnd * 100) / 100
+            });
           });
         }
+
         const textWithoutTags = fullText.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
         if (textWithoutTags) {
           rawSegments.push({
