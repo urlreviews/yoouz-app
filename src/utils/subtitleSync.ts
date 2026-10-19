@@ -19,22 +19,33 @@ export interface SubtitleSegment {
 }
 
 /**
- * Splits an array of words into single-line chunks of 4 to 6 words max, breaking at natural clause/punctuation boundaries.
+ * Calculates a phonetic weight for a word based on character length, syllable count, and stop-word status.
+ * This is used to apportion time slices to individual words within a larger VTT cue window.
  */
 export function getWordPhoneticWeight(word: string): number {
   if (!word) return 1.0;
   const clean = word.toLowerCase().trim().replace(/[^a-z0-9\u0590-\u05FF\u0600-\u06FF\u00C0-\u024F]/g, '');
   if (!clean) return 1.0;
 
-  const shortStopWords = new Set([
-    'a', 'i', 'in', 'it', 'at', 'on', 'of', 'to', 'so', 'do', 'is', 'be', 'by', 'my', 'or', 'and', 'the', 'we', 'he', 'me', 'up', 'no', 'if', 'as'
+  // 1. Short stop words are spoken very rapidly (minimal weight)
+  const rapidStopWords = new Set([
+    'a', 'i', 'in', 'it', 'at', 'on', 'of', 'to', 'so', 'do', 'is', 'be', 'by', 'my', 'or', 'and', 'the', 'we', 'he', 'me', 'up', 'no', 'if', 'as', 'at'
   ]);
-  if (shortStopWords.has(clean)) return 1.1;
+  if (rapidStopWords.has(clean)) return 0.85;
 
+  // 2. Syllable counting (Vowels usually equal syllables)
   const vowels = clean.match(/[aeiouy]/gi);
   const syllables = Math.max(1, vowels ? vowels.length : 1);
 
-  return Math.max(1.2, clean.length * 0.65 + syllables * 1.1);
+  // 3. Proper nouns (Capitalized) are usually spoken slower and with more emphasis
+  const isProperNoun = /^[A-Z]/.test(word.trim()) && clean.length > 2;
+  const properNounBonus = isProperNoun ? 1.4 : 1.0;
+
+  // 4. Complexity weighting: longer words and multi-syllabic words take significantly more time
+  const lengthWeight = clean.length * 0.55;
+  const syllableWeight = syllables * 1.35;
+
+  return Math.max(1.1, (lengthWeight + syllableWeight) * properNounBonus);
 }
 
 /**
@@ -45,7 +56,7 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
   if (clean.length === 0) return [];
   
   const minWords = 3;
-  const maxWords = 6;
+  const maxWords = 6; // Strictly 1 line limit for "Shorts" layout
   
   if (clean.length <= maxWords) return [clean];
 
@@ -57,11 +68,16 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
     currentLine.push(w);
 
     const hasPunctuation = /[.,!?;:]$/.test(w);
-    const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if)$/i.test(w.replace(/[^a-z]/gi, ''));
+    // Clause markers indicate a likely breath or transition, meaning a natural line break.
+    const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if|then|for)$/i.test(w.replace(/[^a-z]/gi, ''));
     const reachMax = currentLine.length >= maxWords;
     const reachMin = currentLine.length >= minWords;
     const remaining = clean.length - (i + 1);
 
+    // BREAK CONDITION:
+    // 1. Reached max words for a single line
+    // 2. Reached min words AND hit punctuation or a clause marker
+    // 3. Reached min words AND only 1-2 words remain (don't leave a tiny dangling line)
     if ((reachMax || (reachMin && (hasPunctuation || isClauseMarker)) || (reachMin && remaining > 0 && remaining < 3)) && remaining > 0) {
       lines.push(currentLine);
       currentLine = [];
@@ -69,6 +85,7 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
   }
 
   if (currentLine.length > 0) {
+    // Cleanup: Merge trailing tiny lines into the previous line if it won't exceed the visual limit
     if (lines.length > 0 && currentLine.length <= 2) {
       const prev = lines[lines.length - 1];
       if (prev.length + currentLine.length <= 7) {

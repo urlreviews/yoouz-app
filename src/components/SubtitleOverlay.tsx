@@ -6,6 +6,7 @@ interface SubtitleCue {
   start: number;
   end: number;
   text: string;
+  words?: { text: string; start: number; end: number }[];
 }
 
 interface SubtitleOverlayProps {
@@ -32,17 +33,15 @@ const isIgnoredTitle = (text: string): boolean => {
   );
 };
 
-import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
-
 /**
- * Helper to split a longer subtitle cue into short 4-5 word 1-line phrase chunks with acoustic phonetic timing.
+ * Helper to split a longer subtitle cue into short 3-4 word 1-line phrase chunks with acoustic phonetic timing.
  * Guarantees that subtitles stay on 1 clean line and advance smoothly in sync with spoken audio.
  */
 const chunkCueTo1Line = (
   start: number,
   end: number,
   text: string,
-  maxWordsPerChunk = 5
+  maxWordsPerChunk = 4
 ): { start: number; end: number; text: string }[] => {
   const cleanText = text.trim();
   if (!cleanText) return [];
@@ -52,7 +51,7 @@ const chunkCueTo1Line = (
     return [{ start, end, text: cleanText }];
   }
 
-  // Use clause-aware chunking
+  // Use clause-aware chunking with a smaller limit (4 words) to guarantee 1 line on mobile
   const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk);
   if (wordGroups.length === 0) return [];
 
@@ -77,7 +76,7 @@ const chunkCueTo1Line = (
 
     chunks.push({
       start: Math.round(currentStart * 100) / 100,
-      end: Math.max(currentStart + 0.35, groupEnd),
+      end: Math.max(currentStart + 0.3, groupEnd),
       text: groupText
     });
 
@@ -89,10 +88,6 @@ const chunkCueTo1Line = (
 
 /**
  * Standard YouTube Subtitle Engine (Rebuilt with 1-Line CapCut / TikTok Phrase Chunking)
- * 1. Short 4-5 word phrase chunking: Guarantees subtitles fit on 1 clean line.
- * 2. Precision time-window matching: A subtitle cue is shown ONLY during [cue.start, cue.end].
- * 3. Instant disappear: When speech ends or between sentences, the subtitle disappears completely.
- * 4. Strict anti-repetition: Collapses identical consecutive lines into single sequential cues.
  */
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime = 0,
@@ -117,11 +112,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     const cleanCues: SubtitleCue[] = [];
     let cueId = 1;
 
-    // PATH A: We have structured segments with timestamps (e.g. from Bunny Stream Smart Captions)
     if (rawList.length > 0) {
-      // Step 1: Collect valid speech items
-      const candidateList: { start: number; end: number; text: string }[] = [];
-
       for (const item of rawList) {
         const txt = String(item?.text || item?.transcript || '').trim();
         if (!txt || isIgnoredTitle(txt)) continue;
@@ -129,97 +120,58 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const s = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : -1;
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
-        candidateList.push({ start: s, end: e, text: txt });
-      }
-
-      // Step 2: Strict Deduplication
-      const mergedList: { start: number; end: number; text: string }[] = [];
-
-      for (const item of candidateList) {
-        if (mergedList.length === 0) {
-          mergedList.push({ ...item });
-          continue;
-        }
-
-        const prev = mergedList[mergedList.length - 1];
-        const prevNorm = prev.text.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const currNorm = item.text.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-        if (prevNorm === currNorm) {
-          if (item.end > prev.end) prev.end = item.end;
-          continue;
-        }
-
-        if (currNorm.startsWith(prevNorm) && item.start <= prev.end + 0.5) {
-          prev.text = item.text;
-          if (item.end > prev.end) prev.end = item.end;
-          continue;
-        }
-
-        mergedList.push({ ...item });
-      }
-
-      // Step 3: Normalize cue durations and split long segments into 1-line phrase chunks preserving exact speech boundaries
-      for (let i = 0; i < mergedList.length; i++) {
-        const item = mergedList[i];
-        let s = item.start >= 0 ? item.start : i * 2.5;
-        let e = item.end > s ? item.end : s + 2.0;
-
-        if (e - s < 0.5) e = s + 0.5;
-
-        // Apply 1-line acoustic phrase chunker to keep text on 1 line while maintaining sync
-        const phraseChunks = chunkCueTo1Line(s, e, item.text, 5);
-        for (const chunk of phraseChunks) {
-          cleanCues.push({
-            id: cueId++,
-            start: chunk.start,
-            end: chunk.end,
-            text: chunk.text
-          });
+        // If the segment already has high-precision words (from Bunny Stream or our new parser)
+        if (Array.isArray(item.words) && item.words.length > 0) {
+          // Group these words into small chunks of 4 words max
+          let currentChunk: any[] = [];
+          for (let i = 0; i < item.words.length; i++) {
+            currentChunk.push(item.words[i]);
+            if (currentChunk.length === 4 || i === item.words.length - 1) {
+              const chunkText = currentChunk.map(w => w.text || w.word).join(" ");
+              const chunkStart = currentChunk[0].start;
+              const chunkEnd = currentChunk[currentChunk.length - 1].end;
+              cleanCues.push({
+                id: cueId++,
+                start: chunkStart,
+                end: chunkEnd,
+                text: chunkText
+              });
+              currentChunk = [];
+            }
+          }
+        } else {
+          // Fallback to phonetic guessing for 1-line chunks
+          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 4);
+          for (const chunk of phraseChunks) {
+            cleanCues.push({
+              id: cueId++,
+              start: chunk.start,
+              end: chunk.end,
+              text: chunk.text
+            });
+          }
         }
       }
     }
 
-    // PATH B: Fallback when only raw transcriptText is present (no pre-timed segments)
+    // PATH B: Fallback when only raw transcriptText is present
     if (cleanCues.length === 0 && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isIgnoredTitle(clean)) {
-        const rawSentences = clean
-          .split(/(?<=[.?!])\s+/)
-          .map(s => s.trim())
-          .filter(Boolean);
-
-        const uniqueSentences: string[] = [];
-        for (const s of rawSentences) {
-          const norm = s.toLowerCase().replace(/[^a-z0-9]/g, '');
-          if (!uniqueSentences.some(u => u.toLowerCase().replace(/[^a-z0-9]/g, '') === norm)) {
-            uniqueSentences.push(s);
+        const rawSentences = clean.split(/(?<=[.?!])\s+/).map(s => s.trim()).filter(Boolean);
+        const videoDur = duration && duration > 2 ? duration : 15;
+        let curStart = 0.5;
+        for (const sText of rawSentences) {
+          const phraseChunks = chunkCueTo1Line(curStart, Math.min(videoDur, curStart + 3.0), sText, 4);
+          for (const chunk of phraseChunks) {
+            cleanCues.push({
+              id: cueId++,
+              start: chunk.start,
+              end: chunk.end,
+              text: chunk.text
+            });
           }
-        }
-
-        const totalSentences = uniqueSentences.length;
-        if (totalSentences > 0) {
-          const videoDur = duration && duration > 2 ? duration : 15;
-          const availableDuration = Math.max(2.0, videoDur - 0.5);
-          const perSentence = Math.min(4.5, Math.max(1.8, availableDuration / totalSentences));
-
-          let curStart = 0.5;
-          for (let i = 0; i < totalSentences; i++) {
-            const sText = uniqueSentences[i];
-            const sEnd = Math.min(videoDur, curStart + perSentence);
-            
-            // Apply 1-line phrase chunker
-            const phraseChunks = chunkCueTo1Line(curStart, sEnd, sText, 5);
-            for (const chunk of phraseChunks) {
-              cleanCues.push({
-                id: cueId++,
-                start: chunk.start,
-                end: chunk.end,
-                text: chunk.text
-              });
-            }
-            curStart = sEnd + 0.2;
-          }
+          curStart += 3.2;
         }
       }
     }
@@ -227,26 +179,18 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return cleanCues;
   }, [segments, transcriptText, duration]);
 
-  // Determine active cue matching the current video playback time
   const activeCue = useMemo<SubtitleCue | null>(() => {
     if (!isActive || cues.length === 0) return null;
+    if (isLiveRecording) return cues[cues.length - 1] || null;
 
-    if (isLiveRecording) {
-      return cues[cues.length - 1] || null;
-    }
-
-    // Strict time-window match: appears ONLY between cue.start and cue.end
     for (const cue of cues) {
       if (currentTime >= cue.start && currentTime <= cue.end) {
         return cue;
       }
     }
-
-    // When speaker is silent or when sentence has finished: DISAPPEAR COMPLETELY
     return null;
   }, [cues, currentTime, isActive, isLiveRecording]);
 
-  // RTL language support (Hebrew, Arabic, etc.)
   const isRTL = useMemo(() => {
     if (!activeCue?.text) return false;
     return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(activeCue.text);
@@ -255,13 +199,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive || !activeCue || !activeCue.text) return null;
 
   return (
-    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-4 md:px-4 pointer-events-none z-[48] select-none transition-opacity duration-150">
-      <div className="max-w-full md:max-w-[620px] flex justify-center">
+    <div className="absolute bottom-[160px] xs:bottom-[170px] sm:bottom-[180px] md:bottom-[140px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
+      <div className="max-w-[85%] flex justify-center">
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/75 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.95)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center"
         >
-          <p className="text-[14px] sm:text-[16px] md:text-[18px] font-bold tracking-tight text-center leading-snug px-1 text-white break-words max-w-full drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             {activeCue.text}
           </p>
         </div>

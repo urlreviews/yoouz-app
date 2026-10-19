@@ -603,7 +603,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
 
     // Strict Guard: If this video is already correctly loaded and playing (or paused at a specific time), DO NOT interrupt it
-    if (!isNewVideo && activeVid.currentTime > 0.05) {
+    if (!isNewVideo) {
       // Just ensure sync of minor properties
       const effectiveMuted = isMuted || !isSessionAudioUnlocked;
       if (activeVid.muted !== effectiveMuted) {
@@ -820,8 +820,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (activeVideo?.id) {
         onRecordView?.(activeVideo.id);
 
-        // Auto-trigger transcription for videos missing segments
-        if (!activeVideo.segments || activeVideo.segments.length === 0) {
+        // Auto-trigger transcription for videos missing high-precision segments
+        const hasHighPrecision = Array.isArray(activeVideo.segments) && activeVideo.segments.length > 0 && activeVideo.segments.some(s => s && s.words);
+        if (!activeVideo.segments || activeVideo.segments.length === 0 || !hasHighPrecision) {
           fetch(`/api/videos/${activeVideo.id}/ensure-transcript`, { method: "POST" })
             .then(res => res.json())
             .then(data => {

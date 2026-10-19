@@ -23097,6 +23097,36 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         return h * 3600 + m * 60 + s + ms / 1000;
       };
 
+      const processSegment = (start: number, end: number, textLines: string[]) => {
+        const fullText = textLines.join(" ");
+        const words: any[] = [];
+        const matches = Array.from(fullText.matchAll(/<(\d{1,2}:)?(\d{2}):(\d{2})[.,](\d{3})>/g));
+        if (matches.length > 0) {
+          const parts = fullText.split(/<[^>]+>/);
+          let lastTime = start;
+          parts.forEach((part, idx) => {
+            const wordText = part.trim();
+            if (!wordText) return;
+            let wordEnd = end;
+            if (idx < matches.length) {
+              const m = matches[idx];
+              wordEnd = parseTime(m[1], m[2], m[3], m[4]);
+            }
+            words.push({ text: wordText, start: Math.round(lastTime * 100) / 100, end: Math.round(wordEnd * 100) / 100 });
+            lastTime = wordEnd;
+          });
+        }
+        const textWithoutTags = fullText.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        if (textWithoutTags) {
+          rawSegments.push({
+            start: Math.round(start * 100) / 100,
+            end: Math.round(end * 100) / 100,
+            text: textWithoutTags,
+            words: words.length > 0 ? words : undefined
+          });
+        }
+      };
+
       for (const line of lines) {
         if (!line || line.startsWith("WEBVTT") || line.startsWith("NOTE") || line.startsWith("STYLE")) {
           continue;
@@ -23104,36 +23134,15 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
         const match = line.match(timeRegex);
         if (match) {
-          if (currentStart >= 0 && currentText.length > 0) {
-            const txt = currentText.join(" ").trim();
-            if (txt) {
-              rawSegments.push({
-                start: Math.round(currentStart * 100) / 100,
-                end: Math.round(currentEnd * 100) / 100,
-                text: txt
-              });
-            }
-          }
+          if (currentStart >= 0 && currentText.length > 0) processSegment(currentStart, currentEnd, currentText);
           currentStart = parseTime(match[1], match[2], match[3], match[4]);
           currentEnd = parseTime(match[5], match[6], match[7], match[8]);
           currentText = [];
-        } else if (currentStart >= 0) {
-          if (!/^\d+$/.test(line)) {
-            currentText.push(line);
-          }
+        } else if (currentStart >= 0 && !/^\d+$/.test(line)) {
+          currentText.push(line);
         }
       }
-
-      if (currentStart >= 0 && currentText.length > 0) {
-        const txt = currentText.join(" ").trim();
-        if (txt) {
-          rawSegments.push({
-            start: Math.round(currentStart * 100) / 100,
-            end: Math.round(currentEnd * 100) / 100,
-            text: txt
-          });
-        }
-      }
+      if (currentStart >= 0 && currentText.length > 0) processSegment(currentStart, currentEnd, currentText);
 
       // Deduplicate consecutive identical/overlapping cues
       const cleanSegments: any[] = [];
