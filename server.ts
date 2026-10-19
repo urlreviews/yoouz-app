@@ -8092,49 +8092,64 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             place: { id, ...finalDataObj },
             updates: { id, ...finalDataObj }
           });
-        } else if (colName === 'videoReviews' || colName === 'videos') {
+          const localList = readReviewsIndex();
+          const isNewReview = !localList.some((item: any) => item.id === id);
+
+          if (isNewReview) {
+            finalDataObj.isProcessing = true;
+            finalDataObj.isLive = false;
+          }
+
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
           const revCreatedAt = finalDataObj.createdAt || (finalDataObj.createdAtMs ? new Date(finalDataObj.createdAtMs).toISOString() : new Date().toISOString());
-          await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, commentsCount, data, createdAt, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET 
-                    placeId = excluded.placeId,
-                    placeName = excluded.placeName,
-                    authorName = excluded.authorName,
-                    authorAvatar = excluded.authorAvatar,
-                    userId = excluded.userId,
-                    rating = excluded.rating,
-                    videoUrl = excluded.videoUrl,
-                    thumbnailUrl = excluded.thumbnailUrl,
-                    duration = excluded.duration,
-                    likesCount = excluded.likesCount,
-                    viewsCount = excluded.viewsCount,
-                    commentsCount = COALESCE(excluded.commentsCount, videoReviews.commentsCount),
-                    data = excluded.data,
-                    createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
-                    updatedAt = CURRENT_TIMESTAMP`,
-            args: [
-              id,
-              rev.placeId || (rev.place && rev.place.id) || '',
-              rev.placeName || (rev.place && rev.place.name) || '',
-              rev.authorName || (rev.author && rev.author.name) || '',
-              rev.authorAvatar || (rev.author && rev.author.avatar) || '',
-              rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
-              rev.rating || 5,
-              rev.videoUrl || '',
-              rev.thumbnailUrl || '',
-              rev.duration || 60,
-              rev.likesCount || rev.likes || 0,
-              rev.viewsCount || rev.views || 0,
-              rev.commentsCount || (Array.isArray(rev.comments) ? rev.comments.length : 0),
-              jsonStr,
-              revCreatedAt
-            ]
-          });
+          
+          if (bunnyDb) {
+            try {
+              await bunnyDb.execute({
+                sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, commentsCount, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET 
+                        placeId = excluded.placeId,
+                        placeName = excluded.placeName,
+                        authorName = excluded.authorName,
+                        authorAvatar = excluded.authorAvatar,
+                        userId = excluded.userId,
+                        rating = excluded.rating,
+                        videoUrl = excluded.videoUrl,
+                        thumbnailUrl = excluded.thumbnailUrl,
+                        duration = excluded.duration,
+                        likesCount = excluded.likesCount,
+                        viewsCount = excluded.viewsCount,
+                        commentsCount = COALESCE(excluded.commentsCount, videoReviews.commentsCount),
+                        data = excluded.data,
+                        createdAt = CASE WHEN excluded.createdAt < videoReviews.createdAt THEN excluded.createdAt ELSE videoReviews.createdAt END,
+                        updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  id,
+                  rev.placeId || (rev.place && rev.place.id) || '',
+                  rev.placeName || (rev.place && rev.place.name) || '',
+                  rev.authorName || (rev.author && rev.author.name) || '',
+                  rev.authorAvatar || (rev.author && rev.author.avatar) || '',
+                  rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
+                  rev.rating || 5,
+                  rev.videoUrl || '',
+                  rev.thumbnailUrl || '',
+                  rev.duration || 60,
+                  rev.likesCount || rev.likes || 0,
+                  rev.viewsCount || rev.views || 0,
+                  rev.commentsCount || (Array.isArray(rev.comments) ? rev.comments.length : 0),
+                  JSON.stringify(rev),
+                  revCreatedAt
+                ]
+              });
+            } catch (bErr) {}
+          }
 
-          // Sync into local server reviews index
-          const localList = readReviewsIndex();
+          // Trigger immediate transcription polling for new reviews
+          if (isNewReview) {
+            console.log(`🚀 [Transcription] Triggering immediate processing for new video: ${id}`);
+            ensureTranscriptionForVideo(id).catch(err => console.warn("[Transcription] Initial poll error:", err));
+          }
           const existingIdx = localList.findIndex((item: any) => item.id === id);
           if (existingIdx !== -1) {
             localList[existingIdx] = { ...localList[existingIdx], ...rev };
@@ -15229,6 +15244,11 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
             if (r && r.id && !isDeletedReviewServer(r.id)) {
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
               if (parsedData && parsedData.id && isDeletedReviewServer(parsedData.id)) return;
+              
+              // NEW: Filter out videos that are still processing transcription (unless explicitly requested by owner)
+              if (parsedData.isProcessing === true && r.userId !== queryUserId) {
+                return;
+              }
               const existing = map.get(r.id) || {};
               const mergedAuthor = {
                 ...(typeof existing.author === 'object' ? existing.author : {}),
@@ -19099,20 +19119,11 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       feedCache.lastFetched = Date.now();
 
-      // Real-Time Cross-Device SSE Broadcast: instantly displays the newly published video on all active computers, phones, and tablets worldwide
-      try {
-        broadcastSseEvent({ type: "new_video", video: review });
-      } catch (sseErr) {
-        console.warn("SSE broadcast new_video error:", sseErr);
-      }
-
-      // Return instant success response to client immediately so mobile & desktop users never hang
-      res.json({ success: true, review });
-
-      // Run BunnyDB, PostgreSQL mirroring, and search engine indexing asynchronously in the background
+      // Run BunnyDB, PostgreSQL mirroring, and search engine indexing
+      // CRITICAL: We trigger transcription BEFORE broadcasting if possible
       (async () => {
         try {
-          // 1. Upload video to Bunny Stream Library (733814 / rev) so dashboard shows videos and auto-transcribes
+          // 1. Upload video to Bunny Stream Library
           try {
             let vBuffer: Buffer | null = null;
             if (review.videoData && typeof review.videoData === 'string') {
@@ -19149,7 +19160,6 @@ app.post("/api/videos/save-review", async (req, res) => {
               } catch (e) {}
             }
 
-            // Only upload if video is not already in Bunny Stream Library
             if (!review.bunnyVideoId && !review.bunnyGuid) {
               await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
             }
@@ -19157,261 +19167,80 @@ app.post("/api/videos/save-review", async (req, res) => {
             console.warn("Bunny Stream upload background notice:", bunnyErr);
           }
 
-          // 2. Transcription Engine: Auto-generate captions in background if missing
-          console.log(`[Transcription] Triggering Bunny Stream Smart Captions for review: ${review.id}`);
-          ensureTranscriptionForVideo(review.id).catch(e => console.warn("Background transcription error:", e));
+          // 2. Transcription Engine: Auto-generate captions with priority
+          console.log(`[Transcription] Triggering high-priority Bunny Stream Smart Captions for review: ${review.id}`);
+          await ensureTranscriptionForVideo(review.id, undefined, true).catch(e => console.warn("Priority transcription error:", e));
 
-          // 3. Sync to Bunny Database (libSQL cloud)
+          // Fetch the updated review with potential new captions
+          let finalReview = review;
+          try {
+            const list = readReviewsIndex();
+            const found = list.find((v: any) => v && v.id === review.id);
+            if (found) finalReview = found;
+          } catch (e) {}
+
+          // 3. Sync to Bunny Database (libSQL cloud) and PostgreSQL
           const bunnyDb = getBunnyDb();
           if (bunnyDb) {
             try {
-              const sqlReview = { ...review };
-              delete sqlReview.videoData; // Prevent libSQL request body too large error
+              const sqlReview = { ...finalReview };
+              delete (sqlReview as any).videoData;
               const jsonStr = JSON.stringify(sqlReview);
-          
-          const reviewPlaceId = review.placeId || (review.place && review.place.id) || '';
-          const reviewPlaceName = review.placeName || (review.place && review.place.name) || '';
-          const rawAuthorName = review.authorName || (review.author && review.author.name) || '';
-          const authorEmailVal = review.userEmail || review.authorEmail || (review.author && review.author.email) || '';
-          const emailPrefix = authorEmailVal ? authorEmailVal.split('@')[0] : '';
-          const reviewAuthorName = rawAuthorName || (emailPrefix ? (emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)) : 'Yoouz Reviewer');
-          const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
-          const reviewUserId = review.userId || authorEmailVal || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-          const reviewRating = typeof review.rating === 'number' ? review.rating : 5;
-          const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-          const reviewVideoUrl = review.videoUrl || review.url || review.src || review.video_url || review.mediaUrl || review.playbackUrl || review.hlsUrl || review.streamUrl || (review.id ? `/api/videos/stream/${review.id}` : `${pullZoneDomain}/sample-review.mp4`);
-          const reviewThumbUrl = review.thumbnailUrl || '';
-          const reviewDuration = review.durationSeconds || review.duration || 60;
-          const reviewLikes = review.likesCount || review.likes || 0;
-          const reviewViews = review.viewsCount || review.views || 0;
-
-          // 2a. Insert/Update Video Review in BunnyDB
-          await bunnyDb.execute({
-            sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET 
-                    placeId = excluded.placeId,
-                    placeName = excluded.placeName,
-                    authorName = excluded.authorName,
-                    authorAvatar = excluded.authorAvatar,
-                    userId = excluded.userId,
-                    rating = excluded.rating,
-                    videoUrl = excluded.videoUrl,
-                    thumbnailUrl = excluded.thumbnailUrl,
-                    duration = excluded.duration,
-                    likesCount = excluded.likesCount,
-                    bookmarksCount = excluded.bookmarksCount,
-                    sharesCount = excluded.sharesCount,
-                    commentsCount = excluded.commentsCount,
-                    viewsCount = excluded.viewsCount,
-                    data = excluded.data,
-                    updatedAt = CURRENT_TIMESTAMP`,
-            args: [
-              review.id,
-              reviewPlaceId,
-              reviewPlaceName,
-              reviewAuthorName,
-              reviewAuthorAvatar,
-              reviewUserId,
-              reviewRating,
-              reviewVideoUrl,
-              reviewThumbUrl,
-              reviewDuration,
-              reviewLikes,
-              review.bookmarksCount || 0,
-              review.sharesCount || 0,
-              review.commentsCount || 0,
-              reviewViews,
-              jsonStr,
-              review.createdAt || (review.createdAtMs ? new Date(review.createdAtMs).toISOString() : new Date().toISOString())
-            ]
-          });
-          console.log(`🐰 [Server] BunnyDB successfully permanently saved video review ${review.id}`);
-
-          // 2b. Automatically ensure creator is upserted into BunnyDB users table
-          if (reviewAuthorName !== 'Verified Reviewer' && reviewUserId !== 'usr_verified_reviewer' && reviewAuthorName !== 'Yoouz Reviewer') {
-            try {
-              const normLoc = normalizeUserLocationServer(
-                review.author?.location,
-                review.author?.city,
-                (review.author as any)?.state,
-                review.author?.country
-              );
-              const authorLoc = normLoc.location || 'Miami Beach, Florida, United States';
-              const authorCity = normLoc.city || 'Miami Beach';
-              const authorState = normLoc.state || 'Florida';
-              const authorCountry = normLoc.country || 'United States';
-
-              const authorData = {
-                id: reviewUserId,
-                uid: reviewUserId,
-                name: reviewAuthorName,
-                email: review.authorEmail || (review.author && review.author.email) || '',
-                avatar: reviewAuthorAvatar,
-                role: "Creator",
-                bio: review.author?.bio || `Verified Yoouz Creator in ${authorLoc}`,
-                location: authorLoc,
-                city: authorCity,
-                state: authorState,
-                country: authorCountry,
-                handle: (review.author?.handle || `@${reviewAuthorName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`).replace(/^@+/, ''),
-                isVerified: true,
-                totalReviews: 1
-              };
-            await bunnyDb.execute({
-              sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    ON CONFLICT(id) DO UPDATE SET
-                      name = COALESCE(?, users.name),
-                      avatar = COALESCE(?, users.avatar),
-                      bio = COALESCE(?, users.bio),
-                      role = 'Creator',
-                      data = ?,
-                      updatedAt = CURRENT_TIMESTAMP`,
-              args: [
-                reviewUserId,
-                authorData.email || null,
-                reviewAuthorName,
-                reviewAuthorAvatar,
-                authorData.bio,
-                'Creator',
-                JSON.stringify(authorData),
-                // Update args
-                reviewAuthorName,
-                reviewAuthorAvatar,
-                authorData.bio,
-                JSON.stringify(authorData)
-              ]
-            });
-            console.log(`🐰 [Server] BunnyDB creator user profile synced for ${reviewAuthorName} (${reviewUserId})`);
-          } catch (userUpsertErr: any) {
-            console.warn("Notice syncing creator to BunnyDB users table:", userUpsertErr?.message || userUpsertErr);
-          }
-        }
-
-          // 2c. Automatically ensure place is upserted into BunnyDB places table
-          if (reviewPlaceId || reviewPlaceName) {
-            try {
-              const placeDocId = reviewPlaceId || reviewPlaceName.toLowerCase().replace(/[^a-z0-9]/g, '-');
               
-              // Check if place already exists to safely merge
-              const existingPlaceRs = await bunnyDb.execute({
-                sql: `SELECT id, name, address, logoUrl, data FROM places WHERE id = ?`,
-                args: [placeDocId]
-              }).catch(() => null);
-
-              let existingDoc: any = {};
-              if (existingPlaceRs && existingPlaceRs.rows && existingPlaceRs.rows.length > 0) {
-                try {
-                  const rawD = (existingPlaceRs.rows[0] as any).data;
-                  existingDoc = typeof rawD === 'string' ? JSON.parse(rawD) : (rawD || {});
-                } catch(e) {}
-              }
-
-              const cleanReviewLogo = (review.placeLogoUrl && !review.placeLogoUrl.includes("tap/0.png") && !review.placeLogoUrl.includes("icons/tap") && !review.placeLogoUrl.startsWith("data:;")) ? review.placeLogoUrl : '';
-              const cleanReviewBanner = (review.placeBannerUrl && !review.placeBannerUrl.includes("unsplash.com") && !review.placeBannerUrl.includes("placeholder")) ? review.placeBannerUrl : '';
-              const cleanReviewAddr = (review.placeAddress && !review.placeAddress.startsWith("http") && review.placeAddress !== "Verified Location") ? review.placeAddress : '';
-
-              const placeData = {
-                id: placeDocId,
-                name: reviewPlaceName || existingDoc.name || placeDocId,
-                website: review.placeWebsite || (review.place && review.place.website) || existingDoc.website || '',
-                brandDomain: review.placeWebsite || (review.place && review.place.brandDomain) || existingDoc.brandDomain || '',
-                rating: reviewRating || existingDoc.rating || 5,
-                totalReviews: Math.max(existingDoc.totalReviews || 1, (existingDoc.totalReviews || 0) + 1),
-                city: review.placeCity || review.place?.city || existingDoc.city || 'Online',
-                country: review.placeCountry || review.place?.country || existingDoc.country || '',
-                address: cleanReviewAddr || existingDoc.address || '',
-                phone: review.placePhone || review.place?.phone || existingDoc.phone || '',
-                email: review.placeEmail || review.place?.email || existingDoc.email || '',
-                bannerUrl: cleanReviewBanner || existingDoc.bannerUrl || existingDoc.ogImage || '',
-                ogImage: cleanReviewBanner || existingDoc.ogImage || existingDoc.bannerUrl || '',
-                photos: cleanReviewBanner ? [cleanReviewBanner] : (existingDoc.photos || []),
-                logoUrl: cleanReviewLogo || existingDoc.logoUrl || existingDoc.avatarUrl || '',
-                avatarUrl: cleanReviewLogo || existingDoc.avatarUrl || existingDoc.logoUrl || '',
-                category: review.placeCategory || review.place?.category || existingDoc.category || 'Services'
-              };
-
-              const jsonStr = JSON.stringify(placeData);
+              const reviewPlaceId = finalReview.placeId || (finalReview.place && finalReview.place.id) || '';
+              const reviewPlaceName = finalReview.placeName || (finalReview.place && finalReview.place.name) || '';
+              const rawAuthorName = finalReview.authorName || (finalReview.author && finalReview.author.name) || '';
+              const authorEmailVal = finalReview.userEmail || finalReview.authorEmail || (finalReview.author && finalReview.author.email) || '';
+              const reviewAuthorAvatar = finalReview.authorAvatar || (finalReview.author && finalReview.author.avatar) || '';
+              const reviewUserId = finalReview.userId || authorEmailVal || `usr_${(rawAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
               await bunnyDb.execute({
-                sql: `INSERT INTO places (id, name, address, category, city, country, logoUrl, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET
-                        name = COALESCE(?, places.name),
-                        address = COALESCE(NULLIF(?, ''), places.address),
-                        category = COALESCE(?, places.category),
-                        city = COALESCE(NULLIF(?, ''), places.city),
-                        country = COALESCE(NULLIF(?, ''), places.country),
-                        logoUrl = COALESCE(NULLIF(?, ''), places.logoUrl),
-                        data = ?,
-                        updatedAt = CURRENT_TIMESTAMP`,
+                sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
-                  placeDocId,
-                  placeData.name,
-                  placeData.address,
-                  placeData.category,
-                  placeData.city,
-                  placeData.country,
-                  placeData.logoUrl,
-                  jsonStr,
-                  // Update args
-                  placeData.name,
-                  placeData.address,
-                  placeData.category,
-                  placeData.city,
-                  placeData.country,
-                  placeData.logoUrl,
-                  jsonStr
+                  finalReview.id, reviewPlaceId, reviewPlaceName, rawAuthorName, reviewAuthorAvatar, reviewUserId, 
+                  finalReview.rating || 5, finalReview.videoUrl || '', finalReview.thumbnailUrl || '', 
+                  finalReview.durationSeconds || 60, 0, 0, 0, 0, 1, jsonStr, 
+                  new Date().toISOString()
                 ]
               });
-              console.log(`🐰 [Server] BunnyDB place synced with address, phone, email, banner, and logo for ${reviewPlaceName} (${placeDocId})`);
-            } catch (placeUpsertErr: any) {
-              console.warn("Notice syncing place to BunnyDB places table:", placeUpsertErr?.message || placeUpsertErr);
+            } catch (bunnySaveErr: any) {
+              console.warn("BunnyDB sync in save-review notice:", bunnySaveErr?.message || bunnySaveErr);
             }
           }
-        } catch (bunnySaveErr: any) {
-          console.warn("BunnyDB sync in save-review notice:", bunnySaveErr?.message || bunnySaveErr);
-        }
-      }
 
-      // Broadcast new video review to all active connected browsers via SSE
-      broadcastSseEvent({
-        type: "new_video_review",
-        review
-      });
-
-      // 3. Sync to BunnyDB Admin directly
-      
-
-      // 3. Mirror to Drizzle PostgreSQL database for container scaling durability
-      if (getDb()) {
-        try {
-          const [existing] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, review.id));
-          if (existing) {
-            let finalData = review;
-            if (existing.data && typeof existing.data === 'object') {
-              finalData = { ...existing.data, ...review };
+          if (getDb()) {
+            try {
+              const [existing] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, finalReview.id));
+              if (existing) {
+                await db.update(BunnyDB_video_reviews).set({ data: finalReview }).where(eq(BunnyDB_video_reviews.id, finalReview.id));
+              } else {
+                await db.insert(BunnyDB_video_reviews).values({ id: finalReview.id, data: finalReview });
+              }
+            } catch (sqlErr) {
+              console.warn("SQL database sync in save-review notice:", (sqlErr as any)?.message || sqlErr);
             }
-            await db.update(BunnyDB_video_reviews).set({ data: finalData }).where(eq(BunnyDB_video_reviews.id, review.id));
-          } else {
-            await db.insert(BunnyDB_video_reviews).values({ id: review.id, data: review });
           }
-        } catch (sqlErr) {
-          console.warn("SQL database sync in save-review notice:", (sqlErr as any)?.message || sqlErr);
-        }
-      }
 
-      // Trigger Automated Search Engine Indexing Notification (Google & Bing/IndexNow)
-      if (review?.id) {
-        triggerSearchEngineIndexing(review.id).catch(() => {});
-      }
-        } catch (bgDbErr) {
-          console.warn("Background BunnyDB/SQL save notice:", bgDbErr);
+          // 4. SSE Broadcast
+          try {
+            broadcastSseEvent({ type: "new_video", video: finalReview });
+            broadcastSseEvent({ type: "new_video_review", review: finalReview });
+          } catch (sseErr) {
+            console.warn("SSE broadcast error:", sseErr);
+          }
+
+          // 5. Indexing
+          if (finalReview?.id) {
+            triggerSearchEngineIndexing(finalReview.id).catch(() => {});
+          }
+        } catch (bgErr) {
+          console.warn("Background publish tasks error:", bgErr);
         }
       })().catch(() => {});
 
-      return;
+      res.json({ success: true, review });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -22536,9 +22365,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   }
 
   // Reusable background transcription logic using Bunny Stream Smart Captions
-  async function ensureTranscriptionForVideo(videoId: string, overrideBunnyVideoId?: string) {
+  async function ensureTranscriptionForVideo(videoId: string, overrideBunnyVideoId?: string, isPriority: boolean = false) {
     try {
       let video: any = null;
+      let attempts = isPriority ? 3 : 1;
+      let delay = 3000;
 
       // 1. Check local JSON index
       try {
@@ -22611,11 +22442,23 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
 
-      // Fetch official Bunny Stream Smart Captions
+      // Fetch official Bunny Stream Smart Captions (with retry for priority requests)
       if (bunnyVideoId) {
         video.bunnyVideoId = bunnyVideoId;
-        const bunnyResult = await fetchBunnyStreamSmartCaptions(bunnyVideoId);
-        if (bunnyResult && (bunnyResult.segments.length > 0 || bunnyResult.description || bunnyResult.aiTitle)) {
+        
+        let bunnyResult: any = null;
+        for (let i = 0; i < attempts; i++) {
+          bunnyResult = await fetchBunnyStreamSmartCaptions(bunnyVideoId);
+          if (bunnyResult && (bunnyResult.segments?.length > 0 || bunnyResult.description || bunnyResult.aiTitle)) {
+            break;
+          }
+          if (i < attempts - 1) {
+            console.log(`⏳ 🐰 [Server] Retrying transcription fetch for ${videoId} in ${delay}ms... (Attempt ${i + 1}/${attempts})`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+        }
+
+        if (bunnyResult && (bunnyResult.segments?.length > 0 || bunnyResult.description || bunnyResult.aiTitle)) {
           const transcriptText = bunnyResult.transcriptText || video.transcriptText || "";
           const segments = bunnyResult.segments?.length > 0 ? bunnyResult.segments : (video.segments || []);
           const aiTitle = bunnyResult.aiTitle || video.aiTitle;
@@ -22634,7 +22477,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             ...((aiTitle && (!video.caption || video.caption.startsWith("Video review for"))) ? { caption: aiTitle } : {}),
             ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
             ...(needsThumbnailUpdate ? { thumbnailUrl: officialThumbnail } : {}),
-            hasBunnySmartCaptions: segments.length > 0 
+            hasBunnySmartCaptions: segments.length > 0,
+            isProcessing: false,
+            isLive: true
           };
 
           // 1. Sync to local JSON index

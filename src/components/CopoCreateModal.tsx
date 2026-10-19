@@ -75,6 +75,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [recordedVideoBlob, setRecordedVideoBlob] = useState<Blob | null>(null);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
   const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  const [videoWidth, setVideoWidth] = useState<number>(0);
+  const [videoHeight, setVideoHeight] = useState<number>(0);
   const [recordingTime, setRecordingTime] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownTimerRef = useRef<any>(null);
@@ -302,7 +304,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setUploadProgress(0);
   };
 
-  const extractThumbnailFromVideo = (videoSource: string | Blob): Promise<string> => {
+  const extractThumbnailFromVideo = (videoSource: string | Blob): Promise<{ thumbnail: string; width: number; height: number }> => {
     return new Promise((resolve) => {
       try {
         const video = document.createElement("video");
@@ -331,7 +333,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
                 cleanup();
-                resolve(dataUrl);
+                resolve({ 
+                  thumbnail: dataUrl, 
+                  width: video.videoWidth, 
+                  height: video.videoHeight 
+                });
                 return;
               }
             }
@@ -339,7 +345,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             console.warn("Frame capture warning:", e);
           }
           cleanup();
-          resolve("");
+          resolve({ thumbnail: "", width: 0, height: 0 });
         };
 
         video.onloadeddata = () => {
@@ -350,18 +356,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         };
         video.onerror = () => {
           cleanup();
-          resolve("");
+          resolve({ thumbnail: "", width: 0, height: 0 });
         };
 
         setTimeout(() => {
           if (video.readyState >= 2) capture();
           else {
             cleanup();
-            resolve("");
+            resolve({ thumbnail: "", width: 0, height: 0 });
           }
         }, 3000);
       } catch {
-        resolve("");
+        resolve({ thumbnail: "", width: 0, height: 0 });
       }
     });
   };
@@ -811,8 +817,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         stopCamera();
 
         // Extract genuine frame snapshot from recorded video
-        extractThumbnailFromVideo(blob).then((thumb) => {
-          if (thumb) setVideoThumbnail(thumb);
+        extractThumbnailFromVideo(blob).then((res) => {
+          if (res.thumbnail) setVideoThumbnail(res.thumbnail);
+          if (res.width && res.height) {
+            setVideoWidth(res.width);
+            setVideoHeight(res.height);
+          }
         });
 
         // Auto-transcribe recorded video in background as fallback ONLY if live segments are empty
@@ -1343,7 +1353,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       viewsCount: 1,
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
-      recordedAt: "Just now"
+      recordedAt: "Just now",
+      isLandscape: videoWidth > 0 && videoHeight > 0 && videoWidth > videoHeight,
+      aspectRatio: (videoWidth > 0 && videoHeight > 0 && videoWidth > videoHeight) ? 'landscape' : 'portrait'
     };
 
     // 🛡️ Anti-Stall Watchdog: Safety timer that guarantees completion while ensuring server sync
