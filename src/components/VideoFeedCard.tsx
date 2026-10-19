@@ -162,6 +162,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   onCloseEmbed
 }) => {
   const { t, language } = useLanguage();
+  const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
   const [computedCommentsCount, setComputedCommentsCount] = useState<number>(Number(video.commentsCount || 0));
 
@@ -675,8 +676,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       triggerDoubleTapLike(e.clientX, e.clientY);
     }
   };
-
-  const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
   // Preload high-priority assets when the card is active or near-active
   useEffect(() => {
