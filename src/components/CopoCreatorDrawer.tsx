@@ -1190,9 +1190,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </div>
                 ) : null}
 
-                {displayLocation && !isBusinessProfile && memberSinceStr ? (
-                  <span className="text-zinc-700 font-bold">•</span>
-                ) : null}
+
 
                 {!isBusinessProfile && memberSinceStr ? (
                   <div className="flex items-center gap-1.5 text-zinc-400">
