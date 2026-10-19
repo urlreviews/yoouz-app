@@ -1151,16 +1151,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 )}
               </button>
             )}
-
-            {!isOwner && onStartChat && (
-              <button
-                onClick={() => onStartChat(author.userId || author.id || author.name, displayName, effectiveAvatar)}
-                className="px-4 py-2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-zinc-700 transition-all cursor-pointer shrink-0"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>{t("common.chat", "Message")}</span>
-              </button>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -1322,20 +1312,20 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <span className="font-semibold text-[11px] text-zinc-200">{t("common.share", "Share")}</span>
                 </button>
 
-                {!isOwner && onOpenReport && (
+                {!isOwner && onStartChat && (
                   <button
-                    id="btn-report-creator-action"
+                    id="btn-chat-creator-action"
                     onClick={() => {
-                      triggerHaptic("medium");
-                      if (author) onOpenReport(author);
+                      triggerHaptic("light");
+                      onStartChat(author.userId || author.id || author.name, displayName, effectiveAvatar);
                     }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-red-400 hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
-                    title={t("profile.reportReviewer", "Report or Block Reviewer")}
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                    title={t("common.chat", "Message")}
                   >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-red-500/10 group-hover:border-red-500/40 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700 transition-colors">
-                      <Flag className="w-4 h-4 text-zinc-200 group-hover:text-red-400 transition-colors" />
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
+                      <MessageSquare className="w-5 h-5 text-zinc-200" />
                     </div>
-                    <span className="font-semibold text-[11px] text-zinc-200 group-hover:text-red-400 transition-colors">{t("common.report", "Report")}</span>
+                    <span className="font-semibold text-[11px] text-zinc-200">{t("common.chat", "Message")}</span>
                   </button>
                 )}
               </div>
