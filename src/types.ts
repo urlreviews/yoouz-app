@@ -179,8 +179,9 @@ export interface VideoReview {
   thumbnailUrl: string;
   caption?: string;
   description?: string;
-  bunnyDescription?: string;
   title?: string;
+  aiTitle?: string;
+  hasBunnySmartCaptions?: boolean;
   bunnyTitle?: string;
   videoTitle?: string;
   dishOrItem?: string;

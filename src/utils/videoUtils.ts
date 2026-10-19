@@ -205,40 +205,51 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
 
   const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
-  const rawThumb = video.thumbnailUrl;
+  // 1. Direct Bunny Stream official video thumbnail (most authentic frame from user's video)
+  const bunnyId = video.bunnyVideoId || video.bunnyGuid;
+  if (bunnyId && typeof bunnyId === "string" && bunnyId.length > 10 && !bunnyId.startsWith("rev-")) {
+    const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
+    const officialStreamThumb = `${streamCdn}/${bunnyId}/thumbnail.jpg`;
+    return `/api/proxy-image?url=${encodeURIComponent(officialStreamThumb)}`;
+  }
 
+  // 2. Explicit thumbnail URL on the review
+  const rawThumb = video.thumbnailUrl;
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
     const trimmed = rawThumb.trim();
 
-    // Direct base64 or blob poster (instant preview without network latency)
-    if (trimmed.startsWith("data:image/") || trimmed.startsWith("blob:")) {
+    // Direct base64 or blob poster (ONLY if current session recording)
+    if (trimmed.startsWith("data:image/") || (trimmed.startsWith("blob:") && video.isCurrentSessionBlob)) {
       return trimmed;
     }
 
-    const isVideoFile = trimmed.endsWith(".mp4") || trimmed.endsWith(".webm") || trimmed.endsWith(".mov") || trimmed.includes("/api/videos/stream/");
-    const isAvatarOrLogo =
-      trimmed.includes("/api/avatar") ||
-      trimmed.includes("ui-avatars") ||
-      trimmed.includes("dicebear") ||
-      trimmed.includes("favicon") ||
-      trimmed.includes("google.com/s2") ||
-      trimmed.includes("clearbit.com") ||
-      trimmed.includes("logo.png") ||
-      trimmed.includes("logo.jpg") ||
-      trimmed.includes("brandfetch.io");
-    
-    // Direct Bunny CDN image
-    if (trimmed.includes("b-cdn.net") && !isVideoFile && !isAvatarOrLogo) {
-      return trimmed;
-    }
-
-    if (!isVideoFile && !isAvatarOrLogo) {
-      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    if (!trimmed.startsWith("blob:")) {
+      const isVideoFile = trimmed.endsWith(".mp4") || trimmed.endsWith(".webm") || trimmed.endsWith(".mov") || trimmed.includes("/api/videos/stream/");
+      const isAvatarOrLogo =
+        trimmed.includes("/api/avatar") ||
+        trimmed.includes("ui-avatars") ||
+        trimmed.includes("dicebear") ||
+        trimmed.includes("favicon") ||
+        trimmed.includes("google.com/s2") ||
+        trimmed.includes("clearbit.com") ||
+        trimmed.includes("logo.png") ||
+        trimmed.includes("logo.jpg") ||
+        trimmed.includes("brandfetch.io");
+      
+      // Direct Bunny CDN image via proxy for referer resilience
+      if (trimmed.includes("b-cdn.net") && !isVideoFile && !isAvatarOrLogo) {
         if (trimmed.startsWith("/api/proxy-image")) return trimmed;
         return `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
       }
-      if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/") || trimmed.startsWith("/")) {
-        return trimmed;
+
+      if (!isVideoFile && !isAvatarOrLogo) {
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+          if (trimmed.startsWith("/api/proxy-image")) return trimmed;
+          return `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
+        }
+        if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/") || trimmed.startsWith("/")) {
+          return trimmed;
+        }
       }
     }
   }

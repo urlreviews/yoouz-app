@@ -1325,7 +1325,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
             {/* Line 2: Star Rating + Globe Icon + Business URL & Line 3: Review Title */}
             {(() => {
-              const rawHeadline = (video.title || (video as any).videoTitle || (video as any).bunnyTitle || "").trim();
+              const rawHeadline = (video.aiTitle || video.title || (video as any).videoTitle || (video as any).bunnyTitle || "").trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
               const isGenericCaption = !rawHeadline || /^video review (for|of)\b/i.test(rawHeadline);
 
@@ -1333,7 +1333,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               if (!isGenericCaption) {
                 displayHeadline = displayHeadline
                   .replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com")
-                  .replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
+                  .replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com")
+                  .replace(/\s*#[a-z]{2,5}\b/gi, "")
+                  .trim();
               }
 
               return (

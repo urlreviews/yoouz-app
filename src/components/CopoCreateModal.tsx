@@ -1265,14 +1265,22 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     const resolvedPlaceBanner = selectedPlace.bannerUrl || selectedPlace.ogImage || (placeDomain && KNOWN_BRAND_BANNERS[placeDomain]) || "";
     const safeThumbnail = finalThumbnail || videoThumbnail || recordedVideoUrl || resolvedPlaceBanner || resolvedPlaceLogo || `/api/avatar?name=${encodeURIComponent(cleanPlaceName)}&background=18181b&color=fff`;
 
+    const activeAuthUser = currentUser || (() => {
+      try {
+        const stored = typeof window !== "undefined" ? (localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user")) : null;
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      return null;
+    })();
+
     const resolvedAuthor = resolveSafeAuthor({
       author: {
-        name: currentUser?.name || (currentUser?.email ? currentUser.email.split("@")[0] : "Verified Reviewer"),
-        avatar: currentUser?.avatar || ""
+        name: activeAuthUser?.name || (activeAuthUser?.email ? activeAuthUser.email.split("@")[0] : "Verified Reviewer"),
+        avatar: activeAuthUser?.avatar || ""
       },
-      userId: currentUser?.email,
-      userEmail: currentUser?.email
-    }, currentUser);
+      userId: activeAuthUser?.email || activeAuthUser?.id,
+      userEmail: activeAuthUser?.email
+    }, activeAuthUser);
 
     let finalTranscript = liveTranscript || "";
     let finalSegments = liveSegments || [];
@@ -1285,8 +1293,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const fallbackReview: VideoReview = {
       id: reviewId,
-      userId: currentUser?.email || "guest@yoouz.com",
-      userEmail: currentUser?.email || "guest@yoouz.com",
+      userId: activeAuthUser?.email || activeAuthUser?.id || "guest@yoouz.com",
+      userEmail: activeAuthUser?.email || "guest@yoouz.com",
       createdAtMs: Date.now(),
       isLocalUpload: true,
       localBlobUrl: recordedVideoUrl || undefined,
@@ -1476,17 +1484,25 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setUploadProgress(92);
     setPublishingStage("Securing content & synchronizing...");
 
-    const resolvedSafeThumbnail = finalThumbnail || safeThumbnail;
+    const streamPullZone = "https://vz-dcd9e101-437.b-cdn.net";
+    const assignedBunnyId = finalBunnyId || fallbackReview.bunnyVideoId;
+    const resolvedSafeThumbnail = assignedBunnyId
+      ? `${streamPullZone}/${assignedBunnyId}/thumbnail.jpg`
+      : (finalThumbnail || safeThumbnail);
 
     const newReview: VideoReview = {
       ...fallbackReview,
+      bunnyVideoId: assignedBunnyId,
+      bunnyGuid: assignedBunnyId,
+      hlsUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/playlist.m3u8` : undefined,
+      vttUrl: `/api/videos/${reviewId}/subtitles.vtt`,
       localBlobUrl: recordedVideoUrl || fallbackReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || fallbackReview.blobUrl || undefined,
       isCurrentSessionBlob: Boolean(recordedVideoUrl),
-      videoUrl: uploadedPublicUrl || defaultStreamUrl,
-      bunnyVideoId: finalBunnyId,
+      videoUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/playlist.m3u8` : (uploadedPublicUrl || defaultStreamUrl),
       videoData: uploadedVideoData || (recordedVideoBlob ? undefined : undefined),
       fallbackVideoUrls: Array.from(new Set([
+        assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/playlist.m3u8` : null,
         recordedVideoUrl,
         uploadedPublicUrl,
         `/api/videos/stream/${cleanFileName}`,
@@ -1496,7 +1512,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       thumbnailUrl: resolvedSafeThumbnail
     } as any;
 
-    // 4. Save metadata locally first so it is immune to network dropouts or reloads
+    // 4. Save metadata to server and local backup IMMEDIATELY so it is 100% durable
+    setUploadProgress(94);
+    setPublishingStage("Securing review to feed...");
+
+    try {
+      await fetch("/api/videos/save-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newReview),
+        signal: AbortSignal.timeout(10000)
+      });
+    } catch (saveErr) {
+      console.warn("Initial server video review save notice:", saveErr);
+    }
+
     try {
       const existingSaved = localStorage.getItem("yoouz_local_created_reviews");
       let list: any[] = [];
@@ -1510,36 +1540,35 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     // 5. Connect to Bunny Stream Smart Captions pipeline & wait for AI Captions
     setPublishingStage("Generating AI Smart Captions...");
-    setUploadProgress(90);
-    const streamPullZone = "https://vz-dcd9e101-437.b-cdn.net";
-    const assignedBunnyId = finalBunnyId || newReview.bunnyVideoId;
+    setUploadProgress(96);
 
     let bunnySegments: any[] = [];
     let bunnyTranscriptText = "";
+    let bunnyAiTitle = "";
 
     if (assignedBunnyId) {
-      // Poll server for official Bunny Stream Smart Captions (up to 5 attempts, ~1.5s delay)
-      for (let attempt = 1; attempt <= 5; attempt++) {
+      // Poll server for official Bunny Stream Smart Captions (up to 3 quick checks)
+      for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           const capRes = await fetch(`/api/videos/${reviewId}/ensure-transcript`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ bunnyVideoId: assignedBunnyId }),
-            signal: AbortSignal.timeout(6000)
+            signal: AbortSignal.timeout(5000)
           });
           if (capRes.ok) {
             const capData = await capRes.json();
             if (capData && Array.isArray(capData.segments) && capData.segments.length > 0) {
               bunnySegments = capData.segments;
               bunnyTranscriptText = capData.transcriptText || "";
+              if (capData.aiTitle) bunnyAiTitle = capData.aiTitle;
               console.log(`🎬 🐰 [Modal] Official Bunny Smart Captions ready on attempt ${attempt}!`);
               break;
             }
           }
         } catch (e) {}
 
-        setPublishingStage(`Processing AI Captions (${attempt}/5)...`);
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1200));
       }
     }
 
@@ -1548,17 +1577,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       bunnyVideoId: assignedBunnyId,
       bunnyGuid: assignedBunnyId,
       hlsUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/playlist.m3u8` : newReview.hlsUrl,
-      vttUrl: assignedBunnyId ? `${streamPullZone}/${assignedBunnyId}/captions/en-auto.vtt` : newReview.vttUrl,
+      vttUrl: `/api/videos/${reviewId}/subtitles.vtt`,
       localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
       transcriptText: bunnySegments.length > 0 ? bunnyTranscriptText : (finalTranscript || newReview.transcriptText || ""),
       segments: bunnySegments.length > 0 ? bunnySegments : ((finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])),
+      ...(bunnyAiTitle ? { aiTitle: bunnyAiTitle, title: bunnyAiTitle, caption: bunnyAiTitle } : {}),
       hasBunnySmartCaptions: bunnySegments.length > 0
     } as any;
 
-    // 6. Save metadata to server review index and memory cache
-    setUploadProgress(96);
-    setPublishingStage("Saving review to feed...");
+    // 6. Final save with any synced AI captions/metadata
+    setUploadProgress(100);
+    setPublishingStage("Published!");
 
     try {
       await fetch("/api/videos/save-review", {

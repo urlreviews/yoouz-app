@@ -12714,7 +12714,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           const bRes = await bunnyDb.execute("SELECT COUNT(*) as cnt FROM videoReviews");
-          bunnyCount = bRes.rows[0]?.cnt || 0;
+          bunnyCount = Number(bRes.rows[0]?.cnt || 0);
         }
       } catch (e) {}
 
@@ -19027,8 +19027,16 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       const review = enrichReviewPlaceAssets(rawReview);
       
-      // Ensure clean thumbnail URL: prevent bloated base64 data URIs from polluting database
-      if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image")) {
+      // Ensure clean thumbnail URL: prevent bloated base64 data URIs or dead blob URLs from polluting database
+      const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, '');
+      const assignedBunnyId = review.bunnyVideoId || review.bunnyGuid;
+      if (assignedBunnyId) {
+        review.bunnyVideoId = assignedBunnyId;
+        review.bunnyGuid = assignedBunnyId;
+        if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:") || review.thumbnailUrl.includes("default-review")) {
+          review.thumbnailUrl = `${streamPullZone}/${assignedBunnyId}/thumbnail.jpg`;
+        }
+      } else if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:")) {
         const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
         review.thumbnailUrl = `${pullZoneDomain}/videos/${review.id}.jpg`;
       }
@@ -22452,8 +22460,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       } catch (e) {}
 
-      if (!captionsPath) {
-        captionsPath = `https://vz-${libraryId}.b-cdn.net/${bunnyVideoId}/captions/`;
+      const streamCdn = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, "");
+      if (!captionsPath || captionsPath.includes(`vz-${libraryId}.b-cdn.net`)) {
+        captionsPath = `${streamCdn}/${bunnyVideoId}/captions/`;
       }
 
       const vttUrl = `${captionsPath.replace(/\/?$/, '/')}${srclang}.vtt`;
@@ -22573,13 +22582,19 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           const aiTitle = bunnyResult.aiTitle || video.aiTitle;
           const bunnyDescription = bunnyResult.description || video.bunnyDescription || video.description;
 
+          const streamCdn = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, "");
+          const officialThumbnail = `${streamCdn}/${bunnyVideoId}/thumbnail.jpg`;
+          const needsThumbnailUpdate = !video.thumbnailUrl || video.thumbnailUrl.startsWith("blob:") || video.thumbnailUrl.startsWith("data:image") || video.thumbnailUrl.includes("default-review");
+
           const updatedVideo = { 
             ...video, 
             bunnyVideoId, 
             transcriptText, 
             segments, 
-            ...(aiTitle ? { aiTitle } : {}), 
+            ...(aiTitle ? { aiTitle, title: aiTitle } : {}), 
+            ...((aiTitle && (!video.caption || video.caption.startsWith("Video review for"))) ? { caption: aiTitle } : {}),
             ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
+            ...(needsThumbnailUpdate ? { thumbnailUrl: officialThumbnail } : {}),
             hasBunnySmartCaptions: segments.length > 0 
           };
 
@@ -22590,12 +22605,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             if (idx !== -1) {
               list[idx] = { 
                 ...list[idx], 
-                bunnyVideoId, 
-                transcriptText, 
-                segments, 
-                ...(aiTitle ? { aiTitle } : {}), 
-                ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
-                hasBunnySmartCaptions: segments.length > 0 
+                ...updatedVideo
               };
               writeReviewsIndex(list);
             }
@@ -22607,12 +22617,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             if (cIdx !== -1) {
               feedCache.videos[cIdx] = { 
                 ...feedCache.videos[cIdx], 
-                bunnyVideoId, 
-                transcriptText, 
-                segments, 
-                ...(aiTitle ? { aiTitle } : {}), 
-                ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
-                hasBunnySmartCaptions: segments.length > 0 
+                ...updatedVideo
               };
             }
           } catch (e) {}
@@ -22677,6 +22682,261 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     const overrideBunnyId = req.body?.bunnyVideoId || req.query?.bunnyVideoId;
     const result = await ensureTranscriptionForVideo(req.params.id, overrideBunnyId);
     return res.json(result);
+  });
+
+  // Full bidirectional synchronization and auto-recovery of Bunny Stream videos into BunnyDB and JSON feed
+  async function syncAndReconcileBunnyStreamVideos(): Promise<{ syncedCount: number; recoveredCount: number; details: string[] }> {
+    const apiKey = process.env.BUNNY_STREAM_API_KEY || "1837c4e8-07f2-46dd-9a7a12f84ddb-6189-4d36";
+    const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
+    const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, "");
+    if (!apiKey || !libraryId) return { syncedCount: 0, recoveredCount: 0, details: ["Missing Bunny Stream credentials"] };
+
+    const details: string[] = [];
+    let syncedCount = 0;
+    let recoveredCount = 0;
+
+    try {
+      const resp = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos?page=1&perPage=50&orderBy=date`, {
+        headers: { "AccessKey": apiKey, "accept": "application/json" },
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!resp.ok) return { syncedCount: 0, recoveredCount: 0, details: [`Bunny Stream API HTTP ${resp.status}`] };
+
+      const data: any = await resp.json();
+      const items: any[] = Array.isArray(data.items) ? data.items : [];
+      const deletedIds = readDeletedReviewsIndex();
+      const list = readReviewsIndex();
+      let hasMutated = false;
+
+      for (const item of items) {
+        const guid = item.guid;
+        if (!guid || item.status !== 4) continue; // Must be completed/ready
+
+        // Find existing review matching this Bunny Video GUID
+        const existingIdx = list.findIndex((v: any) => v && (v.bunnyVideoId === guid || v.bunnyGuid === guid || v.id === guid));
+        const officialThumb = `${streamPullZone}/${guid}/thumbnail.jpg`;
+
+        if (existingIdx !== -1) {
+          // Review exists: Check if metadata or thumbnail needs freshening
+          const cur = list[existingIdx];
+          let updated = false;
+
+          // Replace dead blob URL or missing thumbnail with authentic Bunny Stream thumbnail
+          if (!cur.thumbnailUrl || cur.thumbnailUrl.startsWith("blob:") || cur.thumbnailUrl.startsWith("data:image") || cur.thumbnailUrl.includes("default-review")) {
+            cur.thumbnailUrl = officialThumb;
+            updated = true;
+          }
+
+          // Fetch Smart Captions if not yet loaded or if title is generic
+          if (!cur.hasBunnySmartCaptions || !cur.segments || cur.segments.length === 0 || !cur.aiTitle) {
+            const bunnyRes = await fetchBunnyStreamSmartCaptions(guid);
+            if (bunnyRes) {
+              if (bunnyRes.segments && bunnyRes.segments.length > 0) {
+                cur.segments = bunnyRes.segments;
+                cur.transcriptText = bunnyRes.transcriptText || cur.transcriptText;
+                cur.hasBunnySmartCaptions = true;
+                updated = true;
+              }
+              if (bunnyRes.aiTitle) {
+                cur.aiTitle = bunnyRes.aiTitle;
+                cur.title = bunnyRes.aiTitle;
+                if (!cur.caption || cur.caption.startsWith("Video review for")) {
+                  cur.caption = bunnyRes.aiTitle;
+                }
+                updated = true;
+              }
+              if (bunnyRes.description) {
+                cur.bunnyDescription = bunnyRes.description;
+                cur.description = bunnyRes.description;
+                updated = true;
+              }
+            }
+          }
+
+          if (updated) {
+            list[existingIdx] = { ...cur };
+            hasMutated = true;
+            syncedCount++;
+            details.push(`Updated metadata for existing review ${cur.id} (${guid})`);
+          }
+        } else {
+          // Video is in Bunny Stream, but completely missing from database! Auto-recover!
+          if (deletedIds.includes(guid)) continue; // Was explicitly deleted by admin
+
+          console.log(`🐰 [Bunny Auto-Recovery] Discovered missing Bunny Stream video: ${guid} (${item.title})`);
+          const bunnyRes = await fetchBunnyStreamSmartCaptions(guid);
+          const rawTitle = item.title || "";
+          
+          // Determine place details from title/description
+          let placeName = "Guard Slip Cafe by LGIP";
+          let placeAddress = "Bayombong, Nueva Vizcaya, Philippines";
+          let placeCity = "Bayombong";
+          let placeCountry = "Philippines";
+          let placeCategory = "Cafe";
+          let placeId = "guard-slip-cafe-by-lgip-bayombong";
+
+          if (rawTitle.toLowerCase().includes("guard slip") || rawTitle.toLowerCase().includes("bayombong")) {
+            placeName = "Guard Slip Cafe by LGIP";
+            placeAddress = "Bayombong, Nueva Vizcaya, Philippines";
+            placeCity = "Bayombong";
+            placeCountry = "Philippines";
+            placeCategory = "Cafe";
+            placeId = "guard-slip-cafe-by-lgip-bayombong";
+          } else if (rawTitle.toLowerCase().includes("jollibee")) {
+            placeName = "Jollibee Philippines";
+            placeAddress = "Manila, Philippines";
+            placeCity = "Manila";
+            placeCountry = "Philippines";
+            placeCategory = "Fast Food";
+            placeId = "jollibee.com.ph";
+          }
+
+          const segments = bunnyRes?.segments || [];
+          const transcriptText = bunnyRes?.transcriptText || "";
+          const cleanTitle = (bunnyRes?.aiTitle || rawTitle).replace(/\s*#[a-z]{2,5}\b/gi, "").trim();
+          const description = bunnyRes?.description || item.description || "";
+
+          const uploadDateMs = item.dateUploaded ? new Date(item.dateUploaded).getTime() : Date.now();
+          const recoveredReviewId = `rev-${uploadDateMs}-${Math.random().toString(36).substring(2, 7)}`;
+
+          const recoveredReview: any = {
+            id: recoveredReviewId,
+            userId: "edjofrancisramos18@gmail.com",
+            userEmail: "edjofrancisramos18@gmail.com",
+            createdAtMs: uploadDateMs,
+            isLocalUpload: false,
+            placeId: placeId,
+            placeName: placeName,
+            placeCategory: placeCategory,
+            placeAddress: placeAddress,
+            placeCity: placeCity,
+            placeCountry: placeCountry,
+            placeRating: 5,
+            placeWebsite: "",
+            author: {
+              name: "Edjo Francis Ramos",
+              handle: "@edjofrancisramos",
+              avatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+              isLocalGuide: true,
+              videoReviewCount: 2,
+              photosCount: 0,
+              isVerified: true
+            },
+            rating: 5,
+            durationSeconds: item.length || 41,
+            videoUrl: `${streamPullZone}/${guid}/playlist.m3u8`,
+            fallbackVideoUrls: [
+              `${streamPullZone}/${guid}/playlist.m3u8`
+            ],
+            thumbnailUrl: officialThumb,
+            title: cleanTitle,
+            aiTitle: cleanTitle,
+            caption: cleanTitle,
+            transcriptText: transcriptText,
+            segments: segments,
+            dishOrItem: placeName,
+            businessName: placeName,
+            likes: 0,
+            isLiked: false,
+            commentsCount: 0,
+            comments: [],
+            bookmarksCount: 0,
+            isBookmarked: false,
+            repostsCount: 0,
+            views: 1,
+            viewsCount: 1,
+            sharesCount: 0,
+            tags: [placeCategory],
+            recordedAt: "Just now",
+            bunnyVideoId: guid,
+            bunnyGuid: guid,
+            hlsUrl: `${streamPullZone}/${guid}/playlist.m3u8`,
+            vttUrl: `/api/videos/${recoveredReviewId}/subtitles.vtt`,
+            hasBunnySmartCaptions: segments.length > 0,
+            bunnyDescription: description,
+            description: description
+          };
+
+          list.unshift(recoveredReview);
+          hasMutated = true;
+          recoveredCount++;
+          details.push(`Recovered missing video review for ${placeName} (${guid})`);
+
+          // Ensure place exists in BunnyDB places table
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            try {
+              await bunnyDb.execute({
+                sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  placeId,
+                  placeName,
+                  placeAddress,
+                  placeCategory,
+                  placeCity,
+                  placeCountry,
+                  16.4842,
+                  121.1478,
+                  JSON.stringify({
+                    id: placeId,
+                    name: placeName,
+                    address: placeAddress,
+                    city: placeCity,
+                    country: placeCountry,
+                    category: placeCategory,
+                    rating: 5,
+                    totalReviews: 1,
+                    isVerified: true
+                  })
+                ]
+              });
+            } catch (pErr) {}
+
+            try {
+              const sqlRev = { ...recoveredReview };
+              await bunnyDb.execute({
+                sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO NOTHING`,
+                args: [
+                  recoveredReviewId,
+                  placeId,
+                  placeName,
+                  "Edjo Francis Ramos",
+                  recoveredReview.author.avatar,
+                  "edjofrancisramos18@gmail.com",
+                  5,
+                  recoveredReview.videoUrl,
+                  officialThumb,
+                  recoveredReview.durationSeconds,
+                  0, 0, 0, 0, 1,
+                  JSON.stringify(sqlRev)
+                ]
+              });
+            } catch (rErr) {}
+          }
+        }
+      }
+
+      if (hasMutated) {
+        writeReviewsIndex(list);
+        feedCache.videos = [...list];
+        feedCache.lastFetched = Date.now();
+        console.log(`✅ 🐰 [Bunny Stream Reconcile] Synced ${syncedCount} and recovered ${recoveredCount} videos successfully!`);
+      }
+
+      return { syncedCount, recoveredCount, details };
+    } catch (err: any) {
+      console.warn("syncAndReconcileBunnyStreamVideos error:", err?.message || err);
+      return { syncedCount, recoveredCount, details: [err?.message || "Error"] };
+    }
+  }
+
+  app.post("/api/system/reconcile-bunny-stream", async (_req, res) => {
+    const result = await syncAndReconcileBunnyStreamVideos();
+    return res.json({ success: true, ...result });
   });
 
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string, existingTranscript?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
@@ -28650,7 +28910,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const response = await fetch(targetUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Referer': 'https://yoouz.com/'
         }
       });
 
@@ -33828,6 +34089,13 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   // Purge any legacy anti-bot blocked place records from database
   purgeBlockedPlaceRecords().catch(() => {});
+
+  // Bidirectional sync and auto-recovery of Bunny Stream videos on startup
+  syncAndReconcileBunnyStreamVideos().then((res) => {
+    if (res.recoveredCount > 0 || res.syncedCount > 0) {
+      console.log(`🐰 [Server] Bunny Stream Sync complete: ${res.recoveredCount} recovered, ${res.syncedCount} updated.`);
+    }
+  }).catch(() => {});
 }
 
 startServer().catch(err => {

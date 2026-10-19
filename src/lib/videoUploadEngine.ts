@@ -17,7 +17,7 @@ export async function uploadVideoReview(
   formData.append("fileName", fileName);
   formData.append("mimeType", mime);
 
-  const uploadedUrl = await new Promise<string>((resolve, reject) => {
+  const uploadRes = await new Promise<{ url: string; bunnyVideoId?: string; thumbnailUrl?: string }>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/videos/upload", true);
 
@@ -35,7 +35,11 @@ export async function uploadVideoReview(
           const res = JSON.parse(xhr.responseText);
           if (res.success && res.url) {
             onProgress(98);
-            resolve(res.url);
+            resolve({
+              url: res.url,
+              bunnyVideoId: res.bunnyVideoId,
+              thumbnailUrl: res.thumbnailUrl
+            });
           } else {
             reject(new Error(res.error || "Failed to parse upload response URL"));
           }
@@ -62,7 +66,10 @@ export async function uploadVideoReview(
   const fullReview = {
     ...meta,
     id: reviewId,
-    videoUrl: uploadedUrl,
+    videoUrl: uploadRes.url,
+    ...(uploadRes.bunnyVideoId ? { bunnyVideoId: uploadRes.bunnyVideoId, bunnyGuid: uploadRes.bunnyVideoId } : {}),
+    ...(uploadRes.thumbnailUrl ? { thumbnailUrl: uploadRes.thumbnailUrl } : {}),
+    vttUrl: `/api/videos/${reviewId}/subtitles.vtt`,
     createdAt: new Date().toISOString(),
     createdAtMs: Date.now()
   };

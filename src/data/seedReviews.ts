@@ -2,6 +2,232 @@ import { VideoReview } from "../types";
 
 export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   {
+    "id": "rev-1792404298362-hrk2f",
+    "userId": "edjofrancisramos18@gmail.com",
+    "userEmail": "edjofrancisramos18@gmail.com",
+    "createdAtMs": 1792409252000,
+    "isLocalUpload": false,
+    "placeId": "guard-slip-cafe-by-lgip.bayombong",
+    "placeName": "Guard Slip Cafe By Lgip",
+    "placeCategory": "Cafe",
+    "placeAddress": "Bayombong, Nueva Vizcaya, Philippines",
+    "placeCity": "Bayombong",
+    "placeCountry": "Philippines",
+    "placeRating": 5,
+    "placeWebsite": "https://guard-slip-cafe-by-lgip.bayombong",
+    "author": {
+      "name": "Edjo Francis Ramos",
+      "handle": "@edjofrancisramos",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 2,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": ""
+    },
+    "rating": 5,
+    "durationSeconds": 41,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/cd931352-79b9-4067-8a33-828601661a22.mp4",
+      "/api/videos/stream/rev-1792404298362-hrk2f.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
+    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
+    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
+    "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
+    "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
+    "segments": [
+      {
+        "start": 0.66,
+        "end": 14.06,
+        "text": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which"
+      },
+      {
+        "start": 14.12,
+        "end": 26.77,
+        "text": "they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at"
+      },
+      {
+        "start": 26.87,
+        "end": 40.44,
+        "text": "the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT"
+      }
+    ],
+    "dishOrItem": "Guard Slip Cafe by LGIP",
+    "businessName": "Guard Slip Cafe By Lgip",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 1,
+    "viewsCount": 1,
+    "sharesCount": 0,
+    "tags": [
+      "Cafe"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
+    "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+    "vttUrl": "/api/videos/rev-1792404298362-hrk2f/subtitles.vtt",
+    "hasBunnySmartCaptions": true,
+    "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
+    "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
+    "authorName": "Edjo Francis Ramos",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 41,
+    "createdAt": "2026-10-19 11:27:32",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "placeBannerUrl": "",
+    "bannerUrl": "",
+    "ogImage": "",
+    "placeLogoUrl": "",
+    "placePhone": "",
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1
+  },
+  {
+    "id": "rev-1792405036441-zqqwp",
+    "userId": "edjofrancisramos18@gmail.com",
+    "userEmail": "edjofrancisramos18@gmail.com",
+    "createdAtMs": 1792405036443,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "jollibee.com.ph",
+    "placeName": "Jollibee Philippines",
+    "placeCategory": "Verified Business",
+    "placeAddress": "",
+    "placeCity": "Online",
+    "placeCountry": "",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://jollibee.com.ph",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fen%2Fthumb%2F8%2F84%2FJollibee_2011_logo.svg%2F330px-Jollibee_2011_logo.svg.png%3Futm_source%3Den.wikipedia.org%26utm_campaign%3Dapi%26utm_content%3Dthumbnail",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.jollibee.com.ph%2Fsites%2Fapollocmsmkt%2Ffiles%2Fstyles%2Fwebp_optimized%2Fpublic%2Fhero-banner-images%2F2026-09%2FJKM_P-KEHLANI-DIGITAL-CASCADES_Mobile-Banner-2250x2472px_2026_FA_0.jpg.webp%3Fitok%3D8VxFZWle",
+    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "author": {
+      "name": "Edjo Francis Ramos",
+      "handle": "@edjofrancisramos",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": ""
+    },
+    "rating": 5,
+    "durationSeconds": 42,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/fd5fe606-4b22-4621-9cd7-3efa7591a424.mp4",
+      "/api/videos/stream/rev-1792405036441-zqqwp.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/thumbnail.jpg",
+    "caption": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
+    "transcriptText": "Hello! So for this one is Jollibee Philippines. I gave it a 5 star for its review. Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside. And always be served with the iconic sweet style spaghetti. mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours, making it as your go-to for your late night cravings or at same for any morning breakfast. So, see you there! Enjoy the Philippines!",
+    "segments": [
+      {
+        "start": 1.03,
+        "end": 1.85,
+        "text": "Hello!"
+      },
+      {
+        "start": 1.95,
+        "end": 4.11,
+        "text": "So for this one is Jollibee Philippines."
+      },
+      {
+        "start": 4.19,
+        "end": 6.85,
+        "text": "I gave it a 5 star for its review."
+      },
+      {
+        "start": 6.87,
+        "end": 14.44,
+        "text": "Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside."
+      },
+      {
+        "start": 14.56,
+        "end": 18.84,
+        "text": "And always be served with the iconic sweet style spaghetti."
+      },
+      {
+        "start": 20.55,
+        "end": 25.31,
+        "text": "mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours,"
+      },
+      {
+        "start": 25.33,
+        "end": 28.15,
+        "text": "making it as your go-to for your late night cravings or at same for any morning breakfast."
+      },
+      {
+        "start": 28.17,
+        "end": 28.73,
+        "text": "So, see you there!"
+      },
+      {
+        "start": 28.77,
+        "end": 29.49,
+        "text": "Enjoy the Philippines!"
+      }
+    ],
+    "dishOrItem": "Jollibee Philippines",
+    "businessName": "Jollibee Philippines",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 9,
+    "viewsCount": 9,
+    "sharesCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
+    "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.jollibee.com.ph%2Fsites%2Fapollocmsmkt%2Ffiles%2Fstyles%2Fwebp_optimized%2Fpublic%2Fhero-banner-images%2F2026-09%2FJKM_P-KEHLANI-DIGITAL-CASCADES_Mobile-Banner-2250x2472px_2026_FA_0.jpg.webp%3Fitok%3D8VxFZWle",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.jollibee.com.ph%2Fsites%2Fapollocmsmkt%2Ffiles%2Fstyles%2Fwebp_optimized%2Fpublic%2Fhero-banner-images%2F2026-09%2FJKM_P-KEHLANI-DIGITAL-CASCADES_Mobile-Banner-2250x2472px_2026_FA_0.jpg.webp%3Fitok%3D8VxFZWle",
+    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
+    "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
+    "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fen%2Fthumb%2F8%2F84%2FJollibee_2011_logo.svg%2F330px-Jollibee_2011_logo.svg.png%3Futm_source%3Den.wikipedia.org%26utm_campaign%3Dapi%26utm_content%3Dthumbnail",
+    "likesCount": 0,
+    "authorName": "Edjo Francis Ramos",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 42,
+    "createdAt": "2026-10-19T10:17:16.443Z",
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1,
+    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl"
+  },
+  {
     "id": "rev-1792172427752-d6g7q",
     "userId": "avr6566gd@gmail.com",
     "userEmail": "avr6566gd@gmail.com",
@@ -71,8 +297,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 74,
-    "viewsCount": 74,
+    "views": 163,
+    "viewsCount": 163,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -162,8 +388,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 25,
-    "viewsCount": 25,
+    "views": 47,
+    "viewsCount": 47,
     "sharesCount": 0,
     "tags": [
       "Legal Services"
@@ -1930,8 +2156,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 9,
-    "viewsCount": 9,
+    "views": 32,
+    "viewsCount": 32,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -1970,7 +2196,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeCountry": "United States",
     "placePhone": "(702)%20972-8298%20",
     "placeEmail": "level15moving@gmail.com",
-    "placeRating": 5,
+    "placeRating": 3,
     "placeWebsite": "https://level15moving.com/",
     "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
@@ -1988,7 +2214,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "state": "Florida",
       "country": "United States"
     },
-    "rating": 5,
+    "rating": 3,
     "durationSeconds": 20,
     "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/4e4b0dff-f52b-4fc8-bbf2-cbe88130c6b9/playlist.m3u8",
     "fallbackVideoUrls": [
@@ -4415,8 +4641,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 9,
-    "viewsCount": 9,
+    "views": 36,
+    "viewsCount": 36,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -4502,8 +4728,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 4,
-    "viewsCount": 4,
+    "views": 6,
+    "viewsCount": 6,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -4627,8 +4853,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 309,
-    "viewsCount": 309,
+    "views": 312,
+    "viewsCount": 312,
     "sharesCount": 1,
     "tags": [
       "Technology"
@@ -4724,8 +4950,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 69,
-    "viewsCount": 69,
+    "views": 70,
+    "viewsCount": 70,
     "sharesCount": 4,
     "tags": [
       "Technology"
@@ -4842,8 +5068,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 108,
-    "viewsCount": 108,
+    "views": 109,
+    "viewsCount": 109,
     "sharesCount": 7,
     "tags": [
       "Website"
@@ -5076,8 +5302,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 99,
-    "viewsCount": 99,
+    "views": 100,
+    "viewsCount": 100,
     "sharesCount": 0,
     "tags": [
       "Pharmacy & Healthcare"
