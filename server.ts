@@ -23156,11 +23156,63 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
 
-      // STRICT POLICY: Do NOT re-chunk or guess word timings.
-      // Use the Bunny Stream VTT cues EXACTLY as provided to guarantee 100% sync.
-      return cleanSegments;
+      // Pre-chunk long segments into 4-6 word acoustic sub-segments matching exact speech pacing
+      const finalAcousticSegments: any[] = [];
+      for (const seg of cleanSegments) {
+        const words = seg.text.split(/\s+/).filter(Boolean);
+        if (words.length <= 6) {
+          finalAcousticSegments.push(seg);
+        } else {
+          const totalDur = Math.max(0.6, seg.end - seg.start);
+          const getWeight = (w: string) => {
+            const cl = w.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (['a','i','in','it','at','on','of','to','so','do','is','be','by','my','or','and','the'].includes(cl)) return 1.1;
+            const vowels = cl.match(/[aeiouy]/gi);
+            return Math.max(1.2, cl.length * 0.65 + (vowels ? vowels.length : 1) * 1.1);
+          };
+
+          const wordChunks: string[][] = [];
+          let curChunk: string[] = [];
+          for (let i = 0; i < words.length; i++) {
+            const w = words[i];
+            curChunk.push(w);
+            const hasPunctuation = /[.,!?;:]$/.test(w);
+            const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if)$/i.test(w.replace(/[^a-z]/gi, ''));
+            const reachMax = curChunk.length >= 6;
+            const reachMin = curChunk.length >= 3;
+            const remaining = words.length - (i + 1);
+
+            if ((reachMax || (reachMin && (hasPunctuation || isClauseMarker)) || (reachMin && remaining > 0 && remaining < 3)) && remaining > 0) {
+              wordChunks.push(curChunk);
+              curChunk = [];
+            }
+          }
+          if (curChunk.length > 0) wordChunks.push(curChunk);
+
+          const chunkWeights = wordChunks.map(c => c.reduce((sum, w) => sum + getWeight(w), 0));
+          const totalWeight = chunkWeights.reduce((a, b) => a + b, 0);
+
+          let curStart = seg.start;
+          for (let idx = 0; idx < wordChunks.length; idx++) {
+            const cWords = wordChunks[idx];
+            const cWeight = chunkWeights[idx];
+            const cDur = totalWeight > 0 ? totalDur * (cWeight / totalWeight) : totalDur / wordChunks.length;
+            const cEnd = idx === wordChunks.length - 1 ? seg.end : Math.round((curStart + cDur) * 100) / 100;
+
+            finalAcousticSegments.push({
+              start: Math.round(curStart * 100) / 100,
+              end: Math.max(curStart + 0.35, Math.round(cEnd * 100) / 100),
+              text: cWords.join(" "),
+              isHardwareTimed: true
+            });
+            curStart = cEnd;
+          }
+        }
+      }
+
+      return finalAcousticSegments;
     } catch (e) {
-      console.warn("VTT parse error:", e);
+      console.warn("VTT parse failed:", e);
       return [];
     }
   }

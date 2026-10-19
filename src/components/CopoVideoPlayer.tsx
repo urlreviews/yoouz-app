@@ -572,11 +572,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     activeVideoRef.current = activeVideo;
     const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
 
-    // Strict Guard: If this video is already playing cleanly, DO NOT reload or interrupt it
-    if (!isNewVideo && activeVid.currentTime > 0.05 && !activeVid.paused) {
-      return;
-    }
-
     const isSameSrc = (elSrc: string, targetSrc: string) => {
       if (!elSrc) return false;
       try {
@@ -594,12 +589,34 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     activeVid.preload = "auto";
 
     const currentVidSrc = activeVid.currentSrc || activeVid.src;
-    const isAlreadyUsingWorkingCascadeSrc = currentVidSrc && cascade.some(s => isSameSrc(currentVidSrc, s) && !failedSet.has(s));
+    // CRITICAL: For HLS videos, activeVid.src becomes a blob URL, so it won't match activeSrc (.m3u8).
+    // We must rely on lastLoadedVideoIdRef to prevent unnecessary reloads of the same video.
+    const isAlreadyUsingWorkingCascadeSrc = !isNewVideo && currentVidSrc && (
+      cascade.some(s => isSameSrc(currentVidSrc, s)) || 
+      hlsPoolRef.current.has(activeVid) // If HLS is active, assume it is using the correct source
+    );
 
     if (isNewVideo || !isAlreadyUsingWorkingCascadeSrc) {
       if (!isSameSrc(activeVid.src, activeSrc)) {
         loadVideoSource(activeVid, activeVideo, localBlob);
       }
+    }
+
+    // Strict Guard: If this video is already correctly loaded and playing (or paused at a specific time), DO NOT interrupt it
+    if (!isNewVideo && activeVid.currentTime > 0.05) {
+      // Just ensure sync of minor properties
+      const effectiveMuted = isMuted || !isSessionAudioUnlocked;
+      if (activeVid.muted !== effectiveMuted) {
+        activeVid.muted = effectiveMuted;
+        if (!effectiveMuted) safeSetVolume(activeVid, 1);
+      }
+      setIsActualMuted(activeVid.muted);
+      
+      // If the app wants it to play (not paused globally) and it is not manually paused, ensure it keeps playing
+      if (activeVid.paused && !isPaused && !isManuallyPausedRef.current) {
+        activeVid.play().catch(() => {});
+      }
+      return;
     }
     const activePoster = resolveVideoPosterUrl(activeVideo);
     if (activeVid.poster !== activePoster) {

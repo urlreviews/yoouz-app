@@ -159,7 +159,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         mergedList.push({ ...item });
       }
 
-      // Step 3: Normalize cue durations preserving exact speech boundaries from Bunny Stream VTT
+      // Step 3: Normalize cue durations and split long segments into 1-line phrase chunks preserving exact speech boundaries
       for (let i = 0; i < mergedList.length; i++) {
         const item = mergedList[i];
         let s = item.start >= 0 ? item.start : i * 2.5;
@@ -167,14 +167,16 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
         if (e - s < 0.5) e = s + 0.5;
 
-        // STRICT POLICY: Use the cue EXACTLY as provided by the VTT to guarantee sync.
-        // If the cue is long, it will wrap to multiple lines cleanly in the UI.
-        cleanCues.push({
-          id: cueId++,
-          start: Math.round(s * 100) / 100,
-          end: Math.round(e * 100) / 100,
-          text: item.text
-        });
+        // Apply 1-line acoustic phrase chunker to keep text on 1 line while maintaining sync
+        const phraseChunks = chunkCueTo1Line(s, e, item.text, 5);
+        for (const chunk of phraseChunks) {
+          cleanCues.push({
+            id: cueId++,
+            start: chunk.start,
+            end: chunk.end,
+            text: chunk.text
+          });
+        }
       }
     }
 
