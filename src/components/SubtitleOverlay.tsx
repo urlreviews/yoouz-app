@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
 
 interface SubtitleCue {
   id: number;
@@ -31,7 +32,6 @@ const isIgnoredTitle = (text: string): boolean => {
   );
 };
 
-/**
 import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
 
 /**
