@@ -1162,7 +1162,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   {authorVideos.length === 1 ? t("common.videoReview", "Video Review") : t("common.videoReviews", "Video Reviews")}
                 </span>
               </div>
-              <span className="text-zinc-700 font-bold">•</span>
               <button
                 type="button"
                 onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
@@ -1171,7 +1170,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <span className="font-extrabold text-white text-base group-hover:underline">{effectiveFollowersCount}</span>
                 <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.followers", "followers")}</span>
               </button>
-              <span className="text-zinc-700 font-bold">•</span>
               <button
                 type="button"
                 onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
