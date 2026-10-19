@@ -4578,8 +4578,8 @@ export function App() {
       return followed.length > 0 ? followed : (visibleVideos.length > 0 ? visibleVideos : videos);
     }
 
-    // Emergency Fallback: If we have ANY videos but they are ALL hidden or filtered, show non-deactivated
-    if (visibleVideos.length === 0 && videos.length > 0) {
+    // Emergency Fallback: If in standard home feed and all items are filtered/hidden, show non-deactivated
+    if (!isPlaceView && !isCreatorView && !fullscreenFeedContext && activeSection === "home" && visibleVideos.length === 0 && videos.length > 0) {
       const nonDeactivated = videos.filter((v) => !isUserDeactivated(v.author || v.userId || v.authorName));
       return nonDeactivated;
     }

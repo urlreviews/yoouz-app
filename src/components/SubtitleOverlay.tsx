@@ -32,8 +32,11 @@ const isIgnoredTitle = (text: string): boolean => {
 };
 
 /**
- * Helper to split a longer subtitle cue into short 4-5 word 1-line phrase chunks with proportional timing.
- * Guarantees that subtitles stay on 1 clean line and advance smoothly as the video plays.
+import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
+
+/**
+ * Helper to split a longer subtitle cue into short 4-5 word 1-line phrase chunks with acoustic phonetic timing.
+ * Guarantees that subtitles stay on 1 clean line and advance smoothly in sync with spoken audio.
  */
 const chunkCueTo1Line = (
   start: number,
@@ -49,31 +52,32 @@ const chunkCueTo1Line = (
     return [{ start, end, text: cleanText }];
   }
 
+  // Use clause-aware chunking
+  const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk);
+  if (wordGroups.length === 0) return [];
+
+  const totalDuration = Math.max(0.6, end - start);
+  const groupWeights = wordGroups.map(group =>
+    group.reduce((acc, w) => acc + getWordPhoneticWeight(w), 0)
+  );
+  const totalWeight = groupWeights.reduce((a, b) => a + b, 0);
+
   const chunks: { start: number; end: number; text: string }[] = [];
-  const totalWords = words.length;
-  const totalDuration = Math.max(0.8, end - start);
-
-  const wordGroups: string[][] = [];
-  for (let i = 0; i < totalWords; i += maxWordsPerChunk) {
-    wordGroups.push(words.slice(i, i + maxWordsPerChunk));
-  }
-
-  const numGroups = wordGroups.length;
   let currentStart = start;
 
-  for (let idx = 0; idx < numGroups; idx++) {
+  for (let idx = 0; idx < wordGroups.length; idx++) {
     const group = wordGroups[idx];
     const groupText = group.join(' ');
-    const groupRatio = group.length / totalWords;
-    const groupDuration = totalDuration * groupRatio;
-    
-    const groupEnd = idx === numGroups - 1 
-      ? end 
+    const groupWeight = groupWeights[idx];
+    const groupDuration = totalWeight > 0 ? totalDuration * (groupWeight / totalWeight) : totalDuration / wordGroups.length;
+
+    const groupEnd = idx === wordGroups.length - 1
+      ? end
       : Math.round((currentStart + groupDuration) * 100) / 100;
 
     chunks.push({
       start: Math.round(currentStart * 100) / 100,
-      end: Math.max(currentStart + 0.4, groupEnd),
+      end: Math.max(currentStart + 0.35, groupEnd),
       text: groupText
     });
 
@@ -155,16 +159,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         mergedList.push({ ...item });
       }
 
-      // Step 3: Normalize cue durations and split long segments into 1-line 4-5 word phrase chunks
+      // Step 3: Normalize cue durations and split long segments into 1-line phrase chunks preserving exact speech boundaries
       for (let i = 0; i < mergedList.length; i++) {
         const item = mergedList[i];
         let s = item.start >= 0 ? item.start : i * 2.5;
         let e = item.end > s ? item.end : s + 2.0;
 
-        if (e - s < 0.8) e = s + 0.8;
-        if (e - s > 12.0) e = s + 12.0;
+        if (e - s < 0.5) e = s + 0.5;
 
-        // Apply 1-line phrase chunker
+        // Apply 1-line acoustic phrase chunker
         const phraseChunks = chunkCueTo1Line(s, e, item.text, 5);
         for (const chunk of phraseChunks) {
           cleanCues.push({
