@@ -1387,9 +1387,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         feedVideoRef.current.play().catch(() => {});
       }
       scrollToCard(prevIdx, "smooth");
+    } else if (displayItems.length > 1) {
+      scrollToCard(displayItems.length - 1, "smooth");
+    } else {
+      scrollToCard(0, "smooth");
     }
-    // Strict top boundary: Never wrap or scroll up when at index 0 (first video)
-  }, [scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [displayItems.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
 
   // Toggle Play / Pause (Stop / Resume) for the active video, or activate and play clicked card
   const handleTogglePlayPause = useCallback((e?: React.SyntheticEvent | Event, targetCardIndex?: number) => {
@@ -1860,18 +1863,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 commentsOpen ? "right-[456px] lg:right-[464px]" : "right-4 lg:right-8"
               }`}
             >
-              {/* Up arrow to scroll to previous video (disabled/dimmed when at first video) */}
+              {/* Up arrow to scroll to previous video */}
               <button
                 id="btn-scroll-prev-video"
                 onClick={handlePrev}
-                disabled={isAtFirstVideo}
-                aria-disabled={isAtFirstVideo}
-                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtFirstVideo
-                    ? "bg-zinc-800/20 border-zinc-800/40 text-zinc-600/50 cursor-not-allowed pointer-events-none opacity-30"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
-                }`}
-                title={isAtFirstVideo ? "First Video (Top)" : "Previous Video (Up Arrow)"}
+                className="w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border border-zinc-700/80 bg-zinc-800/90 hover:bg-zinc-700/90 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl shadow-black/80 flex items-center justify-center transition-all"
+                title="Previous Video (Up Arrow)"
                 aria-label="Previous Video"
               >
                 <ChevronUp className="w-6 h-6 stroke-[2.5]" />
@@ -1885,7 +1882,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtLastVideo
                     ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
                 title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
                 aria-label="Next Video"

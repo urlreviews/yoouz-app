@@ -489,15 +489,24 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     };
   }, [isScrubbing, calculatePctFromClientX, updateSeekPosition, onScrubEnd]);
 
-  // High-fidelity poster URL with graceful fallback
+  // High-fidelity poster URL with graceful user avatar fallback (NEVER falls back to company logos)
   const [posterLoadError, setPosterLoadError] = useState(false);
+  const userAvatarFallback = React.useMemo(() => {
+    return getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
+  }, [safeAuthor]);
+
+  const realVideoPoster = React.useMemo(() => {
+    return resolveVideoPosterUrl(video) || video.thumbnailUrl || "";
+  }, [video]);
+
   const posterUrl = React.useMemo(() => {
-    if (posterLoadError) {
-      return getProxiedImageUrl(video.placeBannerUrl || video.placeLogoUrl || "");
+    if (posterLoadError || !realVideoPoster) {
+      return userAvatarFallback;
     }
-    const rawPoster = resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl || "";
-    return getProxiedImageUrl(rawPoster);
-  }, [video, posterLoadError]);
+    return getProxiedImageUrl(realVideoPoster);
+  }, [posterLoadError, realVideoPoster, userAvatarFallback]);
+
+  const hasRealPoster = Boolean(realVideoPoster && !posterLoadError);
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -510,7 +519,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         // Only supply high-resolution video thumbnail or zero-network inline SVG artwork (prevents 404 network errors)
         const artworks: MediaImage[] = [];
 
-        const rawThumb = video.thumbnailUrl || resolveVideoPosterUrl(video) || video.placeBannerUrl || video.placeLogoUrl;
+        const rawThumb = video.thumbnailUrl || resolveVideoPosterUrl(video) || userAvatarFallback;
         if (rawThumb && typeof rawThumb === "string" && !rawThumb.endsWith(".svg")) {
           const resolved = rawThumb.startsWith("http")
             ? rawThumb
@@ -961,18 +970,41 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black pointer-events-none"
       >
         {/* High-Fidelity Poster (visible during loading or until active video starts playback) */}
-        <img
-          src={posterUrl}
-          alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
-          loading={isActive || isNear ? "eager" : "lazy"}
-          decoding="async"
-          fetchPriority={isActive ? "high" : "auto"}
-          onError={() => setPosterLoadError(true)}
-          className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
-            isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
-          referrerPolicy="no-referrer"
-        />
+        {hasRealPoster ? (
+          <img
+            src={posterUrl}
+            alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
+            loading={isActive || isNear ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={isActive ? "high" : "auto"}
+            onError={() => setPosterLoadError(true)}
+            className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
+              isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div
+            className={`w-full h-full pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-zinc-900 via-zinc-950 to-black transition-opacity duration-300 z-10 p-6 ${
+              isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+          >
+            <div className="w-20 h-20 rounded-full p-1 border-2 border-white/20 shadow-2xl bg-black overflow-hidden mb-3">
+              <img
+                src={userAvatarFallback}
+                alt={safeAuthor.name}
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.src = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
+                }}
+              />
+            </div>
+            <span className="text-sm font-bold text-white text-center truncate max-w-[200px]">
+              {safeAuthor.name}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* DEDICATED PLAY/PAUSE INTERACTION LAYER (z-20) */}
