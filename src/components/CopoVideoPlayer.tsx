@@ -916,6 +916,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       setIsManuallyPaused(false);
       previousContextKeyRef.current = contextKey;
 
+      feedVideoRef.current = null;
+      lastLoadedVideoIdRef.current = null;
+
       // Instantly reset player state and scroll container to top for the new context
       activeCardIndexRef.current = 0;
       lastObserverIndexRef.current = 0;

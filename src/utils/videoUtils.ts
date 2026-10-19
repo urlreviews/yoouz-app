@@ -144,7 +144,31 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 2. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id) - ALWAYS FIRST for rev- IDs
+  // 2. Direct Authentic Bunny Stream URLs (Highest priority for authentic video playback)
+  const bunnyId = video.bunnyVideoId || (video as any).bunnyGuid || (video.videoUrl && typeof video.videoUrl === "string" && video.videoUrl.match(/vz-[^/]+\.b-cdn\.net\/([0-9a-f-]{36})/i)?.[1]);
+  if (bunnyId && typeof bunnyId === "string" && bunnyId.length > 10 && !bunnyId.startsWith("rev-")) {
+    const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
+    const hlsUrl = `${streamCdn}/${bunnyId}/playlist.m3u8`;
+    const mp4_720 = `${streamCdn}/${bunnyId}/play_720p.mp4`;
+    const mp4_480 = `${streamCdn}/${bunnyId}/play_480p.mp4`;
+    const mp4_360 = `${streamCdn}/${bunnyId}/play_360p.mp4`;
+    
+    // In HLS-capable environments or Safari, playlist.m3u8 is primary
+    if (!sources.includes(hlsUrl)) sources.push(hlsUrl);
+    if (!sources.includes(mp4_720)) sources.push(mp4_720);
+    if (!sources.includes(mp4_480)) sources.push(mp4_480);
+    if (!sources.includes(mp4_360)) sources.push(mp4_360);
+  }
+
+  // 3. Direct Explicit videoUrl on Document (both m3u8 and mp4)
+  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:")) {
+    const norm = normalizeVideoUrl(video.videoUrl);
+    if (norm && !sources.includes(norm)) {
+      sources.push(norm);
+    }
+  }
+
+  // 4. Reliable Server Proxy Stream Endpoint (/api/videos/stream/:id)
   if (video.id && typeof video.id === "string") {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     const serverStream = `/api/videos/stream/${cleanId}.mp4`;
@@ -153,18 +177,10 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 3. Direct Explicit MP4 videoUrl on Document (if present and non-m3u8)
-  if (video.videoUrl && typeof video.videoUrl === "string" && !video.videoUrl.startsWith("blob:") && !video.videoUrl.includes(".m3u8")) {
-    const norm = normalizeVideoUrl(video.videoUrl);
-    if (norm && !sources.includes(norm)) {
-      sources.push(norm);
-    }
-  }
-
-  // 4. Fallback Video URLs Array (non-m3u8 only)
+  // 5. Fallback Video URLs Array
   if (video.fallbackVideoUrls && Array.isArray(video.fallbackVideoUrls)) {
     for (const fb of video.fallbackVideoUrls) {
-      if (fb && typeof fb === "string" && !fb.startsWith("blob:") && !fb.includes(".m3u8")) {
+      if (fb && typeof fb === "string" && !fb.startsWith("blob:")) {
         const norm = normalizeVideoUrl(fb);
         if (norm && !sources.includes(norm)) {
           sources.push(norm);
@@ -173,12 +189,12 @@ export function resolvePlayableVideoSourcesCascade(
     }
   }
 
-  // 5. Base64 Data URI (if present)
+  // 6. Base64 Data URI (if present)
   if (video.videoData && video.videoData.startsWith("data:video/")) {
     sources.push(video.videoData);
   }
 
-  // 6. Static Bulletproof Fallback Asset
+  // 7. Static Bulletproof Fallback Asset (only for completely missing/unseeded fallback)
   if (!sources.includes("/default-review.mp4")) {
     sources.push("/default-review.mp4");
   }

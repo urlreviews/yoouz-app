@@ -135,7 +135,7 @@ interface CopoAdminPanelProps {
   onExit: () => void;
 }
 
-type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "bookmarks" | "messages" | "broadcast" | "database" | "search" | "agencies";
+type AdminTab = "overview" | "health" | "creators" | "users" | "businesses" | "places" | "videos" | "comments" | "likes" | "bookmarks" | "messages" | "broadcast" | "database" | "search" | "agencies" | "indexing";
 
 export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   currentUser,

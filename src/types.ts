@@ -40,6 +40,8 @@ export interface ReviewComment {
   id: string;
   videoId?: string;
   userId?: string;
+  userEmail?: string;
+  uid?: string;
   userName?: string;
   userHandle?: string;
   userAvatar?: string;
@@ -120,6 +122,7 @@ export interface UserProfile {
   notificationSettings?: NotificationPreferences;
   isDeactivated?: boolean;
   deactivatedAt?: string;
+  isAdmin?: boolean;
 }
 
 export interface VideoReview {
@@ -179,6 +182,7 @@ export interface VideoReview {
   thumbnailUrl: string;
   caption?: string;
   description?: string;
+  bunnyDescription?: string;
   title?: string;
   aiTitle?: string;
   hasBunnySmartCaptions?: boolean;

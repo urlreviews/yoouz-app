@@ -67,8 +67,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 1,
-    "viewsCount": 1,
+    "views": 4,
+    "viewsCount": 4,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -197,8 +197,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 9,
-    "viewsCount": 9,
+    "views": 10,
+    "viewsCount": 10,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -2156,8 +2156,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 32,
-    "viewsCount": 32,
+    "views": 33,
+    "viewsCount": 33,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -4641,8 +4641,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 36,
-    "viewsCount": 36,
+    "views": 37,
+    "viewsCount": 37,
     "sharesCount": 0,
     "tags": [
       "Website"

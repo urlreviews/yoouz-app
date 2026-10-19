@@ -12800,7 +12800,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       let filePath = candidatePaths.find((c) => fs.existsSync(c));
 
       if (!filePath || !fs.existsSync(filePath)) {
-        // 1. Try to recover video from BunnyDB on-the-fly if missing on local disk
+        let matchedReviewDoc: any = null;
         try {
           const bunnyDb = getBunnyDb();
           if (bunnyDb && base) {
@@ -12809,79 +12809,118 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
               args: [base]
             });
             if (dbRes.rows && dbRes.rows[0]) {
-              const rowData = typeof dbRes.rows[0].data === "string" ? JSON.parse(dbRes.rows[0].data) : dbRes.rows[0].data;
-              if (rowData && rowData.videoData && typeof rowData.videoData === "string" && rowData.videoData.includes("base64,")) {
-                const b64 = rowData.videoData.split("base64,")[1];
-                const recoveredPath = path.join(serverUploadsDir, filenameToSave);
-                fs.writeFileSync(recoveredPath, Buffer.from(b64, "base64"));
-                if (fs.existsSync(recoveredPath)) {
-                  filePath = recoveredPath;
-                }
-              }
+              matchedReviewDoc = typeof dbRes.rows[0].data === "string" ? JSON.parse(dbRes.rows[0].data) : dbRes.rows[0].data;
             }
           }
-        } catch (recErr) {
-          console.warn("Notice recovering video from DB:", recErr);
-        }
-      }
+        } catch (recErr) {}
 
-      if (!filePath || !fs.existsSync(filePath)) {
-        // Fallback to default high-performance review video asset immediately if requested file not found
-        const fallbackCandidates = [
-          path.join(serverUploadsDir, "default-review.mp4"),
-          path.join(process.cwd(), "public", "default-review.mp4"),
-          path.join(process.cwd(), "dist", "default-review.mp4")
-        ];
-        filePath = fallbackCandidates.find((c) => fs.existsSync(c));
-      }
-
-      if (!filePath || !fs.existsSync(filePath)) {
-        // 2. Search for ANY valid recorded video file in server uploads or public directory to ensure playback never fails
-        try {
-          const allUploadFiles = fs.existsSync(serverUploadsDir) ? fs.readdirSync(serverUploadsDir) : [];
-          const matchedFile = allUploadFiles.find(f => f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov"));
-          if (matchedFile) {
-            filePath = path.join(serverUploadsDir, matchedFile);
-          }
-        } catch (e) {}
-      }
-
-      if (!filePath || !fs.existsSync(filePath)) {
-        try {
-          const allVideosFiles = fs.existsSync(serverUploadsVideosDir) ? fs.readdirSync(serverUploadsVideosDir) : [];
-          const matchedFile = allVideosFiles.find(f => f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov"));
-          if (matchedFile) {
-            filePath = path.join(serverUploadsVideosDir, matchedFile);
-          }
-        } catch (e) {}
-      }
-
-      if (!filePath || !fs.existsSync(filePath)) {
-        // 3. Fallback to default high-performance review video asset
-        const fallbackCandidates = [
-          path.join(process.cwd(), "public", "default-review.mp4"),
-          path.join(serverUploadsDir, "default-review.mp4"),
-          path.join(process.cwd(), "dist", "default-review.mp4")
-        ];
-        filePath = fallbackCandidates.find((c) => fs.existsSync(c));
-      }
-
-      if (!filePath || !fs.existsSync(filePath)) {
-        // Absolute bulletproof fallback: generate or copy a valid playable video file for any requested filename
-        const targetFallbackPath = path.join(serverUploadsDir, rawFilename);
-        const defaultReviewPath = path.join(process.cwd(), "public", "default-review.mp4");
-        
-        if (fs.existsSync(defaultReviewPath)) {
+        if (!matchedReviewDoc && base) {
           try {
-            fs.copyFileSync(defaultReviewPath, targetFallbackPath);
-            filePath = targetFallbackPath;
-          } catch (e) {
-            filePath = defaultReviewPath;
-          }
-        } else {
-          fs.writeFileSync(targetFallbackPath, Buffer.alloc(50000));
-          filePath = targetFallbackPath;
+            const localList = readReviewsIndex();
+            matchedReviewDoc = localList.find((v: any) => v && v.id === base);
+          } catch(e) {}
         }
+
+        // 1a. Base64 recovery if present
+        if (matchedReviewDoc?.videoData && typeof matchedReviewDoc.videoData === "string" && matchedReviewDoc.videoData.includes("base64,")) {
+          try {
+            const b64 = matchedReviewDoc.videoData.split("base64,")[1];
+            const recoveredPath = path.join(serverUploadsDir, filenameToSave);
+            fs.writeFileSync(recoveredPath, Buffer.from(b64, "base64"));
+            if (fs.existsSync(recoveredPath)) {
+              filePath = recoveredPath;
+            }
+          } catch (e) {}
+        }
+
+        // 1b. Direct authentic Bunny Stream resolution (NEVER fall back to another user's video!)
+        const bunnyVideoId = matchedReviewDoc?.bunnyVideoId || (matchedReviewDoc?.videoUrl && typeof matchedReviewDoc.videoUrl === "string" && matchedReviewDoc.videoUrl.match(/vz-[^/]+\.b-cdn\.net\/([0-9a-f-]{36})/i)?.[1]);
+        if (!filePath && bunnyVideoId) {
+          const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
+          if (isImageRequest) {
+            try {
+              const thumbUrl = `${streamCdn}/${bunnyVideoId}/thumbnail.jpg`;
+              const tResp = await fetch(thumbUrl, { headers: { "Referer": "https://yoouz.com/" } });
+              if (tResp.ok) {
+                const arrBuf = await tResp.arrayBuffer();
+                const buf = Buffer.from(arrBuf);
+                const cachedPath = path.join(serverUploadsDir, rawFilename);
+                try { fs.writeFileSync(cachedPath, buf); } catch (e) {}
+                res.writeHead(200, {
+                  "Content-Type": "image/jpeg",
+                  "Content-Length": buf.length,
+                  "Cache-Control": "public, max-age=2592000, immutable",
+                  "Access-Control-Allow-Origin": "*"
+                });
+                return res.end(buf);
+              }
+            } catch (tErr) {}
+          } else {
+            // Video proxy from Bunny CDN with Range header support
+            const candidates = [
+              `${streamCdn}/${bunnyVideoId}/play_720p.mp4`,
+              `${streamCdn}/${bunnyVideoId}/play_480p.mp4`,
+              `${streamCdn}/${bunnyVideoId}/play_360p.mp4`,
+              `${streamCdn}/${bunnyVideoId}/original`
+            ];
+            for (const candUrl of candidates) {
+              try {
+                const reqHeaders: Record<string, string> = {
+                  "Referer": "https://yoouz.com/"
+                };
+                if (req.headers.range) {
+                  reqHeaders["Range"] = req.headers.range;
+                }
+                const bResp = await fetch(candUrl, { headers: reqHeaders });
+                if (bResp.ok || bResp.status === 206) {
+                  const outHeaders: Record<string, any> = {
+                    "Content-Type": bResp.headers.get("content-type") || "video/mp4",
+                    "Accept-Ranges": "bytes",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                    "Access-Control-Allow-Headers": "Range, Content-Type, Accept, Origin",
+                    "Cache-Control": "public, max-age=31536000, immutable"
+                  };
+                  if (bResp.headers.get("content-length")) {
+                    outHeaders["Content-Length"] = bResp.headers.get("content-length");
+                  }
+                  if (bResp.headers.get("content-range")) {
+                    outHeaders["Content-Range"] = bResp.headers.get("content-range");
+                  }
+                  res.writeHead(bResp.status, outHeaders);
+
+                  if (req.method === "HEAD") {
+                    return res.end();
+                  }
+
+                  if (bResp.body) {
+                    for await (const chunk of bResp.body as any) {
+                      if (res.writableEnded || res.closed) break;
+                      res.write(chunk);
+                    }
+                    return res.end();
+                  }
+                }
+              } catch (proxyErr) {}
+            }
+          }
+        }
+
+        // 1c. If a specific user review was requested by ID, NEVER replace their authentic video with default-review.mp4
+        if (!filePath && matchedReviewDoc) {
+          console.warn(`[Video Stream Guard] Review ${base} exists in DB, but video stream is temporarily resolving. Strictly preventing cross-user video collision.`);
+          return res.status(404).send(`Video for review ${base} is processing or unavailable. Cross-user fallback strictly prohibited.`);
+        }
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
+        // Fallback to default high-performance review video asset ONLY if requested file is not a specific user review
+        const fallbackCandidates = [
+          path.join(serverUploadsDir, "default-review.mp4"),
+          path.join(process.cwd(), "public", "default-review.mp4"),
+          path.join(process.cwd(), "dist", "default-review.mp4")
+        ];
+        filePath = fallbackCandidates.find((c) => fs.existsSync(c));
       }
 
       const stat = fs.statSync(filePath);

@@ -1113,10 +1113,12 @@ export function App() {
             if (matchingVid && matchingVid.author) {
               setSelectedAuthorForDrawer(matchingVid.author);
               setSelectedPlaceIdForDrawer(null);
+              setCurrentVideoIndex(0);
             } else if (KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact]) {
               const ku = KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact];
               setSelectedAuthorForDrawer({
                 name: ku.name,
+                handle: ku.handle || `@${ku.name.toLowerCase().replace(/\s+/g, "")}`,
                 avatar: getSafeAvatarUrl(ku.avatar, ku.name, ku.name),
                 bio: ku.bio || "Verified video reviewer on Yoouz.",
                 location: ku.location || "",
@@ -1124,6 +1126,7 @@ export function App() {
                 isFollowed: false
               });
               setSelectedPlaceIdForDrawer(null);
+              setCurrentVideoIndex(0);
             } else {
               // Check registered users for authentic profile
               fetch(`/api/nosql/users`)
@@ -1147,6 +1150,10 @@ export function App() {
                     if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
                       setSelectedAuthorForDrawer({
                         name: matched.name,
+                        handle: matched.handle || `@${matched.name.toLowerCase().replace(/\s+/g, "")}`,
+                        id: matched.id,
+                        userId: matched.id,
+                        email: matched.email,
                         avatar: getSafeAvatarUrl(matched.avatar, matched.name, matched.handle || matched.email || matched.name),
                         bio: matched.bio || "",
                         banner: matched.banner || "",
@@ -1155,6 +1162,7 @@ export function App() {
                         isFollowed: false
                       });
                       setSelectedPlaceIdForDrawer(null);
+                      setCurrentVideoIndex(0);
                     } else {
                       // No authentic creator found; never fabricate mock pages
                       setSelectedAuthorForDrawer(null);
