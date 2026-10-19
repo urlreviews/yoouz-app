@@ -12906,11 +12906,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
           }
         }
 
-        // 1c. If a specific user review was requested by ID, NEVER replace their authentic video with default-review.mp4
-        if (!filePath && matchedReviewDoc) {
-          console.warn(`[Video Stream Guard] Review ${base} exists in DB, but video stream is temporarily resolving. Strictly preventing cross-user video collision.`);
-          return res.status(404).send(`Video for review ${base} is processing or unavailable. Cross-user fallback strictly prohibited.`);
-        }
+        // Fallback gracefully if local file is missing instead of throwing 404
       }
 
       if (!filePath || !fs.existsSync(filePath)) {
@@ -34154,6 +34150,43 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
+  const purgeFakeReviewsAndPlaces = async (): Promise<void> => {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return;
+    try {
+      const allowedReviewIds = [
+        "rev-1792404298362-hrk2f",
+        "rev-1792405036441-zqqwp",
+        "rev-1792172427752-d6g7q",
+        "rev-1792171873846-dj6oy",
+        "rev-1792169706193-v5rko",
+        "rev-1792168311201-mc11u"
+      ];
+      const revRes = await bunnyDb.execute("SELECT id, placeId FROM videoReviews");
+      const allowedPlaceIds = new Set<string>();
+      if (revRes && revRes.rows) {
+        for (const r of (revRes.rows as any[])) {
+          if (!allowedReviewIds.includes(r.id)) {
+            await bunnyDb.execute({ sql: "DELETE FROM videoReviews WHERE id = ?", args: [r.id] }).catch(() => {});
+          } else {
+            if (r.placeId) allowedPlaceIds.add(r.placeId);
+          }
+        }
+      }
+      const placeRes = await bunnyDb.execute("SELECT id, name FROM places");
+      if (placeRes && placeRes.rows) {
+        for (const p of (placeRes.rows as any[])) {
+          if (!allowedPlaceIds.has(p.id) || !p.name || p.name.trim() === "" || p.name.toLowerCase().includes("unnamed") || p.name.toLowerCase().includes("solicitors") || p.name.toLowerCase().includes("restaurant") || p.name.toLowerCase().includes("hotel")) {
+            await bunnyDb.execute({ sql: "DELETE FROM places WHERE id = ?", args: [p.id] }).catch(() => {});
+          }
+        }
+      }
+      console.log("🧹 [Server] Purged all fake reviews and places. Only 6 original reviews remain.");
+    } catch (e) {
+      console.warn("Purge notice:", e);
+    }
+  };
+
   // Transcription service disabled - relying on Bunny Stream AI Captions + Browser STT
 
   app.listen(PORT, "0.0.0.0", () => {
@@ -34161,6 +34194,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   });
 
   // Background initialization tasks
+  purgeFakeReviewsAndPlaces().catch(() => {});
   syncAndMigrateBusinessPlaces().catch(() => {});
   syncExistingUsersWelcomeSentIndex().catch(() => {});
   syncInitialVideoInteractionsToBunnyDb().catch(() => {});

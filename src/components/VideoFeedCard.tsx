@@ -164,20 +164,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const { t, language } = useLanguage();
   const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
-  const [computedCommentsCount, setComputedCommentsCount] = useState<number>(Number(video.commentsCount || 0));
-
-  useEffect(() => {
-    if (video.id) {
-      fetch(`/api/interactions/comments?videoId=${video.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && typeof data.commentsCount === 'number') {
-            setComputedCommentsCount(data.commentsCount);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [video.id]);
+  const computedCommentsCount = Number(video.commentsCount || 0);
 
   const { effectiveReviewCount, effectiveRating } = React.useMemo(() => {
     let count = 1;
@@ -977,7 +964,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             decoding="async"
             fetchPriority={isActive ? "high" : "auto"}
             onError={() => setPosterLoadError(true)}
-            className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
+            className={`w-full h-full ${video.isLandscape ? "object-contain" : "object-cover"} pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
               isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
             referrerPolicy="no-referrer"

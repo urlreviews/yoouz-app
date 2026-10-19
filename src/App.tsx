@@ -1,3 +1,4 @@
+// Deployment Trigger: 2026-10-19 19:44 (Fix net::ERR_INSUFFICIENT_RESOURCES)
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
