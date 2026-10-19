@@ -164,7 +164,20 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const { t, language } = useLanguage();
   const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
 
-  const computedCommentsCount = Number(video.commentsCount || 0);
+  const [computedCommentsCount, setComputedCommentsCount] = useState<number>(Number(video.commentsCount || 0));
+
+  useEffect(() => {
+    if (video.id) {
+      fetch(`/api/interactions/comments?videoId=${video.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.commentsCount === 'number') {
+            setComputedCommentsCount(data.commentsCount);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [video.id]);
 
   const { effectiveReviewCount, effectiveRating } = React.useMemo(() => {
     let count = 1;
