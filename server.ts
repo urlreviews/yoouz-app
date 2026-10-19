@@ -22475,12 +22475,18 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const aiTitle = cleanTitle ? cleanTitle.replace(/^["'“«»”\s]+|["'“«»”\s]+$/g, "").trim() : undefined;
       const smartDescription = vidData?.description ? String(vidData.description).trim() : undefined;
 
-      // Prefer en-auto, then any en*, then first available language
-      let chosen = captionsList.find((c: any) => c.srclang === 'en-auto') ||
-                   captionsList.find((c: any) => c.srclang?.startsWith('en')) ||
-                   captionsList[0];
-
-      const srclang = chosen?.srclang || 'en-auto';
+      // Try all available caption tracks in order of preference: en-auto, en*, then all available in captionsList
+      const tracksToTry: string[] = [];
+      if (Array.isArray(captionsList)) {
+        for (const c of captionsList) {
+          if (c?.srclang && !tracksToTry.includes(c.srclang)) {
+            tracksToTry.push(c.srclang);
+          }
+        }
+      }
+      if (!tracksToTry.includes('en-auto')) tracksToTry.unshift('en-auto');
+      if (!tracksToTry.includes('en')) tracksToTry.push('en');
+      if (!tracksToTry.includes('tl-auto')) tracksToTry.push('tl-auto');
 
       // 2. Fetch play data to get direct CDN captionsPath
       let captionsPath = "";
@@ -22500,25 +22506,27 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         captionsPath = `${streamCdn}/${bunnyVideoId}/captions/`;
       }
 
-      const vttUrl = `${captionsPath.replace(/\/?$/, '/')}${srclang}.vtt`;
-      console.log(`🎬 🐰 [Bunny Smart Captions] Fetching VTT from: ${vttUrl}`);
+      for (const srclang of tracksToTry) {
+        const vttUrl = `${captionsPath.replace(/\/?$/, '/')}${srclang}.vtt`;
+        console.log(`🎬 🐰 [Bunny Smart Captions] Fetching VTT from: ${vttUrl}`);
 
-      const vttResp = await fetch(vttUrl, { 
-        headers: { "Referer": "https://yoouz.com/" }, 
-        signal: AbortSignal.timeout(10000) 
-      });
-      if (vttResp.ok) {
-        const vttText = await vttResp.text();
-        if (vttText && vttText.includes("WEBVTT")) {
-          const segments = parseVttToSegments(vttText);
-          if (segments.length > 0) {
-            const transcriptText = segments.map((s: any) => s.text).join(" ");
-            console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions & metadata for ${bunnyVideoId}`);
-            return { segments, transcriptText, vttText, aiTitle, description: smartDescription };
+        try {
+          const vttResp = await fetch(vttUrl, { 
+            headers: { "Referer": "https://yoouz.com/" }, 
+            signal: AbortSignal.timeout(8000) 
+          });
+          if (vttResp.ok) {
+            const vttText = await vttResp.text();
+            if (vttText && vttText.includes("WEBVTT")) {
+              const segments = parseVttToSegments(vttText);
+              if (segments.length > 0) {
+                const transcriptText = segments.map((s: any) => s.text).join(" ");
+                console.log(`✅ 🐰 [Bunny Smart Captions] Successfully synced ${segments.length} captions (${srclang}) for ${bunnyVideoId}`);
+                return { segments, transcriptText, vttText, aiTitle, description: smartDescription };
+              }
+            }
           }
-        }
-      } else {
-        console.log(`⏳ 🐰 [Bunny Smart Captions] Captions HTTP ${vttResp.status} for ${bunnyVideoId}`);
+        } catch (e) {}
       }
 
       // If captions are not yet ready, but smart description or title is present in Bunny Stream
