@@ -229,8 +229,6 @@ export interface VideoReview {
   duration?: number;
   ogImage?: string;
   businessName?: string;
-  isLandscape?: boolean;
-  aspectRatio?: 'portrait' | 'landscape';
 }
 
 export type VideoAuthor = VideoReview["author"];
