@@ -1,7 +1,7 @@
-name: Deploy Yoouz App (Bunny Magic Containers)
+name: Deploy Yoouz App (Bunny Magic Containers - Fresh)
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: deploy-fresh-${{ github.ref }}
   cancel-in-progress: true
 
 on:
