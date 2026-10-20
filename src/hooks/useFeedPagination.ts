@@ -332,9 +332,12 @@ export function useFeedPagination() {
         });
       }
 
-      // 4. Local in-flight published (optimistic uploads in last 60 seconds)
+      // 4. Local in-flight published (only items that are ready with title & subtitles)
       localPublished.forEach((v) => {
-        if (v && v.id && !isPurgedItem(v, deletedIds)) combinedMap.set(String(v.id), v);
+        const isReady = !v.isProcessing && v.isReady !== false && Boolean(v.title && !v.title.toLowerCase().startsWith("video review for")) && Boolean(Array.isArray(v.segments) && v.segments.length > 0);
+        if (v && v.id && !isPurgedItem(v, deletedIds) && isReady) {
+          combinedMap.set(String(v.id), v);
+        }
       });
 
       const result = Array.from(combinedMap.values());

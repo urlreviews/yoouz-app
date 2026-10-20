@@ -193,23 +193,23 @@
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
       {
-        "start": 0.918,
-        "end": 4.164,
+        "start": 0.92,
+        "end": 4.16,
         "text": "This Zara perfume is my new favorite."
       },
       {
-        "start": 4.364,
-        "end": 6.288,
+        "start": 4.36,
+        "end": 6.29,
         "text": "It fits my vibe perfectly."
       },
       {
-        "start": 6.468,
-        "end": 11.037,
+        "start": 6.47,
+        "end": 11.04,
         "text": "And unlike any other brands at this price, it actually lasts all day."
       },
       {
-        "start": 11.077,
-        "end": 12.199,
+        "start": 11.08,
+        "end": 12.34,
         "text": "So you have to give it a try."
       }
     ],
@@ -250,9 +250,7 @@
     "reviewCount": 2,
     "totalReviews": 2,
     "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
-    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "isReady": true,
-    "isProcessing": false
+    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!"
   },
   {
     "id": "rev-1792404298362-hrk2f",

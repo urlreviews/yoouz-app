@@ -191,58 +191,31 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "/default-review.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
-    "caption": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "hasBunnySmartCaptions": true,
+    "caption": "Video review for zara.com",
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
-      {
-        "start": 0.92,
-        "end": 2.85,
-        "text": "This Zara perfume is my",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.85,
-        "end": 4.16,
-        "text": "new favorite.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.36,
-        "end": 6.29,
-        "text": "It fits my vibe perfectly."
-      },
-      {
-        "start": 6.47,
-        "end": 8.45,
-        "text": "And unlike any other brands at",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.45,
-        "end": 10.45,
-        "text": "this price, it actually lasts",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.45,
-        "end": 11.04,
-        "text": "all day.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.08,
-        "end": 11.99,
-        "text": "So you have to give it",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.99,
-        "end": 12.34,
-        "text": "a try.",
-        "isHardwareTimed": true
-      }
+      [
+        {
+          "start": 0.92,
+          "end": 4.16,
+          "text": "This Zara perfume is my new favorite."
+        },
+        {
+          "start": 4.36,
+          "end": 6.29,
+          "text": "It fits my vibe perfectly."
+        },
+        {
+          "start": 6.47,
+          "end": 11.04,
+          "text": "And unlike any other brands at this price, it actually lasts all day."
+        },
+        {
+          "start": 11.08,
+          "end": 12.34,
+          "text": "So you have to give it a try."
+        }
+      ]
     ],
     "dishOrItem": "Zara",
     "businessName": "Zara",
@@ -266,6 +239,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
     "vttUrl": "/api/videos/rev-1792505047137-smiho/subtitles.vtt",
+    "hasBunnySmartCaptions": true,
     "bannerUrl": "",
     "ogImage": "",
     "authorName": "Kert P",

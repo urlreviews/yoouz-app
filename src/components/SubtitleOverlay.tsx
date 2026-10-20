@@ -138,8 +138,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               });
             }
           }
+        } else if (s >= 0 && e >= s) {
+          cleanCues.push({
+            id: cueId++,
+            start: s,
+            end: e,
+            text: txt
+          });
         } else {
-          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 4);
+          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 5);
           for (const chunk of phraseChunks) {
             cleanCues.push({
               id: cueId++,
