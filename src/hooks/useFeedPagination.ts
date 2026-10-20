@@ -153,40 +153,37 @@ const HARD_DELETED_IDS = [
   "rev-1788294000000-avis",
   "rev-12345",
   "rev-test-verify-123",
-  "rev-test-big-thumb"
-];
-
-const PROTECTED_FEED_PLACES = new Set([
-  "yoouz.com",
-  "yoouz",
-  "www.yoouz.com"
-]);
-
-const PROTECTED_FEED_CREATORS = new Set([
-  "steven akan",
-  "stevenakan",
-  "@stevenakan",
-  "ben blue",
-  "benblue",
-  "@benblue",
-  "avr6566gd@gmail.com",
-  "aouisesmee@gmail.com",
-  "info@yoouz.com",
-  "yoouz"
-]);
-
-export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
-  "rev-1792172427752-d6g7q",
-  "rev-1792171873846-dj6oy",
-  "rev-1792169706193-v5rko",
-  "rev-1792168311201-mc11u",
-  "rev-1792053448121-182jk",
+  "rev-test-big-thumb",
   "rev-1791495006783-jy6ld",
   "rev-1791494959785-27pap",
   "rev-1791485919882-l8av6",
   "rev-1790368898192-sw74n",
   "rev-1790363378621-w65oy",
-  "rev-1790353801035-1rlp8"
+  "rev-1790353801035-1rlp8",
+  "rev-1792172427752-d6g7q",
+  "rev-1792171873846-dj6oy",
+  "rev-1792169706193-v5rko",
+  "rev-1792168311201-mc11u",
+  "rev-1792053448121-182jk",
+  "rev-1792432790505-8re2s",
+  "rev-1792432790505-4ovhe"
+];
+
+const PROTECTED_FEED_PLACES = new Set([
+  "guard-slip-cafe-by-lgip.bayombong",
+  "jollibee.ph"
+]);
+
+const PROTECTED_FEED_CREATORS = new Set([
+  "edjo francis ramos",
+  "edjofrancisramos",
+  "@edjofrancisramos",
+  "edjofrancisramos18@gmail.com"
+]);
+
+export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
+  "rev-1792404298362-hrk2f",
+  "rev-1792405036441-zqqwp"
 ]);
 
 export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) => {

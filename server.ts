@@ -762,17 +762,8 @@ function writePlacesIndex(list: any[]): void {
 const inMemoryDeletedReviewsSet = new Set<string>();
 
 const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
-  "rev-1792172427752-d6g7q",
-  "rev-1792171873846-dj6oy",
-  "rev-1792169706193-v5rko",
-  "rev-1792168311201-mc11u",
-  "rev-1792053448121-182jk",
-  "rev-1791495006783-jy6ld",
-  "rev-1791494959785-27pap",
-  "rev-1791485919882-l8av6",
-  "rev-1790368898192-sw74n",
-  "rev-1790363378621-w65oy",
-  "rev-1790353801035-1rlp8"
+  "rev-1792404298362-hrk2f",
+  "rev-1792405036441-zqqwp"
 ]);
 
 function readDeletedReviewsIndex(): string[] {

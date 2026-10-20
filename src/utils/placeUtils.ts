@@ -4,7 +4,7 @@ import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImag
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
-export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v40_bunny_stream";
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v41_bunny_clean";
 
 /**
  * Universal, highly robust review timestamp extractor
@@ -3545,10 +3545,8 @@ export function formatPhoneNumber(raw?: string | null, countryOrDomainContext?: 
 }
 
 export const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
-  "rev-1791485919882-l8av6",
-  "rev-1790368898192-sw74n",
-  "rev-1790363378621-w65oy",
-  "rev-1790353801035-1rlp8"
+  "rev-1792404298362-hrk2f",
+  "rev-1792405036441-zqqwp"
 ]);
 
 /**
