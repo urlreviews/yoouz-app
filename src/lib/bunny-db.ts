@@ -506,9 +506,7 @@ export async function initBunnyDbSchema() {
     try { await client.execute("ALTER TABLE places ADD COLUMN bannerUrl TEXT"); } catch (e) {}
     try { await client.execute("ALTER TABLE places ADD COLUMN brandDomain TEXT"); } catch (e) {}
     try { await client.execute("ALTER TABLE places ADD COLUMN website TEXT"); } catch (e) {}
-    try { 
-      await client.execute("UPDATE videoReviews SET authorName = 'Steven Akan' WHERE authorName = 'Verified Customer' OR authorName IS NULL OR authorName = ''"); 
-    } catch (e) {}
+    // Strict Author Immutability: Database never modifies or overrides review author names.
     isInitialized = true;
   } catch (err: any) {
     console.error("⚠️ [BunnyDB] Schema migration warning:", err?.message || err);
