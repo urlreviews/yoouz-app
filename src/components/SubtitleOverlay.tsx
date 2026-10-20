@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
 
 interface SubtitleCue {
@@ -51,7 +51,6 @@ const chunkCueTo1Line = (
     return [{ start, end, text: cleanText }];
   }
 
-  // Use clause-aware chunking with a smaller limit (4 words) to guarantee 1 line on mobile
   const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk);
   if (wordGroups.length === 0) return [];
 
@@ -87,7 +86,7 @@ const chunkCueTo1Line = (
 };
 
 /**
- * Standard YouTube Subtitle Engine (Rebuilt with 1-Line CapCut / TikTok Phrase Chunking)
+ * Anti-Blinking, Anti-Flashing Subtitle Engine (1-Line CapCut / TikTok Phrase Chunking)
  */
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime = 0,
@@ -97,7 +96,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Parse and build clean 1-line phrase subtitle cues
+  // Parse and build clean 1-line phrase subtitle cues with zero-gap bridging
   const cues = useMemo<SubtitleCue[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -120,9 +119,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const s = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : -1;
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
-        // If the segment already has high-precision words (from Bunny Stream or our new parser)
         if (Array.isArray(item.words) && item.words.length > 0) {
-          // Group these words into small chunks of 4 words max
           let currentChunk: any[] = [];
           for (let i = 0; i < item.words.length; i++) {
             currentChunk.push(item.words[i]);
@@ -140,7 +137,6 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
             }
           }
         } else {
-          // Fallback to phonetic guessing for 1-line chunks
           const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 4);
           for (const chunk of phraseChunks) {
             cleanCues.push({
@@ -154,59 +150,117 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    // PATH B: Fallback when only raw transcriptText is present
+    // PATH B: Fallback when only raw transcriptText is present - Distribute evenly across video duration
     if (cleanCues.length === 0 && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isIgnoredTitle(clean)) {
-        const rawSentences = clean.split(/(?<=[.?!])\s+/).map(s => s.trim()).filter(Boolean);
+        const words = clean.split(/\s+/).filter(Boolean);
         const videoDur = duration && duration > 2 ? duration : 15;
-        let curStart = 0.5;
-        for (const sText of rawSentences) {
-          const phraseChunks = chunkCueTo1Line(curStart, Math.min(videoDur, curStart + 3.0), sText, 4);
-          for (const chunk of phraseChunks) {
+        
+        if (words.length <= 4) {
+          cleanCues.push({
+            id: cueId++,
+            start: 0.2,
+            end: Math.max(2.5, videoDur - 0.2),
+            text: clean
+          });
+        } else {
+          // Chunk words into groups of 4 and distribute across playback duration
+          const chunks: string[][] = [];
+          for (let i = 0; i < words.length; i += 4) {
+            chunks.push(words.slice(i, i + 4));
+          }
+          const startOffset = 0.2;
+          const endOffset = Math.max(startOffset + 1.0, videoDur - 0.2);
+          const totalSpan = endOffset - startOffset;
+          const chunkDur = totalSpan / chunks.length;
+
+          chunks.forEach((chunkWords, cIdx) => {
+            const cStart = Math.round((startOffset + (cIdx * chunkDur)) * 100) / 100;
+            const cEnd = Math.round((startOffset + ((cIdx + 1) * chunkDur)) * 100) / 100;
             cleanCues.push({
               id: cueId++,
-              start: chunk.start,
-              end: chunk.end,
-              text: chunk.text
+              start: cStart,
+              end: cEnd,
+              text: chunkWords.join(" ")
             });
-          }
-          curStart += 3.2;
+          });
         }
+      }
+    }
+
+    // 🛡️ ANTI-BLINKING GAP BRIDGING:
+    // Bridge micro-gaps between consecutive phrase cues so subtitles NEVER unmount or flicker between words
+    for (let i = 0; i < cleanCues.length - 1; i++) {
+      const curr = cleanCues[i];
+      const next = cleanCues[i + 1];
+      if (next.start > curr.end && next.start - curr.end <= 1.8) {
+        curr.end = next.start; // Seamless transition!
       }
     }
 
     return cleanCues;
   }, [segments, transcriptText, duration]);
 
+  // Compute active cue with hysteresis hold time to prevent flickering
   const activeCue = useMemo<SubtitleCue | null>(() => {
     if (!isActive || cues.length === 0) return null;
     if (isLiveRecording) return cues[cues.length - 1] || null;
 
-    for (const cue of cues) {
-      if (currentTime >= cue.start && currentTime <= cue.end) {
+    for (let i = 0; i < cues.length; i++) {
+      const cue = cues[i];
+      // Hold last cue up to 0.6s after its official end time to prevent micro-flicker during speech pauses
+      const effectiveEnd = (i === cues.length - 1) ? cue.end + 0.8 : cue.end;
+      if (currentTime >= cue.start && currentTime <= effectiveEnd) {
         return cue;
       }
     }
     return null;
   }, [cues, currentTime, isActive, isLiveRecording]);
 
-  const isRTL = useMemo(() => {
-    if (!activeCue?.text) return false;
-    return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(activeCue.text);
+  // Keep a persistent reference to the active or last display cue to ensure smooth fade-out CSS transitions
+  const [displayCue, setDisplayCue] = useState<SubtitleCue | null>(null);
+  const fadeTimeoutRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (activeCue) {
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+      setDisplayCue(activeCue);
+    } else {
+      // Hold last cue for 0.4s before fading out container
+      fadeTimeoutRef.current = setTimeout(() => {
+        setDisplayCue(null);
+      }, 400);
+    }
+    return () => {
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+    };
   }, [activeCue]);
 
-  if (!isActive || !activeCue || !activeCue.text) return null;
+  const isRTL = useMemo(() => {
+    const txt = activeCue?.text || displayCue?.text;
+    if (!txt) return false;
+    return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(txt);
+  }, [activeCue, displayCue]);
+
+  const isVisible = Boolean(isActive && (activeCue || displayCue));
+  const currentText = activeCue?.text || displayCue?.text;
+
+  if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
-      <div className="max-w-[85%] flex justify-center">
+    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none transition-all duration-200 ease-out">
+      <div 
+        className={`max-w-[85%] flex justify-center transition-all duration-200 ease-out transform ${
+          isVisible && currentText ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'
+        }`}
+      >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center"
+          className="bg-black/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center transition-all duration-150 ease-out"
         >
-          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-            {activeCue.text}
+          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-150 ease-out">
+            {currentText || ''}
           </p>
         </div>
       </div>
