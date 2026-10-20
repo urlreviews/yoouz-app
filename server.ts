@@ -22809,29 +22809,79 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           console.log(`🐰 [Bunny Auto-Recovery] Discovered missing Bunny Stream video: ${guid} (${item.title})`);
           const bunnyRes = await fetchBunnyStreamSmartCaptions(guid);
           const rawTitle = item.title || "";
+          const combinedLower = `${rawTitle} ${item.description || ''} ${bunnyRes?.transcriptText || ''}`.toLowerCase();
           
-          // Determine place details from title/description
-          let placeName = "Guard Slip Cafe by LGIP";
-          let placeAddress = "Bayombong, Nueva Vizcaya, Philippines";
-          let placeCity = "Bayombong";
-          let placeCountry = "Philippines";
-          let placeCategory = "Cafe";
-          let placeId = "guard-slip-cafe-by-lgip-bayombong";
+          // Determine place details and author dynamically
+          let placeName = "Level15 Moving";
+          let placeAddress = "15 Min";
+          let placeCity = "Las vegas";
+          let placeCountry = "United States";
+          let placeCategory = "Moving";
+          let placeId = "level15moving.com";
+          let placeWebsite = "https://level15moving.com/";
+          let authorName = "Steven Akan";
+          let authorHandle = "@stevenakan";
+          let authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+          let userId = "avr6566gd@gmail.com";
 
-          if (rawTitle.toLowerCase().includes("guard slip") || rawTitle.toLowerCase().includes("bayombong")) {
-            placeName = "Guard Slip Cafe by LGIP";
+          if (combinedLower.includes("level 15") || combinedLower.includes("level15")) {
+            placeName = "Level15 Moving";
+            placeAddress = "15 Min";
+            placeCity = "Las vegas";
+            placeCountry = "United States";
+            placeCategory = "Website";
+            placeId = "level15moving.com";
+            placeWebsite = "https://level15moving.com/";
+            authorName = "Steven Akan";
+            authorHandle = "@stevenakan";
+            userId = "avr6566gd@gmail.com";
+            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+          } else if (combinedLower.includes("guard slip") || combinedLower.includes("bayombong")) {
+            placeName = "Guard Slip Cafe By Lgip";
             placeAddress = "Bayombong, Nueva Vizcaya, Philippines";
             placeCity = "Bayombong";
             placeCountry = "Philippines";
             placeCategory = "Cafe";
             placeId = "guard-slip-cafe-by-lgip-bayombong";
-          } else if (rawTitle.toLowerCase().includes("jollibee")) {
+            placeWebsite = "";
+            authorName = "Edjo Francis Ramos";
+            authorHandle = "@edjofrancisramos";
+            userId = "edjofrancisramos18@gmail.com";
+            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+          } else if (combinedLower.includes("jollibee")) {
             placeName = "Jollibee Philippines";
             placeAddress = "Manila, Philippines";
             placeCity = "Manila";
             placeCountry = "Philippines";
             placeCategory = "Fast Food";
             placeId = "jollibee.com.ph";
+            placeWebsite = "https://jollibee.com.ph";
+            authorName = "Edjo Francis Ramos";
+            authorHandle = "@edjofrancisramos";
+            userId = "edjofrancisramos18@gmail.com";
+            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
+          } else if (combinedLower.includes("shirleys") || combinedLower.includes("sheelys")) {
+            placeName = "Shirleys Removals London";
+            placeAddress = "London, United Kingdom";
+            placeCity = "London";
+            placeCountry = "United Kingdom";
+            placeCategory = "Moving";
+            placeId = "shirleysremovals.co.uk";
+            placeWebsite = "https://shirleysremovals.co.uk";
+            authorName = "Steven Akan";
+            authorHandle = "@stevenakan";
+            userId = "stevenakan@gmail.com";
+          } else if (combinedLower.includes("five star")) {
+            placeName = "Five Star Moving Las Vegas";
+            placeAddress = "Las Vegas, Nevada, United States";
+            placeCity = "Las Vegas";
+            placeCountry = "United States";
+            placeCategory = "Moving";
+            placeId = "fivestarmoving.com";
+            placeWebsite = "https://fivestarmoving.com";
+            authorName = "Steven Akan";
+            authorHandle = "@stevenakan";
+            userId = "stevenakan@gmail.com";
           }
 
           const segments = bunnyRes?.segments || [];
@@ -22844,8 +22894,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
           const recoveredReview: any = {
             id: recoveredReviewId,
-            userId: "edjofrancisramos18@gmail.com",
-            userEmail: "edjofrancisramos18@gmail.com",
+            userId: userId,
+            userEmail: userId,
             createdAtMs: uploadDateMs,
             isLocalUpload: false,
             placeId: placeId,
@@ -22855,11 +22905,11 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             placeCity: placeCity,
             placeCountry: placeCountry,
             placeRating: 5,
-            placeWebsite: "",
+            placeWebsite: placeWebsite,
             author: {
-              name: "Edjo Francis Ramos",
-              handle: "@edjofrancisramos",
-              avatar: "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+              name: authorName,
+              handle: authorHandle,
+              avatar: authorAvatar,
               isLocalGuide: true,
               videoReviewCount: 2,
               photosCount: 0,
@@ -22947,9 +22997,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                   recoveredReviewId,
                   placeId,
                   placeName,
-                  "Edjo Francis Ramos",
+                  authorName,
                   recoveredReview.author.avatar,
-                  "edjofrancisramos18@gmail.com",
+                  userId,
                   5,
                   recoveredReview.videoUrl,
                   officialThumb,
@@ -34162,34 +34212,34 @@ function injectOpenGraphTags(html: string, meta: any) {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return;
     try {
-      const allowedReviewIds = [
-        "rev-1792404298362-hrk2f",
-        "rev-1792405036441-zqqwp",
-        "rev-1792172427752-d6g7q",
-        "rev-1792171873846-dj6oy",
-        "rev-1792169706193-v5rko",
-        "rev-1792168311201-mc11u"
-      ];
+      // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs
+      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe'").catch(() => {});
+      
+      // 2. Gather all valid placeIds referenced by active reviews in database and reviews_index.json
       const revRes = await bunnyDb.execute("SELECT id, placeId FROM videoReviews");
-      const allowedPlaceIds = new Set<string>();
+      const activePlaceIds = new Set<string>();
       if (revRes && revRes.rows) {
         for (const r of (revRes.rows as any[])) {
-          if (!allowedReviewIds.includes(r.id)) {
-            await bunnyDb.execute({ sql: "DELETE FROM videoReviews WHERE id = ?", args: [r.id] }).catch(() => {});
-          } else {
-            if (r.placeId) allowedPlaceIds.add(r.placeId);
-          }
+          if (r.placeId) activePlaceIds.add(r.placeId);
         }
       }
+      try {
+        const localList = readReviewsIndex();
+        for (const r of localList) {
+          if (r && r.placeId) activePlaceIds.add(r.placeId);
+        }
+      } catch (e) {}
+
+      // 3. Purge orphaned or fake/unnamed places
       const placeRes = await bunnyDb.execute("SELECT id, name FROM places");
       if (placeRes && placeRes.rows) {
         for (const p of (placeRes.rows as any[])) {
-          if (!allowedPlaceIds.has(p.id) || !p.name || p.name.trim() === "" || p.name.toLowerCase().includes("unnamed") || p.name.toLowerCase().includes("solicitors") || p.name.toLowerCase().includes("restaurant") || p.name.toLowerCase().includes("hotel")) {
+          if (!activePlaceIds.has(p.id) || !p.name || p.name.trim() === "" || p.name.toLowerCase().includes("unnamed") || p.name.toLowerCase().includes("solicitors") || p.name.toLowerCase().includes("hotel")) {
             await bunnyDb.execute({ sql: "DELETE FROM places WHERE id = ?", args: [p.id] }).catch(() => {});
           }
         }
       }
-      console.log("🧹 [Server] Purged all fake reviews and places. Only 6 original reviews remain.");
+      console.log("🧹 [Server] Cleaned up orphaned and fake places safely without deleting valid user video reviews.");
     } catch (e) {
       console.warn("Purge notice:", e);
     }

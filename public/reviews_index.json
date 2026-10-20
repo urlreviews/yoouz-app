@@ -1,5 +1,136 @@
 [
   {
+    "id": "rev-1792432790505-8re2s",
+    "userId": "avr6566gd@gmail.com",
+    "userEmail": "avr6566gd@gmail.com",
+    "createdAtMs": 1792488042000,
+    "isLocalUpload": false,
+    "placeId": "level15moving.com",
+    "placeName": "Level15 Moving",
+    "placeCategory": "Website",
+    "placeAddress": "15 Min",
+    "placeCity": "Las vegas",
+    "placeCountry": "United States",
+    "placeRating": 5,
+    "placeWebsite": "https://level15moving.com/",
+    "author": {
+      "name": "Steven Akan",
+      "handle": "@stevenakan",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "Miami Beach, Florida, United States",
+      "city": "Miami Beach",
+      "country": "United States"
+    },
+    "rating": 5,
+    "durationSeconds": 11,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/f240f98b-5367-421d-b923-fee8293bc6d0.mp4",
+      "/api/videos/stream/rev-1792432790505-8re2s.mp4",
+      "/default-review.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/thumbnail.jpg",
+    "title": "Great Customer Service at Level 15! Highly Recommended!",
+    "aiTitle": "Great Customer Service at Level 15! Highly Recommended!",
+    "caption": "Great Customer Service at Level 15! Highly Recommended!",
+    "transcriptText": "Hello everybody, I would like to recommend again today for level 15 they did a great job, they have good customer service. I'm sure I will recommend other people and will come back again.",
+    "segments": [
+      {
+        "start": 0.71,
+        "end": 2.39,
+        "text": "Hello everybody, I would like to",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.39,
+        "end": 4.3,
+        "text": "recommend again today for level 15",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.3,
+        "end": 5.31,
+        "text": "they did a great job,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.31,
+        "end": 6.14,
+        "text": "they have good",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.14,
+        "end": 7.08,
+        "text": "customer service.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.66,
+        "end": 9.15,
+        "text": "I'm sure I will recommend other",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.15,
+        "end": 10.09,
+        "text": "people and will come",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.09,
+        "end": 10.66,
+        "text": "back again.",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Level15 Moving",
+    "businessName": "Level15 Moving",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 1,
+    "viewsCount": 1,
+    "sharesCount": 0,
+    "tags": [
+      "Website"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "f240f98b-5367-421d-b923-fee8293bc6d0",
+    "bunnyGuid": "f240f98b-5367-421d-b923-fee8293bc6d0",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
+    "vttUrl": "/api/videos/rev-1792432790505-8re2s/subtitles.vtt",
+    "hasBunnySmartCaptions": true,
+    "bunnyDescription": "In the video, the speaker highly praises level 15 for their excellent customer service. They express satisfaction with their experience and mention that they will recommend level 15 to others. The speaker also indicates their intention to return in the future. Overall, the speaker's positive feedback highlights the quality of service provided by level 15 and their intention to spread the word about their positive experience.",
+    "description": "In the video, the speaker highly praises level 15 for their excellent customer service. They express satisfaction with their experience and mention that they will recommend level 15 to others. The speaker also indicates their intention to return in the future. Overall, the speaker's positive feedback highlights the quality of service provided by level 15 and their intention to spread the word about their positive experience.",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "placeDescription": "Level15 Moving · Official business profile for level15moving.com",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "createdAt": "2026-10-20 09:20:42",
+    "authorName": "Steven Akan",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 11,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "placePhone": "",
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3
+  },
+  {
     "id": "rev-1792404298362-hrk2f",
     "userId": "edjofrancisramos18@gmail.com",
     "userEmail": "edjofrancisramos18@gmail.com",
@@ -58,15 +189,15 @@
     ],
     "dishOrItem": "Guard Slip Cafe by LGIP",
     "businessName": "Guard Slip Cafe By Lgip",
-    "likes": 0,
+    "likes": 1,
     "isLiked": false,
     "commentsCount": 0,
     "comments": [],
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 4,
-    "viewsCount": 4,
+    "views": 43,
+    "viewsCount": 43,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -83,7 +214,7 @@
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 41,
     "createdAt": "2026-10-19 11:27:32",
-    "likesCount": 0,
+    "likesCount": 1,
     "bookmarks": 0,
     "shares": 0,
     "placeBannerUrl": "",
@@ -195,8 +326,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 10,
-    "viewsCount": 10,
+    "views": 37,
+    "viewsCount": 37,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -295,8 +426,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 163,
-    "viewsCount": 163,
+    "views": 175,
+    "viewsCount": 175,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -390,8 +521,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 47,
-    "viewsCount": 47,
+    "views": 51,
+    "viewsCount": 51,
     "sharesCount": 0,
     "tags": [
       "Legal Services"
@@ -494,8 +625,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 33,
-    "viewsCount": 33,
+    "views": 37,
+    "viewsCount": 37,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -516,9 +647,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
     "aiTitle": "Great People, Great Job!",
     "title": "Great People, Great Job!",
     "bunnyDescription": "In this video, the speaker expresses their positive experience with Level 15, praising the great help they received and highly recommending their services. They are impressed by the team's professionalism and the quality of work done. The speaker expresses gratitude and mentions their intention to return in the future. Overall, Level 15 has left a lasting positive impression on the speaker, who values the great people and great job done by the team.",
@@ -614,8 +745,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 37,
-    "viewsCount": 37,
+    "views": 42,
+    "viewsCount": 42,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -636,9 +767,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
     "aiTitle": "Fast, Excellent Service, Highly Recommended!",
     "title": "Fast, Excellent Service, Highly Recommended!",
     "bunnyDescription": "Level 15 Moving received high praise from a satisfied customer who highlighted their efficient service and quick response time. The customer expressed appreciation for the excellent job done and the friendly customer service received. They mentioned being impressed by the promptness of Level 15 Moving and expressed a strong intention to return for future services. Additionally, the customer indicated their willingness to recommend Level 15 Moving to friends based on their positive experience. Overall, the customer's feedback emphasized the company's reliability, speed, and exceptional customer service, making them a highly recommended choice for moving services.",
@@ -746,7 +877,7 @@
     "placeEmail": "support@yoouz.com",
     "placeRating": 2,
     "placeWebsite": "https://yoouz.com",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "/favicon.svg",
     "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "placeDescription": "Yoouz Video Reviews Platform",
     "author": {
@@ -840,7 +971,7 @@
     "bunnyVideoId": "7f0228cb-c49b-40f9-9c5d-b1ec18dd2c67",
     "bannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "ogImage": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "/favicon.svg",
     "authorName": "Ben Blue",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 8,
@@ -874,7 +1005,7 @@
     "placeEmail": "support@yoouz.com",
     "placeRating": 5,
     "placeWebsite": "https://yoouz.com",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "/favicon.svg",
     "placeBannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "placeDescription": "Yoouz Video Reviews Platform",
     "author": {
@@ -937,7 +1068,7 @@
     "bunnyVideoId": "9bd4fc5e-4666-4335-ae44-82a14ff0480e",
     "bannerUrl": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
     "ogImage": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "/favicon.svg",
     "authorName": "Steven Akan",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 7,
