@@ -1312,7 +1312,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
             {/* Line 2: Star Rating + Globe Icon + Business URL & Line 3: Review Title */}
             {(() => {
-              const rawHeadline = (video.aiTitle || video.title || (video as any).videoTitle || (video as any).bunnyTitle || "").trim();
+              const rawHeadline = (
+                video.title || 
+                video.aiTitle || 
+                (video.caption && !/^video review (for|of)\b/i.test(video.caption) ? video.caption : "") || 
+                (video as any).videoTitle || 
+                (video as any).bunnyTitle || 
+                ""
+              ).trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
               const isGenericCaption = !rawHeadline || /^video review (for|of)\b/i.test(rawHeadline);
 

@@ -194,8 +194,15 @@
     "segments": [
       {
         "start": 0.92,
+        "end": 2.85,
+        "text": "This Zara perfume is my",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.85,
         "end": 4.16,
-        "text": "This Zara perfume is my new favorite."
+        "text": "new favorite.",
+        "isHardwareTimed": true
       },
       {
         "start": 4.36,
@@ -204,13 +211,33 @@
       },
       {
         "start": 6.47,
+        "end": 8.45,
+        "text": "And unlike any other brands at",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.45,
+        "end": 10.45,
+        "text": "this price, it actually lasts",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.45,
         "end": 11.04,
-        "text": "And unlike any other brands at this price, it actually lasts all day."
+        "text": "all day.",
+        "isHardwareTimed": true
       },
       {
         "start": 11.08,
+        "end": 11.99,
+        "text": "So you have to give it",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.99,
         "end": 12.34,
-        "text": "So you have to give it a try."
+        "text": "a try.",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Zara",
@@ -250,7 +277,10 @@
     "reviewCount": 2,
     "totalReviews": 2,
     "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
-    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!"
+    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "aiTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "bunnyTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "videoTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!"
   },
   {
     "id": "rev-1792404298362-hrk2f",

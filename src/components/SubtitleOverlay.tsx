@@ -185,17 +185,53 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
+    // Sort cues strictly by start time
+    cleanCues.sort((a, b) => a.start - b.start);
+
+    // 🛡️ STRICT OVERLAP REMOVAL & CUE DEDUPLICATION
+    // Ensures subtitles strictly advance forward and NEVER jump backward or restart in the middle
+    const deduplicatedCues: SubtitleCue[] = [];
+    for (const cue of cleanCues) {
+      if (deduplicatedCues.length === 0) {
+        deduplicatedCues.push(cue);
+      } else {
+        const last = deduplicatedCues[deduplicatedCues.length - 1];
+        if (cue.start <= last.start + 0.3) {
+          // If two cues start at virtually the same time, keep the one with longer/fuller text
+          if (cue.text.length > last.text.length) {
+            deduplicatedCues[deduplicatedCues.length - 1] = { ...cue, start: last.start, end: Math.max(last.end, cue.end) };
+          }
+          continue;
+        }
+        if (cue.start < last.end) {
+          if (cue.text === last.text || last.text.includes(cue.text)) {
+            last.end = Math.max(last.end, cue.end);
+            continue;
+          }
+          if (cue.text.includes(last.text)) {
+            last.text = cue.text;
+            last.end = Math.max(last.end, cue.end);
+            continue;
+          }
+          cue.start = last.end;
+        }
+        if (cue.end > cue.start) {
+          deduplicatedCues.push(cue);
+        }
+      }
+    }
+
     // 🛡️ ANTI-BLINKING GAP BRIDGING:
     // Bridge gaps between consecutive phrase cues so subtitles NEVER unmount or flicker between words
-    for (let i = 0; i < cleanCues.length - 1; i++) {
-      const curr = cleanCues[i];
-      const next = cleanCues[i + 1];
+    for (let i = 0; i < deduplicatedCues.length - 1; i++) {
+      const curr = deduplicatedCues[i];
+      const next = deduplicatedCues[i + 1];
       if (next.start > curr.end && next.start - curr.end <= 3.0) {
         curr.end = next.start; // Seamless transition!
       }
     }
 
-    return cleanCues;
+    return deduplicatedCues;
   }, [segments, transcriptText, duration]);
 
   // Compute active cue with hysteresis hold time to prevent flickering
@@ -207,7 +243,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       const cue = cues[i];
       const nextCue = cues[i + 1];
       // Hold cue until next cue starts or up to 1.5s after cue end to prevent mid-speech blinking
-      const effectiveEnd = nextCue ? Math.min(nextCue.start, cue.end + 1.2) : cue.end + 1.8;
+      const effectiveEnd = (nextCue && nextCue.start > cue.start) ? Math.min(nextCue.start, cue.end + 1.2) : cue.end + 1.8;
       if (currentTime >= cue.start && currentTime <= effectiveEnd) {
         return cue;
       }

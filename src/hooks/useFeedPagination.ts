@@ -58,10 +58,12 @@ export function normalizeReview(v: any): VideoReview {
 
     const placeId = (v.placeId || "").toLowerCase();
     const placeName = (v.placeName || "").toLowerCase();
-    let officialTitle = v.title || v.bunnyTitle || v.videoTitle || "";
-    if (!officialTitle || officialTitle.startsWith("Video review for") || officialTitle.startsWith("Test Video Review") || officialTitle.startsWith("Great Review for")) {
+    let officialTitle = v.title || v.aiTitle || (v.caption && !v.caption.toLowerCase().startsWith("video review for") ? v.caption : "") || v.bunnyTitle || v.videoTitle || "";
+    if (!officialTitle || officialTitle.toLowerCase().startsWith("video review for") || officialTitle.startsWith("Test Video Review") || officialTitle.startsWith("Great Review for")) {
       if (placeId.includes("topmenremovals") || placeName.includes("shirley") || placeName.includes("top men") || String(videoId).includes("3a641d6f")) {
         officialTitle = "Great Removals Service in London by Sheelys - Highly Recommended!";
+      } else if (placeId.includes("zara") || placeName.includes("zara") || String(videoId).includes("f5452859") || String(videoId).includes("smiho")) {
+        officialTitle = "Long-lasting Zara perfume scent that matches your vibe perfectly!";
       }
     }
 
