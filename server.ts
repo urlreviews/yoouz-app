@@ -28877,9 +28877,29 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
     }
 
-    // High-resolution authentic brand favicon from Google s2 service via proxy
+    // High-resolution authentic brand favicon from Google s2 service fetched server-side
     if (cleanDomain && cleanDomain.includes(".")) {
-      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`)}`);
+      try {
+        const s2Url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=128`;
+        const s2Resp = await fetch(s2Url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+          },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+        });
+        const cType = (s2Resp.headers.get('content-type') || '').toLowerCase();
+        if (s2Resp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
+          const s2Buf = Buffer.from(await s2Resp.arrayBuffer());
+          // Ensure valid image payload (>200 bytes)
+          if (s2Buf.length > 200) {
+            res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(s2Buf);
+          }
+        }
+      } catch (s2Err) {}
     }
 
     return sendDefaultFavicon(cleanDomain);

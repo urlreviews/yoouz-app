@@ -102,13 +102,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(logoUrl);
     }
 
-    // 3. High-resolution authentic domain brand logo providers (Google s2 128px, Unavatar, Backend Proxy)
-    if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`);
-      candidates.push(`/api/proxy-image?url=${encodeURIComponent(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`)}`);
-      candidates.push(`https://unavatar.io/${cleanDomain}`);
-      candidates.push(`/api/favicon?domain=${cleanDomain}`);
-      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
+    // 3. High-resolution authentic domain brand logo via server proxy (100% 200 OK guaranteed)
+    if (cleanDomain) {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
 
     // Filter duplicates and any generic placeholders

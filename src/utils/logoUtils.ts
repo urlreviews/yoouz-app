@@ -1165,8 +1165,8 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   if (url && !isFaviconUrl(url)) return getProxiedImageUrl(url);
 
   // High-res domain logo fallback
-  if (cleanDomain && cleanDomain.includes(".")) {
-    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+  if (cleanDomain) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;
@@ -1234,8 +1234,8 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 4. Guaranteed high-resolution authentic domain logo fallback for any verified web business
-  if (cleanDomain && cleanDomain.includes(".")) {
-    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+  if (cleanDomain) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;
