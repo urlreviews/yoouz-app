@@ -4,7 +4,7 @@
     "userId": "krtpcq@gmail.com",
     "userEmail": "krtpcq@gmail.com",
     "createdAtMs": 1792505354615,
-    "isLocalUpload": true,
+    "isLocalUpload": false,
     "isCurrentSessionBlob": true,
     "placeId": "zara.com",
     "placeName": "Zara",
@@ -114,8 +114,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 7,
-    "viewsCount": 7,
+    "views": 17,
+    "viewsCount": 17,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -141,18 +141,20 @@
     "reviewsCount": 2,
     "reviewCount": 2,
     "totalReviews": 2,
-    "updatedAt": 1792506752246,
+    "updatedAt": 1792514318491,
     "aiTitle": "Long-lasting winter scent matching my style perfectly!",
     "title": "Long-lasting winter scent matching my style perfectly!",
     "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
-    "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity."
+    "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
+    "isProcessing": false,
+    "isReady": true
   },
   {
     "id": "rev-1792505047137-smiho",
     "userId": "krtpcq@gmail.com",
     "userEmail": "krtpcq@gmail.com",
     "createdAtMs": 1792505047138,
-    "isLocalUpload": true,
+    "isLocalUpload": false,
     "isCurrentSessionBlob": true,
     "placeId": "zara.com",
     "placeName": "Zara",
@@ -193,51 +195,24 @@
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
       {
-        "start": 0.92,
-        "end": 2.85,
-        "text": "This Zara perfume is my",
-        "isHardwareTimed": true
+        "start": 0.918,
+        "end": 4.164,
+        "text": "This Zara perfume is my new favorite."
       },
       {
-        "start": 2.85,
-        "end": 4.16,
-        "text": "new favorite.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.36,
-        "end": 6.29,
+        "start": 4.364,
+        "end": 6.288,
         "text": "It fits my vibe perfectly."
       },
       {
-        "start": 6.47,
-        "end": 8.45,
-        "text": "And unlike any other brands at",
-        "isHardwareTimed": true
+        "start": 6.468,
+        "end": 11.037,
+        "text": "And unlike any other brands at this price, it actually lasts all day."
       },
       {
-        "start": 8.45,
-        "end": 10.45,
-        "text": "this price, it actually lasts",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.45,
-        "end": 11.04,
-        "text": "all day.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.08,
-        "end": 11.99,
-        "text": "So you have to give it",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.99,
-        "end": 12.34,
-        "text": "a try.",
-        "isHardwareTimed": true
+        "start": 11.077,
+        "end": 12.199,
+        "text": "So you have to give it a try."
       }
     ],
     "dishOrItem": "Zara",
@@ -249,8 +224,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 6,
-    "viewsCount": 6,
+    "views": 18,
+    "viewsCount": 18,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -276,11 +251,10 @@
     "reviewsCount": 2,
     "reviewCount": 2,
     "totalReviews": 2,
-    "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
     "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "aiTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "bunnyTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "videoTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!"
+    "isReady": true,
+    "isProcessing": false
   },
   {
     "id": "rev-1792404298362-hrk2f",
@@ -318,25 +292,124 @@
       "/default-review.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
-    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
-    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
+    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
     "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
     "segments": [
       {
         "start": 0.66,
+        "end": 2.61,
+        "text": "hello everyone so",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.61,
+        "end": 4.61,
+        "text": "i'm here to do my review",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.61,
+        "end": 6.85,
+        "text": "with the guard slip cafe by",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.85,
+        "end": 11.18,
+        "text": "lgip located in bayombong nueva vizcaya",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.18,
+        "end": 12.91,
+        "text": "so do visit the store the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.91,
         "end": 14.06,
-        "text": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which"
+        "text": "cafe in which",
+        "isHardwareTimed": true
       },
       {
         "start": 14.12,
-        "end": 26.77,
-        "text": "they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at"
+        "end": 17.09,
+        "text": "they do offer affordable drinks and",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.09,
+        "end": 19.38,
+        "text": "freshly baked pastries and",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.38,
+        "end": 22.35,
+        "text": "breads with affordable price it is",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 22.35,
+        "end": 24.41,
+        "text": "a very uh cozy place the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.41,
+        "end": 26.54,
+        "text": "ambience is very good",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.54,
+        "end": 26.89,
+        "text": "and at",
+        "isHardwareTimed": true
       },
       {
         "start": 26.87,
+        "end": 29.38,
+        "text": "the same time um lip cafe",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 29.38,
+        "end": 31.82,
+        "text": "by lgit do supports okay the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 31.82,
+        "end": 34.99,
+        "text": "nova viscayano local bins so",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 34.99,
+        "end": 36.64,
+        "text": "once again if",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 36.64,
+        "end": 39,
+        "text": "you have time drop by",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39,
+        "end": 39.86,
+        "text": "at lip café",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39.86,
         "end": 40.44,
-        "text": "the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT"
+        "text": "by LGIT",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Guard Slip Cafe by LGIP",
@@ -348,8 +421,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 68,
-    "viewsCount": 68,
+    "views": 70,
+    "viewsCount": 70,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -377,7 +450,10 @@
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dguard-slip-cafe-by-lgip.bayombong%26sz%3D128"
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dguard-slip-cafe-by-lgip.bayombong%26sz%3D128",
+    "isProcessing": false,
+    "isReady": true,
+    "updatedAt": 1792514315862
   },
   {
     "id": "rev-1792405036441-zqqwp",
@@ -431,33 +507,129 @@
       },
       {
         "start": 1.95,
+        "end": 2.78,
+        "text": "So for this one is",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.78,
         "end": 4.11,
-        "text": "So for this one is Jollibee Philippines."
+        "text": "Jollibee Philippines.",
+        "isHardwareTimed": true
       },
       {
         "start": 4.19,
+        "end": 5.53,
+        "text": "I gave it a 5 star",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.53,
         "end": 6.85,
-        "text": "I gave it a 5 star for its review."
+        "text": "for its review.",
+        "isHardwareTimed": true
       },
       {
         "start": 6.87,
+        "end": 9.19,
+        "text": "Because basically, they do offer the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.19,
+        "end": 11.67,
+        "text": "famous iconic chicken joint crispy on",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.67,
+        "end": 12.49,
+        "text": "the outside and",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.49,
+        "end": 13.84,
+        "text": "at the same time juicy",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.84,
         "end": 14.44,
-        "text": "Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside."
+        "text": "on inside.",
+        "isHardwareTimed": true
       },
       {
         "start": 14.56,
+        "end": 16.29,
+        "text": "And always be served with",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.29,
+        "end": 17.53,
+        "text": "the iconic sweet",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.53,
         "end": 18.84,
-        "text": "And always be served with the iconic sweet style spaghetti."
+        "text": "style spaghetti.",
+        "isHardwareTimed": true
       },
       {
         "start": 20.55,
-        "end": 25.31,
-        "text": "mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours,"
+        "end": 21.62,
+        "text": "mag-loaded with apple slices,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 21.62,
+        "end": 22.46,
+        "text": "cheese, and at the same time",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 22.46,
+        "end": 23.82,
+        "text": "also, it's very convenient because",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 23.82,
+        "end": 24.97,
+        "text": "majority of their store is open",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.97,
+        "end": 25.32,
+        "text": "24 hours,",
+        "isHardwareTimed": true
       },
       {
         "start": 25.33,
+        "end": 26.2,
+        "text": "making it as your go-to for",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.2,
+        "end": 27.12,
+        "text": "your late night cravings or at",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 27.12,
+        "end": 27.57,
+        "text": "same for any",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 27.57,
         "end": 28.15,
-        "text": "making it as your go-to for your late night cravings or at same for any morning breakfast."
+        "text": "morning breakfast.",
+        "isHardwareTimed": true
       },
       {
         "start": 28.17,
@@ -479,8 +651,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 60,
-    "viewsCount": 60,
+    "views": 64,
+    "viewsCount": 64,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -493,7 +665,7 @@
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.jollibee.com.ph%2Fsites%2Fapollocmsmkt%2Ffiles%2Fstyles%2Fwebp_optimized%2Fpublic%2Fhero-banner-images%2F2026-09%2FJKM_P-KEHLANI-DIGITAL-CASCADES_Mobile-Banner-2250x2472px_2026_FA_0.jpg.webp%3Fitok%3D8VxFZWle",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.jollibee.com.ph%2Fsites%2Fapollocmsmkt%2Ffiles%2Fstyles%2Fwebp_optimized%2Fpublic%2Fhero-banner-images%2F2026-09%2FJKM_P-KEHLANI-DIGITAL-CASCADES_Mobile-Banner-2250x2472px_2026_FA_0.jpg.webp%3Fitok%3D8VxFZWle",
-    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
+    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
     "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
     "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
     "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fen%2Fthumb%2F8%2F84%2FJollibee_2011_logo.svg%2F330px-Jollibee_2011_logo.svg.png%3Futm_source%3Den.wikipedia.org%26utm_campaign%3Dapi%26utm_content%3Dthumbnail",
@@ -507,6 +679,9 @@
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl"
+    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "isProcessing": false,
+    "isReady": true,
+    "updatedAt": 1792514327833
   }
 ]

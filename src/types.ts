@@ -186,6 +186,8 @@ export interface VideoReview {
   title?: string;
   aiTitle?: string;
   hasBunnySmartCaptions?: boolean;
+  isProcessing?: boolean;
+  isReady?: boolean;
   bunnyTitle?: string;
   videoTitle?: string;
   dishOrItem?: string;
