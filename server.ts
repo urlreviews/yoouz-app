@@ -14124,6 +14124,18 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "anthropic.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+      logoUrl: "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://anthropic.com&size=256",
+      name: "Anthropic",
+      website: "https://anthropic.com"
+    },
+    "www.anthropic.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+      logoUrl: "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://anthropic.com&size=256",
+      name: "Anthropic",
+      website: "https://anthropic.com"
+    },
     "toopoptiek.com": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png%2Fv1%2Ffit%2Fw_2500%2Ch_1330%2Cal_c%2Fcb6ad0_eede6bcc70b84e4b869fde51dbd86571%7Emv2.png",
       logoUrl: "/api/favicon?domain=toopoptiek.com",
