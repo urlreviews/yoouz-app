@@ -2414,25 +2414,28 @@ export function resolveSafeAuthor(
   // 4. Resolve authentic candidate avatar
   let candidateAvatar = registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
 
-  // Strict canonical identity verification
-  const videoCluster = getCanonicalUserKey({
-    email: video?.userEmail || video?.userId,
-    name: rawName,
-    handle: authorObj.handle,
-    id: video?.userId
-  });
+  // Strict canonical identity verification (ONLY if rawName is generic or absent)
+  const isGeneric = !rawName || rawName.toLowerCase() === "reviewer" || rawName.toLowerCase() === "verified reviewer" || rawName.toLowerCase() === "yoouz reviewer";
+  if (isGeneric) {
+    const videoCluster = getCanonicalUserKey({
+      email: video?.userEmail || video?.userId,
+      name: rawName,
+      handle: authorObj.handle,
+      id: video?.userId
+    });
 
-  if (videoCluster === "user_group_aouisesmee") {
-    finalName = "Ben Blue";
-    finalHandle = "@benblue";
-    if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("7CB342") || candidateAvatar.includes("%237CB342")) {
-      candidateAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue");
-    }
-  } else if (videoCluster === "user_group_stevenakan") {
-    finalName = "Steven Akan";
-    finalHandle = "@stevenakan";
-    if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("1E88E5") || candidateAvatar.includes("%231E88E5") || candidateAvatar.includes("00897B") || candidateAvatar.includes("%2300897B")) {
-      candidateAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan");
+    if (videoCluster === "user_group_aouisesmee") {
+      finalName = "Ben Blue";
+      finalHandle = "@benblue";
+      if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("7CB342") || candidateAvatar.includes("%237CB342")) {
+        candidateAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue");
+      }
+    } else if (videoCluster === "user_group_stevenakan") {
+      finalName = "Steven Akan";
+      finalHandle = "@stevenakan";
+      if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("1E88E5") || candidateAvatar.includes("%231E88E5") || candidateAvatar.includes("00897B") || candidateAvatar.includes("%2300897B")) {
+        candidateAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan");
+      }
     }
   }
 

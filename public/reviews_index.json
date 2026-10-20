@@ -1,136 +1,5 @@
 [
   {
-    "id": "rev-1792432790505-8re2s",
-    "userId": "avr6566gd@gmail.com",
-    "userEmail": "avr6566gd@gmail.com",
-    "createdAtMs": 1792488042000,
-    "isLocalUpload": false,
-    "placeId": "level15moving.com",
-    "placeName": "Level15 Moving",
-    "placeCategory": "Website",
-    "placeAddress": "15 Min",
-    "placeCity": "Las vegas",
-    "placeCountry": "United States",
-    "placeRating": 5,
-    "placeWebsite": "https://level15moving.com/",
-    "author": {
-      "name": "Steven Akan",
-      "handle": "@stevenakan",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "Miami Beach, Florida, United States",
-      "city": "Miami Beach",
-      "country": "United States"
-    },
-    "rating": 5,
-    "durationSeconds": 11,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/f240f98b-5367-421d-b923-fee8293bc6d0.mp4",
-      "/api/videos/stream/rev-1792432790505-8re2s.mp4",
-      "/default-review.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/thumbnail.jpg",
-    "title": "Great Customer Service at Level 15! Highly Recommended!",
-    "aiTitle": "Great Customer Service at Level 15! Highly Recommended!",
-    "caption": "Great Customer Service at Level 15! Highly Recommended!",
-    "transcriptText": "Hello everybody, I would like to recommend again today for level 15 they did a great job, they have good customer service. I'm sure I will recommend other people and will come back again.",
-    "segments": [
-      {
-        "start": 0.71,
-        "end": 2.39,
-        "text": "Hello everybody, I would like to",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.39,
-        "end": 4.3,
-        "text": "recommend again today for level 15",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.3,
-        "end": 5.31,
-        "text": "they did a great job,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 5.31,
-        "end": 6.14,
-        "text": "they have good",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.14,
-        "end": 7.08,
-        "text": "customer service.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.66,
-        "end": 9.15,
-        "text": "I'm sure I will recommend other",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.15,
-        "end": 10.09,
-        "text": "people and will come",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.09,
-        "end": 10.66,
-        "text": "back again.",
-        "isHardwareTimed": true
-      }
-    ],
-    "dishOrItem": "Level15 Moving",
-    "businessName": "Level15 Moving",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 1,
-    "viewsCount": 1,
-    "sharesCount": 0,
-    "tags": [
-      "Website"
-    ],
-    "recordedAt": "Just now",
-    "bunnyVideoId": "f240f98b-5367-421d-b923-fee8293bc6d0",
-    "bunnyGuid": "f240f98b-5367-421d-b923-fee8293bc6d0",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f240f98b-5367-421d-b923-fee8293bc6d0/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792432790505-8re2s/subtitles.vtt",
-    "hasBunnySmartCaptions": true,
-    "bunnyDescription": "In the video, the speaker highly praises level 15 for their excellent customer service. They express satisfaction with their experience and mention that they will recommend level 15 to others. The speaker also indicates their intention to return in the future. Overall, the speaker's positive feedback highlights the quality of service provided by level 15 and their intention to spread the word about their positive experience.",
-    "description": "In the video, the speaker highly praises level 15 for their excellent customer service. They express satisfaction with their experience and mention that they will recommend level 15 to others. The speaker also indicates their intention to return in the future. Overall, the speaker's positive feedback highlights the quality of service provided by level 15 and their intention to spread the word about their positive experience.",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
-    "placeDescription": "Level15 Moving · Official business profile for level15moving.com",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "createdAt": "2026-10-20 09:20:42",
-    "authorName": "Steven Akan",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 11,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
-    "placePhone": "",
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3
-  },
-  {
     "id": "rev-1792404298362-hrk2f",
     "userId": "edjofrancisramos18@gmail.com",
     "userEmail": "edjofrancisramos18@gmail.com",
@@ -196,8 +65,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 43,
-    "viewsCount": 43,
+    "views": 44,
+    "viewsCount": 44,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -326,8 +195,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 37,
-    "viewsCount": 37,
+    "views": 39,
+    "viewsCount": 39,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -426,8 +295,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 175,
-    "viewsCount": 175,
+    "views": 177,
+    "viewsCount": 177,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -521,8 +390,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 51,
-    "viewsCount": 51,
+    "views": 52,
+    "viewsCount": 52,
     "sharesCount": 0,
     "tags": [
       "Legal Services"
@@ -559,39 +428,35 @@
     "isLocalUpload": false,
     "placeId": "level15moving.com",
     "placeName": "Level15 Moving",
-    "placeCategory": "Website",
-    "placeAddress": "15 Min",
-    "placeCity": "Las vegas",
-    "placeCountry": "United States",
-    "placePhone": "(702)%20972-8298%20",
+    "placeCategory": "",
+    "placeAddress": "",
+    "placeCity": "",
+    "placeCountry": "",
+    "placePhone": "",
     "placeEmail": "level15moving@gmail.com",
     "placeRating": 5,
-    "placeWebsite": "https://level15moving.com/",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "placeWebsite": "",
+    "placeLogoUrl": "",
+    "placeBannerUrl": "",
     "placeDescription": "Level15 Moving · Official business profile for level15moving.com",
     "author": {
       "name": "Steven Akan",
       "handle": "@stevenakan",
       "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
       "location": "Miami Beach, Florida, United States",
       "city": "Miami Beach",
+      "state": "Florida",
       "country": "United States"
     },
     "rating": 5,
     "durationSeconds": 12,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
+    "videoUrl": "https://rev1.b-cdn.net/videos/rev-1792169706193-v5rko.mp4",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/edf11846-b280-4ebd-8cde-ab4c280a78ed.mp4",
+      "https://rev1.b-cdn.net/videos/rev-1792169706193-v5rko.mp4",
       "/api/videos/stream/rev-1792169706193-v5rko.mp4",
       "/default-review.mp4"
     ],
-    "thumbnailUrl": "/uploads/rev-1792169706193-v5rko.jpg",
+    "thumbnailUrl": "https://rev1.b-cdn.net/videos/rev-1792169706193-v5rko.jpg",
     "caption": "Great People, Great Job!",
     "transcriptText": "Hello everybody. So today I'm going to share my opinion about Level 15. They really helped me so I highly recommend. I am sure I will come back. Great people and a great job.",
     "segments": [
@@ -602,13 +467,39 @@
       },
       {
         "start": 2.35,
+        "end": 3.66,
+        "text": "So today I'm going to share",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.66,
+        "end": 5.11,
+        "text": "my opinion about Level 15.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.11,
+        "end": 6.39,
+        "text": "They really helped me so",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.39,
         "end": 7.36,
-        "text": "So today I'm going to share my opinion about Level 15. They really helped me so I highly recommend."
+        "text": "I highly recommend.",
+        "isHardwareTimed": true
       },
       {
         "start": 7.44,
+        "end": 8.19,
+        "text": "I am sure I will",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.19,
         "end": 8.68,
-        "text": "I am sure I will come back."
+        "text": "come back.",
+        "isHardwareTimed": true
       },
       {
         "start": 9.26,
@@ -625,8 +516,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 37,
-    "viewsCount": 37,
+    "views": 38,
+    "viewsCount": 38,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -637,8 +528,8 @@
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/edf11846-b280-4ebd-8cde-ab4c280a78ed/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flocal-moving-img02.webp",
+    "bannerUrl": "",
+    "ogImage": "",
     "logoUrl": "/api/proxy-image?url=https%3A%2F%2Flevel15moving.com%2Fwp-content%2Fuploads%2F2024%2F09%2Flevel15-moving-logo01-300x300.webp",
     "authorName": "Steven Akan",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
@@ -647,9 +538,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2,
     "aiTitle": "Great People, Great Job!",
     "title": "Great People, Great Job!",
     "bunnyDescription": "In this video, the speaker expresses their positive experience with Level 15, praising the great help they received and highly recommending their services. They are impressed by the team's professionalism and the quality of work done. The speaker expresses gratitude and mentions their intention to return in the future. Overall, Level 15 has left a lasting positive impression on the speaker, who values the great people and great job done by the team.",
@@ -745,8 +636,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 42,
-    "viewsCount": 42,
+    "views": 43,
+    "viewsCount": 43,
     "sharesCount": 0,
     "tags": [
       "Website"
@@ -767,9 +658,9 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2,
     "aiTitle": "Fast, Excellent Service, Highly Recommended!",
     "title": "Fast, Excellent Service, Highly Recommended!",
     "bunnyDescription": "Level 15 Moving received high praise from a satisfied customer who highlighted their efficient service and quick response time. The customer expressed appreciation for the excellent job done and the friendly customer service received. They mentioned being impressed by the promptness of Level 15 Moving and expressed a strong intention to return for future services. Additionally, the customer indicated their willingness to recommend Level 15 Moving to friends based on their positive experience. Overall, the customer's feedback emphasized the company's reliability, speed, and exceptional customer service, making them a highly recommended choice for moving services.",
@@ -1058,8 +949,8 @@
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 70,
-    "viewsCount": 70,
+    "views": 71,
+    "viewsCount": 71,
     "sharesCount": 4,
     "tags": [
       "Technology"
@@ -1176,8 +1067,8 @@
     "bookmarksCount": 1,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 109,
-    "viewsCount": 109,
+    "views": 110,
+    "viewsCount": 110,
     "sharesCount": 7,
     "tags": [
       "Website"

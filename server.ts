@@ -19076,11 +19076,47 @@ app.post("/api/videos/save-review", async (req, res) => {
         review.thumbnailUrl = `${pullZoneDomain}/videos/${review.id}.jpg`;
       }
       
-      // 1. Save to local server JSON index
       const list = readReviewsIndex();
+
+      // 🛡️ Global Video Asset Collision & Duplicate Prevention Guard:
+      // A video asset (bunnyVideoId, bunnyGuid, or authentic videoUrl) can NEVER be reused across different reviews or businesses!
+      const targetBunnyId = review.bunnyVideoId || review.bunnyGuid;
+      const targetVideoUrl = review.videoUrl;
+      const conflictingReview = list.find((existing: any) => {
+        if (!existing || existing.id === review.id) return false;
+        if (targetBunnyId && (existing.bunnyVideoId === targetBunnyId || existing.bunnyGuid === targetBunnyId)) {
+          return true;
+        }
+        if (targetVideoUrl && existing.videoUrl === targetVideoUrl && !targetVideoUrl.includes("default-review") && !targetVideoUrl.startsWith("blob:")) {
+          return true;
+        }
+        return false;
+      });
+
+      if (conflictingReview) {
+        console.warn(`🛡️ [Collision Guard] BLOCKED attempt to clone/reuse video asset ${targetBunnyId || targetVideoUrl} for review ${review.id} (${review.placeName}). Asset already belongs to review ${conflictingReview.id} (${conflictingReview.placeName} by ${conflictingReview.author?.name}).`);
+        return res.status(409).json({
+          error: "Video asset collision: this video recording already belongs to an authentic review and cannot be duplicated or transferred to another business.",
+          existingReviewId: conflictingReview.id
+        });
+      }
+
+      // 1. Save to local server JSON index
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
       if (existingIdx !== -1) {
-        list[existingIdx] = { ...list[existingIdx], ...review };
+        const existing = list[existingIdx];
+        // 🛡️ Strict Identity Immutability Guard: An established review's author and business place can NEVER be changed!
+        if (existing.author?.name && existing.author.name !== "Verified Reviewer" && existing.author.name !== "Yoouz Reviewer") {
+          review.author = { ...review.author, name: existing.author.name, handle: existing.author.handle || review.author?.handle, avatar: existing.author.avatar || review.author?.avatar };
+          review.authorName = existing.author.name;
+        }
+        if (existing.placeName && !existing.placeName.toLowerCase().includes("unnamed")) {
+          review.placeName = existing.placeName;
+          review.placeId = existing.placeId || review.placeId;
+          review.businessName = existing.businessName || existing.placeName;
+          review.dishOrItem = existing.dishOrItem || existing.placeName;
+        }
+        list[existingIdx] = { ...existing, ...review };
       } else {
         list.unshift(review);
       }
@@ -22770,8 +22806,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             updated = true;
           }
 
-          // Fetch Smart Captions if not yet loaded or if title is generic
-          if (!cur.hasBunnySmartCaptions || !cur.segments || cur.segments.length === 0 || !cur.aiTitle) {
+          // Fetch Smart Captions if not yet loaded
+          if (!cur.hasBunnySmartCaptions || !cur.segments || cur.segments.length === 0) {
             const bunnyRes = await fetchBunnyStreamSmartCaptions(guid);
             if (bunnyRes) {
               if (bunnyRes.segments && bunnyRes.segments.length > 0) {
@@ -22780,17 +22816,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 cur.hasBunnySmartCaptions = true;
                 updated = true;
               }
-              if (bunnyRes.aiTitle) {
-                cur.aiTitle = bunnyRes.aiTitle;
-                cur.title = bunnyRes.aiTitle;
-                if (!cur.caption || cur.caption.startsWith("Video review for")) {
-                  cur.caption = bunnyRes.aiTitle;
-                }
-                updated = true;
-              }
-              if (bunnyRes.description) {
+              if (bunnyRes.description && !cur.bunnyDescription) {
                 cur.bunnyDescription = bunnyRes.description;
-                cur.description = bunnyRes.description;
                 updated = true;
               }
             }
@@ -22800,216 +22827,15 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             list[existingIdx] = { ...cur };
             hasMutated = true;
             syncedCount++;
-            details.push(`Updated metadata for existing review ${cur.id} (${guid})`);
+            details.push(`Updated captions for existing review ${cur.id} (${guid})`);
           }
         } else {
-          // Video is in Bunny Stream, but completely missing from database! Auto-recover!
-          if (deletedIds.includes(guid)) continue; // Was explicitly deleted by admin
-
-          console.log(`🐰 [Bunny Auto-Recovery] Discovered missing Bunny Stream video: ${guid} (${item.title})`);
-          const bunnyRes = await fetchBunnyStreamSmartCaptions(guid);
-          const rawTitle = item.title || "";
-          const combinedLower = `${rawTitle} ${item.description || ''} ${bunnyRes?.transcriptText || ''}`.toLowerCase();
-          
-          // Determine place details and author dynamically
-          let placeName = "Level15 Moving";
-          let placeAddress = "15 Min";
-          let placeCity = "Las vegas";
-          let placeCountry = "United States";
-          let placeCategory = "Moving";
-          let placeId = "level15moving.com";
-          let placeWebsite = "https://level15moving.com/";
-          let authorName = "Steven Akan";
-          let authorHandle = "@stevenakan";
-          let authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-          let userId = "avr6566gd@gmail.com";
-
-          if (combinedLower.includes("level 15") || combinedLower.includes("level15")) {
-            placeName = "Level15 Moving";
-            placeAddress = "15 Min";
-            placeCity = "Las vegas";
-            placeCountry = "United States";
-            placeCategory = "Website";
-            placeId = "level15moving.com";
-            placeWebsite = "https://level15moving.com/";
-            authorName = "Steven Akan";
-            authorHandle = "@stevenakan";
-            userId = "avr6566gd@gmail.com";
-            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-          } else if (combinedLower.includes("guard slip") || combinedLower.includes("bayombong")) {
-            placeName = "Guard Slip Cafe By Lgip";
-            placeAddress = "Bayombong, Nueva Vizcaya, Philippines";
-            placeCity = "Bayombong";
-            placeCountry = "Philippines";
-            placeCategory = "Cafe";
-            placeId = "guard-slip-cafe-by-lgip-bayombong";
-            placeWebsite = "";
-            authorName = "Edjo Francis Ramos";
-            authorHandle = "@edjofrancisramos";
-            userId = "edjofrancisramos18@gmail.com";
-            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-          } else if (combinedLower.includes("jollibee")) {
-            placeName = "Jollibee Philippines";
-            placeAddress = "Manila, Philippines";
-            placeCity = "Manila";
-            placeCountry = "Philippines";
-            placeCategory = "Fast Food";
-            placeId = "jollibee.com.ph";
-            placeWebsite = "https://jollibee.com.ph";
-            authorName = "Edjo Francis Ramos";
-            authorHandle = "@edjofrancisramos";
-            userId = "edjofrancisramos18@gmail.com";
-            authorAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-          } else if (combinedLower.includes("shirleys") || combinedLower.includes("sheelys")) {
-            placeName = "Shirleys Removals London";
-            placeAddress = "London, United Kingdom";
-            placeCity = "London";
-            placeCountry = "United Kingdom";
-            placeCategory = "Moving";
-            placeId = "shirleysremovals.co.uk";
-            placeWebsite = "https://shirleysremovals.co.uk";
-            authorName = "Steven Akan";
-            authorHandle = "@stevenakan";
-            userId = "stevenakan@gmail.com";
-          } else if (combinedLower.includes("five star")) {
-            placeName = "Five Star Moving Las Vegas";
-            placeAddress = "Las Vegas, Nevada, United States";
-            placeCity = "Las Vegas";
-            placeCountry = "United States";
-            placeCategory = "Moving";
-            placeId = "fivestarmoving.com";
-            placeWebsite = "https://fivestarmoving.com";
-            authorName = "Steven Akan";
-            authorHandle = "@stevenakan";
-            userId = "stevenakan@gmail.com";
-          }
-
-          const segments = bunnyRes?.segments || [];
-          const transcriptText = bunnyRes?.transcriptText || "";
-          const cleanTitle = (bunnyRes?.aiTitle || rawTitle).replace(/\s*#[a-z]{2,5}\b/gi, "").trim();
-          const description = bunnyRes?.description || item.description || "";
-
-          const uploadDateMs = item.dateUploaded ? new Date(item.dateUploaded).getTime() : Date.now();
-          const recoveredReviewId = `rev-${uploadDateMs}-${Math.random().toString(36).substring(2, 7)}`;
-
-          const recoveredReview: any = {
-            id: recoveredReviewId,
-            userId: userId,
-            userEmail: userId,
-            createdAtMs: uploadDateMs,
-            isLocalUpload: false,
-            placeId: placeId,
-            placeName: placeName,
-            placeCategory: placeCategory,
-            placeAddress: placeAddress,
-            placeCity: placeCity,
-            placeCountry: placeCountry,
-            placeRating: 5,
-            placeWebsite: placeWebsite,
-            author: {
-              name: authorName,
-              handle: authorHandle,
-              avatar: authorAvatar,
-              isLocalGuide: true,
-              videoReviewCount: 2,
-              photosCount: 0,
-              isVerified: true
-            },
-            rating: 5,
-            durationSeconds: item.length || 41,
-            videoUrl: `${streamPullZone}/${guid}/playlist.m3u8`,
-            fallbackVideoUrls: [
-              `${streamPullZone}/${guid}/playlist.m3u8`
-            ],
-            thumbnailUrl: officialThumb,
-            title: cleanTitle,
-            aiTitle: cleanTitle,
-            caption: cleanTitle,
-            transcriptText: transcriptText,
-            segments: segments,
-            dishOrItem: placeName,
-            businessName: placeName,
-            likes: 0,
-            isLiked: false,
-            commentsCount: 0,
-            comments: [],
-            bookmarksCount: 0,
-            isBookmarked: false,
-            repostsCount: 0,
-            views: 1,
-            viewsCount: 1,
-            sharesCount: 0,
-            tags: [placeCategory],
-            recordedAt: "Just now",
-            bunnyVideoId: guid,
-            bunnyGuid: guid,
-            hlsUrl: `${streamPullZone}/${guid}/playlist.m3u8`,
-            vttUrl: `/api/videos/${recoveredReviewId}/subtitles.vtt`,
-            hasBunnySmartCaptions: segments.length > 0,
-            bunnyDescription: description,
-            description: description
-          };
-
-          list.unshift(recoveredReview);
-          hasMutated = true;
-          recoveredCount++;
-          details.push(`Recovered missing video review for ${placeName} (${guid})`);
-
-          // Ensure place exists in BunnyDB places table
-          const bunnyDb = getBunnyDb();
-          if (bunnyDb) {
-            try {
-              await bunnyDb.execute({
-                sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO UPDATE SET updatedAt = CURRENT_TIMESTAMP`,
-                args: [
-                  placeId,
-                  placeName,
-                  placeAddress,
-                  placeCategory,
-                  placeCity,
-                  placeCountry,
-                  16.4842,
-                  121.1478,
-                  JSON.stringify({
-                    id: placeId,
-                    name: placeName,
-                    address: placeAddress,
-                    city: placeCity,
-                    country: placeCountry,
-                    category: placeCategory,
-                    rating: 5,
-                    totalReviews: 1,
-                    isVerified: true
-                  })
-                ]
-              });
-            } catch (pErr) {}
-
-            try {
-              const sqlRev = { ...recoveredReview };
-              await bunnyDb.execute({
-                sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                      ON CONFLICT(id) DO NOTHING`,
-                args: [
-                  recoveredReviewId,
-                  placeId,
-                  placeName,
-                  authorName,
-                  recoveredReview.author.avatar,
-                  userId,
-                  5,
-                  recoveredReview.videoUrl,
-                  officialThumb,
-                  recoveredReview.durationSeconds,
-                  0, 0, 0, 0, 1,
-                  JSON.stringify(sqlRev)
-                ]
-              });
-            } catch (rErr) {}
-          }
+          // 🛡️ Strict Anti-Fabrication & Anti-Duplication Guard:
+          // Raw videos in Bunny Stream without an established review record MUST NEVER be auto-recovered or fabricated.
+          // They may be deleted reviews, abandoned uploads, or draft files.
+          // Reviews are ONLY created when authentic users record and publish them.
+          // The system will NEVER guess authors, businesses, or create duplicate reviews.
+          continue;
         }
       }
 
