@@ -233,8 +233,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "Real Estate"
     ],
     "recordedAt": "Just now",
-    "isLandscape": true,
-    "aspectRatio": "landscape",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
     "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",

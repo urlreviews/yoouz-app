@@ -588,12 +588,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
     activeVid.preload = "auto";
     
-    // Set aspect ratio fit dynamically
-    if (activeVideo.isLandscape) {
-      activeVid.style.objectFit = "contain";
-    } else {
-      activeVid.style.objectFit = "cover";
-    }
+    // Enforce full vertical fill (object-cover) for seamless 9:16 phone layout
+    activeVid.style.objectFit = "cover";
 
     const currentVidSrc = activeVid.currentSrc || activeVid.src;
     // CRITICAL: For HLS videos, activeVid.src becomes a blob URL, so it won't match activeSrc (.m3u8).

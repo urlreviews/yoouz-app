@@ -1354,8 +1354,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       sharesCount: 0,
       tags: [selectedPlace.category || "Review"],
       recordedAt: "Just now",
-      isLandscape: videoWidth > 0 && videoHeight > 0 && videoWidth > videoHeight,
-      aspectRatio: (videoWidth > 0 && videoHeight > 0 && videoWidth > videoHeight) ? 'landscape' : 'portrait'
+      isLandscape: false,
+      aspectRatio: 'portrait'
     };
 
     // 🛡️ Anti-Stall Watchdog: Safety timer that guarantees completion while ensuring server sync

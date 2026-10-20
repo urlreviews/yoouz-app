@@ -964,7 +964,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             decoding="async"
             fetchPriority={isActive ? "high" : "auto"}
             onError={() => setPosterLoadError(true)}
-            className={`w-full h-full ${video.isLandscape ? "object-contain" : "object-cover"} pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
+            className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
               isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
             referrerPolicy="no-referrer"
