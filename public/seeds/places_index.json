@@ -1,0 +1,22 @@
+[
+  {
+    "id": "anythingvirtual.net",
+    "name": "Anything Virtual",
+    "website": "https://anythingvirtual.net/",
+    "brandDomain": "anythingvirtual.net",
+    "category": "Digital Services & Tech",
+    "address": "Global / Online",
+    "city": "Online",
+    "country": "Philippines",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "isClaimed": true,
+    "claimedByEmail": "kert@anythingvirtual.net",
+    "claimedByName": "Kert",
+    "isVerified": true,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Danythingvirtual.net%26sz%3D128",
+    "bannerUrl": "",
+    "description": "Official verified business profile for Anything Virtual (anythingvirtual.net)."
+  }
+]

@@ -2055,7 +2055,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const isYoouz = key === 'yoouz.com' || canonId === 'yoouz.com' || rawId === 'yoouz.com' || rawId === 'yoouz-com' || (p.name && p.name.toLowerCase() === 'yoouz');
       const isLocalClaimed = Boolean(localVerifiedPlaceId && (localVerifiedPlaceId === rawId || localVerifiedPlaceId === canonId || localVerifiedPlaceId === key));
 
-      const isClaimed = Boolean(isYoouz || p.claimedByEmail || (p.isClaimed && Boolean(p.claimedByEmail)) || isLocalClaimed);
+      const isClaimed = Boolean(isYoouz || p.isClaimed || p.claimedByEmail || isLocalClaimed);
       const claimedEmail = p.claimedByEmail || (isYoouz ? "info@yoouz.com" : (isLocalClaimed ? localVerifiedEmail : undefined));
 
       const existing = canonicalMap.get(key);
@@ -2142,7 +2142,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     deduplicatedPlaces.forEach((p) => {
       const rawId = String(p.id).toLowerCase();
       const isYoouz = p.id === 'yoouz.com' || p.brandDomain === 'yoouz.com' || rawId === 'yoouz.com' || rawId === 'yoouz-com' || rawId === 'place-custom-yoouz-com' || (p.name && p.name.toLowerCase() === 'yoouz');
-      const isClaimedBusiness = Boolean(isYoouz || p.claimedByEmail || (p.isClaimed && Boolean(p.claimedByEmail)));
+      const isClaimedBusiness = Boolean(isYoouz || p.isClaimed || p.claimedByEmail);
 
       if (isClaimedBusiness) {
         businesses.push({

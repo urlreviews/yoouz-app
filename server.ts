@@ -759,6 +759,40 @@ function writePlacesIndex(list: any[]): void {
   } catch (e) {}
 }
 
+const usersIndexPath = path.join(globalUploadsDir, "users_index.json");
+
+function readUsersIndex(): any[] {
+  try {
+    if (fs.existsSync(usersIndexPath)) {
+      const raw = fs.readFileSync(usersIndexPath, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+    const publicFallback = path.join(process.cwd(), "public", "users_index.json");
+    if (fs.existsSync(publicFallback)) {
+      const raw = fs.readFileSync(publicFallback, "utf8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function writeUsersIndex(list: any[]): void {
+  try {
+    if (!fs.existsSync(globalUploadsDir)) {
+      fs.mkdirSync(globalUploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(usersIndexPath, JSON.stringify(list, null, 2), "utf8");
+    const publicPath = path.join(process.cwd(), "public", "users_index.json");
+    try {
+      const pubDir = path.dirname(publicPath);
+      if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
+      fs.writeFileSync(publicPath, JSON.stringify(list, null, 2), "utf8");
+    } catch (e) {}
+  } catch (e) {}
+}
+
 const inMemoryDeletedReviewsSet = new Set<string>();
 
 const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
@@ -19454,6 +19488,18 @@ app.post("/api/videos/save-review", async (req, res) => {
                 ]
               });
               console.log(`🐰 [Server] BunnyDB place synced with address, phone, email, banner, and logo for ${reviewPlaceName} (${placeDocId})`);
+
+              // Automatically sync place profile to local places_index.json so directory always includes it
+              try {
+                const localPlaces = readPlacesIndex();
+                const pIdx = localPlaces.findIndex((p: any) => p && (p.id === placeDocId || p.name?.toLowerCase() === placeData.name?.toLowerCase()));
+                if (pIdx !== -1) {
+                  localPlaces[pIdx] = { ...localPlaces[pIdx], ...placeData };
+                } else {
+                  localPlaces.unshift(placeData);
+                }
+                writePlacesIndex(localPlaces);
+              } catch (idxSyncErr) {}
             } catch (placeUpsertErr: any) {
               console.warn("Notice syncing place to BunnyDB places table:", placeUpsertErr?.message || placeUpsertErr);
             }
@@ -20347,6 +20393,27 @@ app.post("/api/videos/save-review", async (req, res) => {
         });
       }
 
+      // Automatically record pending sign-up in user database so all sign-up attempts are captured in Admin Panel
+      try {
+        const pendingUserRecord = {
+          id: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          uid: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          email: cleanEmail,
+          name: (firstName || lastName) ? `${firstName || ''} ${lastName || ''}`.trim() : (cleanEmail.split('@')[0]),
+          handle: `@${cleanEmail.split('@')[0]}`,
+          role: "Member (Pending Verification)",
+          status: "pending_verification",
+          isVerified: false,
+          isRegisteredAccount: true,
+          memberSince: "Just now"
+        };
+        const localUsers = readUsersIndex();
+        if (!localUsers.some((u: any) => u && u.email === cleanEmail)) {
+          localUsers.push(pendingUserRecord);
+          writeUsersIndex(localUsers);
+        }
+      } catch (pendingErr) {}
+
       return res.json({
         success: true,
         email: cleanEmail,
@@ -20469,6 +20536,24 @@ app.post("/api/videos/save-review", async (req, res) => {
       } catch (saveErr) {
         console.warn("Could not persist verified user to BunnyDB:", saveErr);
       }
+
+      // Automatically sync verified user into users_index.json on disk
+      try {
+        const localUsers = readUsersIndex();
+        const uIdx = localUsers.findIndex((u: any) => u && (u.email === cleanEmail || u.id === userSession.uid || u.uid === userSession.uid));
+        const updatedUserObj = {
+          ...userSession,
+          status: "verified",
+          isVerified: true,
+          isRegisteredAccount: true
+        };
+        if (uIdx !== -1) {
+          localUsers[uIdx] = { ...localUsers[uIdx], ...updatedUserObj };
+        } else {
+          localUsers.push(updatedUserObj);
+        }
+        writeUsersIndex(localUsers);
+      } catch (userWriteErr) {}
 
       try {
         const existingSql = await db.select().from(users).where(eq(users.email, cleanEmail));
@@ -21245,6 +21330,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           : ''));
 
       // Upsert verified place into Bunny DB with isClaimed: true
+      let updatedDoc: any = {};
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
@@ -21253,7 +21339,6 @@ app.post("/api/videos/save-review", async (req, res) => {
             args: [matchedPlaceId]
           }).catch(() => null);
 
-          let updatedDoc: any = {};
           if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
             const row: any = existingRow.rows[0];
             try {
@@ -21301,6 +21386,37 @@ app.post("/api/videos/save-review", async (req, res) => {
           }
         }
       } catch (e) {}
+
+      // Automatically write and persist claimed place into places_index.json on disk so Admin and Directory update instantly
+      try {
+        const localPlaces = readPlacesIndex();
+        const pIdx = localPlaces.findIndex((p: any) => p && (p.id === matchedPlaceId || p.brandDomain === rawDomain));
+        const finalPlaceObj = {
+          id: matchedPlaceId,
+          name: matchedPlaceName,
+          website: rawDomain ? `https://${rawDomain}` : '',
+          brandDomain: rawDomain,
+          category: isYoouz ? 'Video Reviews Platform' : 'Verified Business',
+          isClaimed: true,
+          isVerified: true,
+          claimedByEmail: cleanEmail,
+          ownerId: cleanEmail,
+          verifiedAt: new Date().toISOString(),
+          logoUrl: logoUrl,
+          ...(updatedDoc || {})
+        };
+        if (pIdx !== -1) {
+          localPlaces[pIdx] = { ...localPlaces[pIdx], ...finalPlaceObj };
+        } else {
+          localPlaces.unshift(finalPlaceObj);
+        }
+        writePlacesIndex(localPlaces);
+
+        // Broadcast place_claimed event so live Admin Panel updates instantly
+        try {
+          broadcastSseEvent({ type: "place_claimed", place: finalPlaceObj });
+        } catch (sErr) {}
+      } catch (idxErr) {}
 
       const session = {
         businessEmail: cleanEmail,
