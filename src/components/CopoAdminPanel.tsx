@@ -188,7 +188,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [placeClaimFilter, setPlaceClaimFilter] = useState<"all" | "claimed" | "unclaimed">("all");
   const [creatorFilter, setCreatorFilter] = useState<"all" | "verified" | "top" | "unverified">("all");
   const [userFilter, setUserFilter] = useState<"all" | "verified" | "unverified">("all");
-  const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators" | "business" | "members">("all");
+  const [userTypeFilter, setUserTypeFilter] = useState<"all" | "registered" | "creators" | "business" | "members" | "pending">("all");
 
   // Multi-Selection
   const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
@@ -1754,6 +1754,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         return;
       }
       const cleanHandle = getCleanHandle(u.name) || (u.email ? u.email.split("@")[0].toLowerCase() : u.id) || "user";
+      const isPending = u.status === "pending_verification" || (u.role && String(u.role).includes("Pending")) || u.isVerified === false;
       mergedList.push({
         id: u.id || u.uid || cleanHandle,
         uid: u.uid || u.id,
@@ -1762,9 +1763,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         handle: cleanHandle,
         bio: u.bio || "",
         avatar: getSafeAvatarUrl(u.avatar, u.name, cleanHandle || u.email),
-        isVerified: u.isVerified !== false,
+        isVerified: !isPending && u.isVerified !== false,
         isRegisteredAccount: true,
-        role: u.role || (u.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
+        role: u.role || (u.email === "admin@yoouz.com" ? "Super Admin" : (isPending ? "Member (Pending Verification)" : "Member")),
+        status: u.status || (isPending ? "pending_verification" : "verified"),
         memberSince: u.memberSince || "Active"
       });
     });
@@ -2286,10 +2288,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         (u.handle && u.handle.toLowerCase().includes(q)) ||
         (u.email && u.email.toLowerCase().includes(q));
 
+      const isPending = u.status === "pending_verification" || (u.role && String(u.role).includes("Pending")) || u.isVerified === false;
       const matchType =
         userTypeFilter === "all" ||
         (userTypeFilter === "members" && u.role !== "Creator" && u.role !== "Business") ||
         (userTypeFilter === "creators" && u.role === "Creator") ||
+        (userTypeFilter === "pending" && isPending) ||
         (userTypeFilter === "registered" && (u.isRegisteredAccount || Boolean(u.email))) ||
         (userTypeFilter === "business" && u.role === "Business");
 
@@ -5874,6 +5878,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="all">All Users ({uniqueUsers.length})</option>
                     <option value="members">Standard Users ({standardUsersList.length})</option>
                     <option value="creators">Creators ({creatorsList.length})</option>
+                    <option value="pending">Pending Verification ({uniqueUsers.filter(u => u.status === "pending_verification" || (u.role && String(u.role).includes("Pending")) || !u.isVerified).length})</option>
                     <option value="registered">Registered Accounts</option>
                   </select>
 
@@ -5950,11 +5955,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <span className="font-bold text-white">{user.role || "Community Member"}</span>
                         </div>
                         <span className={`px-2 py-0.5 rounded-md font-semibold text-[10px] ${
-                          user.role === "Creator" 
-                            ? "bg-amber-950/60 text-amber-300 border border-amber-800/60" 
-                            : "bg-zinc-800 text-zinc-200 border border-zinc-700"
+                          (user.status === "pending_verification" || (user.role && String(user.role).includes("Pending")) || !user.isVerified)
+                            ? "bg-amber-950/80 text-amber-300 border border-amber-700/80"
+                            : user.role === "Creator" 
+                              ? "bg-blue-950/60 text-blue-300 border border-blue-800/60" 
+                              : "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
                         }`}>
-                          {user.role || "Member"}
+                          {(user.status === "pending_verification" || (user.role && String(user.role).includes("Pending")) || !user.isVerified)
+                            ? "Pending Verification"
+                            : (user.role || "Member")}
                         </span>
                       </div>
 

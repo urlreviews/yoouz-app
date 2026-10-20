@@ -6952,7 +6952,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       } catch (e) {}
     }
 
-    // 2c. For comments, aggregate with local comments_index.json
+    // 2d. For comments, aggregate with local comments_index.json
     if (colName === 'comments') {
       try {
         const localComments = readCommentsIndex();
@@ -6964,6 +6964,26 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               ...existing,
               id: c.id
             });
+          }
+        });
+      } catch (e) {}
+    }
+
+    // 2e. For users, aggregate with local users_index.json so all pending/registered users are returned
+    if (colName === 'users') {
+      try {
+        const localUsers = readUsersIndex();
+        localUsers.forEach((u: any) => {
+          if (u) {
+            const key = String(u.id || u.uid || u.email || '').toLowerCase().trim();
+            if (key) {
+              const existing = itemMap.get(key) || {};
+              itemMap.set(key, {
+                ...u,
+                ...existing,
+                id: u.id || u.uid || key
+              });
+            }
           }
         });
       } catch (e) {}
@@ -20411,6 +20431,14 @@ app.post("/api/videos/save-review", async (req, res) => {
         if (!localUsers.some((u: any) => u && u.email === cleanEmail)) {
           localUsers.push(pendingUserRecord);
           writeUsersIndex(localUsers);
+        }
+
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: `INSERT OR REPLACE INTO users (id, email, data, createdAt, updatedAt) VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
+            args: [pendingUserRecord.id, cleanEmail, JSON.stringify(pendingUserRecord)]
+          }).catch(() => {});
         }
       } catch (pendingErr) {}
 
