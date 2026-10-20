@@ -15447,7 +15447,9 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         } catch (sErr) {}
       }
 
-      const merged = Array.from(map.values()).map((r: any) => {
+      const merged = Array.from(map.values())
+        .filter((r: any) => r && !r.isProcessing && r.isReady !== false)
+        .map((r: any) => {
         // Overlay live place metadata onto the video review to prevent banner popping on the client
         if (r.placeId && placesDataMap.has(String(r.placeId))) {
           const livePlace = placesDataMap.get(String(r.placeId));
@@ -19142,6 +19144,17 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       }
 
+      // Check title and subtitle readiness: If title or subtitles are missing, hold in processing state
+      const hasValidTitle = Boolean(review.title && !review.title.toLowerCase().startsWith("video review for"));
+      const hasValidSegments = Boolean(Array.isArray(review.segments) && review.segments.length > 0);
+      if (hasValidTitle && hasValidSegments) {
+        review.isReady = true;
+        review.isProcessing = false;
+      } else {
+        review.isReady = false;
+        review.isProcessing = true;
+      }
+
       // 1. Save to local server JSON index
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
       if (existingIdx !== -1) {
@@ -19163,7 +19176,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       writeReviewsIndex(list);
 
-      // Instantly update memory feed cache so any immediate feed fetch or another user gets the review
+      // Update memory feed cache
       const cachedIdx = feedCache.videos.findIndex((item: any) => item.id === review.id);
       if (cachedIdx !== -1) {
         feedCache.videos[cachedIdx] = { ...feedCache.videos[cachedIdx], ...review };
@@ -19172,11 +19185,13 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       feedCache.lastFetched = Date.now();
 
-      // Real-Time Cross-Device SSE Broadcast: instantly displays the newly published video on all active computers, phones, and tablets worldwide
-      try {
-        broadcastSseEvent({ type: "new_video", video: review });
-      } catch (sseErr) {
-        console.warn("SSE broadcast new_video error:", sseErr);
+      // Only broadcast immediately if video is fully ready with title & subtitles
+      if (review.isReady) {
+        try {
+          broadcastSseEvent({ type: "new_video", video: review });
+        } catch (sseErr) {
+          console.warn("SSE broadcast new_video error:", sseErr);
+        }
       }
 
       // Return instant success response to client immediately so mobile & desktop users never hang
@@ -22715,7 +22730,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             ...((aiTitle && (!video.caption || video.caption.startsWith("Video review for"))) ? { caption: aiTitle } : {}),
             ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
             ...(needsThumbnailUpdate ? { thumbnailUrl: officialThumbnail } : {}),
-            hasBunnySmartCaptions: segments.length > 0 
+            hasBunnySmartCaptions: segments.length > 0,
+            isProcessing: false,
+            isReady: true
           };
 
           // 1. Sync to local JSON index
@@ -22762,9 +22779,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             await db.update(BunnyDB_video_reviews).set({ data: updatedVideo }).where(eq(BunnyDB_video_reviews.id, videoId));
           } catch (e) {}
 
-          // 4. Real-time broadcast to active players
+          // 4. Real-time broadcast to active players: Publish video now that title & subtitles are 100% ready!
           try {
-            broadcastSseEvent({ type: "video_transcribed", videoId, transcriptText, segments });
+            broadcastSseEvent({ type: "video_transcribed", videoId, transcriptText, segments, video: updatedVideo });
+            broadcastSseEvent({ type: "new_video", video: updatedVideo });
           } catch (e) {}
 
           return { success: true, transcriptText, segments, method: "bunny_stream" };
@@ -32604,7 +32622,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       const deletedSet = new Set(readDeletedReviewsIndex());
       const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
       const liveVideos = (sourceVideos || [])
-        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)))
+        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)) && !v.isProcessing && v.isReady !== false)
         .slice(0, 30);
       
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');

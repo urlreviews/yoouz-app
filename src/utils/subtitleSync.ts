@@ -51,14 +51,16 @@ export function getWordPhoneticWeight(word: string): number {
 /**
  * Splits an array of words into single-line chunks of 4 to 6 words per line max, respecting clause boundaries.
  */
-export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLine = 5): string[][] {
+export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLine = 4): string[][] {
   const clean = words.map(w => w.trim()).filter(Boolean);
   if (clean.length === 0) return [];
   
-  const minWords = 3;
-  const maxWords = 6; // Strictly 1 line limit for "Shorts" layout
-  
+  const maxWords = Math.max(3, Math.min(6, targetWordsPerLine || 4));
   if (clean.length <= maxWords) return [clean];
+
+  // Calculate ideal number of chunks to balance words evenly
+  const numChunks = Math.ceil(clean.length / maxWords);
+  const wordsPerChunk = Math.ceil(clean.length / numChunks);
 
   const lines: string[][] = [];
   let currentLine: string[] = [];
@@ -68,27 +70,23 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
     currentLine.push(w);
 
     const hasPunctuation = /[.,!?;:]$/.test(w);
-    // Clause markers indicate a likely breath or transition, meaning a natural line break.
     const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if|then|for)$/i.test(w.replace(/[^a-z]/gi, ''));
-    const reachMax = currentLine.length >= maxWords;
-    const reachMin = currentLine.length >= minWords;
     const remaining = clean.length - (i + 1);
 
-    // BREAK CONDITION:
-    // 1. Reached max words for a single line
-    // 2. Reached min words AND hit punctuation or a clause marker
-    // 3. Reached min words AND only 1-2 words remain (don't leave a tiny dangling line)
-    if ((reachMax || (reachMin && (hasPunctuation || isClauseMarker)) || (reachMin && remaining > 0 && remaining < 3)) && remaining > 0) {
+    const reachedTarget = currentLine.length >= wordsPerChunk;
+    const reachedMax = currentLine.length >= maxWords;
+    const reachMin = currentLine.length >= 2;
+
+    if ((reachedMax || (reachedTarget && (hasPunctuation || isClauseMarker || remaining <= wordsPerChunk))) && remaining > 0) {
       lines.push(currentLine);
       currentLine = [];
     }
   }
 
   if (currentLine.length > 0) {
-    // Cleanup: Merge trailing tiny lines into the previous line if it won't exceed the visual limit
     if (lines.length > 0 && currentLine.length <= 2) {
       const prev = lines[lines.length - 1];
-      if (prev.length + currentLine.length <= 7) {
+      if (prev.length + currentLine.length <= maxWords + 2) {
         lines[lines.length - 1] = [...prev, ...currentLine];
       } else {
         lines.push(currentLine);

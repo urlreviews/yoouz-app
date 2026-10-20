@@ -120,20 +120,22 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
         if (Array.isArray(item.words) && item.words.length > 0) {
-          let currentChunk: any[] = [];
-          for (let i = 0; i < item.words.length; i++) {
-            currentChunk.push(item.words[i]);
-            if (currentChunk.length === 4 || i === item.words.length - 1) {
-              const chunkText = currentChunk.map(w => w.text || w.word).join(" ");
-              const chunkStart = currentChunk[0].start;
-              const chunkEnd = currentChunk[currentChunk.length - 1].end;
+          const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
+          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4);
+          let wordIdx = 0;
+          for (const chunkWords of wordChunks) {
+            const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
+            wordIdx += chunkWords.length;
+            if (chunkItems.length > 0) {
+              const chunkText = chunkItems.map((w: any) => w.text || w.word).join(" ");
+              const chunkStart = chunkItems[0].start;
+              const chunkEnd = chunkItems[chunkItems.length - 1].end;
               cleanCues.push({
                 id: cueId++,
                 start: chunkStart,
-                end: chunkEnd,
+                end: Math.max(chunkStart + 0.4, chunkEnd),
                 text: chunkText
               });
-              currentChunk = [];
             }
           }
         } else {
@@ -157,44 +159,31 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const words = clean.split(/\s+/).filter(Boolean);
         const videoDur = duration && duration > 2 ? duration : 15;
         
-        if (words.length <= 4) {
+        const wordChunks = splitWordsIntoSingleLineChunks(words, 4);
+        const startOffset = 0.2;
+        const endOffset = Math.max(startOffset + 1.0, videoDur - 0.2);
+        const totalSpan = endOffset - startOffset;
+        const chunkDur = totalSpan / wordChunks.length;
+
+        wordChunks.forEach((chunkWords, cIdx) => {
+          const cStart = Math.round((startOffset + (cIdx * chunkDur)) * 100) / 100;
+          const cEnd = Math.round((startOffset + ((cIdx + 1) * chunkDur)) * 100) / 100;
           cleanCues.push({
             id: cueId++,
-            start: 0.2,
-            end: Math.max(2.5, videoDur - 0.2),
-            text: clean
+            start: cStart,
+            end: cEnd,
+            text: chunkWords.join(" ")
           });
-        } else {
-          // Chunk words into groups of 4 and distribute across playback duration
-          const chunks: string[][] = [];
-          for (let i = 0; i < words.length; i += 4) {
-            chunks.push(words.slice(i, i + 4));
-          }
-          const startOffset = 0.2;
-          const endOffset = Math.max(startOffset + 1.0, videoDur - 0.2);
-          const totalSpan = endOffset - startOffset;
-          const chunkDur = totalSpan / chunks.length;
-
-          chunks.forEach((chunkWords, cIdx) => {
-            const cStart = Math.round((startOffset + (cIdx * chunkDur)) * 100) / 100;
-            const cEnd = Math.round((startOffset + ((cIdx + 1) * chunkDur)) * 100) / 100;
-            cleanCues.push({
-              id: cueId++,
-              start: cStart,
-              end: cEnd,
-              text: chunkWords.join(" ")
-            });
-          });
-        }
+        });
       }
     }
 
     // 🛡️ ANTI-BLINKING GAP BRIDGING:
-    // Bridge micro-gaps between consecutive phrase cues so subtitles NEVER unmount or flicker between words
+    // Bridge gaps between consecutive phrase cues so subtitles NEVER unmount or flicker between words
     for (let i = 0; i < cleanCues.length - 1; i++) {
       const curr = cleanCues[i];
       const next = cleanCues[i + 1];
-      if (next.start > curr.end && next.start - curr.end <= 1.8) {
+      if (next.start > curr.end && next.start - curr.end <= 3.0) {
         curr.end = next.start; // Seamless transition!
       }
     }
@@ -209,8 +198,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     for (let i = 0; i < cues.length; i++) {
       const cue = cues[i];
-      // Hold last cue up to 0.6s after its official end time to prevent micro-flicker during speech pauses
-      const effectiveEnd = (i === cues.length - 1) ? cue.end + 0.8 : cue.end;
+      const nextCue = cues[i + 1];
+      // Hold cue until next cue starts or up to 1.5s after cue end to prevent mid-speech blinking
+      const effectiveEnd = nextCue ? Math.min(nextCue.start, cue.end + 1.2) : cue.end + 1.8;
       if (currentTime >= cue.start && currentTime <= effectiveEnd) {
         return cue;
       }
@@ -249,17 +239,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none transition-all duration-200 ease-out">
+    <div className="absolute bottom-[250px] xs:bottom-[260px] sm:bottom-[270px] md:bottom-[240px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[85%] flex justify-center transition-all duration-200 ease-out transform ${
-          isVisible && currentText ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'
+        className={`max-w-[85%] flex justify-center transition-opacity duration-200 ease-out ${
+          isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center transition-all duration-150 ease-out"
+          className="bg-black/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center"
         >
-          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-150 ease-out">
+          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             {currentText || ''}
           </p>
         </div>
