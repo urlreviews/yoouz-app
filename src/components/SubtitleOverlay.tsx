@@ -282,7 +282,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[140px] xs:bottom-[145px] sm:bottom-[150px] md:bottom-[140px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[140px] md:bottom-[140px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
       <div 
         className={`max-w-[85%] flex justify-center transition-opacity duration-200 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
