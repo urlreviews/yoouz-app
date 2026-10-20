@@ -28777,7 +28777,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
   });
 
   function generateCustomBrandLogo(nameOrDomain?: string | null): string {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1" fill="none"></svg>`;
+    const raw = (nameOrDomain || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
+    const letter = (raw.charAt(0) || "B").toUpperCase();
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="#18181b"/>
+      <rect x="1" y="1" width="126" height="126" rx="27" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+      <text x="64" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle">${letter}</text>
+    </svg>`;
   }
 
   app.get("/api/favicon", async (req, res) => {
@@ -28828,6 +28834,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     if (KNOWN_BRAND_LOGOS[cleanDomain]) {
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
+    }
+
+    // High-resolution authentic brand favicon from Google s2 service via proxy
+    if (cleanDomain && cleanDomain.includes(".")) {
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`)}`);
     }
 
     return sendDefaultFavicon(cleanDomain);

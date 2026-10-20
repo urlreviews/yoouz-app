@@ -1124,6 +1124,10 @@ export function isFaviconUrl(url?: string | null): boolean {
   if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
     return false;
   }
+  // Allow internal /api/favicon endpoint
+  if (l.startsWith("/api/favicon") || l.includes("/api/favicon")) {
+    return false;
+  }
   return (
     l.includes("favicon") ||
     l.includes("16x16") ||
@@ -1133,8 +1137,6 @@ export function isFaviconUrl(url?: string | null): boolean {
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||
-    l.includes("google.com/s2/favicons") ||
-    l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse")
   );
 }
@@ -1160,7 +1162,14 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  return url && !isFaviconUrl(url) ? getProxiedImageUrl(url) : null;
+  if (url && !isFaviconUrl(url)) return getProxiedImageUrl(url);
+
+  // High-res domain logo fallback
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
+  }
+
+  return null;
 }
 
 export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): string | null {
@@ -1222,6 +1231,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     !place.avatarUrl.includes("1024x170")
   ) {
     return getProxiedImageUrl(place.avatarUrl);
+  }
+
+  // 4. Guaranteed high-resolution authentic domain logo fallback for any verified web business
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`;
   }
 
   return null;

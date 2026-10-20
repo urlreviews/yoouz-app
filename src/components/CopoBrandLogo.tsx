@@ -97,9 +97,18 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon.svg"))
+      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon.svg") || logoUrl.includes("sz=128") || logoUrl.includes("size=256"))
     ) {
       candidates.push(logoUrl);
+    }
+
+    // 3. High-resolution authentic domain brand logo providers (Google s2 128px, Unavatar, Backend Proxy)
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`);
+      candidates.push(`/api/proxy-image?url=${encodeURIComponent(`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=128`)}`);
+      candidates.push(`https://unavatar.io/${cleanDomain}`);
+      candidates.push(`/api/favicon?domain=${cleanDomain}`);
+      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
     // Filter duplicates and any generic placeholders
@@ -144,6 +153,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   // Display Name / Domain Title for wordmark fallback
   const displayName = (name || cleanDomain || "Business").trim();
   const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
+  const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
 
   return (
     <div className={`relative overflow-hidden bg-transparent [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${className}`}>
@@ -180,8 +190,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-300 print:bg-zinc-900 print:text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
-          <Building2 className="w-1/2 h-1/2 opacity-75 text-zinc-400 print:text-white print:opacity-100" />
+        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-white font-black text-xs uppercase select-none print:bg-zinc-900 print:text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+          <span className={fallbackTextClassName || "text-zinc-200 tracking-wider"}>{brandInitial}</span>
         </div>
       )}
     </div>
