@@ -4,7 +4,7 @@ import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImag
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
-export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v41_bunny_clean";
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v42_live_strict_v1";
 
 /**
  * Universal, highly robust review timestamp extractor

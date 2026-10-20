@@ -296,46 +296,50 @@ export function useFeedPagination() {
       const combinedMap = new Map<string, VideoReview>();
 
       // 1. Injected server HTML baseline (highest authority! Instant live state for cold starts / private windows)
-      if (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0) {
+      const hasServerInjected = typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0;
+      if (hasServerInjected) {
         (window as any).__INITIAL_FEED_VIDEOS__
           .filter((v: any) => !isPurgedItem(v, deletedIds))
           .map(normalizeReview)
           .forEach((v: VideoReview) => {
             if (v && v.id) combinedMap.set(String(v.id), v);
           });
-      }
-
-      // 2. Cached feed videos from localStorage (only fill in any additional non-conflicting items)
-      const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
-      if (cached) {
+        // Immediately synchronize localStorage to contain ONLY the server authoritative videos
         try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v: VideoReview) => {
-              if (v && v.id && !combinedMap.has(String(v.id))) {
-                combinedMap.set(String(v.id), v);
-              }
-            });
-          }
+          localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(Array.from(combinedMap.values()).slice(0, 50)));
         } catch (e) {}
+      } else {
+        // 2. Only if server baseline was completely absent (e.g. offline device cold start) check localStorage
+        const cached = localStorage.getItem(YOOUZ_VIDEOS_CACHE_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              parsed.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v: VideoReview) => {
+                if (v && v.id && !combinedMap.has(String(v.id))) {
+                  combinedMap.set(String(v.id), v);
+                }
+              });
+            }
+          } catch (e) {}
+        }
+
+        // 3. Initial fresh seed baseline fallback
+        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
+          if (v && v.id && !combinedMap.has(String(v.id))) {
+            combinedMap.set(String(v.id), v);
+          }
+        });
       }
 
-      // 3. Initial fresh seed baseline (guarantees the 5 authentic reviews are always seeded instantly)
-      INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-        if (v && v.id && !combinedMap.has(String(v.id))) {
-          combinedMap.set(String(v.id), v);
-        }
-      });
-
-      // 4. Local published (optimistic uploads in last 60 seconds)
+      // 4. Local in-flight published (optimistic uploads in last 60 seconds)
       localPublished.forEach((v) => {
-        if (v && v.id) combinedMap.set(String(v.id), v);
+        if (v && v.id && !isPurgedItem(v, deletedIds)) combinedMap.set(String(v.id), v);
       });
 
       const result = Array.from(combinedMap.values());
       result.sort((a, b) => getReviewTime(b) - getReviewTime(a));
       
-      // Immediately persist fresh authoritative baseline back to localStorage cache
       try {
         localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(result.slice(0, 50)));
       } catch (e) {}

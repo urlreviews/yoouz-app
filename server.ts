@@ -5321,7 +5321,33 @@ async function purgeVideoFromAllStores(videoId: string) {
         if (delRes.ok || delRes.status === 404) {
           console.log(`✅ [Bunny Stream] Successfully deleted video ${bGuid} from library.`);
         }
+
+        // Instantly purge Bunny CDN edge caches worldwide (India, US, EU, Asia)
+        try {
+          const edgeUrls = [
+            `https://vz-dcd9e101-437.b-cdn.net/${bGuid}/playlist.m3u8`,
+            `https://vz-dcd9e101-437.b-cdn.net/${bGuid}/thumbnail.jpg`,
+            `https://vz-dcd9e101-437.b-cdn.net/${bGuid}/preview.webp`,
+            `https://vz-dcd9e101-437.b-cdn.net/${bGuid}/play_720p.mp4`,
+            `https://vz-dcd9e101-437.b-cdn.net/${bGuid}/play_480p.mp4`
+          ];
+          await Promise.allSettled(edgeUrls.map(u => 
+            fetch(`https://api.bunny.net/purge?url=${encodeURIComponent(u)}`, {
+              method: 'POST',
+              headers: { 'AccessKey': bunnyStreamKey }
+            }).catch(() => {})
+          ));
+        } catch (edgeErr) {}
       }
+    }
+
+    if (existingVideoObj?.videoUrl) {
+      try {
+        await fetch(`https://api.bunny.net/purge?url=${encodeURIComponent(existingVideoObj.videoUrl)}`, {
+          method: 'POST',
+          headers: { 'AccessKey': bunnyStreamKey }
+        }).catch(() => {});
+      } catch (e) {}
     }
   } catch (bStreamErr) {
     console.warn("Bunny Stream video delete warning:", bStreamErr);
@@ -7485,6 +7511,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
 app.get('/api/nosql/:collection', async (req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     const colName = req.params.collection;
     const reqUser = String(req.query.user || req.query.email || req.query.userId || '').trim().toLowerCase();
     const items = await getNoSqlCollectionItems(colName, reqUser);
@@ -7496,7 +7525,14 @@ app.get('/api/nosql/:collection', async (req, res) => {
 
 app.get('/api/nosql/:collection/:id', async (req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     const { collection: colName, id } = req.params;
+
+    if ((colName === 'videoReviews' || colName === 'videos' || colName === 'video_reviews') && isDeletedReviewServer(id)) {
+      return res.status(404).json({ error: "Video review not found (permanently deleted)" });
+    }
 
     if (colName === 'places' && isDeletedPlaceServer(id)) {
       return res.status(404).json({ error: "Place not found (deleted)" });

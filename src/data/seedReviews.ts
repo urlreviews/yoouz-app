@@ -67,8 +67,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 63,
-    "viewsCount": 63,
+    "views": 64,
+    "viewsCount": 64,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -96,7 +96,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dguard-slip-cafe-by-lgip.bayombong%26sz%3D128"
+    "logoUrl": "https://www.google.com/s2/favicons?domain=guard-slip-cafe-by-lgip.bayombong&sz=128"
   },
   {
     "id": "rev-1792405036441-zqqwp",
@@ -198,8 +198,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 55,
-    "viewsCount": 55,
+    "views": 56,
+    "viewsCount": 56,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
