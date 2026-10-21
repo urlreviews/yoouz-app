@@ -1297,18 +1297,22 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return YOOUZ_LOGO_DATA_URI;
   }
 
-  // 1. Direct match for known high-quality brand vector logos takes precedence
+  // 1. Direct match for known high-quality brand vector logos takes absolute precedence
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
+  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]) {
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
+  }
 
-  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons or .ico icons)
+  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, or Wikimedia URLs for known brands)
   if (
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
     !isFaviconUrl(place.logoUrl) &&
     !isWhiteOrInvertedLogo(place.logoUrl) &&
     !place.logoUrl.includes("brandfetch.io") &&
+    !place.logoUrl.includes("wikimedia.org") &&
     place.logoUrl !== "data:;" &&
     !place.logoUrl.startsWith("data:;") &&
     !place.logoUrl.includes("tap/0.png") &&
@@ -1352,13 +1356,6 @@ export function getCategoryThematicBanner(category?: string | null, name?: strin
  */
 export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
   if (!place) return "";
-  
-  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl)) {
-    return getProxiedImageUrl(place.bannerUrl);
-  }
-  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
-    return getProxiedImageUrl(place.ogImage);
-  }
 
   let domain = place.brandDomain;
   if (!domain && place.website) {
@@ -1379,6 +1376,13 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
     if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) {
       return KNOWN_BRAND_BANNERS[`www.${cleanDomain}`];
     }
+  }
+
+  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl) && !place.bannerUrl.startsWith("blob:")) {
+    return getProxiedImageUrl(place.bannerUrl);
+  }
+  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
+    return getProxiedImageUrl(place.ogImage);
   }
 
   return getCategoryThematicBanner(place.category, place.name);

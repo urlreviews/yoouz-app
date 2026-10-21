@@ -809,13 +809,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     : "";
 
   const effectiveBanner =
+    knownDomainBanner ||
     cleanBannerUrl ||
     cleanOgImage ||
     cachedMedia?.bannerUrl ||
     cleanFetchedBanner ||
     activeBanner ||
     cleanReviewBanner ||
-    knownDomainBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
 
   // Check if photos are authentic place photos
