@@ -85,10 +85,8 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('gavel-hammer') ||
     u.includes('scale-of-justice') ||
     u.includes('blindfold-statue') ||
-    u.includes('shutterstock_') ||
-    u.includes('istockphoto') ||
-    u.includes('featured_image') ||
-    u.includes('featured-image') ||
+    u.includes('default-featured-image') ||
+    u.includes('no-featured-image') ||
     u.includes('thrive-visual-editor') ||
     u.includes('editor/css/images') ||
     u.endsWith('.ico')
@@ -218,10 +216,18 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "gett": GETT_LOGO_DATA_URI,
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
-  "yoouz": YOOUZ_LOGO_DATA_URI,
   "zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
   "www.zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
   "zara": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
+  "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+  "www.refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+  "refalo": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+  "mamotcv.com": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
+  "www.mamotcv.com": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
+  "mamotcv": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
   "cleanton-management.co.il": CLEANTON_LOGO_DATA_URI,
   "www.cleanton-management.co.il": CLEANTON_LOGO_DATA_URI,
   "cleanton-management": CLEANTON_LOGO_DATA_URI,
@@ -787,9 +793,29 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
-  "zara.com": "https://static.zara.net/photos///contents/mkt/spots/aw26-north-woman-new/subspots/spot-special-prices-woman//huge/w_1920_q85.jpg",
-  "www.zara.com": "https://static.zara.net/photos///contents/mkt/spots/aw26-north-woman-new/subspots/spot-special-prices-woman//huge/w_1920_q85.jpg",
-  "zara": "https://static.zara.net/photos///contents/mkt/spots/aw26-north-woman-new/subspots/spot-special-prices-woman//huge/w_1920_q85.jpg",
+  "zara.com": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
+  "www.zara.com": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
+  "zara": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
+  "anthropic.com": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
+  "www.anthropic.com": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
+  "anthropic": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
+  "refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
+  "www.refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
+  "refalo": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
+  "mamotcv.com": "https://www.mamotcv.com/app/uploads/2022/01/fbshare.jpg",
+  "www.mamotcv.com": "https://www.mamotcv.com/app/uploads/2022/01/fbshare.jpg",
+  "mamotcv": "https://www.mamotcv.com/app/uploads/2022/01/fbshare.jpg",
+  "jollibee.com.ph": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "www.jollibee.com.ph": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "jollibee": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
+  "www.whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
+  "whatsapp": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
+  "guard-slip-cafe-by-lgip.bayombong": "https://i.pinimg.com/736x/3e/0e/84/3e0e846bff77cac51167bf5f9ab99cd9.jpg",
+  "anythingvirtual.net": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "healis.be": "https://www.healis.be/sites/default/files/styles/article_teaser/public/media/image/2026-06/healis-apotheeksintjacob-apotheek1.jpg",
+  "izci.be": "https://images.pexels.com/photos/3807277/pexels-photo-3807277.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "autowerkplaatsbrugge.be": "https://images.pexels.com/photos/2244746/pexels-photo-2244746.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "www.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "london.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",

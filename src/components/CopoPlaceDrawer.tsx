@@ -829,6 +829,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return true;
     };
 
+    const cleanDomainKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().replace(/^www\./, "").trim();
+    const domainDirectBanner = cleanDomainKey ? (KNOWN_BRAND_BANNERS[cleanDomainKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomainKey}`] || "") : "";
+
     const photoCandidates = [
       cleanBannerUrl,
       cachedMedia?.bannerUrl,
@@ -836,13 +839,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       cleanFetchedBanner,
       activeBanner,
       cleanReviewBanner,
-      ...(place.photos || []).filter(isAuthentic),
+      domainDirectBanner,
       knownDomainBanner,
+      domainFallbackBanner,
+      ...(place.photos || []).filter(isAuthentic),
       (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, cachedMedia?.bannerUrl, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace]);
+  }, [cleanFetchedBanner, cleanBannerUrl, cachedMedia, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 
@@ -1277,7 +1282,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
         </div>
 
-        {(hasAuthenticPhoto || effectiveBanner) && !bannerError ? (
+        {(hasAuthenticPhoto || effectiveBanner) && (!bannerError || Boolean(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner)) ? (
           <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
@@ -1300,6 +1305,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   return;
                 }
                 setBannerLoaded(true);
+                setBannerError(false);
                 const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner);
                 if (currentSrc) {
                   KNOWN_LOADED_BANNERS.add(currentSrc);
@@ -1321,25 +1327,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         ) : null}
 
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
-        {hasAuthenticLogo ? (
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
-            <CopoBrandLogo
-              domain={drawerDomain || place.brandDomain}
-              name={displayedPlaceName}
-              website={place.website}
-              logoUrl={primaryLogoUrl || place.logoUrl}
-              bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-              className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-              imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
-              fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-              onLoad={() => setLogoLoaded(true)}
-            />
-          </div>
-        ) : null}
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
+          <CopoBrandLogo
+            domain={drawerDomain || place.brandDomain}
+            name={displayedPlaceName}
+            website={place.website}
+            logoUrl={primaryLogoUrl || place.logoUrl}
+            bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+            className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+            onLoad={() => setLogoLoaded(true)}
+          />
+        </div>
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className={`px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 ${hasAuthenticLogo ? "pt-12 sm:pt-16" : "pt-5 sm:pt-6"}`}>
+      <div className="px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 pt-12 sm:pt-16">
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">
