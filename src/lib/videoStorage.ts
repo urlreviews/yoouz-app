@@ -218,41 +218,66 @@ export async function uploadVideoToServerWithProgress(
       formData.append("thumbnailData", thumbnailData);
     }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/videos/upload", true);
+    const attemptUpload = (retriesLeft: number) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/videos/upload", true);
+      xhr.timeout = 300000; // 5 minutes timeout for large video uploads
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        onProgress(Math.min(100, percent));
-      }
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(Math.min(100, percent));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.url) {
+              onProgress(100);
+              const finalUrl = data.url.includes("/api/videos/stream/")
+                ? `/api/videos/stream/${data.url.split("/api/videos/stream/")[1]}`
+                : data.url;
+              
+              // Extract the official Bunny GUID ONLY if returned by server
+              const bunnyId = data.bunnyVideoId || undefined;
+
+              resolve({ url: finalUrl, thumbnailUrl: data.thumbnailUrl, bunnyVideoId: bunnyId });
+              return;
+            }
+          } catch (e) {}
+        }
+        if (retriesLeft > 0) {
+          console.warn(`[Upload] Upload failed with HTTP ${xhr.status}. Retrying (${retriesLeft} left)...`);
+          setTimeout(() => attemptUpload(retriesLeft - 1), 1500);
+        } else {
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => {
+        if (retriesLeft > 0) {
+          console.warn(`[Upload] Network error during upload. Retrying (${retriesLeft} left)...`);
+          setTimeout(() => attemptUpload(retriesLeft - 1), 1500);
+        } else {
+          resolve(null);
+        }
+      };
+
+      xhr.ontimeout = () => {
+        if (retriesLeft > 0) {
+          console.warn(`[Upload] Upload timed out. Retrying (${retriesLeft} left)...`);
+          setTimeout(() => attemptUpload(retriesLeft - 1), 1500);
+        } else {
+          resolve(null);
+        }
+      };
+
+      xhr.send(formData);
     };
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          if (data.url) {
-            onProgress(100);
-            const finalUrl = data.url.includes("/api/videos/stream/")
-              ? `/api/videos/stream/${data.url.split("/api/videos/stream/")[1]}`
-              : data.url;
-            
-            // Extract the official Bunny GUID ONLY if returned by server
-            const bunnyId = data.bunnyVideoId || undefined;
-
-            resolve({ url: finalUrl, thumbnailUrl: data.thumbnailUrl, bunnyVideoId: bunnyId });
-            return;
-          }
-        } catch (e) {}
-      }
-      resolve(null);
-    };
-
-    xhr.onerror = () => resolve(null);
-    xhr.timeout = 300000; // 5 minutes timeout for large video uploads
-    xhr.ontimeout = () => resolve(null);
-    xhr.send(formData);
+    attemptUpload(1); // 1 automatic retry on network glitch
   });
 }
 

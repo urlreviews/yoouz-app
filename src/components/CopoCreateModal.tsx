@@ -1488,9 +1488,28 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           uploadedVideoData = (uploadResult as any).videoData;
         }
       }
+
+      // If a recorded video blob was provided but the upload returned no valid remote URL/Bunny ID, stop publish flow gracefully
+      if (recordedVideoBlob && !finalBunnyId && (!uploadedPublicUrl || uploadedPublicUrl === defaultStreamUrl) && !uploadedVideoData) {
+        if (publishWatchdogRef.current) clearTimeout(publishWatchdogRef.current);
+        setIsPublishing(false);
+        isPublishingRef.current = false;
+        setUploadProgress(0);
+        onCompleteBackgroundUpload?.();
+        setErrorMessage("Upload Interrupted: The video recording could not be uploaded due to a network connection timeout or loss. Please check your internet connection and publish your review again.");
+        triggerHaptic("heavy");
+        return;
+      }
     } catch (uploadErr) {
       console.warn("Server video upload notice:", uploadErr);
-      // Even if direct upload threw an error, continue with local fallback URL so user review is never lost
+      if (publishWatchdogRef.current) clearTimeout(publishWatchdogRef.current);
+      setIsPublishing(false);
+      isPublishingRef.current = false;
+      setUploadProgress(0);
+      onCompleteBackgroundUpload?.();
+      setErrorMessage("Upload Interrupted: A network error occurred while sending video data. Please check your internet connection and try again.");
+      triggerHaptic("heavy");
+      return;
     }
 
     setUploadProgress(92);

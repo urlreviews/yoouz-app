@@ -2785,6 +2785,37 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
+  const handlePurgeIncompleteUploads = async () => {
+    const incompleteIds = videos
+      .filter(v => v && !v.bunnyVideoId && (!v.videoUrl || v.videoUrl.includes("/api/videos/stream/") || v.videoUrl.includes("sample-review.mp4")) && (!v.videoData || !v.videoData.startsWith("data:video")))
+      .map(v => v.id);
+
+    if (incompleteIds.length === 0) {
+      showToast("No incomplete or interrupted uploads found.");
+      return;
+    }
+
+    if (!window.confirm(`Found ${incompleteIds.length} incomplete video upload(s) without valid video files. Do you want to purge them?`)) {
+      return;
+    }
+
+    let purgedCount = 0;
+    for (const vidId of incompleteIds) {
+      try {
+        await fetch("/api/admin/videos/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: vidId })
+        });
+        if (onDeleteVideo) onDeleteVideo(vidId);
+        purgedCount++;
+      } catch (e) {}
+    }
+
+    showToast(`Purged ${purgedCount} incomplete upload record(s).`);
+    setTimeout(fetchLiveStats, 500);
+  };
+
   const handleSendBroadcast = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!broadcastData.message.trim()) return;
@@ -4789,31 +4820,50 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Sync Bunny Library
                   </button>
+
+                  {/* Purge Incomplete / Interrupted Uploads */}
+                  <button
+                    onClick={handlePurgeIncompleteUploads}
+                    className="px-3 py-1.5 bg-zinc-950 hover:bg-amber-950/50 text-amber-300 hover:text-amber-200 border border-zinc-800 hover:border-amber-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    title="Purge incomplete review records where the client video stream failed to upload"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-amber-400" /> Purge Incomplete Uploads
+                  </button>
                 </div>
               </div>
 
               {/* Grid View */}
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {filteredVideos.map((video) => (
-                    <div
-                      key={video.id}
-                      className="group relative bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:border-zinc-700 transition-all flex flex-col"
-                    >
-                      {/* Top Bar Overlay */}
-                      <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between pointer-events-none">
-                        <div className="pointer-events-auto">
-                          <input
-                            type="checkbox"
-                            checked={selectedVideoIds.includes(video.id)}
-                            onChange={() => handleToggleVideoSelection(video.id)}
-                            className="w-4 h-4 rounded border-zinc-700 bg-zinc-950/80 text-white focus:ring-0 cursor-pointer shadow-md accent-white"
-                          />
+                  {filteredVideos.map((video) => {
+                    const isBrokenStream = !video.bunnyVideoId && (!video.videoUrl || video.videoUrl.includes("/api/videos/stream/") || video.videoUrl.includes("sample-review.mp4")) && (!video.videoData || !video.videoData.startsWith("data:video"));
+
+                    return (
+                      <div
+                        key={video.id}
+                        className={`group relative bg-zinc-900 rounded-2xl border overflow-hidden shadow-sm hover:border-zinc-700 transition-all flex flex-col ${isBrokenStream ? 'border-amber-500/40 bg-amber-950/10' : 'border-zinc-800'}`}
+                      >
+                        {/* Top Bar Overlay */}
+                        <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between pointer-events-none">
+                          <div className="pointer-events-auto">
+                            <input
+                              type="checkbox"
+                              checked={selectedVideoIds.includes(video.id)}
+                              onChange={() => handleToggleVideoSelection(video.id)}
+                              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950/80 text-white focus:ring-0 cursor-pointer shadow-md accent-white"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 pointer-events-auto">
+                            {isBrokenStream && (
+                              <span className="px-2 py-0.5 rounded-lg bg-amber-950/90 backdrop-blur-md text-[10px] font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-sm" title="Video stream failed or upload was interrupted before completion">
+                                <AlertTriangle className="w-3 h-3 text-amber-400" /> Upload Interrupted
+                              </span>
+                            )}
+                            <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-white border border-white/10 flex items-center gap-1 shadow-sm">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {video.rating}
+                            </span>
+                          </div>
                         </div>
-                        <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-white border border-white/10 flex items-center gap-1 shadow-sm">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {video.rating}
-                        </span>
-                      </div>
 
                       {/* Video Thumbnail with Hover Play */}
                       <div
@@ -4914,7 +4964,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               ) : (
                 /* Table View */
