@@ -144,7 +144,17 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   }
 
   if (clean.startsWith("https://")) {
-    if (clean.includes("b-cdn.net") || clean.includes("bunnycdn.com")) {
+    if (
+      clean.includes("b-cdn.net") ||
+      clean.includes("bunnycdn.com") ||
+      clean.includes("wikimedia.org") ||
+      clean.includes("pinimg.com") ||
+      clean.includes("unsplash.com") ||
+      clean.includes("pexels.com") ||
+      clean.includes("imgur.com") ||
+      clean.includes("fbcdn.net") ||
+      clean.includes("googleusercontent.com")
+    ) {
       return clean;
     }
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
