@@ -505,7 +505,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     startCamera();
   };
 
-  // Camera Access (Strict Front Camera Only)
+  // Camera Access (Strict Front Camera Only with Both Video & Audio Required)
   const startCamera = async () => {
     setCameraActive(true);
     setErrorMessage(null);
@@ -530,10 +530,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
+      const hasVideo = stream.getVideoTracks().some(t => t.readyState === "live" && t.enabled);
+      const hasAudio = stream.getAudioTracks().some(t => t.readyState === "live" && t.enabled);
+
+      if (!hasVideo || !hasAudio) {
+        stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+        activeStreamRef.current = null;
+        setCameraActive(false);
+        setErrorMessage("Both Camera and Microphone permissions are required to record a video review. Please allow permissions in your browser settings.");
+        return;
+      }
+
       if (!videoRef.current) {
-        stream.getTracks().forEach(t => {
-          try { t.stop(); } catch(e) {}
-        });
+        activeStreamRef.current = stream;
         return;
       }
 
@@ -549,93 +558,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         }
       }
     } catch (err: any) {
-      if (err.name === "AbortError") return;
-
-      console.warn("Camera access error (expected if denied):", err);
-      try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-          audio: true
-        });
-
-        if (!videoRef.current) {
-          fallbackStream.getTracks().forEach(t => {
-            try { t.stop(); } catch(e) {}
-          });
-          return;
-        }
-
-        activeStreamRef.current = fallbackStream;
-        videoRef.current.srcObject = fallbackStream;
-        videoRef.current.muted = true;
-        
-        try {
-          await videoRef.current.play();
-        } catch (playErr: any) {
-          if (playErr.name !== "AbortError") {
-            console.warn("Fallback camera playback error:", playErr);
-          }
-        }
-      } catch (fallbackErr) {
-        console.warn("Fallback camera access error (expected if denied):", fallbackErr);
-        
-        // Canvas Simulation Stream Fallback so user is never blocked by permission denial in restricted iframes
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = 720;
-          canvas.height = 1280;
-          const ctx = canvas.getContext('2d');
-          
-          if (ctx) {
-            let hue = 210;
-            const drawFrame = () => {
-              if (!activeStreamRef.current) return;
-              hue = (hue + 0.5) % 360;
-              ctx.fillStyle = `hsl(${hue}, 45%, 12%)`;
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              
-              ctx.fillStyle = '#ffffff';
-              ctx.font = 'bold 36px system-ui, sans-serif';
-              ctx.textAlign = 'center';
-              ctx.fillText('Yoouz Review Studio', canvas.width / 2, canvas.height / 2 + 100);
-              
-              ctx.font = '22px system-ui, sans-serif';
-              ctx.fillStyle = '#93c5fd';
-              ctx.fillText('Front Camera Active', canvas.width / 2, canvas.height / 2 + 150);
-
-              requestAnimationFrame(drawFrame);
-            };
-            drawFrame();
-          }
-
-          const simStream = (canvas as any).captureStream(30);
-          try {
-            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const dst = audioCtx.createMediaStreamDestination();
-            oscillator.connect(dst);
-            oscillator.start();
-            const audioTrack = dst.stream.getAudioTracks()[0];
-            if (audioTrack) {
-              simStream.addTrack(audioTrack);
-            }
-          } catch (e) {}
-
-          activeStreamRef.current = simStream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = simStream;
-            videoRef.current.muted = true;
-            await videoRef.current.play().catch(() => {});
-          }
-
-          setErrorMessage(null);
-          return;
-        } catch (simErr) {
-          console.error("Simulation fallback error:", simErr);
-        }
-
-        setErrorMessage("Please allow camera & microphone permissions to record your video review.");
-      }
+      console.warn("Camera or microphone access denied:", err);
+      activeStreamRef.current = null;
+      setCameraActive(false);
+      setErrorMessage("Both Camera and Microphone permissions are required to record a video review. Please allow permissions in your browser settings.");
     }
   };
 
@@ -734,12 +660,23 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     // Clear any previous transient warning
     setErrorMessage(null);
 
-    // If camera hasn't spun up yet, kick it off immediately
-    if (!activeStreamRef.current && (!videoRef.current || !videoRef.current.srcObject)) {
-      startCamera();
+    // Strict Permission Verification Guard: Ensure BOTH camera and microphone are active & authorized
+    let currentStream = (videoRef.current?.srcObject as MediaStream) || activeStreamRef.current;
+    if (!currentStream) {
+      await startCamera();
+      currentStream = (videoRef.current?.srcObject as MediaStream) || activeStreamRef.current;
     }
 
-    // Start 3-2-1 Countdown immediately
+    const hasLiveVideo = Boolean(currentStream?.getVideoTracks().some(t => t.readyState === "live" && t.enabled));
+    const hasLiveAudio = Boolean(currentStream?.getAudioTracks().some(t => t.readyState === "live" && t.enabled));
+
+    if (!currentStream || !hasLiveVideo || !hasLiveAudio) {
+      setErrorMessage("Both Camera and Microphone permissions are required to record a video review. Please allow permissions in your browser settings.");
+      startCamera();
+      return; // BLOCK RECORDING: DO NOT START 3-2-1 COUNTDOWN WITHOUT PERMISSIONS
+    }
+
+    // Start 3-2-1 Countdown immediately once permissions are verified
     let currentCount = 3;
     setCountdown(currentCount);
     playCountdownTone(currentCount);
@@ -764,13 +701,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   const startActualRecording = () => {
     const stream = (videoRef.current?.srcObject as MediaStream) || activeStreamRef.current;
-    if (!stream) {
-      // If camera is still spinning up, start camera and then start recording as soon as stream is ready
-      startCamera().then(() => {
-        setTimeout(() => {
-          startActualRecording();
-        }, 150);
-      });
+    const hasLiveVideo = Boolean(stream?.getVideoTracks().some(t => t.readyState === "live" && t.enabled));
+    const hasLiveAudio = Boolean(stream?.getAudioTracks().some(t => t.readyState === "live" && t.enabled));
+
+    if (!stream || !hasLiveVideo || !hasLiveAudio) {
+      setErrorMessage("Both Camera and Microphone permissions are required to record a video review. Please allow permissions in your browser settings.");
+      startCamera();
       return;
     }
     triggerHaptic("heavy");
@@ -1337,7 +1273,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       videoUrl: defaultStreamUrl,
       fallbackVideoUrls: recordedVideoUrl ? [recordedVideoUrl, defaultStreamUrl] : [defaultStreamUrl],
       thumbnailUrl: safeThumbnail,
-      caption: `Video review for ${getDisplayUrlAsDomain(selectedPlace) || cleanPlaceName}`,
+      caption: cleanPlaceName,
+      title: cleanPlaceName,
       transcriptText: finalTranscript,
       segments: finalSegments,
       dishOrItem: cleanPlaceName,
@@ -2355,18 +2292,28 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {/* Content Safety / Error Alert Banner */}
                 {errorMessage && (
                   <div className="absolute top-20 md:top-22 inset-x-4 md:inset-x-6 z-40 flex justify-center pointer-events-auto animate-fadeIn">
-                    <div className="p-3.5 sm:p-4 rounded-2xl bg-red-950/95 backdrop-blur-xl border border-red-500/50 text-white text-xs sm:text-sm font-semibold flex items-start gap-3 shadow-2xl max-w-md">
-                      <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
-                      <div className="flex-1 space-y-1">
-                        <p className="font-bold text-red-200">Recording Notice</p>
-                        <p className="text-zinc-200 text-xs leading-relaxed">{errorMessage}</p>
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-red-950/95 backdrop-blur-xl border border-red-500/50 text-white text-xs sm:text-sm font-semibold flex flex-col gap-2.5 shadow-2xl max-w-md w-full">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+                        <div className="flex-1 space-y-1">
+                          <p className="font-bold text-red-200">Permissions Required</p>
+                          <p className="text-zinc-200 text-xs leading-relaxed">{errorMessage}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setErrorMessage(null)}
+                          className="text-white/60 hover:text-white p-1 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setErrorMessage(null)}
-                        className="text-white/60 hover:text-white p-1 cursor-pointer"
+                        onClick={() => startCamera()}
+                        className="w-full py-2 px-3 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                       >
-                        <X className="w-4 h-4" />
+                        <Camera className="w-4 h-4" />
+                        <span>Allow Camera & Microphone Access</span>
                       </button>
                     </div>
                   </div>
