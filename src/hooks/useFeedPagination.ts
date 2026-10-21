@@ -334,10 +334,10 @@ export function useFeedPagination() {
         });
       }
 
-      // 4. Local in-flight published (only items that are ready with title & subtitles)
+      // 4. Local in-flight published
       localPublished.forEach((v) => {
-        const isReady = !v.isProcessing && v.isReady !== false && Boolean(v.title && !v.title.toLowerCase().startsWith("video review for")) && Boolean(Array.isArray(v.segments) && v.segments.length > 0);
-        if (v && v.id && !isPurgedItem(v, deletedIds) && isReady) {
+        const hasVideo = Boolean(v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl);
+        if (v && v.id && !isPurgedItem(v, deletedIds) && hasVideo) {
           combinedMap.set(String(v.id), v);
         }
       });

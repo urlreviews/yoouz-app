@@ -15773,7 +15773,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       }
 
       const merged = Array.from(map.values())
-        .filter((r: any) => r && !r.isProcessing && r.isReady !== false)
+        .filter((r: any) => r && (r.videoUrl || r.hlsUrl || r.bunnyVideoId || r.localBlobUrl || r.playbackUrl))
         .map((r: any) => {
         // Overlay live place metadata onto the video review to prevent banner popping on the client
         if (r.placeId && placesDataMap.has(String(r.placeId))) {
@@ -19469,15 +19469,14 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       }
 
-      // Check title and subtitle readiness: If title or subtitles are missing, hold in processing state
-      const hasValidTitle = Boolean(review.title && !review.title.toLowerCase().startsWith("video review for"));
-      const hasValidSegments = Boolean(Array.isArray(review.segments) && review.segments.length > 0);
-      if (hasValidTitle && hasValidSegments) {
-        review.isReady = true;
-        review.isProcessing = false;
-      } else {
-        review.isReady = false;
-        review.isProcessing = true;
+      // Every video review with a video recording is 100% READY & LIVE immediately!
+      review.isReady = true;
+      review.isProcessing = false;
+      if (!review.title || review.title.toLowerCase().startsWith("video review for")) {
+        review.title = review.placeName || review.businessName || "Verified Review";
+      }
+      if (!review.caption || review.caption.toLowerCase().startsWith("video review for")) {
+        review.caption = review.title || review.placeName || "Verified Review";
       }
 
       // 1. Save to local server JSON index
@@ -19510,13 +19509,11 @@ app.post("/api/videos/save-review", async (req, res) => {
       }
       feedCache.lastFetched = Date.now();
 
-      // Only broadcast immediately if video is fully ready with title & subtitles
-      if (review.isReady) {
-        try {
-          broadcastSseEvent({ type: "new_video", video: review });
-        } catch (sseErr) {
-          console.warn("SSE broadcast new_video error:", sseErr);
-        }
+      // Broadcast immediately for live user feed updates across all clients
+      try {
+        broadcastSseEvent({ type: "new_video", video: review });
+      } catch (sseErr) {
+        console.warn("SSE broadcast new_video error:", sseErr);
       }
 
       // Return instant success response to client immediately so mobile & desktop users never hang
@@ -33116,7 +33113,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       const deletedSet = new Set(readDeletedReviewsIndex());
       const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
       const liveVideos = (sourceVideos || [])
-        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)) && !v.isProcessing && v.isReady !== false)
+        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl))
         .slice(0, 30);
       
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');

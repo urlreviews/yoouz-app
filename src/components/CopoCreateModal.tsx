@@ -1615,8 +1615,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       segments: bunnySegments.length > 0 ? bunnySegments : ((finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])),
       ...(bunnyAiTitle ? { aiTitle: bunnyAiTitle, title: bunnyAiTitle, caption: bunnyAiTitle } : {}),
       hasBunnySmartCaptions: bunnySegments.length > 0,
-      isReady: Boolean((bunnyAiTitle || newReview.title) && (bunnySegments.length > 0 || (newReview.segments && newReview.segments.length > 0))),
-      isProcessing: !Boolean((bunnyAiTitle || newReview.title) && (bunnySegments.length > 0 || (newReview.segments && newReview.segments.length > 0)))
+      isReady: true,
+      isProcessing: false
     } as any;
 
     // 6. Final save with any synced AI captions/metadata
