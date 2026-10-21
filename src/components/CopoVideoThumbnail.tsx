@@ -21,7 +21,7 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
   alt,
 }) => {
   const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true);
 
   const posterSrc = React.useMemo(() => {
     return resolveVideoPosterUrl(video);

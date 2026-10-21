@@ -137,7 +137,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setIsHoveredUnfollow(false);
     setIsEnriching(false);
     setForcedHeaderReady(false);
-    const t = setTimeout(() => setForcedHeaderReady(true), 2000);
+    const t = setTimeout(() => setForcedHeaderReady(true), 300);
     if (fetchedTargetUrlsRef.current) {
       fetchedTargetUrlsRef.current.clear();
     }
