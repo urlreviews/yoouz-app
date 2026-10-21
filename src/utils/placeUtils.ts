@@ -2019,16 +2019,7 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
   const isFakeOrDeletedStr = (str?: any) => {
     if (!str) return false;
     const s = String(str).toLowerCase().trim().replace(/^@+/, '');
-    return (
-      s.includes('yoouz') ||
-      s.includes('member') ||
-      s.includes('reviewer') ||
-      s.includes('registered user') ||
-      s.includes('david') ||
-      s === 'user' ||
-      s === 'community member' ||
-      s === 'community reviewer'
-    );
+    return s === 'deleted_user' || s === 'deleted' || s === 'purged_user';
   };
 
   if (typeof userOrIdOrEmail === 'string') {
