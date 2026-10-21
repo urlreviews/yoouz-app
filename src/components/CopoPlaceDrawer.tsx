@@ -120,6 +120,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
+  const [forcedHeaderReady, setForcedHeaderReady] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
@@ -135,9 +136,12 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setFetchedBannerUrl(null);
     setIsHoveredUnfollow(false);
     setIsEnriching(false);
+    setForcedHeaderReady(false);
+    const t = setTimeout(() => setForcedHeaderReady(true), 2000);
     if (fetchedTargetUrlsRef.current) {
       fetchedTargetUrlsRef.current.clear();
     }
+    return () => clearTimeout(t);
   }, [place?.id, place?.brandDomain, place?.website, place?.name]);
 
   // Synchronously reset banner error state when fresh banner arrives from background enrichment or place updates
@@ -930,6 +934,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Synchronous Co-Landing Gate: Both Banner and Logo transition to screen TOGETHER in 1 exact millisecond
   const isHeaderReady = React.useMemo(() => {
+    if (forcedHeaderReady) return true;
     if (!hasAuthenticPhoto) return true;
     const proxiedBanner = getProxiedImageUrl(activeBannerUrl);
     // Strict bypass for high-end CDNs that are always fast
@@ -937,7 +942,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (proxiedBanner && KNOWN_LOADED_BANNERS.has(proxiedBanner)) return true;
     if (bannerLoaded && (logoLoaded || !primaryLogoUrl)) return true;
     return criticalImagesLoaded;
-  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, primaryLogoUrl, criticalImagesLoaded, place.id]);
+  }, [forcedHeaderReady, hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, primaryLogoUrl, criticalImagesLoaded, place.id]);
 
   // Genuine check filters
   const placeKeyForKnown = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();

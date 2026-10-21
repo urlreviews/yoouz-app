@@ -111,17 +111,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u))));
   }, [isYoouz, cleanDomain, logoUrl]);
 
-  // Current src candidate
+// Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || null;
 
   // Reset index when domain/logoUrl changes
   useEffect(() => {
     setCandidateIdx(0);
-    if (currentSrc && KNOWN_LOADED_LOGOS.has(currentSrc)) {
-      setImgLoaded(true);
-    } else {
-      setImgLoaded(false);
-    }
+    setImgLoaded(false);
   }, [cleanDomain, logoUrl]);
 
   // Dedicated Yoouz emblem
@@ -148,7 +144,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Display Name / Domain Title for wordmark fallback
   const displayName = (name || cleanDomain || "Business").trim();
-  const shortTitle = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
   const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
 
   return (
@@ -161,8 +156,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-150 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
-            imgLoaded ? "opacity-100" : "opacity-90"
+          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+            imgLoaded ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
           onLoad={(e) => {
@@ -181,12 +176,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             onLoad?.();
           }}
           onError={() => {
-            // Cascade to next candidate image URL in the chain if this candidate fails
             setCandidateIdx((prev) => prev + 1);
           }}
         />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-white font-black text-xs uppercase select-none print:bg-zinc-900 print:text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+      ) : null}
+      {/* Fallback - keep it visible if image is still loading or failed */}
+      {!imgLoaded && (
+        <div className={`absolute inset-0 flex items-center justify-center bg-zinc-900 text-white font-black text-xs uppercase select-none ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
           <span className={fallbackTextClassName || "text-zinc-200 tracking-wider"}>{brandInitial}</span>
         </div>
       )}
