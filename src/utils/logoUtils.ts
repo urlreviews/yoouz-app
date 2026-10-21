@@ -144,6 +144,9 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
   }
 
   if (clean.startsWith("https://")) {
+    if (clean.includes("b-cdn.net") || clean.includes("bunnycdn.com")) {
+      return clean;
+    }
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
   }
 
