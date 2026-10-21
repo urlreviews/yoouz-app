@@ -971,25 +971,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           />
         ) : (
           <div
-            className={`w-full h-full pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-zinc-900 via-zinc-950 to-black transition-opacity duration-300 z-10 p-6 ${
+            className={`w-full h-full pointer-events-none absolute inset-0 bg-black transition-opacity duration-300 z-10 ${
               isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
-          >
-            <div className="w-20 h-20 rounded-full p-1 border-2 border-white/20 shadow-2xl bg-black overflow-hidden mb-3">
-              <img
-                src={userAvatarFallback}
-                alt={safeAuthor.name}
-                className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  target.src = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
-                }}
-              />
-            </div>
-            <span className="text-sm font-bold text-white text-center truncate max-w-[200px]">
-              {safeAuthor.name}
-            </span>
-          </div>
+          />
         )}
       </div>
 

@@ -243,6 +243,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Initialize pool of 3 hardware-accelerated video elements once
   useLayoutEffect(() => {
     if (typeof document === "undefined") return;
+    
+    // Immediate pre-connect to critical Bunny CDN storage edge to reduce TTFB for video streams
+    const preconnect = document.createElement("link");
+    preconnect.rel = "preconnect";
+    preconnect.href = "https://rev1.b-cdn.net";
+    preconnect.crossOrigin = "anonymous";
+    document.head.appendChild(preconnect);
 
     if (videoPoolRef.current.length === 0) {
       const pool: HTMLVideoElement[] = [];
@@ -799,7 +806,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
         }
       }
-    }, 350);
+    }, 150);
 
     // 4. Pause and unmount any idle element outside active, next, and prev
     pool.forEach((v) => {

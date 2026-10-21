@@ -932,10 +932,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const isHeaderReady = React.useMemo(() => {
     if (!hasAuthenticPhoto) return true;
     const proxiedBanner = getProxiedImageUrl(activeBannerUrl);
+    // Strict bypass for high-end CDNs that are always fast
+    if (proxiedBanner && (proxiedBanner.includes("wikimedia.org") || proxiedBanner.includes("fbcdn.net"))) return true;
     if (proxiedBanner && KNOWN_LOADED_BANNERS.has(proxiedBanner)) return true;
     if (bannerLoaded && (logoLoaded || !primaryLogoUrl)) return true;
     return criticalImagesLoaded;
-  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, primaryLogoUrl, criticalImagesLoaded]);
+  }, [hasAuthenticPhoto, activeBannerUrl, bannerLoaded, logoLoaded, primaryLogoUrl, criticalImagesLoaded, place.id]);
 
   // Genuine check filters
   const placeKeyForKnown = (place.brandDomain || place.id || place.name || "").toLowerCase().replace(/^www\./, "").trim();
@@ -1286,7 +1288,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
-              key={allPhotos[photoIndex] || allPhotos[0] || effectiveBanner}
+              key={`banner-${place.id}-${allPhotos[photoIndex] || allPhotos[0] || effectiveBanner}`}
               src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner)}
               alt={displayedPlaceName}
               loading="eager"
@@ -1329,6 +1331,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
         <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
           <CopoBrandLogo
+            key={`logo-${place.id}`}
             domain={drawerDomain || place.brandDomain}
             name={displayedPlaceName}
             website={place.website}

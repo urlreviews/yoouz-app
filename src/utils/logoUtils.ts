@@ -27,6 +27,11 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("logo-placeholder") ||
     clean.includes("placeholder") ||
     clean.includes("mock") ||
+    clean.includes("fake") ||
+    clean.includes("test") ||
+    clean.includes("sample") ||
+    clean.includes("example") ||
+    clean.includes("demo") ||
     clean.includes("og-banner.png") ||
     clean.includes("tap/0.png") ||
     clean.includes("icons/tap") ||
@@ -153,7 +158,13 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
       clean.includes("pexels.com") ||
       clean.includes("imgur.com") ||
       clean.includes("fbcdn.net") ||
-      clean.includes("googleusercontent.com")
+      clean.includes("googleusercontent.com") ||
+      clean.includes("jollibee.com.ph") ||
+      clean.includes("jollibee.com") ||
+      clean.includes("jollibee.uk") ||
+      clean.includes("jollibee.ca") ||
+      clean.includes("jollibee.com.au") ||
+      clean.includes("jollibeefoods.com")
     ) {
       return clean;
     }
@@ -229,6 +240,14 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "gett": GETT_LOGO_DATA_URI,
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
+  "jollibee.com.ph": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "www.jollibee.com.ph": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "jollibee.com": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "www.jollibee.com": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "jollibee.uk": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "jollibee.ca": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "jollibee.com.au": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
+  "jollibee": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
   "zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
   "www.zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
   "zara": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
@@ -828,6 +847,11 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "mamotcv": "https://www.mamotcv.com/app/uploads/2022/01/fbshare.jpg",
   "jollibee.com.ph": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "www.jollibee.com.ph": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "jollibee.com": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "www.jollibee.com": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "jollibee.uk": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "jollibee.ca": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
+  "jollibee.com.au": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "jollibee": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
   "www.whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
