@@ -225,6 +225,31 @@ export const WHATSAPP_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBo
 </svg>`;
 export const WHATSAPP_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(WHATSAPP_LOGO_SVG)}`;
 
+export const JOLLIBEE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#e21b23"/>
+  <circle cx="50" cy="56" r="22" fill="#ffffff"/>
+  <circle cx="50" cy="57" r="20" fill="#f8a51d"/>
+  <path d="M 40 38 C 36 34 36 24 44 22 C 48 18 58 18 60 23 C 66 22 70 30 66 38 Z" fill="#ffffff"/>
+  <rect x="42" y="34" width="22" height="6" rx="2" fill="#ffffff"/>
+  <rect x="43" y="38" width="20" height="2" fill="#e21b23"/>
+  <path d="M 36 44 C 40 40 60 40 64 44 C 64 48 36 48 36 44 Z" fill="#ffffff"/>
+  <ellipse cx="43" cy="54" rx="3.5" ry="5" fill="#18181b"/>
+  <ellipse cx="57" cy="54" rx="3.5" ry="5" fill="#18181b"/>
+  <circle cx="44.5" cy="52.5" r="1.5" fill="#ffffff"/>
+  <circle cx="58.5" cy="52.5" r="1.5" fill="#ffffff"/>
+  <circle cx="37" cy="58" r="3" fill="#e21b23"/>
+  <circle cx="63" cy="58" r="3" fill="#e21b23"/>
+  <path d="M 42 62 Q 50 70 58 62" stroke="#18181b" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <ellipse cx="50" cy="58" rx="3" ry="2" fill="#ffffff"/>
+</svg>`;
+export const JOLLIBEE_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(JOLLIBEE_LOGO_SVG)}`;
+
+export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#000000"/>
+  <text x="50" y="62" font-family="'Times New Roman', Georgia, serif" font-weight="900" font-size="26" fill="#ffffff" text-anchor="middle" letter-spacing="-1">ZARA</text>
+</svg>`;
+export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "whatsapp.com": WHATSAPP_LOGO_DATA_URI,
@@ -240,17 +265,17 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "gett": GETT_LOGO_DATA_URI,
   "yoouz.com": YOOUZ_LOGO_DATA_URI,
   "www.yoouz.com": YOOUZ_LOGO_DATA_URI,
-  "jollibee.com.ph": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "www.jollibee.com.ph": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "jollibee.com": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "www.jollibee.com": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "jollibee.uk": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "jollibee.ca": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "jollibee.com.au": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "jollibee": "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Jollibee_logo.svg/1200px-Jollibee_logo.svg.png",
-  "zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
-  "www.zara.com": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
-  "zara": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
+  "jollibee.com.ph": JOLLIBEE_LOGO_DATA_URI,
+  "www.jollibee.com.ph": JOLLIBEE_LOGO_DATA_URI,
+  "jollibee.com": JOLLIBEE_LOGO_DATA_URI,
+  "www.jollibee.com": JOLLIBEE_LOGO_DATA_URI,
+  "jollibee.uk": JOLLIBEE_LOGO_DATA_URI,
+  "jollibee.ca": JOLLIBEE_LOGO_DATA_URI,
+  "jollibee.com.au": JOLLIBEE_LOGO_DATA_URI,
+  "jollibee": JOLLIBEE_LOGO_DATA_URI,
+  "zara.com": ZARA_LOGO_DATA_URI,
+  "www.zara.com": ZARA_LOGO_DATA_URI,
+  "zara": ZARA_LOGO_DATA_URI,
   "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",

@@ -217,26 +217,53 @@ export function resolvePlayableVideoSource(
  * Resolves the best available cover thumbnail poster for a VideoReview.
  * Never falls back to place logos, user avatars, or letter graphics to avoid screen flash before playback.
  */
+export function extractBunnyIdFromVideo(video?: VideoReview | null): string | null {
+  if (!video) return null;
+  if (video.bunnyVideoId && typeof video.bunnyVideoId === "string" && video.bunnyVideoId.length > 10 && !video.bunnyVideoId.startsWith("rev-")) {
+    return video.bunnyVideoId;
+  }
+  if (video.bunnyGuid && typeof video.bunnyGuid === "string" && video.bunnyGuid.length > 10 && !video.bunnyGuid.startsWith("rev-")) {
+    return video.bunnyGuid;
+  }
+  const urlsToSearch = [video.videoUrl, video.thumbnailUrl, ...(video.fallbackVideoUrls || [])].filter(Boolean) as string[];
+  for (const url of urlsToSearch) {
+    if (typeof url !== "string") continue;
+    const match = url.match(/vz-[^/]+\.b-cdn\.net\/([0-9a-f-]{36})/i) || url.match(/\/([0-9a-f-]{36})\/(playlist\.m3u8|play_|thumbnail)/i);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves the best available cover thumbnail poster for a VideoReview.
+ * Returns direct CDN URLs (or local paths) for 100% instant rendering without server proxy bottlenecks.
+ */
 export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
 
-  const cleanZone = (activeBunnyPullZone || "https://rev1.b-cdn.net").replace(/\/+$/, "");
   // 1. Direct Bunny Stream official video thumbnail (most authentic frame from user's video)
-  const bunnyId = video.bunnyVideoId || video.bunnyGuid;
-  if (bunnyId && typeof bunnyId === "string" && bunnyId.length > 10 && !bunnyId.startsWith("rev-")) {
+  const bunnyId = extractBunnyIdFromVideo(video);
+  if (bunnyId) {
     const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
-    const officialStreamThumb = `${streamCdn}/${bunnyId}/thumbnail.jpg`;
-    return `/api/proxy-image?url=${encodeURIComponent(officialStreamThumb)}`;
+    return `${streamCdn}/${bunnyId}/thumbnail.jpg`;
   }
 
   // 2. Explicit thumbnail URL on the review
   const rawThumb = video.thumbnailUrl;
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
-    const trimmed = rawThumb.trim();
+    let trimmed = rawThumb.trim();
 
     // Direct base64 or blob poster (ONLY if current session recording)
     if (trimmed.startsWith("data:image/") || (trimmed.startsWith("blob:") && video.isCurrentSessionBlob)) {
       return trimmed;
+    }
+
+    // Unwrap proxy wrapper if present
+    while (trimmed.includes("/api/proxy-image?url=")) {
+      const parts = trimmed.split("/api/proxy-image?url=");
+      trimmed = decodeURIComponent(parts[parts.length - 1]);
     }
 
     if (!trimmed.startsWith("blob:")) {
@@ -252,18 +279,8 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
         trimmed.includes("logo.jpg") ||
         trimmed.includes("brandfetch.io");
       
-      // Direct Bunny CDN image via proxy for referer resilience
-      if (trimmed.includes("b-cdn.net") && !isVideoFile && !isAvatarOrLogo) {
-        if (trimmed.startsWith("/api/proxy-image")) return trimmed;
-        return `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
-      }
-
       if (!isVideoFile && !isAvatarOrLogo) {
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-          if (trimmed.startsWith("/api/proxy-image")) return trimmed;
-          return `/api/proxy-image?url=${encodeURIComponent(trimmed)}`;
-        }
-        if (trimmed.startsWith("/uploads/") || trimmed.startsWith("/videos/") || trimmed.startsWith("/")) {
+        if (trimmed.includes("b-cdn.net") || trimmed.includes("bunnycdn.com") || trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
           return trimmed;
         }
       }
