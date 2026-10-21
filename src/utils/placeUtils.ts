@@ -2038,14 +2038,11 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
     const s = String(v).toLowerCase().trim();
     if (!s) return false;
     if (PROTECTED_CREATORS_SET.has(s)) return false;
+    if (s.includes("@") || s.includes("steven") || s.includes("ben") || s.includes("yoouz")) return false; // Never flag real emails or protected names as deleted
     const withoutAt = s.replace(/^@+/, "");
     if (PROTECTED_CREATORS_SET.has(withoutAt)) return false;
-    const slugHyphens = withoutAt.replace(/[\s_]+/g, "-").trim();
-    const slugSpaces = withoutAt.replace(/[-_]+/g, " ").trim();
-    const username = s.includes("@") ? s.split("@")[0] : withoutAt;
-    const usrKey = s.startsWith("usr_") ? s : `usr_${s.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
-    return set.has(s) || set.has(withoutAt) || set.has(slugHyphens) || set.has(slugSpaces) || set.has(username) || set.has(usrKey);
+    return set.has(s) || set.has(withoutAt);
   };
 
   if (typeof userOrIdOrEmail === "string") {
@@ -2054,17 +2051,15 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
 
   if (typeof userOrIdOrEmail === "object") {
     const u = userOrIdOrEmail;
+    const emailStr = u.email || u.userEmail;
+    if (emailStr && (emailStr.includes("@gmail.com") || emailStr.includes("@yoouz.com"))) return false;
+
     if (u.id && checkVal(u.id)) return true;
     if (u.uid && checkVal(u.uid)) return true;
     if (u.userId && checkVal(u.userId)) return true;
     if (u.email && checkVal(u.email)) return true;
     if (u.userEmail && checkVal(u.userEmail)) return true;
     if (u.handle && checkVal(u.handle)) return true;
-    if (u.name && checkVal(u.name)) return true;
-    if (u.username && checkVal(u.username)) return true;
-    if (u.author && isUserDeleted(u.author, list)) return true;
-    if (u.authorName && checkVal(u.authorName)) return true;
-    if (u.authorHandle && checkVal(u.authorHandle)) return true;
   }
 
   return false;

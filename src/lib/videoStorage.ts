@@ -277,7 +277,7 @@ export async function uploadVideoToServerWithProgress(
       xhr.send(formData);
     };
 
-    attemptUpload(1); // 1 automatic retry on network glitch
+    attemptUpload(0); // Exactly one upload attempt with zero retries to prevent duplicate Bunny Stream entries
   });
 }
 

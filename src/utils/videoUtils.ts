@@ -255,8 +255,8 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
     let trimmed = rawThumb.trim();
 
-    // Direct base64 or blob poster (ONLY if current session recording)
-    if (trimmed.startsWith("data:image/") || (trimmed.startsWith("blob:") && video.isCurrentSessionBlob)) {
+    // Direct base64 or blob poster (ONLY if current session recording and starts with blob:)
+    if (trimmed.startsWith("data:image/") || (trimmed.startsWith("blob:") && video.isCurrentSessionBlob && trimmed.startsWith("blob:"))) {
       return trimmed;
     }
 

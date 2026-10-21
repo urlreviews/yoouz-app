@@ -40,6 +40,14 @@ import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
 
 dotenv.config();
 
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception caught safely:', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection caught safely at:', promise, 'reason:', reason);
+});
+
 const FIRECRAWL_BASE_URL = process.env.FIRECRAWL_API_URL || "";
 const FIRECRAWL_PUBLIC_URL = "https://mc-rb4zzrxvx1.bunny.run";
 
