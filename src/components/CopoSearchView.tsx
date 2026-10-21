@@ -145,6 +145,108 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     }
   }, [initialQuery]);
 
+  const findMatchingPlace = (term: string, preferredName?: string): Place | undefined => {
+    const base = (preferredName || term).trim();
+    const target = extractCleanDomain(base);
+    const rawTarget = extractCleanDomain(term);
+    return places.find(p => {
+      if (!p) return false;
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+      const isRealDom = isValidDomainUrl(pDom);
+
+      if (target && pDom === target && isRealDom) return true;
+      if (rawTarget && pDom === rawTarget && isRealDom) return true;
+      
+      const pNameLower = (p.name || "").toLowerCase().trim();
+      const baseLower = base.toLowerCase().trim();
+      const termLower = term.toLowerCase().trim();
+
+      const isKnownBrand = Boolean(
+        (pDom && KNOWN_OFFICIAL_NAMES[pDom]) ||
+        (pNameLower && KNOWN_OFFICIAL_NAMES[pNameLower])
+      );
+      
+      if (isKnownBrand && (pNameLower === baseLower || pNameLower === termLower)) {
+        return true;
+      }
+      
+      if (pNameLower === baseLower || pNameLower === termLower) {
+        return true;
+      }
+
+      if (baseLower.length >= 3 && pNameLower.includes(baseLower)) {
+        return true;
+      }
+      
+      return false;
+    });
+  };
+
+  const getItemLogoUrl = (term: string, place?: Place | null): string | null => {
+    if (place) {
+      const l = getPlaceLogoUrl(place);
+      if (l) return l;
+    }
+    const cleanDomain = getCleanDomainUrl(term) || extractCleanDomain(term);
+    if (cleanDomain && cleanDomain.includes(".")) {
+      return getPlaceLogoUrl({ name: cleanDomain, brandDomain: cleanDomain });
+    }
+    return getPlaceLogoUrl({ name: term });
+  };
+
+  const trending = React.useMemo(() => {
+    const sorted = [...places]
+      .map(p => {
+        const count = videos.filter(v => isPlaceReviewMatch(v, p)).length;
+        return { place: p, count };
+      })
+      .sort((a, b) => b.count - a.count)
+      .map(item => item.place)
+      .filter((p, idx, arr) => p && arr.findIndex(x => x && x.id === p.id) === idx);
+
+    // Guaranteed fallback trending items so Trending Searches NEVER disappears
+    const fallbackDomains = ["yoouz.com", "firststrikeelectrical.co.uk", "izci.be", "apple.com", "booking.com"];
+    for (const dom of fallbackDomains) {
+      if (sorted.length >= 8) break;
+      const existing = sorted.find(p => p && (p.brandDomain || p.website || p.id || "").includes(dom));
+      if (!existing) {
+        const fallbackPlace: Place = {
+          id: dom,
+          name: KNOWN_OFFICIAL_NAMES[dom] || formatBusinessName(dom),
+          category: "Verified Business",
+          categoryType: "all",
+          address: "Verified Location",
+          city: "Worldwide",
+          country: "",
+          lat: 0,
+          lng: 0,
+          rating: 5,
+          totalReviews: 1,
+          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: "",
+          logoUrl: "",
+          bannerUrl: "",
+          ogImage: "",
+          photos: [],
+          isOpen: true,
+          openingHours: "Available 24/7",
+          phone: "",
+          priceRange: "$$",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          website: `https://${dom}`,
+          brandDomain: dom
+        };
+        sorted.push(fallbackPlace);
+      }
+    }
+
+    return sorted.slice(0, 8);
+  }, [places, videos]);
+
   // Live Auto-Suggest debounce with 0ms instant local database preview
   useEffect(() => {
     const trimmed = query.trim();
@@ -745,27 +847,38 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   </div>
                   <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
                     {recentSearches.map((term, idx) => {
-                      const isRealDomain = isValidDomainUrl(term) || (term.includes(".") && !term.includes(" "));
-                      const cleanUrl = isRealDomain ? extractCleanDomain(term) : "";
-                      const title = (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-                        || (isRealDomain ? formatBusinessName(cleanUrl) : formatBusinessName(term));
+                      const place = findMatchingPlace(term);
+                      const cleanUrl = getCleanDomainUrl(place || term) || (isValidDomainUrl(term) ? extractCleanDomain(term) : "");
+                      const title = place?.name 
+                        || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
+                        || (cleanUrl ? formatBusinessName(cleanUrl) : formatBusinessName(term));
+                      const logoUrl = getItemLogoUrl(term, place) || place?.logoUrl || place?.avatarUrl;
+
                       return (
                         <div
                           key={`recent-${idx}`}
                           onClick={() => {
-                            setQuery(cleanUrl || term);
-                            handleSearch(undefined, cleanUrl || term, title);
+                            if (place) {
+                              if (onOpenPlace) onOpenPlace(place.id);
+                            } else {
+                              setQuery(cleanUrl || term);
+                              handleSearch(undefined, cleanUrl || term, title);
+                            }
                           }}
                           className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
                         >
-                          <CopoBrandLogo
-                            domain={cleanUrl || term}
-                            name={title}
-                            website={cleanUrl ? `https://${cleanUrl}` : ""}
-                            className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
-                            imageClassName="w-full h-full object-contain"
-                            fallbackTextClassName="font-extrabold text-xs text-zinc-950"
-                          />
+                          <div className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
+                            <CopoBrandLogo
+                              domain={cleanUrl || place?.brandDomain || term}
+                              name={title}
+                              website={place?.website || (cleanUrl ? `https://${cleanUrl}` : "")}
+                              logoUrl={logoUrl}
+                              bannerUrl={place?.bannerUrl || place?.ogImage}
+                              className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
+                              imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
+                              fallbackTextClassName="font-extrabold text-xs text-zinc-950 uppercase"
+                            />
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
                               {title}
@@ -798,42 +911,53 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <h3 className="text-zinc-400 text-sm font-bold">{t("search.trendingSearches", "Trending Searches")}</h3>
                 </div>
                 <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
-                  {[
-                    { id: "yoouz.com", name: "Yoouz", domain: "yoouz.com" },
-                    { id: "firststrikeelectrical.co.uk", name: "First Strike Electrical", domain: "firststrikeelectrical.co.uk" },
-                    { id: "izci.be", name: "Bosch Car Service Izci", domain: "izci.be" },
-                    { id: "apple.com", name: "Apple", domain: "apple.com" },
-                    { id: "booking.com", name: "Booking.com", domain: "booking.com" },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        saveRecentSearch(item.domain || item.name);
-                        setQuery(item.domain);
-                        handleSearch(undefined, item.domain, item.name);
-                      }}
-                      className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
-                    >
-                      <CopoBrandLogo
-                        domain={item.domain}
-                        name={item.name}
-                        website={`https://${item.domain}`}
-                        className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden"
-                        imageClassName="w-full h-full object-contain"
-                        fallbackTextClassName="font-extrabold text-xs text-zinc-950"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
-                          {item.name}
+                  {trending.map((place) => {
+                    const cleanUrl = getCleanDomainUrl(place) || extractCleanDomain(place.brandDomain || place.website || place.id) || "";
+                    const title = place.name || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl || place.id);
+                    const logoUrl = getItemLogoUrl(cleanUrl || place.name, place) || place.logoUrl || place.avatarUrl;
+
+                    return (
+                      <button
+                        key={place.id}
+                        type="button"
+                        onClick={() => {
+                          saveRecentSearch(cleanUrl || title);
+                          if (place.id && !place.id.includes(".")) {
+                            if (onOpenPlace) onOpenPlace(place.id);
+                          } else {
+                            setQuery(cleanUrl || title);
+                            handleSearch(undefined, cleanUrl || title, title);
+                          }
+                        }}
+                        className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
+                          <CopoBrandLogo
+                            domain={cleanUrl || place.brandDomain}
+                            name={title}
+                            website={place.website || (cleanUrl ? `https://${cleanUrl}` : "")}
+                            logoUrl={logoUrl}
+                            bannerUrl={place.bannerUrl || place.ogImage}
+                            className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
+                            imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
+                            fallbackTextClassName="font-extrabold text-xs text-zinc-950 uppercase"
+                          />
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
-                          <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
-                          <span>{item.domain.toLowerCase()}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
+                            {title}
+                          </div>
+                          {cleanUrl ? (
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
+                              <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
+                              <span>{cleanUrl.toLowerCase()}</span>
+                            </div>
+                          ) : null}
                         </div>
-                      </div>
-                      <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
+                        <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

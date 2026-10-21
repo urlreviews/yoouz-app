@@ -27201,12 +27201,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 || (!isFaviconUrl(pData.avatarUrl) && !pData.avatarUrl?.includes('apple-touch-icon') ? pData.avatarUrl : null) 
                 || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) 
                 || "";
+              const resolvedEntity = row.name || (matchedDom ? (KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()] || formatBusinessName(matchedDom)) : rawQuery);
               return res.json({
-                title: resolvedTitle,
-                description: pData.description || `${resolvedTitle} is a verified business on Yoouz.`,
+                title: resolvedEntity,
+                description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
                 image: cachedImageCandidate,
                 logo: cachedLogoCandidate,
-                siteName: resolvedTitle,
+                siteName: resolvedEntity,
                 domain: matchedDom,
                 url: pData.website || `https://${matchedDom}`,
                 address: row.address || pData.address || "",
