@@ -182,7 +182,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       ) : null}
       {/* Fallback - keep it visible if image is still loading or failed */}
       {!imgLoaded && (
-        <div className={`absolute inset-0 flex items-center justify-center bg-zinc-900 text-white font-black text-xs uppercase select-none ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
+        <div className={`absolute inset-0 flex items-center justify-center bg-zinc-800/50 text-zinc-400 font-bold text-xs uppercase select-none ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
           <span className={fallbackTextClassName || "text-zinc-200 tracking-wider"}>{brandInitial}</span>
         </div>
       )}
