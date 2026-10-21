@@ -7,30 +7,29 @@ RUN npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000
 
-COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+ COPY package*.json ./
+RUN npm install --no-audit --no-fund || npm ci --no-audit --no-fund
 
-COPY . .
+ COPY . .
 RUN mkdir -p /app/uploads /app/public /app/dist
 RUN npm run build
 
 # Remove development dependencies to keep production image lean and fast
 RUN npm prune --production
 
-FROM node:22-alpine AS runner
+ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+ ENV NODE_ENV=production
 ENV PORT=3000
 
-COPY package*.json ./
+ COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/uploads ./uploads
 
-EXPOSE 3000
+ EXPOSE 3000
 
 CMD ["node", "dist/server.cjs"]
-
