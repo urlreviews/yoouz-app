@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { VideoReview } from "../types";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
+import { getCategoryThematicBanner } from "../utils/logoUtils";
 
 interface CopoVideoThumbnailProps {
   video: VideoReview;
@@ -8,45 +9,67 @@ interface CopoVideoThumbnailProps {
   alt?: string;
 }
 
-const FALLBACK_POSTER_SVG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
-  <rect width="300" height="400" fill="#18181b"/>
-  <circle cx="150" cy="200" r="32" fill="#27272a"/>
-  <polygon points="144,188 162,200 144,212" fill="#a1a1aa"/>
-</svg>`);
-
 export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
   video,
   className = "w-full h-full object-cover",
   alt,
 }) => {
-  const [hasError, setHasError] = useState(false);
+  const [errorStage, setErrorStage] = useState(0); // 0: primary poster, 1: category/banner fallback, 2: svg fallback
   const [isLoaded, setIsLoaded] = useState(true);
 
   const posterSrc = React.useMemo(() => {
-    return resolveVideoPosterUrl(video);
-  }, [video]);
+    if (errorStage === 0) {
+      return resolveVideoPosterUrl(video) || video.placeBannerUrl || getCategoryThematicBanner(video.placeCategory, video.placeName);
+    }
+    if (errorStage === 1) {
+      return video.placeBannerUrl || getCategoryThematicBanner(video.placeCategory, video.placeName);
+    }
+    return "";
+  }, [video, errorStage]);
 
-  const activeSrc = hasError || !posterSrc ? FALLBACK_POSTER_SVG : posterSrc;
+  const placeInitial = (video.placeName || video.placeId || "V").charAt(0).toUpperCase();
+
+  const FALLBACK_POSTER_SVG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#27272a" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+  </defs>
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <circle cx="150" cy="180" r="40" fill="#3f3f46" opacity="0.8"/>
+  <text x="150" y="190" font-family="-apple-system, sans-serif" font-weight="bold" font-size="28" fill="#ffffff" text-anchor="middle">${placeInitial}</text>
+  <circle cx="150" cy="270" r="24" fill="#ef4444"/>
+  <polygon points="144,260 162,270 144,280" fill="#ffffff"/>
+  <text x="150" y="330" font-family="-apple-system, sans-serif" font-weight="600" font-size="13" fill="#a1a1aa" text-anchor="middle">${video.placeName || "Video Review"}</text>
+</svg>`);
+
+  const activeSrc = errorStage >= 2 || !posterSrc ? FALLBACK_POSTER_SVG : posterSrc;
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-zinc-900">
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 animate-pulse pointer-events-none" />
-      )}
+    <div className="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center">
       <img
         src={activeSrc}
         alt={alt || video.caption || video.placeName || "Video review preview"}
-        className={`${className} transition-opacity duration-200 ${isLoaded || hasError ? "opacity-100" : "opacity-0"}`}
+        className={`${className} transition-opacity duration-300`}
         loading="eager"
         decoding="async"
         fetchPriority="high"
         referrerPolicy="no-referrer"
         onLoad={() => setIsLoaded(true)}
         onError={() => {
-          setHasError(true);
+          if (errorStage < 2) {
+            setErrorStage(prev => prev + 1);
+          }
         }}
       />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none opacity-80" />
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] font-semibold text-white/90 pointer-events-none">
+        <span className="truncate bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
+          {video.placeName || "Review"}
+        </span>
+      </div>
     </div>
   );
 };
