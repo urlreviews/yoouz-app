@@ -193,6 +193,43 @@ export function App() {
                 return [{ ...rawPlace, id: targetId }, ...prev];
               });
             }
+          } else if (payload.type === "delete_video" || payload.type === "delete" || payload.type === "purge_video") {
+            const delId = String(payload.videoId || payload.id || "").trim();
+            const delBunnyId = String(payload.bunnyVideoId || payload.guid || "").trim();
+            if (delId || delBunnyId) {
+              setVideos((prev) => prev.filter((v) => {
+                if (!v) return false;
+                if (delId && (String(v.id) === delId || String(v.id).toLowerCase() === delId.toLowerCase())) return false;
+                if (delBunnyId && (String(v.bunnyVideoId) === delBunnyId || String(v.bunnyGuid) === delBunnyId)) return false;
+                return true;
+              }));
+              setPlaces((prev) => prev.map((p) => {
+                if (!p.reviews) return p;
+                return {
+                  ...p,
+                  reviews: p.reviews.filter((r: any) => {
+                    if (!r) return false;
+                    if (delId && (String(r.id) === delId || String(r.id).toLowerCase() === delId.toLowerCase())) return false;
+                    if (delBunnyId && (String(r.bunnyVideoId) === delBunnyId || String(r.bunnyGuid) === delBunnyId)) return false;
+                    return true;
+                  })
+                };
+              }));
+              setActiveCommentVideo((cur) => {
+                if (!cur) return null;
+                if (delId && String(cur.id) === delId) return null;
+                if (delBunnyId && (String(cur.bunnyVideoId) === delBunnyId || String(cur.bunnyGuid) === delBunnyId)) return null;
+                return cur;
+              });
+              try {
+                const cachedRaw = localStorage.getItem("yoouz_videos_cache");
+                if (cachedRaw) {
+                  const parsed = JSON.parse(cachedRaw);
+                  const filtered = parsed.filter((v: any) => v && String(v.id) !== delId && String(v.bunnyVideoId) !== delBunnyId);
+                  localStorage.setItem("yoouz_videos_cache", JSON.stringify(filtered));
+                }
+              } catch (e) {}
+            }
           } else if (payload.type === "video_liked" && payload.videoId) {
             const vidId = String(payload.videoId);
             const nLikes = typeof payload.likesCount === 'number' ? payload.likesCount : 0;

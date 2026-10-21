@@ -203,17 +203,20 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
             onClick={toggleInlinePlay}
             onError={(e) => {
               const el = e.currentTarget;
-              console.warn(`Video playback notice on review card for ${review.id}`);
-              const fallbacks = (review.fallbackVideoUrls || [])
+              console.warn(`Video playback error on review card for ${review.id}`);
+              const targetGuid = review.bunnyVideoId || review.bunnyGuid || review.id;
+              const sameVideoFallbacks = (review.fallbackVideoUrls || [])
                 .concat(review.videoUrl ? [review.videoUrl] : [])
                 .map(u => normalizeVideoUrl(u))
                 .filter(
                   u =>
                     u &&
-                    u !== el.src
+                    !u.includes("default-review") &&
+                    u !== el.src &&
+                    (targetGuid ? u.includes(targetGuid) : false)
                 );
-              if (fallbacks.length > 0 && videoRef.current) {
-                videoRef.current.src = fallbacks[0];
+              if (sameVideoFallbacks.length > 0 && videoRef.current) {
+                videoRef.current.src = sameVideoFallbacks[0];
                 videoRef.current.load();
               }
             }}

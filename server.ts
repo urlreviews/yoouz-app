@@ -5308,16 +5308,27 @@ async function purgeVideoFromAllStores(videoId: string) {
     }
   }
 
-  // 1. Record in persistent blacklist index (both original and lowercased)
+  // 1. Record in persistent blacklist index (both original, lowercased, and associated Bunny GUIDs)
   recordDeletedReviewId(videoId);
   if (typeof videoId === "string" && videoId.trim()) {
     recordDeletedReviewId(videoId.trim().toLowerCase());
   }
+  if (existingVideoObj?.bunnyVideoId) recordDeletedReviewId(String(existingVideoObj.bunnyVideoId));
+  if (existingVideoObj?.bunnyGuid) recordDeletedReviewId(String(existingVideoObj.bunnyGuid));
+
+  // Broadcast immediate SSE delete event to instantly remove video from all open client browsers
+  try {
+    broadcastSseEvent({
+      type: "delete_video",
+      videoId: strId,
+      bunnyVideoId: existingVideoObj?.bunnyVideoId || existingVideoObj?.bunnyGuid || ""
+    });
+  } catch (sErr) {}
 
   // 2. Remove from local reviews_index.json
   try {
     const list = readReviewsIndex();
-    const filtered = list.filter((item: any) => item && item.id && !isDeletedReviewServer(item.id));
+    const filtered = list.filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && item.bunnyVideoId !== existingVideoObj?.bunnyVideoId);
     writeReviewsIndex(filtered);
 
     // Keep static frontend seed file in sync on disk so Vite bundle never serves deleted reviews
@@ -5334,7 +5345,7 @@ async function purgeVideoFromAllStores(videoId: string) {
 
   // 3. Purge from in-memory feed cache & force immediate fresh fetch
   try {
-    feedCache.videos = (feedCache.videos || []).filter((item: any) => item && item.id && !isDeletedReviewServer(item.id));
+    feedCache.videos = (feedCache.videos || []).filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && item.bunnyVideoId !== existingVideoObj?.bunnyVideoId);
     feedCache.lastFetched = 0;
   } catch (e) {}
 
@@ -14609,14 +14620,19 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
     }
 
     const rawFallbacks = Array.isArray(r.fallbackVideoUrls) ? r.fallbackVideoUrls : [];
+    const bId = r.bunnyVideoId || r.bunnyGuid || cleanId;
     const cleanFallbacks = Array.from(new Set([
       resolvedVideoUrl,
       cdnUrl,
       serverStreamUrl,
       r.videoUrl,
-      ...rawFallbacks,
-      "/default-review.mp4"
-    ].filter((u: any): u is string => typeof u === "string" && Boolean(u) && !u.startsWith("blob:"))));
+      ...rawFallbacks
+    ].filter((u: any): u is string => {
+      if (typeof u !== "string" || !u || u.startsWith("blob:") || u.includes("default-review")) return false;
+      if (bId && (u.includes(bId) || u.includes(cleanId))) return true;
+      if (u.includes("b-cdn.net") || u.startsWith("/api/videos/stream/")) return true;
+      return false;
+    })));
 
     const matchedLoc = KNOWN_ENTITY_LOCATIONS[domain] || (domain ? Object.entries(KNOWN_ENTITY_LOCATIONS).find(([k]) => domain.includes(k) || k.includes(domain))?.[1] : null);
     const effectivePlaceName = formatBusinessName(r.placeName || r.businessName || domain || r.placeId, domain);
@@ -14626,7 +14642,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       placeName: effectivePlaceName,
       businessName: effectivePlaceName,
       videoUrl: resolvedVideoUrl,
-      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl, cdnUrl, "/default-review.mp4"].filter(Boolean),
+      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl].filter(Boolean),
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",

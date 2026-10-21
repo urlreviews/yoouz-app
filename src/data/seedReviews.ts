@@ -2,91 +2,6 @@ import { VideoReview } from "../types";
 
 export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   {
-    "id": "rev-1792588172597-vb7nk",
-    "userId": "ghafardhillow@gmail.com",
-    "userEmail": "ghafardhillow@gmail.com",
-    "createdAtMs": 1792588172599,
-    "isLocalUpload": true,
-    "isCurrentSessionBlob": true,
-    "placeId": "renevolt-by-solar-x.co.il",
-    "placeName": "Renevolt By Solar X",
-    "placeCategory": "Verified Business",
-    "placeAddress": "& Contact",
-    "placeCity": "Tel Aviv",
-    "placeCountry": "Israel",
-    "placePhone": "+971-72-367203",
-    "placeEmail": "",
-    "placeRating": 5,
-    "placeWebsite": "https://renevolt-by-solar-x.co.il",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Frevolt-optical.com%2Fcdn%2Fshop%2Ffiles%2Fsticker240_1200x1200.png%3Fv%3D1694673736",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmedia.licdn.com%2Fdms%2Fimage%2Fv2%2FD4D05AQFxEzWpDthIhg%2Ffeedshare-thumbnail_720_1280%2Ffeedshare-thumbnail_720_1280%2F0%2F1706265650303%3Fe%3D2147483647%26v%3Dbeta%26t%3DRW4HSwrxXpahO8tMBbvzH3boa0b7TAZb1SABeHMx-Gc",
-    "placeDescription": "Find Renevolt by SolarX's email formats, employee contacts, and company information. Access 4 verified contacts.",
-    "author": {
-      "name": "M Faisal",
-      "handle": "@mfaisal",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EM%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 27,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/7ca2740c-cfc8-4afe-ab43-8350298cda87/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/7ca2740c-cfc8-4afe-ab43-8350298cda87/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/7ca2740c-cfc8-4afe-ab43-8350298cda87.mp4",
-      "/api/videos/stream/rev-1792588172597-vb7nk.mp4",
-      "/default-review.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/7ca2740c-cfc8-4afe-ab43-8350298cda87/thumbnail.jpg",
-    "caption": "Renevolt By Solar X",
-    "transcriptText": "",
-    "segments": [],
-    "dishOrItem": "Renevolt By Solar X",
-    "businessName": "Renevolt By Solar X",
-    "likes": 1,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 2,
-    "viewsCount": 2,
-    "sharesCount": 0,
-    "tags": [
-      "Verified Business"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bunnyVideoId": "7ca2740c-cfc8-4afe-ab43-8350298cda87",
-    "bunnyGuid": "7ca2740c-cfc8-4afe-ab43-8350298cda87",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/7ca2740c-cfc8-4afe-ab43-8350298cda87/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792588172597-vb7nk/subtitles.vtt",
-    "hasBunnySmartCaptions": false,
-    "isReady": true,
-    "isProcessing": false,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmedia.licdn.com%2Fdms%2Fimage%2Fv2%2FD4D05AQFxEzWpDthIhg%2Ffeedshare-thumbnail_720_1280%2Ffeedshare-thumbnail_720_1280%2F0%2F1706265650303%3Fe%3D2147483647%26v%3Dbeta%26t%3DRW4HSwrxXpahO8tMBbvzH3boa0b7TAZb1SABeHMx-Gc",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmedia.licdn.com%2Fdms%2Fimage%2Fv2%2FD4D05AQFxEzWpDthIhg%2Ffeedshare-thumbnail_720_1280%2Ffeedshare-thumbnail_720_1280%2F0%2F1706265650303%3Fe%3D2147483647%26v%3Dbeta%26t%3DRW4HSwrxXpahO8tMBbvzH3boa0b7TAZb1SABeHMx-Gc",
-    "authorName": "M Faisal",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Frevolt-optical.com%2Fcdn%2Fshop%2Ffiles%2Fsticker240_1200x1200.png%3Fv%3D1694673736",
-    "likesCount": 1,
-    "title": "Renevolt By Solar X",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EM%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 60,
-    "createdAt": "2026-10-21T13:09:32.599Z",
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1
-  },
-  {
     "id": "rev-1792531482229-aux2t",
     "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
     "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
@@ -253,8 +168,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "fallbackVideoUrls": [
       "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
       "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
-      "/api/videos/stream/rev-1792531482229-aux2t.mp4",
-      "/default-review.mp4"
+      "/api/videos/stream/rev-1792531482229-aux2t.mp4"
     ],
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "placeWebsite": "https://anthropic.com",
@@ -326,8 +240,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "fallbackVideoUrls": [
       "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
       "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
-      "/api/videos/stream/rev-1792505354614-j01wo.mp4",
-      "/default-review.mp4"
+      "/api/videos/stream/rev-1792505354614-j01wo.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
     "caption": "Long-lasting winter scent matching my style perfectly!",
@@ -476,8 +389,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "fallbackVideoUrls": [
       "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
       "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
-      "/api/videos/stream/rev-1792505047137-smiho.mp4",
-      "/default-review.mp4"
+      "/api/videos/stream/rev-1792505047137-smiho.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
     "caption": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
@@ -577,8 +489,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "fallbackVideoUrls": [
       "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
       "https://rev1.b-cdn.net/videos/cd931352-79b9-4067-8a33-828601661a22.mp4",
-      "/api/videos/stream/rev-1792404298362-hrk2f.mp4",
-      "/default-review.mp4"
+      "/api/videos/stream/rev-1792404298362-hrk2f.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
     "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
@@ -782,8 +693,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "fallbackVideoUrls": [
       "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
       "https://rev1.b-cdn.net/videos/fd5fe606-4b22-4621-9cd7-3efa7591a424.mp4",
-      "/api/videos/stream/rev-1792405036441-zqqwp.mp4",
-      "/default-review.mp4"
+      "/api/videos/stream/rev-1792405036441-zqqwp.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/thumbnail.jpg",
     "caption": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",

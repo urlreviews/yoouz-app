@@ -368,20 +368,23 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
             onError={(e) => {
               const el = e.currentTarget;
               const errCode = el.error?.code;
-              console.warn(`Video playback notice (${errCode}) in modal for ${currentReview.id}`);
+              console.warn(`Video playback error (${errCode}) for ${currentReview.id}`);
               
-              const fallbacks = (currentReview.fallbackVideoUrls || [])
+              const targetGuid = currentReview.bunnyVideoId || currentReview.bunnyGuid || currentReview.id;
+              const sameVideoFallbacks = (currentReview.fallbackVideoUrls || [])
                 .concat(currentReview.videoUrl ? [currentReview.videoUrl] : [])
                 .map(u => normalizeVideoUrl(u))
                 .filter(
                   u =>
                     u &&
+                    !u.includes("default-review") &&
                     u !== activeVideoSrc &&
-                    u !== el.src
+                    u !== el.src &&
+                    (targetGuid ? u.includes(targetGuid) : false)
                 );
 
-              if (fallbacks.length > 0 && videoRef.current) {
-                const nextSrc = fallbacks[0];
+              if (sameVideoFallbacks.length > 0 && videoRef.current) {
+                const nextSrc = sameVideoFallbacks[0];
                 if (videoRef.current.src !== nextSrc) {
                   videoRef.current.src = nextSrc;
                   videoRef.current.load();

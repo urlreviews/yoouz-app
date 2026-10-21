@@ -695,6 +695,23 @@ export function useFeedPagination() {
                 return updated;
               });
               window.dispatchEvent(new CustomEvent("copo-video-created", { detail: { video: freshVideo } }));
+            } else if (payload.type === "delete_video" || payload.type === "delete" || payload.type === "purge_video") {
+              const targetId = String(payload.videoId || payload.id || "").trim();
+              const targetBunnyId = String(payload.bunnyVideoId || payload.guid || "").trim();
+              if (targetId || targetBunnyId) {
+                setVideos((prev) => {
+                  const updated = prev.filter((v) => {
+                    if (!v) return false;
+                    if (targetId && (String(v.id) === targetId || String(v.id).toLowerCase() === targetId.toLowerCase())) return false;
+                    if (targetBunnyId && (String(v.bunnyVideoId) === targetBunnyId || String(v.bunnyGuid) === targetBunnyId)) return false;
+                    return true;
+                  });
+                  try {
+                    localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(updated.slice(0, 50)));
+                  } catch (e) {}
+                  return updated;
+                });
+              }
             } else if (payload.type === "video_liked" && payload.videoId) {
               const targetId = String(payload.videoId);
               const newLikes = typeof payload.likesCount === "number" ? payload.likesCount : 0;
