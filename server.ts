@@ -1521,12 +1521,19 @@ function recordDeletedCommentId(id: string): void {
 
 function readCommentsIndex(): any[] {
   const deletedSet = new Set(readDeletedCommentsIndex());
+  const activeReviewIds = new Set(readReviewsIndex().map((r: any) => String(r.id)));
   try {
     if (fs.existsSync(commentsIndexPath)) {
       const raw = fs.readFileSync(commentsIndexPath, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+        return parsed.filter((c: any) => {
+          if (!c || !c.id || deletedSet.has(String(c.id))) return false;
+          if (c.videoId && (isDeletedReviewServer(c.videoId) || (activeReviewIds.size > 0 && !activeReviewIds.has(String(c.videoId))))) {
+            return false;
+          }
+          return true;
+        });
       }
     }
     const publicFallback = path.join(process.cwd(), "public", "comments_index.json");
@@ -1534,7 +1541,13 @@ function readCommentsIndex(): any[] {
       const raw = fs.readFileSync(publicFallback, "utf8");
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+        return parsed.filter((c: any) => {
+          if (!c || !c.id || deletedSet.has(String(c.id))) return false;
+          if (c.videoId && (isDeletedReviewServer(c.videoId) || (activeReviewIds.size > 0 && !activeReviewIds.has(String(c.videoId))))) {
+            return false;
+          }
+          return true;
+        });
       }
     }
   } catch (e) {}
@@ -1544,7 +1557,14 @@ function readCommentsIndex(): any[] {
 function writeCommentsIndex(list: any[]): void {
   try {
     const deletedSet = new Set(readDeletedCommentsIndex());
-    const sanitized = (Array.isArray(list) ? list : []).filter((c: any) => c && c.id && !deletedSet.has(String(c.id)));
+    const activeReviewIds = new Set(readReviewsIndex().map((r: any) => String(r.id)));
+    const sanitized = (Array.isArray(list) ? list : []).filter((c: any) => {
+      if (!c || !c.id || deletedSet.has(String(c.id))) return false;
+      if (c.videoId && (isDeletedReviewServer(c.videoId) || (activeReviewIds.size > 0 && !activeReviewIds.has(String(c.videoId))))) {
+        return false;
+      }
+      return true;
+    });
     if (!fs.existsSync(globalUploadsDir)) {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
@@ -7808,6 +7828,21 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           } catch (e) {}
         }
       }
+    }
+
+    if (['comments', 'likes', 'bookmarks', 'shares'].includes(colName)) {
+      const activeReviewIds = new Set(readReviewsIndex().map((r: any) => String(r.id)));
+      items = items.filter((item: any) => {
+        if (!item) return false;
+        const vId = String(item.videoId || item.video_id || '').trim();
+        if (vId) {
+          if (isDeletedReviewServer(vId)) return false;
+          if (activeReviewIds.size > 0 && !activeReviewIds.has(vId) && !activeReviewIds.has(vId.toLowerCase())) {
+            return false;
+          }
+        }
+        return true;
+      });
     }
 
     return items;

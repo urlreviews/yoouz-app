@@ -1922,12 +1922,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
       
       const vId = c.videoId || "";
-      const video = activeVideos.find((v) => String(v.id) === String(vId)) || {
-        id: vId,
-        placeName: "Deleted/Unknown Video",
-        authorName: "Unknown User",
-        author: { name: "Unknown User" }
-      } as any;
+      if (vId && isClientDeletedVideo(vId)) return;
+      const video = activeVideos.find((v) => String(v.id) === String(vId));
+      if (!video) return; // Completely skip comments for deleted or missing videos
 
       const key = `${video.id}_${c.id}`;
       if (!seenCommentKeys.has(key)) {
@@ -2382,7 +2379,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   // Filtered and Sorted Likes List
   const filteredLikes = useMemo(() => {
-    let list = [...adminLikes];
+    let list = adminLikes.filter((l) => {
+      if (!l || !l.videoId) return true;
+      if (isClientDeletedVideo(l.videoId)) return false;
+      return activeVideos.some((v) => String(v.id) === String(l.videoId));
+    });
     if (likesSearchQuery.trim()) {
       const q = likesSearchQuery.toLowerCase().trim();
       list = list.filter((l) => {
@@ -2401,11 +2402,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     }
     return list;
-  }, [adminLikes, likesSearchQuery, likesSort]);
+  }, [adminLikes, activeVideos, likesSearchQuery, likesSort]);
 
   // Filtered and Sorted Bookmarks List
   const filteredBookmarks = useMemo(() => {
-    let list = [...adminBookmarks];
+    let list = adminBookmarks.filter((b) => {
+      if (!b || !b.videoId) return true;
+      if (isClientDeletedVideo(b.videoId)) return false;
+      return activeVideos.some((v) => String(v.id) === String(b.videoId));
+    });
     if (bookmarksSearchQuery.trim()) {
       const q = bookmarksSearchQuery.toLowerCase().trim();
       list = list.filter((b) => {
