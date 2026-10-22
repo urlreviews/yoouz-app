@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { VideoReview, Place, ReviewComment, UserProfile } from "../types";
+import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import {
   Shield,
   Video,
@@ -4253,7 +4254,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 onClick={() => setPreviewVideo(v)}
                                 className="w-12 h-16 rounded-xl bg-zinc-900 overflow-hidden relative shrink-0 cursor-pointer shadow-sm border border-zinc-800"
                               >
-                                <img src={getProxiedImageUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <CopoVideoThumbnail video={v} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
                                   <div className="w-6 h-6 rounded-full bg-white/90 text-zinc-950 flex items-center justify-center">
                                     <Play className="w-3 h-3 fill-zinc-950 ml-0.5" />
@@ -4875,9 +4876,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         onClick={() => setPreviewVideo(video)}
                         className="aspect-[9/16] bg-black relative overflow-hidden cursor-pointer"
                       >
-                        <img
-                          src={getProxiedImageUrl(video.thumbnailUrl)}
-                          alt=""
+                        <CopoVideoThumbnail
+                          video={video}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent flex flex-col justify-end p-3.5">
@@ -5012,7 +5012,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 onClick={() => setPreviewVideo(v)}
                                 className="w-12 h-16 rounded-xl bg-zinc-950 overflow-hidden relative cursor-pointer group border border-zinc-800"
                               >
-                                <img src={getProxiedImageUrl(v.thumbnailUrl)} alt="" className="w-full h-full object-cover" />
+                                <CopoVideoThumbnail video={v} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Play className="w-4 h-4 text-white fill-white" />
                                 </div>

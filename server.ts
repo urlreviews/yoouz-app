@@ -23342,8 +23342,40 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (!guid || item.status !== 4) continue; // Must be completed/ready
 
         // Find existing review matching this Bunny Video GUID
-        const existingIdx = list.findIndex((v: any) => v && (v.bunnyVideoId === guid || v.bunnyGuid === guid || v.id === guid));
+        let existingIdx = list.findIndex((v: any) => v && (v.bunnyVideoId === guid || v.bunnyGuid === guid || v.id === guid));
         const officialThumb = `${streamPullZone}/${guid}/thumbnail.jpg`;
+
+        if (existingIdx === -1 && item.title) {
+          // 🩹 Auto-heal stale GUIDs: Match reviews with broken/stale GUIDs by title or place name & duration
+          const cleanItemTitle = item.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+          existingIdx = list.findIndex((v: any) => {
+            if (!v) return false;
+            const vTitle = (v.title || v.caption || v.placeName || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+            const vPlace = (v.placeName || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!vTitle && !vPlace) return false;
+            const titleMatch = (cleanItemTitle.length > 4 && (vTitle.includes(cleanItemTitle) || cleanItemTitle.includes(vTitle))) ||
+                               (vPlace.length > 3 && cleanItemTitle.includes(vPlace));
+            const durationMatch = typeof v.durationSeconds === 'number' && typeof item.length === 'number' && Math.abs(v.durationSeconds - item.length) <= 5;
+            return titleMatch || durationMatch;
+          });
+
+          if (existingIdx !== -1) {
+            const cur = list[existingIdx];
+            cur.bunnyVideoId = guid;
+            cur.bunnyGuid = guid;
+            cur.videoUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
+            cur.hlsUrl = `${streamPullZone}/${guid}/playlist.m3u8`;
+            cur.thumbnailUrl = officialThumb;
+            cur.fallbackVideoUrls = [
+              `${streamPullZone}/${guid}/playlist.m3u8`,
+              `https://rev1.b-cdn.net/videos/${guid}.mp4`,
+              `/api/videos/stream/${cur.id}.mp4`
+            ];
+            hasMutated = true;
+            syncedCount++;
+            details.push(`Auto-bound stale review ${cur.id} to active Bunny Stream GUID ${guid}`);
+          }
+        }
 
         if (existingIdx !== -1) {
           // Review exists: Check if metadata or thumbnail needs freshening

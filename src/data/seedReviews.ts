@@ -2,6 +2,1638 @@ import { VideoReview } from "../types";
 
 export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   {
+    "id": "rev-1792611672289-cajjk",
+    "userId": "jadrdc@gmail.com",
+    "userEmail": "jadrdc@gmail.com",
+    "createdAtMs": 1792611672289,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "zara.com",
+    "placeName": "Zara",
+    "placeCategory": "Real Estate",
+    "placeAddress": "Online",
+    "placeCity": "Online",
+    "placeCountry": "Belgium",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://www.zara.com/",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "placeDescription": "Zara · real estate · Online",
+    "author": {
+      "name": "Jose Agustin Reinoso",
+      "handle": "@joseagustinreinoso",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": ""
+    },
+    "rating": 5,
+    "durationSeconds": 23,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a6b4d277-7a46-40b8-8c82-baac5e522f8f.mp4",
+      "/api/videos/stream/rev-1792611672289-cajjk.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
+    "caption": "Zara",
+    "title": "Jose Agustin Reinoso - Zara",
+    "transcriptText": "Buenos Días when I started at Excelente Look at Carlos",
+    "segments": [
+      {
+        "start": 0.59,
+        "end": 4.8,
+        "text": "Buenos Días when",
+        "words": [
+          {
+            "word": "Buenos",
+            "start": 0.59,
+            "end": 2.89
+          },
+          {
+            "word": "Días",
+            "start": 2.89,
+            "end": 4.01
+          },
+          {
+            "word": "when",
+            "start": 4.01,
+            "end": 4.8
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.8,
+        "end": 6.65,
+        "text": "I started at",
+        "words": [
+          {
+            "word": "I",
+            "start": 4.8,
+            "end": 4.99
+          },
+          {
+            "word": "started",
+            "start": 4.99,
+            "end": 6.46
+          },
+          {
+            "word": "at",
+            "start": 6.46,
+            "end": 6.65
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.65,
+        "end": 7.99,
+        "text": "Buenos Días when",
+        "words": [
+          {
+            "word": "Buenos",
+            "start": 6.65,
+            "end": 7.39
+          },
+          {
+            "word": "Días",
+            "start": 7.39,
+            "end": 7.74
+          },
+          {
+            "word": "when",
+            "start": 7.74,
+            "end": 7.99
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.99,
+        "end": 8.83,
+        "text": "I started the",
+        "words": [
+          {
+            "word": "I",
+            "start": 7.99,
+            "end": 8.08
+          },
+          {
+            "word": "started",
+            "start": 8.08,
+            "end": 8.74
+          },
+          {
+            "word": "the",
+            "start": 8.74,
+            "end": 8.83
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.58,
+        "end": 10.76,
+        "text": "Buenos Días when I",
+        "words": [
+          {
+            "word": "Buenos",
+            "start": 8.58,
+            "end": 9.72
+          },
+          {
+            "word": "Días",
+            "start": 9.72,
+            "end": 10.27
+          },
+          {
+            "word": "when",
+            "start": 10.27,
+            "end": 10.66
+          },
+          {
+            "word": "I",
+            "start": 10.66,
+            "end": 10.76
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.76,
+        "end": 13.18,
+        "text": "started at Excelente",
+        "words": [
+          {
+            "word": "started",
+            "start": 10.76,
+            "end": 11.48
+          },
+          {
+            "word": "at",
+            "start": 11.48,
+            "end": 11.58
+          },
+          {
+            "word": "Excelente",
+            "start": 11.58,
+            "end": 13.18
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.18,
+        "end": 22.25,
+        "text": "Look at Carlos",
+        "words": [
+          {
+            "word": "Look",
+            "start": 13.18,
+            "end": 17.04
+          },
+          {
+            "word": "at",
+            "start": 17.04,
+            "end": 17.52
+          },
+          {
+            "word": "Carlos",
+            "start": 17.52,
+            "end": 22.25
+          }
+        ],
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Zara",
+    "businessName": "Zara",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 8,
+    "viewsCount": 8,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "isReady": true,
+    "isProcessing": false,
+    "authorName": "Jose Agustin Reinoso",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 23,
+    "createdAt": "2026-10-21T19:41:12.289Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
+    "bunnyVideoId": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
+    "bunnyGuid": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+    "vttUrl": "https://vz-733814.b-cdn.net/28d0f1aa-44b7-4380-bc7e-5a527107e38f/captions/en-auto.vtt",
+    "aiTitle": "Jose Agustin Reinoso - Zara",
+    "hasBunnySmartCaptions": true,
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E"
+  },
+  {
+    "id": "rev-1792611567587-xlv37",
+    "userId": "jadrdc@gmail.com",
+    "userEmail": "jadrdc@gmail.com",
+    "createdAtMs": 1792611567587,
+    "isLocalUpload": true,
+    "isCurrentSessionBlob": true,
+    "placeId": "jollibee.com.ph",
+    "placeName": "Jollibee",
+    "placeCategory": "Verified Business",
+    "placeAddress": "",
+    "placeCity": "Online",
+    "placeCountry": "",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://jollibee.com.ph",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "author": {
+      "name": "Jose Agustin Reinoso",
+      "handle": "@joseagustinreinoso",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": ""
+    },
+    "rating": 5,
+    "durationSeconds": 22,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811.mp4",
+      "/api/videos/stream/rev-1792611567587-xlv37.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/thumbnail.jpg",
+    "caption": "Jollibee",
+    "title": "Hollywood Project - Excellent UI Experience",
+    "transcriptText": "I'm just here as he was testing for the for the application right now leaving a review for you for review the project on the drill Thanks for",
+    "segments": [
+      {
+        "start": 1.73,
+        "end": 5.93,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 1.73,
+            "end": 2.67
+          },
+          {
+            "word": "just",
+            "start": 2.67,
+            "end": 4.04
+          },
+          {
+            "word": "here",
+            "start": 4.04,
+            "end": 5.93
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.93,
+        "end": 7.74,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 5.93,
+            "end": 6.26
+          },
+          {
+            "word": "he",
+            "start": 6.26,
+            "end": 6.58
+          },
+          {
+            "word": "was",
+            "start": 6.58,
+            "end": 7.74
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.74,
+        "end": 9.08,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 7.74,
+            "end": 8.04
+          },
+          {
+            "word": "just",
+            "start": 8.04,
+            "end": 8.48
+          },
+          {
+            "word": "here",
+            "start": 8.48,
+            "end": 9.08
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.08,
+        "end": 9.92,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 9.08,
+            "end": 9.23
+          },
+          {
+            "word": "he",
+            "start": 9.23,
+            "end": 9.38
+          },
+          {
+            "word": "was",
+            "start": 9.38,
+            "end": 9.92
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.19,
+        "end": 9.53,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 8.19,
+            "end": 8.49
+          },
+          {
+            "word": "just",
+            "start": 8.49,
+            "end": 8.93
+          },
+          {
+            "word": "here",
+            "start": 8.93,
+            "end": 9.53
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.53,
+        "end": 10.37,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 9.53,
+            "end": 9.68
+          },
+          {
+            "word": "he",
+            "start": 9.68,
+            "end": 9.83
+          },
+          {
+            "word": "was",
+            "start": 9.83,
+            "end": 10.37
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.43,
+        "end": 9.77,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 8.43,
+            "end": 8.73
+          },
+          {
+            "word": "just",
+            "start": 8.73,
+            "end": 9.17
+          },
+          {
+            "word": "here",
+            "start": 9.17,
+            "end": 9.77
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.77,
+        "end": 10.61,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 9.77,
+            "end": 9.92
+          },
+          {
+            "word": "he",
+            "start": 9.92,
+            "end": 10.07
+          },
+          {
+            "word": "was",
+            "start": 10.07,
+            "end": 10.61
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.9,
+        "end": 10.24,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 8.9,
+            "end": 9.2
+          },
+          {
+            "word": "just",
+            "start": 9.2,
+            "end": 9.64
+          },
+          {
+            "word": "here",
+            "start": 9.64,
+            "end": 10.24
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.24,
+        "end": 11.08,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 10.24,
+            "end": 10.39
+          },
+          {
+            "word": "he",
+            "start": 10.39,
+            "end": 10.54
+          },
+          {
+            "word": "was",
+            "start": 10.54,
+            "end": 11.08
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.13,
+        "end": 10.47,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 9.13,
+            "end": 9.43
+          },
+          {
+            "word": "just",
+            "start": 9.43,
+            "end": 9.87
+          },
+          {
+            "word": "here",
+            "start": 9.87,
+            "end": 10.47
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.47,
+        "end": 11.31,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 10.47,
+            "end": 10.62
+          },
+          {
+            "word": "he",
+            "start": 10.62,
+            "end": 10.77
+          },
+          {
+            "word": "was",
+            "start": 10.77,
+            "end": 11.31
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.65,
+        "end": 10.99,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 9.65,
+            "end": 9.95
+          },
+          {
+            "word": "just",
+            "start": 9.95,
+            "end": 10.39
+          },
+          {
+            "word": "here",
+            "start": 10.39,
+            "end": 10.99
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.99,
+        "end": 11.83,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 10.99,
+            "end": 11.14
+          },
+          {
+            "word": "he",
+            "start": 11.14,
+            "end": 11.29
+          },
+          {
+            "word": "was",
+            "start": 11.29,
+            "end": 11.83
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.35,
+        "end": 11.7,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 10.35,
+            "end": 10.66
+          },
+          {
+            "word": "just",
+            "start": 10.66,
+            "end": 11.09
+          },
+          {
+            "word": "here",
+            "start": 11.09,
+            "end": 11.7
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.7,
+        "end": 12.54,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 11.7,
+            "end": 11.85
+          },
+          {
+            "word": "he",
+            "start": 11.85,
+            "end": 12
+          },
+          {
+            "word": "was",
+            "start": 12,
+            "end": 12.54
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.62,
+        "end": 11.96,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 10.62,
+            "end": 10.92
+          },
+          {
+            "word": "just",
+            "start": 10.92,
+            "end": 11.36
+          },
+          {
+            "word": "here",
+            "start": 11.36,
+            "end": 11.96
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.96,
+        "end": 12.8,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 11.96,
+            "end": 12.11
+          },
+          {
+            "word": "he",
+            "start": 12.11,
+            "end": 12.26
+          },
+          {
+            "word": "was",
+            "start": 12.26,
+            "end": 12.8
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.62,
+        "end": 11.96,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 10.62,
+            "end": 10.92
+          },
+          {
+            "word": "just",
+            "start": 10.92,
+            "end": 11.36
+          },
+          {
+            "word": "here",
+            "start": 11.36,
+            "end": 11.96
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.96,
+        "end": 12.8,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 11.96,
+            "end": 12.11
+          },
+          {
+            "word": "he",
+            "start": 12.11,
+            "end": 12.26
+          },
+          {
+            "word": "was",
+            "start": 12.26,
+            "end": 12.8
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.86,
+        "end": 12.2,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 10.86,
+            "end": 11.16
+          },
+          {
+            "word": "just",
+            "start": 11.16,
+            "end": 11.6
+          },
+          {
+            "word": "here",
+            "start": 11.6,
+            "end": 12.2
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.2,
+        "end": 13.04,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 12.2,
+            "end": 12.35
+          },
+          {
+            "word": "he",
+            "start": 12.35,
+            "end": 12.5
+          },
+          {
+            "word": "was",
+            "start": 12.5,
+            "end": 13.04
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.87,
+        "end": 12.21,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 10.87,
+            "end": 11.17
+          },
+          {
+            "word": "just",
+            "start": 11.17,
+            "end": 11.61
+          },
+          {
+            "word": "here",
+            "start": 11.61,
+            "end": 12.21
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.21,
+        "end": 13.05,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 12.21,
+            "end": 12.36
+          },
+          {
+            "word": "he",
+            "start": 12.36,
+            "end": 12.51
+          },
+          {
+            "word": "was",
+            "start": 12.51,
+            "end": 13.05
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.1,
+        "end": 12.44,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 11.1,
+            "end": 11.4
+          },
+          {
+            "word": "just",
+            "start": 11.4,
+            "end": 11.84
+          },
+          {
+            "word": "here",
+            "start": 11.84,
+            "end": 12.44
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.44,
+        "end": 13.28,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 12.44,
+            "end": 12.59
+          },
+          {
+            "word": "he",
+            "start": 12.59,
+            "end": 12.74
+          },
+          {
+            "word": "was",
+            "start": 12.74,
+            "end": 13.28
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.14,
+        "end": 12.48,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 11.14,
+            "end": 11.44
+          },
+          {
+            "word": "just",
+            "start": 11.44,
+            "end": 11.88
+          },
+          {
+            "word": "here",
+            "start": 11.88,
+            "end": 12.48
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.48,
+        "end": 13.32,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 12.48,
+            "end": 12.63
+          },
+          {
+            "word": "he",
+            "start": 12.63,
+            "end": 12.78
+          },
+          {
+            "word": "was",
+            "start": 12.78,
+            "end": 13.32
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.3,
+        "end": 12.64,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 11.3,
+            "end": 11.6
+          },
+          {
+            "word": "just",
+            "start": 11.6,
+            "end": 12.04
+          },
+          {
+            "word": "here",
+            "start": 12.04,
+            "end": 12.64
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.64,
+        "end": 13.48,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 12.64,
+            "end": 12.79
+          },
+          {
+            "word": "he",
+            "start": 12.79,
+            "end": 12.94
+          },
+          {
+            "word": "was",
+            "start": 12.94,
+            "end": 13.48
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.84,
+        "end": 13.18,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 11.84,
+            "end": 12.14
+          },
+          {
+            "word": "just",
+            "start": 12.14,
+            "end": 12.58
+          },
+          {
+            "word": "here",
+            "start": 12.58,
+            "end": 13.18
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.18,
+        "end": 14.02,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 13.18,
+            "end": 13.33
+          },
+          {
+            "word": "he",
+            "start": 13.33,
+            "end": 13.48
+          },
+          {
+            "word": "was",
+            "start": 13.48,
+            "end": 14.02
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.76,
+        "end": 14.11,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 12.76,
+            "end": 13.07
+          },
+          {
+            "word": "just",
+            "start": 13.07,
+            "end": 13.5
+          },
+          {
+            "word": "here",
+            "start": 13.5,
+            "end": 14.11
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.11,
+        "end": 14.95,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 14.11,
+            "end": 14.26
+          },
+          {
+            "word": "he",
+            "start": 14.26,
+            "end": 14.41
+          },
+          {
+            "word": "was",
+            "start": 14.41,
+            "end": 14.95
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.76,
+        "end": 15.11,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 13.76,
+            "end": 14.07
+          },
+          {
+            "word": "just",
+            "start": 14.07,
+            "end": 14.5
+          },
+          {
+            "word": "here",
+            "start": 14.5,
+            "end": 15.11
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.11,
+        "end": 15.95,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 15.11,
+            "end": 15.26
+          },
+          {
+            "word": "he",
+            "start": 15.26,
+            "end": 15.41
+          },
+          {
+            "word": "was",
+            "start": 15.41,
+            "end": 15.95
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.67,
+        "end": 17.01,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 15.67,
+            "end": 15.97
+          },
+          {
+            "word": "just",
+            "start": 15.97,
+            "end": 16.4
+          },
+          {
+            "word": "here",
+            "start": 16.4,
+            "end": 17.01
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.01,
+        "end": 17.85,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 17.01,
+            "end": 17.16
+          },
+          {
+            "word": "he",
+            "start": 17.16,
+            "end": 17.31
+          },
+          {
+            "word": "was",
+            "start": 17.31,
+            "end": 17.85
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.86,
+        "end": 17.2,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 15.86,
+            "end": 16.16
+          },
+          {
+            "word": "just",
+            "start": 16.16,
+            "end": 16.6
+          },
+          {
+            "word": "here",
+            "start": 16.6,
+            "end": 17.2
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.2,
+        "end": 18.04,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 17.2,
+            "end": 17.35
+          },
+          {
+            "word": "he",
+            "start": 17.35,
+            "end": 17.5
+          },
+          {
+            "word": "was",
+            "start": 17.5,
+            "end": 18.04
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.1,
+        "end": 17.44,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 16.1,
+            "end": 16.4
+          },
+          {
+            "word": "just",
+            "start": 16.4,
+            "end": 16.83
+          },
+          {
+            "word": "here",
+            "start": 16.83,
+            "end": 17.44
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.44,
+        "end": 18.28,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 17.44,
+            "end": 17.59
+          },
+          {
+            "word": "he",
+            "start": 17.59,
+            "end": 17.74
+          },
+          {
+            "word": "was",
+            "start": 17.74,
+            "end": 18.28
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.37,
+        "end": 17.71,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 16.37,
+            "end": 16.67
+          },
+          {
+            "word": "just",
+            "start": 16.67,
+            "end": 17.11
+          },
+          {
+            "word": "here",
+            "start": 17.11,
+            "end": 17.71
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.71,
+        "end": 18.55,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 17.71,
+            "end": 17.86
+          },
+          {
+            "word": "he",
+            "start": 17.86,
+            "end": 18.01
+          },
+          {
+            "word": "was",
+            "start": 18.01,
+            "end": 18.55
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.59,
+        "end": 17.93,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 16.59,
+            "end": 16.89
+          },
+          {
+            "word": "just",
+            "start": 16.89,
+            "end": 17.33
+          },
+          {
+            "word": "here",
+            "start": 17.33,
+            "end": 17.93
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.93,
+        "end": 18.77,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 17.93,
+            "end": 18.08
+          },
+          {
+            "word": "he",
+            "start": 18.08,
+            "end": 18.23
+          },
+          {
+            "word": "was",
+            "start": 18.23,
+            "end": 18.77
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.84,
+        "end": 18.39,
+        "text": "I'm just here",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 16.84,
+            "end": 17.19
+          },
+          {
+            "word": "just",
+            "start": 17.19,
+            "end": 17.69
+          },
+          {
+            "word": "here",
+            "start": 17.69,
+            "end": 18.39
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.39,
+        "end": 19.23,
+        "text": "as he was",
+        "words": [
+          {
+            "word": "as",
+            "start": 18.39,
+            "end": 18.54
+          },
+          {
+            "word": "he",
+            "start": 18.54,
+            "end": 18.69
+          },
+          {
+            "word": "was",
+            "start": 18.69,
+            "end": 19.23
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.07,
+        "end": 20.47,
+        "text": "I'm just here as he",
+        "words": [
+          {
+            "word": "I'm",
+            "start": 19.07,
+            "end": 19.34
+          },
+          {
+            "word": "just",
+            "start": 19.34,
+            "end": 19.73
+          },
+          {
+            "word": "here",
+            "start": 19.73,
+            "end": 20.28
+          },
+          {
+            "word": "as",
+            "start": 20.28,
+            "end": 20.37
+          },
+          {
+            "word": "he",
+            "start": 20.37,
+            "end": 20.47
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.47,
+        "end": 21.99,
+        "text": "was testing for the for",
+        "words": [
+          {
+            "word": "was",
+            "start": 20.47,
+            "end": 20.75
+          },
+          {
+            "word": "testing",
+            "start": 20.75,
+            "end": 21.36
+          },
+          {
+            "word": "for",
+            "start": 21.36,
+            "end": 21.63
+          },
+          {
+            "word": "the",
+            "start": 21.63,
+            "end": 21.71
+          },
+          {
+            "word": "for",
+            "start": 21.71,
+            "end": 21.99
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 21.99,
+        "end": 24.65,
+        "text": "the application right now leaving",
+        "words": [
+          {
+            "word": "the",
+            "start": 21.99,
+            "end": 22.07
+          },
+          {
+            "word": "application",
+            "start": 22.07,
+            "end": 23.26
+          },
+          {
+            "word": "right",
+            "start": 23.26,
+            "end": 23.64
+          },
+          {
+            "word": "now",
+            "start": 23.64,
+            "end": 23.91
+          },
+          {
+            "word": "leaving",
+            "start": 23.91,
+            "end": 24.65
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.65,
+        "end": 26.5,
+        "text": "a review for you for",
+        "words": [
+          {
+            "word": "a",
+            "start": 24.65,
+            "end": 24.73
+          },
+          {
+            "word": "review",
+            "start": 24.73,
+            "end": 25.41
+          },
+          {
+            "word": "for",
+            "start": 25.41,
+            "end": 25.69
+          },
+          {
+            "word": "you",
+            "start": 25.69,
+            "end": 26.22
+          },
+          {
+            "word": "for",
+            "start": 26.22,
+            "end": 26.5
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.5,
+        "end": 28.18,
+        "text": "review the project on the drill",
+        "words": [
+          {
+            "word": "review",
+            "start": 26.5,
+            "end": 27.1
+          },
+          {
+            "word": "the",
+            "start": 27.1,
+            "end": 27.18
+          },
+          {
+            "word": "project",
+            "start": 27.17,
+            "end": 27.71
+          },
+          {
+            "word": "on",
+            "start": 27.71,
+            "end": 27.79
+          },
+          {
+            "word": "the",
+            "start": 27.78,
+            "end": 27.86
+          },
+          {
+            "word": "drill",
+            "start": 27.84,
+            "end": 28.18
+          }
+        ],
+        "isHardwareTimed": true
+      },
+      {
+        "start": 28.18,
+        "end": 28.88,
+        "text": "Thanks for",
+        "words": [
+          {
+            "word": "Thanks",
+            "start": 28.18,
+            "end": 28.66
+          },
+          {
+            "word": "for",
+            "start": 28.66,
+            "end": 28.88
+          }
+        ],
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Jollibee",
+    "businessName": "Jollibee",
+    "likes": 1,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 10,
+    "viewsCount": 10,
+    "sharesCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyVideoId": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
+    "bunnyGuid": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+    "vttUrl": "/api/videos/rev-1792611567587-xlv37/subtitles.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "isReady": true,
+    "isProcessing": false,
+    "aiTitle": "Hollywood Project - Excellent UI Experience",
+    "bunnyDescription": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
+    "description": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
+    "hasBunnySmartCaptions": true,
+    "likesCount": 1,
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "authorName": "Jose Agustin Reinoso",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 60,
+    "createdAt": "2026-10-21T19:39:27.587Z",
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2
+  },
+  {
     "id": "rev-1792531482229-aux2t",
     "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
     "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
@@ -128,9 +1760,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "hasBunnySmartCaptions": true,
     "isProcessing": false,
     "isReady": true,
-    "placeBannerUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    "bannerUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
     "placeName": "Anthropic",
     "placeCity": "Gent",
@@ -150,8 +1782,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarks": 0,
     "sharesCount": 0,
     "shares": 0,
-    "viewsCount": 45,
-    "views": 45,
+    "viewsCount": 78,
+    "views": 78,
     "author": {
       "name": "redha bm",
       "handle": "@redhabm",
@@ -170,7 +1802,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
       "/api/videos/stream/rev-1792531482229-aux2t.mp4"
     ],
-    "ogImage": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
     "placeWebsite": "https://anthropic.com",
     "placeAddress": "",
     "placePhone": "",
@@ -185,7 +1817,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "userId": "benmeddourridha7@gmail.com",
     "userEmail": "benmeddourridha7@gmail.com",
     "isLocalUpload": false,
-    "isCurrentSessionBlob": false,
+    "isCurrentSessionBlob": true,
     "placeEmail": "",
     "placeDescription": "Anthropic · verified business · anthropic.com",
     "durationSeconds": 27,
@@ -208,7 +1840,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "userEmail": "krtpcq@gmail.com",
     "createdAtMs": 1792505354615,
     "isLocalUpload": false,
-    "isCurrentSessionBlob": false,
+    "isCurrentSessionBlob": true,
     "placeId": "zara.com",
     "placeName": "Zara",
     "placeCategory": "Real Estate",
@@ -219,8 +1851,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
-    "placeBannerUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Ff%2Ffd%2FZara_Logo.svg",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "placeDescription": "Zara · real estate · Online",
     "author": {
       "name": "Kert P",
@@ -316,8 +1948,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 45,
-    "viewsCount": 45,
+    "views": 61,
+    "viewsCount": 61,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -330,8 +1962,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
     "vttUrl": "/api/videos/rev-1792505354614-j01wo/subtitles.vtt",
     "hasBunnySmartCaptions": true,
-    "bannerUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
-    "ogImage": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
     "authorName": "Kert P",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
@@ -340,9 +1972,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
     "updatedAt": 1792514318491,
     "aiTitle": "Long-lasting winter scent matching my style perfectly!",
     "title": "Long-lasting winter scent matching my style perfectly!",
@@ -357,7 +1989,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "userEmail": "krtpcq@gmail.com",
     "createdAtMs": 1792505047138,
     "isLocalUpload": false,
-    "isCurrentSessionBlob": false,
+    "isCurrentSessionBlob": true,
     "placeId": "zara.com",
     "placeName": "Zara",
     "placeCategory": "Real Estate",
@@ -368,8 +2000,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
-    "placeBannerUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Ff%2Ffd%2FZara_Logo.svg",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "placeDescription": "Zara · real estate · Online",
     "author": {
       "name": "Kert P",
@@ -385,13 +2017,13 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     },
     "rating": 5,
     "durationSeconds": 14,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
+      "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
       "/api/videos/stream/rev-1792505047137-smiho.mp4"
     ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
     "caption": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
@@ -425,8 +2057,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 39,
-    "viewsCount": 39,
+    "views": 51,
+    "viewsCount": 51,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -434,13 +2066,13 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "recordedAt": "Just now",
     "isLandscape": true,
     "aspectRatio": "landscape",
-    "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-    "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+    "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
     "vttUrl": "/api/videos/rev-1792505047137-smiho/subtitles.vtt",
     "hasBunnySmartCaptions": true,
-    "bannerUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
-    "ogImage": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "authorName": "Kert P",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Zara_Logo.svg",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
@@ -449,9 +2081,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
     "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "aiTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "isReady": true,
@@ -621,8 +2253,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 82,
-    "viewsCount": 82,
+    "views": 97,
+    "viewsCount": 97,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -642,9 +2274,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "likesCount": 1,
     "bookmarks": 0,
     "shares": 0,
-    "placeBannerUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80",
-    "bannerUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80",
-    "ogImage": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
     "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "placePhone": "",
     "reviewsCount": 1,
@@ -661,9 +2293,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "userEmail": "edjofrancisramos18@gmail.com",
     "createdAtMs": 1792405036443,
     "isLocalUpload": false,
-    "isCurrentSessionBlob": false,
+    "isCurrentSessionBlob": true,
     "placeId": "jollibee.com.ph",
-    "placeName": "Jollibee Philippines",
+    "placeName": "Jollibee",
     "placeCategory": "Verified Business",
     "placeAddress": "",
     "placeCity": "Online",
@@ -672,8 +2304,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://jollibee.com.ph",
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Jollibee_2011_logo.svg/1200px-Jollibee_2011_logo.svg.png",
-    "placeBannerUrl": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fen%2Fthumb%2F8%2F84%2FJollibee_2011_logo.svg%2F1200px-Jollibee_2011_logo.svg.png",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
     "author": {
       "name": "Edjo Francis Ramos",
@@ -842,7 +2474,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       }
     ],
     "dishOrItem": "Jollibee Philippines",
-    "businessName": "Jollibee Philippines",
+    "businessName": "Jollibee",
     "likes": 0,
     "isLiked": false,
     "commentsCount": 0,
@@ -850,8 +2482,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 74,
-    "viewsCount": 74,
+    "views": 90,
+    "viewsCount": 90,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -862,8 +2494,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
-    "bannerUrl": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
-    "ogImage": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
     "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
     "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
@@ -875,9 +2507,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-19T10:17:16.443Z",
     "bookmarks": 0,
     "shares": 0,
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2,
     "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
     "isProcessing": false,
     "isReady": true,
