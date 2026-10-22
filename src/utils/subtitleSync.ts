@@ -51,15 +51,20 @@ export function getWordPhoneticWeight(word: string): number {
 /**
  * Splits an array of words into single-line chunks of 4 to 6 words per line max, respecting clause boundaries.
  */
-export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLine = 4): string[][] {
+export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLine = 4, targetMaxChars = 32): string[][] {
   const clean = words.map(w => w.trim()).filter(Boolean);
   if (clean.length === 0) return [];
   
-  const maxWords = Math.max(3, Math.min(6, targetWordsPerLine || 4));
-  if (clean.length <= maxWords) return [clean];
+  const maxWords = Math.max(3, Math.min(5, targetWordsPerLine || 4));
+  const maxChars = Math.max(24, Math.min(36, targetMaxChars || 32));
+  
+  const totalCleanChars = clean.join(' ').length;
+  if (clean.length <= maxWords && totalCleanChars <= maxChars) return [clean];
 
-  // Calculate ideal number of chunks to balance words evenly
-  const numChunks = Math.ceil(clean.length / maxWords);
+  // Calculate ideal number of chunks to balance words and characters evenly
+  const numChunksByWords = Math.ceil(clean.length / maxWords);
+  const numChunksByChars = Math.ceil(totalCleanChars / maxChars);
+  const numChunks = Math.max(numChunksByWords, numChunksByChars);
   const wordsPerChunk = Math.ceil(clean.length / numChunks);
 
   const lines: string[][] = [];
@@ -72,12 +77,13 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
     const hasPunctuation = /[.,!?;:]$/.test(w);
     const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if|then|for)$/i.test(w.replace(/[^a-z]/gi, ''));
     const remaining = clean.length - (i + 1);
+    const currentLineCharLen = currentLine.join(' ').length;
 
     const reachedTarget = currentLine.length >= wordsPerChunk;
-    const reachedMax = currentLine.length >= maxWords;
-    const reachMin = currentLine.length >= 2;
+    const reachedMaxWords = currentLine.length >= maxWords;
+    const reachedMaxChars = currentLineCharLen >= maxChars;
 
-    if ((reachedMax || (reachedTarget && (hasPunctuation || isClauseMarker || remaining <= wordsPerChunk))) && remaining > 0) {
+    if ((reachedMaxWords || reachedMaxChars || (reachedTarget && (hasPunctuation || isClauseMarker || remaining <= wordsPerChunk))) && remaining > 0) {
       lines.push(currentLine);
       currentLine = [];
     }
@@ -86,7 +92,9 @@ export function splitWordsIntoSingleLineChunks(words: string[], targetWordsPerLi
   if (currentLine.length > 0) {
     if (lines.length > 0 && currentLine.length <= 2) {
       const prev = lines[lines.length - 1];
-      if (prev.length + currentLine.length <= maxWords + 2) {
+      const prevLen = prev.join(' ').length;
+      const curLen = currentLine.join(' ').length;
+      if (prev.length + currentLine.length <= maxWords + 1 && (prevLen + curLen + 1) <= maxChars) {
         lines[lines.length - 1] = [...prev, ...currentLine];
       } else {
         lines.push(currentLine);

@@ -47,11 +47,11 @@ const chunkCueTo1Line = (
   if (!cleanText) return [];
 
   const words = cleanText.split(/\s+/).filter(Boolean);
-  if (words.length <= maxWordsPerChunk) {
+  if (words.length <= maxWordsPerChunk && cleanText.length <= 28) {
     return [{ start, end, text: cleanText }];
   }
 
-  const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk);
+  const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk, 28);
   if (wordGroups.length === 0) return [];
 
   const totalDuration = Math.max(0.6, end - start);
@@ -86,7 +86,7 @@ const chunkCueTo1Line = (
 };
 
 /**
- * Anti-Blinking, Anti-Flashing Subtitle Engine (1-Line CapCut / TikTok Phrase Chunking)
+ * Anti-Blinking, Anti-Flashing Subtitle Engine (1-2 Line CapCut / TikTok Phrase Chunking)
  */
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime = 0,
@@ -96,7 +96,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   isActive = false,
   isLiveRecording = false
 }) => {
-  // Parse and build clean 1-line phrase subtitle cues with zero-gap bridging
+  // Parse and build clean 1-2 line phrase subtitle cues with zero-gap bridging
   const cues = useMemo<SubtitleCue[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -120,15 +120,30 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
         if (s >= 0 && e >= s) {
-          cleanCues.push({
-            id: cueId++,
-            start: s,
-            end: e,
-            text: txt
-          });
+          const words = txt.split(/\s+/).filter(Boolean);
+          // If the cue is already 1-line short (<= 4 words and <= 28 chars), keep it directly
+          if (words.length <= 4 && txt.length <= 28) {
+            cleanCues.push({
+              id: cueId++,
+              start: s,
+              end: e,
+              text: txt
+            });
+          } else {
+            // Long Bunny Stream cue: chunk into compact 1-2 line synced phrases timed acoustically
+            const phraseChunks = chunkCueTo1Line(s, e, txt, 4);
+            for (const chunk of phraseChunks) {
+              cleanCues.push({
+                id: cueId++,
+                start: chunk.start,
+                end: chunk.end,
+                text: chunk.text
+              });
+            }
+          }
         } else if (Array.isArray(item.words) && item.words.length > 0) {
           const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
-          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 6);
+          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4, 28);
           let wordIdx = 0;
           for (const chunkWords of wordChunks) {
             const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
@@ -146,7 +161,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
             }
           }
         } else {
-          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 5);
+          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 4);
           for (const chunk of phraseChunks) {
             cleanCues.push({
               id: cueId++,
@@ -166,7 +181,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const words = clean.split(/\s+/).filter(Boolean);
         const videoDur = duration && duration > 2 ? duration : 15;
         
-        const wordChunks = splitWordsIntoSingleLineChunks(words, 4);
+        const wordChunks = splitWordsIntoSingleLineChunks(words, 4, 28);
         const startOffset = 0.2;
         const endOffset = Math.max(startOffset + 1.0, videoDur - 0.2);
         const totalSpan = endOffset - startOffset;
@@ -196,7 +211,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         deduplicatedCues.push(cue);
       } else {
         const last = deduplicatedCues[deduplicatedCues.length - 1];
-        if (cue.start <= last.start + 0.3) {
+        if (cue.start <= last.start + 0.05) {
           // If two cues start at virtually the same time, keep the one with longer/fuller text
           if (cue.text.length > last.text.length) {
             deduplicatedCues[deduplicatedCues.length - 1] = { ...cue, start: last.start, end: Math.max(last.end, cue.end) };
@@ -226,7 +241,7 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     for (let i = 0; i < deduplicatedCues.length - 1; i++) {
       const curr = deduplicatedCues[i];
       const next = deduplicatedCues[i + 1];
-      if (next.start > curr.end && next.start - curr.end <= 3.0) {
+      if (next.start > curr.end && next.start - curr.end <= 2.5) {
         curr.end = next.start; // Seamless transition!
       }
     }
@@ -282,17 +297,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[240px] xs:bottom-[250px] sm:bottom-[140px] md:bottom-[140px] left-0 right-0 flex justify-center px-6 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[230px] xs:bottom-[240px] sm:bottom-[130px] md:bottom-[130px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[85%] flex justify-center transition-opacity duration-200 ease-out ${
+        className={`max-w-[88%] sm:max-w-[82%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/25 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center"
+          className="bg-black/85 backdrop-blur-xl px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[15px] sm:text-[17px] md:text-[19px] font-black tracking-tight text-center leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-black tracking-tight text-center leading-snug text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] line-clamp-2 max-h-[3.2rem] sm:max-h-[3.6rem] overflow-hidden">
             {currentText || ''}
           </p>
         </div>
