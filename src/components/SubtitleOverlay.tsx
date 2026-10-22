@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks } from '../utils/subtitleSync';
+import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks, buildSingleLineSegments } from '../utils/subtitleSync';
 
 interface SubtitleCue {
   id: number;
@@ -125,9 +125,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
         if (Array.isArray(item.words) && item.words.length > 0) {
           // If Bunny Stream provided exact word-level timecodes in the VTT (<00:00:xx>)
-          // Group into clean 5-7 word single-line phrases using Bunny's authentic word timestamps
+          // Group into clean 3-5 word single-line phrases using Bunny's authentic word timestamps
           const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
-          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 6, 36);
+          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4, 28);
           let wordIdx = 0;
           for (const chunkWords of wordChunks) {
             const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
@@ -139,19 +139,34 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               cleanCues.push({
                 id: cueId++,
                 start: chunkStart,
-                end: Math.max(chunkStart + 0.4, chunkEnd),
+                end: Math.max(chunkStart + 0.35, chunkEnd),
                 text: chunkText
               });
             }
           }
         } else if (s >= 0 && e >= s) {
-          // 🐰 Official Bunny Stream Sentence Cue: Use exact, authentic start/end timestamps from Bunny Stream
-          cleanCues.push({
-            id: cueId++,
-            start: s,
-            end: e,
-            text: txt
-          });
+          // 🐰 Official Bunny Stream Cue:
+          // Strictly guarantee 1 SINGLE LINE: if cue has > 4 words or > 26 characters,
+          // slice into 1-line phrase chunks bounded within the exact [s, e] window of Bunny Stream
+          const cueWords = txt.split(/\s+/).filter(Boolean);
+          if (cueWords.length > 4 || txt.length > 26) {
+            const lineSegments = buildSingleLineSegments(cueWords, s, e);
+            for (const seg of lineSegments) {
+              cleanCues.push({
+                id: cueId++,
+                start: seg.start,
+                end: seg.end,
+                text: seg.text
+              });
+            }
+          } else {
+            cleanCues.push({
+              id: cueId++,
+              start: s,
+              end: e,
+              text: txt
+            });
+          }
         } else {
           cleanCues.push({
             id: cueId++,
@@ -342,17 +357,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[205px] xs:bottom-[215px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-2.5 sm:px-4 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[96%] sm:max-w-[92%] flex justify-center transition-opacity duration-150 ease-out ${
+        className={`max-w-[94%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-md px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-white/20 shadow-[0_4px_24px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/85 backdrop-blur-md px-3.5 sm:px-4 py-1.5 rounded-full border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[12.5px] xs:text-[13px] sm:text-[14px] md:text-[14.5px] font-bold tracking-normal text-center leading-snug sm:leading-relaxed text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] [text-wrap:balance] line-clamp-2">
+          <p className="text-[13px] xs:text-[13.5px] sm:text-[14px] font-bold tracking-tight text-center leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] whitespace-nowrap">
             {currentText || ''}
           </p>
         </div>

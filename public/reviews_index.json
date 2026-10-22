@@ -217,8 +217,33 @@
     "segments": [
       {
         "start": 0.63,
-        "end": 9.04,
-        "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that."
+        "end": 3.64,
+        "text": "If you're a business owner searching",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.64,
+        "end": 6.08,
+        "text": "for some editors or developers,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.08,
+        "end": 7.5,
+        "text": "you can now in 2026,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.5,
+        "end": 8.71,
+        "text": "You shouldn't do",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.71,
+        "end": 9.06,
+        "text": "that.",
+        "isHardwareTimed": true
       },
       {
         "start": 9.52,
@@ -227,8 +252,27 @@
       },
       {
         "start": 11.06,
+        "end": 12.32,
+        "text": "They have cloud,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.32,
+        "end": 13.98,
+        "text": "they have Cloud code,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.98,
+        "end": 15.49,
+        "text": "They can make codes,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.49,
         "end": 16.5,
-        "text": "They have cloud, they have Cloud code, They can make codes, the normal code."
+        "text": "the normal code.",
+        "isHardwareTimed": true
       },
       {
         "start": 16.72,
@@ -237,18 +281,51 @@
       },
       {
         "start": 17.42,
+        "end": 18.43,
+        "text": "you Can make all the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.43,
         "end": 19.28,
-        "text": "you Can make all the video editing."
+        "text": "video editing.",
+        "isHardwareTimed": true
       },
       {
         "start": 19.34,
+        "end": 20.83,
+        "text": "So we don't need any of",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.83,
         "end": 21.41,
-        "text": "So we don't need any of this now."
+        "text": "this now.",
+        "isHardwareTimed": true
       },
       {
         "start": 22.21,
+        "end": 23.28,
+        "text": "All we can do is focus",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 23.28,
+        "end": 24.38,
+        "text": "on your business and",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.38,
+        "end": 25.39,
+        "text": "these things come",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 25.39,
         "end": 25.93,
-        "text": "All we can do is focus on your business and these things come easily."
+        "text": "easily.",
+        "isHardwareTimed": true
       }
     ],
     "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
