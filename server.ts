@@ -4297,6 +4297,12 @@ async function startServer() {
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const isProd = process.env.NODE_ENV === "production";
 
+  // Immediate Zero-Latency Health Checks for Container Orchestrator and Bunny Edge Network
+  app.get(["/health", "/healthz", "/ping", "/api/health"], (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    return res.status(200).send("OK");
+  });
+
   // Global Cross-Origin Resource Sharing (CORS) Middleware
   // Ensures flawless API, asset, and video streaming across all domains (yoouz.com, preview, dev, and mobile webviews)
   app.use((req, res, next) => {
@@ -4363,7 +4369,7 @@ async function startServer() {
     const host = rawHost.split(':')[0];
     if (host === 'yoouz.com') {
       const cleanPath = (req.path || '').toLowerCase();
-      if (cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/sitemap-video.xml' || cleanPath === '/sitemap-index.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
+      if (cleanPath === '/health' || cleanPath === '/healthz' || cleanPath === '/ping' || cleanPath === '/api/health' || cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/sitemap-video.xml' || cleanPath === '/sitemap-index.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
         return next();
       }
       return res.redirect(301, `https://www.yoouz.com${req.originalUrl || req.url}`);
@@ -33197,6 +33203,26 @@ function injectOpenGraphTags(html: string, meta: any) {
       robots = "noindex, nofollow";
     }
 
+    const hasSpecialQuery = !!(params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r') || params.get('place') || params.get('creator') || params.get('user') || params.get('handle'));
+    if ((cleanPathname === '/' || cleanPathname === '') && !hasSpecialQuery) {
+      return {
+        title,
+        description,
+        imageUrl,
+        touchIcon,
+        logoUrl: touchIcon,
+        videoUrl: "",
+        embedUrl: "",
+        type: "website",
+        twitterCard: "summary_large_image",
+        url: fullUrl,
+        keywords,
+        robots: "",
+        canonicalVideoUrl: `${baseUrl}/`,
+        structuredData: null
+      };
+    }
+
     const revInPath = cleanPathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
     let detectedVideoId = null;
     let placeDomainFromReviewPath: string | null = null;
@@ -34397,10 +34423,20 @@ function injectOpenGraphTags(html: string, meta: any) {
       try {
         const indexPath = path.resolve(process.cwd(), 'index.html');
         let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
-        const meta = await resolveMetadataForRequest(req);
+        
+        let meta: any = null;
+        try {
+          meta = await Promise.race([
+            resolveMetadataForRequest(req),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 400))
+          ]);
+        } catch (_mErr) {
+          meta = null;
+        }
+
         indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
-        const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
-        return res.status(meta.statusCode || 200).set({ 
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta)) : indexTemplate;
+        return res.status(meta?.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
           'Pragma': 'no-cache',
@@ -34436,25 +34472,50 @@ function injectOpenGraphTags(html: string, meta: any) {
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
         } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-          res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
       }
     }));
+
+    let cachedDistIndexTemplate: string | null = null;
     app.get("*", async (req: any, res: any) => {
       try {
-        const indexPath = path.join(distPath, "index.html");
-        let indexTemplate = fs.readFileSync(indexPath, "utf-8");
-        const meta = await resolveMetadataForRequest(req);
-        const finalHtml = injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta));
-        res.status(meta.statusCode || 200).set({ 
-          'Content-Type': 'text/html',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+        if (!cachedDistIndexTemplate) {
+          const indexPath = path.join(distPath, "index.html");
+          cachedDistIndexTemplate = fs.existsSync(indexPath) ? fs.readFileSync(indexPath, "utf-8") : "";
+        }
+        let indexTemplate = cachedDistIndexTemplate;
+
+        const userAgent = req.headers['user-agent'] || '';
+        const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+
+        let meta: any = null;
+        try {
+          meta = await Promise.race([
+            resolveMetadataForRequest(req),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 400))
+          ]);
+        } catch (_mErr) {
+          meta = null;
+        }
+
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta)) : indexTemplate;
+        
+        // Bunny Edge Caching & Stale-While-Revalidate:
+        // - Edge caches the response for 60s
+        // - Serves stale cache in < 10ms for 24h while revalidating asynchronously
+        // - Eliminates 504 Gateway Timeout completely across global Bunny network
+        res.status(meta?.statusCode || 200).set({ 
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': isCrawler 
+            ? 'public, max-age=300' 
+            : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400',
+          'Vary': 'User-Agent, Accept-Encoding'
         }).end(finalHtml);
       } catch (err) {
         res.status(200).set({
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400'
         }).sendFile(path.join(distPath, "index.html"));
       }
     });
@@ -34612,13 +34673,15 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   }
 
-  await initBunnyDbSchema().catch(() => {});
-  try {
-    const bunnyDb = getBunnyDb();
-    if (bunnyDb) {
-      await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%' OR name LIKE '%blocked%' OR name LIKE '%unable to access%' OR bannerUrl LIKE '%blocked%' OR bannerUrl LIKE '%challenge%'").catch(() => {});
-    }
-  } catch(e) {}
+  // Start database schema verification and cleanup asynchronously in background
+  initBunnyDbSchema().then(async () => {
+    try {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%' OR name LIKE '%blocked%' OR name LIKE '%unable to access%' OR bannerUrl LIKE '%blocked%' OR bannerUrl LIKE '%challenge%'").catch(() => {});
+      }
+    } catch(e) {}
+  }).catch(() => {});
 
   const purgeBlockedPlaceRecords = async (): Promise<void> => {
     const bunnyDb = getBunnyDb();

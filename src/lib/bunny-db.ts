@@ -183,6 +183,23 @@ function createLocalClient(): Client {
   return local;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errMsg = "Remote query timed out"): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(errMsg));
+    }, timeoutMs);
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 function createResilientClient(remoteClient: Client | null, localClient: Client): Client {
   let remoteCooldownUntil = 0;
 
@@ -193,7 +210,7 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
 
     if (isRemoteAvailable && remoteClient) {
       try {
-        return await remoteClient.execute(finalStmt);
+        return await withTimeout(remoteClient.execute(finalStmt), 1500, "BunnyDB remote query timeout (1500ms)");
       } catch (err: any) {
         const isSqlError = 
           err.message?.includes("SQLITE_") || 
@@ -207,9 +224,9 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
           throw err; // Re-throw SQL errors so they can be caught by the caller without triggering an incorrect cooldown
         }
 
-        // Transient network or connection failure. Impose a 5-second cooldown to protect performance, then fallback to local sqlite for this request
-        remoteCooldownUntil = Date.now() + 5000;
-        console.warn(`🐰 [BunnyDB] Remote endpoint query failed (${err.message || err}). Initiating 5-second auto-recovering cooldown and falling back to local persistent edge database.`);
+        // Transient network or connection failure / timeout. Impose a 10-second cooldown to protect performance, then fallback to local sqlite for this request
+        remoteCooldownUntil = Date.now() + 10000;
+        console.warn(`🐰 [BunnyDB] Remote endpoint query failed or timed out (${err.message || err}). Initiating 10-second auto-recovering cooldown and falling back to local persistent edge database.`);
         return await localClient.execute(finalStmt);
       }
     }
@@ -222,15 +239,15 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
 
     if (isRemoteAvailable && remoteClient) {
       try {
-        return await remoteClient.batch(stmts, mode);
+        return await withTimeout(remoteClient.batch(stmts, mode), 2000, "BunnyDB remote batch timeout (2000ms)");
       } catch (err: any) {
         const isSqlError = err.message?.includes("SQLITE_") || err.message?.includes("SQLite error") || err.code?.startsWith("SQLITE_");
         if (isSqlError) {
           throw err;
         }
 
-        remoteCooldownUntil = Date.now() + 5000;
-        console.warn(`🐰 [BunnyDB] Remote endpoint batch failed (${err.message || err}). Initiating 5-second auto-recovering cooldown and falling back to local persistent edge database.`);
+        remoteCooldownUntil = Date.now() + 10000;
+        console.warn(`🐰 [BunnyDB] Remote endpoint batch failed or timed out (${err.message || err}). Initiating 10-second auto-recovering cooldown and falling back to local persistent edge database.`);
         return await localClient.batch(stmts, mode);
       }
     }
