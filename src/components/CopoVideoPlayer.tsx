@@ -67,7 +67,7 @@ interface CopoVideoPlayerProps {
   allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
   onPurgeAllVideos?: () => void;
-  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string }) => void;
+  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string; hasBunnySmartCaptions?: boolean; title?: string; aiTitle?: string }) => void;
   isPaused?: boolean;
   initialAutoplayPaused?: boolean;
   contextKey?: string;
@@ -830,24 +830,50 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (activeVideo?.id) {
         onRecordView?.(activeVideo.id);
 
-        // Auto-trigger transcription for videos missing high-precision segments
-        const hasHighPrecision = Array.isArray(activeVideo.segments) && activeVideo.segments.length > 0 && activeVideo.segments.some(s => s && s.words);
-        if (!activeVideo.segments || activeVideo.segments.length === 0 || !hasHighPrecision) {
-          fetch(`/api/videos/${activeVideo.id}/ensure-transcript`, { method: "POST" })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success && data.segments) {
-                // Update parent state to trigger re-render and persist in feed
-                onUpdateVideoReview?.(activeVideo.id, {
-                  segments: data.segments,
-                  transcriptText: data.transcriptText
-                });
-                // Immediate local update fallback
-                activeVideo.segments = data.segments;
-                activeVideo.transcriptText = data.transcriptText;
-              }
-            })
-            .catch(err => console.warn("[Player] Auto-transcription trigger failed:", err));
+        // Auto-trigger official Bunny Stream Smart Captions if not yet loaded or if holding legacy browser speech segments
+        const hasLegacyWebSpeechSegments = Array.isArray(activeVideo.segments) && activeVideo.segments.some(s => s && s.words);
+        const needsBunnyCaptions = !activeVideo.hasBunnySmartCaptions || !activeVideo.segments || activeVideo.segments.length === 0 || hasLegacyWebSpeechSegments;
+        if (needsBunnyCaptions) {
+          const targetVidId = activeVideo.id;
+          let pollAttempts = 0;
+          const maxPollAttempts = 8;
+
+          const pollCaptions = () => {
+            if (activeVideoRef.current?.id !== targetVidId) return;
+            fetch(`/api/videos/${targetVidId}/ensure-transcript`, { method: "POST" })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && Array.isArray(data.segments) && data.segments.length > 0) {
+                  onUpdateVideoReview?.(targetVidId, {
+                    segments: data.segments,
+                    transcriptText: data.transcriptText,
+                    hasBunnySmartCaptions: true,
+                    ...(data.aiTitle ? { aiTitle: data.aiTitle, title: data.aiTitle, caption: data.aiTitle } : {})
+                  });
+                  if (activeVideoRef.current?.id === targetVidId) {
+                    activeVideo.segments = data.segments;
+                    activeVideo.transcriptText = data.transcriptText;
+                    activeVideo.hasBunnySmartCaptions = true;
+                    if (data.aiTitle) {
+                      activeVideo.aiTitle = data.aiTitle;
+                      activeVideo.title = data.aiTitle;
+                      activeVideo.caption = data.aiTitle;
+                    }
+                  }
+                } else if (pollAttempts < maxPollAttempts) {
+                  pollAttempts++;
+                  setTimeout(pollCaptions, 3500);
+                }
+              })
+              .catch(err => {
+                if (pollAttempts < maxPollAttempts) {
+                  pollAttempts++;
+                  setTimeout(pollCaptions, 3500);
+                }
+              });
+          };
+
+          pollCaptions();
         }
       }
     }, 1000);

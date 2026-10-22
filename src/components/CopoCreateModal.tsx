@@ -28,8 +28,6 @@ import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
-import { SubtitleOverlay, buildSegmentsFromTranscript } from "./SubtitleOverlay";
-import { alignWordsToTimeWindow, normalizeWordTimings, buildSingleLineSegments, splitWordsIntoSingleLineChunks, SubtitleSegment } from "../utils/subtitleSync";
 import { triggerHaptic } from "../utils/haptics";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -116,7 +114,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const voiceBlocksRef = useRef<Array<{ start: number; end: number }>>([]);
   const currentVoiceBlockRef = useRef<{ start: number; end: number } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const speechRecognitionRef = useRef<any>(null);
   const isCancellingRef = useRef<boolean>(false);
   const recordingStartTimeRef = useRef<number>(0);
   const phraseStartRef = useRef<number>(-1);
@@ -761,40 +758,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           }
         });
 
-        // Auto-transcribe recorded video in background as fallback ONLY if live segments are empty
-        (async () => {
-          try {
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = async () => {
-              const base64Data = (reader.result as string)?.split(",")[1];
-              if (!base64Data) return;
-              const res = await fetch("/api/videos/transcribe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  videoData: base64Data,
-                  mimeType: blob.type || "video/webm",
-                  filename: `recording_${Date.now()}.webm`
-                })
-              });
-              if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.transcript) {
-                  const serverTranscript = String(data.transcript || '').trim();
-                  if (serverTranscript) {
-                    setLiveTranscript((prev) => (!prev || serverTranscript.length >= prev.length * 0.7 ? serverTranscript : prev));
-                  }
-                  if (data.segments && data.segments.length > 0) {
-                    setLiveSegments((prev) => (!prev || prev.length === 0 || data.segments.length >= prev.length ? data.segments : prev));
-                  }
-                }
-              }
-            };
-          } catch (err) {
-            console.warn("Auto preview transcription notice:", err);
-          }
-        })();
       };
 
       // Set hardware recording start timestamp baseline for exact 0s alignment
@@ -875,152 +838,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         console.warn("[VAD] Setup notice:", vadErr);
       }
 
-      // Initialize Browser-Native Zero-API Live Speech Recognition Engine
-      try {
-        const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (SpeechRecognitionClass) {
-          const recognition = new SpeechRecognitionClass();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = navigator.language || 'en-US';
-
-          recognition.onresult = (event: any) => {
-            const recStart = recordingStartTimeRef.current || performance.now();
-            const nowSec = Math.max(0, (performance.now() - recStart) / 1000);
-            let interim = "";
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-              const res = event.results[i];
-              const transcriptPiece = res[0]?.transcript?.trim();
-              if (!transcriptPiece) continue;
-
-              if (res.isFinal) {
-                const words = transcriptPiece.split(/\s+/).filter(Boolean);
-                if (words.length === 0) continue;
-
-                // Determine strict acoustic window [segStart, segEnd] for finalized sentence
-                const prevEnd = liveSegmentsRef.current.length > 0 
-                  ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
-                  : 0;
-
-                const estimatedMinDur = Math.max(0.7, words.length * 0.35);
-
-                let segStart = phraseStartRef.current >= 0 
-                  ? phraseStartRef.current 
-                  : Math.max(prevEnd, nowSec - estimatedMinDur - 0.2);
-                
-                if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.start >= prevEnd - 0.25) {
-                  segStart = Math.max(prevEnd, currentVoiceBlockRef.current.start);
-                }
-
-                // If this is the beginning of the video, ensure speech doesn't start prematurely at 0.0s before speaker speaks
-                if (prevEnd === 0 && segStart < 0.4 && nowSec > 0.9) {
-                  segStart = Math.max(0.4, nowSec - estimatedMinDur - 0.25);
-                }
-                
-                let segEnd = Math.max(segStart + estimatedMinDur, nowSec);
-                if (currentVoiceBlockRef.current && currentVoiceBlockRef.current.end > segStart) {
-                  segEnd = Math.max(segStart + estimatedMinDur, currentVoiceBlockRef.current.end);
-                }
-
-                // Split into strictly single-line segments (max 6-8 words per line) that start over when finished
-                const singleLineSegments = buildSingleLineSegments(words, segStart, segEnd);
-
-                liveSegmentsRef.current.push(...singleLineSegments);
-                setLiveSegments([...liveSegmentsRef.current]);
-                setLiveTranscript((prev) => (prev ? prev + " " : "") + transcriptPiece);
-                
-                currentActivePhraseRef.current = null;
-                setInterimTranscript("");
-                phraseStartRef.current = -1;
-              } else {
-                if (phraseStartRef.current < 0) {
-                  const prevEnd = liveSegmentsRef.current.length > 0 
-                    ? liveSegmentsRef.current[liveSegmentsRef.current.length - 1].end 
-                    : 0;
-                  let onset = currentVoiceBlockRef.current 
-                    ? Math.max(prevEnd, currentVoiceBlockRef.current.start) 
-                    : Math.max(prevEnd, nowSec - 0.25);
-                  if (prevEnd === 0 && onset < 0.4 && nowSec > 0.8) {
-                    onset = Math.max(0.4, nowSec - 0.45);
-                  }
-                  phraseStartRef.current = onset;
-                }
-
-                interim = transcriptPiece;
-                let words = transcriptPiece.split(/\s+/).filter(Boolean);
-
-                // When live interim speech exceeds 6 words, commit the first 6-word sentence line smoothly
-                if (words.length >= 7) {
-                  const firstChunkWords = words.slice(0, 6);
-                  const remainingWords = words.slice(6);
-                  
-                  const segStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(0, nowSec - 2.0);
-                  const segEnd = nowSec;
-                  const committedSegs = buildSingleLineSegments(firstChunkWords, segStart, segEnd);
-                  
-                  liveSegmentsRef.current.push(...committedSegs);
-                  setLiveSegments([...liveSegmentsRef.current]);
-                  
-                  words = remainingWords;
-                  phraseStartRef.current = nowSec;
-                  interim = remainingWords.join(" ");
-                }
-
-                if (words.length > 0) {
-                  const segStart = phraseStartRef.current >= 0 ? phraseStartRef.current : Math.max(0, nowSec - 0.3);
-                  const segEnd = Math.max(segStart + (words.length * 0.35), nowSec + 0.5);
-                  const activeText = words.join(" ");
-                  
-                  currentActivePhraseRef.current = {
-                    fullText: activeText,
-                    text: activeText,
-                    segments: [{
-                      start: Math.round(segStart * 100) / 100,
-                      end: Math.round(segEnd * 100) / 100,
-                      text: activeText,
-                      words: alignWordsToTimeWindow(words, segStart, segEnd),
-                      isHardwareTimed: true
-                    }],
-                    start: Math.round(segStart * 100) / 100,
-                    end: Math.round(segEnd * 100) / 100,
-                    isHardwareTimed: true
-                  };
-                }
-              }
-            }
-
-            if (interim) {
-              setInterimTranscript(interim);
-            }
-          };
-
-          recognition.onend = () => {
-            if (isRecordingRef.current && speechRecognitionRef.current) {
-              try {
-                speechRecognitionRef.current.start();
-              } catch (e) {
-                console.warn("[SpeechRecognition] Auto-restart notice:", e);
-              }
-            }
-          };
-
-          recognition.onerror = (e: any) => {
-            console.warn("[SpeechRecognition] Notice:", e);
-            if (isRecordingRef.current && e.error !== 'aborted') {
-              try {
-                speechRecognitionRef.current.start();
-              } catch (err) {}
-            }
-          };
-
-          recognition.start();
-          speechRecognitionRef.current = recognition;
-        }
-      } catch (speechErr) {
-        console.warn("[SpeechRecognition] Setup notice:", speechErr);
-      }
-
       // Request data slices periodically (every 500ms for responsiveness)
       mediaRecorder.start(500);
       setIsRecording(true);
@@ -1074,72 +891,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         vadIntervalRef.current = null;
       }
 
-      // Stop SpeechRecognition engine
-      if (speechRecognitionRef.current) {
-        try { speechRecognitionRef.current.stop(); } catch (e) {}
-        speechRecognitionRef.current = null;
-      }
-
-      // Capture any unfinalized interim transcript at stop time
-      const activePhrase = currentActivePhraseRef.current;
-      if (activePhrase) {
-        const activeText = activePhrase.fullText || activePhrase.text || "";
-        const activeSegments = activePhrase.segments;
-        if (Array.isArray(activeSegments) && activeSegments.length > 0) {
-          liveSegmentsRef.current.push(...activeSegments);
-          setLiveSegments([...liveSegmentsRef.current]);
-          setLiveTranscript((prev) => (prev ? prev + " " : "") + activeText);
-        } else if (activeText) {
-          const activeWords = activeText.split(/\s+/).filter(Boolean);
-          if (activeWords.length > 0) {
-            const recStart = recordingStartTimeRef.current || performance.now();
-            const finalNowSec = Math.max(0, (performance.now() - recStart) / 1000);
-            const start = activePhrase.start || Math.max(0, finalNowSec - 1.2);
-            const end = Math.max(start + (activeWords.length * 0.35), finalNowSec);
-            const singleLineSegments = buildSingleLineSegments(activeWords, start, end);
-            liveSegmentsRef.current.push(...singleLineSegments);
-            setLiveSegments([...liveSegmentsRef.current]);
-            setLiveTranscript((prev) => (prev ? prev + " " : "") + activeText);
-          }
-        }
-      }
       currentActivePhraseRef.current = null;
       setInterimTranscript("");
       phraseStartRef.current = -1;
 
-      // Fallback only if liveSegments is completely empty and voice blocks exist
-      setLiveSegments((prev) => {
-        if (prev && prev.length > 0) return prev;
-        const blocks = voiceBlocksRef.current;
-        if (!blocks || blocks.length === 0) return prev;
-
-        const fullText = (liveTranscript || "").trim();
-        if (!fullText) return prev;
-
-        const words = fullText.split(/\s+/).filter(Boolean);
-        if (words.length === 0) return prev;
-
-        const wordsPerBlock = Math.ceil(words.length / blocks.length);
-        const newChunks: any[] = [];
-
-        for (let b = 0; b < blocks.length; b++) {
-          const block = blocks[b];
-          const blockWords = words.slice(b * wordsPerBlock, (b + 1) * wordsPerBlock);
-          if (blockWords.length === 0) break;
-
-          const wordTimings = alignWordsToTimeWindow(blockWords, block.start, block.end);
-
-          newChunks.push({
-            start: Math.round(block.start * 100) / 100,
-            end: Math.round(block.end * 100) / 100,
-            text: blockWords.join(" "),
-            words: wordTimings,
-            isHardwareTimed: true
-          });
-        }
-        liveSegmentsRef.current = newChunks;
-        return newChunks;
-      });
+      setLiveSegments([]);
+      liveSegmentsRef.current = [];
+      setLiveTranscript("");
       
       // Stop Audio Processing
       if (audioProcessorRef.current) {
@@ -1228,14 +986,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       userEmail: activeAuthUser?.email
     }, activeAuthUser);
 
-    let finalTranscript = liveTranscript || "";
-    let finalSegments = liveSegments || [];
-
-    // Character-weighted timed segments if live segments were not generated during recording
-    if ((!finalSegments || finalSegments.length === 0) && finalTranscript) {
-      const effDuration = recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15);
-      finalSegments = buildSegmentsFromTranscript(finalTranscript, effDuration);
-    }
+    let finalTranscript = "";
+    let finalSegments: any[] = [];
 
     const fallbackReview: VideoReview = {
       id: reviewId,
@@ -1275,8 +1027,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       thumbnailUrl: safeThumbnail,
       caption: cleanPlaceName,
       title: cleanPlaceName,
-      transcriptText: finalTranscript,
-      segments: finalSegments,
+      transcriptText: "",
+      segments: [],
+      hasBunnySmartCaptions: false,
       dishOrItem: cleanPlaceName,
       businessName: cleanPlaceName,
       likes: 0,
@@ -1548,8 +1301,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       vttUrl: `/api/videos/${reviewId}/subtitles.vtt`,
       localBlobUrl: recordedVideoUrl || newReview.localBlobUrl || undefined,
       blobUrl: recordedVideoUrl || newReview.blobUrl || undefined,
-      transcriptText: bunnySegments.length > 0 ? bunnyTranscriptText : (finalTranscript || newReview.transcriptText || ""),
-      segments: bunnySegments.length > 0 ? bunnySegments : ((finalSegments && finalSegments.length > 0) ? finalSegments : (newReview.segments || [])),
+      transcriptText: bunnySegments.length > 0 ? bunnyTranscriptText : "",
+      segments: bunnySegments.length > 0 ? bunnySegments : [],
       ...(bunnyAiTitle ? { aiTitle: bunnyAiTitle, title: bunnyAiTitle, caption: bunnyAiTitle } : {}),
       hasBunnySmartCaptions: bunnySegments.length > 0,
       isReady: true,

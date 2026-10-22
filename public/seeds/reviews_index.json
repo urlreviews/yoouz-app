@@ -40,39 +40,34 @@
       "/api/videos/stream/rev-1792611672289-cajjk.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
-    "caption": "Review de tiendas SAVA: Productos excelentes y a la moda para todos",
-    "title": "Jose Agustin Reinoso - Zara",
+    "caption": "Productos excelentes y a la moda para todos",
+    "title": "Productos excelentes y a la moda para todos",
     "transcriptText": "Buenos días, buenas tardes. Este es un review para las tiendas SAVA. Excelentes productos, excelentes... Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen. Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
     "segments": [
       {
-        "start": 0.823,
-        "end": 2.186,
-        "text": "Buenos días, buenas tardes.",
-        "isHardwareTimed": true
+        "start": 0.82,
+        "end": 2.19,
+        "text": "Buenos días, buenas tardes."
       },
       {
-        "start": 2.226,
-        "end": 3.929,
-        "text": "Este es un review para las tiendas SAVA.",
-        "isHardwareTimed": true
+        "start": 2.23,
+        "end": 3.93,
+        "text": "Este es un review para las tiendas SAVA."
       },
       {
         "start": 4.15,
-        "end": 8.878,
-        "text": "Excelentes productos, excelentes...",
-        "isHardwareTimed": true
+        "end": 8.88,
+        "text": "Excelentes productos, excelentes..."
       },
       {
-        "start": 8.959,
-        "end": 14.249,
-        "text": "Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen.",
-        "isHardwareTimed": true
+        "start": 8.96,
+        "end": 14.25,
+        "text": "Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen."
       },
       {
-        "start": 15.251,
-        "end": 21.102,
-        "text": "Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
-        "isHardwareTimed": true
+        "start": 15.25,
+        "end": 21.1,
+        "text": "Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está..."
       }
     ],
     "dishOrItem": "Zara",
@@ -158,21 +153,19 @@
       "/api/videos/stream/rev-1792611567587-xlv37.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/thumbnail.jpg",
-    "caption": "Jollibee",
+    "caption": "Hollywood Project - Excellent UI Experience",
     "title": "Hollywood Project - Excellent UI Experience",
     "transcriptText": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood. I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
     "segments": [
       {
-        "start": 2.432,
-        "end": 12.257,
-        "text": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood.",
-        "isHardwareTimed": true
+        "start": 2.43,
+        "end": 12.26,
+        "text": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood."
       },
       {
-        "start": 12.278,
-        "end": 19.703,
-        "text": "I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
-        "isHardwareTimed": true
+        "start": 12.28,
+        "end": 19.7,
+        "text": "I started reviewing because I think the project itself is really good and the experience on the UI has been really nice."
       }
     ],
     "dishOrItem": "Jollibee",
@@ -223,46 +216,39 @@
     "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
     "segments": [
       {
-        "start": 0.631,
-        "end": 9.037,
-        "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that.",
-        "isHardwareTimed": true
+        "start": 0.63,
+        "end": 9.04,
+        "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that."
       },
       {
-        "start": 9.517,
-        "end": 10.858,
-        "text": "You can go to Anthropic.",
-        "isHardwareTimed": true
+        "start": 9.52,
+        "end": 10.86,
+        "text": "You can go to Anthropic."
       },
       {
-        "start": 11.058,
-        "end": 16.502,
-        "text": "They have cloud, they have Cloud code, They can make codes, the normal code.",
-        "isHardwareTimed": true
+        "start": 11.06,
+        "end": 16.5,
+        "text": "They have cloud, they have Cloud code, They can make codes, the normal code."
       },
       {
-        "start": 16.722,
-        "end": 17.402,
-        "text": "It's for free.",
-        "isHardwareTimed": true
+        "start": 16.72,
+        "end": 17.4,
+        "text": "It's for free."
       },
       {
-        "start": 17.422,
-        "end": 19.284,
-        "text": "you Can make all the video editing.",
-        "isHardwareTimed": true
+        "start": 17.42,
+        "end": 19.28,
+        "text": "you Can make all the video editing."
       },
       {
-        "start": 19.344,
-        "end": 21.405,
-        "text": "So we don't need any of this now.",
-        "isHardwareTimed": true
+        "start": 19.34,
+        "end": 21.41,
+        "text": "So we don't need any of this now."
       },
       {
-        "start": 22.206,
-        "end": 25.928,
-        "text": "All we can do is focus on your business and these things come easily.",
-        "isHardwareTimed": true
+        "start": 22.21,
+        "end": 25.93,
+        "text": "All we can do is focus on your business and these things come easily."
       }
     ],
     "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
@@ -393,16 +379,14 @@
     "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
     "segments": [
       {
-        "start": 1.305,
+        "start": 1.31,
         "end": 16.75,
-        "text": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts",
-        "isHardwareTimed": true
+        "text": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts"
       },
       {
-        "start": 16.829,
-        "end": 20.951,
-        "text": "way longer than anything else I have tried at this price point so you should you",
-        "isHardwareTimed": true
+        "start": 16.83,
+        "end": 20.95,
+        "text": "way longer than anything else I have tried at this price point so you should you"
       }
     ],
     "dishOrItem": "Zara",
@@ -490,32 +474,28 @@
       "/api/videos/stream/rev-1792505047137-smiho.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
-    "caption": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "caption": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
       {
-        "start": 0.918,
-        "end": 4.164,
-        "text": "This Zara perfume is my new favorite.",
-        "isHardwareTimed": true
+        "start": 0.92,
+        "end": 4.16,
+        "text": "This Zara perfume is my new favorite."
       },
       {
-        "start": 4.364,
-        "end": 6.288,
-        "text": "It fits my vibe perfectly.",
-        "isHardwareTimed": true
+        "start": 4.36,
+        "end": 6.29,
+        "text": "It fits my vibe perfectly."
       },
       {
-        "start": 6.468,
-        "end": 11.037,
-        "text": "And unlike any other brands at this price, it actually lasts all day.",
-        "isHardwareTimed": true
+        "start": 6.47,
+        "end": 11.04,
+        "text": "And unlike any other brands at this price, it actually lasts all day."
       },
       {
-        "start": 11.077,
-        "end": 12.199,
-        "text": "So you have to give it a try.",
-        "isHardwareTimed": true
+        "start": 11.08,
+        "end": 12.2,
+        "text": "So you have to give it a try."
       }
     ],
     "dishOrItem": "Zara",
@@ -554,7 +534,7 @@
     "reviewsCount": 3,
     "reviewCount": 3,
     "totalReviews": 3,
-    "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "title": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
     "aiTitle": "Zara perfume: Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
     "isReady": true,
     "isProcessing": false,
@@ -596,28 +576,25 @@
       "/api/videos/stream/rev-1792404298362-hrk2f.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
-    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "aiTitle": "Review: Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
     "segments": [
       {
-        "start": 0.658,
-        "end": 14.063,
-        "text": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which",
-        "isHardwareTimed": true
+        "start": 0.66,
+        "end": 14.06,
+        "text": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which"
       },
       {
-        "start": 14.123,
-        "end": 26.768,
-        "text": "they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at",
-        "isHardwareTimed": true
+        "start": 14.12,
+        "end": 26.77,
+        "text": "they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at"
       },
       {
-        "start": 26.869,
-        "end": 40.435,
-        "text": "the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
-        "isHardwareTimed": true
+        "start": 26.87,
+        "end": 40.44,
+        "text": "the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT"
       }
     ],
     "dishOrItem": "Guard Slip Cafe by LGIP",
@@ -708,58 +685,49 @@
     "transcriptText": "Hello! So for this one is Jollibee Philippines. I gave it a 5 star for its review. Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside. And always be served with the iconic sweet style spaghetti. mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours, making it as your go-to for your late night cravings or at same for any morning breakfast. So, see you there! Enjoy the Philippines!",
     "segments": [
       {
-        "start": 1.027,
-        "end": 1.848,
-        "text": "Hello!",
-        "isHardwareTimed": true
+        "start": 1.03,
+        "end": 1.85,
+        "text": "Hello!"
       },
       {
-        "start": 1.948,
+        "start": 1.95,
         "end": 4.11,
-        "text": "So for this one is Jollibee Philippines.",
-        "isHardwareTimed": true
+        "text": "So for this one is Jollibee Philippines."
       },
       {
         "start": 4.19,
-        "end": 6.852,
-        "text": "I gave it a 5 star for its review.",
-        "isHardwareTimed": true
+        "end": 6.85,
+        "text": "I gave it a 5 star for its review."
       },
       {
-        "start": 6.872,
-        "end": 14.439,
-        "text": "Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside.",
-        "isHardwareTimed": true
+        "start": 6.87,
+        "end": 14.44,
+        "text": "Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside."
       },
       {
-        "start": 14.559,
-        "end": 18.843,
-        "text": "And always be served with the iconic sweet style spaghetti.",
-        "isHardwareTimed": true
+        "start": 14.56,
+        "end": 18.84,
+        "text": "And always be served with the iconic sweet style spaghetti."
       },
       {
         "start": 20.55,
-        "end": 25.312,
-        "text": "mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours,",
-        "isHardwareTimed": true
+        "end": 25.31,
+        "text": "mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours,"
       },
       {
-        "start": 25.332,
-        "end": 28.153,
-        "text": "making it as your go-to for your late night cravings or at same for any morning breakfast.",
-        "isHardwareTimed": true
+        "start": 25.33,
+        "end": 28.15,
+        "text": "making it as your go-to for your late night cravings or at same for any morning breakfast."
       },
       {
-        "start": 28.173,
-        "end": 28.733,
-        "text": "So, see you there!",
-        "isHardwareTimed": true
+        "start": 28.17,
+        "end": 28.73,
+        "text": "So, see you there!"
       },
       {
-        "start": 28.773,
-        "end": 29.494,
-        "text": "Enjoy the Philippines!",
-        "isHardwareTimed": true
+        "start": 28.77,
+        "end": 29.49,
+        "text": "Enjoy the Philippines!"
       }
     ],
     "dishOrItem": "Jollibee Philippines",
@@ -799,7 +767,7 @@
     "reviewsCount": 2,
     "reviewCount": 2,
     "totalReviews": 2,
-    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
     "isProcessing": false,
     "isReady": true,
     "updatedAt": 1792514327833

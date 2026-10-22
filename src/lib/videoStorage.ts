@@ -285,32 +285,3 @@ export async function uploadVideoToServer(blob: Blob, videoId: string): Promise<
   const result = await uploadVideoToServerWithProgress(blob, videoId, () => {});
   return result?.url || null;
 }
-
-export async function transcribeVideoBlobWithGemini(blob: Blob): Promise<string> {
-  try {
-    const base64Data = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-
-    const response = await fetch("/api/videos/transcribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        videoData: base64Data,
-        mimeType: blob.type || "video/webm"
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return (data.transcript || "").trim();
-    }
-    return "";
-  } catch (err) {
-    console.warn("Gemini transcription client error:", err);
-    return "";
-  }
-}

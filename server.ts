@@ -19499,18 +19499,13 @@ app.post("/api/videos/save-review", async (req, res) => {
         });
       }
 
-      // Guarantee 100% INSTANT Subtitles: If segments are not yet generated, build instant single-line sentence alignment immediately
-      if (!review.segments || !Array.isArray(review.segments) || review.segments.length === 0) {
-        const textForSubtitles = String(review.transcriptText || review.comment || review.caption || review.description || "").trim();
-        if (textForSubtitles && !textForSubtitles.toLowerCase().startsWith("video review for")) {
-          try {
-            const localTrans = await transcribeVideoLocally(Buffer.from([]), `${review.id}.mp4`, "video/mp4", textForSubtitles);
-            if (localTrans && Array.isArray(localTrans.segments) && localTrans.segments.length > 0) {
-              review.segments = localTrans.segments;
-              review.transcriptText = localTrans.transcript || textForSubtitles;
-            }
-          } catch (tErr) {}
-        }
+      // Subtitles and captions strictly rely exclusively on Bunny Stream Smart Captions.
+      // Never fabricate artificial pseudo-subtitles or slice comments into segments.
+      const hasLegacyWebSpeechSegments = Array.isArray(review.segments) && review.segments.some((s: any) => s && s.words);
+      if (!review.hasBunnySmartCaptions || hasLegacyWebSpeechSegments) {
+        review.segments = [];
+        review.transcriptText = "";
+        review.hasBunnySmartCaptions = false;
       }
 
       // Every video review with a video recording is 100% READY & LIVE immediately!
@@ -19871,6 +19866,13 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Trigger Automated Search Engine Indexing Notification (Google & Bing/IndexNow)
       if (review?.id) {
         triggerSearchEngineIndexing(review.id).catch(() => {});
+      }
+
+      // Automatically trigger background transcription and Smart Captions synchronization from Bunny Stream
+      if (assignedBunnyId && (!review.hasBunnySmartCaptions || !review.segments || review.segments.length === 0)) {
+        ensureTranscriptionForVideo(review.id, assignedBunnyId).catch((err) => {
+          console.warn("[save-review] Background ensureTranscriptionForVideo notice:", err?.message || err);
+        });
       }
         } catch (bgDbErr) {
           console.warn("Background BunnyDB/SQL save notice:", bgDbErr);
@@ -23631,61 +23633,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         }
       }
 
-      // Pre-chunk long segments into 4-6 word acoustic sub-segments matching exact speech pacing
-      const finalAcousticSegments: any[] = [];
-      for (const seg of cleanSegments) {
-        const words = seg.text.split(/\s+/).filter(Boolean);
-        if (words.length <= 6) {
-          finalAcousticSegments.push(seg);
-        } else {
-          const totalDur = Math.max(0.6, seg.end - seg.start);
-          const getWeight = (w: string) => {
-            const cl = w.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (['a','i','in','it','at','on','of','to','so','do','is','be','by','my','or','and','the'].includes(cl)) return 1.1;
-            const vowels = cl.match(/[aeiouy]/gi);
-            return Math.max(1.2, cl.length * 0.65 + (vowels ? vowels.length : 1) * 1.1);
-          };
-
-          const wordChunks: string[][] = [];
-          let curChunk: string[] = [];
-          for (let i = 0; i < words.length; i++) {
-            const w = words[i];
-            curChunk.push(w);
-            const hasPunctuation = /[.,!?;:]$/.test(w);
-            const isClauseMarker = /^(so|and|because|with|but|located|by|where|that|which|when|while|if)$/i.test(w.replace(/[^a-z]/gi, ''));
-            const reachMax = curChunk.length >= 6;
-            const reachMin = curChunk.length >= 3;
-            const remaining = words.length - (i + 1);
-
-            if ((reachMax || (reachMin && (hasPunctuation || isClauseMarker)) || (reachMin && remaining > 0 && remaining < 3)) && remaining > 0) {
-              wordChunks.push(curChunk);
-              curChunk = [];
-            }
-          }
-          if (curChunk.length > 0) wordChunks.push(curChunk);
-
-          const chunkWeights = wordChunks.map(c => c.reduce((sum, w) => sum + getWeight(w), 0));
-          const totalWeight = chunkWeights.reduce((a, b) => a + b, 0);
-
-          let curStart = seg.start;
-          for (let idx = 0; idx < wordChunks.length; idx++) {
-            const cWords = wordChunks[idx];
-            const cWeight = chunkWeights[idx];
-            const cDur = totalWeight > 0 ? totalDur * (cWeight / totalWeight) : totalDur / wordChunks.length;
-            const cEnd = idx === wordChunks.length - 1 ? seg.end : Math.round((curStart + cDur) * 100) / 100;
-
-            finalAcousticSegments.push({
-              start: Math.round(curStart * 100) / 100,
-              end: Math.max(curStart + 0.35, Math.round(cEnd * 100) / 100),
-              text: cWords.join(" "),
-              isHardwareTimed: true
-            });
-            curStart = cEnd;
-          }
-        }
-      }
-
-      return finalAcousticSegments;
+      // Return authentic Bunny Stream cues directly with exact timecodes
+      return cleanSegments;
     } catch (e) {
       console.warn("VTT parse failed:", e);
       return [];

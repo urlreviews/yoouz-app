@@ -390,21 +390,29 @@ export function App() {
             const vidId = String(payload.videoId);
             const transcriptText = payload.transcriptText || "";
             const segments = payload.segments || [];
+            const aiTitle = payload.video?.aiTitle || payload.aiTitle;
+            const caption = payload.video?.caption || aiTitle;
 
-            setVideos((prev) => prev.map((v) => {
-              if (String(v.id) !== vidId) return v;
-              return { ...v, transcriptText, segments };
-            }));
+            const updateItem = (item: any) => ({
+              ...item,
+              transcriptText,
+              segments,
+              hasBunnySmartCaptions: segments.length > 0,
+              ...(aiTitle ? { aiTitle, title: aiTitle } : {}),
+              ...(caption ? { caption } : {})
+            });
+
+            setVideos((prev) => prev.map((v) => (String(v.id) === vidId ? updateItem(v) : v)));
             setPlaces((prev) => prev.map((p) => {
               if (!p.reviews || !p.reviews.some((r: any) => r && String(r.id) === vidId)) return p;
               return {
                 ...p,
-                reviews: p.reviews.map((v: any) => v && String(v.id) === vidId ? { ...v, transcriptText, segments } : v)
+                reviews: p.reviews.map((v: any) => (v && String(v.id) === vidId ? updateItem(v) : v))
               };
             }));
             setActiveCommentVideo((currentActive) => {
               if (!currentActive || String(currentActive.id) !== vidId) return currentActive;
-              return { ...currentActive, transcriptText, segments };
+              return updateItem(currentActive);
             });
           } else if (payload.type === "new_video" && payload.video) {
             const incomingVideo = payload.video;

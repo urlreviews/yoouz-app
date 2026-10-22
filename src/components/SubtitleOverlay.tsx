@@ -119,9 +119,16 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const s = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : -1;
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
-        if (Array.isArray(item.words) && item.words.length > 0) {
+        if (s >= 0 && e >= s) {
+          cleanCues.push({
+            id: cueId++,
+            start: s,
+            end: e,
+            text: txt
+          });
+        } else if (Array.isArray(item.words) && item.words.length > 0) {
           const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
-          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4);
+          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 6);
           let wordIdx = 0;
           for (const chunkWords of wordChunks) {
             const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
@@ -138,13 +145,6 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               });
             }
           }
-        } else if (s >= 0 && e >= s) {
-          cleanCues.push({
-            id: cueId++,
-            start: s,
-            end: e,
-            text: txt
-          });
         } else {
           const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 5);
           for (const chunk of phraseChunks) {
