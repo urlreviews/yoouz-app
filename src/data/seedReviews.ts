@@ -66,44 +66,50 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 8.96,
-        "end": 9.83,
+        "end": 9.89,
         "text": "Siempre a la moda,",
         "isHardwareTimed": true
       },
       {
-        "start": 9.83,
-        "end": 11.73,
+        "start": 9.89,
+        "end": 11.29,
         "text": "siempre a las vanguardias y a",
         "isHardwareTimed": true
       },
       {
-        "start": 11.87,
-        "end": 12.89,
+        "start": 11.29,
+        "end": 12.68,
         "text": "todas las personas que están en",
         "isHardwareTimed": true
       },
       {
-        "start": 13.03,
+        "start": 12.68,
         "end": 14.25,
         "text": "esto, les recomiendo que lo utilicen.",
         "isHardwareTimed": true
       },
       {
         "start": 15.25,
-        "end": 18.18,
+        "end": 17.6,
         "text": "Entiendo qué es una marca que",
         "isHardwareTimed": true
       },
       {
-        "start": 18.34,
+        "start": 17.6,
         "end": 19.12,
         "text": "se adapta a los precios y",
         "isHardwareTimed": true
       },
       {
         "start": 19.12,
+        "end": 20.47,
+        "text": "demás, se adaptan a calidad,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.47,
         "end": 21.1,
-        "text": "demás, se adaptan a calidad, todo está...",
+        "text": "todo está...",
         "isHardwareTimed": true
       }
     ],
@@ -208,8 +214,14 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 8.09,
+        "end": 10.2,
+        "text": "and right now giving a review",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.2,
         "end": 12.26,
-        "text": "and right now giving a review for Hollywood.",
+        "text": "for Hollywood.",
         "isHardwareTimed": true
       },
       {
@@ -226,12 +238,12 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 16.37,
-        "end": 17.5,
+        "end": 17.07,
         "text": "is really good",
         "isHardwareTimed": true
       },
       {
-        "start": 17.86,
+        "start": 17.07,
         "end": 18.51,
         "text": "and the experience on the UI",
         "isHardwareTimed": true
@@ -245,7 +257,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     ],
     "dishOrItem": "Jollibee",
     "businessName": "Jollibee",
-    "likes": 1,
+    "likes": 2,
     "isLiked": false,
     "commentsCount": 0,
     "comments": [],
@@ -273,7 +285,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyDescription": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
     "description": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
     "hasBunnySmartCaptions": true,
-    "likesCount": 1,
+    "likesCount": 2,
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "authorName": "Jose Agustin Reinoso",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
@@ -305,12 +317,12 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 6.83,
-        "end": 7.69,
+        "end": 7.99,
         "text": "you can now in 2026,",
         "isHardwareTimed": true
       },
       {
-        "start": 7.69,
+        "start": 7.99,
         "end": 9,
         "text": "You shouldn't do that.",
         "isHardwareTimed": true
@@ -323,24 +335,24 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 11.1,
-        "end": 11.74,
+        "end": 12.45,
         "text": "They have cloud,",
         "isHardwareTimed": true
       },
       {
-        "start": 12.13,
+        "start": 12.45,
         "end": 14.03,
         "text": "they have Cloud code,",
         "isHardwareTimed": true
       },
       {
         "start": 14.47,
-        "end": 15.3,
+        "end": 15.8,
         "text": "They can make codes,",
         "isHardwareTimed": true
       },
       {
-        "start": 15.67,
+        "start": 15.8,
         "end": 16.5,
         "text": "the normal code.",
         "isHardwareTimed": true
@@ -365,18 +377,18 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 22.21,
-        "end": 24.36,
+        "end": 23.61,
         "text": "All we can do is focus",
         "isHardwareTimed": true
       },
       {
-        "start": 24.6,
-        "end": 25.2,
+        "start": 23.61,
+        "end": 24.36,
         "text": "on your business",
         "isHardwareTimed": true
       },
       {
-        "start": 25.47,
+        "start": 24.6,
         "end": 25.92,
         "text": "and these things come easily.",
         "isHardwareTimed": true
@@ -407,8 +419,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "duration": 27,
     "createdAt": "2026-10-20T21:24:42.229Z",
     "createdAtMs": 1792531482229,
-    "likesCount": 1,
-    "likes": 1,
+    "likesCount": 2,
+    "likes": 2,
     "bookmarksCount": 0,
     "bookmarks": 0,
     "sharesCount": 0,
@@ -530,37 +542,37 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 11.89,
-        "end": 12.57,
+        "end": 13.93,
         "text": "version to winter",
         "isHardwareTimed": true
       },
       {
-        "start": 12.81,
+        "start": 14.1,
         "end": 15.5,
         "text": "and it matches my style perfectly",
         "isHardwareTimed": true
       },
       {
-        "start": 15.66,
+        "start": 15.5,
         "end": 16.75,
         "text": "and honestly it lasts",
         "isHardwareTimed": true
       },
       {
         "start": 16.83,
-        "end": 18.97,
+        "end": 18.1,
         "text": "way longer than anything else",
         "isHardwareTimed": true
       },
       {
-        "start": 19.24,
-        "end": 20.52,
+        "start": 18.1,
+        "end": 19.76,
         "text": "I have tried at this price point",
         "isHardwareTimed": true
       },
       {
-        "start": 20.86,
-        "end": 21.31,
+        "start": 19.76,
+        "end": 20.95,
         "text": "so you should you",
         "isHardwareTimed": true
       }
@@ -674,12 +686,12 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 9.21,
-        "end": 10.39,
+        "end": 9.69,
         "text": "this price,",
         "isHardwareTimed": true
       },
       {
-        "start": 10.57,
+        "start": 9.69,
         "end": 11.04,
         "text": "it actually lasts all day.",
         "isHardwareTimed": true
@@ -772,48 +784,54 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
     "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
     "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
-    "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
+    "transcriptText": "Hello everyone, so I'm here to do my review with the Garza Lip Cafe by LGIT, located in Bayambonheva, Vizcaya. So, do visit the store, the cafe, in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very cozy place the ambiance is very good and at the same time um lip cafe by lgit do supports okay the nova biscayano local beans so once again if you have time drop by at lip café by LGIT",
     "segments": [
       {
         "start": 0.68,
         "end": 2.79,
-        "text": "hello everyone so i'm here to",
+        "text": "Hello everyone,",
         "isHardwareTimed": true
       },
       {
         "start": 2.93,
-        "end": 5.58,
-        "text": "do my review with the guard",
+        "end": 4.33,
+        "text": "so I'm here to do my",
         "isHardwareTimed": true
       },
       {
-        "start": 5.75,
-        "end": 6.65,
-        "text": "slip cafe by lgip",
+        "start": 4.33,
+        "end": 5.89,
+        "text": "review with the Garza Lip Cafe",
         "isHardwareTimed": true
       },
       {
-        "start": 6.65,
-        "end": 10.79,
-        "text": "located in bayombong nueva vizcaya",
+        "start": 6.22,
+        "end": 6.7,
+        "text": "by LGIT,",
         "isHardwareTimed": true
       },
       {
-        "start": 11.22,
-        "end": 13.26,
-        "text": "so do visit the store the",
+        "start": 6.7,
+        "end": 8.7,
+        "text": "located in Bayambonheva, Vizcaya.",
         "isHardwareTimed": true
       },
       {
-        "start": 13.57,
-        "end": 14.06,
-        "text": "cafe in which",
+        "start": 9.12,
+        "end": 11.5,
+        "text": "So, do visit the store,",
         "isHardwareTimed": true
       },
       {
-        "start": 14.12,
+        "start": 11.64,
+        "end": 12.15,
+        "text": "the cafe,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.45,
         "end": 15.78,
-        "text": "they do offer affordable drinks",
+        "text": "in which they do offer affordable drinks",
         "isHardwareTimed": true
       },
       {
@@ -830,56 +848,56 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       },
       {
         "start": 23.02,
-        "end": 25.12,
-        "text": "is a very uh cozy place",
+        "end": 24.17,
+        "text": "is a very cozy",
         "isHardwareTimed": true
       },
       {
-        "start": 25.37,
-        "end": 26.77,
-        "text": "the ambience is very good and at",
+        "start": 24.29,
+        "end": 27.69,
+        "text": "place the ambiance is very good",
         "isHardwareTimed": true
       },
       {
-        "start": 26.87,
-        "end": 29,
-        "text": "the same time um lip cafe",
+        "start": 28.02,
+        "end": 29.47,
+        "text": "and at the same time um",
         "isHardwareTimed": true
       },
       {
-        "start": 29.24,
-        "end": 31.58,
-        "text": "by lgit do supports okay the",
+        "start": 29.47,
+        "end": 31.2,
+        "text": "lip cafe by lgit do supports",
         "isHardwareTimed": true
       },
       {
-        "start": 31.73,
+        "start": 31.35,
         "end": 34.92,
-        "text": "nova viscayano local bins",
+        "text": "okay the nova biscayano local beans",
         "isHardwareTimed": true
       },
       {
         "start": 35.17,
-        "end": 35.65,
+        "end": 36.58,
         "text": "so once again",
         "isHardwareTimed": true
       },
       {
-        "start": 36.02,
-        "end": 39.06,
+        "start": 36.58,
+        "end": 38.43,
         "text": "if you have time",
         "isHardwareTimed": true
       },
       {
-        "start": 39.22,
-        "end": 40.44,
+        "start": 38.47,
+        "end": 40.49,
         "text": "drop by at lip café by LGIT",
         "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Guard Slip Cafe by LGIP",
     "businessName": "Guard Slip Cafe By Lgip",
-    "likes": 1,
+    "likes": 2,
     "isLiked": false,
     "commentsCount": 0,
     "comments": [],
@@ -896,7 +914,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
     "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/tl-auto.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
     "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
@@ -904,7 +922,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 41,
     "createdAt": "2026-10-19 11:27:32",
-    "likesCount": 1,
+    "likesCount": 2,
     "bookmarks": 0,
     "shares": 0,
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
@@ -963,126 +981,108 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/thumbnail.jpg",
     "caption": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
-    "transcriptText": "Hello! So for this one is Jollibee Philippines. I gave it a 5 star for its review. Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside. And always be served with the iconic sweet style spaghetti. mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours, making it as your go-to for your late night cravings or at same for any morning breakfast. So, see you there! Enjoy the Philippines!",
+    "transcriptText": "Hello, so for this one is Jollibee Philippines, I gave you 5 stars for the review. Because basically they do offer the famous iconic chicken joint, crispy on the outside and at the same time juicy on inside. And always be served with the iconic smooth style spaghetti. loaded with hot dog slices and cheese and at the same time also it's very convenient because the majority of their store is open 24 hours maybe as your go-to for your late night cravings or at same for any morning breakfast. So, see you there in Jao de Philippines!",
     "segments": [
       {
         "start": 1.04,
-        "end": 1.72,
-        "text": "Hello!",
+        "end": 2.54,
+        "text": "Hello, so for this one is",
         "isHardwareTimed": true
       },
       {
-        "start": 1.95,
-        "end": 4.11,
-        "text": "So for this one is Jollibee Philippines.",
+        "start": 2.54,
+        "end": 4.46,
+        "text": "Jollibee Philippines,",
         "isHardwareTimed": true
       },
       {
-        "start": 4.19,
-        "end": 4.76,
-        "text": "I gave it a 5 star for",
+        "start": 4.46,
+        "end": 6.43,
+        "text": "I gave you 5 stars for the review.",
         "isHardwareTimed": true
       },
       {
-        "start": 4.89,
-        "end": 6.68,
-        "text": "its review.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.19,
+        "start": 6.47,
         "end": 9.12,
-        "text": "Because basically,",
+        "text": "Because basically they do offer the",
         "isHardwareTimed": true
       },
       {
         "start": 9.27,
-        "end": 10.51,
-        "text": "they do offer the famous iconic",
+        "end": 11.39,
+        "text": "famous iconic chicken joint,",
         "isHardwareTimed": true
       },
       {
-        "start": 10.79,
-        "end": 13.34,
-        "text": "chicken joint crispy on the outside",
+        "start": 11.87,
+        "end": 13.07,
+        "text": "crispy on the outside",
         "isHardwareTimed": true
       },
       {
-        "start": 13.47,
-        "end": 14.44,
+        "start": 13.07,
+        "end": 15.01,
         "text": "and at the same time juicy on inside.",
         "isHardwareTimed": true
       },
       {
-        "start": 14.56,
-        "end": 16.69,
+        "start": 15.3,
+        "end": 18.11,
         "text": "And always be served with the",
         "isHardwareTimed": true
       },
       {
-        "start": 16.83,
-        "end": 18.84,
-        "text": "iconic sweet style spaghetti.",
+        "start": 18.32,
+        "end": 20.18,
+        "text": "iconic smooth style spaghetti.",
         "isHardwareTimed": true
       },
       {
-        "start": 20.55,
+        "start": 20.61,
         "end": 22.51,
-        "text": "mag-loaded with apple slices,",
+        "text": "loaded with hot dog slices",
         "isHardwareTimed": true
       },
       {
         "start": 22.65,
-        "end": 23.19,
-        "text": "cheese, and at the same time also,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.48,
-        "end": 23.88,
-        "text": "it's very convenient",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.88,
-        "end": 24.61,
-        "text": "because majority of their store is",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.61,
         "end": 25.07,
-        "text": "open 24 hours,",
+        "text": "and cheese and at the same",
         "isHardwareTimed": true
       },
       {
         "start": 25.34,
         "end": 26.53,
-        "text": "making it as your go-to for",
+        "text": "time also it's very convenient",
         "isHardwareTimed": true
       },
       {
         "start": 26.89,
-        "end": 27.59,
-        "text": "your late night cravings or at",
+        "end": 29.99,
+        "text": "because the majority of their store",
         "isHardwareTimed": true
       },
       {
-        "start": 27.73,
-        "end": 28.18,
-        "text": "same for any morning breakfast.",
+        "start": 30.13,
+        "end": 32.71,
+        "text": "is open 24 hours maybe as your",
         "isHardwareTimed": true
       },
       {
-        "start": 28.17,
-        "end": 28.71,
-        "text": "So, see you there!",
+        "start": 33.22,
+        "end": 35.71,
+        "text": "go-to for your late night cravings",
         "isHardwareTimed": true
       },
       {
-        "start": 28.9,
-        "end": 29.49,
-        "text": "Enjoy the Philippines!",
+        "start": 35.71,
+        "end": 37.98,
+        "text": "or at same for any morning breakfast.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 38,
+        "end": 41.24,
+        "text": "So, see you there in Jao de Philippines!",
         "isHardwareTimed": true
       }
     ],
@@ -1105,7 +1105,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/tl-auto.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",

@@ -369,18 +369,18 @@ export interface AudioSilenceInterval {
 export function splitCueTextIntoNaturalPhrases(
   text: string,
   maxWordsPerPhrase = 6,
-  maxCharsPerPhrase = 38
+  maxCharsPerPhrase = 36
 ): string[] {
   const clean = (text || "").replace(/\s+/g, " ").trim();
   if (!clean) return [];
 
   const words = clean.split(" ").filter(Boolean);
-  if (words.length <= maxWordsPerPhrase + 1 && clean.length <= maxCharsPerPhrase + 6) {
+  if (words.length <= maxWordsPerPhrase && clean.length <= maxCharsPerPhrase) {
     return [clean];
   }
 
   const clauseStarters = new Set([
-    "that", "it's", "its", "and", "because", "so", "but", "which", "where",
+    "that", "it's", "and", "because", "so", "but", "which", "where",
     "when", "while", "if", "located", "making", "version", "honestly", "way",
     "unlike", "always", "once", "drop"
   ]);
@@ -409,23 +409,23 @@ export function splitCueTextIntoNaturalPhrases(
     const updatedChars = currentChars + (currentChars > 0 ? 1 : 0) + word.length;
     const hasEndPunct = /[.,!?;:]$/.test(word);
     const afterRemaining = words.length - (i + 1);
-    const nextWordLower = afterRemaining >= 1 ? words[i + 1].toLowerCase().replace(/[^a-z']/g, "") : "";
+    const nextWord = afterRemaining >= 1 ? words[i + 1] : "";
+    const nextWordLower = nextWord.toLowerCase().replace(/[^a-z']/g, "");
     const wordAfterNextLower = afterRemaining >= 2 ? words[i + 2].toLowerCase().replace(/[^a-z']/g, "") : "";
 
     if (afterRemaining > 0) {
-      // If the word after next is a clause starter (e.g. "price [point] [so]"), allow 1 extra word so we split cleanly before the clause starter
       const holdOneMoreWordForClause =
         !hasEndPunct &&
         !clauseStarters.has(nextWordLower) &&
         clauseStarters.has(wordAfterNextLower) &&
         current.length <= maxWordsPerPhrase &&
-        updatedChars + 1 + (words[i + 1]?.length || 0) <= maxCharsPerPhrase + 6;
+        updatedChars + 1 + nextWord.length <= maxCharsPerPhrase + 4;
 
       if (
         !holdOneMoreWordForClause &&
-        ((hasEndPunct && current.length >= 2) ||
+        ((hasEndPunct && current.length >= 2 && afterRemaining >= 2) ||
           current.length >= maxWordsPerPhrase ||
-          updatedChars >= maxCharsPerPhrase)
+          updatedChars + 1 + nextWord.length > maxCharsPerPhrase)
       ) {
         phrases.push(current);
         current = [];
@@ -445,9 +445,17 @@ export function splitCueTextIntoNaturalPhrases(
       i === phrases.length - 1 &&
       p.length <= 2 &&
       merged.length > 0 &&
-      merged[merged.length - 1].length + p.length <= maxWordsPerPhrase + 2
+      merged[merged.length - 1].join(" ").length + 1 + p.join(" ").length <= maxCharsPerPhrase + 4
     ) {
       merged[merged.length - 1] = [...merged[merged.length - 1], ...p];
+    } else if (
+      i === phrases.length - 1 &&
+      p.length === 1 &&
+      merged.length > 0 &&
+      merged[merged.length - 1].length >= 4
+    ) {
+      const moved = merged[merged.length - 1].pop()!;
+      merged.push([moved, ...p]);
     } else {
       merged.push(p);
     }
@@ -458,13 +466,16 @@ export function splitCueTextIntoNaturalPhrases(
 
 /**
  * Aligns official Bunny Stream VTT cues with hardware-detected audio silence intervals (from ffmpeg silencedetect).
+ * - Automatically detects and decompresses any trailing cues compressed by Whisper's 30s window boundary.
  * - Preserves short cues with exact Bunny Stream timestamps.
  * - For multi-clause cues, maps phrase phonetic weights exclusively onto active vocal speech islands
- *   (excluding silence pauses) and snaps phrase boundaries directly to real hardware voice pauses.
+ *   (excluding silence pauses) and snaps phrase boundaries directly to real hardware voice pauses
+ *   while enforcing natural human speaking rate bounds.
  */
 export function alignBunnyCuesWithHardwareSilences(
   rawCues: { start: number; end: number; text: string }[],
-  silences: AudioSilenceInterval[] = []
+  silences: AudioSilenceInterval[] = [],
+  videoDuration = 0
 ): SubtitleSegment[] {
   if (!Array.isArray(rawCues) || rawCues.length === 0) return [];
 
@@ -472,10 +483,57 @@ export function alignBunnyCuesWithHardwareSilences(
     .filter((s) => s && typeof s.start === "number" && typeof s.end === "number" && s.end > s.start)
     .sort((a, b) => a.start - b.start);
 
+  // Determine the true end of active vocal speech from hardware silences
+  let lastVocalEnd = 0;
+  if (videoDuration > 0 && sortedSilences.length > 0) {
+    let cursor = 0;
+    for (const s of sortedSilences) {
+      if (s.start > cursor + 0.12) {
+        lastVocalEnd = s.start;
+      }
+      cursor = Math.max(cursor, s.end);
+    }
+    if (videoDuration > cursor + 0.25) {
+      lastVocalEnd = videoDuration;
+    }
+  }
+
+  let workingCues = rawCues
+    .map((c) => ({
+      start: Number(c?.start || 0),
+      end: Number(c?.end || 0),
+      text: String(c?.text || "").replace(/\s+/g, " ").trim()
+    }))
+    .filter((c) => c.text.length > 0);
+
+  // Stage 1: If Bunny Stream's VTT compressed trailing cues before the end of actual hardware speech (> 3.0s gap),
+  // remap the compressed trailing block across the full hardware vocal speech span [blockStart, lastVocalEnd]
+  if (workingCues.length > 0 && lastVocalEnd > workingCues[workingCues.length - 1].end + 3.0) {
+    let splitIdx = workingCues.length - 1;
+    while (splitIdx > 0) {
+      const gap = workingCues[splitIdx].start - workingCues[splitIdx - 1].end;
+      if (gap >= 0.45) break;
+      splitIdx--;
+    }
+    const compressedBlock = workingCues.slice(splitIdx);
+    const blockWords = compressedBlock.reduce((sum, c) => sum + c.text.split(/\s+/).length, 0);
+    const blockVttDur = Math.max(0.1, compressedBlock[compressedBlock.length - 1].end - compressedBlock[0].start);
+    if (blockWords / blockVttDur > 3.5) {
+      workingCues = [
+        ...workingCues.slice(0, splitIdx),
+        {
+          start: compressedBlock[0].start,
+          end: lastVocalEnd,
+          text: compressedBlock.map((c) => c.text).join(" ")
+        }
+      ];
+    }
+  }
+
   const result: SubtitleSegment[] = [];
 
-  for (const cue of rawCues) {
-    const text = String(cue?.text || "").replace(/\s+/g, " ").trim();
+  for (const cue of workingCues) {
+    const text = cue.text;
     if (!text) continue;
 
     let cueStart = Math.max(0, Number(cue.start || 0));
@@ -491,7 +549,7 @@ export function alignBunnyCuesWithHardwareSilences(
       }
     }
 
-    const phrases = splitCueTextIntoNaturalPhrases(text, 6, 38);
+    const phrases = splitCueTextIntoNaturalPhrases(text, 6, 36);
     if (phrases.length <= 1) {
       result.push({
         start: Math.round(cueStart * 100) / 100,
@@ -571,22 +629,27 @@ export function alignBunnyCuesWithHardwareSilences(
       const targetVocalTime = (cumulativeWeight / totalWeight) * totalVocalDuration;
       const idealRealTime = vocalTimeToRealTime(targetVocalTime);
 
-      // Find the best unused hardware silence pause near idealRealTime
+      const phraseWords = phrases[i].split(/\s+/).length;
+      const remWordsAfter = phrases.slice(i + 1).join(" ").split(/\s+/).length;
+      const minPhraseDur = Math.max(0.48, phraseWords / 4.3);
+      const minRemDurAfter = Math.max(0.52, remWordsAfter / 4.3);
+
+      // Find the best unused hardware silence pause near idealRealTime that respects human speaking rates
       let bestSilIdx = -1;
       let bestScore = Infinity;
 
       for (let sIdx = 0; sIdx < internalSilences.length; sIdx++) {
         if (usedSilenceIndices.has(sIdx)) continue;
         const sil = internalSilences[sIdx];
-        if (sil.start < currentPhraseStart + 0.45) continue;
-        if (sil.start > cueEnd - 0.15) continue;
+        if (sil.start < currentPhraseStart + minPhraseDur) continue;
+        if (cueEnd - sil.end < minRemDurAfter) continue;
 
         const dist = Math.abs(sil.start - idealRealTime);
-        // Prefer longer pauses when close to the expected vocal boundary
-        const durationBonus = Math.min(0.4, sil.duration * 0.35);
-        const score = dist - durationBonus;
+        const durationBonus = Math.min(0.45, sil.duration * 0.38);
+        const punctBonus = /[.,!?;:]$/.test(phrases[i]) ? 0.15 : 0;
+        const score = dist - durationBonus - punctBonus;
 
-        if (dist <= 1.35 && score < bestScore) {
+        if (dist <= 1.38 && score < bestScore) {
           bestScore = score;
           bestSilIdx = sIdx;
         }
@@ -595,7 +658,7 @@ export function alignBunnyCuesWithHardwareSilences(
       if (bestSilIdx !== -1) {
         usedSilenceIndices.add(bestSilIdx);
         const chosenSil = internalSilences[bestSilIdx];
-        const phraseEnd = Math.max(currentPhraseStart + 0.35, chosenSil.start);
+        const phraseEnd = Math.max(currentPhraseStart + minPhraseDur, chosenSil.start);
         result.push({
           start: Math.round(currentPhraseStart * 100) / 100,
           end: Math.round(phraseEnd * 100) / 100,
@@ -605,7 +668,10 @@ export function alignBunnyCuesWithHardwareSilences(
         // Next phrase starts at the exact millisecond the speaker resumes talking after the silence!
         currentPhraseStart = chosenSil.end;
       } else {
-        const phraseEnd = Math.max(currentPhraseStart + 0.4, Math.min(cueEnd - 0.35, idealRealTime));
+        const phraseEnd = Math.max(
+          currentPhraseStart + minPhraseDur,
+          Math.min(cueEnd - minRemDurAfter, idealRealTime)
+        );
         result.push({
           start: Math.round(currentPhraseStart * 100) / 100,
           end: Math.round(phraseEnd * 100) / 100,
@@ -619,5 +685,6 @@ export function alignBunnyCuesWithHardwareSilences(
 
   return result;
 }
+
 
 
