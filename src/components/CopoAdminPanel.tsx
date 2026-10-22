@@ -1396,6 +1396,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {}
     return [];
   });
+  const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
   const [dbUsers, setDbUsers] = useState<any[]>(() => {
     try {
       const cached = localStorage.getItem("yoouz_admin_cached_users");
