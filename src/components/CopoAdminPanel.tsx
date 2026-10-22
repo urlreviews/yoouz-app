@@ -1759,7 +1759,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     });
     return set;
-  }, [activeAllUsers]);
+  }, [activeAllUsers, isAuthenticated]);
 
   // Unique Users Mapping (Real registered users and video creators, without fake business email injection!)
   const uniqueUsers = useMemo(() => {
@@ -1779,11 +1779,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     (activeAllUsers || []).forEach((u) => {
       if (!u) return;
       if (
-        isKeyDeleted(u.id) ||
-        isKeyDeleted(u.uid) ||
-        isKeyDeleted(u.email) ||
-        isKeyDeleted(u.name) ||
-        isKeyDeleted(u.handle)
+        !isAuthenticated && (
+          isKeyDeleted(u.id) ||
+          isKeyDeleted(u.uid) ||
+          isKeyDeleted(u.email) ||
+          isKeyDeleted(u.name) ||
+          isKeyDeleted(u.handle)
+        )
       ) {
         return;
       }
@@ -1881,17 +1883,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // Do not filter out incomplete signups; keep all registered users in the admin view so the admin can always find them!
     return finalList.filter(u => {
        if (
-         isKeyDeleted(u.id) ||
-         isKeyDeleted(u.uid) ||
-         isKeyDeleted(u.email) ||
-         isKeyDeleted(u.name) ||
-         isKeyDeleted(u.handle)
+         !isAuthenticated && (
+           isKeyDeleted(u.id) ||
+           isKeyDeleted(u.uid) ||
+           isKeyDeleted(u.email) ||
+           isKeyDeleted(u.name) ||
+           isKeyDeleted(u.handle)
+         )
        ) {
          return false;
        }
        return true;
     });
-  }, [activeAllUsers, activeVideos, deletedUserKeys]);
+  }, [activeAllUsers, activeVideos, deletedUserKeys, isAuthenticated]);
 
   // Helper to normalize comment details with full user resolution for Admin View
   const resolveCommentUserMeta = useCallback((c: ReviewComment): ReviewComment => {

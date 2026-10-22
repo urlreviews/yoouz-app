@@ -646,10 +646,7 @@ export function useFeedPagination() {
         }
       } finally {
         isFetching = false;
-      }
-
-      if (!isBackground) {
-        setTimeout(() => { if (active) setIsLoading(false); }, 1500);
+        if (!isBackground) setIsLoading(false);
       }
     };
 
@@ -1162,8 +1159,8 @@ export function useFeedPagination() {
 
     loadDataRef.current = loadData;
 
-    // Initial load
-    loadData(1, false);
+    // Initial load (silent background sync so page loads instantly for cold starts)
+    loadData(1, true);
 
     // Live background polling (every 12 seconds) as backup synchronization
     const interval = setInterval(() => {
