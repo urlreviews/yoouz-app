@@ -1396,9 +1396,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {}
     return [];
   });
-  const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
-  const [dbUsers, setDbUsers] = useState<any[]>([]);
-  const [dbComments, setDbComments] = useState<any[]>([]);
+  const [dbUsers, setDbUsers] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem("yoouz_admin_cached_users");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
 
   // Partner Agencies State
   const [adminAgencies, setAdminAgencies] = useState<any[]>([]);
@@ -1475,7 +1482,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         fetch("/api/admin/live-stats", { cache: "no-store" }),
         fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" }),
         fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" }),
-        fetch(`/api/nosql/users?_t=${Date.now()}`, { cache: "no-store" }),
+        fetch("/api/admin/users", { cache: "no-store" }),
         fetch("/api/admin/chats", { cache: "no-store" }),
         fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store" })
       ]);
@@ -1510,8 +1517,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       if (usersRes.status === "fulfilled" && usersRes.value.ok) {
         const usersData = await usersRes.value.json();
-        if (Array.isArray(usersData)) {
-          setDbUsers(usersData);
+        const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
+        if (Array.isArray(list) && list.length > 0) {
+          setDbUsers(list);
+          try {
+            localStorage.setItem("yoouz_admin_cached_users", JSON.stringify(list));
+          } catch (e) {}
         }
       }
 

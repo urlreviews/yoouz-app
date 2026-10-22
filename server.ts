@@ -8744,6 +8744,102 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
 app.post('/api/nosql/:collection/:id', express.json({limit: '50mb'}), handleSaveNoSqlDoc);
 app.put('/api/nosql/:collection/:id', express.json({limit: '50mb'}), handleSaveNoSqlDoc);
 
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    const usersMap = new Map<string, any>();
+
+    // 1. Fetch from NoSQL collection (queries BunnyDB users, local DB, and users_index.json)
+    const baseUsers = await getNoSqlCollectionItems('users');
+    if (Array.isArray(baseUsers)) {
+      baseUsers.forEach(u => {
+        if (u) {
+          const key = String(u.email || u.id || u.uid || '').toLowerCase().trim();
+          if (key) usersMap.set(key, u);
+        }
+      });
+    }
+
+    // 2. Fetch directly from BunnyDB users table
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      try {
+        const rows = await bunnyDb.execute("SELECT * FROM users");
+        if (rows && rows.rows) {
+          rows.rows.forEach((row: any) => {
+            if (row && (row.id || row.email)) {
+              let parsed: any = {};
+              try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+              const emailKey = String(row.email || parsed.email || row.id).toLowerCase().trim();
+              const existing = usersMap.get(emailKey) || {};
+              const resolvedRole = parsed.role || row.role || existing.role || "user";
+              const isPending = parsed.status === "pending_verification" || parsed.isVerified === false || resolvedRole.includes("Pending");
+              usersMap.set(emailKey, {
+                id: row.id || parsed.id || emailKey,
+                uid: parsed.uid || row.id || emailKey,
+                email: row.email || parsed.email || (emailKey.includes('@') ? emailKey : ''),
+                name: parsed.name || row.name || existing.name || (emailKey.includes('@') ? emailKey.split('@')[0] : 'User'),
+                role: resolvedRole,
+                status: isPending ? "pending_verification" : (parsed.status || "verified"),
+                isVerified: !isPending,
+                avatar: parsed.avatar || row.avatar || existing.avatar || '',
+                bio: parsed.bio || row.bio || existing.bio || '',
+                handle: parsed.handle || existing.handle || (emailKey.includes('@') ? `@${emailKey.split('@')[0]}` : '@user'),
+                isRegisteredAccount: true,
+                ...parsed,
+                ...existing
+              });
+            }
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 3. Include any active in-memory OTP verification requests (users who requested 6-digit code)
+    if (typeof userVerificationStore !== "undefined" && userVerificationStore.size > 0) {
+      userVerificationStore.forEach((rec, emailKey) => {
+        const clean = String(emailKey).toLowerCase().trim();
+        if (clean && !usersMap.has(clean)) {
+          usersMap.set(clean, {
+            id: `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            uid: `usr_${clean.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            email: clean,
+            name: rec.firstName ? `${rec.firstName} ${rec.lastName || ''}`.trim() : clean.split('@')[0],
+            handle: `@${clean.split('@')[0]}`,
+            role: "Member (Pending Verification)",
+            status: "pending_verification",
+            isVerified: false,
+            isRegisteredAccount: true,
+            memberSince: "Just now"
+          });
+        }
+      });
+    }
+
+    // 4. Include local users_index.json (ensures pending signups like Elaine are permanently represented)
+    const localList = readUsersIndex();
+    if (Array.isArray(localList)) {
+      localList.forEach(u => {
+        if (u && (u.email || u.id)) {
+          const key = String(u.email || u.id).toLowerCase().trim();
+          if (key && !usersMap.has(key)) {
+            usersMap.set(key, u);
+          }
+        }
+      });
+    }
+
+    const finalList = Array.from(usersMap.values()).filter(u => !isDeletedUserServer(u));
+    return res.json(finalList);
+  } catch (err: any) {
+    console.error("GET /api/admin/users error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/users/delete', express.json(), async (req, res) => {
   try {
     const { id, uid, email, name, handle } = req.body || {};
@@ -10637,6 +10733,47 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       }
       return purgedCount;
     } catch (err) {
+      return 0;
+    }
+  }
+
+  // Ensure all registered and pending verification users are permanently synced and backed up in BunnyDB
+  async function syncAndPersistAllUsers(): Promise<number> {
+    try {
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      let synced = 0;
+      if (bunnyDb && Array.isArray(localUsers) && localUsers.length > 0) {
+        for (const u of localUsers) {
+          if (!u || (!u.id && !u.email)) continue;
+          const cleanEmail = String(u.email || '').toLowerCase().trim();
+          const cleanId = String(u.id || u.uid || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+          try {
+            const existing = await bunnyDb.execute({
+              sql: "SELECT id, email FROM users WHERE email = ? OR id = ? LIMIT 1",
+              args: [cleanEmail || cleanId, cleanId]
+            });
+            if (!existing || !existing.rows || existing.rows.length === 0) {
+              const isPending = u.status === "pending_verification" || u.isVerified === false;
+              const role = u.role || (isPending ? "Member (Pending Verification)" : "user");
+              await bunnyDb.execute({
+                sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                args: [
+                  cleanId,
+                  cleanEmail || null,
+                  u.name || (cleanEmail ? cleanEmail.split('@')[0] : 'User'),
+                  role,
+                  JSON.stringify(u)
+                ]
+              });
+              synced++;
+            }
+          } catch (rowErr) {}
+        }
+      }
+      return synced;
+    } catch (e) {
       return 0;
     }
   }
@@ -20791,8 +20928,8 @@ app.post("/api/videos/save-review", async (req, res) => {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           await bunnyDb.execute({
-            sql: `INSERT OR REPLACE INTO users (id, email, data, createdAt, updatedAt) VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
-            args: [pendingUserRecord.id, cleanEmail, JSON.stringify(pendingUserRecord)]
+            sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+            args: [pendingUserRecord.id, cleanEmail, pendingUserRecord.name, pendingUserRecord.role, JSON.stringify(pendingUserRecord)]
           }).catch(() => {});
         }
       } catch (pendingErr) {}
@@ -34774,6 +34911,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
     }
   }).catch((e) => console.warn("User profile reconciliation startup notice:", e?.message));
+
+  // Sync and permanently persist all registered and pending users to BunnyDB
+  syncAndPersistAllUsers().then((count) => {
+    if (count > 0) {
+      console.log(`👤 [Server] Synced and backed up ${count} user record(s) into persistent Bunny Cloud Database.`);
+    }
+  }).catch(() => {});
 
   // Sanitize existing user database to purge mismatched business system emails
   sanitizeExistingUsersDatabase().then((count) => {
