@@ -123,17 +123,11 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const s = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : -1;
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
-        if (s >= 0 && e >= s) {
-          // 🐰 Official Bunny Stream Cue: Use exact, authentic start/end timestamps from Bunny Stream
-          cleanCues.push({
-            id: cueId++,
-            start: s,
-            end: e,
-            text: txt
-          });
-        } else if (Array.isArray(item.words) && item.words.length > 0) {
+        if (Array.isArray(item.words) && item.words.length > 0) {
+          // If Bunny Stream provided exact word-level timecodes in the VTT (<00:00:xx>)
+          // Group into clean 5-7 word single-line phrases using Bunny's authentic word timestamps
           const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
-          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4, 28);
+          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 6, 36);
           let wordIdx = 0;
           for (const chunkWords of wordChunks) {
             const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
@@ -150,6 +144,14 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
               });
             }
           }
+        } else if (s >= 0 && e >= s) {
+          // 🐰 Official Bunny Stream Sentence Cue: Use exact, authentic start/end timestamps from Bunny Stream
+          cleanCues.push({
+            id: cueId++,
+            start: s,
+            end: e,
+            text: txt
+          });
         } else {
           cleanCues.push({
             id: cueId++,
@@ -238,46 +240,78 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   // 🎯 Direct hardware timeupdate event listener on the active video element for precise lockstep sync
   const [exactCurrentTime, setExactCurrentTime] = useState<number>(() => currentTime || 0);
 
+  // Instantly sync when high-frequency 60Hz RAF loop passes updated time from CopoVideoPlayer
+  useEffect(() => {
+    if (typeof currentTime === 'number' && !isNaN(currentTime)) {
+      setExactCurrentTime(currentTime);
+    }
+  }, [currentTime]);
+
   useEffect(() => {
     if (!isActive) return;
 
-    let targetVid: HTMLVideoElement | null = videoElement || null;
-    if (!targetVid && slotId) {
-      targetVid = document.getElementById(slotId)?.querySelector('video') || null;
-    }
-    if (!targetVid) {
-      targetVid = document.querySelector('video[id^="copo-feed-video-"]') as HTMLVideoElement | null;
-    }
+    const findTargetVideo = (): HTMLVideoElement | null => {
+      if (videoElement) return videoElement;
+      if (slotId) {
+        const slotEl = document.getElementById(slotId);
+        const vidInSlot = slotEl?.querySelector('video');
+        if (vidInSlot) return vidInSlot;
+      }
+      const feedVideos = Array.from(document.querySelectorAll<HTMLVideoElement>('video[id^="copo-feed-video-"], video.copo-video-feed-element'));
+      const playing = feedVideos.find(v => !v.paused && v.currentTime > 0);
+      return playing || feedVideos[0] || null;
+    };
 
-    if (!targetVid) {
-      setExactCurrentTime(currentTime || 0);
-      return;
-    }
+    let targetVid = findTargetVideo();
 
     const syncTimeFromHardware = () => {
+      if (!targetVid) {
+        targetVid = findTargetVideo();
+      }
       if (targetVid && typeof targetVid.currentTime === 'number' && !isNaN(targetVid.currentTime)) {
         setExactCurrentTime(targetVid.currentTime);
       }
     };
 
-    // Immediate sync
     syncTimeFromHardware();
 
-    // Listen directly to native HTML5 video element events
-    targetVid.addEventListener('timeupdate', syncTimeFromHardware, { passive: true });
-    targetVid.addEventListener('seeking', syncTimeFromHardware, { passive: true });
-    targetVid.addEventListener('seeked', syncTimeFromHardware, { passive: true });
-    targetVid.addEventListener('play', syncTimeFromHardware, { passive: true });
-    targetVid.addEventListener('pause', syncTimeFromHardware, { passive: true });
+    const attachListeners = (vid: HTMLVideoElement) => {
+      vid.addEventListener('timeupdate', syncTimeFromHardware, { passive: true });
+      vid.addEventListener('seeking', syncTimeFromHardware, { passive: true });
+      vid.addEventListener('seeked', syncTimeFromHardware, { passive: true });
+      vid.addEventListener('play', syncTimeFromHardware, { passive: true });
+      vid.addEventListener('pause', syncTimeFromHardware, { passive: true });
+    };
+
+    const detachListeners = (vid: HTMLVideoElement) => {
+      vid.removeEventListener('timeupdate', syncTimeFromHardware);
+      vid.removeEventListener('seeking', syncTimeFromHardware);
+      vid.removeEventListener('seeked', syncTimeFromHardware);
+      vid.removeEventListener('play', syncTimeFromHardware);
+      vid.removeEventListener('pause', syncTimeFromHardware);
+    };
+
+    if (targetVid) {
+      attachListeners(targetVid);
+    }
+
+    const interval = setInterval(() => {
+      if (!targetVid) {
+        targetVid = findTargetVideo();
+        if (targetVid) {
+          attachListeners(targetVid);
+          syncTimeFromHardware();
+        }
+      }
+    }, 400);
 
     return () => {
-      targetVid?.removeEventListener('timeupdate', syncTimeFromHardware);
-      targetVid?.removeEventListener('seeking', syncTimeFromHardware);
-      targetVid?.removeEventListener('seeked', syncTimeFromHardware);
-      targetVid?.removeEventListener('play', syncTimeFromHardware);
-      targetVid?.removeEventListener('pause', syncTimeFromHardware);
+      clearInterval(interval);
+      if (targetVid) {
+        detachListeners(targetVid);
+      }
     };
-  }, [isActive, slotId, videoElement, currentTime]);
+  }, [isActive, slotId, videoElement]);
 
   const effectiveTime = isLiveRecording ? (currentTime || 0) : exactCurrentTime;
 
@@ -308,17 +342,17 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[230px] xs:bottom-[240px] sm:bottom-[130px] md:bottom-[130px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[205px] xs:bottom-[215px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-2.5 sm:px-4 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[90%] sm:max-w-[85%] flex justify-center transition-opacity duration-150 ease-out ${
+        className={`max-w-[96%] sm:max-w-[92%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/80 backdrop-blur-md px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-white/20 shadow-[0_4px_24px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-bold tracking-tight text-center leading-snug text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] [text-wrap:balance]">
+          <p className="text-[12.5px] xs:text-[13px] sm:text-[14px] md:text-[14.5px] font-bold tracking-normal text-center leading-snug sm:leading-relaxed text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] [text-wrap:balance] line-clamp-2">
             {currentText || ''}
           </p>
         </div>
