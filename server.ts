@@ -8832,6 +8832,67 @@ app.get('/api/admin/users', async (req, res) => {
       });
     }
 
+    // 5. Include known community creators (e.g. Steven Akan, Ben Blue)
+    if (typeof KNOWN_COMMUNITY_USERS_SERVER !== "undefined") {
+      Object.entries(KNOWN_COMMUNITY_USERS_SERVER).forEach(([k, km]) => {
+        if (km && km.name) {
+          const handleClean = (km.handle || k).replace(/^@+/, '').toLowerCase();
+          const emailKey = `${handleClean}@users.yoouz.com`;
+          const existingKey = Array.from(usersMap.keys()).find(key => 
+            key.includes(k) || key.includes(handleClean)
+          );
+          if (!existingKey && !usersMap.has(emailKey)) {
+            const cleanId = `usr_${km.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+            usersMap.set(emailKey, {
+              id: cleanId,
+              uid: cleanId,
+              email: emailKey,
+              name: km.name,
+              handle: km.handle.startsWith('@') ? km.handle : `@${km.handle}`,
+              role: "Creator",
+              status: "verified",
+              isVerified: true,
+              avatar: km.avatar,
+              bio: km.bio || "Verified community reviewer on Yoouz.",
+              location: km.location || "",
+              isRegisteredAccount: true
+            });
+          }
+        }
+      });
+    }
+
+    // 6. Include authors from active video reviews index (e.g. Jose Agustin Reinoso, redha bm, Kert P, Edjo Francis Ramos)
+    const reviewsIndex = readReviewsIndex();
+    if (Array.isArray(reviewsIndex)) {
+      reviewsIndex.forEach(v => {
+        if (v && v.author && v.author.name) {
+          const aName = String(v.author.name).trim();
+          const aHandle = String(v.author.handle || '').replace(/^@+/, '').trim().toLowerCase();
+          const aSlug = aName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const emailKey = String(v.userEmail || (aHandle ? `${aHandle}@users.yoouz.com` : `${aSlug}@users.yoouz.com`)).toLowerCase().trim();
+          
+          if (emailKey && !usersMap.has(emailKey)) {
+            const uId = String(v.userId || `usr_${aSlug}`);
+            usersMap.set(emailKey, {
+              id: uId,
+              uid: uId,
+              email: emailKey,
+              name: aName,
+              handle: v.author.handle ? (v.author.handle.startsWith('@') ? v.author.handle : `@${v.author.handle}`) : `@${aSlug}`,
+              role: "Creator",
+              status: "verified",
+              isVerified: true,
+              avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=27272a&color=fff&bold=true&size=128`,
+              bio: v.author.bio || "Verified video reviewer on Yoouz.",
+              location: v.author.location || "",
+              isRegisteredAccount: true
+            });
+          }
+        }
+      });
+    }
+
     const finalList = Array.from(usersMap.values()).filter(u => !isDeletedUserServer(u));
     return res.json(finalList);
   } catch (err: any) {
@@ -10737,38 +10798,108 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     }
   }
 
-  // Ensure all registered and pending verification users are permanently synced and backed up in BunnyDB
+  // Ensure all registered, pending, community creators and review author users are permanently synced and backed up in BunnyDB
   async function syncAndPersistAllUsers(): Promise<number> {
     try {
       const bunnyDb = getBunnyDb();
+      const allUsersMap = new Map<string, any>();
+
+      // 1. Read existing users_index.json
       const localUsers = readUsersIndex();
+      if (Array.isArray(localUsers)) {
+        localUsers.forEach(u => {
+          if (u && (u.email || u.id)) {
+            const key = String(u.email || u.id).toLowerCase().trim();
+            if (key) allUsersMap.set(key, u);
+          }
+        });
+      }
+
+      // 2. Add KNOWN_COMMUNITY_USERS_SERVER creators
+      if (typeof KNOWN_COMMUNITY_USERS_SERVER !== "undefined") {
+        Object.entries(KNOWN_COMMUNITY_USERS_SERVER).forEach(([k, km]) => {
+          if (km && km.name) {
+            const handleClean = (km.handle || k).replace(/^@+/, '').toLowerCase();
+            const emailKey = `${handleClean}@users.yoouz.com`;
+            if (!allUsersMap.has(emailKey) && !allUsersMap.has(handleClean)) {
+              const cleanId = `usr_${km.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+              allUsersMap.set(emailKey, {
+                id: cleanId,
+                uid: cleanId,
+                email: emailKey,
+                name: km.name,
+                handle: km.handle.startsWith('@') ? km.handle : `@${km.handle}`,
+                role: "Creator",
+                status: "verified",
+                isVerified: true,
+                avatar: km.avatar,
+                bio: km.bio || "Verified community reviewer on Yoouz.",
+                location: km.location || "",
+                isRegisteredAccount: true
+              });
+            }
+          }
+        });
+      }
+
+      // 3. Add Video Review Authors from reviews_index.json
+      const reviewsIndex = readReviewsIndex();
+      if (Array.isArray(reviewsIndex)) {
+        reviewsIndex.forEach(v => {
+          if (v && v.author && v.author.name) {
+            const aName = String(v.author.name).trim();
+            const aHandle = String(v.author.handle || '').replace(/^@+/, '').trim().toLowerCase();
+            const aSlug = aName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const emailKey = String(v.userEmail || (aHandle ? `${aHandle}@users.yoouz.com` : `${aSlug}@users.yoouz.com`)).toLowerCase().trim();
+
+            if (emailKey && !allUsersMap.has(emailKey)) {
+              const uId = String(v.userId || `usr_${aSlug}`);
+              allUsersMap.set(emailKey, {
+                id: uId,
+                uid: uId,
+                email: emailKey,
+                name: aName,
+                handle: v.author.handle ? (v.author.handle.startsWith('@') ? v.author.handle : `@${v.author.handle}`) : `@${aSlug}`,
+                role: "Creator",
+                status: "verified",
+                isVerified: true,
+                avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=27272a&color=fff&bold=true&size=128`,
+                bio: v.author.bio || "Verified video reviewer on Yoouz.",
+                location: v.author.location || "",
+                isRegisteredAccount: true
+              });
+            }
+          }
+        });
+      }
+
+      // Filter out deleted users
+      const aggregatedList = Array.from(allUsersMap.values()).filter(u => !isDeletedUserServer(u));
+
+      // Persist aggregated list into local users_index.json on disk
+      writeUsersIndex(aggregatedList);
+
       let synced = 0;
-      if (bunnyDb && Array.isArray(localUsers) && localUsers.length > 0) {
-        for (const u of localUsers) {
+      if (bunnyDb && aggregatedList.length > 0) {
+        for (const u of aggregatedList) {
           if (!u || (!u.id && !u.email)) continue;
           const cleanEmail = String(u.email || '').toLowerCase().trim();
           const cleanId = String(u.id || u.uid || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
           try {
-            const existing = await bunnyDb.execute({
-              sql: "SELECT id, email FROM users WHERE email = ? OR id = ? LIMIT 1",
-              args: [cleanEmail || cleanId, cleanId]
+            const isPending = u.status === "pending_verification" || u.isVerified === false;
+            const role = u.role || (isPending ? "Member (Pending Verification)" : "user");
+            await bunnyDb.execute({
+              sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+              args: [
+                cleanId,
+                cleanEmail || null,
+                u.name || (cleanEmail ? cleanEmail.split('@')[0] : 'User'),
+                role,
+                JSON.stringify(u)
+              ]
             });
-            if (!existing || !existing.rows || existing.rows.length === 0) {
-              const isPending = u.status === "pending_verification" || u.isVerified === false;
-              const role = u.role || (isPending ? "Member (Pending Verification)" : "user");
-              await bunnyDb.execute({
-                sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt)
-                      VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                args: [
-                  cleanId,
-                  cleanEmail || null,
-                  u.name || (cleanEmail ? cleanEmail.split('@')[0] : 'User'),
-                  role,
-                  JSON.stringify(u)
-                ]
-              });
-              synced++;
-            }
+            synced++;
           } catch (rowErr) {}
         }
       }

@@ -1744,6 +1744,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch {}
   };
 
+  const activeKeysSet = useMemo(() => {
+    const set = new Set<string>();
+    (activeAllUsers || []).forEach((u) => {
+      if (u) {
+        if (u.id) set.add(String(u.id).toLowerCase().trim());
+        if (u.uid) set.add(String(u.uid).toLowerCase().trim());
+        if (u.email) {
+          const cleanE = String(u.email).toLowerCase().trim();
+          set.add(cleanE);
+          set.add(`usr_${cleanE.replace(/[^a-zA-Z0-9]/g, '_')}`);
+        }
+      }
+    });
+    return set;
+  }, [activeAllUsers]);
+
   // Unique Users Mapping (Real registered users and video creators, without fake business email injection!)
   const uniqueUsers = useMemo(() => {
     const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim().toLowerCase();
@@ -1751,6 +1767,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (!val) return false;
       const clean = val.toLowerCase().trim();
       const withoutAt = clean.replace(/^@+/, "");
+      if (activeKeysSet.has(clean) || activeKeysSet.has(withoutAt)) {
+        return false;
+      }
       return deletedUserKeys.has(clean) || deletedUserKeys.has(withoutAt);
     };
 
