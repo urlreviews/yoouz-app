@@ -266,7 +266,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.preload = "auto";
         vid.disablePictureInPicture = true;
         vid.crossOrigin = "anonymous";
-        vid.className = "w-full h-full absolute inset-0 z-0 pointer-events-none";
+        vid.className = "w-full h-full absolute inset-0 z-0 pointer-events-none object-cover copo-video-feed-element";
+        vid.style.objectFit = "cover";
+        vid.style.width = "100%";
+        vid.style.height = "100%";
 
         vid.addEventListener("playing", () => {
           if (feedVideoRef.current === vid) {
@@ -309,7 +312,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         });
         vid.addEventListener("timeupdate", () => {
           if (feedVideoRef.current === vid) {
-            if (!vid.paused && vid.currentTime >= 0.05) {
+            const curTime = typeof vid.currentTime === 'number' && !isNaN(vid.currentTime) ? vid.currentTime : 0;
+            setVideoTime(curTime);
+            if (!vid.paused && curTime >= 0.05) {
               setIsPlaying(true);
               setIsBuffering(false);
               if (lastLoadedVideoIdRef.current) {
@@ -318,9 +323,18 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             }
             if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
               setVideoDuration(vid.duration);
-              setVideoTime(vid.currentTime);
-              setProgressPercent((vid.currentTime / vid.duration) * 100);
+              setProgressPercent((curTime / vid.duration) * 100);
             }
+          }
+        });
+        vid.addEventListener("seeking", () => {
+          if (feedVideoRef.current === vid && typeof vid.currentTime === 'number' && !isNaN(vid.currentTime)) {
+            setVideoTime(vid.currentTime);
+          }
+        });
+        vid.addEventListener("seeked", () => {
+          if (feedVideoRef.current === vid && typeof vid.currentTime === 'number' && !isNaN(vid.currentTime)) {
+            setVideoTime(vid.currentTime);
           }
         });
         vid.addEventListener("volumechange", () => {

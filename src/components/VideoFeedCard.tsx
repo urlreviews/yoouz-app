@@ -990,6 +990,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
       {/* Subtitle Overlay (TikTok / CapCut 60Hz synchronized word highlight captions) */}
       <SubtitleOverlay
+        slotId={slotId || `video-slot-${video.id}`}
         currentTime={isActive ? videoTime : 0}
         segments={video.segments}
         transcriptText={video.transcriptText || video.caption}

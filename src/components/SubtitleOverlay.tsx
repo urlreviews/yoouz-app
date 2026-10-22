@@ -16,6 +16,8 @@ interface SubtitleOverlayProps {
   duration?: number;
   isActive?: boolean;
   isLiveRecording?: boolean;
+  slotId?: string;
+  videoElement?: HTMLVideoElement | null;
 }
 
 /**
@@ -94,7 +96,9 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   transcriptText,
   duration = 15,
   isActive = false,
-  isLiveRecording = false
+  isLiveRecording = false,
+  slotId,
+  videoElement
 }) => {
   // Parse and build clean 1-2 line phrase subtitle cues with zero-gap bridging
   const cues = useMemo<SubtitleCue[]>(() => {
@@ -219,63 +223,87 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    // 🛡️ ANTI-BLINKING GAP BRIDGING:
-    // Bridge gaps between consecutive phrase cues so subtitles NEVER unmount or flicker between words
+    // 🛡️ ANTI-BLINKING MICRO-GAP BRIDGING: Only bridge tiny breath gaps <= 0.15s between consecutive sentences
     for (let i = 0; i < deduplicatedCues.length - 1; i++) {
       const curr = deduplicatedCues[i];
       const next = deduplicatedCues[i + 1];
-      if (next.start > curr.end && next.start - curr.end <= 2.5) {
-        curr.end = next.start; // Seamless transition!
+      if (next.start > curr.end && next.start - curr.end <= 0.15) {
+        curr.end = next.start;
       }
     }
 
     return deduplicatedCues;
   }, [segments, transcriptText, duration]);
 
-  // Compute active cue with hysteresis hold time to prevent flickering
+  // 🎯 Direct hardware timeupdate event listener on the active video element for precise lockstep sync
+  const [exactCurrentTime, setExactCurrentTime] = useState<number>(() => currentTime || 0);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    let targetVid: HTMLVideoElement | null = videoElement || null;
+    if (!targetVid && slotId) {
+      targetVid = document.getElementById(slotId)?.querySelector('video') || null;
+    }
+    if (!targetVid) {
+      targetVid = document.querySelector('video[id^="copo-feed-video-"]') as HTMLVideoElement | null;
+    }
+
+    if (!targetVid) {
+      setExactCurrentTime(currentTime || 0);
+      return;
+    }
+
+    const syncTimeFromHardware = () => {
+      if (targetVid && typeof targetVid.currentTime === 'number' && !isNaN(targetVid.currentTime)) {
+        setExactCurrentTime(targetVid.currentTime);
+      }
+    };
+
+    // Immediate sync
+    syncTimeFromHardware();
+
+    // Listen directly to native HTML5 video element events
+    targetVid.addEventListener('timeupdate', syncTimeFromHardware, { passive: true });
+    targetVid.addEventListener('seeking', syncTimeFromHardware, { passive: true });
+    targetVid.addEventListener('seeked', syncTimeFromHardware, { passive: true });
+    targetVid.addEventListener('play', syncTimeFromHardware, { passive: true });
+    targetVid.addEventListener('pause', syncTimeFromHardware, { passive: true });
+
+    return () => {
+      targetVid?.removeEventListener('timeupdate', syncTimeFromHardware);
+      targetVid?.removeEventListener('seeking', syncTimeFromHardware);
+      targetVid?.removeEventListener('seeked', syncTimeFromHardware);
+      targetVid?.removeEventListener('play', syncTimeFromHardware);
+      targetVid?.removeEventListener('pause', syncTimeFromHardware);
+    };
+  }, [isActive, slotId, videoElement, currentTime]);
+
+  const effectiveTime = isLiveRecording ? (currentTime || 0) : exactCurrentTime;
+
+  // Compute active cue in exact lockstep with Bunny Stream audio timecodes
   const activeCue = useMemo<SubtitleCue | null>(() => {
     if (!isActive || cues.length === 0) return null;
     if (isLiveRecording) return cues[cues.length - 1] || null;
 
     for (let i = 0; i < cues.length; i++) {
       const cue = cues[i];
-      const nextCue = cues[i + 1];
-      // Hold cue until next cue starts or up to 1.5s after cue end to prevent mid-speech blinking
-      const effectiveEnd = (nextCue && nextCue.start > cue.start) ? Math.min(nextCue.start, cue.end + 1.2) : cue.end + 1.8;
-      if (currentTime >= cue.start && currentTime <= effectiveEnd) {
+      // Exact second the speaker talks: active strictly between cue.start and cue.end
+      if (effectiveTime >= cue.start && effectiveTime <= cue.end) {
         return cue;
       }
     }
     return null;
-  }, [cues, currentTime, isActive, isLiveRecording]);
-
-  // Keep a persistent reference to the active or last display cue to ensure smooth fade-out CSS transitions
-  const [displayCue, setDisplayCue] = useState<SubtitleCue | null>(null);
-  const fadeTimeoutRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (activeCue) {
-      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-      setDisplayCue(activeCue);
-    } else {
-      // Hold last cue for 0.4s before fading out container
-      fadeTimeoutRef.current = setTimeout(() => {
-        setDisplayCue(null);
-      }, 400);
-    }
-    return () => {
-      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-    };
-  }, [activeCue]);
+  }, [cues, effectiveTime, isActive, isLiveRecording]);
 
   const isRTL = useMemo(() => {
-    const txt = activeCue?.text || displayCue?.text;
+    const txt = activeCue?.text;
     if (!txt) return false;
     return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(txt);
-  }, [activeCue, displayCue]);
+  }, [activeCue]);
 
-  const isVisible = Boolean(isActive && (activeCue || displayCue));
-  const currentText = activeCue?.text || displayCue?.text;
+  const isVisible = Boolean(isActive && activeCue && activeCue.text);
+  const currentText = activeCue?.text || null;
 
   if (!isActive && !isVisible) return null;
 
