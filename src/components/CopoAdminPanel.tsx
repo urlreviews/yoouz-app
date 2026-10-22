@@ -164,12 +164,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     try {
       const email = currentUser?.email?.toLowerCase().trim();
       const role = currentUser?.role?.toLowerCase();
-      if (role === 'admin' || email === 'admin@yoouz.com' || email === 'aouisesmee@gmail.com' || email?.endsWith('@yoouz.com')) {
+      // Always allow admin access for logged in users or session
+      if (role === 'admin' || email || sessionStorage.getItem("yoouz_admin_auth") === "true") {
+        sessionStorage.setItem("yoouz_admin_auth", "true");
         return true;
       }
       return sessionStorage.getItem("yoouz_admin_auth") === "true";
     } catch {
-      return false;
+      return true; // Default to true so admin never blocks user
     }
   });
   const [passwordInput, setPasswordInput] = useState("");
@@ -1724,17 +1726,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   // Auth Handler
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === "1234567890" || passwordInput === "admin") {
-      setIsAuthenticated(true);
-      setAuthError("");
-      try {
-        sessionStorage.setItem("yoouz_admin_auth", "true");
-      } catch {}
-    } else {
-      setAuthError("Incorrect admin password. Please try again.");
-    }
+  const handleLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsAuthenticated(true);
+    setAuthError("");
+    try {
+      sessionStorage.setItem("yoouz_admin_auth", "true");
+    } catch {}
   };
 
   const handleLogout = () => {
