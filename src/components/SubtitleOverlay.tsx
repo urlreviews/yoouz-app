@@ -120,27 +120,13 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
         if (s >= 0 && e >= s) {
-          const words = txt.split(/\s+/).filter(Boolean);
-          // If the cue is already 1-line short (<= 4 words and <= 28 chars), keep it directly
-          if (words.length <= 4 && txt.length <= 28) {
-            cleanCues.push({
-              id: cueId++,
-              start: s,
-              end: e,
-              text: txt
-            });
-          } else {
-            // Long Bunny Stream cue: chunk into compact 1-2 line synced phrases timed acoustically
-            const phraseChunks = chunkCueTo1Line(s, e, txt, 4);
-            for (const chunk of phraseChunks) {
-              cleanCues.push({
-                id: cueId++,
-                start: chunk.start,
-                end: chunk.end,
-                text: chunk.text
-              });
-            }
-          }
+          // 🐰 Official Bunny Stream Cue: Use exact, authentic start/end timestamps from Bunny Stream
+          cleanCues.push({
+            id: cueId++,
+            start: s,
+            end: e,
+            text: txt
+          });
         } else if (Array.isArray(item.words) && item.words.length > 0) {
           const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
           const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4, 28);
@@ -161,15 +147,12 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
             }
           }
         } else {
-          const phraseChunks = chunkCueTo1Line(s >= 0 ? s : (cueId - 1) * 2.5, e >= s ? e : s + 2.0, txt, 4);
-          for (const chunk of phraseChunks) {
-            cleanCues.push({
-              id: cueId++,
-              start: chunk.start,
-              end: chunk.end,
-              text: chunk.text
-            });
-          }
+          cleanCues.push({
+            id: cueId++,
+            start: s >= 0 ? s : (cueId - 1) * 2.5,
+            end: e >= s ? e : (s >= 0 ? s + 2.5 : cueId * 2.5),
+            text: txt
+          });
         }
       }
     }
@@ -299,15 +282,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   return (
     <div className="absolute bottom-[230px] xs:bottom-[240px] sm:bottom-[130px] md:bottom-[130px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[88%] sm:max-w-[82%] flex justify-center transition-opacity duration-150 ease-out ${
+        className={`max-w-[90%] sm:max-w-[85%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-xl px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] text-center flex items-center justify-center max-w-full"
         >
-          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-black tracking-tight text-center leading-snug text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] line-clamp-2 max-h-[3.2rem] sm:max-h-[3.6rem] overflow-hidden">
+          <p className="text-[14px] xs:text-[15px] sm:text-[16px] md:text-[17px] font-bold tracking-tight text-center leading-snug text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] [text-wrap:balance]">
             {currentText || ''}
           </p>
         </div>
