@@ -44,172 +44,66 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
     "caption": "Zara",
     "title": "Jose Agustin Reinoso - Zara",
-    "transcriptText": "Buenos Días when I started at Excelente Look at Carlos",
+    "transcriptText": "Buenos días, buenas tardes. Este es un review para las tiendas SAVA. Excelentes productos, excelentes... Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen. Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
     "segments": [
       {
-        "start": 0.59,
-        "end": 4.8,
-        "text": "Buenos Días when",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 0.59,
-            "end": 2.89
-          },
-          {
-            "word": "Días",
-            "start": 2.89,
-            "end": 4.01
-          },
-          {
-            "word": "when",
-            "start": 4.01,
-            "end": 4.8
-          }
-        ],
+        "start": 0.82,
+        "end": 2.19,
+        "text": "Buenos días, buenas tardes.",
         "isHardwareTimed": true
       },
       {
-        "start": 4.8,
-        "end": 6.65,
-        "text": "I started at",
-        "words": [
-          {
-            "word": "I",
-            "start": 4.8,
-            "end": 4.99
-          },
-          {
-            "word": "started",
-            "start": 4.99,
-            "end": 6.46
-          },
-          {
-            "word": "at",
-            "start": 6.46,
-            "end": 6.65
-          }
-        ],
+        "start": 2.23,
+        "end": 3.93,
+        "text": "Este es un review para las tiendas SAVA.",
         "isHardwareTimed": true
       },
       {
-        "start": 6.65,
-        "end": 7.99,
-        "text": "Buenos Días when",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 6.65,
-            "end": 7.39
-          },
-          {
-            "word": "Días",
-            "start": 7.39,
-            "end": 7.74
-          },
-          {
-            "word": "when",
-            "start": 7.74,
-            "end": 7.99
-          }
-        ],
+        "start": 4.15,
+        "end": 8.88,
+        "text": "Excelentes productos, excelentes...",
         "isHardwareTimed": true
       },
       {
-        "start": 7.99,
-        "end": 8.83,
-        "text": "I started the",
-        "words": [
-          {
-            "word": "I",
-            "start": 7.99,
-            "end": 8.08
-          },
-          {
-            "word": "started",
-            "start": 8.08,
-            "end": 8.74
-          },
-          {
-            "word": "the",
-            "start": 8.74,
-            "end": 8.83
-          }
-        ],
+        "start": 8.96,
+        "end": 9.83,
+        "text": "Siempre a la moda,",
         "isHardwareTimed": true
       },
       {
-        "start": 8.58,
-        "end": 10.76,
-        "text": "Buenos Días when I",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 8.58,
-            "end": 9.72
-          },
-          {
-            "word": "Días",
-            "start": 9.72,
-            "end": 10.27
-          },
-          {
-            "word": "when",
-            "start": 10.27,
-            "end": 10.66
-          },
-          {
-            "word": "I",
-            "start": 10.66,
-            "end": 10.76
-          }
-        ],
+        "start": 9.83,
+        "end": 11.73,
+        "text": "siempre a las vanguardias y a",
         "isHardwareTimed": true
       },
       {
-        "start": 10.76,
-        "end": 13.18,
-        "text": "started at Excelente",
-        "words": [
-          {
-            "word": "started",
-            "start": 10.76,
-            "end": 11.48
-          },
-          {
-            "word": "at",
-            "start": 11.48,
-            "end": 11.58
-          },
-          {
-            "word": "Excelente",
-            "start": 11.58,
-            "end": 13.18
-          }
-        ],
+        "start": 11.87,
+        "end": 12.89,
+        "text": "todas las personas que están en",
         "isHardwareTimed": true
       },
       {
-        "start": 13.18,
-        "end": 22.25,
-        "text": "Look at Carlos",
-        "words": [
-          {
-            "word": "Look",
-            "start": 13.18,
-            "end": 17.04
-          },
-          {
-            "word": "at",
-            "start": 17.04,
-            "end": 17.52
-          },
-          {
-            "word": "Carlos",
-            "start": 17.52,
-            "end": 22.25
-          }
-        ],
+        "start": 13.03,
+        "end": 14.25,
+        "text": "esto, les recomiendo que lo utilicen.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.25,
+        "end": 18.18,
+        "text": "Entiendo qué es una marca que",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.34,
+        "end": 19.12,
+        "text": "se adapta a los precios y",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.12,
+        "end": 21.1,
+        "text": "demás, se adaptan a calidad, todo está...",
         "isHardwareTimed": true
       }
     ],
@@ -222,8 +116,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 8,
-    "viewsCount": 8,
+    "views": 28,
+    "viewsCount": 28,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -248,17 +142,19 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
     "bunnyGuid": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
-    "vttUrl": "https://vz-733814.b-cdn.net/28d0f1aa-44b7-4380-bc7e-5a527107e38f/captions/en-auto.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/captions/es-auto.vtt",
     "aiTitle": "Jose Agustin Reinoso - Zara",
     "hasBunnySmartCaptions": true,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E"
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "hasHardwareSilenceSync": true,
+    "bunnyDescription": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca."
   },
   {
     "id": "rev-1792611567587-xlv37",
     "userId": "jadrdc@gmail.com",
     "userEmail": "jadrdc@gmail.com",
     "createdAtMs": 1792611567587,
-    "isLocalUpload": true,
+    "isLocalUpload": false,
     "isCurrentSessionBlob": true,
     "placeId": "jollibee.com.ph",
     "placeName": "Jollibee",
@@ -300,13 +196,51 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "segments": [
       {
         "start": 2.43,
+        "end": 4.53,
+        "text": "Hello, I'm just here as a",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.67,
+        "end": 7.96,
+        "text": "UI testing for the use application",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.09,
         "end": 12.26,
-        "text": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood."
+        "text": "and right now giving a review for Hollywood.",
+        "isHardwareTimed": true
       },
       {
         "start": 12.28,
+        "end": 13.8,
+        "text": "I started reviewing",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.4,
+        "end": 16.23,
+        "text": "because I think the project itself",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.37,
+        "end": 17.5,
+        "text": "is really good",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.86,
+        "end": 18.51,
+        "text": "and the experience on the UI",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.51,
         "end": 19.7,
-        "text": "I started reviewing because I think the project itself is really good and the experience on the UI has been really nice."
+        "text": "has been really nice.",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Jollibee",
@@ -318,8 +252,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 10,
-    "viewsCount": 10,
+    "views": 31,
+    "viewsCount": 31,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -330,7 +264,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
     "bunnyGuid": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792611567587-xlv37/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/captions/en-auto.vtt",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "isReady": true,
@@ -343,138 +277,195 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "authorName": "Jose Agustin Reinoso",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 60,
+    "duration": 22,
     "createdAt": "2026-10-21T19:39:27.587Z",
     "bookmarks": 0,
     "shares": 0,
     "reviewsCount": 2,
     "reviewCount": 2,
-    "totalReviews": 2
+    "totalReviews": 2,
+    "hasHardwareSilenceSync": true
   },
   {
-  "id": "rev-1792531482229-aux2t",
-  "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
-  "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
-  "segments": [
-    {
-      "start": 0.63,
-      "end": 9.04,
-      "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that."
+    "id": "rev-1792531482229-aux2t",
+    "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
+    "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
+    "segments": [
+      {
+        "start": 0.64,
+        "end": 3.77,
+        "text": "If you're a business owner searching",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.5,
+        "end": 5.99,
+        "text": "for some editors or developers,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.83,
+        "end": 7.69,
+        "text": "you can now in 2026,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.69,
+        "end": 9,
+        "text": "You shouldn't do that.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.55,
+        "end": 10.86,
+        "text": "You can go to Anthropic.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.1,
+        "end": 11.74,
+        "text": "They have cloud,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.13,
+        "end": 14.03,
+        "text": "they have Cloud code,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.47,
+        "end": 15.3,
+        "text": "They can make codes,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.67,
+        "end": 16.5,
+        "text": "the normal code.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.72,
+        "end": 17.4,
+        "text": "It's for free.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.42,
+        "end": 19.28,
+        "text": "you Can make all the video editing.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.34,
+        "end": 21.41,
+        "text": "So we don't need any of this now.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 22.21,
+        "end": 24.36,
+        "text": "All we can do is focus",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.6,
+        "end": 25.2,
+        "text": "on your business",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 25.47,
+        "end": 25.92,
+        "text": "and these things come easily.",
+        "isHardwareTimed": true
+      }
+    ],
+    "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
+    "title": "Free Cloud Code for Easy Video Editing in 2026",
+    "caption": "Free Cloud Code for Easy Video Editing in 2026",
+    "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+    "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
+    "hasBunnySmartCaptions": true,
+    "isProcessing": false,
+    "isReady": true,
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+    "placeName": "Anthropic",
+    "placeCity": "Gent",
+    "placeCountry": "Belgium",
+    "rating": 5,
+    "placeRating": 5,
+    "placeId": "anthropic.com",
+    "authorName": "redha bm",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+    "duration": 27,
+    "createdAt": "2026-10-20T21:24:42.229Z",
+    "createdAtMs": 1792531482229,
+    "likesCount": 1,
+    "likes": 1,
+    "bookmarksCount": 0,
+    "bookmarks": 0,
+    "sharesCount": 0,
+    "shares": 0,
+    "viewsCount": 91,
+    "views": 91,
+    "author": {
+      "name": "redha bm",
+      "handle": "@redhabm",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": ""
     },
-    {
-      "start": 9.52,
-      "end": 10.86,
-      "text": "You can go to Anthropic."
-    },
-    {
-      "start": 11.06,
-      "end": 16.5,
-      "text": "They have cloud, they have Cloud code, They can make codes, the normal code."
-    },
-    {
-      "start": 16.72,
-      "end": 17.4,
-      "text": "It's for free."
-    },
-    {
-      "start": 17.42,
-      "end": 19.28,
-      "text": "you Can make all the video editing."
-    },
-    {
-      "start": 19.34,
-      "end": 21.41,
-      "text": "So we don't need any of this now."
-    },
-    {
-      "start": 22.21,
-      "end": 25.93,
-      "text": "All we can do is focus on your business and these things come easily."
-    }
-  ],
-  "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
-  "title": "Free Cloud Code for Easy Video Editing in 2026",
-  "caption": "Free Cloud Code for Easy Video Editing in 2026",
-  "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-  "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-  "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
-  "hasBunnySmartCaptions": true,
-  "isProcessing": false,
-  "isReady": true,
-  "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-  "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-  "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
-  "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-  "placeName": "Anthropic",
-  "placeCity": "Gent",
-  "placeCountry": "Belgium",
-  "rating": 5,
-  "placeRating": 5,
-  "placeId": "anthropic.com",
-  "authorName": "redha bm",
-  "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-  "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-  "duration": 27,
-  "createdAt": "2026-10-20T21:24:42.229Z",
-  "createdAtMs": 1792531482229,
-  "likesCount": 1,
-  "likes": 1,
-  "bookmarksCount": 0,
-  "bookmarks": 0,
-  "sharesCount": 0,
-  "shares": 0,
-  "viewsCount": 78,
-  "views": 78,
-  "author": {
-    "name": "redha bm",
-    "handle": "@redhabm",
-    "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "isLocalGuide": true,
-    "videoReviewCount": 1,
-    "photosCount": 0,
-    "isVerified": true,
-    "location": "",
-    "city": "",
-    "country": ""
+    "businessName": "Anthropic",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
+      "/api/videos/stream/rev-1792531482229-aux2t.mp4"
+    ],
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "placeWebsite": "https://anthropic.com",
+    "placeAddress": "",
+    "placePhone": "",
+    "placeCategory": "Verified Business",
+    "comments": [],
+    "commentsCount": 0,
+    "isBookmarked": false,
+    "isLiked": false,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1,
+    "userId": "benmeddourridha7@gmail.com",
+    "userEmail": "benmeddourridha7@gmail.com",
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeEmail": "",
+    "placeDescription": "Anthropic · verified business · anthropic.com",
+    "durationSeconds": 27,
+    "dishOrItem": "Anthropic",
+    "repostsCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
+    "updatedAt": 1792588096031,
+    "hasHardwareSilenceSync": true
   },
-  "businessName": "Anthropic",
-  "fallbackVideoUrls": [
-    "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
-    "/api/videos/stream/rev-1792531482229-aux2t.mp4"
-  ],
-  "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-  "placeWebsite": "https://anthropic.com",
-  "placeAddress": "",
-  "placePhone": "",
-  "placeCategory": "Verified Business",
-  "comments": [],
-  "commentsCount": 0,
-  "isBookmarked": false,
-  "isLiked": false,
-  "reviewsCount": 1,
-  "reviewCount": 1,
-  "totalReviews": 1,
-  "userId": "benmeddourridha7@gmail.com",
-  "userEmail": "benmeddourridha7@gmail.com",
-  "isLocalUpload": false,
-  "isCurrentSessionBlob": true,
-  "placeEmail": "",
-  "placeDescription": "Anthropic · verified business · anthropic.com",
-  "durationSeconds": 27,
-  "dishOrItem": "Anthropic",
-  "repostsCount": 0,
-  "tags": [
-    "Verified Business"
-  ],
-  "recordedAt": "Just now",
-  "isLandscape": false,
-  "aspectRatio": "portrait",
-  "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
-  "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-  "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
-  "updatedAt": 1792588096031
-},
   {
     "id": "rev-1792505354614-j01wo",
     "userId": "krtpcq@gmail.com",
@@ -521,62 +512,56 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "segments": [
       {
         "start": 1.31,
-        "end": 5.15,
-        "text": "I found another Zara perfume that",
+        "end": 3.89,
+        "text": "I found another Zara perfume",
         "isHardwareTimed": true
       },
       {
-        "start": 5.15,
-        "end": 7.11,
-        "text": "I am obsessed with",
+        "start": 4.04,
+        "end": 6.59,
+        "text": "that I am obsessed with",
         "isHardwareTimed": true
       },
       {
-        "start": 7.11,
-        "end": 9.91,
+        "start": 7.84,
+        "end": 11.28,
         "text": "it's called night for a home",
         "isHardwareTimed": true
       },
       {
-        "start": 9.91,
-        "end": 11.93,
-        "text": "version to winter and",
+        "start": 11.89,
+        "end": 12.57,
+        "text": "version to winter",
         "isHardwareTimed": true
       },
       {
-        "start": 11.93,
-        "end": 15.01,
-        "text": "it matches my style perfectly and",
+        "start": 12.81,
+        "end": 15.5,
+        "text": "and it matches my style perfectly",
         "isHardwareTimed": true
       },
       {
-        "start": 15.01,
+        "start": 15.66,
         "end": 16.75,
-        "text": "honestly it lasts",
+        "text": "and honestly it lasts",
         "isHardwareTimed": true
       },
       {
         "start": 16.83,
-        "end": 18.45,
-        "text": "way longer than anything else I",
+        "end": 18.97,
+        "text": "way longer than anything else",
         "isHardwareTimed": true
       },
       {
-        "start": 18.45,
-        "end": 19.93,
-        "text": "have tried at this price point",
+        "start": 19.24,
+        "end": 20.52,
+        "text": "I have tried at this price point",
         "isHardwareTimed": true
       },
       {
-        "start": 19.93,
-        "end": 20.64,
-        "text": "so you should",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.64,
-        "end": 20.990000000000002,
-        "text": "you",
+        "start": 20.86,
+        "end": 21.31,
+        "text": "so you should you",
         "isHardwareTimed": true
       }
     ],
@@ -589,8 +574,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 61,
-    "viewsCount": 61,
+    "views": 69,
+    "viewsCount": 69,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -601,7 +586,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
     "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792505354614-j01wo/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
@@ -622,7 +607,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
     "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
     "isProcessing": false,
-    "isReady": true
+    "isReady": true,
+    "hasHardwareSilenceSync": true
   },
   {
     "id": "rev-1792505047137-smiho",
@@ -669,24 +655,40 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [
       {
-        "start": 0.918,
-        "end": 4.164,
-        "text": "This Zara perfume is my new favorite."
+        "start": 0.92,
+        "end": 4.15,
+        "text": "This Zara perfume is my new favorite.",
+        "isHardwareTimed": true
       },
       {
-        "start": 4.364,
-        "end": 6.288,
-        "text": "It fits my vibe perfectly."
+        "start": 4.36,
+        "end": 6.29,
+        "text": "It fits my vibe perfectly.",
+        "isHardwareTimed": true
       },
       {
-        "start": 6.468,
-        "end": 11.037,
-        "text": "And unlike any other brands at this price, it actually lasts all day."
+        "start": 6.47,
+        "end": 8.73,
+        "text": "And unlike any other brands at",
+        "isHardwareTimed": true
       },
       {
-        "start": 11.077,
-        "end": 12.199,
-        "text": "So you have to give it a try."
+        "start": 9.21,
+        "end": 10.39,
+        "text": "this price,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.57,
+        "end": 11.04,
+        "text": "it actually lasts all day.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.08,
+        "end": 12.2,
+        "text": "So you have to give it a try.",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Zara",
@@ -698,8 +700,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 51,
-    "viewsCount": 51,
+    "views": 55,
+    "viewsCount": 55,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -710,7 +712,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792505047137-smiho/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
@@ -728,7 +730,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "aiTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
     "isReady": true,
-    "isProcessing": false
+    "isProcessing": false,
+    "hasHardwareSilenceSync": true,
+    "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity."
   },
   {
     "id": "rev-1792404298362-hrk2f",
@@ -771,117 +775,105 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
     "segments": [
       {
-        "start": 0.66,
-        "end": 2.61,
-        "text": "hello everyone so",
+        "start": 0.68,
+        "end": 2.79,
+        "text": "hello everyone so i'm here to",
         "isHardwareTimed": true
       },
       {
-        "start": 2.61,
-        "end": 4.61,
-        "text": "i'm here to do my review",
+        "start": 2.93,
+        "end": 5.58,
+        "text": "do my review with the guard",
         "isHardwareTimed": true
       },
       {
-        "start": 4.61,
-        "end": 6.85,
-        "text": "with the guard slip cafe by",
+        "start": 5.75,
+        "end": 6.65,
+        "text": "slip cafe by lgip",
         "isHardwareTimed": true
       },
       {
-        "start": 6.85,
-        "end": 11.18,
-        "text": "lgip located in bayombong nueva vizcaya",
+        "start": 6.65,
+        "end": 10.79,
+        "text": "located in bayombong nueva vizcaya",
         "isHardwareTimed": true
       },
       {
-        "start": 11.18,
-        "end": 12.91,
+        "start": 11.22,
+        "end": 13.26,
         "text": "so do visit the store the",
         "isHardwareTimed": true
       },
       {
-        "start": 12.91,
+        "start": 13.57,
         "end": 14.06,
         "text": "cafe in which",
         "isHardwareTimed": true
       },
       {
         "start": 14.12,
-        "end": 17.09,
-        "text": "they do offer affordable drinks and",
+        "end": 15.78,
+        "text": "they do offer affordable drinks",
         "isHardwareTimed": true
       },
       {
-        "start": 17.09,
-        "end": 19.38,
-        "text": "freshly baked pastries and",
+        "start": 16.17,
+        "end": 18.77,
+        "text": "and freshly baked pastries",
         "isHardwareTimed": true
       },
       {
-        "start": 19.38,
-        "end": 22.35,
-        "text": "breads with affordable price it is",
+        "start": 18.91,
+        "end": 22.53,
+        "text": "and breads with affordable price it",
         "isHardwareTimed": true
       },
       {
-        "start": 22.35,
-        "end": 24.41,
-        "text": "a very uh cozy place the",
+        "start": 23.02,
+        "end": 25.12,
+        "text": "is a very uh cozy place",
         "isHardwareTimed": true
       },
       {
-        "start": 24.41,
-        "end": 26.54,
-        "text": "ambience is very good",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.54,
-        "end": 26.89,
-        "text": "and at",
+        "start": 25.37,
+        "end": 26.77,
+        "text": "the ambience is very good and at",
         "isHardwareTimed": true
       },
       {
         "start": 26.87,
-        "end": 29.38,
+        "end": 29,
         "text": "the same time um lip cafe",
         "isHardwareTimed": true
       },
       {
-        "start": 29.38,
-        "end": 31.82,
+        "start": 29.24,
+        "end": 31.58,
         "text": "by lgit do supports okay the",
         "isHardwareTimed": true
       },
       {
-        "start": 31.82,
-        "end": 34.99,
-        "text": "nova viscayano local bins so",
+        "start": 31.73,
+        "end": 34.92,
+        "text": "nova viscayano local bins",
         "isHardwareTimed": true
       },
       {
-        "start": 34.99,
-        "end": 36.64,
-        "text": "once again if",
+        "start": 35.17,
+        "end": 35.65,
+        "text": "so once again",
         "isHardwareTimed": true
       },
       {
-        "start": 36.64,
-        "end": 39,
-        "text": "you have time drop by",
+        "start": 36.02,
+        "end": 39.06,
+        "text": "if you have time",
         "isHardwareTimed": true
       },
       {
-        "start": 39,
-        "end": 39.86,
-        "text": "at lip café",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.86,
+        "start": 39.22,
         "end": 40.44,
-        "text": "by LGIT",
+        "text": "drop by at lip café by LGIT",
         "isHardwareTimed": true
       }
     ],
@@ -894,8 +886,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 97,
-    "viewsCount": 97,
+    "views": 100,
+    "viewsCount": 100,
     "sharesCount": 0,
     "tags": [
       "Cafe"
@@ -904,7 +896,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
     "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792404298362-hrk2f/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/tl-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
     "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
@@ -926,7 +918,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "isProcessing": false,
     "isReady": true,
-    "updatedAt": 1792514315862
+    "updatedAt": 1792514315862,
+    "hasHardwareSilenceSync": true
   },
   {
     "id": "rev-1792405036441-zqqwp",
@@ -973,145 +966,124 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "transcriptText": "Hello! So for this one is Jollibee Philippines. I gave it a 5 star for its review. Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside. And always be served with the iconic sweet style spaghetti. mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours, making it as your go-to for your late night cravings or at same for any morning breakfast. So, see you there! Enjoy the Philippines!",
     "segments": [
       {
-        "start": 1.03,
-        "end": 1.85,
-        "text": "Hello!"
-      },
-      {
-        "start": 1.95,
-        "end": 2.78,
-        "text": "So for this one is",
+        "start": 1.04,
+        "end": 1.72,
+        "text": "Hello!",
         "isHardwareTimed": true
       },
       {
-        "start": 2.78,
+        "start": 1.95,
         "end": 4.11,
-        "text": "Jollibee Philippines.",
+        "text": "So for this one is Jollibee Philippines.",
         "isHardwareTimed": true
       },
       {
         "start": 4.19,
-        "end": 5.53,
-        "text": "I gave it a 5 star",
+        "end": 4.76,
+        "text": "I gave it a 5 star for",
         "isHardwareTimed": true
       },
       {
-        "start": 5.53,
-        "end": 6.85,
-        "text": "for its review.",
+        "start": 4.89,
+        "end": 6.68,
+        "text": "its review.",
         "isHardwareTimed": true
       },
       {
-        "start": 6.87,
-        "end": 9.19,
-        "text": "Because basically, they do offer the",
+        "start": 7.19,
+        "end": 9.12,
+        "text": "Because basically,",
         "isHardwareTimed": true
       },
       {
-        "start": 9.19,
-        "end": 11.67,
-        "text": "famous iconic chicken joint crispy on",
+        "start": 9.27,
+        "end": 10.51,
+        "text": "they do offer the famous iconic",
         "isHardwareTimed": true
       },
       {
-        "start": 11.67,
-        "end": 12.49,
-        "text": "the outside and",
+        "start": 10.79,
+        "end": 13.34,
+        "text": "chicken joint crispy on the outside",
         "isHardwareTimed": true
       },
       {
-        "start": 12.49,
-        "end": 13.84,
-        "text": "at the same time juicy",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.84,
+        "start": 13.47,
         "end": 14.44,
-        "text": "on inside.",
+        "text": "and at the same time juicy on inside.",
         "isHardwareTimed": true
       },
       {
         "start": 14.56,
-        "end": 16.29,
-        "text": "And always be served with",
+        "end": 16.69,
+        "text": "And always be served with the",
         "isHardwareTimed": true
       },
       {
-        "start": 16.29,
-        "end": 17.53,
-        "text": "the iconic sweet",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.53,
+        "start": 16.83,
         "end": 18.84,
-        "text": "style spaghetti.",
+        "text": "iconic sweet style spaghetti.",
         "isHardwareTimed": true
       },
       {
         "start": 20.55,
-        "end": 21.62,
+        "end": 22.51,
         "text": "mag-loaded with apple slices,",
         "isHardwareTimed": true
       },
       {
-        "start": 21.62,
-        "end": 22.46,
-        "text": "cheese, and at the same time",
+        "start": 22.65,
+        "end": 23.19,
+        "text": "cheese, and at the same time also,",
         "isHardwareTimed": true
       },
       {
-        "start": 22.46,
-        "end": 23.82,
-        "text": "also, it's very convenient because",
+        "start": 23.48,
+        "end": 23.88,
+        "text": "it's very convenient",
         "isHardwareTimed": true
       },
       {
-        "start": 23.82,
-        "end": 24.97,
-        "text": "majority of their store is open",
+        "start": 23.88,
+        "end": 24.61,
+        "text": "because majority of their store is",
         "isHardwareTimed": true
       },
       {
-        "start": 24.97,
-        "end": 25.32,
-        "text": "24 hours,",
+        "start": 24.61,
+        "end": 25.07,
+        "text": "open 24 hours,",
         "isHardwareTimed": true
       },
       {
-        "start": 25.33,
-        "end": 26.2,
+        "start": 25.34,
+        "end": 26.53,
         "text": "making it as your go-to for",
         "isHardwareTimed": true
       },
       {
-        "start": 26.2,
-        "end": 27.12,
+        "start": 26.89,
+        "end": 27.59,
         "text": "your late night cravings or at",
         "isHardwareTimed": true
       },
       {
-        "start": 27.12,
-        "end": 27.57,
-        "text": "same for any",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 27.57,
-        "end": 28.15,
-        "text": "morning breakfast.",
+        "start": 27.73,
+        "end": 28.18,
+        "text": "same for any morning breakfast.",
         "isHardwareTimed": true
       },
       {
         "start": 28.17,
-        "end": 28.73,
-        "text": "So, see you there!"
+        "end": 28.71,
+        "text": "So, see you there!",
+        "isHardwareTimed": true
       },
       {
-        "start": 28.77,
+        "start": 28.9,
         "end": 29.49,
-        "text": "Enjoy the Philippines!"
+        "text": "Enjoy the Philippines!",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Jollibee Philippines",
@@ -1123,8 +1095,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 90,
-    "viewsCount": 90,
+    "views": 91,
+    "viewsCount": 91,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -1133,7 +1105,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/tl-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
@@ -1154,6 +1126,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
     "isProcessing": false,
     "isReady": true,
-    "updatedAt": 1792514327833
+    "updatedAt": 1792514327833,
+    "hasHardwareSilenceSync": true
   }
 ];

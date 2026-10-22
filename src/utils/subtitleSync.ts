@@ -356,4 +356,268 @@ export function formatCueToMaxTwoLines(
   return result;
 }
 
+export interface AudioSilenceInterval {
+  start: number;
+  end: number;
+  duration: number;
+}
+
+/**
+ * Splits a caption cue into natural 1-2 line spoken phrases (4 to 7 words / up to ~38 chars)
+ * at punctuation marks and natural clause boundaries, merging tiny 1-2 word tail orphans.
+ */
+export function splitCueTextIntoNaturalPhrases(
+  text: string,
+  maxWordsPerPhrase = 6,
+  maxCharsPerPhrase = 38
+): string[] {
+  const clean = (text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+
+  const words = clean.split(" ").filter(Boolean);
+  if (words.length <= maxWordsPerPhrase + 1 && clean.length <= maxCharsPerPhrase + 6) {
+    return [clean];
+  }
+
+  const clauseStarters = new Set([
+    "that", "it's", "its", "and", "because", "so", "but", "which", "where",
+    "when", "while", "if", "located", "making", "version", "honestly", "way",
+    "unlike", "always", "once", "drop"
+  ]);
+
+  const phrases: string[][] = [];
+  let current: string[] = [];
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const cleanLower = word.toLowerCase().replace(/[^a-z']/g, "");
+    const currentChars = current.join(" ").length;
+    const remainingWords = words.length - i;
+
+    // Break BEFORE a natural clause starter if current phrase already has >= 3 words
+    if (
+      current.length >= 3 &&
+      remainingWords >= 2 &&
+      (clauseStarters.has(cleanLower) || (cleanLower === "i" && current.length >= 4))
+    ) {
+      phrases.push(current);
+      current = [word];
+      continue;
+    }
+
+    current.push(word);
+    const updatedChars = currentChars + (currentChars > 0 ? 1 : 0) + word.length;
+    const hasEndPunct = /[.,!?;:]$/.test(word);
+    const afterRemaining = words.length - (i + 1);
+    const nextWordLower = afterRemaining >= 1 ? words[i + 1].toLowerCase().replace(/[^a-z']/g, "") : "";
+    const wordAfterNextLower = afterRemaining >= 2 ? words[i + 2].toLowerCase().replace(/[^a-z']/g, "") : "";
+
+    if (afterRemaining > 0) {
+      // If the word after next is a clause starter (e.g. "price [point] [so]"), allow 1 extra word so we split cleanly before the clause starter
+      const holdOneMoreWordForClause =
+        !hasEndPunct &&
+        !clauseStarters.has(nextWordLower) &&
+        clauseStarters.has(wordAfterNextLower) &&
+        current.length <= maxWordsPerPhrase &&
+        updatedChars + 1 + (words[i + 1]?.length || 0) <= maxCharsPerPhrase + 6;
+
+      if (
+        !holdOneMoreWordForClause &&
+        ((hasEndPunct && current.length >= 2) ||
+          current.length >= maxWordsPerPhrase ||
+          updatedChars >= maxCharsPerPhrase)
+      ) {
+        phrases.push(current);
+        current = [];
+      }
+    }
+  }
+
+  if (current.length > 0) {
+    phrases.push(current);
+  }
+
+  // Merge any tiny 1-2 word trailing or orphan phrase into its neighbor so single words never flash alone
+  const merged: string[][] = [];
+  for (let i = 0; i < phrases.length; i++) {
+    const p = phrases[i];
+    if (
+      i === phrases.length - 1 &&
+      p.length <= 2 &&
+      merged.length > 0 &&
+      merged[merged.length - 1].length + p.length <= maxWordsPerPhrase + 2
+    ) {
+      merged[merged.length - 1] = [...merged[merged.length - 1], ...p];
+    } else {
+      merged.push(p);
+    }
+  }
+
+  return merged.map((p) => p.join(" "));
+}
+
+/**
+ * Aligns official Bunny Stream VTT cues with hardware-detected audio silence intervals (from ffmpeg silencedetect).
+ * - Preserves short cues with exact Bunny Stream timestamps.
+ * - For multi-clause cues, maps phrase phonetic weights exclusively onto active vocal speech islands
+ *   (excluding silence pauses) and snaps phrase boundaries directly to real hardware voice pauses.
+ */
+export function alignBunnyCuesWithHardwareSilences(
+  rawCues: { start: number; end: number; text: string }[],
+  silences: AudioSilenceInterval[] = []
+): SubtitleSegment[] {
+  if (!Array.isArray(rawCues) || rawCues.length === 0) return [];
+
+  const sortedSilences = [...(silences || [])]
+    .filter((s) => s && typeof s.start === "number" && typeof s.end === "number" && s.end > s.start)
+    .sort((a, b) => a.start - b.start);
+
+  const result: SubtitleSegment[] = [];
+
+  for (const cue of rawCues) {
+    const text = String(cue?.text || "").replace(/\s+/g, " ").trim();
+    if (!text) continue;
+
+    let cueStart = Math.max(0, Number(cue.start || 0));
+    let cueEnd = Math.max(cueStart + 0.4, Number(cue.end || cueStart + 2.0));
+
+    // Trim leading/trailing silence overlapping cue boundaries
+    for (const sil of sortedSilences) {
+      if (sil.start <= cueStart + 0.08 && sil.end > cueStart && sil.end < cueEnd - 0.4) {
+        cueStart = sil.end;
+      }
+      if (sil.end >= cueEnd - 0.08 && sil.start > cueStart + 0.4 && sil.start < cueEnd) {
+        cueEnd = sil.start;
+      }
+    }
+
+    const phrases = splitCueTextIntoNaturalPhrases(text, 6, 38);
+    if (phrases.length <= 1) {
+      result.push({
+        start: Math.round(cueStart * 100) / 100,
+        end: Math.round(cueEnd * 100) / 100,
+        text: phrases[0] || text,
+        isHardwareTimed: true
+      });
+      continue;
+    }
+
+    // Build active vocal islands inside [cueStart, cueEnd] by subtracting hardware silences
+    const internalSilences = sortedSilences.filter(
+      (s) => s.start > cueStart + 0.25 && s.start < cueEnd - 0.15 && s.duration >= 0.12
+    );
+
+    const vocalIslands: { start: number; end: number; duration: number }[] = [];
+    let cursor = cueStart;
+    for (const sil of internalSilences) {
+      if (sil.start > cursor + 0.05) {
+        vocalIslands.push({
+          start: cursor,
+          end: sil.start,
+          duration: sil.start - cursor
+        });
+      }
+      cursor = Math.max(cursor, sil.end);
+    }
+    if (cueEnd > cursor + 0.05) {
+      vocalIslands.push({
+        start: cursor,
+        end: cueEnd,
+        duration: cueEnd - cursor
+      });
+    }
+
+    const totalVocalDuration = vocalIslands.reduce((acc, v) => acc + v.duration, 0);
+
+    // Helper: convert active vocal elapsed time [0, totalVocalDuration] -> real video timestamp
+    const vocalTimeToRealTime = (vocalElapsed: number): number => {
+      if (vocalIslands.length === 0 || totalVocalDuration <= 0) {
+        return cueStart + (vocalElapsed / Math.max(1, totalVocalDuration)) * (cueEnd - cueStart);
+      }
+      let rem = Math.max(0, Math.min(totalVocalDuration, vocalElapsed));
+      for (const island of vocalIslands) {
+        if (rem <= island.duration + 1e-6) {
+          return island.start + rem;
+        }
+        rem -= island.duration;
+      }
+      return cueEnd;
+    };
+
+    const phraseWeights = phrases.map((p) => {
+      const pWords = p.split(/\s+/).filter(Boolean);
+      return pWords.reduce((sum, w) => sum + getWordPhoneticWeight(w), 0);
+    });
+    const totalWeight = phraseWeights.reduce((a, b) => a + b, 0);
+
+    const usedSilenceIndices = new Set<number>();
+    let currentPhraseStart = cueStart;
+    let cumulativeWeight = 0;
+
+    for (let i = 0; i < phrases.length; i++) {
+      const isLast = i === phrases.length - 1;
+      cumulativeWeight += phraseWeights[i];
+
+      if (isLast) {
+        result.push({
+          start: Math.round(currentPhraseStart * 100) / 100,
+          end: Math.round(Math.max(currentPhraseStart + 0.45, cueEnd) * 100) / 100,
+          text: phrases[i],
+          isHardwareTimed: true
+        });
+        break;
+      }
+
+      const targetVocalTime = (cumulativeWeight / totalWeight) * totalVocalDuration;
+      const idealRealTime = vocalTimeToRealTime(targetVocalTime);
+
+      // Find the best unused hardware silence pause near idealRealTime
+      let bestSilIdx = -1;
+      let bestScore = Infinity;
+
+      for (let sIdx = 0; sIdx < internalSilences.length; sIdx++) {
+        if (usedSilenceIndices.has(sIdx)) continue;
+        const sil = internalSilences[sIdx];
+        if (sil.start < currentPhraseStart + 0.45) continue;
+        if (sil.start > cueEnd - 0.15) continue;
+
+        const dist = Math.abs(sil.start - idealRealTime);
+        // Prefer longer pauses when close to the expected vocal boundary
+        const durationBonus = Math.min(0.4, sil.duration * 0.35);
+        const score = dist - durationBonus;
+
+        if (dist <= 1.35 && score < bestScore) {
+          bestScore = score;
+          bestSilIdx = sIdx;
+        }
+      }
+
+      if (bestSilIdx !== -1) {
+        usedSilenceIndices.add(bestSilIdx);
+        const chosenSil = internalSilences[bestSilIdx];
+        const phraseEnd = Math.max(currentPhraseStart + 0.35, chosenSil.start);
+        result.push({
+          start: Math.round(currentPhraseStart * 100) / 100,
+          end: Math.round(phraseEnd * 100) / 100,
+          text: phrases[i],
+          isHardwareTimed: true
+        });
+        // Next phrase starts at the exact millisecond the speaker resumes talking after the silence!
+        currentPhraseStart = chosenSil.end;
+      } else {
+        const phraseEnd = Math.max(currentPhraseStart + 0.4, Math.min(cueEnd - 0.35, idealRealTime));
+        result.push({
+          start: Math.round(currentPhraseStart * 100) / 100,
+          end: Math.round(phraseEnd * 100) / 100,
+          text: phrases[i],
+          isHardwareTimed: true
+        });
+        currentPhraseStart = phraseEnd;
+      }
+    }
+  }
+
+  return result;
+}
+
 

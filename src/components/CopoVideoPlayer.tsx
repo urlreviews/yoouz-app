@@ -67,7 +67,7 @@ interface CopoVideoPlayerProps {
   allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
   onPurgeAllVideos?: () => void;
-  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string; hasBunnySmartCaptions?: boolean; title?: string; aiTitle?: string }) => void;
+  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string; hasBunnySmartCaptions?: boolean; hasHardwareSilenceSync?: boolean; title?: string; aiTitle?: string }) => void;
   isPaused?: boolean;
   initialAutoplayPaused?: boolean;
   contextKey?: string;
@@ -844,9 +844,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (activeVideo?.id) {
         onRecordView?.(activeVideo.id);
 
-        // Auto-trigger official Bunny Stream Smart Captions if not yet loaded or if holding legacy browser speech segments
+        // Auto-trigger official Bunny Stream Smart Captions + Hardware Silence Sync if not yet loaded
         const hasLegacyWebSpeechSegments = Array.isArray(activeVideo.segments) && activeVideo.segments.some(s => s && s.words);
-        const needsBunnyCaptions = !activeVideo.hasBunnySmartCaptions || !activeVideo.segments || activeVideo.segments.length === 0 || hasLegacyWebSpeechSegments;
+        const needsBunnyCaptions = !activeVideo.hasBunnySmartCaptions || !activeVideo.hasHardwareSilenceSync || !activeVideo.segments || activeVideo.segments.length === 0 || hasLegacyWebSpeechSegments;
         if (needsBunnyCaptions) {
           const targetVidId = activeVideo.id;
           let pollAttempts = 0;
@@ -862,12 +862,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     segments: data.segments,
                     transcriptText: data.transcriptText,
                     hasBunnySmartCaptions: true,
+                    hasHardwareSilenceSync: true,
                     ...(data.aiTitle ? { aiTitle: data.aiTitle, title: data.aiTitle, caption: data.aiTitle } : {})
                   });
                   if (activeVideoRef.current?.id === targetVidId) {
                     activeVideo.segments = data.segments;
                     activeVideo.transcriptText = data.transcriptText;
                     activeVideo.hasBunnySmartCaptions = true;
+                    activeVideo.hasHardwareSilenceSync = true;
                     if (data.aiTitle) {
                       activeVideo.aiTitle = data.aiTitle;
                       activeVideo.title = data.aiTitle;

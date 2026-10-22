@@ -398,6 +398,7 @@ export function App() {
               transcriptText,
               segments,
               hasBunnySmartCaptions: segments.length > 0,
+              hasHardwareSilenceSync: segments.length > 0,
               ...(aiTitle ? { aiTitle, title: aiTitle } : {}),
               ...(caption ? { caption } : {})
             });

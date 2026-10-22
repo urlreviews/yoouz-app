@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks, buildSingleLineSegments, formatCueToMaxTwoLines } from '../utils/subtitleSync';
+import { getWordPhoneticWeight, splitWordsIntoSingleLineChunks, alignBunnyCuesWithHardwareSilences } from '../utils/subtitleSync';
 
 interface SubtitleCue {
   id: number;
@@ -36,59 +36,7 @@ const isIgnoredTitle = (text: string): boolean => {
 };
 
 /**
- * Helper to split a longer subtitle cue into short 3-4 word 1-line phrase chunks with acoustic phonetic timing.
- * Guarantees that subtitles stay on 1 clean line and advance smoothly in sync with spoken audio.
- */
-const chunkCueTo1Line = (
-  start: number,
-  end: number,
-  text: string,
-  maxWordsPerChunk = 4
-): { start: number; end: number; text: string }[] => {
-  const cleanText = text.trim();
-  if (!cleanText) return [];
-
-  const words = cleanText.split(/\s+/).filter(Boolean);
-  if (words.length <= maxWordsPerChunk && cleanText.length <= 28) {
-    return [{ start, end, text: cleanText }];
-  }
-
-  const wordGroups = splitWordsIntoSingleLineChunks(words, maxWordsPerChunk, 28);
-  if (wordGroups.length === 0) return [];
-
-  const totalDuration = Math.max(0.6, end - start);
-  const groupWeights = wordGroups.map(group =>
-    group.reduce((acc, w) => acc + getWordPhoneticWeight(w), 0)
-  );
-  const totalWeight = groupWeights.reduce((a, b) => a + b, 0);
-
-  const chunks: { start: number; end: number; text: string }[] = [];
-  let currentStart = start;
-
-  for (let idx = 0; idx < wordGroups.length; idx++) {
-    const group = wordGroups[idx];
-    const groupText = group.join(' ');
-    const groupWeight = groupWeights[idx];
-    const groupDuration = totalWeight > 0 ? totalDuration * (groupWeight / totalWeight) : totalDuration / wordGroups.length;
-
-    const groupEnd = idx === wordGroups.length - 1
-      ? end
-      : Math.round((currentStart + groupDuration) * 100) / 100;
-
-    chunks.push({
-      start: Math.round(currentStart * 100) / 100,
-      end: Math.max(currentStart + 0.3, groupEnd),
-      text: groupText
-    });
-
-    currentStart = groupEnd;
-  }
-
-  return chunks;
-};
-
-/**
- * Anti-Blinking, Anti-Flashing Subtitle Engine (1-2 Line CapCut / TikTok Phrase Chunking)
+ * Hardware-Locked Bunny Stream Smart Captions Overlay (9:16 Mobile & Desktop)
  */
 export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   currentTime = 0,
@@ -100,7 +48,6 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   slotId,
   videoElement
 }) => {
-  // Parse and build clean 1-2 line phrase subtitle cues with zero-gap bridging
   const cues = useMemo<SubtitleCue[]>(() => {
     let rawList: any[] = [];
     if (Array.isArray(segments) && segments.length > 0) {
@@ -117,44 +64,32 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
     if (rawList.length > 0) {
       for (const item of rawList) {
-        const txt = String(item?.text || item?.transcript || '').trim();
+        const txt = String(item?.text || item?.transcript || '').replace(/\s+/g, ' ').trim();
         if (!txt || isIgnoredTitle(txt)) continue;
 
         const s = typeof item?.start === 'number' && !isNaN(item.start) ? Math.max(0, item.start) : -1;
         const e = typeof item?.end === 'number' && !isNaN(item.end) ? Math.max(s + 0.3, item.end) : -1;
 
-        if (Array.isArray(item.words) && item.words.length > 0) {
-          // If word-level timecodes exist, format into clean 1-2 line phrases
-          const wordTexts = item.words.map((w: any) => w.text || w.word || '').filter(Boolean);
-          const wordChunks = splitWordsIntoSingleLineChunks(wordTexts, 4, 28);
-          let wordIdx = 0;
-          for (const chunkWords of wordChunks) {
-            const chunkItems = item.words.slice(wordIdx, wordIdx + chunkWords.length);
-            wordIdx += chunkWords.length;
-            if (chunkItems.length > 0) {
-              const chunkText = chunkItems.map((w: any) => w.text || w.word).join(" ");
-              const chunkStart = chunkItems[0].start;
-              const chunkEnd = chunkItems[chunkItems.length - 1].end;
-              cleanCues.push({
-                id: cueId++,
-                start: chunkStart,
-                end: Math.max(chunkStart + 0.35, chunkEnd),
-                text: chunkText
-              });
-            }
-          }
-        } else if (s >= 0 && e >= s) {
-          // 🐰 Official Bunny Stream Cue:
-          // Format into clean 1 to 2 lines max, splitting at natural punctuation pauses
-          // Guarantees zero 3-dots ('...'), 100% audio sync, and 1-2 lines maximum
-          const formatted = formatCueToMaxTwoLines(s, e, txt, 68);
-          for (const fc of formatted) {
+        if (s >= 0 && e >= s) {
+          // If the segment is already a clean 1-2 line phrase (<= 48 chars), preserve its exact hardware timestamps untouched!
+          if (txt.length <= 48) {
             cleanCues.push({
               id: cueId++,
-              start: fc.start,
-              end: fc.end,
-              text: fc.text
+              start: Math.round(s * 100) / 100,
+              end: Math.round(e * 100) / 100,
+              text: txt
             });
+          } else {
+            // Only if an unsplit raw long cue (>48 chars) arrives directly, split into natural clauses
+            const aligned = alignBunnyCuesWithHardwareSilences([{ start: s, end: e, text: txt }], []);
+            for (const ac of aligned) {
+              cleanCues.push({
+                id: cueId++,
+                start: ac.start,
+                end: ac.end,
+                text: ac.text
+              });
+            }
           }
         } else {
           cleanCues.push({
@@ -167,74 +102,45 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
       }
     }
 
-    // PATH B: Fallback when only raw transcriptText is present - Distribute evenly across video duration
+    // Fallback when only raw transcriptText is present
     if (cleanCues.length === 0 && transcriptText && transcriptText.trim()) {
       const clean = transcriptText.trim();
       if (!isIgnoredTitle(clean)) {
-        const words = clean.split(/\s+/).filter(Boolean);
         const videoDur = duration && duration > 2 ? duration : 15;
-        
-        const wordChunks = splitWordsIntoSingleLineChunks(words, 4, 28);
-        const startOffset = 0.2;
-        const endOffset = Math.max(startOffset + 1.0, videoDur - 0.2);
-        const totalSpan = endOffset - startOffset;
-        const chunkDur = totalSpan / wordChunks.length;
-
-        wordChunks.forEach((chunkWords, cIdx) => {
-          const cStart = Math.round((startOffset + (cIdx * chunkDur)) * 100) / 100;
-          const cEnd = Math.round((startOffset + ((cIdx + 1) * chunkDur)) * 100) / 100;
+        const aligned = alignBunnyCuesWithHardwareSilences(
+          [{ start: 0.3, end: Math.max(1.5, videoDur - 0.3), text: clean }],
+          []
+        );
+        for (const ac of aligned) {
           cleanCues.push({
             id: cueId++,
-            start: cStart,
-            end: cEnd,
-            text: chunkWords.join(" ")
+            start: ac.start,
+            end: ac.end,
+            text: ac.text
           });
-        });
+        }
       }
     }
 
-    // Sort cues strictly by start time
     cleanCues.sort((a, b) => a.start - b.start);
 
-    // 🛡️ STRICT OVERLAP REMOVAL & CUE DEDUPLICATION
-    // Ensures subtitles strictly advance forward and NEVER jump backward or restart in the middle
+    // Ensure non-overlapping monotonic progression without altering hardware pause gaps
     const deduplicatedCues: SubtitleCue[] = [];
     for (const cue of cleanCues) {
       if (deduplicatedCues.length === 0) {
-        deduplicatedCues.push(cue);
+        deduplicatedCues.push({ ...cue });
       } else {
         const last = deduplicatedCues[deduplicatedCues.length - 1];
-        if (cue.start <= last.start + 0.05) {
-          // If two cues start at virtually the same time, keep the one with longer/fuller text
-          if (cue.text.length > last.text.length) {
-            deduplicatedCues[deduplicatedCues.length - 1] = { ...cue, start: last.start, end: Math.max(last.end, cue.end) };
-          }
+        if (Math.abs(cue.start - last.start) <= 0.04 && cue.text.toLowerCase() === last.text.toLowerCase()) {
+          last.end = Math.max(last.end, cue.end);
           continue;
         }
         if (cue.start < last.end) {
-          if (cue.text === last.text || last.text.includes(cue.text)) {
-            last.end = Math.max(last.end, cue.end);
-            continue;
-          }
-          if (cue.text.includes(last.text)) {
-            last.text = cue.text;
-            last.end = Math.max(last.end, cue.end);
-            continue;
-          }
-          cue.start = last.end;
+          last.end = cue.start;
         }
-        if (cue.end > cue.start) {
-          deduplicatedCues.push(cue);
+        if (cue.end > cue.start + 0.05) {
+          deduplicatedCues.push({ ...cue });
         }
-      }
-    }
-
-    // 🛡️ ANTI-BLINKING MICRO-GAP BRIDGING: Only bridge tiny breath gaps <= 0.15s between consecutive sentences
-    for (let i = 0; i < deduplicatedCues.length - 1; i++) {
-      const curr = deduplicatedCues[i];
-      const next = deduplicatedCues[i + 1];
-      if (next.start > curr.end && next.start - curr.end <= 0.15) {
-        curr.end = next.start;
       }
     }
 
