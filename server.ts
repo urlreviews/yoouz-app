@@ -34851,32 +34851,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     try {
       // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs
       await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe'").catch(() => {});
-      
-      // 2. Gather all valid placeIds referenced by active reviews in database and reviews_index.json
-      const revRes = await bunnyDb.execute("SELECT id, placeId FROM videoReviews");
-      const activePlaceIds = new Set<string>();
-      if (revRes && revRes.rows) {
-        for (const r of (revRes.rows as any[])) {
-          if (r.placeId) activePlaceIds.add(r.placeId);
-        }
-      }
-      try {
-        const localList = readReviewsIndex();
-        for (const r of localList) {
-          if (r && r.placeId) activePlaceIds.add(r.placeId);
-        }
-      } catch (e) {}
 
-      // 3. Purge orphaned or fake/unnamed places
-      const placeRes = await bunnyDb.execute("SELECT id, name FROM places");
-      if (placeRes && placeRes.rows) {
-        for (const p of (placeRes.rows as any[])) {
-          if (!activePlaceIds.has(p.id) || !p.name || p.name.trim() === "" || p.name.toLowerCase().includes("unnamed") || p.name.toLowerCase().includes("solicitors") || p.name.toLowerCase().includes("hotel")) {
-            await bunnyDb.execute({ sql: "DELETE FROM places WHERE id = ?", args: [p.id] }).catch(() => {});
-          }
-        }
-      }
-      console.log("🧹 [Server] Cleaned up orphaned and fake places safely without deleting valid user video reviews.");
+      // 2. Purge only broken or unnamed place records (never delete valid registered places)
+      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%'").catch(() => {});
+      console.log("🧹 [Server] Cleaned up broken and unnamed place records safely.");
     } catch (e) {
       console.warn("Purge notice:", e);
     }
@@ -34888,53 +34866,50 @@ function injectOpenGraphTags(html: string, meta: any) {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
   });
 
-  // Background initialization tasks
-  purgeFakeReviewsAndPlaces().catch(() => {});
-  syncAndMigrateBusinessPlaces().catch(() => {});
-  syncExistingUsersWelcomeSentIndex().catch(() => {});
-  syncInitialVideoInteractionsToBunnyDb().catch(() => {});
+  // Deferred non-blocking background initialization tasks after server is listening
+  setTimeout(async () => {
+    try {
+      await purgeFakeReviewsAndPlaces().catch(() => {});
+      await syncAndMigrateBusinessPlaces().catch(() => {});
+      await syncExistingUsersWelcomeSentIndex().catch(() => {});
+      await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
 
-  try {
-    const bunnyDb = getBunnyDb();
-    if (bunnyDb) {
-      console.log("⚡ [Server] Connected to persistent Bunny Cloud Database and initialized schema.");
-    } else {
-      console.log("⚡ [Server] Connected to persistent edge database.");
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        console.log("⚡ [Server] Connected to persistent Bunny Cloud Database and initialized schema.");
+      } else {
+        console.log("⚡ [Server] Connected to persistent edge database.");
+      }
+
+      await reconcileDuplicateUserProfiles().then((res) => {
+        if (res.reconciledCount > 0) {
+          console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
+        }
+      }).catch((e) => console.warn("User profile reconciliation notice:", e?.message));
+
+      await syncAndPersistAllUsers().then((count) => {
+        if (count > 0) {
+          console.log(`👤 [Server] Synced and backed up ${count} user record(s) into persistent Bunny Cloud Database.`);
+        }
+      }).catch(() => {});
+
+      await sanitizeExistingUsersDatabase().then((count) => {
+        if (count > 0) {
+          console.log(`🧹 [Server] Purged ${count} mismatched business email record(s) from user database.`);
+        }
+      }).catch(() => {});
+
+      await purgeBlockedPlaceRecords().catch(() => {});
+
+      await syncAndReconcileBunnyStreamVideos().then((res) => {
+        if (res.recoveredCount > 0 || res.syncedCount > 0) {
+          console.log(`🐰 [Server] Bunny Stream Sync complete: ${res.recoveredCount} recovered, ${res.syncedCount} updated.`);
+        }
+      }).catch(() => {});
+    } catch (bgErr) {
+      console.warn("Background startup sync notice:", bgErr);
     }
-  } catch (initErr) {
-    console.warn("Database startup notice:", initErr);
-  }
-
-  // Reconcile and deduplicate user profiles on startup
-  reconcileDuplicateUserProfiles().then((res) => {
-    if (res.reconciledCount > 0) {
-      console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
-    }
-  }).catch((e) => console.warn("User profile reconciliation startup notice:", e?.message));
-
-  // Sync and permanently persist all registered and pending users to BunnyDB
-  syncAndPersistAllUsers().then((count) => {
-    if (count > 0) {
-      console.log(`👤 [Server] Synced and backed up ${count} user record(s) into persistent Bunny Cloud Database.`);
-    }
-  }).catch(() => {});
-
-  // Sanitize existing user database to purge mismatched business system emails
-  sanitizeExistingUsersDatabase().then((count) => {
-    if (count > 0) {
-      console.log(`🧹 [Server] Purged ${count} mismatched business email record(s) from user database.`);
-    }
-  }).catch(() => {});
-
-  // Purge any legacy anti-bot blocked place records from database
-  purgeBlockedPlaceRecords().catch(() => {});
-
-  // Bidirectional sync and auto-recovery of Bunny Stream videos on startup and every 5 minutes
-  syncAndReconcileBunnyStreamVideos().then((res) => {
-    if (res.recoveredCount > 0 || res.syncedCount > 0) {
-      console.log(`🐰 [Server] Bunny Stream Sync complete: ${res.recoveredCount} recovered, ${res.syncedCount} updated.`);
-    }
-  }).catch(() => {});
+  }, 2000);
 
   setInterval(() => {
     syncAndReconcileBunnyStreamVideos().catch(() => {});

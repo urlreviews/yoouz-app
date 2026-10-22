@@ -1407,6 +1407,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {}
     return [];
   });
+  const [dbComments, setDbComments] = useState<any[]>([]);
 
   // Partner Agencies State
   const [adminAgencies, setAdminAgencies] = useState<any[]>([]);
