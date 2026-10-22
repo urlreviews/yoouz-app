@@ -261,4 +261,99 @@ export function generatePrecisionSubtitles(text: string, totalDuration: number =
   return buildSingleLineSegments(allWords, start, end);
 }
 
+/**
+ * Formats a subtitle cue so it never exceeds 1 to 2 lines max (standard TikTok / Reels format).
+ * If a sentence exceeds ~68 characters, splits strictly at natural speech pauses (commas, periods, clauses).
+ * Guarantees zero truncation (no 3 dots '...'), constant font size, and max 2 lines.
+ */
+export function formatCueToMaxTwoLines(
+  start: number,
+  end: number,
+  text: string,
+  maxCharsPerCue = 68
+): { start: number; end: number; text: string }[] {
+  const clean = text.trim();
+  if (!clean) return [];
+
+  if (clean.length <= maxCharsPerCue) {
+    return [{ start: Math.round(start * 100) / 100, end: Math.round(end * 100) / 100, text: clean }];
+  }
+
+  const mid = Math.floor(clean.length / 2);
+  const minSplit = Math.floor(clean.length * 0.3);
+  const maxSplit = Math.floor(clean.length * 0.7);
+
+  let bestSplitIdx = -1;
+  let bestDistance = Infinity;
+
+  // 1. Natural punctuation marks (comma, semicolon, period, exclamation, question)
+  const punctMatches = Array.from(clean.matchAll(/([.,!?;:])\s+/g));
+  for (const match of punctMatches) {
+    const idx = (match.index || 0) + match[1].length;
+    if (idx >= minSplit && idx <= maxSplit) {
+      const dist = Math.abs(idx - mid);
+      if (dist < bestDistance) {
+        bestDistance = dist;
+        bestSplitIdx = idx;
+      }
+    }
+  }
+
+  // 2. Clause conjunctions (and, but, because, with, that, so)
+  if (bestSplitIdx === -1) {
+    const conjMatches = Array.from(clean.matchAll(/\s+(and|but|because|with|that|which|when|while|if|then|for|or)\s+/gi));
+    for (const match of conjMatches) {
+      const idx = match.index || 0;
+      if (idx >= minSplit && idx <= maxSplit) {
+        const dist = Math.abs(idx - mid);
+        if (dist < bestDistance) {
+          bestDistance = dist;
+          bestSplitIdx = idx;
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: closest whitespace to middle
+  if (bestSplitIdx === -1) {
+    const spaces = Array.from(clean.matchAll(/\s+/g));
+    for (const match of spaces) {
+      const idx = match.index || 0;
+      const dist = Math.abs(idx - mid);
+      if (dist < bestDistance) {
+        bestDistance = dist;
+        bestSplitIdx = idx;
+      }
+    }
+  }
+
+  if (bestSplitIdx <= 0 || bestSplitIdx >= clean.length) {
+    return [{ start: Math.round(start * 100) / 100, end: Math.round(end * 100) / 100, text: clean }];
+  }
+
+  const part1 = clean.slice(0, bestSplitIdx).trim();
+  const part2 = clean.slice(bestSplitIdx).trim();
+
+  const totalChars = part1.length + part2.length;
+  const totalDur = Math.max(0.6, end - start);
+  const dur1 = totalChars > 0 ? totalDur * (part1.length / totalChars) : totalDur / 2;
+  const splitTime = Math.round((start + dur1) * 100) / 100;
+
+  const result: { start: number; end: number; text: string }[] = [];
+
+  if (part1.length > maxCharsPerCue) {
+    result.push(...formatCueToMaxTwoLines(start, splitTime, part1, maxCharsPerCue));
+  } else {
+    result.push({ start: Math.round(start * 100) / 100, end: splitTime, text: part1 });
+  }
+
+  if (part2.length > maxCharsPerCue) {
+    result.push(...formatCueToMaxTwoLines(splitTime, end, part2, maxCharsPerCue));
+  } else {
+    result.push({ start: splitTime, end: Math.round(end * 100) / 100, text: part2 });
+  }
+
+  return result;
+}
+
 

@@ -352,206 +352,129 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "totalReviews": 2
   },
   {
-    "id": "rev-1792531482229-aux2t",
-    "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
-    "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
-    "segments": [
-      {
-        "start": 0.63,
-        "end": 3.64,
-        "text": "If you're a business owner searching",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 3.64,
-        "end": 6.08,
-        "text": "for some editors or developers,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.08,
-        "end": 7.5,
-        "text": "you can now in 2026,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.5,
-        "end": 8.71,
-        "text": "You shouldn't do",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.71,
-        "end": 9.06,
-        "text": "that.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.52,
-        "end": 10.86,
-        "text": "You can go to Anthropic."
-      },
-      {
-        "start": 11.06,
-        "end": 12.32,
-        "text": "They have cloud,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.32,
-        "end": 13.98,
-        "text": "they have Cloud code,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.98,
-        "end": 15.49,
-        "text": "They can make codes,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.49,
-        "end": 16.5,
-        "text": "the normal code.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.72,
-        "end": 17.4,
-        "text": "It's for free."
-      },
-      {
-        "start": 17.42,
-        "end": 18.43,
-        "text": "you Can make all the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.43,
-        "end": 19.28,
-        "text": "video editing.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.34,
-        "end": 20.83,
-        "text": "So we don't need any of",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.83,
-        "end": 21.41,
-        "text": "this now.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 22.21,
-        "end": 23.28,
-        "text": "All we can do is focus",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.28,
-        "end": 24.38,
-        "text": "on your business and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.38,
-        "end": 25.39,
-        "text": "these things come",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 25.39,
-        "end": 25.93,
-        "text": "easily.",
-        "isHardwareTimed": true
-      }
-    ],
-    "aiTitle": "Free Cloud Code for Easy Video Editing in 2026",
-    "title": "Free Cloud Code for Easy Video Editing in 2026",
-    "caption": "Free Cloud Code for Easy Video Editing in 2026",
-    "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-    "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
-    "hasBunnySmartCaptions": true,
-    "isProcessing": false,
-    "isReady": true,
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-    "placeName": "Anthropic",
-    "placeCity": "Gent",
-    "placeCountry": "Belgium",
-    "rating": 5,
-    "placeRating": 5,
-    "placeId": "anthropic.com",
-    "authorName": "redha bm",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "duration": 27,
-    "createdAt": "2026-10-20T21:24:42.229Z",
-    "createdAtMs": 1792531482229,
-    "likesCount": 1,
-    "likes": 1,
-    "bookmarksCount": 0,
-    "bookmarks": 0,
-    "sharesCount": 0,
-    "shares": 0,
-    "viewsCount": 78,
-    "views": 78,
-    "author": {
-      "name": "redha bm",
-      "handle": "@redhabm",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
+  "id": "rev-1792531482229-aux2t",
+  "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
+  "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
+  "segments": [
+    {
+      "start": 0.63,
+      "end": 9.04,
+      "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that."
     },
-    "businessName": "Anthropic",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
-      "/api/videos/stream/rev-1792531482229-aux2t.mp4"
-    ],
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "placeWebsite": "https://anthropic.com",
-    "placeAddress": "",
-    "placePhone": "",
-    "placeCategory": "Verified Business",
-    "comments": [],
-    "commentsCount": 0,
-    "isBookmarked": false,
-    "isLiked": false,
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1,
-    "userId": "benmeddourridha7@gmail.com",
-    "userEmail": "benmeddourridha7@gmail.com",
-    "isLocalUpload": false,
-    "isCurrentSessionBlob": true,
-    "placeEmail": "",
-    "placeDescription": "Anthropic · verified business · anthropic.com",
-    "durationSeconds": 27,
-    "dishOrItem": "Anthropic",
-    "repostsCount": 0,
-    "tags": [
-      "Verified Business"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792531482229-aux2t/subtitles.vtt",
-    "updatedAt": 1792588096031
+    {
+      "start": 9.52,
+      "end": 10.86,
+      "text": "You can go to Anthropic."
+    },
+    {
+      "start": 11.06,
+      "end": 16.5,
+      "text": "They have cloud, they have Cloud code, They can make codes, the normal code."
+    },
+    {
+      "start": 16.72,
+      "end": 17.4,
+      "text": "It's for free."
+    },
+    {
+      "start": 17.42,
+      "end": 19.28,
+      "text": "you Can make all the video editing."
+    },
+    {
+      "start": 19.34,
+      "end": 21.41,
+      "text": "So we don't need any of this now."
+    },
+    {
+      "start": 22.21,
+      "end": 25.93,
+      "text": "All we can do is focus on your business and these things come easily."
+    }
+  ],
+  "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
+  "title": "Free Cloud Code for Easy Video Editing in 2026",
+  "caption": "Free Cloud Code for Easy Video Editing in 2026",
+  "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+  "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+  "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
+  "hasBunnySmartCaptions": true,
+  "isProcessing": false,
+  "isReady": true,
+  "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+  "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+  "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
+  "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "placeName": "Anthropic",
+  "placeCity": "Gent",
+  "placeCountry": "Belgium",
+  "rating": 5,
+  "placeRating": 5,
+  "placeId": "anthropic.com",
+  "authorName": "redha bm",
+  "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+  "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+  "duration": 27,
+  "createdAt": "2026-10-20T21:24:42.229Z",
+  "createdAtMs": 1792531482229,
+  "likesCount": 1,
+  "likes": 1,
+  "bookmarksCount": 0,
+  "bookmarks": 0,
+  "sharesCount": 0,
+  "shares": 0,
+  "viewsCount": 78,
+  "views": 78,
+  "author": {
+    "name": "redha bm",
+    "handle": "@redhabm",
+    "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "isLocalGuide": true,
+    "videoReviewCount": 1,
+    "photosCount": 0,
+    "isVerified": true,
+    "location": "",
+    "city": "",
+    "country": ""
   },
+  "businessName": "Anthropic",
+  "fallbackVideoUrls": [
+    "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+    "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
+    "/api/videos/stream/rev-1792531482229-aux2t.mp4"
+  ],
+  "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+  "placeWebsite": "https://anthropic.com",
+  "placeAddress": "",
+  "placePhone": "",
+  "placeCategory": "Verified Business",
+  "comments": [],
+  "commentsCount": 0,
+  "isBookmarked": false,
+  "isLiked": false,
+  "reviewsCount": 1,
+  "reviewCount": 1,
+  "totalReviews": 1,
+  "userId": "benmeddourridha7@gmail.com",
+  "userEmail": "benmeddourridha7@gmail.com",
+  "isLocalUpload": false,
+  "isCurrentSessionBlob": true,
+  "placeEmail": "",
+  "placeDescription": "Anthropic · verified business · anthropic.com",
+  "durationSeconds": 27,
+  "dishOrItem": "Anthropic",
+  "repostsCount": 0,
+  "tags": [
+    "Verified Business"
+  ],
+  "recordedAt": "Just now",
+  "isLandscape": false,
+  "aspectRatio": "portrait",
+  "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
+  "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+  "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
+  "updatedAt": 1792588096031
+},
   {
     "id": "rev-1792505354614-j01wo",
     "userId": "krtpcq@gmail.com",
