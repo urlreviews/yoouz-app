@@ -1318,7 +1318,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const arr = JSON.parse(stored);
       const filtered = (Array.isArray(arr) ? arr : []).filter((k: string) => {
         const s = String(k).toLowerCase();
-        return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
+        return !s.includes("aouisesmee") && 
+               !s.includes("4samet") && 
+               !s.includes("admin@yoouz.com") &&
+               s !== "mlio66hdr9trvofdgddgwm30rku2";
       });
       return new Set(filtered.map((k: string) => String(k).toLowerCase()));
     } catch {

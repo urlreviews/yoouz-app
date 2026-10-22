@@ -2145,6 +2145,24 @@ const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: strin
     avatar: "/api/avatar?name=Ben+Blue&background=1976d2&color=fff&bold=true&size=128",
     bio: "Authentic food & venue explorer on Yoouz.",
     location: "Sydney, Australia"
+  },
+  "admin": {
+    name: "Yoouz Admin",
+    handle: "@admin",
+    avatar: "/api/avatar?name=Yoouz+Admin&background=27272a&color=fff&bold=true&size=128",
+    bio: "Official Yoouz Platform Administrator."
+  },
+  "4samet": {
+    name: "Samet",
+    handle: "@4samet",
+    avatar: "/api/avatar?name=Samet&background=546e7a&color=fff&bold=true&size=128",
+    bio: "Verified user on Yoouz."
+  },
+  "samet": {
+    name: "Samet",
+    handle: "@4samet",
+    avatar: "/api/avatar?name=Samet&background=546e7a&color=fff&bold=true&size=128",
+    bio: "Verified user on Yoouz."
   }
 };
 
@@ -10813,6 +10831,35 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             if (key) allUsersMap.set(key, u);
           }
         });
+      }
+
+      // 1.5. Query BunnyDB users table to ensure all registered accounts are in the index
+      if (bunnyDb) {
+        try {
+          const rs = await bunnyDb.execute("SELECT * FROM users");
+          if (rs && rs.rows) {
+            rs.rows.forEach((row: any) => {
+              if (row && (row.id || row.email)) {
+                let parsed: any = {};
+                try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e){}
+                const key = String(row.email || parsed.email || row.id).toLowerCase().trim();
+                if (key && !allUsersMap.has(key)) {
+                  allUsersMap.set(key, {
+                    id: row.id || parsed.id || key,
+                    uid: parsed.uid || row.id || key,
+                    email: row.email || parsed.email || (key.includes('@') ? key : ''),
+                    name: parsed.name || row.name || (key.includes('@') ? key.split('@')[0] : 'User'),
+                    role: parsed.role || row.role || "user",
+                    status: parsed.status || "verified",
+                    isVerified: parsed.isVerified !== false,
+                    isRegisteredAccount: true,
+                    ...parsed
+                  });
+                }
+              }
+            });
+          }
+        } catch (e) {}
       }
 
       // 2. Add KNOWN_COMMUNITY_USERS_SERVER creators
@@ -35040,7 +35087,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     } catch (bgErr) {
       console.warn("Background startup sync notice:", bgErr);
     }
-  }, 2000);
+  }, 100);
 
   setInterval(() => {
     syncAndReconcileBunnyStreamVideos().catch(() => {});

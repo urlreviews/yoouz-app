@@ -210,7 +210,7 @@ function createResilientClient(remoteClient: Client | null, localClient: Client)
 
     if (isRemoteAvailable && remoteClient) {
       try {
-        return await withTimeout(remoteClient.execute(finalStmt), 1500, "BunnyDB remote query timeout (1500ms)");
+        return await withTimeout(remoteClient.execute(finalStmt), 3000, "BunnyDB remote query timeout (3000ms)");
       } catch (err: any) {
         const isSqlError = 
           err.message?.includes("SQLITE_") || 
