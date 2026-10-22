@@ -145,28 +145,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
             }
           }
         } else if (s >= 0 && e >= s) {
-          // 🐰 Official Bunny Stream Cue:
-          // Strictly guarantee 1 SINGLE LINE: if cue has > 4 words or > 26 characters,
-          // slice into 1-line phrase chunks bounded within the exact [s, e] window of Bunny Stream
-          const cueWords = txt.split(/\s+/).filter(Boolean);
-          if (cueWords.length > 4 || txt.length > 26) {
-            const lineSegments = buildSingleLineSegments(cueWords, s, e);
-            for (const seg of lineSegments) {
-              cleanCues.push({
-                id: cueId++,
-                start: seg.start,
-                end: seg.end,
-                text: seg.text
-              });
-            }
-          } else {
-            cleanCues.push({
-              id: cueId++,
-              start: s,
-              end: e,
-              text: txt
-            });
-          }
+          // 🐰 Official Bunny Stream Cue (Option A):
+          // Directly preserve Bunny Stream's authentic verified acoustic timestamps [s, e]
+          // Never mathematically slice or interpolate - guarantees 100% audio sync lockstep
+          cleanCues.push({
+            id: cueId++,
+            start: s,
+            end: e,
+            text: txt
+          });
         } else {
           cleanCues.push({
             id: cueId++,
@@ -354,20 +341,29 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   const isVisible = Boolean(isActive && activeCue && activeCue.text);
   const currentText = activeCue?.text || null;
 
+  // Fluid responsive font scaling so authentic sentences fit comfortably in 1 sleek line
+  const fontSizeClass = useMemo(() => {
+    const len = currentText ? currentText.length : 0;
+    if (len <= 28) return 'text-[13px] xs:text-[13.5px] sm:text-[14px]';
+    if (len <= 52) return 'text-[11.5px] xs:text-[12px] sm:text-[12.5px]';
+    if (len <= 80) return 'text-[10px] xs:text-[10.5px] sm:text-[11px]';
+    return 'text-[9px] xs:text-[9.5px] sm:text-[10px]';
+  }, [currentText]);
+
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-3 sm:px-4 pointer-events-none z-[48] select-none">
       <div 
-        className={`max-w-[94%] flex justify-center transition-opacity duration-150 ease-out ${
+        className={`max-w-[96%] sm:max-w-[90%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-md px-3.5 sm:px-4 py-1.5 rounded-full border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/85 backdrop-blur-md px-3.5 sm:px-4 py-1.5 rounded-full border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full overflow-hidden"
         >
-          <p className="text-[13px] xs:text-[13.5px] sm:text-[14px] font-bold tracking-tight text-center leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] whitespace-nowrap">
+          <p className={`${fontSizeClass} font-bold tracking-tight text-center leading-none text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] whitespace-nowrap truncate max-w-full`}>
             {currentText || ''}
           </p>
         </div>
