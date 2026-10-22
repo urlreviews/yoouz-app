@@ -40,174 +40,38 @@
       "/api/videos/stream/rev-1792611672289-cajjk.mp4"
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
-    "caption": "Zara",
+    "caption": "Review de tiendas SAVA: Productos excelentes y a la moda para todos",
     "title": "Jose Agustin Reinoso - Zara",
-    "transcriptText": "Buenos Días when I started at Excelente Look at Carlos",
+    "transcriptText": "Buenos días, buenas tardes. Este es un review para las tiendas SAVA. Excelentes productos, excelentes... Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen. Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
     "segments": [
       {
-        "start": 0.59,
-        "end": 4.8,
-        "text": "Buenos Días when",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 0.59,
-            "end": 2.89
-          },
-          {
-            "word": "Días",
-            "start": 2.89,
-            "end": 4.01
-          },
-          {
-            "word": "when",
-            "start": 4.01,
-            "end": 4.8
-          }
-        ],
+        "start": 0.823,
+        "end": 2.186,
+        "text": "Buenos días, buenas tardes.",
         "isHardwareTimed": true
       },
       {
-        "start": 4.8,
-        "end": 6.65,
-        "text": "I started at",
-        "words": [
-          {
-            "word": "I",
-            "start": 4.8,
-            "end": 4.99
-          },
-          {
-            "word": "started",
-            "start": 4.99,
-            "end": 6.46
-          },
-          {
-            "word": "at",
-            "start": 6.46,
-            "end": 6.65
-          }
-        ],
+        "start": 2.226,
+        "end": 3.929,
+        "text": "Este es un review para las tiendas SAVA.",
         "isHardwareTimed": true
       },
       {
-        "start": 6.65,
-        "end": 7.99,
-        "text": "Buenos Días when",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 6.65,
-            "end": 7.39
-          },
-          {
-            "word": "Días",
-            "start": 7.39,
-            "end": 7.74
-          },
-          {
-            "word": "when",
-            "start": 7.74,
-            "end": 7.99
-          }
-        ],
+        "start": 4.15,
+        "end": 8.878,
+        "text": "Excelentes productos, excelentes...",
         "isHardwareTimed": true
       },
       {
-        "start": 7.99,
-        "end": 8.83,
-        "text": "I started the",
-        "words": [
-          {
-            "word": "I",
-            "start": 7.99,
-            "end": 8.08
-          },
-          {
-            "word": "started",
-            "start": 8.08,
-            "end": 8.74
-          },
-          {
-            "word": "the",
-            "start": 8.74,
-            "end": 8.83
-          }
-        ],
+        "start": 8.959,
+        "end": 14.249,
+        "text": "Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen.",
         "isHardwareTimed": true
       },
       {
-        "start": 8.58,
-        "end": 10.76,
-        "text": "Buenos Días when I",
-        "words": [
-          {
-            "word": "Buenos",
-            "start": 8.58,
-            "end": 9.72
-          },
-          {
-            "word": "Días",
-            "start": 9.72,
-            "end": 10.27
-          },
-          {
-            "word": "when",
-            "start": 10.27,
-            "end": 10.66
-          },
-          {
-            "word": "I",
-            "start": 10.66,
-            "end": 10.76
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.76,
-        "end": 13.18,
-        "text": "started at Excelente",
-        "words": [
-          {
-            "word": "started",
-            "start": 10.76,
-            "end": 11.48
-          },
-          {
-            "word": "at",
-            "start": 11.48,
-            "end": 11.58
-          },
-          {
-            "word": "Excelente",
-            "start": 11.58,
-            "end": 13.18
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.18,
-        "end": 22.25,
-        "text": "Look at Carlos",
-        "words": [
-          {
-            "word": "Look",
-            "start": 13.18,
-            "end": 17.04
-          },
-          {
-            "word": "at",
-            "start": 17.04,
-            "end": 17.52
-          },
-          {
-            "word": "Carlos",
-            "start": 17.52,
-            "end": 22.25
-          }
-        ],
+        "start": 15.251,
+        "end": 21.102,
+        "text": "Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
         "isHardwareTimed": true
       }
     ],
@@ -246,10 +110,12 @@
     "bunnyVideoId": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
     "bunnyGuid": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
-    "vttUrl": "https://vz-733814.b-cdn.net/28d0f1aa-44b7-4380-bc7e-5a527107e38f/captions/en-auto.vtt",
-    "aiTitle": "Jose Agustin Reinoso - Zara",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/captions/es-auto.vtt",
+    "aiTitle": "Review de tiendas SAVA: Productos excelentes y a la moda para todos",
     "hasBunnySmartCaptions": true,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E"
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "bunnyDescription": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca.",
+    "description": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca."
   },
   {
     "id": "rev-1792611567587-xlv37",
@@ -294,1298 +160,18 @@
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/thumbnail.jpg",
     "caption": "Jollibee",
     "title": "Hollywood Project - Excellent UI Experience",
-    "transcriptText": "I'm just here as he was testing for the for the application right now leaving a review for you for review the project on the drill Thanks for",
+    "transcriptText": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood. I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
     "segments": [
       {
-        "start": 1.73,
-        "end": 5.93,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 1.73,
-            "end": 2.67
-          },
-          {
-            "word": "just",
-            "start": 2.67,
-            "end": 4.04
-          },
-          {
-            "word": "here",
-            "start": 4.04,
-            "end": 5.93
-          }
-        ],
+        "start": 2.432,
+        "end": 12.257,
+        "text": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood.",
         "isHardwareTimed": true
       },
       {
-        "start": 5.93,
-        "end": 7.74,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 5.93,
-            "end": 6.26
-          },
-          {
-            "word": "he",
-            "start": 6.26,
-            "end": 6.58
-          },
-          {
-            "word": "was",
-            "start": 6.58,
-            "end": 7.74
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.74,
-        "end": 9.08,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 7.74,
-            "end": 8.04
-          },
-          {
-            "word": "just",
-            "start": 8.04,
-            "end": 8.48
-          },
-          {
-            "word": "here",
-            "start": 8.48,
-            "end": 9.08
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.08,
-        "end": 9.92,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 9.08,
-            "end": 9.23
-          },
-          {
-            "word": "he",
-            "start": 9.23,
-            "end": 9.38
-          },
-          {
-            "word": "was",
-            "start": 9.38,
-            "end": 9.92
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.19,
-        "end": 9.53,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 8.19,
-            "end": 8.49
-          },
-          {
-            "word": "just",
-            "start": 8.49,
-            "end": 8.93
-          },
-          {
-            "word": "here",
-            "start": 8.93,
-            "end": 9.53
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.53,
-        "end": 10.37,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 9.53,
-            "end": 9.68
-          },
-          {
-            "word": "he",
-            "start": 9.68,
-            "end": 9.83
-          },
-          {
-            "word": "was",
-            "start": 9.83,
-            "end": 10.37
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.43,
-        "end": 9.77,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 8.43,
-            "end": 8.73
-          },
-          {
-            "word": "just",
-            "start": 8.73,
-            "end": 9.17
-          },
-          {
-            "word": "here",
-            "start": 9.17,
-            "end": 9.77
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.77,
-        "end": 10.61,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 9.77,
-            "end": 9.92
-          },
-          {
-            "word": "he",
-            "start": 9.92,
-            "end": 10.07
-          },
-          {
-            "word": "was",
-            "start": 10.07,
-            "end": 10.61
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.9,
-        "end": 10.24,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 8.9,
-            "end": 9.2
-          },
-          {
-            "word": "just",
-            "start": 9.2,
-            "end": 9.64
-          },
-          {
-            "word": "here",
-            "start": 9.64,
-            "end": 10.24
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.24,
-        "end": 11.08,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 10.24,
-            "end": 10.39
-          },
-          {
-            "word": "he",
-            "start": 10.39,
-            "end": 10.54
-          },
-          {
-            "word": "was",
-            "start": 10.54,
-            "end": 11.08
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.13,
-        "end": 10.47,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 9.13,
-            "end": 9.43
-          },
-          {
-            "word": "just",
-            "start": 9.43,
-            "end": 9.87
-          },
-          {
-            "word": "here",
-            "start": 9.87,
-            "end": 10.47
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.47,
-        "end": 11.31,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 10.47,
-            "end": 10.62
-          },
-          {
-            "word": "he",
-            "start": 10.62,
-            "end": 10.77
-          },
-          {
-            "word": "was",
-            "start": 10.77,
-            "end": 11.31
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.65,
-        "end": 10.99,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 9.65,
-            "end": 9.95
-          },
-          {
-            "word": "just",
-            "start": 9.95,
-            "end": 10.39
-          },
-          {
-            "word": "here",
-            "start": 10.39,
-            "end": 10.99
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.99,
-        "end": 11.83,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 10.99,
-            "end": 11.14
-          },
-          {
-            "word": "he",
-            "start": 11.14,
-            "end": 11.29
-          },
-          {
-            "word": "was",
-            "start": 11.29,
-            "end": 11.83
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.35,
-        "end": 11.7,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 10.35,
-            "end": 10.66
-          },
-          {
-            "word": "just",
-            "start": 10.66,
-            "end": 11.09
-          },
-          {
-            "word": "here",
-            "start": 11.09,
-            "end": 11.7
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.7,
-        "end": 12.54,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 11.7,
-            "end": 11.85
-          },
-          {
-            "word": "he",
-            "start": 11.85,
-            "end": 12
-          },
-          {
-            "word": "was",
-            "start": 12,
-            "end": 12.54
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.62,
-        "end": 11.96,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 10.62,
-            "end": 10.92
-          },
-          {
-            "word": "just",
-            "start": 10.92,
-            "end": 11.36
-          },
-          {
-            "word": "here",
-            "start": 11.36,
-            "end": 11.96
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.96,
-        "end": 12.8,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 11.96,
-            "end": 12.11
-          },
-          {
-            "word": "he",
-            "start": 12.11,
-            "end": 12.26
-          },
-          {
-            "word": "was",
-            "start": 12.26,
-            "end": 12.8
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.62,
-        "end": 11.96,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 10.62,
-            "end": 10.92
-          },
-          {
-            "word": "just",
-            "start": 10.92,
-            "end": 11.36
-          },
-          {
-            "word": "here",
-            "start": 11.36,
-            "end": 11.96
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.96,
-        "end": 12.8,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 11.96,
-            "end": 12.11
-          },
-          {
-            "word": "he",
-            "start": 12.11,
-            "end": 12.26
-          },
-          {
-            "word": "was",
-            "start": 12.26,
-            "end": 12.8
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.86,
-        "end": 12.2,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 10.86,
-            "end": 11.16
-          },
-          {
-            "word": "just",
-            "start": 11.16,
-            "end": 11.6
-          },
-          {
-            "word": "here",
-            "start": 11.6,
-            "end": 12.2
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.2,
-        "end": 13.04,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 12.2,
-            "end": 12.35
-          },
-          {
-            "word": "he",
-            "start": 12.35,
-            "end": 12.5
-          },
-          {
-            "word": "was",
-            "start": 12.5,
-            "end": 13.04
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.87,
-        "end": 12.21,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 10.87,
-            "end": 11.17
-          },
-          {
-            "word": "just",
-            "start": 11.17,
-            "end": 11.61
-          },
-          {
-            "word": "here",
-            "start": 11.61,
-            "end": 12.21
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.21,
-        "end": 13.05,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 12.21,
-            "end": 12.36
-          },
-          {
-            "word": "he",
-            "start": 12.36,
-            "end": 12.51
-          },
-          {
-            "word": "was",
-            "start": 12.51,
-            "end": 13.05
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.1,
-        "end": 12.44,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 11.1,
-            "end": 11.4
-          },
-          {
-            "word": "just",
-            "start": 11.4,
-            "end": 11.84
-          },
-          {
-            "word": "here",
-            "start": 11.84,
-            "end": 12.44
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.44,
-        "end": 13.28,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 12.44,
-            "end": 12.59
-          },
-          {
-            "word": "he",
-            "start": 12.59,
-            "end": 12.74
-          },
-          {
-            "word": "was",
-            "start": 12.74,
-            "end": 13.28
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.14,
-        "end": 12.48,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 11.14,
-            "end": 11.44
-          },
-          {
-            "word": "just",
-            "start": 11.44,
-            "end": 11.88
-          },
-          {
-            "word": "here",
-            "start": 11.88,
-            "end": 12.48
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.48,
-        "end": 13.32,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 12.48,
-            "end": 12.63
-          },
-          {
-            "word": "he",
-            "start": 12.63,
-            "end": 12.78
-          },
-          {
-            "word": "was",
-            "start": 12.78,
-            "end": 13.32
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.3,
-        "end": 12.64,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 11.3,
-            "end": 11.6
-          },
-          {
-            "word": "just",
-            "start": 11.6,
-            "end": 12.04
-          },
-          {
-            "word": "here",
-            "start": 12.04,
-            "end": 12.64
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.64,
-        "end": 13.48,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 12.64,
-            "end": 12.79
-          },
-          {
-            "word": "he",
-            "start": 12.79,
-            "end": 12.94
-          },
-          {
-            "word": "was",
-            "start": 12.94,
-            "end": 13.48
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.84,
-        "end": 13.18,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 11.84,
-            "end": 12.14
-          },
-          {
-            "word": "just",
-            "start": 12.14,
-            "end": 12.58
-          },
-          {
-            "word": "here",
-            "start": 12.58,
-            "end": 13.18
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.18,
-        "end": 14.02,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 13.18,
-            "end": 13.33
-          },
-          {
-            "word": "he",
-            "start": 13.33,
-            "end": 13.48
-          },
-          {
-            "word": "was",
-            "start": 13.48,
-            "end": 14.02
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.76,
-        "end": 14.11,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 12.76,
-            "end": 13.07
-          },
-          {
-            "word": "just",
-            "start": 13.07,
-            "end": 13.5
-          },
-          {
-            "word": "here",
-            "start": 13.5,
-            "end": 14.11
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 14.11,
-        "end": 14.95,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 14.11,
-            "end": 14.26
-          },
-          {
-            "word": "he",
-            "start": 14.26,
-            "end": 14.41
-          },
-          {
-            "word": "was",
-            "start": 14.41,
-            "end": 14.95
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.76,
-        "end": 15.11,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 13.76,
-            "end": 14.07
-          },
-          {
-            "word": "just",
-            "start": 14.07,
-            "end": 14.5
-          },
-          {
-            "word": "here",
-            "start": 14.5,
-            "end": 15.11
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.11,
-        "end": 15.95,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 15.11,
-            "end": 15.26
-          },
-          {
-            "word": "he",
-            "start": 15.26,
-            "end": 15.41
-          },
-          {
-            "word": "was",
-            "start": 15.41,
-            "end": 15.95
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.67,
-        "end": 17.01,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 15.67,
-            "end": 15.97
-          },
-          {
-            "word": "just",
-            "start": 15.97,
-            "end": 16.4
-          },
-          {
-            "word": "here",
-            "start": 16.4,
-            "end": 17.01
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.01,
-        "end": 17.85,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 17.01,
-            "end": 17.16
-          },
-          {
-            "word": "he",
-            "start": 17.16,
-            "end": 17.31
-          },
-          {
-            "word": "was",
-            "start": 17.31,
-            "end": 17.85
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.86,
-        "end": 17.2,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 15.86,
-            "end": 16.16
-          },
-          {
-            "word": "just",
-            "start": 16.16,
-            "end": 16.6
-          },
-          {
-            "word": "here",
-            "start": 16.6,
-            "end": 17.2
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.2,
-        "end": 18.04,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 17.2,
-            "end": 17.35
-          },
-          {
-            "word": "he",
-            "start": 17.35,
-            "end": 17.5
-          },
-          {
-            "word": "was",
-            "start": 17.5,
-            "end": 18.04
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.1,
-        "end": 17.44,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 16.1,
-            "end": 16.4
-          },
-          {
-            "word": "just",
-            "start": 16.4,
-            "end": 16.83
-          },
-          {
-            "word": "here",
-            "start": 16.83,
-            "end": 17.44
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.44,
-        "end": 18.28,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 17.44,
-            "end": 17.59
-          },
-          {
-            "word": "he",
-            "start": 17.59,
-            "end": 17.74
-          },
-          {
-            "word": "was",
-            "start": 17.74,
-            "end": 18.28
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.37,
-        "end": 17.71,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 16.37,
-            "end": 16.67
-          },
-          {
-            "word": "just",
-            "start": 16.67,
-            "end": 17.11
-          },
-          {
-            "word": "here",
-            "start": 17.11,
-            "end": 17.71
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.71,
-        "end": 18.55,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 17.71,
-            "end": 17.86
-          },
-          {
-            "word": "he",
-            "start": 17.86,
-            "end": 18.01
-          },
-          {
-            "word": "was",
-            "start": 18.01,
-            "end": 18.55
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.59,
-        "end": 17.93,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 16.59,
-            "end": 16.89
-          },
-          {
-            "word": "just",
-            "start": 16.89,
-            "end": 17.33
-          },
-          {
-            "word": "here",
-            "start": 17.33,
-            "end": 17.93
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.93,
-        "end": 18.77,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 17.93,
-            "end": 18.08
-          },
-          {
-            "word": "he",
-            "start": 18.08,
-            "end": 18.23
-          },
-          {
-            "word": "was",
-            "start": 18.23,
-            "end": 18.77
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.84,
-        "end": 18.39,
-        "text": "I'm just here",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 16.84,
-            "end": 17.19
-          },
-          {
-            "word": "just",
-            "start": 17.19,
-            "end": 17.69
-          },
-          {
-            "word": "here",
-            "start": 17.69,
-            "end": 18.39
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.39,
-        "end": 19.23,
-        "text": "as he was",
-        "words": [
-          {
-            "word": "as",
-            "start": 18.39,
-            "end": 18.54
-          },
-          {
-            "word": "he",
-            "start": 18.54,
-            "end": 18.69
-          },
-          {
-            "word": "was",
-            "start": 18.69,
-            "end": 19.23
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.07,
-        "end": 20.47,
-        "text": "I'm just here as he",
-        "words": [
-          {
-            "word": "I'm",
-            "start": 19.07,
-            "end": 19.34
-          },
-          {
-            "word": "just",
-            "start": 19.34,
-            "end": 19.73
-          },
-          {
-            "word": "here",
-            "start": 19.73,
-            "end": 20.28
-          },
-          {
-            "word": "as",
-            "start": 20.28,
-            "end": 20.37
-          },
-          {
-            "word": "he",
-            "start": 20.37,
-            "end": 20.47
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.47,
-        "end": 21.99,
-        "text": "was testing for the for",
-        "words": [
-          {
-            "word": "was",
-            "start": 20.47,
-            "end": 20.75
-          },
-          {
-            "word": "testing",
-            "start": 20.75,
-            "end": 21.36
-          },
-          {
-            "word": "for",
-            "start": 21.36,
-            "end": 21.63
-          },
-          {
-            "word": "the",
-            "start": 21.63,
-            "end": 21.71
-          },
-          {
-            "word": "for",
-            "start": 21.71,
-            "end": 21.99
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 21.99,
-        "end": 24.65,
-        "text": "the application right now leaving",
-        "words": [
-          {
-            "word": "the",
-            "start": 21.99,
-            "end": 22.07
-          },
-          {
-            "word": "application",
-            "start": 22.07,
-            "end": 23.26
-          },
-          {
-            "word": "right",
-            "start": 23.26,
-            "end": 23.64
-          },
-          {
-            "word": "now",
-            "start": 23.64,
-            "end": 23.91
-          },
-          {
-            "word": "leaving",
-            "start": 23.91,
-            "end": 24.65
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.65,
-        "end": 26.5,
-        "text": "a review for you for",
-        "words": [
-          {
-            "word": "a",
-            "start": 24.65,
-            "end": 24.73
-          },
-          {
-            "word": "review",
-            "start": 24.73,
-            "end": 25.41
-          },
-          {
-            "word": "for",
-            "start": 25.41,
-            "end": 25.69
-          },
-          {
-            "word": "you",
-            "start": 25.69,
-            "end": 26.22
-          },
-          {
-            "word": "for",
-            "start": 26.22,
-            "end": 26.5
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.5,
-        "end": 28.18,
-        "text": "review the project on the drill",
-        "words": [
-          {
-            "word": "review",
-            "start": 26.5,
-            "end": 27.1
-          },
-          {
-            "word": "the",
-            "start": 27.1,
-            "end": 27.18
-          },
-          {
-            "word": "project",
-            "start": 27.17,
-            "end": 27.71
-          },
-          {
-            "word": "on",
-            "start": 27.71,
-            "end": 27.79
-          },
-          {
-            "word": "the",
-            "start": 27.78,
-            "end": 27.86
-          },
-          {
-            "word": "drill",
-            "start": 27.84,
-            "end": 28.18
-          }
-        ],
-        "isHardwareTimed": true
-      },
-      {
-        "start": 28.18,
-        "end": 28.88,
-        "text": "Thanks for",
-        "words": [
-          {
-            "word": "Thanks",
-            "start": 28.18,
-            "end": 28.66
-          },
-          {
-            "word": "for",
-            "start": 28.66,
-            "end": 28.88
-          }
-        ],
+        "start": 12.278,
+        "end": 19.703,
+        "text": "I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
         "isHardwareTimed": true
       }
     ],
@@ -1610,12 +196,12 @@
     "bunnyVideoId": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
     "bunnyGuid": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792611567587-xlv37/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/captions/en-auto.vtt",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "isReady": true,
     "isProcessing": false,
-    "aiTitle": "Hollywood Project - Excellent UI Experience",
+    "aiTitle": "UI Testing Review: Hollywood Project - Excellent UI Experience",
     "bunnyDescription": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
     "description": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
     "hasBunnySmartCaptions": true,
@@ -1637,119 +223,49 @@
     "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
     "segments": [
       {
-        "start": 0.63,
-        "end": 3.64,
-        "text": "If you're a business owner searching",
+        "start": 0.631,
+        "end": 9.037,
+        "text": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that.",
         "isHardwareTimed": true
       },
       {
-        "start": 3.64,
-        "end": 6.08,
-        "text": "for some editors or developers,",
+        "start": 9.517,
+        "end": 10.858,
+        "text": "You can go to Anthropic.",
         "isHardwareTimed": true
       },
       {
-        "start": 6.08,
-        "end": 7.5,
-        "text": "you can now in 2026,",
+        "start": 11.058,
+        "end": 16.502,
+        "text": "They have cloud, they have Cloud code, They can make codes, the normal code.",
         "isHardwareTimed": true
       },
       {
-        "start": 7.5,
-        "end": 8.71,
-        "text": "You shouldn't do",
+        "start": 16.722,
+        "end": 17.402,
+        "text": "It's for free.",
         "isHardwareTimed": true
       },
       {
-        "start": 8.71,
-        "end": 9.06,
-        "text": "that.",
+        "start": 17.422,
+        "end": 19.284,
+        "text": "you Can make all the video editing.",
         "isHardwareTimed": true
       },
       {
-        "start": 9.52,
-        "end": 10.86,
-        "text": "You can go to Anthropic."
-      },
-      {
-        "start": 11.06,
-        "end": 12.32,
-        "text": "They have cloud,",
+        "start": 19.344,
+        "end": 21.405,
+        "text": "So we don't need any of this now.",
         "isHardwareTimed": true
       },
       {
-        "start": 12.32,
-        "end": 13.98,
-        "text": "they have Cloud code,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.98,
-        "end": 15.49,
-        "text": "They can make codes,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.49,
-        "end": 16.5,
-        "text": "the normal code.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.72,
-        "end": 17.4,
-        "text": "It's for free."
-      },
-      {
-        "start": 17.42,
-        "end": 18.43,
-        "text": "you Can make all the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.43,
-        "end": 19.28,
-        "text": "video editing.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.34,
-        "end": 20.83,
-        "text": "So we don't need any of",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.83,
-        "end": 21.41,
-        "text": "this now.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 22.21,
-        "end": 23.28,
-        "text": "All we can do is focus",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.28,
-        "end": 24.38,
-        "text": "on your business and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.38,
-        "end": 25.39,
-        "text": "these things come",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 25.39,
-        "end": 25.93,
-        "text": "easily.",
+        "start": 22.206,
+        "end": 25.928,
+        "text": "All we can do is focus on your business and these things come easily.",
         "isHardwareTimed": true
       }
     ],
-    "aiTitle": "Free Cloud Code for Easy Video Editing in 2026",
+    "aiTitle": "Anthropic: Free Cloud Code for Easy Video Editing in 2026",
     "title": "Free Cloud Code for Easy Video Editing in 2026",
     "caption": "Free Cloud Code for Easy Video Editing in 2026",
     "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
@@ -1829,7 +345,7 @@
     "aspectRatio": "portrait",
     "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792531482229-aux2t/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
     "updatedAt": 1792588096031
   },
   {
@@ -1877,63 +393,15 @@
     "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
     "segments": [
       {
-        "start": 1.31,
-        "end": 5.15,
-        "text": "I found another Zara perfume that",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 5.15,
-        "end": 7.11,
-        "text": "I am obsessed with",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.11,
-        "end": 9.91,
-        "text": "it's called night for a home",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.91,
-        "end": 11.93,
-        "text": "version to winter and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.93,
-        "end": 15.01,
-        "text": "it matches my style perfectly and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.01,
+        "start": 1.305,
         "end": 16.75,
-        "text": "honestly it lasts",
+        "text": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts",
         "isHardwareTimed": true
       },
       {
-        "start": 16.83,
-        "end": 18.45,
-        "text": "way longer than anything else I",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.45,
-        "end": 19.93,
-        "text": "have tried at this price point",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.93,
-        "end": 20.64,
-        "text": "so you should",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.64,
-        "end": 20.990000000000002,
-        "text": "you",
+        "start": 16.829,
+        "end": 20.951,
+        "text": "way longer than anything else I have tried at this price point so you should you",
         "isHardwareTimed": true
       }
     ],
@@ -1958,7 +426,7 @@
     "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
     "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792505354614-j01wo/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
@@ -1974,7 +442,7 @@
     "reviewCount": 3,
     "totalReviews": 3,
     "updatedAt": 1792514318491,
-    "aiTitle": "Long-lasting winter scent matching my style perfectly!",
+    "aiTitle": "Obsessed with Zara Night Perfume: Long-lasting winter scent matching my style perfectly!",
     "title": "Long-lasting winter scent matching my style perfectly!",
     "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
     "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
@@ -2028,22 +496,26 @@
       {
         "start": 0.918,
         "end": 4.164,
-        "text": "This Zara perfume is my new favorite."
+        "text": "This Zara perfume is my new favorite.",
+        "isHardwareTimed": true
       },
       {
         "start": 4.364,
         "end": 6.288,
-        "text": "It fits my vibe perfectly."
+        "text": "It fits my vibe perfectly.",
+        "isHardwareTimed": true
       },
       {
         "start": 6.468,
         "end": 11.037,
-        "text": "And unlike any other brands at this price, it actually lasts all day."
+        "text": "And unlike any other brands at this price, it actually lasts all day.",
+        "isHardwareTimed": true
       },
       {
         "start": 11.077,
         "end": 12.199,
-        "text": "So you have to give it a try."
+        "text": "So you have to give it a try.",
+        "isHardwareTimed": true
       }
     ],
     "dishOrItem": "Zara",
@@ -2067,7 +539,7 @@
     "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792505047137-smiho/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
@@ -2083,9 +555,11 @@
     "reviewCount": 3,
     "totalReviews": 3,
     "title": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
-    "aiTitle": "Long-lasting Zara perfume scent that matches your vibe perfectly!",
+    "aiTitle": "Zara perfume: Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
     "isReady": true,
-    "isProcessing": false
+    "isProcessing": false,
+    "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
+    "description": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity."
   },
   {
     "id": "rev-1792404298362-hrk2f",
@@ -2123,122 +597,26 @@
     ],
     "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
     "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
-    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "aiTitle": "Review: Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong, TL",
     "transcriptText": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
     "segments": [
       {
-        "start": 0.66,
-        "end": 2.61,
-        "text": "hello everyone so",
+        "start": 0.658,
+        "end": 14.063,
+        "text": "hello everyone so i'm here to do my review with the guard slip cafe by lgip located in bayombong nueva vizcaya so do visit the store the cafe in which",
         "isHardwareTimed": true
       },
       {
-        "start": 2.61,
-        "end": 4.61,
-        "text": "i'm here to do my review",
+        "start": 14.123,
+        "end": 26.768,
+        "text": "they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very uh cozy place the ambience is very good and at",
         "isHardwareTimed": true
       },
       {
-        "start": 4.61,
-        "end": 6.85,
-        "text": "with the guard slip cafe by",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.85,
-        "end": 11.18,
-        "text": "lgip located in bayombong nueva vizcaya",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.18,
-        "end": 12.91,
-        "text": "so do visit the store the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.91,
-        "end": 14.06,
-        "text": "cafe in which",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 14.12,
-        "end": 17.09,
-        "text": "they do offer affordable drinks and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.09,
-        "end": 19.38,
-        "text": "freshly baked pastries and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.38,
-        "end": 22.35,
-        "text": "breads with affordable price it is",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 22.35,
-        "end": 24.41,
-        "text": "a very uh cozy place the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.41,
-        "end": 26.54,
-        "text": "ambience is very good",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.54,
-        "end": 26.89,
-        "text": "and at",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.87,
-        "end": 29.38,
-        "text": "the same time um lip cafe",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 29.38,
-        "end": 31.82,
-        "text": "by lgit do supports okay the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 31.82,
-        "end": 34.99,
-        "text": "nova viscayano local bins so",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 34.99,
-        "end": 36.64,
-        "text": "once again if",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 36.64,
-        "end": 39,
-        "text": "you have time drop by",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39,
-        "end": 39.86,
-        "text": "at lip café",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.86,
-        "end": 40.44,
-        "text": "by LGIT",
+        "start": 26.869,
+        "end": 40.435,
+        "text": "the same time um lip cafe by lgit do supports okay the nova viscayano local bins so once again if you have time drop by at lip café by LGIT",
         "isHardwareTimed": true
       }
     ],
@@ -2261,7 +639,7 @@
     "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
     "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-    "vttUrl": "/api/videos/rev-1792404298362-hrk2f/subtitles.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/tl-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
     "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
@@ -2330,145 +708,58 @@
     "transcriptText": "Hello! So for this one is Jollibee Philippines. I gave it a 5 star for its review. Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside. And always be served with the iconic sweet style spaghetti. mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours, making it as your go-to for your late night cravings or at same for any morning breakfast. So, see you there! Enjoy the Philippines!",
     "segments": [
       {
-        "start": 1.03,
-        "end": 1.85,
-        "text": "Hello!"
-      },
-      {
-        "start": 1.95,
-        "end": 2.78,
-        "text": "So for this one is",
+        "start": 1.027,
+        "end": 1.848,
+        "text": "Hello!",
         "isHardwareTimed": true
       },
       {
-        "start": 2.78,
+        "start": 1.948,
         "end": 4.11,
-        "text": "Jollibee Philippines.",
+        "text": "So for this one is Jollibee Philippines.",
         "isHardwareTimed": true
       },
       {
         "start": 4.19,
-        "end": 5.53,
-        "text": "I gave it a 5 star",
+        "end": 6.852,
+        "text": "I gave it a 5 star for its review.",
         "isHardwareTimed": true
       },
       {
-        "start": 5.53,
-        "end": 6.85,
-        "text": "for its review.",
+        "start": 6.872,
+        "end": 14.439,
+        "text": "Because basically, they do offer the famous iconic chicken joint crispy on the outside and at the same time juicy on inside.",
         "isHardwareTimed": true
       },
       {
-        "start": 6.87,
-        "end": 9.19,
-        "text": "Because basically, they do offer the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.19,
-        "end": 11.67,
-        "text": "famous iconic chicken joint crispy on",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.67,
-        "end": 12.49,
-        "text": "the outside and",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.49,
-        "end": 13.84,
-        "text": "at the same time juicy",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.84,
-        "end": 14.44,
-        "text": "on inside.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 14.56,
-        "end": 16.29,
-        "text": "And always be served with",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.29,
-        "end": 17.53,
-        "text": "the iconic sweet",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.53,
-        "end": 18.84,
-        "text": "style spaghetti.",
+        "start": 14.559,
+        "end": 18.843,
+        "text": "And always be served with the iconic sweet style spaghetti.",
         "isHardwareTimed": true
       },
       {
         "start": 20.55,
-        "end": 21.62,
-        "text": "mag-loaded with apple slices,",
+        "end": 25.312,
+        "text": "mag-loaded with apple slices, cheese, and at the same time also, it's very convenient because majority of their store is open 24 hours,",
         "isHardwareTimed": true
       },
       {
-        "start": 21.62,
-        "end": 22.46,
-        "text": "cheese, and at the same time",
+        "start": 25.332,
+        "end": 28.153,
+        "text": "making it as your go-to for your late night cravings or at same for any morning breakfast.",
         "isHardwareTimed": true
       },
       {
-        "start": 22.46,
-        "end": 23.82,
-        "text": "also, it's very convenient because",
+        "start": 28.173,
+        "end": 28.733,
+        "text": "So, see you there!",
         "isHardwareTimed": true
       },
       {
-        "start": 23.82,
-        "end": 24.97,
-        "text": "majority of their store is open",
+        "start": 28.773,
+        "end": 29.494,
+        "text": "Enjoy the Philippines!",
         "isHardwareTimed": true
-      },
-      {
-        "start": 24.97,
-        "end": 25.32,
-        "text": "24 hours,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 25.33,
-        "end": 26.2,
-        "text": "making it as your go-to for",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.2,
-        "end": 27.12,
-        "text": "your late night cravings or at",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 27.12,
-        "end": 27.57,
-        "text": "same for any",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 27.57,
-        "end": 28.15,
-        "text": "morning breakfast.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 28.17,
-        "end": 28.73,
-        "text": "So, see you there!"
-      },
-      {
-        "start": 28.77,
-        "end": 29.49,
-        "text": "Enjoy the Philippines!"
       }
     ],
     "dishOrItem": "Jollibee Philippines",
@@ -2490,11 +781,11 @@
     "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
     "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/tl-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "aiTitle": "Jollibee PH: 5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭 #tl",
     "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
     "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Jollibee_2011_logo.svg/1200px-Jollibee_2011_logo.svg.png",
