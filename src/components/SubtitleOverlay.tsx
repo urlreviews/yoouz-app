@@ -346,15 +346,15 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
   if (!isActive && !isVisible) return null;
 
   return (
-    <div className="absolute bottom-[200px] xs:bottom-[210px] sm:bottom-[125px] md:bottom-[125px] left-0 right-0 flex justify-center px-4 pointer-events-none z-[48] select-none">
+    <div className="absolute bottom-[265px] xs:bottom-[275px] sm:bottom-[195px] md:bottom-[205px] left-0 right-0 flex justify-center pr-14 md:pr-4 pl-4 pointer-events-none z-[48] select-none transition-all duration-200">
       <div 
-        className={`max-w-[92%] sm:max-w-[85%] flex justify-center transition-opacity duration-150 ease-out ${
+        className={`max-w-[88%] sm:max-w-[84%] flex justify-center transition-opacity duration-150 ease-out ${
           isVisible && currentText ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className="bg-black/85 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
+          className="bg-black/85 backdrop-blur-md px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.7)] text-center flex items-center justify-center max-w-full"
         >
           <p className="text-[13px] xs:text-[13.5px] sm:text-[14px] font-bold tracking-tight text-center leading-[1.3] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] max-w-full text-balance">
             {currentText || ''}
