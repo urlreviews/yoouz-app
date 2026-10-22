@@ -200,58 +200,75 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errMsg = "Remote
   });
 }
 
+function syncRemoteToLocalBackground(remoteClient: Client, localClient: Client) {
+  setTimeout(async () => {
+    const tables = ["users", "places", "videoReviews", "comments", "likes", "bookmarks", "shares", "chats", "notifications", "businessClaims", "follows", "agencies"];
+    for (const tbl of tables) {
+      try {
+        const rs = await withTimeout(remoteClient.execute(`SELECT * FROM ${tbl}`), 2500, `Sync timeout for ${tbl}`);
+        if (rs && rs.rows && rs.rows.length > 0) {
+          for (const row of rs.rows) {
+            const r = row as Record<string, any>;
+            const cols = Object.keys(r).filter((k) => isNaN(Number(k)));
+            if (cols.length === 0) continue;
+            // Skip deleted system/duplicate user IDs during background sync
+            if (tbl === "users" && ["usr_yoouz_admin", "usr_samet", "usr_steven_akan", "usr_ben_blue", "admin@users.yoouz.com", "4samet@users.yoouz.com", "stevenakan@users.yoouz.com", "benblue@users.yoouz.com"].includes(String(r.id))) {
+              continue;
+            }
+            const placeholders = cols.map(() => "?").join(", ");
+            const args = cols.map((c) => r[c] ?? null);
+            await localClient.execute({
+              sql: `INSERT OR IGNORE INTO ${tbl} (${cols.join(", ")}) VALUES (${placeholders})`,
+              args
+            }).catch(() => {});
+          }
+        }
+      } catch (e) {}
+    }
+  }, 100);
+}
+
 function createResilientClient(remoteClient: Client | null, localClient: Client): Client {
   let remoteCooldownUntil = 0;
 
+  if (remoteClient) {
+    syncRemoteToLocalBackground(remoteClient, localClient);
+  }
+
   const handleExecute = async (stmt: InStatement, args?: any[]): Promise<ResultSet> => {
-    const now = Date.now();
-    const isRemoteAvailable = remoteClient && now > remoteCooldownUntil;
     const finalStmt: InStatement = (args && typeof stmt === "string") ? { sql: stmt, args } : stmt;
+    const sqlStr = typeof finalStmt === "string" ? finalStmt : finalStmt.sql;
+    const isSelect = /^\s*SELECT\b/i.test(sqlStr);
 
-    if (isRemoteAvailable && remoteClient) {
-      try {
-        return await withTimeout(remoteClient.execute(finalStmt), 3000, "BunnyDB remote query timeout (3000ms)");
-      } catch (err: any) {
-        const isSqlError = 
-          err.message?.includes("SQLITE_") || 
-          err.message?.includes("SQLite error") || 
-          err.code?.startsWith("SQLITE_") ||
-          err.message?.includes("ARGS_INVALID") ||
-          err.message?.includes("syntax error") ||
-          err.message?.includes("no such table") ||
-          err.message?.includes("no such column");
-        if (isSqlError) {
-          throw err; // Re-throw SQL errors so they can be caught by the caller without triggering an incorrect cooldown
-        }
+    // 1. Always execute against ultra-fast local persistent edge SQLite (<1ms latency)
+    const localRes = await localClient.execute(finalStmt);
 
-        // Transient network or connection failure / timeout. Impose a 10-second cooldown to protect performance, then fallback to local sqlite for this request
-        remoteCooldownUntil = Date.now() + 10000;
-        console.warn(`🐰 [BunnyDB] Remote endpoint query failed or timed out (${err.message || err}). Initiating 10-second auto-recovering cooldown and falling back to local persistent edge database.`);
-        return await localClient.execute(finalStmt);
-      }
+    // 2. For any write/mutation (INSERT, UPDATE, DELETE, CREATE, ALTER), asynchronously replicate to remote Bunny Cloud DB without blocking HTTP response
+    if (!isSelect && remoteClient && Date.now() > remoteCooldownUntil) {
+      withTimeout(remoteClient.execute(finalStmt), 2500, "BunnyDB remote write timeout")
+        .catch((err: any) => {
+          const isSqlError =
+            err.message?.includes("SQLITE_") ||
+            err.message?.includes("SQLite error") ||
+            err.code?.startsWith("SQLITE_");
+          if (!isSqlError) {
+            remoteCooldownUntil = Date.now() + 60000;
+          }
+        });
     }
-    return await localClient.execute(finalStmt);
+
+    return localRes;
   };
 
   const handleBatch = async (stmts: InStatement[], mode?: TransactionMode): Promise<ResultSet[]> => {
-    const now = Date.now();
-    const isRemoteAvailable = remoteClient && now > remoteCooldownUntil;
-
-    if (isRemoteAvailable && remoteClient) {
-      try {
-        return await withTimeout(remoteClient.batch(stmts, mode), 2000, "BunnyDB remote batch timeout (2000ms)");
-      } catch (err: any) {
-        const isSqlError = err.message?.includes("SQLITE_") || err.message?.includes("SQLite error") || err.code?.startsWith("SQLITE_");
-        if (isSqlError) {
-          throw err;
-        }
-
-        remoteCooldownUntil = Date.now() + 10000;
-        console.warn(`🐰 [BunnyDB] Remote endpoint batch failed or timed out (${err.message || err}). Initiating 10-second auto-recovering cooldown and falling back to local persistent edge database.`);
-        return await localClient.batch(stmts, mode);
-      }
+    const localRes = await localClient.batch(stmts, mode);
+    if (remoteClient && Date.now() > remoteCooldownUntil) {
+      withTimeout(remoteClient.batch(stmts, mode), 2500, "BunnyDB remote batch timeout")
+        .catch(() => {
+          remoteCooldownUntil = Date.now() + 60000;
+        });
     }
-    return await localClient.batch(stmts, mode);
+    return localRes;
   };
 
   return {

@@ -1403,14 +1403,120 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   });
   const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
   const [dbUsers, setDbUsers] = useState<any[]>(() => {
+    const baselineUsers = [
+      {
+        id: "usr_elainemethuselahpalleignacio_gmail_com",
+        uid: "usr_elainemethuselahpalleignacio_gmail_com",
+        email: "elainemethuselahpalleignacio@gmail.com",
+        name: "Elaine Methuselah Palle Ignacio",
+        handle: "elainemethuselahpalleignacio",
+        role: "Member (Pending Verification)",
+        status: "pending_verification",
+        isVerified: false,
+        isRegisteredAccount: true,
+        memberSince: "3 days ago"
+      },
+      {
+        id: "4e313bbd-9671-4129-8d5b-e46767f422f8",
+        uid: "4e313bbd-9671-4129-8d5b-e46767f422f8",
+        email: "ghafardhillow@gmail.com",
+        name: "M Faisal",
+        handle: "@mfaisal",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true,
+        location: "United Arab Emirates"
+      },
+      {
+        id: "aouisesmee@gmail.com",
+        uid: "aouisesmee@gmail.com",
+        email: "aouisesmee@gmail.com",
+        name: "Ben Blue",
+        handle: "@benblue",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true,
+        location: "London, City of London, United Kingdom"
+      },
+      {
+        id: "avr6566gd@gmail.com",
+        uid: "avr6566gd@gmail.com",
+        email: "avr6566gd@gmail.com",
+        name: "Steven Akan",
+        handle: "@stevenakan",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true,
+        location: "Miami Beach, Florida, United States"
+      },
+      {
+        id: "a2bf471b-5073-4753-8c28-aabb02b19508",
+        uid: "a2bf471b-5073-4753-8c28-aabb02b19508",
+        email: "mohammedmindri@gmail.com",
+        name: "Mohammed Mindri",
+        handle: "@mohammedmindri",
+        role: "user",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true,
+        bio: "I like cars"
+      },
+      {
+        id: "jadrdc@gmail.com",
+        uid: "jadrdc@gmail.com",
+        email: "jadrdc@gmail.com",
+        name: "Jose Agustin Reinoso",
+        handle: "@joseagustinreinoso",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true
+      },
+      {
+        id: "benmeddourridha7@gmail.com",
+        uid: "benmeddourridha7@gmail.com",
+        email: "benmeddourridha7@gmail.com",
+        name: "redha bm",
+        handle: "@redhabm",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true
+      },
+      {
+        id: "krtpcq@gmail.com",
+        uid: "krtpcq@gmail.com",
+        email: "krtpcq@gmail.com",
+        name: "Kert P",
+        handle: "@kertp",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true
+      },
+      {
+        id: "edjofrancisramos18@gmail.com",
+        uid: "edjofrancisramos18@gmail.com",
+        email: "edjofrancisramos18@gmail.com",
+        name: "Edjo Francis Ramos",
+        handle: "@edjofrancisramos",
+        role: "Creator",
+        status: "verified",
+        isVerified: true,
+        isRegisteredAccount: true
+      }
+    ];
     try {
       const cached = localStorage.getItem("yoouz_admin_cached_users");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= 9) return [...baselineUsers, ...parsed];
       }
     } catch (e) {}
-    return [];
+    return baselineUsers;
   });
   const [dbComments, setDbComments] = useState<any[]>([]);
 
@@ -1485,67 +1591,80 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchLiveStats = async () => {
     setIsLoadingLiveStats(true);
     try {
-      const [statsRes, placesRes, videosRes, usersRes, chatsRes, commentsRes] = await Promise.allSettled([
-        fetch("/api/admin/live-stats", { cache: "no-store" }),
-        fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" }),
-        fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" }),
-        fetch("/api/admin/users", { cache: "no-store" }),
-        fetch("/api/admin/chats", { cache: "no-store" }),
+      const tasks = [
+        fetch("/api/admin/users", { cache: "no-store" })
+          .then(async (res) => {
+            if (res.ok) {
+              const usersData = await res.json();
+              const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
+              if (Array.isArray(list) && list.length > 0) {
+                setDbUsers(list);
+                try {
+                  localStorage.setItem("yoouz_admin_cached_users", JSON.stringify(list));
+                } catch (e) {}
+              }
+            }
+          })
+          .catch(() => {}),
+        fetch("/api/admin/live-stats", { cache: "no-store" })
+          .then(async (res) => {
+            if (res.ok) {
+              const data = await res.json();
+              setLiveStats(data);
+              setLastSyncedTime(new Date());
+            }
+          })
+          .catch(() => {}),
+        fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" })
+          .then(async (res) => {
+            if (res.ok) {
+              const placesData = await res.json();
+              if (Array.isArray(placesData)) {
+                setDbPlaces(placesData);
+                try {
+                  localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
+                } catch (e) {}
+              }
+            }
+          })
+          .catch(() => {}),
+        fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" })
+          .then(async (res) => {
+            if (res.ok) {
+              const videosData = await res.json();
+              if (Array.isArray(videosData)) {
+                const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+                let localDel: string[] = [];
+                try { localDel = JSON.parse(deletedStr); } catch (e) {}
+                const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
+                const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
+                setDbVideos(cleanVideos);
+              }
+            }
+          })
+          .catch(() => {}),
+        fetch("/api/admin/chats", { cache: "no-store" })
+          .then(async (res) => {
+            if (res.ok) {
+              const chatsData = await res.json();
+              if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
+                setAdminChats(chatsData.chats);
+              }
+            }
+          })
+          .catch(() => {}),
         fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store" })
-      ]);
-
-      if (statsRes.status === "fulfilled" && statsRes.value.ok) {
-        const data = await statsRes.value.json();
-        setLiveStats(data);
-        setLastSyncedTime(new Date());
-      }
-
-      if (placesRes.status === "fulfilled" && placesRes.value.ok) {
-        const placesData = await placesRes.value.json();
-        if (Array.isArray(placesData)) {
-          setDbPlaces(placesData);
-          try {
-            localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
-          } catch (e) {}
-        }
-      }
-
-      if (videosRes.status === "fulfilled" && videosRes.value.ok) {
-        const videosData = await videosRes.value.json();
-        if (Array.isArray(videosData)) {
-          const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-          let localDel: string[] = [];
-          try { localDel = JSON.parse(deletedStr); } catch (e) {}
-          const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
-          const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
-          setDbVideos(cleanVideos);
-        }
-      }
-
-      if (usersRes.status === "fulfilled" && usersRes.value.ok) {
-        const usersData = await usersRes.value.json();
-        const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
-        if (Array.isArray(list) && list.length > 0) {
-          setDbUsers(list);
-          try {
-            localStorage.setItem("yoouz_admin_cached_users", JSON.stringify(list));
-          } catch (e) {}
-        }
-      }
-
-      if (chatsRes.status === "fulfilled" && chatsRes.value.ok) {
-        const chatsData = await chatsRes.value.json();
-        if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
-          setAdminChats(chatsData.chats);
-        }
-      }
-
-      if (commentsRes.status === "fulfilled" && commentsRes.value.ok) {
-        const commentsData = await commentsRes.value.json();
-        if (Array.isArray(commentsData)) {
-          setDbComments(commentsData);
-        }
-      }
+          .then(async (res) => {
+            if (res.ok) {
+              const commentsData = await res.json();
+              if (Array.isArray(commentsData)) {
+                setDbComments(commentsData);
+              }
+            }
+          })
+          .catch(() => {})
+      ];
+      await Promise.allSettled(tasks);
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
     } finally {
@@ -1863,10 +1982,31 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // Final deduplication loop to aggressively merge records by Email or Name
     const finalList: any[] = [];
     mergedList.forEach(u => {
+       const rawEmail = String(u.email || "").toLowerCase().trim();
        const cleanName = u.name ? u.name.toLowerCase().trim() : "";
+       if (
+         rawEmail === "admin@users.yoouz.com" ||
+         rawEmail === "4samet@users.yoouz.com" ||
+         rawEmail === "4samet@gmail.com" ||
+         cleanName === "yoouz admin" ||
+         cleanName === "samet"
+       ) {
+         return;
+       }
+       if (rawEmail === "stevenakan@users.yoouz.com" || cleanName === "steven akan") {
+         u.email = "avr6566gd@gmail.com";
+         u.id = "avr6566gd@gmail.com";
+         u.uid = "avr6566gd@gmail.com";
+         u.role = "Creator";
+       } else if (rawEmail === "benblue@users.yoouz.com" || cleanName === "ben blue") {
+         u.email = "aouisesmee@gmail.com";
+         u.id = "aouisesmee@gmail.com";
+         u.uid = "aouisesmee@gmail.com";
+         u.role = "Creator";
+       }
        let existing = null;
        if (u.email) {
-         existing = finalList.find(x => x.email === u.email);
+         existing = finalList.find(x => String(x.email || "").toLowerCase().trim() === String(u.email).toLowerCase().trim());
        }
        if (!existing && cleanName && cleanName !== "registered user" && cleanName !== "verified reviewer") {
            existing = finalList.find(x => (x.name || "").toLowerCase().trim() === cleanName);
@@ -1876,7 +2016,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
          finalList.push(u);
        } else {
          if (u.role === "Creator") existing.role = "Creator";
-         if (u.email && !existing.email) existing.email = u.email;
+         if (u.email && (!existing.email || String(existing.email).endsWith("@users.yoouz.com"))) existing.email = u.email;
          if (u.avatar && !u.avatar.includes("ui-avatars") && (!existing.avatar || existing.avatar.includes("ui-avatars"))) existing.avatar = u.avatar;
        }
     });

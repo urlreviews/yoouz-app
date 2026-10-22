@@ -5,8 +5,12 @@ import * as schema from './schema.ts';
 
 let pool: any = null;
 let dbInstance: any = null;
+let sqlCooldownUntil = 0;
 
 export function getDb() {
+  if (Date.now() < sqlCooldownUntil) {
+    return null;
+  }
   if (!dbInstance) {
     if (!process.env.SQL_HOST || !process.env.SQL_DB_NAME) {
       return null;
@@ -18,13 +22,16 @@ export function getDb() {
         password: process.env.SQL_PASSWORD,
         database: process.env.SQL_DB_NAME,
         max: 10,
-        connectionTimeoutMillis: 5000,
+        connectionTimeoutMillis: 800,
       });
       pool.on('error', (err: any) => {
-        console.warn('PostgreSQL pool background error caught:', err?.message || err);
+        sqlCooldownUntil = Date.now() + 300000;
+        dbInstance = null;
+        console.warn('PostgreSQL pool background error caught (entering 5m cooldown):', err?.message || err);
       });
       dbInstance = drizzle(pool, { schema });
     } catch (e) {
+      sqlCooldownUntil = Date.now() + 300000;
       console.warn("Failed to initialize PostgreSQL pool:", e);
       return null;
     }

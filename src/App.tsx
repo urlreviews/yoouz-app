@@ -581,7 +581,7 @@ export function App() {
     // Immediate sync from URL on boot to prevent flash of home
     try {
       const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
-      if (pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
+      if (pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
       if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return "testembed";
       if (pathname === "/searchtest" || pathname === "/search-test") return "searchtest";
       if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
