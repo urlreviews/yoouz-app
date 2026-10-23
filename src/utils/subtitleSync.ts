@@ -536,8 +536,9 @@ export function alignBunnyCuesWithHardwareSilences(
     const text = cue.text;
     if (!text) continue;
 
-    let cueStart = Math.max(0, Number(cue.start || 0));
-    let cueEnd = Math.max(cueStart + 0.4, Number(cue.end || cueStart + 2.0));
+    const ACOUSTIC_OFFSET = 0.20; // 200ms acoustic voice onset calibration
+    let cueStart = Math.max(0, Number(cue.start || 0) + ACOUSTIC_OFFSET);
+    let cueEnd = Math.max(cueStart + 1.6, Number(cue.end || cueStart + 2.0) + ACOUSTIC_OFFSET);
 
     // Trim leading/trailing silence overlapping cue boundaries
     for (const sil of sortedSilences) {
@@ -553,7 +554,7 @@ export function alignBunnyCuesWithHardwareSilences(
     if (phrases.length <= 1) {
       result.push({
         start: Math.round(cueStart * 100) / 100,
-        end: Math.round(cueEnd * 100) / 100,
+        end: Math.round(Math.max(cueStart + 1.6, cueEnd) * 100) / 100,
         text: phrases[0] || text,
         isHardwareTimed: true
       });

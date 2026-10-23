@@ -225,15 +225,23 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
 
   const effectiveTime = isLiveRecording ? (currentTime || 0) : exactCurrentTime;
 
-  // Compute active cue in exact lockstep with Bunny Stream audio timecodes
+  // Compute active cue with acoustic voice onset calibration (+200ms delay & display pacing)
   const activeCue = useMemo<SubtitleCue | null>(() => {
     if (!isActive || cues.length === 0) return null;
     if (isLiveRecording) return cues[cues.length - 1] || null;
 
+    const ACOUSTIC_OFFSET = 0.20; // 200ms acoustic voice onset calibration
+
     for (let i = 0; i < cues.length; i++) {
       const cue = cues[i];
-      // Exact second the speaker talks: active strictly between cue.start and cue.end
-      if (effectiveTime >= cue.start && effectiveTime <= cue.end) {
+      const nextCue = cues[i + 1];
+
+      // Shift display window by acoustic offset so phrase switches when speaker actually vocalizes
+      const displayStart = Math.max(0, cue.start + ACOUSTIC_OFFSET);
+      const nextStart = nextCue ? Math.max(displayStart + 1.2, nextCue.start + ACOUSTIC_OFFSET) : cue.end + ACOUSTIC_OFFSET + 0.3;
+      const displayEnd = Math.max(displayStart + 1.6, Math.max(cue.end + ACOUSTIC_OFFSET, nextStart));
+
+      if (effectiveTime >= displayStart && effectiveTime < displayEnd) {
         return cue;
       }
     }

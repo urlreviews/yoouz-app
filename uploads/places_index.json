@@ -196,38 +196,38 @@
         "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
         "segments": [
           {
-            "start": 0.92,
-            "end": 4.15,
+            "start": 1.12,
+            "end": 4.56,
             "text": "This Zara perfume is my new favorite.",
             "isHardwareTimed": true
           },
           {
-            "start": 4.36,
-            "end": 6.29,
+            "start": 4.56,
+            "end": 6.67,
             "text": "It fits my vibe perfectly.",
             "isHardwareTimed": true
           },
           {
-            "start": 6.47,
-            "end": 8.73,
+            "start": 6.67,
+            "end": 9.41,
             "text": "And unlike any other brands at",
             "isHardwareTimed": true
           },
           {
-            "start": 9.21,
-            "end": 9.69,
+            "start": 9.41,
+            "end": 10.81,
             "text": "this price,",
             "isHardwareTimed": true
           },
           {
-            "start": 9.69,
-            "end": 11.04,
+            "start": 9.89,
+            "end": 11.29,
             "text": "it actually lasts all day.",
             "isHardwareTimed": true
           },
           {
-            "start": 11.08,
-            "end": 12.2,
+            "start": 11.28,
+            "end": 12.68,
             "text": "So you have to give it a try.",
             "isHardwareTimed": true
           }
@@ -319,56 +319,56 @@
         "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
         "segments": [
           {
-            "start": 1.31,
-            "end": 3.89,
+            "start": 1.51,
+            "end": 4.24,
             "text": "I found another Zara perfume",
             "isHardwareTimed": true
           },
           {
-            "start": 4.04,
-            "end": 6.59,
+            "start": 4.24,
+            "end": 8.04,
             "text": "that I am obsessed with",
             "isHardwareTimed": true
           },
           {
-            "start": 7.84,
-            "end": 11.28,
+            "start": 8.04,
+            "end": 12.09,
             "text": "it's called night for a home",
             "isHardwareTimed": true
           },
           {
-            "start": 11.89,
-            "end": 13.93,
+            "start": 12.09,
+            "end": 14.3,
             "text": "version to winter",
             "isHardwareTimed": true
           },
           {
-            "start": 14.1,
-            "end": 15.5,
+            "start": 14.3,
+            "end": 15.7,
             "text": "and it matches my style perfectly",
             "isHardwareTimed": true
           },
           {
-            "start": 15.5,
-            "end": 16.75,
+            "start": 15.7,
+            "end": 17.1,
             "text": "and honestly it lasts",
             "isHardwareTimed": true
           },
           {
-            "start": 16.83,
-            "end": 18.1,
+            "start": 17.03,
+            "end": 18.43,
             "text": "way longer than anything else",
             "isHardwareTimed": true
           },
           {
-            "start": 18.1,
-            "end": 19.76,
+            "start": 18.3,
+            "end": 19.96,
             "text": "I have tried at this price point",
             "isHardwareTimed": true
           },
           {
-            "start": 19.76,
-            "end": 20.95,
+            "start": 19.96,
+            "end": 21.36,
             "text": "so you should you",
             "isHardwareTimed": true
           }
@@ -458,92 +458,92 @@
         "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
         "segments": [
           {
-            "start": 0.64,
-            "end": 3.77,
+            "start": 0.84,
+            "end": 4.7,
             "text": "If you're a business owner searching",
             "isHardwareTimed": true
           },
           {
-            "start": 4.5,
-            "end": 5.99,
+            "start": 4.7,
+            "end": 7.03,
             "text": "for some editors or developers,",
             "isHardwareTimed": true
           },
           {
-            "start": 6.83,
-            "end": 7.99,
+            "start": 7.03,
+            "end": 8.43,
             "text": "you can now in 2026,",
             "isHardwareTimed": true
           },
           {
-            "start": 7.99,
-            "end": 9,
+            "start": 8.19,
+            "end": 9.75,
             "text": "You shouldn't do that.",
             "isHardwareTimed": true
           },
           {
-            "start": 9.55,
-            "end": 10.86,
+            "start": 9.75,
+            "end": 11.3,
             "text": "You can go to Anthropic.",
             "isHardwareTimed": true
           },
           {
-            "start": 11.1,
-            "end": 12.45,
+            "start": 11.3,
+            "end": 12.7,
             "text": "They have cloud,",
             "isHardwareTimed": true
           },
           {
-            "start": 12.45,
-            "end": 14.03,
+            "start": 12.65,
+            "end": 14.67,
             "text": "they have Cloud code,",
             "isHardwareTimed": true
           },
           {
-            "start": 14.47,
-            "end": 15.8,
+            "start": 14.67,
+            "end": 16.07,
             "text": "They can make codes,",
             "isHardwareTimed": true
           },
           {
-            "start": 15.8,
-            "end": 16.5,
+            "start": 16,
+            "end": 17.4,
             "text": "the normal code.",
             "isHardwareTimed": true
           },
           {
-            "start": 16.72,
-            "end": 17.4,
+            "start": 16.92,
+            "end": 18.32,
             "text": "It's for free.",
             "isHardwareTimed": true
           },
           {
-            "start": 17.42,
-            "end": 19.28,
+            "start": 17.62,
+            "end": 19.54,
             "text": "you Can make all the video editing.",
             "isHardwareTimed": true
           },
           {
-            "start": 19.34,
-            "end": 21.41,
+            "start": 19.54,
+            "end": 22.41,
             "text": "So we don't need any of this now.",
             "isHardwareTimed": true
           },
           {
-            "start": 22.21,
-            "end": 23.61,
+            "start": 22.41,
+            "end": 23.81,
             "text": "All we can do is focus",
             "isHardwareTimed": true
           },
           {
-            "start": 23.61,
-            "end": 24.36,
+            "start": 23.81,
+            "end": 25.21,
             "text": "on your business",
             "isHardwareTimed": true
           },
           {
-            "start": 24.6,
-            "end": 25.92,
+            "start": 24.8,
+            "end": 26.2,
             "text": "and these things come easily.",
             "isHardwareTimed": true
           }

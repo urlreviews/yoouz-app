@@ -1298,16 +1298,25 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
             {/* Line 2: Star Rating + Globe Icon + Business URL & Line 3: Review Title */}
             {(() => {
-              const rawHeadline = (
-                video.title || 
-                video.aiTitle || 
-                (video.caption && !/^video review (for|of)\b/i.test(video.caption) ? video.caption : "") || 
-                (video as any).videoTitle || 
-                (video as any).bunnyTitle || 
-                ""
-              ).trim();
+              const pName = (video.placeName || "").trim().toLowerCase();
+              const bName = ((video as any).businessName || "").trim().toLowerCase();
+              const isPlaceFallback = (t?: string) => {
+                if (!t) return true;
+                const lower = t.trim().toLowerCase();
+                return lower === pName || lower === bName || /^video review (for|of)\b/i.test(lower);
+              };
+
+              const candidateTitle = [
+                video.aiTitle, 
+                video.title, 
+                video.caption, 
+                (video as any).bunnyTitle, 
+                (video as any).videoTitle
+              ].find(t => t && !isPlaceFallback(t));
+
+              const rawHeadline = (candidateTitle || "").trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
-              const isGenericCaption = !rawHeadline || /^video review (for|of)\b/i.test(rawHeadline);
+              const isGenericCaption = !rawHeadline || isPlaceFallback(rawHeadline);
 
               let displayHeadline = rawHeadline;
               if (!isGenericCaption) {

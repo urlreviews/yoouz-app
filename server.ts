@@ -23613,7 +23613,22 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 }
                 const segments = alignBunnyCuesWithHardwareSilences(rawSegments, silences, effDuration);
                 console.log(`✅ 🐰 [Bunny Smart Captions] Synced ${segments.length} hardware-aligned captions (${srclang}, ${silences.length} audio pauses, dur=${effDuration.toFixed(1)}s) for ${bunnyVideoId}`);
-                return { segments, transcriptText, vttText, vttUrl, aiTitle, description: smartDescription };
+
+                let effectiveTitle = aiTitle;
+                if (!effectiveTitle && transcriptText && transcriptText.trim().length > 10) {
+                  let text = transcriptText.trim().replace(/^["'\s]+|["'\s]+$/g, "");
+                  text = text.charAt(0).toUpperCase() + text.slice(1);
+                  const sentenceEnd = text.search(/[.!?]/);
+                  if (sentenceEnd > 15 && sentenceEnd < 90) {
+                    effectiveTitle = text.substring(0, sentenceEnd + 1).trim();
+                  } else if (text.length > 80) {
+                    effectiveTitle = text.substring(0, 75).trim() + "...";
+                  } else {
+                    effectiveTitle = text;
+                  }
+                }
+
+                return { segments, transcriptText, vttText, vttUrl, aiTitle: effectiveTitle, rawBunnyTitle: aiTitle, description: smartDescription };
               }
             }
           }
@@ -23727,7 +23742,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             segments, 
             ...(bunnyResult.vttUrl ? { vttUrl: bunnyResult.vttUrl } : {}),
             ...(aiTitle ? { aiTitle, title: aiTitle } : {}), 
-            ...((aiTitle && (!video.caption || video.caption.startsWith("Video review for"))) ? { caption: aiTitle } : {}),
+            ...((aiTitle && (!video.caption || video.caption === video.placeName || video.caption.startsWith("Video review for"))) ? { caption: aiTitle } : {}),
             ...(bunnyDescription ? { bunnyDescription, description: bunnyDescription } : {}),
             ...(needsThumbnailUpdate ? { thumbnailUrl: officialThumbnail } : {}),
             hasBunnySmartCaptions: segments.length > 0,
@@ -23786,21 +23801,22 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             broadcastSseEvent({ type: "new_video", video: updatedVideo });
           } catch (e) {}
 
-          return { success: true, transcriptText, segments, method: "bunny_stream" };
+          return { success: true, transcriptText, segments, aiTitle, video: updatedVideo, method: "bunny_stream" };
         } else {
-          // Captions might be encoding in Bunny Stream, schedule automated background polling
+          // Captions/Smart Title might be encoding in Bunny Stream, schedule automated background polling
           const pollDelays = [3000, 6000, 10000, 15000, 22000, 30000, 45000, 60000, 90000];
           pollDelays.forEach((delay, attemptIdx) => {
             setTimeout(async () => {
               try {
                 const list = readReviewsIndex();
                 const curr = list.find((v: any) => v && String(v.id) === String(videoId));
-                if (curr && curr.hasBunnySmartCaptions && curr.hasHardwareSilenceSync && Array.isArray(curr.segments) && curr.segments.length > 0 && curr.bunnyVideoId === bunnyVideoId) {
-                  return; // already synced with official Bunny Stream Smart Captions + Hardware Silence Alignment
+                const hasOfficialTitle = Boolean(curr && curr.aiTitle && curr.title && curr.title.toLowerCase().trim() !== (curr.placeName || "").toLowerCase().trim());
+                if (curr && curr.hasBunnySmartCaptions && curr.hasHardwareSilenceSync && Array.isArray(curr.segments) && curr.segments.length > 0 && curr.bunnyVideoId === bunnyVideoId && hasOfficialTitle) {
+                  return; // already synced with official Bunny Stream Smart Captions + Smart Title
                 }
                 const res = await fetchBunnyStreamSmartCaptions(bunnyVideoId, videoId);
-                if (res && res.segments.length > 0) {
-                  console.log(`🎬 🐰 [Bunny Smart Captions] Poll attempt ${attemptIdx + 1} succeeded for ${videoId}!`);
+                if (res && (res.segments.length > 0 || res.aiTitle)) {
+                  console.log(`🎬 🐰 [Bunny Smart Captions/Title] Poll attempt ${attemptIdx + 1} succeeded for ${videoId}!`);
                   await ensureTranscriptionForVideo(videoId);
                 }
               } catch (e) {}
@@ -23895,8 +23911,9 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             updated = true;
           }
 
-          // Fetch Smart Captions + Hardware Silence Alignment if not yet loaded or if missing hardware silence sync
-          if (forceRefreshAll || !cur.hasBunnySmartCaptions || !cur.hasHardwareSilenceSync || !cur.segments || cur.segments.length === 0) {
+          // Fetch Smart Captions + Hardware Silence Alignment + Smart Title if missing or unpopulated
+          const needsTitleUpdate = !cur.aiTitle || !cur.title || cur.title.toLowerCase().trim() === (cur.placeName || "").toLowerCase().trim();
+          if (forceRefreshAll || !cur.hasBunnySmartCaptions || !cur.hasHardwareSilenceSync || !cur.segments || cur.segments.length === 0 || needsTitleUpdate) {
             const bunnyRes = await fetchBunnyStreamSmartCaptions(guid, cur.id);
             if (bunnyRes) {
               if (bunnyRes.segments && bunnyRes.segments.length > 0) {
@@ -23907,8 +23924,19 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 cur.hasHardwareSilenceSync = true;
                 updated = true;
               }
-              if (bunnyRes.description && !cur.bunnyDescription) {
+              if (bunnyRes.aiTitle) {
+                cur.aiTitle = bunnyRes.aiTitle;
+                if (!cur.title || cur.title.toLowerCase().trim() === (cur.placeName || "").toLowerCase().trim()) {
+                  cur.title = bunnyRes.aiTitle;
+                }
+                if (!cur.caption || cur.caption.toLowerCase().trim() === (cur.placeName || "").toLowerCase().trim() || cur.caption.startsWith("Video review for")) {
+                  cur.caption = bunnyRes.aiTitle;
+                }
+                updated = true;
+              }
+              if (bunnyRes.description && (!cur.bunnyDescription || !cur.description)) {
                 cur.bunnyDescription = bunnyRes.description;
+                cur.description = bunnyRes.description;
                 updated = true;
               }
             }
@@ -23918,7 +23946,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             list[existingIdx] = { ...cur };
             hasMutated = true;
             syncedCount++;
-            details.push(`Updated hardware-aligned captions for review ${cur.id} (${guid})`);
+            details.push(`Updated hardware-aligned captions and title for review ${cur.id} (${guid})`);
           }
         } else {
           continue;
@@ -24012,6 +24040,23 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     const force = Boolean(req.body?.force || req.query?.force);
     const result = await syncAndReconcileBunnyStreamVideos(force);
     return res.json({ success: true, ...result });
+  });
+
+  // Bunny Stream Webhook Handler (Instant notification when smart titles, descriptions, or captions complete)
+  app.post(["/api/bunny/webhook", "/api/webhooks/bunny-stream"], express.json(), async (req, res) => {
+    try {
+      const body = req.body || {};
+      const bunnyVidId = body.VideoId || body.videoId || body.guid || body.Guid;
+      console.log(`🎬 🐰 [Bunny Stream Webhook] Notification received for video: ${bunnyVidId}`, body);
+      if (bunnyVidId) {
+        // Trigger immediate background sync for this video
+        ensureTranscriptionForVideo(String(bunnyVidId), String(bunnyVidId)).catch(() => {});
+        syncAndReconcileBunnyStreamVideos().catch(() => {});
+      }
+      return res.json({ success: true, message: "Webhook processed successfully" });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Webhook handling error" });
+    }
   });
 
   async function transcribeVideoLocally(videoBuffer: Buffer, filename: string, mimeTypeInput?: string, existingTranscript?: string): Promise<{ transcript: string, segments?: any[], vtt_content?: string }> {
