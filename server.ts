@@ -14122,7 +14122,13 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
 
       if (bunnyStreamKey && bunnyLibraryId) {
         try {
-          console.log(`🎬 🐰 [Bunny Stream] Creating entry for ${targetVideoFileName} (Lib: ${bunnyLibraryId})...`);
+          const rawIncomingPlace = String(req.body?.placeName || req.query?.placeName || "").trim();
+          const rawIncomingAuthor = String(req.body?.authorName || req.query?.authorName || "").trim();
+          const initialVideoTitle = rawIncomingPlace 
+            ? `${rawIncomingAuthor ? rawIncomingAuthor + ' - ' : ''}${rawIncomingPlace} Review`
+            : `Review ${targetVideoFileName.replace(/\.mp4$/i, "")}`;
+
+          console.log(`🎬 🐰 [Bunny Stream] Creating entry for "${initialVideoTitle}" (Lib: ${bunnyLibraryId})...`);
           const createResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`, {
             method: 'POST',
             headers: {
@@ -14130,7 +14136,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
               'Content-Type': 'application/json',
               'accept': 'application/json'
             },
-            body: JSON.stringify({ title: targetVideoFileName }),
+            body: JSON.stringify({ title: initialVideoTitle }),
             signal: AbortSignal.timeout(15000)
           });
 
@@ -14156,6 +14162,21 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
               bunnyUrl = `${streamPullZone}/${bunnyVideoId}/playlist.m3u8`;
               publicUrl = bunnyUrl;
               console.log(`✅ 🐰 [Bunny Stream] SUCCESS! Stream URL: ${bunnyUrl}`);
+
+              // Immediately queue official Bunny Stream Smart Captions and Smart Metadata generation
+              fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}/transcribe?force=true`, {
+                method: 'POST',
+                headers: { 'AccessKey': bunnyStreamKey, 'Content-Type': 'application/json', 'accept': 'application/json' },
+                body: JSON.stringify({ sourceLanguage: 'en', targetLanguages: ['en'], generateTitle: true, generateDescription: true }),
+                signal: AbortSignal.timeout(5000)
+              }).catch(() => {});
+
+              fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}/smart`, {
+                method: 'POST',
+                headers: { 'AccessKey': bunnyStreamKey, 'Content-Type': 'application/json', 'accept': 'application/json' },
+                body: JSON.stringify({ generateTitle: true, generateDescription: true }),
+                signal: AbortSignal.timeout(5000)
+              }).catch(() => {});
             } else {
               console.warn(`⚠️ 🐰 [Bunny Stream] PUT failed, attempting fetch ingest fallback...`);
               try {
@@ -23991,6 +24012,97 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     return { silences: [], duration: 0 };
   }
 
+  // Intelligent Smart Review Title Synthesizer for Video Reviews
+  function generateSmartReviewTitle(
+    placeName?: string,
+    transcriptText?: string,
+    rating?: number,
+    category?: string
+  ): string {
+    const cleanPlace = (placeName || "").trim().replace(/\.(com|org|net|io|ph|co|uk)$/i, "").trim();
+    const rawText = (transcriptText || "").trim();
+    const numRating = Number(rating) || 5;
+
+    if (!rawText || rawText.length < 5) {
+      return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : "Verified Video Review";
+    }
+
+    // 1. Remove spoken introductory filler phrases:
+    let cleaned = rawText
+      .replace(/^(hey|hello|hi|good\s+(morning|afternoon|evening)|so|well|okay|alright|yo)\b[,\s]*/i, "")
+      .replace(/^(guys|everyone|y'all|there|folks)\b[,\s]*/i, "")
+      .replace(/^(so\s+)?(if you('ve| have) been looking for|if you're looking for|are you looking for)\b[,\s]*/i, "")
+      .replace(/^(today i('m| am) (going to|gonna|reviewing|sharing)|check out (my|this)|i just wanted to (say|share))\b[,\s]*/i, "")
+      .replace(/^(so for this one is|this is my review of|my review for|here('s| is) my review of)\b[,\s]*/i, "")
+      .trim();
+
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+
+    const lower = rawText.toLowerCase();
+    const catLower = (category || "").toLowerCase();
+
+    // Skincare & Beauty
+    if (lower.includes("moisturiz") || lower.includes("skin") || lower.includes("cleanser") || lower.includes("lotion") || lower.includes("cream") || catLower.includes("skin") || catLower.includes("beauty")) {
+      const isSoft = lower.includes("babe touch") || lower.includes("baby touch") || lower.includes("soft") || lower.includes("smooth");
+      const isHydrating = lower.includes("moisturiz") || lower.includes("hydrat");
+      const keyAttr = (isSoft && isHydrating) ? "Perfect Hydration for Soft & Smooth Skin ✨" :
+        isSoft ? "Leaves Skin Incredibly Soft & Smooth ✨" :
+        isHydrating ? "Deeply Hydrating Everyday Moisturizer" :
+        "Simple & Effective Skincare Favorite";
+
+      return cleanPlace ? `${cleanPlace}: ${keyAttr}` : `Top Skincare Pick: ${keyAttr}`;
+    }
+
+    // Food & Dining
+    if (lower.includes("chicken") || lower.includes("burger") || lower.includes("fries") || lower.includes("spaghetti") || lower.includes("pizza") || lower.includes("tacos") || lower.includes("coffee") || lower.includes("pastr") || lower.includes("drink") || catLower.includes("food") || catLower.includes("restaurant") || catLower.includes("cafe")) {
+      const items: string[] = [];
+      if (lower.includes("crispy chicken") || lower.includes("chicken")) items.push("Crispy Chicken");
+      if (lower.includes("spaghetti")) items.push("Sweet Spaghetti");
+      if (lower.includes("burger")) items.push("Juicy Burgers");
+      if (lower.includes("fries")) items.push("Crispy Fries");
+      if (lower.includes("coffee") || lower.includes("latte")) items.push("Artisan Coffee");
+      if (lower.includes("pastr")) items.push("Fresh Pastries");
+
+      const itemStr = items.slice(0, 2).join(" & ");
+      const isConvenient = lower.includes("24 hour") || lower.includes("24-hr") || lower.includes("convenient");
+      const suffix = isConvenient ? "with 24/7 Convenience" : "Must-Try Favorites";
+      
+      if (itemStr) {
+        return cleanPlace ? `${cleanPlace}: Iconic ${itemStr} (${numRating}★ Review)` : `Delicious ${itemStr} - ${suffix}`;
+      }
+    }
+
+    // Fragrance & Fashion
+    if (lower.includes("perfume") || lower.includes("scent") || lower.includes("cologne") || lower.includes("fragrance")) {
+      const isLongLasting = lower.includes("long-lasting") || lower.includes("all day") || lower.includes("lasts");
+      const descriptor = isLongLasting ? "Long-Lasting Scent for Any Season" : "Signature Vibe & Fragrance";
+      return cleanPlace ? `${cleanPlace} Fragrance: ${descriptor}` : `Must-Try Scent: ${descriptor}`;
+    }
+
+    // Tech & Gadgets
+    if (lower.includes("unboxing") || lower.includes("device") || lower.includes("tech") || lower.includes("feature")) {
+      return cleanPlace ? `${cleanPlace} Hands-On Review: Unboxing & Key Features` : "Hands-On Tech Review & Highlights";
+    }
+
+    // General clean synthesis
+    const sentenceEnd = cleaned.search(/[.!?]/);
+    let firstSentence = sentenceEnd > 15 ? cleaned.substring(0, sentenceEnd).trim() : cleaned;
+    if (firstSentence.length > 70) {
+      const lastSpace = firstSentence.substring(0, 65).lastIndexOf(" ");
+      firstSentence = (lastSpace > 20 ? firstSentence.substring(0, lastSpace) : firstSentence.substring(0, 65)).trim();
+    }
+
+    firstSentence = firstSentence.replace(/\s+(and|or|with|where|that|because|in|at|on|for|to)$/i, "").trim();
+
+    if (firstSentence.length > 15 && !firstSentence.toLowerCase().includes(cleanPlace.toLowerCase())) {
+      return cleanPlace ? `${cleanPlace}: ${firstSentence}` : firstSentence;
+    }
+
+    return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Video Review");
+  }
+
   // Fetch real Smart Captions (WebVTT) & Smart Metadata generated by Bunny Stream AI + Align with Hardware Audio Pauses
   async function fetchBunnyStreamSmartCaptions(bunnyVideoId: string, videoId?: string): Promise<{ segments: any[], transcriptText: string, vttText: string, vttUrl?: string, aiTitle?: string, rawBunnyTitle?: string, description?: string, hasHardwareSilenceSync?: boolean } | null> {
     const apiKey = process.env.BUNNY_STREAM_API_KEY || "1837c4e8-07f2-46dd-9a7a12f84ddb-6189-4d36";
@@ -24085,18 +24197,50 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 const segments = alignBunnyCuesWithHardwareSilences(rawSegments, silences, effDuration);
                 console.log(`✅ 🐰 [Bunny Smart Captions] Synced ${segments.length} hardware-aligned captions (${srclang}, ${silences.length} audio pauses, dur=${effDuration.toFixed(1)}s) for ${bunnyVideoId}`);
 
+                let matchedPlaceName = "";
+                let matchedRating = 5;
+                let matchedCategory = "";
+                if (videoId) {
+                  try {
+                    const list = readReviewsIndex();
+                    const rObj = list.find((v: any) => v && (String(v.id) === String(videoId) || v.bunnyVideoId === bunnyVideoId || v.bunnyGuid === bunnyVideoId));
+                    if (rObj) {
+                      matchedPlaceName = rObj.placeName || "";
+                      matchedRating = Number(rObj.rating) || 5;
+                      matchedCategory = rObj.placeCategory || "";
+                    }
+                  } catch (e) {}
+                }
+
                 let effectiveTitle = aiTitle;
-                if (!effectiveTitle && transcriptText && transcriptText.trim().length > 10) {
-                  let text = transcriptText.trim().replace(/^["'\s]+|["'\s]+$/g, "");
-                  text = text.charAt(0).toUpperCase() + text.slice(1);
-                  const sentenceEnd = text.search(/[.!?]/);
-                  if (sentenceEnd > 15 && sentenceEnd < 90) {
-                    effectiveTitle = text.substring(0, sentenceEnd + 1).trim();
-                  } else if (text.length > 80) {
-                    effectiveTitle = text.substring(0, 75).trim() + "...";
-                  } else {
-                    effectiveTitle = text;
-                  }
+                const isBadTitle = !effectiveTitle || 
+                  effectiveTitle.endsWith("...") || 
+                  effectiveTitle.endsWith(".mp4") || 
+                  effectiveTitle.startsWith("rev-") ||
+                  /^hey,\s*so\b/i.test(effectiveTitle) ||
+                  /^hello,\s*so\b/i.test(effectiveTitle);
+
+                if (isBadTitle && transcriptText && transcriptText.trim().length > 10) {
+                  effectiveTitle = generateSmartReviewTitle(
+                    matchedPlaceName || vidData?.title || "",
+                    transcriptText,
+                    matchedRating,
+                    matchedCategory
+                  );
+                }
+
+                // If a clean smart title is available, update Bunny Stream video metadata so the dashboard is also synced
+                if (effectiveTitle && bunnyVideoId && apiKey && libraryId) {
+                  fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${bunnyVideoId}`, {
+                    method: "POST",
+                    headers: {
+                      "AccessKey": apiKey,
+                      "Content-Type": "application/json",
+                      "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ title: effectiveTitle }),
+                    signal: AbortSignal.timeout(6000)
+                  }).catch(() => {});
                 }
 
                 return {
@@ -24224,21 +24368,43 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         if (bunnyResult && (bunnyResult.segments.length > 0 || bunnyResult.description || bunnyResult.aiTitle)) {
           const transcriptText = bunnyResult.transcriptText || video.transcriptText || "";
           const segments = bunnyResult.segments?.length > 0 ? bunnyResult.segments : (video.segments || []);
-          const officialBunnyTitle = bunnyResult.rawBunnyTitle && bunnyResult.rawBunnyTitle.toLowerCase().trim() !== (video.placeName || "").toLowerCase().trim()
+          const officialBunnyTitle = bunnyResult.rawBunnyTitle && 
+            bunnyResult.rawBunnyTitle.toLowerCase().trim() !== (video.placeName || "").toLowerCase().trim() &&
+            !bunnyResult.rawBunnyTitle.endsWith('.mp4') &&
+            !bunnyResult.rawBunnyTitle.startsWith('rev-') &&
+            !bunnyResult.rawBunnyTitle.endsWith('...') &&
+            !/^hey,\s*so\b/i.test(bunnyResult.rawBunnyTitle) &&
+            !/^hello,\s*so\b/i.test(bunnyResult.rawBunnyTitle)
             ? bunnyResult.rawBunnyTitle
             : undefined;
-          const aiTitle = officialBunnyTitle || bunnyResult.aiTitle || video.aiTitle;
-          const hasOfficialBunnyTitle = Boolean(officialBunnyTitle || video.hasOfficialBunnyTitle);
+
+          let aiTitle = officialBunnyTitle || bunnyResult.aiTitle || video.aiTitle;
+          const isBadTitle = !aiTitle || 
+            aiTitle.endsWith("...") || 
+            aiTitle.endsWith(".mp4") || 
+            aiTitle.startsWith("rev-") ||
+            /^hey,\s*so\b/i.test(aiTitle) ||
+            /^hello,\s*so\b/i.test(aiTitle);
+
+          if (isBadTitle && transcriptText && transcriptText.trim().length > 5) {
+            aiTitle = generateSmartReviewTitle(video.placeName, transcriptText, video.rating, video.placeCategory);
+          }
+
+          const hasOfficialBunnyTitle = Boolean(officialBunnyTitle || (aiTitle && !isBadTitle));
           const bunnyDescription = bunnyResult.description || video.bunnyDescription || video.description;
 
           const streamCdn = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, "");
           const officialThumbnail = `${streamCdn}/${bunnyVideoId}/thumbnail.jpg`;
           const needsThumbnailUpdate = !video.thumbnailUrl || video.thumbnailUrl.startsWith("blob:") || video.thumbnailUrl.startsWith("data:image") || video.thumbnailUrl.includes("default-review");
 
-          const shouldUpdateCaption = Boolean(
-            officialBunnyTitle ||
-            (aiTitle && (!video.caption || video.caption === video.placeName || video.caption.startsWith("Video review for") || !video.hasOfficialBunnyTitle))
-          );
+          const isBadCaption = !video.caption || 
+            video.caption === video.placeName || 
+            video.caption.startsWith("Video review for") || 
+            video.caption.endsWith("...") ||
+            /^hey,\s*so\b/i.test(video.caption) ||
+            !video.hasOfficialBunnyTitle;
+
+          const shouldUpdateCaption = Boolean(officialBunnyTitle || (aiTitle && isBadCaption));
 
           const updatedVideo = { 
             ...video, 

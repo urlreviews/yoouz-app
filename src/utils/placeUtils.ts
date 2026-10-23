@@ -3737,5 +3737,100 @@ export function purgeVideoIdFromClientStorage(videoId?: string, bunnyVideoId?: s
   } catch (e) {}
 }
 
+/**
+ * Intelligent Smart Review Title Synthesizer.
+ * Generates engaging, authentic editorial titles from spoken video transcripts, place names, and ratings.
+ * Strictly avoids filler conversational intros ("Hey, so...") and never truncates with trailing ellipses.
+ */
+export function generateSmartReviewTitle(
+  placeName?: string,
+  transcriptText?: string,
+  rating?: number,
+  category?: string
+): string {
+  const cleanPlace = (placeName || "").trim().replace(/\.(com|org|net|io|ph|co|uk)$/i, "").trim();
+  const rawText = (transcriptText || "").trim();
+  const numRating = Number(rating) || 5;
+
+  if (!rawText || rawText.length < 5) {
+    return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : "Verified Video Review";
+  }
+
+  // 1. Remove spoken introductory filler phrases:
+  let cleaned = rawText
+    .replace(/^(hey|hello|hi|good\s+(morning|afternoon|evening)|so|well|okay|alright|yo)\b[,\s]*/i, "")
+    .replace(/^(guys|everyone|y'all|there|folks)\b[,\s]*/i, "")
+    .replace(/^(so\s+)?(if you('ve| have) been looking for|if you're looking for|are you looking for)\b[,\s]*/i, "")
+    .replace(/^(today i('m| am) (going to|gonna|reviewing|sharing)|check out (my|this)|i just wanted to (say|share))\b[,\s]*/i, "")
+    .replace(/^(so for this one is|this is my review of|my review for|here('s| is) my review of)\b[,\s]*/i, "")
+    .trim();
+
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  const lower = rawText.toLowerCase();
+  const catLower = (category || "").toLowerCase();
+
+  // Skincare & Beauty
+  if (lower.includes("moisturiz") || lower.includes("skin") || lower.includes("cleanser") || lower.includes("lotion") || lower.includes("cream") || catLower.includes("skin") || catLower.includes("beauty")) {
+    const isSoft = lower.includes("babe touch") || lower.includes("baby touch") || lower.includes("soft") || lower.includes("smooth");
+    const isHydrating = lower.includes("moisturiz") || lower.includes("hydrat");
+    const keyAttr = (isSoft && isHydrating) ? "Perfect Hydration for Soft & Smooth Skin ✨" :
+      isSoft ? "Leaves Skin Incredibly Soft & Smooth ✨" :
+      isHydrating ? "Deeply Hydrating Everyday Moisturizer" :
+      "Simple & Effective Skincare Favorite";
+
+    return cleanPlace ? `${cleanPlace}: ${keyAttr}` : `Top Skincare Pick: ${keyAttr}`;
+  }
+
+  // Food & Dining
+  if (lower.includes("chicken") || lower.includes("burger") || lower.includes("fries") || lower.includes("spaghetti") || lower.includes("pizza") || lower.includes("tacos") || lower.includes("coffee") || lower.includes("pastr") || lower.includes("drink") || catLower.includes("food") || catLower.includes("restaurant") || catLower.includes("cafe")) {
+    const items: string[] = [];
+    if (lower.includes("crispy chicken") || lower.includes("chicken")) items.push("Crispy Chicken");
+    if (lower.includes("spaghetti")) items.push("Sweet Spaghetti");
+    if (lower.includes("burger")) items.push("Juicy Burgers");
+    if (lower.includes("fries")) items.push("Crispy Fries");
+    if (lower.includes("coffee") || lower.includes("latte")) items.push("Artisan Coffee");
+    if (lower.includes("pastr")) items.push("Fresh Pastries");
+
+    const itemStr = items.slice(0, 2).join(" & ");
+    const isConvenient = lower.includes("24 hour") || lower.includes("24-hr") || lower.includes("convenient");
+    const suffix = isConvenient ? "with 24/7 Convenience" : "Must-Try Favorites";
+    
+    if (itemStr) {
+      return cleanPlace ? `${cleanPlace}: Iconic ${itemStr} (${numRating}★ Review)` : `Delicious ${itemStr} - ${suffix}`;
+    }
+  }
+
+  // Fragrance & Fashion
+  if (lower.includes("perfume") || lower.includes("scent") || lower.includes("cologne") || lower.includes("fragrance")) {
+    const isLongLasting = lower.includes("long-lasting") || lower.includes("all day") || lower.includes("lasts");
+    const descriptor = isLongLasting ? "Long-Lasting Scent for Any Season" : "Signature Vibe & Fragrance";
+    return cleanPlace ? `${cleanPlace} Fragrance: ${descriptor}` : `Must-Try Scent: ${descriptor}`;
+  }
+
+  // Tech & Gadgets
+  if (lower.includes("unboxing") || lower.includes("device") || lower.includes("tech") || lower.includes("feature")) {
+    return cleanPlace ? `${cleanPlace} Hands-On Review: Unboxing & Key Features` : "Hands-On Tech Review & Highlights";
+  }
+
+  // General clean synthesis
+  const sentenceEnd = cleaned.search(/[.!?]/);
+  let firstSentence = sentenceEnd > 15 ? cleaned.substring(0, sentenceEnd).trim() : cleaned;
+  if (firstSentence.length > 70) {
+    const lastSpace = firstSentence.substring(0, 65).lastIndexOf(" ");
+    firstSentence = (lastSpace > 20 ? firstSentence.substring(0, lastSpace) : firstSentence.substring(0, 65)).trim();
+  }
+
+  firstSentence = firstSentence.replace(/\s+(and|or|with|where|that|because|in|at|on|for|to)$/i, "").trim();
+
+  if (firstSentence.length > 15 && !firstSentence.toLowerCase().includes(cleanPlace.toLowerCase())) {
+    return cleanPlace ? `${cleanPlace}: ${firstSentence}` : firstSentence;
+  }
+
+  return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Video Review");
+}
+
 
 

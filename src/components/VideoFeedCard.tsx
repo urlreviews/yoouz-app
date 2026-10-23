@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch } from "../utils/placeUtils";
+import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch, generateSmartReviewTitle } from "../utils/placeUtils";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -1306,13 +1306,24 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 return lower === pName || lower === bName || /^video review (for|of)\b/i.test(lower);
               };
 
-              const candidateTitle = [
+              const isTruncatedSubtitle = (t?: string) => {
+                if (!t) return false;
+                const clean = t.trim();
+                const lower = clean.toLowerCase();
+                return clean.endsWith("...") || /^hey,\s*so\b/i.test(lower) || /^hello,\s*so\b/i.test(lower);
+              };
+
+              let candidateTitle = [
                 video.aiTitle, 
                 video.title, 
                 video.caption, 
                 (video as any).bunnyTitle, 
                 (video as any).videoTitle
-              ].find(t => t && !isPlaceFallback(t));
+              ].find(t => t && !isPlaceFallback(t) && !isTruncatedSubtitle(t));
+
+              if (!candidateTitle && video.transcriptText) {
+                candidateTitle = generateSmartReviewTitle(video.placeName, video.transcriptText, video.rating, (video as any).placeCategory);
+              }
 
               const rawHeadline = (candidateTitle || "").trim();
               const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
