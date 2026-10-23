@@ -150,6 +150,8 @@ export interface VideoReview {
   placeOpeningHours?: any;
   author?: {
     name: string;
+    firstName?: string;
+    lastName?: string;
     handle?: string;
     email?: string;
     userId?: string;

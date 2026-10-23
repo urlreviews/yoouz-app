@@ -2308,8 +2308,9 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
     return null;
   }
 
-  // Layer 1: Check BunnyDB live users table FIRST so any user photo/banner/name update is immediately live
+  // Layer 1: Check BunnyDB live users table & users_index.json FIRST so any user photo/banner/name update is immediately live
   try {
+    const candidates: any[] = [];
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       const userRows = await bunnyDb.execute({
@@ -2323,7 +2324,7 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
                  OR (name IS NOT NULL AND LOWER(name) = ?)
                  OR data LIKE ?
                  OR data LIKE ?
-              LIMIT 1`,
+              LIMIT 10`,
         args: [
           clean, 
           clean, 
@@ -2336,37 +2337,97 @@ async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted
           candidateEmailFromUsr ? `%"${candidateEmailFromUsr}"%` : `%"${clean}"%`
         ]
       });
-      if (userRows.rows.length > 0 && userRows.rows[0]) {
-        const row: any = userRows.rows[0];
-        let parsed: any = {};
-        if (row.data) {
-          parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-        }
-        const candidateName = parsed.name || row.name;
-        if (candidateName && candidateName !== 'Registered User') {
-          const resolvedAv = parsed.avatar || row.avatar || '';
-          const resolvedBanner = parsed.banner || row.banner || '';
-          const candidateProfile = {
+      if (userRows.rows && userRows.rows.length > 0) {
+        for (const row of userRows.rows as any[]) {
+          if (!row) continue;
+          let parsed: any = {};
+          if (row.data) {
+            try { parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data; } catch (e) {}
+          }
+          candidates.push({
+            ...parsed,
             uid: parsed.uid || row.id || uid,
             id: parsed.id || row.id || uid,
             email: parsed.email || row.email || (clean.includes('@') ? clean : candidateEmailFromUsr || ''),
-            name: candidateName,
-            firstName: parsed.firstName || candidateName.split(' ')[0] || candidateName,
-            lastName: parsed.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
-            avatar: resolvedAv,
-            banner: resolvedBanner,
-            handle: parsed.handle || `@${candidateName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-            bio: parsed.bio || "Community reviewer on Yoouz.",
-            city: parsed.city || '',
-            country: parsed.country || '',
-            location: parsed.location || '',
-            isVerified: true,
-            role: parsed.role || 'user',
-            isNewUser: false
-          };
-          if (!isDeletedUserServer(candidateProfile)) {
-            return candidateProfile;
-          }
+            name: (parsed.firstName && parsed.lastName) ? `${parsed.firstName} ${parsed.lastName}`.trim() : (parsed.name || row.name || ''),
+            avatar: parsed.avatar || row.avatar || '',
+            banner: parsed.banner || row.banner || ''
+          });
+        }
+      }
+    }
+
+    try {
+      const localUsers = readUsersIndex();
+      for (const lu of localUsers) {
+        if (!lu) continue;
+        const luEmail = String(lu.email || '').trim().toLowerCase();
+        const luId = String(lu.id || lu.uid || '').trim().toLowerCase();
+        const luName = String(lu.name || '').trim().toLowerCase();
+        const luHandle = String(lu.handle || '').trim().toLowerCase().replace(/^@+/, '');
+        if (
+          luEmail === clean ||
+          (candidateEmailFromUsr && luEmail === candidateEmailFromUsr) ||
+          luId === clean ||
+          luId === uid ||
+          luId === strippedUsr ||
+          luName === slugWithSpaces ||
+          luName === cleanWithoutAt ||
+          luHandle === cleanWithoutAt
+        ) {
+          candidates.push({
+            ...lu,
+            name: (lu.firstName && lu.lastName) ? `${lu.firstName} ${lu.lastName}`.trim() : (lu.name || '')
+          });
+        }
+      }
+    } catch (e) {}
+
+    if (candidates.length > 0) {
+      // Sort candidates so a profile with a full First + Last Name (contains a space) Always wins over a single-word email prefix
+      candidates.sort((a, b) => {
+        const aName = String(a.name || '').trim();
+        const bName = String(b.name || '').trim();
+        const aEmailPrefix = String(a.email || clean).split('@')[0].toLowerCase();
+        const bEmailPrefix = String(b.email || clean).split('@')[0].toLowerCase();
+        const aIsFull = aName.includes(' ') && aName.toLowerCase() !== aEmailPrefix;
+        const bIsFull = bName.includes(' ') && bName.toLowerCase() !== bEmailPrefix;
+        if (aIsFull && !bIsFull) return -1;
+        if (!aIsFull && bIsFull) return 1;
+        return 0;
+      });
+
+      const best = candidates[0];
+      const candidateName = String(best.name || '').trim();
+      if (candidateName && candidateName !== 'Registered User') {
+        const mergedCity = candidates.find(c => c.city)?.city || '';
+        const mergedCountry = candidates.find(c => c.country)?.country || '';
+        const mergedLocation = candidates.find(c => c.location)?.location || '';
+        const mergedAvatar = candidates.find(c => c.avatar && !c.avatar.includes('ui-avatars'))?.avatar || best.avatar || '';
+        const mergedBanner = candidates.find(c => c.banner)?.banner || best.banner || '';
+        const mergedBio = candidates.find(c => c.bio && c.bio !== 'Community reviewer on Yoouz.')?.bio || best.bio || 'Community reviewer on Yoouz.';
+        const candidateProfile = {
+          uid: best.uid || best.id || uid,
+          id: best.id || best.uid || uid,
+          email: best.email || (clean.includes('@') ? clean : candidateEmailFromUsr || ''),
+          name: candidateName,
+          firstName: best.firstName || candidateName.split(' ')[0] || candidateName,
+          lastName: best.lastName || (candidateName.includes(' ') ? candidateName.split(' ').slice(1).join(' ') : ''),
+          avatar: mergedAvatar,
+          banner: mergedBanner,
+          handle: (best.handle && !best.handle.includes( String(best.email || clean).split('@')[0] ) && candidateName.includes(' '))
+            ? best.handle
+            : `@${candidateName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+          bio: mergedBio,
+          city: mergedCity,
+          country: mergedCountry,
+          location: mergedLocation,
+          isVerified: true,
+          role: best.role || 'user',
+          isNewUser: false
+        };
+        if (!isDeletedUserServer(candidateProfile)) {
+          return candidateProfile;
         }
       }
     }
@@ -7600,23 +7661,23 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           return "usr_canonical_bizriv";
         }
 
-        // 4. Normalized handle key
+        // 4. Normalized email key FIRST so pending verification records and full profile records with the same email always merge!
+        if (email && email.includes("@")) {
+          const prefix = email.split("@")[0].replace(/[^a-z0-9]/g, "");
+          if (prefix && prefix.length >= 3) return `usr_email_${prefix}`;
+          return `usr_email_${email.replace(/[^a-z0-9]/g, "_")}`;
+        }
+
+        // 5. Normalized handle key
         const normHandle = handle.replace(/[^a-z0-9]/g, "");
         if (normHandle && normHandle !== "user" && normHandle.length >= 3) {
           return `usr_handle_${normHandle}`;
         }
 
-        // 5. Normalized name key
+        // 6. Normalized name key
         const normName = name.replace(/[^a-z0-9]/g, "");
         if (normName && normName !== "reviewer" && normName !== "user" && normName.length >= 3) {
           return `usr_name_${normName}`;
-        }
-
-        // 6. Normalized email prefix key
-        if (email && email.includes("@")) {
-          const prefix = email.split("@")[0].replace(/[^a-z0-9]/g, "");
-          if (prefix && prefix.length >= 3) return `usr_email_${prefix}`;
-          return `usr_email_${email.replace(/[^a-z0-9]/g, "_")}`;
         }
 
         return id || `usr_anon_${Date.now()}`;
@@ -7628,7 +7689,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         if (!key) return;
         const existing = userMap.get(key);
         if (!existing) {
-          userMap.set(key, { ...u });
+          const uFull = (u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}`.trim() : u.name;
+          userMap.set(key, { ...u, name: uFull || u.name });
         } else {
           // Merge preserving the most authentic, complete and verified information
           const hasRealAvatar = (av: string) => Boolean(
@@ -7663,14 +7725,35 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             bestId = "avr6566gd@gmail.com";
           }
 
-          const bestName = (u.name && u.name !== "Reviewer" && u.name !== "User" ? u.name : "") || 
-                           (existing.name && existing.name !== "Reviewer" ? existing.name : "") || 
-                           u.name || 
-                           existing.name;
+          const emailPrefix = bestEmail ? bestEmail.split("@")[0].toLowerCase() : "";
+          const uCandidateName = ((u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}`.trim() : (u.name || "")).trim();
+          const exCandidateName = ((existing.firstName && existing.lastName) ? `${existing.firstName} ${existing.lastName}`.trim() : (existing.name || "")).trim();
 
-          const rawHandle = (u.handle && u.handle !== "@user" ? u.handle : "") || 
+          const isFullHumanName = (n: string) => Boolean(
+            n &&
+            n !== "Reviewer" &&
+            n !== "User" &&
+            n !== "Verified Reviewer" &&
+            n.includes(" ") &&
+            (!emailPrefix || n.toLowerCase() !== emailPrefix)
+          );
+
+          const bestName =
+            (isFullHumanName(uCandidateName) ? uCandidateName : "") ||
+            (isFullHumanName(exCandidateName) ? exCandidateName : "") ||
+            (uCandidateName && uCandidateName !== "Reviewer" && uCandidateName !== "User" && uCandidateName.toLowerCase() !== emailPrefix ? uCandidateName : "") ||
+            (exCandidateName && exCandidateName !== "Reviewer" && exCandidateName !== "User" && exCandidateName.toLowerCase() !== emailPrefix ? exCandidateName : "") ||
+            uCandidateName ||
+            exCandidateName;
+
+          const bestFirstName = u.firstName || existing.firstName || (bestName.includes(" ") ? bestName.split(" ")[0] : bestName);
+          const bestLastName = u.lastName || existing.lastName || (bestName.includes(" ") ? bestName.split(" ").slice(1).join(" ") : "");
+
+          const canonicalHandleFromBestName = `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+          const rawHandle = (bestName.includes(" ") ? canonicalHandleFromBestName : "") ||
+                            (u.handle && u.handle !== "@user" ? u.handle : "") || 
                             (existing.handle && existing.handle !== "@user" ? existing.handle : "") || 
-                            `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+                            canonicalHandleFromBestName;
           const bestHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
 
           const rawLocation = (typeof u.location === 'string' && u.location.trim() !== '')
@@ -7678,6 +7761,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             : (existing.location?.trim() || "");
           const rawCity = (typeof u.city === 'string' && u.city.trim() !== '') ? u.city.trim() : (existing.city || "");
           const rawState = (typeof u.state === 'string' && u.state.trim() !== '') ? u.state.trim() : (existing.state || "");
+          existing.firstName = bestFirstName;
+          existing.lastName = bestLastName;
           const rawCountry = (typeof u.country === 'string' && u.country.trim() !== '') ? u.country.trim() : (existing.country || "");
 
           const normalizedLoc = normalizeUserLocationServer(rawLocation, rawCity, rawState, rawCountry);
@@ -8716,13 +8801,16 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           });
         } else if (colName === 'users') {
           let canonicalUserId = id;
+          const parsed = typeof finalDataObj === 'object' ? finalDataObj : {};
+          const uEmail = (parsed.email || (String(id).includes('@') ? id : '')).trim().toLowerCase();
+          const uName = ((parsed.firstName && parsed.lastName) ? `${parsed.firstName} ${parsed.lastName}`.trim() : (parsed.name || '')).trim();
+          if (uName) finalDataObj.name = uName;
+          if (uEmail) finalDataObj.email = uEmail;
           try {
-            const parsed = typeof finalDataObj === 'object' ? finalDataObj : {};
-            const uEmail = (parsed.email || '').trim().toLowerCase();
-            const uName = (parsed.name || '').trim();
+            const usrPrefixId = uEmail ? `usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
             const existingRes = await bunnyDb.execute({
-              sql: `SELECT id, email, name FROM users WHERE id = ? OR (email != '' AND email = ?) OR (name != '' AND name = ?)`,
-              args: [id, uEmail, uName]
+              sql: `SELECT id, email, name FROM users WHERE id = ? OR id = ? OR (email != '' AND LOWER(email) = ?) OR (name != '' AND name = ?)`,
+              args: [id, usrPrefixId || id, uEmail, uName]
             });
             const matching = existingRes.rows || [];
             if (matching.length > 0) {
@@ -8736,10 +8824,23 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             }
           } catch(uErr) {}
 
+          const updatedJsonStr = JSON.stringify(finalDataObj);
           await bunnyDb.execute({
-            sql: `INSERT INTO users (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-            args: [canonicalUserId, jsonStr, jsonStr]
+            sql: `INSERT INTO users (id, email, name, avatar, bio, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET email = ?, name = ?, avatar = ?, bio = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              canonicalUserId,
+              uEmail,
+              uName,
+              finalDataObj.avatar || '',
+              finalDataObj.bio || '',
+              updatedJsonStr,
+              uEmail,
+              uName,
+              finalDataObj.avatar || '',
+              finalDataObj.bio || '',
+              updatedJsonStr
+            ]
           });
         } else {
           await bunnyDb.execute({
@@ -8825,26 +8926,60 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
     // across all reviews created by this user so all visitors immediately see the updated profile data
     if (colName === 'users' && data) {
       try {
-        const list = readReviewsIndex();
-        let changed = false;
-        const targetName = (data.name || '').trim().toLowerCase();
-        const targetEmail = (data.email || '').trim().toLowerCase();
+        const effectiveName = ((data.firstName && data.lastName) ? `${data.firstName} ${data.lastName}`.trim() : (data.name || '')).trim();
+        if (effectiveName) data.name = effectiveName;
+        const targetName = effectiveName.toLowerCase();
+        const targetEmail = (data.email || (String(id).includes('@') ? id : '')).trim().toLowerCase();
+        const targetEmailPrefix = targetEmail.includes('@') ? targetEmail.split('@')[0] : '';
         const targetUid = (data.uid || id || '').trim().toLowerCase();
 
-        list.forEach((item: any) => {
+        // Sync users_index.json on disk
+        try {
+          const localUsers = readUsersIndex();
+          let foundIdx = -1;
+          for (let i = localUsers.length - 1; i >= 0; i--) {
+            const u = localUsers[i];
+            if (!u) continue;
+            const uE = String(u.email || '').trim().toLowerCase();
+            const uI = String(u.id || u.uid || '').trim().toLowerCase();
+            if ((targetEmail && uE === targetEmail) || (targetUid && uI === targetUid)) {
+              if (foundIdx === -1) {
+                foundIdx = i;
+              } else {
+                localUsers.splice(i, 1);
+                foundIdx--;
+              }
+            }
+          }
+          if (foundIdx !== -1) {
+            localUsers[foundIdx] = { ...localUsers[foundIdx], ...data, name: effectiveName || localUsers[foundIdx].name };
+          } else {
+            localUsers.push({ id: targetEmail || id, uid: targetUid || id, ...data, name: effectiveName || data.name });
+          }
+          writeUsersIndex(localUsers);
+        } catch (uIdxErr) {}
+
+        const list = readReviewsIndex();
+        let changed = false;
+        const updatedReviewIds: string[] = [];
+
+        const applyUserToReview = (item: any) => {
           const itemAuthor = (item && typeof item.author === 'object' && item.author) ? item.author : {};
           const itemName = (itemAuthor.name || item.authorName || '').trim().toLowerCase();
           const itemEmail = (item.userEmail || itemAuthor.email || '').trim().toLowerCase();
           const itemUid = (item.userId || itemAuthor.userId || itemAuthor.uid || '').trim().toLowerCase();
 
           const isMatch = (targetUid && (itemUid === targetUid)) ||
-                          (targetEmail && (itemEmail === targetEmail)) ||
+                          (targetEmail && (itemEmail === targetEmail || itemUid === targetEmail)) ||
+                          (targetEmailPrefix && (itemName === targetEmailPrefix || itemUid === targetEmailPrefix)) ||
                           (targetName && (itemName === targetName));
 
           if (isMatch) {
             item.author = {
               ...itemAuthor,
-              name: data.name || itemAuthor.name,
+              name: effectiveName || itemAuthor.name,
+              firstName: data.firstName || itemAuthor.firstName,
+              lastName: data.lastName || itemAuthor.lastName,
               handle: data.handle || itemAuthor.handle,
               avatar: data.avatar || itemAuthor.avatar,
               bio: data.bio !== undefined ? data.bio : itemAuthor.bio,
@@ -8854,14 +8989,44 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               country: data.country !== undefined ? data.country : itemAuthor.country
             };
             if (data.avatar) item.authorAvatar = data.avatar;
-            if (data.name) item.authorName = data.name;
+            if (effectiveName) item.authorName = effectiveName;
+            return true;
+          }
+          return false;
+        };
+
+        list.forEach((item: any) => {
+          if (applyUserToReview(item)) {
             changed = true;
+            if (item.id) updatedReviewIds.push(item.id);
           }
         });
 
+        if (Array.isArray(feedCache.videos)) {
+          feedCache.videos.forEach((item: any) => {
+            applyUserToReview(item);
+          });
+        }
+
         if (changed) {
           writeReviewsIndex(list);
+          if (bunnyDb && updatedReviewIds.length > 0) {
+            for (const revId of updatedReviewIds) {
+              const revObj = list.find((r: any) => r && r.id === revId);
+              if (revObj) {
+                bunnyDb.execute({
+                  sql: `UPDATE videoReviews SET authorName = ?, authorHandle = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                  args: [revObj.author?.name || revObj.authorName || '', revObj.author?.handle || '', revObj.author?.avatar || '', JSON.stringify(revObj), revId]
+                }).catch(() => {});
+              }
+            }
+          }
         }
+
+        broadcastSseEvent({
+          type: "user_updated",
+          user: { id: targetEmail || id, uid: targetUid || id, ...data, name: effectiveName || data.name }
+        });
       } catch (syncErr) {
         console.warn("Notice updating reviews author info on user profile change:", syncErr);
       }
@@ -16043,14 +16208,29 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
               const parsedData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
               if (parsedData && parsedData.id && isDeletedReviewServer(parsedData.id)) return;
               const existing = map.get(r.id) || {};
+              const parsedAuthor = (typeof parsedData.author === 'object' && parsedData.author) ? parsedData.author : {};
+              const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
+              const authorFirstLast = (parsedAuthor.firstName && parsedAuthor.lastName)
+                ? `${String(parsedAuthor.firstName).trim()} ${String(parsedAuthor.lastName).trim()}`.trim()
+                : ((existingAuthor.firstName && existingAuthor.lastName) ? `${String(existingAuthor.firstName).trim()} ${String(existingAuthor.lastName).trim()}`.trim() : '');
+              const authorCandidates = [
+                authorFirstLast,
+                parsedAuthor.name,
+                parsedData.authorName,
+                r.authorName,
+                existingAuthor.name
+              ].filter(Boolean) as string[];
+              const bestAuthorName = authorCandidates.find(n => n.trim().includes(" ")) || authorCandidates[0] || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId);
               const mergedAuthor = {
-                ...(typeof existing.author === 'object' ? existing.author : {}),
-                ...(typeof parsedData.author === 'object' ? parsedData.author : {}),
-                name: r.authorName || parsedData.authorName || (parsedData.author && parsedData.author.name) || (existing.author && existing.author.name) || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId),
-                avatar: r.authorAvatar || parsedData.authorAvatar || (parsedData.author && parsedData.author.avatar) || (existing.author && existing.author.avatar) || '',
-                location: (parsedData.author && parsedData.author.location) || (existing.author && existing.author.location) || '',
-                city: (parsedData.author && parsedData.author.city) || (existing.author && existing.author.city) || '',
-                country: (parsedData.author && parsedData.author.country) || (existing.author && existing.author.country) || ''
+                ...existingAuthor,
+                ...parsedAuthor,
+                name: bestAuthorName,
+                firstName: parsedAuthor.firstName || existingAuthor.firstName || (bestAuthorName.includes(" ") ? bestAuthorName.split(" ")[0] : bestAuthorName),
+                lastName: parsedAuthor.lastName || existingAuthor.lastName || (bestAuthorName.includes(" ") ? bestAuthorName.split(" ").slice(1).join(" ") : ""),
+                avatar: r.authorAvatar || parsedData.authorAvatar || parsedAuthor.avatar || existingAuthor.avatar || '',
+                location: (parsedAuthor && parsedAuthor.location) || (existingAuthor && existingAuthor.location) || '',
+                city: (parsedAuthor && parsedAuthor.city) || (existingAuthor && existingAuthor.city) || '',
+                country: (parsedAuthor && parsedAuthor.country) || (existingAuthor && existingAuthor.country) || ''
               };
 
               if ((mergedAuthor.name === "Steven Akan" || r.userId === "avr6566gd@gmail.com") && !mergedAuthor.location) {
@@ -16087,7 +16267,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
                 id: r.id,
                 placeId: r.placeId || parsedData.placeId,
                 placeName: r.placeName || parsedData.placeName,
-                authorName: r.authorName || parsedData.authorName,
+                authorName: bestAuthorName || r.authorName || parsedData.authorName,
                 authorAvatar: r.authorAvatar || parsedData.authorAvatar,
                 rating: effRating,
                 placeRating: effRating,
@@ -19880,6 +20060,64 @@ app.post("/api/videos/save-review", async (req, res) => {
         return res.json({ success: false, error: "Review was deleted", deleted: true });
       }
       const review = enrichReviewPlaceAssets(rawReview);
+
+      // 👤 Ensure the author's full First and Last Name from their profile is ALWAYS resolved and applied immediately upon publishing
+      try {
+        const rawAuthor = (review.author && typeof review.author === "object") ? review.author : {};
+        const lookupUserKey = String(review.userEmail || review.userId || rawAuthor.email || rawAuthor.userId || rawAuthor.name || "").trim();
+        const emailPrefix = lookupUserKey.includes("@") ? lookupUserKey.split("@")[0].toLowerCase() : "";
+        let currentAuthorName = String(
+          (rawAuthor.firstName && rawAuthor.lastName)
+            ? `${rawAuthor.firstName} ${rawAuthor.lastName}`.trim()
+            : (rawAuthor.name || review.authorName || "")
+        ).trim();
+
+        const needsProfileEnrichment =
+          !currentAuthorName ||
+          !currentAuthorName.includes(" ") ||
+          currentAuthorName.toLowerCase() === "verified reviewer" ||
+          currentAuthorName.toLowerCase() === "yoouz reviewer" ||
+          currentAuthorName.toLowerCase() === "reviewer" ||
+          (emailPrefix && currentAuthorName.toLowerCase() === emailPrefix) ||
+          !rawAuthor.location;
+
+        if (lookupUserKey && needsProfileEnrichment) {
+          const resolvedProfile = await resolveUserProfileFromAnySource(lookupUserKey);
+          if (resolvedProfile) {
+            const profileFullName = (resolvedProfile.firstName && resolvedProfile.lastName)
+              ? `${resolvedProfile.firstName} ${resolvedProfile.lastName}`.trim()
+              : (resolvedProfile.name || currentAuthorName);
+            const bestFullName = (profileFullName && profileFullName.includes(" "))
+              ? profileFullName
+              : ((currentAuthorName && currentAuthorName.includes(" ")) ? currentAuthorName : (profileFullName || currentAuthorName));
+
+            review.author = {
+              ...rawAuthor,
+              name: bestFullName,
+              firstName: resolvedProfile.firstName || rawAuthor.firstName || (bestFullName.includes(" ") ? bestFullName.split(" ")[0] : bestFullName),
+              lastName: resolvedProfile.lastName || rawAuthor.lastName || (bestFullName.includes(" ") ? bestFullName.split(" ").slice(1).join(" ") : ""),
+              handle: resolvedProfile.handle || rawAuthor.handle || `@${bestFullName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+              avatar: rawAuthor.avatar || resolvedProfile.avatar || review.authorAvatar || "",
+              bio: rawAuthor.bio || resolvedProfile.bio || "",
+              location: rawAuthor.location || resolvedProfile.location || "",
+              city: rawAuthor.city || resolvedProfile.city || "",
+              country: rawAuthor.country || resolvedProfile.country || "",
+              isLocalGuide: true,
+              isVerified: true
+            };
+            review.authorName = bestFullName;
+            if (review.author.avatar) {
+              review.authorAvatar = review.author.avatar;
+            }
+          }
+        } else if (currentAuthorName) {
+          review.author = {
+            ...rawAuthor,
+            name: currentAuthorName
+          };
+          review.authorName = currentAuthorName;
+        }
+      } catch (authorEnrichErr) {}
       
       // Ensure clean thumbnail URL: prevent bloated base64 data URIs or dead blob URLs from polluting database
       const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, '');
@@ -19943,10 +20181,24 @@ app.post("/api/videos/save-review", async (req, res) => {
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
       if (existingIdx !== -1) {
         const existing = list[existingIdx];
-        // 🛡️ Strict Identity Immutability Guard: An established review's author and business place can NEVER be changed!
-        if (existing.author?.name && existing.author.name !== "Verified Reviewer" && existing.author.name !== "Yoouz Reviewer") {
-          review.author = { ...review.author, name: existing.author.name, handle: existing.author.handle || review.author?.handle, avatar: existing.author.avatar || review.author?.avatar };
-          review.authorName = existing.author.name;
+        // 🛡️ Strict Identity Immutability Guard: Preserve established full name, but NEVER overwrite a full First + Last Name with an email prefix!
+        const exAuthorName = String(existing.author?.name || "").trim();
+        const newAuthorName = String(review.author?.name || review.authorName || "").trim();
+        const preferExistingName =
+          exAuthorName &&
+          exAuthorName !== "Verified Reviewer" &&
+          exAuthorName !== "Yoouz Reviewer" &&
+          (exAuthorName.includes(" ") || !newAuthorName.includes(" "));
+
+        if (preferExistingName) {
+          review.author = {
+            ...existing.author,
+            ...review.author,
+            name: exAuthorName,
+            handle: existing.author.handle || review.author?.handle,
+            avatar: existing.author.avatar || review.author?.avatar
+          };
+          review.authorName = exAuthorName;
         }
         if (existing.placeName && !existing.placeName.toLowerCase().includes("unnamed")) {
           review.placeName = existing.placeName;
@@ -21183,34 +21435,36 @@ app.post("/api/videos/save-review", async (req, res) => {
         });
       }
 
-      // Automatically record pending sign-up in user database so all sign-up attempts are captured in Admin Panel
-      try {
-        const pendingUserRecord = {
-          id: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          uid: `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
-          email: cleanEmail,
-          name: (firstName || lastName) ? `${firstName || ''} ${lastName || ''}`.trim() : (cleanEmail.split('@')[0]),
-          handle: `@${cleanEmail.split('@')[0]}`,
-          role: "Member (Pending Verification)",
-          status: "pending_verification",
-          isVerified: false,
-          isRegisteredAccount: true,
-          memberSince: "Just now"
-        };
-        const localUsers = readUsersIndex();
-        if (!localUsers.some((u: any) => u && u.email === cleanEmail)) {
-          localUsers.push(pendingUserRecord);
-          writeUsersIndex(localUsers);
-        }
+      // Automatically record pending sign-up in user database ONLY if not already registered
+      if (!isAlreadyRegistered) {
+        try {
+          const pendingUserRecord = {
+            id: cleanEmail,
+            uid: cleanEmail,
+            email: cleanEmail,
+            name: (firstName || lastName) ? `${firstName || ''} ${lastName || ''}`.trim() : (cleanEmail.split('@')[0]),
+            handle: `@${cleanEmail.split('@')[0]}`,
+            role: "Member (Pending Verification)",
+            status: "pending_verification",
+            isVerified: false,
+            isRegisteredAccount: true,
+            memberSince: "Just now"
+          };
+          const localUsers = readUsersIndex();
+          if (!localUsers.some((u: any) => u && u.email === cleanEmail)) {
+            localUsers.push(pendingUserRecord);
+            writeUsersIndex(localUsers);
+          }
 
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
-          await bunnyDb.execute({
-            sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-            args: [pendingUserRecord.id, cleanEmail, pendingUserRecord.name, pendingUserRecord.role, JSON.stringify(pendingUserRecord)]
-          }).catch(() => {});
-        }
-      } catch (pendingErr) {}
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
+            await bunnyDb.execute({
+              sql: `INSERT OR IGNORE INTO users (id, email, name, role, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+              args: [pendingUserRecord.id, cleanEmail, pendingUserRecord.name, pendingUserRecord.role, JSON.stringify(pendingUserRecord)]
+            }).catch(() => {});
+          }
+        } catch (pendingErr) {}
+      }
 
       return res.json({
         success: true,
@@ -21278,10 +21532,10 @@ app.post("/api/videos/save-review", async (req, res) => {
       const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
       const assignedRole = isAdminEmail ? 'admin' : (existingUser?.role || 'user');
 
-      const freshUuid = crypto.randomUUID();
+      const canonicalUid = existingUser?.uid || existingUser?.id || cleanEmail;
       const userSession = {
-        uid: existingUser?.uid || existingUser?.id || freshUuid,
-        id: existingUser?.uid || existingUser?.id || freshUuid,
+        uid: canonicalUid,
+        id: canonicalUid,
         email: cleanEmail,
         name: isKnown ? fullName : (fullName || cleanEmail.split('@')[0]),
         firstName: isKnown ? fName : fName,
@@ -21315,6 +21569,10 @@ app.post("/api/videos/save-review", async (req, res) => {
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
+          const usrPrefixId = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          if (usrPrefixId !== userSession.uid) {
+            await bunnyDb.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [usrPrefixId] }).catch(() => {});
+          }
           await bunnyDb.execute({
             sql: `INSERT INTO users (id, email, name, role, data, updatedAt) 
                   VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) 
@@ -21383,71 +21641,168 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
-  // Update User Profile Endpoint (Directly into Bunny Cloud Database)
+  // Update User Profile Endpoint (Directly into Bunny Cloud Database, users_index.json, SQL, and active reviews)
   app.post("/api/auth/update-profile", async (req, res) => {
     try {
-      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId, role: bodyRole } = req.body;
+      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId, role: bodyRole, videoReviewCount, isVerified } = req.body;
       if (!email) {
         return res.status(400).json({ error: "Missing email address." });
       }
 
       const cleanEmail = email.trim().toLowerCase();
-      let uid = bodyUid || bodyId;
+      const emailPrefix = cleanEmail.split('@')[0].toLowerCase();
 
-      if (!uid) {
-        try {
-           const existing = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
-           if (existing.length > 0) {
-              uid = existing[0].uid;
-           } else {
-              uid = `usr_${crypto.randomUUID().replace(/-/g, '')}`;
-           }
-        } catch (e) {
-           uid = `usr_${crypto.randomUUID().replace(/-/g, '')}`;
-        }
-      }
+      // Resolve any existing user profile so partial updates (e.g. videoReviewCount) never wipe firstName, lastName, city, country, avatar
+      const existingProfile = await resolveUserProfileFromAnySource(cleanEmail).catch(() => null);
 
-      const fName = (firstName || '').trim();
-      const lName = (lastName || '').trim();
-      const fullName = (name || (fName && lName ? `${fName} ${lName}` : (fName || cleanEmail.split('@')[0]))).trim();
-      const initial = (fName ? fName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
-      const locParts = [city?.trim(), country?.trim()].filter(Boolean);
-      const combinedLocation = location || locParts.join(', ');
-      const finalAvatar = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
+      let uid = bodyUid || bodyId || existingProfile?.uid || existingProfile?.id || cleanEmail;
+
+      const fName = (firstName !== undefined ? String(firstName).trim() : (existingProfile?.firstName || '')).trim();
+      const lName = (lastName !== undefined ? String(lastName).trim() : (existingProfile?.lastName || '')).trim();
+      const combinedFirstLast = (fName && lName) ? `${fName} ${lName}`.trim() : '';
+
+      const rawIncomingName = (name || '').trim();
+      const existingFullName = (existingProfile?.name && existingProfile.name.includes(' ') && existingProfile.name.toLowerCase() !== emailPrefix)
+        ? existingProfile.name.trim()
+        : '';
+
+      const fullName = (
+        combinedFirstLast ||
+        (rawIncomingName && rawIncomingName.includes(' ') ? rawIncomingName : '') ||
+        existingFullName ||
+        (rawIncomingName && rawIncomingName.toLowerCase() !== emailPrefix ? rawIncomingName : '') ||
+        fName ||
+        rawIncomingName ||
+        cleanEmail.split('@')[0]
+      ).trim();
+
+      const resolvedFirstName = fName || (fullName.includes(' ') ? fullName.split(' ')[0] : fullName);
+      const resolvedLastName = lName || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : '');
+      const initial = (resolvedFirstName ? resolvedFirstName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
+
+      const finalCity = (city !== undefined ? String(city).trim() : (existingProfile?.city || '')).trim();
+      const finalCountry = (country !== undefined ? String(country).trim() : (existingProfile?.country || '')).trim();
+      const locParts = [finalCity, finalCountry].filter(Boolean);
+      const combinedLocation = (location !== undefined && String(location).trim() !== '')
+        ? String(location).trim()
+        : (locParts.length > 0 ? locParts.join(', ') : (existingProfile?.location || ''));
+
+      const finalAvatar = avatar || existingProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
+      const finalBanner = banner !== undefined ? banner : (existingProfile?.banner || '');
+      const finalBio = bio !== undefined ? bio : (existingProfile?.bio || 'Verified video reviewer on Yoouz.');
 
       const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
-      const assignedRole = isAdminEmail ? 'admin' : (bodyRole || 'user');
+      const assignedRole = isAdminEmail ? 'admin' : (bodyRole || existingProfile?.role || 'user');
 
-      const profile = {
+      const profile: any = {
+        ...(existingProfile || {}),
         uid,
         id: uid,
         email: cleanEmail,
         name: fullName,
-        firstName: fName,
-        lastName: lName,
-        city: (city || '').trim(),
-        country: (country || '').trim(),
+        firstName: resolvedFirstName,
+        lastName: resolvedLastName,
+        city: finalCity,
+        country: finalCountry,
         location: combinedLocation,
         avatar: finalAvatar,
-        banner: banner || '',
-        bio: bio || '',
+        banner: finalBanner,
+        bio: finalBio,
         handle: `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
         initial,
         role: assignedRole,
+        status: "verified",
+        isRegisteredAccount: true,
         isNewUser: false,
-        isVerified: true,
+        isVerified: isVerified !== undefined ? Boolean(isVerified) : true,
+        ...(videoReviewCount !== undefined ? { videoReviewCount: Number(videoReviewCount) } : {}),
         updatedAt: new Date().toISOString()
       };
 
-      console.log(`[Auth] Updating profile for ${cleanEmail} (UID: ${uid}, Role: ${assignedRole})`);
+      console.log(`[Auth] Updating profile for ${cleanEmail} -> Name: "${fullName}" (UID: ${uid}, Role: ${assignedRole})`);
       unrecordDeletedUserIds([uid, cleanEmail, fullName, profile.handle]);
+      unrecordDeactivatedUserIds([uid, cleanEmail, fullName, profile.handle]);
 
-      // Simple, Fast, SQL-Only Persistence
+      // 1. Persist directly into Bunny Cloud Database (users table) & deduplicate any pending usr_<email> / UUID rows
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const usrPrefixId = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const existingRowsRes = await bunnyDb.execute({
+            sql: `SELECT id FROM users WHERE LOWER(email) = ? OR LOWER(id) = ? OR LOWER(id) = ? OR LOWER(id) = ?`,
+            args: [cleanEmail, cleanEmail, usrPrefixId.toLowerCase(), String(uid).toLowerCase()]
+          }).catch(() => ({ rows: [] as any[] }));
+
+          const matchingIds = (existingRowsRes.rows || []).map((r: any) => String(r.id));
+          const canonicalId = matchingIds.find((rid: string) => rid.toLowerCase() === cleanEmail) || cleanEmail;
+          profile.id = canonicalId;
+          profile.uid = canonicalId;
+
+          for (const oldId of matchingIds) {
+            if (oldId !== canonicalId) {
+              await bunnyDb.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [oldId] }).catch(() => {});
+            }
+          }
+
+          const profileJson = JSON.stringify(profile);
+          await bunnyDb.execute({
+            sql: `INSERT INTO users (id, email, name, role, avatar, bio, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(id) DO UPDATE SET email = ?, name = ?, role = ?, avatar = ?, bio = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+            args: [
+              canonicalId,
+              cleanEmail,
+              fullName,
+              assignedRole,
+              finalAvatar,
+              finalBio,
+              profileJson,
+              cleanEmail,
+              fullName,
+              assignedRole,
+              finalAvatar,
+              finalBio,
+              profileJson
+            ]
+          });
+        } catch (bunnyErr) {
+          console.warn("[Auth] BunnyDB profile update warning:", bunnyErr);
+        }
+      }
+
+      // 2. Persist to local users_index.json (deduplicating any pending rows for this email)
       try {
-        const existingSql = await db.select().from(users).where(eq(users.uid, uid)).limit(1);
+        const localUsers = readUsersIndex();
+        const usrPrefixId = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`.toLowerCase();
+        let keptIdx = -1;
+        for (let i = localUsers.length - 1; i >= 0; i--) {
+          const u = localUsers[i];
+          if (!u) continue;
+          const uEmail = String(u.email || '').trim().toLowerCase();
+          const uId = String(u.id || u.uid || '').trim().toLowerCase();
+          if (uEmail === cleanEmail || uId === cleanEmail || uId === usrPrefixId || uId === String(uid).toLowerCase()) {
+            if (keptIdx === -1) {
+              keptIdx = i;
+            } else {
+              localUsers.splice(i, 1);
+              keptIdx--;
+            }
+          }
+        }
+        if (keptIdx !== -1) {
+          localUsers[keptIdx] = { ...localUsers[keptIdx], ...profile };
+        } else {
+          localUsers.push(profile);
+        }
+        writeUsersIndex(localUsers);
+      } catch (idxErr) {}
+
+      // 3. Persist to Drizzle SQL users table
+      try {
+        const existingSql = await db.select().from(users).where(eq(users.email, cleanEmail)).limit(1);
         if (existingSql.length === 0) {
           await db.insert(users).values({
-            uid,
+            uid: profile.uid,
             email: cleanEmail,
             name: fullName,
             avatar: finalAvatar
@@ -21456,14 +21811,88 @@ app.post("/api/videos/save-review", async (req, res) => {
           await db.update(users).set({
             name: fullName,
             avatar: finalAvatar
-          }).where(eq(users.uid, uid));
+          }).where(eq(users.email, cleanEmail));
         }
-        console.log(`[Auth] SQL DB successful for ${cleanEmail}`);
-      } catch (sqlErr) {
-        console.error("[Auth] SQL DB persistence failed:", sqlErr);
-      }
+      } catch (sqlErr) {}
 
-      console.log(`[Auth] Profile update complete for ${cleanEmail}`);
+      // 4. Cascade updated full name, handle, avatar, and location to all video reviews by this user immediately
+      try {
+        const revList = readReviewsIndex();
+        let revChanged = false;
+        const updatedRevIds: string[] = [];
+
+        const syncReviewAuthor = (item: any) => {
+          if (!item) return false;
+          const itemAuthor = (item.author && typeof item.author === 'object') ? item.author : {};
+          const itemEmail = String(item.userEmail || itemAuthor.email || '').trim().toLowerCase();
+          const itemUid = String(item.userId || itemAuthor.userId || itemAuthor.uid || '').trim().toLowerCase();
+          const itemName = String(itemAuthor.name || item.authorName || '').trim().toLowerCase();
+
+          if (
+            itemEmail === cleanEmail ||
+            itemUid === cleanEmail ||
+            itemUid === String(uid).toLowerCase() ||
+            (emailPrefix && (itemName === emailPrefix || itemUid === emailPrefix)) ||
+            itemName === fullName.toLowerCase()
+          ) {
+            item.author = {
+              ...itemAuthor,
+              name: fullName,
+              firstName: resolvedFirstName,
+              lastName: resolvedLastName,
+              handle: profile.handle,
+              avatar: finalAvatar || itemAuthor.avatar,
+              bio: finalBio || itemAuthor.bio,
+              banner: finalBanner || itemAuthor.banner,
+              location: combinedLocation || itemAuthor.location,
+              city: finalCity || itemAuthor.city,
+              country: finalCountry || itemAuthor.country
+            };
+            item.authorName = fullName;
+            if (finalAvatar) item.authorAvatar = finalAvatar;
+            return true;
+          }
+          return false;
+        };
+
+        revList.forEach((item: any) => {
+          if (syncReviewAuthor(item)) {
+            revChanged = true;
+            if (item.id) updatedRevIds.push(item.id);
+          }
+        });
+
+        if (Array.isArray(feedCache.videos)) {
+          feedCache.videos.forEach((item: any) => {
+            syncReviewAuthor(item);
+          });
+        }
+
+        if (revChanged) {
+          writeReviewsIndex(revList);
+          if (bunnyDb && updatedRevIds.length > 0) {
+            for (const rId of updatedRevIds) {
+              const rObj = revList.find((r: any) => r && r.id === rId);
+              if (rObj) {
+                bunnyDb.execute({
+                  sql: `UPDATE videoReviews SET authorName = ?, authorHandle = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                  args: [fullName, profile.handle, rObj.author?.avatar || '', JSON.stringify(rObj), rId]
+                }).catch(() => {});
+              }
+            }
+          }
+        }
+      } catch (revSyncErr) {}
+
+      // 5. Broadcast live SSE update so all active video players and profile drawers update immediately
+      try {
+        broadcastSseEvent({
+          type: "user_updated",
+          user: profile
+        });
+      } catch (sseErr) {}
+
+      console.log(`[Auth] Profile update complete for ${cleanEmail} (${fullName})`);
       return res.json({
         success: true,
         user: profile,

@@ -1915,12 +1915,18 @@ export function App() {
           .then((res) => res.json())
           .then((data) => {
             if (data.user) {
-              const fName = data.user.firstName || magicEmail.split("@")[0];
-              const lName = data.user.lastName || "";
-              const avatarSvg = generateGoogleLetterAvatarSvg(fName, 128, data.user.email || magicEmail);
+              const fName = (data.user.firstName || "").trim();
+              const lName = (data.user.lastName || "").trim();
+              const fullName = (fName && lName) ? `${fName} ${lName}`.trim() : (data.user.name || magicEmail.split("@")[0]);
+              const avatarSvg = generateGoogleLetterAvatarSvg(fName || fullName, 128, data.user.email || magicEmail);
               const profile: UserProfile = {
                 id: data.user.uid || data.user.id,
-                name: data.user.name || fName,
+                name: fullName,
+                firstName: fName,
+                lastName: lName,
+                city: data.user.city || "",
+                country: data.user.country || "",
+                location: data.user.location || "",
                 email: data.user.email || magicEmail,
                 avatar: data.user.avatar || avatarSvg,
                 handle: data.user.handle,
@@ -1931,6 +1937,7 @@ export function App() {
               const reactivateIds = [magicEmail, data.user.email, data.user.id, data.user.uid, profile.name, profile.handle].filter(Boolean);
               unrecordDeactivatedUsersInLocalStorage(reactivateIds);
               unrecordDeletedUsersInLocalStorage(reactivateIds);
+              updateUserRegistry(profile);
               fetch('/api/user/reactivate-account', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1945,6 +1952,10 @@ export function App() {
               // Clean query parameters from URL
               const cleanUrl = window.location.pathname;
               window.history.replaceState({}, "", cleanUrl);
+              // If the user has not yet entered their First and Last Name, open the profile completion step immediately
+              if (data.user.isNewUser || !fName || !lName || !fullName.includes(" ")) {
+                setIsAuthModalOpen(true);
+              }
             }
           })
           .catch((err) => console.warn("Magic token verification error:", err));
@@ -2813,21 +2824,57 @@ export function App() {
               return true;
             });
 
-            // Ensure current active user is integrated into the user directory
-            if (currentUser && (currentUser.email || currentUser.uid)) {
-              const currentEmail = (currentUser.email || "").toLowerCase().trim();
-              const currentUid = (currentUser.uid || currentUser.id || "").toLowerCase().trim();
-              const exists = validUsers.some((u: any) => {
+            // Ensure current active user (from state or localStorage) is integrated into the user directory with their full First & Last Name
+            let latestActiveUser: any = currentUser;
+            try {
+              const storedUserStr = localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user");
+              if (storedUserStr) {
+                const parsedStored = JSON.parse(storedUserStr);
+                if (parsedStored && (parsedStored.email || parsedStored.uid || parsedStored.id)) {
+                  latestActiveUser = parsedStored;
+                }
+              }
+            } catch (e) {}
+
+            if (latestActiveUser && (latestActiveUser.email || latestActiveUser.uid || latestActiveUser.id)) {
+              const currentEmail = (latestActiveUser.email || "").toLowerCase().trim();
+              const currentUid = (latestActiveUser.uid || latestActiveUser.id || "").toLowerCase().trim();
+              const activeFullName = (
+                (latestActiveUser.firstName && latestActiveUser.lastName)
+                  ? `${String(latestActiveUser.firstName).trim()} ${String(latestActiveUser.lastName).trim()}`.trim()
+                  : (latestActiveUser.name || "")
+              ).trim();
+
+              let matchedExisting = false;
+              validUsers = validUsers.map((u: any) => {
                 const e = (u.email || "").toLowerCase().trim();
                 const id = (u.id || u.uid || "").toLowerCase().trim();
-                return (currentEmail && e === currentEmail) || (currentUid && id === currentUid);
+                if ((currentEmail && e === currentEmail) || (currentUid && id === currentUid)) {
+                  matchedExisting = true;
+                  const uName = String(u.name || "").trim();
+                  const bestName = (activeFullName.includes(" ") && !uName.includes(" ")) ? activeFullName : (uName || activeFullName);
+                  return {
+                    ...latestActiveUser,
+                    ...u,
+                    name: bestName,
+                    firstName: u.firstName || latestActiveUser.firstName,
+                    lastName: u.lastName || latestActiveUser.lastName,
+                    avatar: u.avatar || latestActiveUser.avatar,
+                    location: u.location || latestActiveUser.location,
+                    city: u.city || latestActiveUser.city,
+                    country: u.country || latestActiveUser.country
+                  };
+                }
+                return u;
               });
-              if (!exists) {
+
+              if (!matchedExisting) {
                 validUsers = [
                   {
-                    ...currentUser,
-                    id: currentUser.uid || currentUser.id || currentEmail,
-                    role: currentUser.role || (currentUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
+                    ...latestActiveUser,
+                    name: activeFullName || latestActiveUser.name,
+                    id: latestActiveUser.email || latestActiveUser.uid || latestActiveUser.id || currentEmail,
+                    role: latestActiveUser.role || (latestActiveUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
                     isVerified: true
                   },
                   ...validUsers
@@ -2842,7 +2889,7 @@ export function App() {
             setVideos((prevVideos) => {
               let hasChanged = false;
               const nextVideos = prevVideos.map((v) => {
-                const refreshedAuthor = resolveSafeAuthor(v, currentUser, validUsers);
+                const refreshedAuthor = resolveSafeAuthor(v, latestActiveUser, validUsers);
                 if (
                   refreshedAuthor.location !== v.author?.location ||
                   refreshedAuthor.avatar !== v.author?.avatar ||
@@ -2853,6 +2900,7 @@ export function App() {
                   hasChanged = true;
                   return {
                     ...v,
+                    authorName: refreshedAuthor.name,
                     author: refreshedAuthor
                   };
                 }
@@ -2897,12 +2945,40 @@ export function App() {
   // Synchronize current user to remote BunnyDB so admin live stats and user list always reflect active users
   useEffect(() => {
     if (currentUser && (currentUser.email || currentUser.uid)) {
-      const docId = currentUser.uid || currentUser.email?.replace(/[^a-zA-Z0-9]/g, "_") || "user_me";
+      const fullName = (currentUser.firstName && currentUser.lastName)
+        ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
+        : currentUser.name;
+      updateUserRegistry({ ...currentUser, name: fullName || currentUser.name });
+      // Also immediately refresh any video cards in state belonging to currentUser
+      setVideos((prevVideos) =>
+        prevVideos.map((v) => {
+          const vEmail = (v.userEmail || v.userId || "").toLowerCase().trim();
+          const cEmail = (currentUser.email || "").toLowerCase().trim();
+          if (cEmail && vEmail === cEmail && fullName && v.author?.name !== fullName) {
+            return {
+              ...v,
+              authorName: fullName,
+              author: {
+                ...v.author,
+                name: fullName,
+                handle: currentUser.handle || `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+                avatar: currentUser.avatar || v.author?.avatar || "",
+                location: currentUser.location || v.author?.location,
+                city: currentUser.city || v.author?.city,
+                country: currentUser.country || v.author?.country
+              }
+            };
+          }
+          return v;
+        })
+      );
+      const docId = currentUser.email || currentUser.uid || "user_me";
       fetch(`/api/nosql/users/${encodeURIComponent(docId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...currentUser,
+          name: fullName || currentUser.name,
           role: currentUser.role || (currentUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
           updatedAt: new Date().toISOString()
         })
@@ -6683,6 +6759,57 @@ export function App() {
     (newReview as any).isLocalUpload = true;
     if (!newReview.createdAtMs) newReview.createdAtMs = Date.now();
 
+    // 👤 Ensure full First and Last Name from active user is immediately stamped on the review before rendering
+    const effectiveUser = currentUser || (() => {
+      try {
+        const stored = typeof window !== "undefined" ? (localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user")) : null;
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      return null;
+    })();
+
+    const fullUserName = (
+      ((effectiveUser as any)?.firstName && (effectiveUser as any)?.lastName)
+        ? `${String((effectiveUser as any).firstName).trim()} ${String((effectiveUser as any).lastName).trim()}`.trim()
+        : (effectiveUser?.name || "")
+    ).trim();
+
+    if (fullUserName) {
+      const currentAuthor = (newReview.author && typeof newReview.author === "object") ? newReview.author : ({} as any);
+      const bestName = (fullUserName.includes(" ") || !currentAuthor.name || !currentAuthor.name.includes(" "))
+        ? fullUserName
+        : currentAuthor.name;
+      const fName = (effectiveUser as any)?.firstName || currentAuthor.firstName || (bestName.includes(" ") ? bestName.split(" ")[0] : bestName);
+      const lName = (effectiveUser as any)?.lastName || currentAuthor.lastName || (bestName.includes(" ") ? bestName.split(" ").slice(1).join(" ") : "");
+      
+      newReview.authorName = bestName;
+      newReview.author = {
+        ...currentAuthor,
+        name: bestName,
+        firstName: fName,
+        lastName: lName,
+        handle: currentAuthor.handle || `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        avatar: effectiveUser?.avatar || currentAuthor.avatar || newReview.authorAvatar,
+        location: effectiveUser?.location || currentAuthor.location || "",
+        city: effectiveUser?.city || currentAuthor.city || "",
+        country: effectiveUser?.country || currentAuthor.country || "",
+        isVerified: true,
+        isLocalGuide: true
+      };
+      if (newReview.author.avatar) {
+        newReview.authorAvatar = newReview.author.avatar;
+      }
+      updateUserRegistry({
+        ...effectiveUser,
+        name: bestName,
+        firstName: fName,
+        lastName: lName,
+        handle: newReview.author.handle,
+        avatar: newReview.author.avatar,
+        location: newReview.author.location
+      });
+    }
+
     setVideos((prev) => {
       return [newReview, ...prev.filter((v) => v.id !== newReview.id)];
     });
@@ -6698,13 +6825,19 @@ export function App() {
     // Automatically grant verified badge (isVerified = true) to user on publishing their first video review
     if (currentUser) {
       const nextCount = (currentUser.videoReviewCount || 0) + 1;
+      const fullName = (currentUser.firstName && currentUser.lastName)
+        ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
+        : currentUser.name;
       const updatedUser: UserProfile = {
         ...currentUser,
+        name: fullName || currentUser.name,
         videoReviewCount: nextCount,
         isVerified: true
       };
       setCurrentUser(updatedUser);
+      updateUserRegistry(updatedUser);
       try {
+        localStorage.setItem("copo_user", JSON.stringify(updatedUser));
         localStorage.setItem("copo_user_profile", JSON.stringify(updatedUser));
       } catch (e) {}
 
@@ -6716,6 +6849,9 @@ export function App() {
           ) {
             return {
               ...u,
+              name: fullName || u.name,
+              firstName: currentUser.firstName || u.firstName,
+              lastName: currentUser.lastName || u.lastName,
               videoReviewCount: nextCount,
               isVerified: true
             };
@@ -6728,8 +6864,16 @@ export function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...updatedUser,
           email: currentUser.email,
-          name: currentUser.name,
+          name: fullName || currentUser.name,
+          firstName: currentUser.firstName,
+          lastName: currentUser.lastName,
+          city: currentUser.city,
+          country: currentUser.country,
+          location: currentUser.location,
+          avatar: currentUser.avatar,
+          bio: currentUser.bio,
           videoReviewCount: nextCount,
           isVerified: true
         })
@@ -8581,7 +8725,50 @@ export function App() {
           window.dispatchEvent(new CustomEvent("copo-user-reactivated", {
             detail: { userIds }
           }));
-          setCurrentUser(user);
+
+          const fullName = (anyUser.firstName && anyUser.lastName)
+            ? `${String(anyUser.firstName).trim()} ${String(anyUser.lastName).trim()}`.trim()
+            : anyUser.name;
+
+          const updatedUserObj = {
+            ...user,
+            name: fullName || user.name,
+            firstName: anyUser.firstName,
+            lastName: anyUser.lastName
+          };
+
+          setCurrentUser(updatedUserObj);
+          updateUserRegistry(updatedUserObj);
+
+          if (fullName && fullName.includes(" ")) {
+            setVideos((prevVideos) =>
+              prevVideos.map((vid) => {
+                const authorKey = (vid.userId || vid.userEmail || vid.author?.id || (vid.author as any)?.userId || "").toLowerCase().trim();
+                const userKey = (anyUser.email || anyUser.id || "").toLowerCase().trim();
+                const emailPrefix = userKey.includes("@") ? userKey.split("@")[0] : "";
+                if (
+                  (userKey && authorKey && (authorKey === userKey || authorKey === emailPrefix)) ||
+                  (emailPrefix && (vid.author?.name?.toLowerCase() === emailPrefix || vid.authorName?.toLowerCase() === emailPrefix))
+                ) {
+                  return {
+                    ...vid,
+                    authorName: fullName,
+                    author: {
+                      ...(vid.author || {}),
+                      name: fullName,
+                      firstName: anyUser.firstName || vid.author?.firstName || fullName.split(" ")[0],
+                      lastName: anyUser.lastName || vid.author?.lastName || fullName.split(" ").slice(1).join(" "),
+                      handle: anyUser.handle || vid.author?.handle,
+                      avatar: anyUser.avatar || vid.author?.avatar,
+                      location: anyUser.location || vid.author?.location
+                    }
+                  };
+                }
+                return vid;
+              })
+            );
+          }
+
           setIsAuthModalOpen(false);
           if (authIntent === 'record') {
             setIsCreateModalOpen(true);

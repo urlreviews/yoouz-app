@@ -1059,14 +1059,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       return null;
     })();
 
+    const authFullName = (
+      ((activeAuthUser as any)?.firstName && (activeAuthUser as any)?.lastName)
+        ? `${String((activeAuthUser as any).firstName).trim()} ${String((activeAuthUser as any).lastName).trim()}`.trim()
+        : (activeAuthUser?.name || (activeAuthUser?.email ? activeAuthUser.email.split("@")[0] : "Verified Reviewer"))
+    ).trim();
+
     const resolvedAuthor = resolveSafeAuthor({
       author: {
-        name: activeAuthUser?.name || (activeAuthUser?.email ? activeAuthUser.email.split("@")[0] : "Verified Reviewer"),
+        name: authFullName,
         avatar: activeAuthUser?.avatar || ""
       },
       userId: activeAuthUser?.email || activeAuthUser?.id,
       userEmail: activeAuthUser?.email
-    }, activeAuthUser);
+    }, activeAuthUser ? { ...activeAuthUser, name: authFullName } : null);
 
     let finalTranscript = "";
     let finalSegments: any[] = [];
@@ -1093,14 +1099,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       placeLogoUrl: resolvedPlaceLogo,
       placeBannerUrl: resolvedPlaceBanner,
       placeDescription: getEffectivePlaceDescription(selectedPlace) || selectedPlace.description || "",
+      authorName: resolvedAuthor.name || authFullName || "Verified Reviewer",
+      authorAvatar: resolvedAuthor.avatar || getSafeAvatarUrl(currentUser?.avatar, resolvedAuthor.name || authFullName),
       author: {
-        name: resolvedAuthor.name || "Verified Reviewer",
-        handle: resolvedAuthor.handle || "@reviewer",
-        avatar: resolvedAuthor.avatar || getSafeAvatarUrl(currentUser?.avatar, resolvedAuthor.name),
+        name: resolvedAuthor.name || authFullName || "Verified Reviewer",
+        firstName: (activeAuthUser as any)?.firstName || (resolvedAuthor as any)?.firstName || (authFullName.includes(' ') ? authFullName.split(' ')[0] : authFullName),
+        lastName: (activeAuthUser as any)?.lastName || (resolvedAuthor as any)?.lastName || (authFullName.includes(' ') ? authFullName.split(' ').slice(1).join(' ') : ''),
+        handle: resolvedAuthor.handle || `@${(resolvedAuthor.name || authFullName || "reviewer").toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        avatar: resolvedAuthor.avatar || getSafeAvatarUrl(currentUser?.avatar, resolvedAuthor.name || authFullName),
         isLocalGuide: true,
         videoReviewCount: 1,
         photosCount: 0,
-        isVerified: true
+        isVerified: true,
+        location: resolvedAuthor.location || activeAuthUser?.location || "",
+        city: resolvedAuthor.city || activeAuthUser?.city || "",
+        country: resolvedAuthor.country || activeAuthUser?.country || ""
       },
       rating: rating || 5,
       durationSeconds: recordingTime > 0 ? recordingTime : (duration > 0 ? Math.round(duration) : 15),

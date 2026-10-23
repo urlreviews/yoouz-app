@@ -2,647 +2,116 @@ import { VideoReview } from "../types";
 
 export const INITIAL_SEED_VIDEOS: VideoReview[] = [
   {
-    "id": "rev-1792405036441-zqqwp",
-    "userId": "edjofrancisramos18@gmail.com",
-    "userEmail": "edjofrancisramos18@gmail.com",
-    "createdAtMs": 1792405036443,
-    "isLocalUpload": false,
+    "id": "rev-1792775736880-yyxx1",
+    "userId": "sophiecieloo@gmail.com",
+    "userEmail": "sophiecieloo@gmail.com",
+    "createdAtMs": 1792775736883,
+    "isLocalUpload": true,
     "isCurrentSessionBlob": true,
-    "placeId": "jollibee.com.ph",
-    "placeName": "Jollibee",
-    "placeCategory": "Verified Business",
-    "placeAddress": "",
-    "placeCity": "Online",
-    "placeCountry": "",
-    "placePhone": "",
-    "placeEmail": "",
-    "placeRating": 5,
-    "placeWebsite": "https://jollibee.com.ph",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
-    "author": {
-      "name": "Edjo Francis Ramos",
-      "handle": "@edjofrancisramos",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 42,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/fd5fe606-4b22-4621-9cd7-3efa7591a424.mp4",
-      "/api/videos/stream/rev-1792405036441-zqqwp.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/thumbnail.jpg",
-    "caption": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
-    "transcriptText": "Hello, so for this one is Jollibee Philippines, I gave you 5 stars for the review. Because basically they do offer the famous iconic chicken joint, crispy on the outside and at the same time juicy on inside. And always be served with the iconic smooth style spaghetti. loaded with hot dog slices and cheese and at the same time also it's very convenient because the majority of their store is open 24 hours maybe as your go-to for your late night cravings or at same for any morning breakfast. So, see you there in Jao de Philippines!",
-    "segments": [
-      {
-        "start": 1.06,
-        "end": 2.06,
-        "text": "Hello, so for this one is",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.06,
-        "end": 3.83,
-        "text": "Jollibee Philippines,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 3.83,
-        "end": 5.36,
-        "text": "I gave you 5 stars",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 5.36,
-        "end": 5.76,
-        "text": "for the review.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.64,
-        "end": 8.81,
-        "text": "Because basically they do offer the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.81,
-        "end": 11.93,
-        "text": "famous iconic chicken joint,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.93,
-        "end": 12.88,
-        "text": "crispy on the outside",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.88,
-        "end": 14.27,
-        "text": "and at the same time juicy",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 14.27,
-        "end": 14.67,
-        "text": "on inside.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.45,
-        "end": 18.07,
-        "text": "And always be served with the",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.39,
-        "end": 20.05,
-        "text": "iconic smooth style spaghetti.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.85,
-        "end": 22.39,
-        "text": "loaded with hot dog slices",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 22.97,
-        "end": 24.25,
-        "text": "and cheese and at the same",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.64,
-        "end": 25.93,
-        "text": "time also it's very convenient",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 27.38,
-        "end": 29.16,
-        "text": "because the majority of their store",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 29.28,
-        "end": 32.59,
-        "text": "is open 24 hours maybe as your",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 33.23,
-        "end": 34.68,
-        "text": "go-to for your late night cravings",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 34.68,
-        "end": 37.32,
-        "text": "or at same for any morning breakfast.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.67,
-        "end": 40.24,
-        "text": "So, see you there in Jao",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 40.24,
-        "end": 40.64,
-        "text": "de Philippines!",
-        "isHardwareTimed": true
-      }
-    ],
-    "dishOrItem": "Jollibee Philippines",
-    "businessName": "Jollibee",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 92,
-    "viewsCount": 92,
-    "sharesCount": 0,
-    "tags": [
-      "Verified Business"
-    ],
-    "recordedAt": "Just now",
-    "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
-    "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
-    "hasBunnySmartCaptions": true,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
-    "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
-    "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "likesCount": 0,
-    "authorName": "Edjo Francis Ramos",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 42,
-    "createdAt": "2026-10-19T10:17:16.443Z",
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
-    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
-    "isProcessing": false,
-    "isReady": true,
-    "updatedAt": 1792514327833,
-    "hasHardwareSilenceSync": true,
-    "hasOfficialBunnyTitle": true
-  },
-  {
-    "id": "rev-1792404298362-hrk2f",
-    "userId": "edjofrancisramos18@gmail.com",
-    "userEmail": "edjofrancisramos18@gmail.com",
-    "createdAtMs": 1792409252000,
-    "isLocalUpload": false,
-    "placeId": "guard-slip-cafe-by-lgip.bayombong",
-    "placeName": "Guard Slip Cafe By Lgip",
-    "placeCategory": "Cafe",
-    "placeAddress": "Bayombong, Nueva Vizcaya, Philippines",
-    "placeCity": "Bayombong",
-    "placeCountry": "Philippines",
-    "placeRating": 5,
-    "placeWebsite": "https://guard-slip-cafe-by-lgip.bayombong",
-    "author": {
-      "name": "Edjo Francis Ramos",
-      "handle": "@edjofrancisramos",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 2,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 41,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/cd931352-79b9-4067-8a33-828601661a22.mp4",
-      "/api/videos/stream/rev-1792404298362-hrk2f.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
-    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
-    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
-    "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
-    "transcriptText": "Hello everyone, so I'm here to do my review with the Garza Lip Cafe by LGIT, located in Bayambonheva, Vizcaya. So, do visit the store, the cafe, in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very cozy place the ambiance is very good and at the same time um lip cafe by lgit do supports okay the nova biscayano local beans so once again if you have time drop by at lip café by LGIT",
-    "segments": [
-      {
-        "start": 0.64,
-        "end": 1.69,
-        "text": "Hello everyone,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 1.69,
-        "end": 3.35,
-        "text": "so I'm here to do my",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 3.45,
-        "end": 5.85,
-        "text": "review with the Garza Lip Cafe",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.2,
-        "end": 6.71,
-        "text": "by LGIT,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.84,
-        "end": 8.7,
-        "text": "located in Bayambonheva, Vizcaya.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.12,
-        "end": 10.75,
-        "text": "So, do visit the store,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.22,
-        "end": 12.1,
-        "text": "the cafe,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.44,
-        "end": 15.72,
-        "text": "in which they do offer affordable drinks",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.14,
-        "end": 17.31,
-        "text": "and freshly baked pastries",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.06,
-        "end": 21.2,
-        "text": "and breads with affordable price it",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 21.73,
-        "end": 24.17,
-        "text": "is a very cozy",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.29,
-        "end": 26.04,
-        "text": "place the ambiance is very good",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.49,
-        "end": 28.33,
-        "text": "and at the same time um",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 28.81,
-        "end": 30.5,
-        "text": "lip cafe by lgit do supports",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 30.63,
-        "end": 34,
-        "text": "okay the nova biscayano local beans",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 34.27,
-        "end": 35.6,
-        "text": "so once again",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 36.01,
-        "end": 38.43,
-        "text": "if you have time",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 38.47,
-        "end": 39.92,
-        "text": "drop by at lip café",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.92,
-        "end": 40.49,
-        "text": "by LGIT",
-        "isHardwareTimed": true
-      }
-    ],
-    "dishOrItem": "Guard Slip Cafe by LGIP",
-    "businessName": "Guard Slip Cafe By Lgip",
-    "likes": 3,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 101,
-    "viewsCount": 101,
-    "sharesCount": 0,
-    "tags": [
-      "Cafe"
-    ],
-    "recordedAt": "Just now",
-    "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
-    "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/en-auto.vtt",
-    "hasBunnySmartCaptions": true,
-    "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
-    "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
-    "authorName": "Edjo Francis Ramos",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 41,
-    "createdAt": "2026-10-19 11:27:32",
-    "likesCount": 3,
-    "bookmarks": 0,
-    "shares": 0,
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "placePhone": "",
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "isProcessing": false,
-    "isReady": true,
-    "updatedAt": 1792514315862,
-    "hasHardwareSilenceSync": true,
-    "hasOfficialBunnyTitle": true
-  },
-  {
-    "id": "rev-1792505047137-smiho",
-    "userId": "krtpcq@gmail.com",
-    "userEmail": "krtpcq@gmail.com",
-    "createdAtMs": 1792505047138,
-    "isLocalUpload": false,
-    "isCurrentSessionBlob": true,
-    "placeId": "zara.com",
-    "placeName": "Zara",
-    "placeCategory": "Real Estate",
-    "placeAddress": "Online",
-    "placeCity": "Online",
+    "placeId": "cetaphil.com",
+    "placeName": "Cetaphil",
+    "placeCategory": "Skincare & Beauty",
+    "placeAddress": "5 Signs of Sensitive Skin",
+    "placeCity": "Gent",
     "placeCountry": "Belgium",
     "placePhone": "",
     "placeEmail": "",
     "placeRating": 5,
-    "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "placeDescription": "Zara · real estate · Online",
+    "placeWebsite": "https://cetaphil.com",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "placeDescription": "Cetaphil · verified business · cetaphil.com",
     "author": {
-      "name": "Kert P",
-      "handle": "@kertp",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "name": "Sophie Cielo",
+      "handle": "@sophiecielo",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "videoReviewCount": 1,
       "photosCount": 0,
       "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
+      "location": "Vitória da Conquista, Bahia, Brazil",
+      "city": "Vitória da Conquista",
+      "country": "Brazil",
+      "firstName": "Sophie",
+      "lastName": "Cielo"
     },
     "rating": 5,
-    "durationSeconds": 14,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "durationSeconds": 17,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
-      "/api/videos/stream/rev-1792505047137-smiho.mp4"
+      "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/b71c0598-84a4-43a7-a56a-1886eda29ffc.mp4",
+      "/api/videos/stream/rev-1792775736880-yyxx1.mp4"
     ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
-    "caption": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-    "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/thumbnail.jpg",
+    "caption": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
+    "title": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
+    "transcriptText": "Hey, so if you have been looking for a perfect moisturize where it leaves your skin like with a babe touch, I think I found the perfect one. Cetaphil has been in my skincare routine a long time and it's simple, effective and in love.",
     "segments": [
       {
-        "start": 0.92,
-        "end": 4.12,
-        "text": "This Zara perfume is my new favorite.",
+        "start": 0.57,
+        "end": 1.91,
+        "text": "Hey, so if you have been",
         "isHardwareTimed": true
       },
       {
-        "start": 4.65,
-        "end": 6.29,
-        "text": "It fits my vibe perfectly.",
+        "start": 1.91,
+        "end": 3.94,
+        "text": "looking for a perfect moisturize",
         "isHardwareTimed": true
       },
       {
-        "start": 6.47,
-        "end": 8.12,
-        "text": "And unlike any other brands at",
+        "start": 3.94,
+        "end": 6.14,
+        "text": "where it leaves your skin like",
         "isHardwareTimed": true
       },
       {
-        "start": 8.21,
-        "end": 8.69,
-        "text": "this price,",
+        "start": 6.14,
+        "end": 7.66,
+        "text": "with a babe touch,",
         "isHardwareTimed": true
       },
       {
-        "start": 9.19,
-        "end": 11.04,
-        "text": "it actually lasts all day.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.08,
-        "end": 12.04,
-        "text": "So you have to give it",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.04,
-        "end": 12.44,
-        "text": "a try.",
-        "isHardwareTimed": true
-      }
-    ],
-    "dishOrItem": "Zara",
-    "businessName": "Zara",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 56,
-    "viewsCount": 56,
-    "sharesCount": 0,
-    "tags": [
-      "Real Estate"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": true,
-    "aspectRatio": "landscape",
-    "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-    "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
-    "hasBunnySmartCaptions": true,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "authorName": "Kert P",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 14,
-    "createdAt": "2026-10-20T14:04:07.138Z",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3,
-    "title": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-    "aiTitle": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-    "isReady": true,
-    "isProcessing": false,
-    "hasHardwareSilenceSync": true,
-    "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
-    "hasOfficialBunnyTitle": true,
-    "description": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity."
-  },
-  {
-    "id": "rev-1792505354614-j01wo",
-    "userId": "krtpcq@gmail.com",
-    "userEmail": "krtpcq@gmail.com",
-    "createdAtMs": 1792505354615,
-    "isLocalUpload": false,
-    "isCurrentSessionBlob": true,
-    "placeId": "zara.com",
-    "placeName": "Zara",
-    "placeCategory": "Real Estate",
-    "placeAddress": "Online",
-    "placeCity": "Online",
-    "placeCountry": "Belgium",
-    "placePhone": "",
-    "placeEmail": "",
-    "placeRating": 5,
-    "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "placeDescription": "Zara · real estate · Online",
-    "author": {
-      "name": "Kert P",
-      "handle": "@kertp",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 23,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
-      "/api/videos/stream/rev-1792505354614-j01wo.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
-    "caption": "Long-lasting winter scent matching my style perfectly!",
-    "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
-    "segments": [
-      {
-        "start": 1.31,
-        "end": 3.87,
-        "text": "I found another Zara perfume",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.03,
-        "end": 6.56,
-        "text": "that I am obsessed with",
+        "start": 7.66,
+        "end": 8.06,
+        "text": "I think",
         "isHardwareTimed": true
       },
       {
         "start": 7.82,
-        "end": 11.24,
-        "text": "it's called night for a home",
+        "end": 8.56,
+        "text": "I found the perfect one.",
         "isHardwareTimed": true
       },
       {
-        "start": 11.87,
-        "end": 13.21,
-        "text": "version to winter",
+        "start": 9.07,
+        "end": 10.64,
+        "text": "Cetaphil has been in my skincare",
         "isHardwareTimed": true
       },
       {
-        "start": 13.21,
-        "end": 15.31,
-        "text": "and it matches my style perfectly",
+        "start": 11.18,
+        "end": 12.78,
+        "text": "routine a long time",
         "isHardwareTimed": true
       },
       {
-        "start": 15.31,
-        "end": 16.75,
-        "text": "and honestly it lasts",
+        "start": 13.29,
+        "end": 14.37,
+        "text": "and it's simple,",
         "isHardwareTimed": true
       },
       {
-        "start": 16.83,
-        "end": 18.12,
-        "text": "way longer than anything else",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.12,
-        "end": 20.03,
-        "text": "I have tried at this price point",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.03,
-        "end": 20.95,
-        "text": "so you should you",
+        "start": 14.77,
+        "end": 15.81,
+        "text": "effective and in love.",
         "isHardwareTimed": true
       }
     ],
-    "dishOrItem": "Zara",
-    "businessName": "Zara",
+    "hasBunnySmartCaptions": true,
+    "dishOrItem": "Cetaphil",
+    "businessName": "Cetaphil",
     "likes": 0,
     "isLiked": false,
     "commentsCount": 0,
@@ -650,506 +119,141 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 72,
-    "viewsCount": 72,
+    "views": 3,
+    "viewsCount": 3,
     "sharesCount": 0,
-    "tags": [
-      "Real Estate"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-    "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
-    "hasBunnySmartCaptions": true,
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "authorName": "Kert P",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 23,
-    "createdAt": "2026-10-20T14:09:14.615Z",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3,
-    "updatedAt": 1792514318491,
-    "aiTitle": "Long-lasting winter scent matching my style perfectly!",
-    "title": "Long-lasting winter scent matching my style perfectly!",
-    "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
-    "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
-    "isProcessing": false,
-    "isReady": true,
-    "hasHardwareSilenceSync": true,
-    "hasOfficialBunnyTitle": true
-  },
-  {
-    "id": "rev-1792531482229-aux2t",
-    "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
-    "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
-    "segments": [
-      {
-        "start": 0.63,
-        "end": 2.01,
-        "text": "If you're a business owner",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.01,
-        "end": 3.74,
-        "text": "searching for some editors",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.51,
-        "end": 5.23,
-        "text": "or developers,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 5.59,
-        "end": 7.54,
-        "text": "you can now in 2026,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.54,
-        "end": 8.82,
-        "text": "You shouldn't do that.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.53,
-        "end": 10.86,
-        "text": "You can go to Anthropic.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.08,
-        "end": 12.25,
-        "text": "They have cloud,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.34,
-        "end": 13.4,
-        "text": "they have Cloud code,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 13.52,
-        "end": 15.04,
-        "text": "They can make codes,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.68,
-        "end": 16.41,
-        "text": "the normal code.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.72,
-        "end": 17.4,
-        "text": "It's for free.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.42,
-        "end": 19.28,
-        "text": "you Can make all the video editing.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.34,
-        "end": 21.01,
-        "text": "So we don't need any of",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 21.01,
-        "end": 21.41,
-        "text": "this now.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 22.21,
-        "end": 23.18,
-        "text": "All we can do is focus",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.18,
-        "end": 24.11,
-        "text": "on your business",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 24.11,
-        "end": 25.89,
-        "text": "and these things come easily.",
-        "isHardwareTimed": true
-      }
-    ],
-    "aiTitle": "Free Cloud Code for Easy Video Editing in 2026",
-    "title": "Free Cloud Code for Easy Video Editing in 2026",
-    "caption": "Free Cloud Code for Easy Video Editing in 2026",
-    "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-    "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
-    "hasBunnySmartCaptions": true,
-    "isProcessing": false,
-    "isReady": true,
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-    "placeName": "Anthropic",
-    "placeCity": "Gent",
-    "placeCountry": "Belgium",
-    "rating": 5,
-    "placeRating": 5,
-    "placeId": "anthropic.com",
-    "authorName": "redha bm",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "duration": 27,
-    "createdAt": "2026-10-20T21:24:42.229Z",
-    "createdAtMs": 1792531482229,
-    "likesCount": 3,
-    "likes": 3,
-    "bookmarksCount": 0,
-    "bookmarks": 0,
-    "sharesCount": 0,
-    "shares": 0,
-    "viewsCount": 93,
-    "views": 93,
-    "author": {
-      "name": "redha bm",
-      "handle": "@redhabm",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "businessName": "Anthropic",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
-      "/api/videos/stream/rev-1792531482229-aux2t.mp4"
-    ],
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
-    "placeWebsite": "https://anthropic.com",
-    "placeAddress": "2026 Public Benefit Report",
-    "placePhone": "",
-    "placeCategory": "Verified Business",
-    "comments": [],
-    "commentsCount": 0,
-    "isBookmarked": false,
-    "isLiked": false,
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1,
-    "userId": "benmeddourridha7@gmail.com",
-    "userEmail": "benmeddourridha7@gmail.com",
-    "isLocalUpload": false,
-    "isCurrentSessionBlob": true,
-    "placeEmail": "",
-    "placeDescription": "Anthropic · verified business · anthropic.com",
-    "durationSeconds": 27,
-    "dishOrItem": "Anthropic",
-    "repostsCount": 0,
     "tags": [
       "Verified Business"
     ],
     "recordedAt": "Just now",
     "isLandscape": false,
     "aspectRatio": "portrait",
-    "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
-    "updatedAt": 1792588096031,
+    "bunnyVideoId": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
+    "bunnyGuid": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/captions/en-auto.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "isReady": true,
+    "isProcessing": false,
+    "authorName": "Sophie Cielo",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 17,
+    "createdAt": "2026-10-23T17:15:36.883Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1,
+    "aiTitle": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
+    "hasOfficialBunnyTitle": false,
     "hasHardwareSilenceSync": true,
-    "hasOfficialBunnyTitle": true
+    "placeAvatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "brandDomain": "cetaphil.com"
   },
   {
-    "id": "rev-1792611567587-xlv37",
-    "userId": "jadrdc@gmail.com",
-    "userEmail": "jadrdc@gmail.com",
-    "createdAtMs": 1792611567587,
-    "isLocalUpload": false,
+    "id": "rev-1792774959649-hot8m",
+    "userId": "sophiecieloo@gmail.com",
+    "userEmail": "sophiecieloo@gmail.com",
+    "createdAtMs": 1792774959651,
+    "isLocalUpload": true,
     "isCurrentSessionBlob": true,
-    "placeId": "jollibee.com.ph",
-    "placeName": "Jollibee",
-    "placeCategory": "Verified Business",
+    "placeId": "bk.com",
+    "placeName": "Burger King",
+    "placeCategory": "Fast Food Restaurant",
     "placeAddress": "",
     "placeCity": "Online",
     "placeCountry": "",
     "placePhone": "",
     "placeEmail": "",
     "placeRating": 5,
-    "placeWebsite": "https://jollibee.com.ph",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "placeWebsite": "https://bk.com",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
+    "placeDescription": "Bk · verified business · bk.com",
     "author": {
-      "name": "Jose Agustin Reinoso",
-      "handle": "@joseagustinreinoso",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "name": "Sophie Cielo",
+      "handle": "@sophiecielo",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "videoReviewCount": 1,
       "photosCount": 0,
       "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
+      "bio": "",
+      "banner": "",
+      "location": "Vitória da Conquista, Bahia, Brazil",
+      "city": "Vitória da Conquista",
+      "country": "Brazil",
+      "firstName": "Sophie",
+      "lastName": "Cielo"
     },
     "rating": 5,
-    "durationSeconds": 22,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+    "durationSeconds": 18,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811.mp4",
-      "/api/videos/stream/rev-1792611567587-xlv37.mp4"
+      "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/c3a61590-755a-4f83-b031-fa3890ff816d.mp4",
+      "/api/videos/stream/rev-1792774959649-hot8m.mp4"
     ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/thumbnail.jpg",
-    "caption": "Hollywood Project - Excellent UI Experience",
-    "title": "Hollywood Project - Excellent UI Experience",
-    "transcriptText": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood. I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/thumbnail.jpg",
+    "caption": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
+    "title": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
+    "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
     "segments": [
       {
-        "start": 2.43,
-        "end": 5.57,
-        "text": "Hello, I'm just here as a",
+        "start": 2.13,
+        "end": 3.54,
+        "text": "I want to share my experience",
         "isHardwareTimed": true
       },
       {
-        "start": 6.08,
-        "end": 7.93,
-        "text": "UI testing for the use application",
+        "start": 3.54,
+        "end": 3.94,
+        "text": "with Burger King.",
         "isHardwareTimed": true
       },
       {
-        "start": 8.07,
-        "end": 10.26,
-        "text": "and right now giving a review",
+        "start": 4.31,
+        "end": 7.74,
+        "text": "I always have been really satisfied",
         "isHardwareTimed": true
       },
       {
-        "start": 10.26,
-        "end": 12.26,
-        "text": "for Hollywood.",
+        "start": 7.98,
+        "end": 8.63,
+        "text": "with the combos,",
         "isHardwareTimed": true
       },
       {
-        "start": 12.28,
-        "end": 13.55,
-        "text": "I started reviewing",
+        "start": 9.93,
+        "end": 11.42,
+        "text": "with crispy fries",
         "isHardwareTimed": true
       },
       {
-        "start": 14.39,
-        "end": 15.94,
-        "text": "because I think the project itself",
+        "start": 11.65,
+        "end": 13.45,
+        "text": "and bananas is one of my",
         "isHardwareTimed": true
       },
       {
-        "start": 15.94,
-        "end": 16.81,
-        "text": "is really good",
+        "start": 14.33,
+        "end": 16.1,
+        "text": "favorite hamburgers in the whole world.",
         "isHardwareTimed": true
       },
       {
         "start": 16.81,
-        "end": 18.51,
-        "text": "and the experience on the UI",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 18.51,
-        "end": 19.7,
-        "text": "has been really nice.",
+        "end": 17.26,
+        "text": "Love that.",
         "isHardwareTimed": true
       }
     ],
-    "dishOrItem": "Jollibee",
-    "businessName": "Jollibee",
-    "likes": 3,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 32,
-    "viewsCount": 32,
-    "sharesCount": 0,
-    "tags": [
-      "Verified Business"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bunnyVideoId": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
-    "bunnyGuid": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/captions/en-auto.vtt",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
-    "isReady": true,
-    "isProcessing": false,
-    "aiTitle": "Hollywood Project - Excellent UI Experience",
-    "bunnyDescription": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
-    "description": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
     "hasBunnySmartCaptions": true,
-    "likesCount": 3,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "authorName": "Jose Agustin Reinoso",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 22,
-    "createdAt": "2026-10-21T19:39:27.587Z",
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 2,
-    "reviewCount": 2,
-    "totalReviews": 2,
-    "hasHardwareSilenceSync": true,
-    "hasOfficialBunnyTitle": true
-  },
-  {
-    "id": "rev-1792611672289-cajjk",
-    "userId": "jadrdc@gmail.com",
-    "userEmail": "jadrdc@gmail.com",
-    "createdAtMs": 1792611672289,
-    "isLocalUpload": false,
-    "isCurrentSessionBlob": true,
-    "placeId": "zara.com",
-    "placeName": "Zara",
-    "placeCategory": "Real Estate",
-    "placeAddress": "Online",
-    "placeCity": "Online",
-    "placeCountry": "Belgium",
-    "placePhone": "",
-    "placeEmail": "",
-    "placeRating": 5,
-    "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "placeDescription": "Zara · real estate · Online",
-    "author": {
-      "name": "Jose Agustin Reinoso",
-      "handle": "@joseagustinreinoso",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 23,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/a6b4d277-7a46-40b8-8c82-baac5e522f8f.mp4",
-      "/api/videos/stream/rev-1792611672289-cajjk.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
-    "caption": "Productos excelentes y a la moda para todos",
-    "title": "Productos excelentes y a la moda para todos",
-    "transcriptText": "Buenos días, buenas tardes. Este es un review para las tiendas SAVA. Excelentes productos, excelentes... Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen. Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
-    "segments": [
-      {
-        "start": 0.82,
-        "end": 1.52,
-        "text": "Buenos días,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 1.52,
-        "end": 2.19,
-        "text": "buenas tardes.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.33,
-        "end": 3.37,
-        "text": "Este es un review para las",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 3.37,
-        "end": 3.93,
-        "text": "tiendas SAVA.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.26,
-        "end": 8.88,
-        "text": "Excelentes productos, excelentes...",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 8.96,
-        "end": 9.7,
-        "text": "Siempre a la moda,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.7,
-        "end": 10.75,
-        "text": "siempre a las vanguardias y a",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 10.75,
-        "end": 12.67,
-        "text": "todas las personas que están en esto,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.67,
-        "end": 14.22,
-        "text": "les recomiendo que lo utilicen.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.25,
-        "end": 17.5,
-        "text": "Entiendo qué es una marca que",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 17.5,
-        "end": 19.46,
-        "text": "se adapta a los precios y demás,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 19.56,
-        "end": 20.64,
-        "text": "se adaptan a calidad,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.64,
-        "end": 21.1,
-        "text": "todo está...",
-        "isHardwareTimed": true
-      }
-    ],
-    "dishOrItem": "Zara",
-    "businessName": "Zara",
+    "dishOrItem": "Burger King",
+    "businessName": "Burger King",
     "likes": 0,
     "isLiked": false,
     "commentsCount": 0,
@@ -1157,219 +261,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 32,
-    "viewsCount": 32,
-    "sharesCount": 0,
-    "tags": [
-      "Real Estate"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "isReady": true,
-    "isProcessing": false,
-    "authorName": "Jose Agustin Reinoso",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 23,
-    "createdAt": "2026-10-21T19:41:12.289Z",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 3,
-    "reviewCount": 3,
-    "totalReviews": 3,
-    "bunnyVideoId": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
-    "bunnyGuid": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/captions/es-auto.vtt",
-    "aiTitle": "Productos excelentes y a la moda para todos",
-    "hasBunnySmartCaptions": true,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "hasHardwareSilenceSync": true,
-    "bunnyDescription": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca.",
-    "hasOfficialBunnyTitle": true,
-    "description": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca."
-  },
-  {
-    "id": "rev-1792740198020-gknyb",
-    "userId": "yudansha14@gmail.com",
-    "userEmail": "yudansha14@gmail.com",
-    "createdAtMs": 1792740198021,
-    "isLocalUpload": true,
-    "isCurrentSessionBlob": true,
-    "placeId": "flipper.net",
-    "placeName": "Flipper Zero",
-    "placeCategory": "Verified Business",
-    "placeAddress": "",
-    "placeCity": "",
-    "placeCountry": "",
-    "placePhone": "",
-    "placeEmail": "business@flipper.net",
-    "placeRating": 5,
-    "placeWebsite": "https://flipper.net",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_dolphin-flipper-gray.png%3Fv%3D1765368570%26width%3D500",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
-    "placeDescription": "Flipper Zero · verified business · flipper.net",
-    "author": {
-      "name": "Josh Montgomery",
-      "handle": "@joshmontgomery",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "location": "",
-      "city": "",
-      "country": ""
-    },
-    "rating": 5,
-    "durationSeconds": 47,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/189297f7-78ae-4049-963a-6ac619762152.mp4",
-      "/api/videos/stream/rev-1792740198020-gknyb.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/thumbnail.jpg",
-    "caption": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-    "title": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-    "transcriptText": "Hey guys, I just got news that my flipper zero is coming in the mail Saturday, and I'm excited to open it up This is a product. I've been excited too Check out and a little bit to Do different things with I don't know I will actually come back here and revise this review probably once I have some input on the product. But at this point, it's just super exciting to get my Flipper Zero finally. Yay! This is a test. ABC123, check,",
-    "segments": [
-      {
-        "start": 1.54,
-        "end": 2.28,
-        "text": "Hey guys,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 2.82,
-        "end": 4.05,
-        "text": "I just got news",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.18,
-        "end": 6.15,
-        "text": "that my flipper zero is coming",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 6.24,
-        "end": 7.78,
-        "text": "in the mail Saturday,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.87,
-        "end": 10.04,
-        "text": "and I'm excited to open it up",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.1,
-        "end": 12.3,
-        "text": "This is a product.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 12.52,
-        "end": 14.67,
-        "text": "I've been excited too Check out",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 15.73,
-        "end": 18.82,
-        "text": "and a little bit to Do",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 20.88,
-        "end": 22.28,
-        "text": "different things with",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 23.02,
-        "end": 25.5,
-        "text": "I don't know",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 26.29,
-        "end": 28.84,
-        "text": "I will actually come back here",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 28.97,
-        "end": 31.01,
-        "text": "and revise this review probably",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 31.36,
-        "end": 32.51,
-        "text": "once I have some input",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 32.51,
-        "end": 33.05,
-        "text": "on the product.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 33.33,
-        "end": 34.3,
-        "text": "But at this point,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 34.3,
-        "end": 36.19,
-        "text": "it's just super exciting to get",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 36.19,
-        "end": 38,
-        "text": "my Flipper Zero finally.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.16,
-        "end": 39.61,
-        "text": "Yay!",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 39.97,
-        "end": 40.88,
-        "text": "This is a test.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 41.96,
-        "end": 42.6,
-        "text": "ABC123, check,",
-        "isHardwareTimed": true
-      }
-    ],
-    "hasBunnySmartCaptions": true,
-    "dishOrItem": "Flipper Zero",
-    "businessName": "Flipper Zero",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 19,
-    "viewsCount": 19,
+    "views": 14,
+    "viewsCount": 14,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -1377,30 +270,32 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "recordedAt": "Just now",
     "isLandscape": false,
     "aspectRatio": "portrait",
-    "bunnyVideoId": "189297f7-78ae-4049-963a-6ac619762152",
-    "bunnyGuid": "189297f7-78ae-4049-963a-6ac619762152",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/captions/en-auto.vtt",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "bunnyVideoId": "c3a61590-755a-4f83-b031-fa3890ff816d",
+    "bunnyGuid": "c3a61590-755a-4f83-b031-fa3890ff816d",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/captions/en-auto.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
     "isReady": true,
     "isProcessing": false,
-    "hasHardwareSilenceSync": true,
-    "authorName": "Josh Montgomery",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_dolphin-flipper-gray.png%3Fv%3D1765368570%26width%3D500",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 47,
-    "createdAt": "2026-10-23T07:23:18.021Z",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
+    "authorName": "Sophie Cielo",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 18,
+    "createdAt": "2026-10-23T17:02:39.651Z",
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "aiTitle": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-    "bunnyDescription": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product. For now, they are simply delighted to receive their Flipper Zero. The text also includes a playful mention of a test code, ABC123. Overall, the speaker's anticipation and enthusiasm for their new gadget are evident in the message.",
-    "description": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product. For now, they are simply delighted to receive their Flipper Zero. The text also includes a playful mention of a test code, ABC123. Overall, the speaker's anticipation and enthusiasm for their new gadget are evident in the message.",
-    "hasOfficialBunnyTitle": true
+    "aiTitle": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
+    "hasOfficialBunnyTitle": true,
+    "hasHardwareSilenceSync": true,
+    "placeAvatarUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
+    "brandDomain": "bk.com",
+    "bunnyDescription": "The speaker shares their positive experience with Burger King, expressing satisfaction with the combos that include crispy fries and bananas. They describe one of their favorite hamburgers in the world as being from Burger King. The speaker loves the food from Burger King and is particularly fond of the delicious combos offered.",
+    "description": "The speaker shares their positive experience with Burger King, expressing satisfaction with the combos that include crispy fries and bananas. They describe one of their favorite hamburgers in the world as being from Burger King. The speaker loves the food from Burger King and is particularly fond of the delicious combos offered."
   },
   {
     "id": "rev-1792746895031-e9qy5",
@@ -1432,7 +327,9 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "isVerified": true,
       "location": "",
       "city": "",
-      "country": ""
+      "country": "",
+      "firstName": "Trev",
+      "lastName": "Lee"
     },
     "rating": 5,
     "durationSeconds": 53,
@@ -1631,256 +528,176 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "description": "The Art Gallery Cafe is a unique small business that fosters a strong sense of community. The cafe owner, who is also an artist, decorates the space with their own photography and paintings. They host events like stand-up comedy nights and presentations, creating a welcoming atmosphere that is rare in today's cafe scene dominated by franchises. This cafe stands out for its personal touch and creative vibe, offering a refreshing alternative to the typical chain experience. Highly recommended for those seeking a more intimate and community-oriented cafe experience."
   },
   {
-    "id": "rev-1792774959649-hot8m",
-    "userId": "sophiecieloo@gmail.com",
-    "userEmail": "sophiecieloo@gmail.com",
-    "createdAtMs": 1792774959651,
+    "id": "rev-1792740198020-gknyb",
+    "userId": "yudansha14@gmail.com",
+    "userEmail": "yudansha14@gmail.com",
+    "createdAtMs": 1792740198021,
     "isLocalUpload": true,
     "isCurrentSessionBlob": true,
-    "placeId": "bk.com",
-    "placeName": "Burger King",
-    "placeCategory": "Fast Food Restaurant",
+    "placeId": "flipper.net",
+    "placeName": "Flipper Zero",
+    "placeCategory": "Verified Business",
     "placeAddress": "",
-    "placeCity": "Online",
+    "placeCity": "",
     "placeCountry": "",
     "placePhone": "",
-    "placeEmail": "",
+    "placeEmail": "business@flipper.net",
     "placeRating": 5,
-    "placeWebsite": "https://bk.com",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
-    "placeDescription": "Bk · verified business · bk.com",
+    "placeWebsite": "https://flipper.net",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_dolphin-flipper-gray.png%3Fv%3D1765368570%26width%3D500",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "placeDescription": "Flipper Zero · verified business · flipper.net",
     "author": {
-      "name": "Sophie Cielo",
-      "handle": "@sophiecielo",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-      "isLocalGuide": true,
-      "videoReviewCount": 1,
-      "photosCount": 0,
-      "isVerified": true,
-      "bio": "",
-      "banner": "",
-      "location": "Vitória da Conquista, Bahia, Brazil",
-      "city": "Vitória da Conquista",
-      "country": "Brazil"
-    },
-    "rating": 5,
-    "durationSeconds": 18,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-    "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/c3a61590-755a-4f83-b031-fa3890ff816d.mp4",
-      "/api/videos/stream/rev-1792774959649-hot8m.mp4"
-    ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/thumbnail.jpg",
-    "caption": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-    "title": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-    "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
-    "segments": [
-      {
-        "start": 2.13,
-        "end": 3.54,
-        "text": "I want to share my experience",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 3.54,
-        "end": 3.94,
-        "text": "with Burger King.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 4.31,
-        "end": 7.74,
-        "text": "I always have been really satisfied",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 7.98,
-        "end": 8.63,
-        "text": "with the combos,",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 9.93,
-        "end": 11.42,
-        "text": "with crispy fries",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 11.65,
-        "end": 13.45,
-        "text": "and bananas is one of my",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 14.33,
-        "end": 16.1,
-        "text": "favorite hamburgers in the whole world.",
-        "isHardwareTimed": true
-      },
-      {
-        "start": 16.81,
-        "end": 17.26,
-        "text": "Love that.",
-        "isHardwareTimed": true
-      }
-    ],
-    "hasBunnySmartCaptions": true,
-    "dishOrItem": "Burger King",
-    "businessName": "Burger King",
-    "likes": 0,
-    "isLiked": false,
-    "commentsCount": 0,
-    "comments": [],
-    "bookmarksCount": 0,
-    "isBookmarked": false,
-    "repostsCount": 0,
-    "views": 14,
-    "viewsCount": 14,
-    "sharesCount": 0,
-    "tags": [
-      "Verified Business"
-    ],
-    "recordedAt": "Just now",
-    "isLandscape": false,
-    "aspectRatio": "portrait",
-    "bunnyVideoId": "c3a61590-755a-4f83-b031-fa3890ff816d",
-    "bunnyGuid": "c3a61590-755a-4f83-b031-fa3890ff816d",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/captions/en-auto.vtt",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
-    "isReady": true,
-    "isProcessing": false,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "authorName": "Sophie Cielo",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 18,
-    "createdAt": "2026-10-23T17:02:39.651Z",
-    "likesCount": 0,
-    "bookmarks": 0,
-    "shares": 0,
-    "reviewsCount": 1,
-    "reviewCount": 1,
-    "totalReviews": 1,
-    "aiTitle": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-    "hasOfficialBunnyTitle": true,
-    "hasHardwareSilenceSync": true,
-    "placeAvatarUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "brandDomain": "bk.com",
-    "bunnyDescription": "The speaker shares their positive experience with Burger King, expressing satisfaction with the combos that include crispy fries and bananas. They describe one of their favorite hamburgers in the world as being from Burger King. The speaker loves the food from Burger King and is particularly fond of the delicious combos offered.",
-    "description": "The speaker shares their positive experience with Burger King, expressing satisfaction with the combos that include crispy fries and bananas. They describe one of their favorite hamburgers in the world as being from Burger King. The speaker loves the food from Burger King and is particularly fond of the delicious combos offered."
-  },
-  {
-    "id": "rev-1792775736880-yyxx1",
-    "userId": "sophiecieloo@gmail.com",
-    "userEmail": "sophiecieloo@gmail.com",
-    "createdAtMs": 1792775736883,
-    "isLocalUpload": true,
-    "isCurrentSessionBlob": true,
-    "placeId": "cetaphil.com",
-    "placeName": "Cetaphil",
-    "placeCategory": "Skincare & Beauty",
-    "placeAddress": "5 Signs of Sensitive Skin",
-    "placeCity": "Gent",
-    "placeCountry": "Belgium",
-    "placePhone": "",
-    "placeEmail": "",
-    "placeRating": 5,
-    "placeWebsite": "https://cetaphil.com",
-    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
-    "placeDescription": "Cetaphil · verified business · cetaphil.com",
-    "author": {
-      "name": "Sophie Cielo",
-      "handle": "@sophiecielo",
-      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "name": "Josh Montgomery",
+      "handle": "@joshmontgomery",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
       "isLocalGuide": true,
       "videoReviewCount": 1,
       "photosCount": 0,
       "isVerified": true,
       "location": "",
       "city": "",
-      "country": ""
+      "country": "",
+      "firstName": "Josh",
+      "lastName": "Montgomery"
     },
     "rating": 5,
-    "durationSeconds": 17,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
+    "durationSeconds": 47,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/b71c0598-84a4-43a7-a56a-1886eda29ffc.mp4",
-      "/api/videos/stream/rev-1792775736880-yyxx1.mp4"
+      "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/189297f7-78ae-4049-963a-6ac619762152.mp4",
+      "/api/videos/stream/rev-1792740198020-gknyb.mp4"
     ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/thumbnail.jpg",
-    "caption": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
-    "title": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
-    "transcriptText": "Hey, so if you have been looking for a perfect moisturize where it leaves your skin like with a babe touch, I think I found the perfect one. Cetaphil has been in my skincare routine a long time and it's simple, effective and in love.",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/thumbnail.jpg",
+    "caption": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+    "title": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+    "transcriptText": "Hey guys, I just got news that my flipper zero is coming in the mail Saturday, and I'm excited to open it up This is a product. I've been excited too Check out and a little bit to Do different things with I don't know I will actually come back here and revise this review probably once I have some input on the product. But at this point, it's just super exciting to get my Flipper Zero finally. Yay! This is a test. ABC123, check,",
     "segments": [
       {
-        "start": 0.57,
-        "end": 1.91,
-        "text": "Hey, so if you have been",
+        "start": 1.54,
+        "end": 2.28,
+        "text": "Hey guys,",
         "isHardwareTimed": true
       },
       {
-        "start": 1.91,
-        "end": 3.94,
-        "text": "looking for a perfect moisturize",
+        "start": 2.82,
+        "end": 4.05,
+        "text": "I just got news",
         "isHardwareTimed": true
       },
       {
-        "start": 3.94,
-        "end": 6.14,
-        "text": "where it leaves your skin like",
+        "start": 4.18,
+        "end": 6.15,
+        "text": "that my flipper zero is coming",
         "isHardwareTimed": true
       },
       {
-        "start": 6.14,
-        "end": 7.66,
-        "text": "with a babe touch,",
+        "start": 6.24,
+        "end": 7.78,
+        "text": "in the mail Saturday,",
         "isHardwareTimed": true
       },
       {
-        "start": 7.66,
-        "end": 8.06,
-        "text": "I think",
+        "start": 7.87,
+        "end": 10.04,
+        "text": "and I'm excited to open it up",
         "isHardwareTimed": true
       },
       {
-        "start": 7.82,
-        "end": 8.56,
-        "text": "I found the perfect one.",
+        "start": 11.1,
+        "end": 12.3,
+        "text": "This is a product.",
         "isHardwareTimed": true
       },
       {
-        "start": 9.07,
-        "end": 10.64,
-        "text": "Cetaphil has been in my skincare",
+        "start": 12.52,
+        "end": 14.67,
+        "text": "I've been excited too Check out",
         "isHardwareTimed": true
       },
       {
-        "start": 11.18,
-        "end": 12.78,
-        "text": "routine a long time",
+        "start": 15.73,
+        "end": 18.82,
+        "text": "and a little bit to Do",
         "isHardwareTimed": true
       },
       {
-        "start": 13.29,
-        "end": 14.37,
-        "text": "and it's simple,",
+        "start": 20.88,
+        "end": 22.28,
+        "text": "different things with",
         "isHardwareTimed": true
       },
       {
-        "start": 14.77,
-        "end": 15.81,
-        "text": "effective and in love.",
+        "start": 23.02,
+        "end": 25.5,
+        "text": "I don't know",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.29,
+        "end": 28.84,
+        "text": "I will actually come back here",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 28.97,
+        "end": 31.01,
+        "text": "and revise this review probably",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 31.36,
+        "end": 32.51,
+        "text": "once I have some input",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 32.51,
+        "end": 33.05,
+        "text": "on the product.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 33.33,
+        "end": 34.3,
+        "text": "But at this point,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 34.3,
+        "end": 36.19,
+        "text": "it's just super exciting to get",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 36.19,
+        "end": 38,
+        "text": "my Flipper Zero finally.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39.16,
+        "end": 39.61,
+        "text": "Yay!",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39.97,
+        "end": 40.88,
+        "text": "This is a test.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 41.96,
+        "end": 42.6,
+        "text": "ABC123, check,",
         "isHardwareTimed": true
       }
     ],
     "hasBunnySmartCaptions": true,
-    "dishOrItem": "Cetaphil",
-    "businessName": "Cetaphil",
+    "dishOrItem": "Flipper Zero",
+    "businessName": "Flipper Zero",
     "likes": 0,
     "isLiked": false,
     "commentsCount": 0,
@@ -1888,8 +705,8 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 3,
-    "viewsCount": 3,
+    "views": 19,
+    "viewsCount": 19,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -1897,29 +714,1234 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "recordedAt": "Just now",
     "isLandscape": false,
     "aspectRatio": "portrait",
-    "bunnyVideoId": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
-    "bunnyGuid": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/captions/en-auto.vtt",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "bunnyVideoId": "189297f7-78ae-4049-963a-6ac619762152",
+    "bunnyGuid": "189297f7-78ae-4049-963a-6ac619762152",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/captions/en-auto.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
     "isReady": true,
     "isProcessing": false,
-    "authorName": "Sophie Cielo",
-    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "duration": 17,
-    "createdAt": "2026-10-23T17:15:36.883Z",
+    "hasHardwareSilenceSync": true,
+    "authorName": "Josh Montgomery",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_dolphin-flipper-gray.png%3Fv%3D1765368570%26width%3D500",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 47,
+    "createdAt": "2026-10-23T07:23:18.021Z",
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 0,
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
-    "aiTitle": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
-    "hasOfficialBunnyTitle": false,
+    "aiTitle": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+    "bunnyDescription": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product. For now, they are simply delighted to receive their Flipper Zero. The text also includes a playful mention of a test code, ABC123. Overall, the speaker's anticipation and enthusiasm for their new gadget are evident in the message.",
+    "description": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product. For now, they are simply delighted to receive their Flipper Zero. The text also includes a playful mention of a test code, ABC123. Overall, the speaker's anticipation and enthusiasm for their new gadget are evident in the message.",
+    "hasOfficialBunnyTitle": true
+  },
+  {
+    "id": "rev-1792611672289-cajjk",
+    "userId": "jadrdc@gmail.com",
+    "userEmail": "jadrdc@gmail.com",
+    "createdAtMs": 1792611672289,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "zara.com",
+    "placeName": "Zara",
+    "placeCategory": "Real Estate",
+    "placeAddress": "Online",
+    "placeCity": "Online",
+    "placeCountry": "Belgium",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://www.zara.com/",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "placeDescription": "Zara · real estate · Online",
+    "author": {
+      "name": "Jose Agustin Reinoso",
+      "handle": "@joseagustinreinoso",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Jose",
+      "lastName": "Agustin Reinoso"
+    },
+    "rating": 5,
+    "durationSeconds": 23,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a6b4d277-7a46-40b8-8c82-baac5e522f8f.mp4",
+      "/api/videos/stream/rev-1792611672289-cajjk.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/thumbnail.jpg",
+    "caption": "Productos excelentes y a la moda para todos",
+    "title": "Productos excelentes y a la moda para todos",
+    "transcriptText": "Buenos días, buenas tardes. Este es un review para las tiendas SAVA. Excelentes productos, excelentes... Siempre a la moda, siempre a las vanguardias y a todas las personas que están en esto, les recomiendo que lo utilicen. Entiendo qué es una marca que se adapta a los precios y demás, se adaptan a calidad, todo está...",
+    "segments": [
+      {
+        "start": 0.82,
+        "end": 1.52,
+        "text": "Buenos días,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 1.52,
+        "end": 2.19,
+        "text": "buenas tardes.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.33,
+        "end": 3.37,
+        "text": "Este es un review para las",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.37,
+        "end": 3.93,
+        "text": "tiendas SAVA.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.26,
+        "end": 8.88,
+        "text": "Excelentes productos, excelentes...",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.96,
+        "end": 9.7,
+        "text": "Siempre a la moda,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.7,
+        "end": 10.75,
+        "text": "siempre a las vanguardias y a",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.75,
+        "end": 12.67,
+        "text": "todas las personas que están en esto,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.67,
+        "end": 14.22,
+        "text": "les recomiendo que lo utilicen.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.25,
+        "end": 17.5,
+        "text": "Entiendo qué es una marca que",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.5,
+        "end": 19.46,
+        "text": "se adapta a los precios y demás,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.56,
+        "end": 20.64,
+        "text": "se adaptan a calidad,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.64,
+        "end": 21.1,
+        "text": "todo está...",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Zara",
+    "businessName": "Zara",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 32,
+    "viewsCount": 32,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "isReady": true,
+    "isProcessing": false,
+    "authorName": "Jose Agustin Reinoso",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 23,
+    "createdAt": "2026-10-21T19:41:12.289Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
+    "bunnyVideoId": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
+    "bunnyGuid": "a6b4d277-7a46-40b8-8c82-baac5e522f8f",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/captions/es-auto.vtt",
+    "aiTitle": "Productos excelentes y a la moda para todos",
+    "hasBunnySmartCaptions": true,
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "hasHardwareSilenceSync": true,
-    "placeAvatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "brandDomain": "cetaphil.com"
+    "bunnyDescription": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca.",
+    "hasOfficialBunnyTitle": true,
+    "description": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca."
+  },
+  {
+    "id": "rev-1792611567587-xlv37",
+    "userId": "jadrdc@gmail.com",
+    "userEmail": "jadrdc@gmail.com",
+    "createdAtMs": 1792611567587,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "jollibee.com.ph",
+    "placeName": "Jollibee",
+    "placeCategory": "Verified Business",
+    "placeAddress": "",
+    "placeCity": "Online",
+    "placeCountry": "",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://jollibee.com.ph",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "author": {
+      "name": "Jose Agustin Reinoso",
+      "handle": "@joseagustinreinoso",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Jose",
+      "lastName": "Agustin Reinoso"
+    },
+    "rating": 5,
+    "durationSeconds": 22,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811.mp4",
+      "/api/videos/stream/rev-1792611567587-xlv37.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/thumbnail.jpg",
+    "caption": "Hollywood Project - Excellent UI Experience",
+    "title": "Hollywood Project - Excellent UI Experience",
+    "transcriptText": "Hello, I'm just here as a UI testing for the use application and right now giving a review for Hollywood. I started reviewing because I think the project itself is really good and the experience on the UI has been really nice.",
+    "segments": [
+      {
+        "start": 2.43,
+        "end": 5.57,
+        "text": "Hello, I'm just here as a",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.08,
+        "end": 7.93,
+        "text": "UI testing for the use application",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.07,
+        "end": 10.26,
+        "text": "and right now giving a review",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 10.26,
+        "end": 12.26,
+        "text": "for Hollywood.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.28,
+        "end": 13.55,
+        "text": "I started reviewing",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.39,
+        "end": 15.94,
+        "text": "because I think the project itself",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.94,
+        "end": 16.81,
+        "text": "is really good",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.81,
+        "end": 18.51,
+        "text": "and the experience on the UI",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.51,
+        "end": 19.7,
+        "text": "has been really nice.",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Jollibee",
+    "businessName": "Jollibee",
+    "likes": 4,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 32,
+    "viewsCount": 32,
+    "sharesCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyVideoId": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
+    "bunnyGuid": "a6e6b9e9-c89e-4cf5-a318-2acb69fbb811",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6e6b9e9-c89e-4cf5-a318-2acb69fbb811/captions/en-auto.vtt",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "isReady": true,
+    "isProcessing": false,
+    "aiTitle": "Hollywood Project - Excellent UI Experience",
+    "bunnyDescription": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
+    "description": "In the video, the speaker introduces themselves as a UI tester for a user application and shares a review of Hollywood. They express that they decided to review the project due to its quality and highlight the positive experience they had with the user interface. The speaker appreciates the overall goodness of the project and the pleasant UI experience.",
+    "hasBunnySmartCaptions": true,
+    "likesCount": 4,
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "authorName": "Jose Agustin Reinoso",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 22,
+    "createdAt": "2026-10-21T19:39:27.587Z",
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
+  },
+  {
+    "id": "rev-1792531482229-aux2t",
+    "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
+    "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
+    "segments": [
+      {
+        "start": 0.63,
+        "end": 2.01,
+        "text": "If you're a business owner",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.01,
+        "end": 3.74,
+        "text": "searching for some editors",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.51,
+        "end": 5.23,
+        "text": "or developers,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.59,
+        "end": 7.54,
+        "text": "you can now in 2026,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.54,
+        "end": 8.82,
+        "text": "You shouldn't do that.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.53,
+        "end": 10.86,
+        "text": "You can go to Anthropic.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.08,
+        "end": 12.25,
+        "text": "They have cloud,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.34,
+        "end": 13.4,
+        "text": "they have Cloud code,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.52,
+        "end": 15.04,
+        "text": "They can make codes,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.68,
+        "end": 16.41,
+        "text": "the normal code.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.72,
+        "end": 17.4,
+        "text": "It's for free.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 17.42,
+        "end": 19.28,
+        "text": "you Can make all the video editing.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 19.34,
+        "end": 21.01,
+        "text": "So we don't need any of",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 21.01,
+        "end": 21.41,
+        "text": "this now.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 22.21,
+        "end": 23.18,
+        "text": "All we can do is focus",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 23.18,
+        "end": 24.11,
+        "text": "on your business",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.11,
+        "end": 25.89,
+        "text": "and these things come easily.",
+        "isHardwareTimed": true
+      }
+    ],
+    "aiTitle": "Free Cloud Code for Easy Video Editing in 2026",
+    "title": "Free Cloud Code for Easy Video Editing in 2026",
+    "caption": "Free Cloud Code for Easy Video Editing in 2026",
+    "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+    "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
+    "hasBunnySmartCaptions": true,
+    "isProcessing": false,
+    "isReady": true,
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+    "placeName": "Anthropic",
+    "placeCity": "Gent",
+    "placeCountry": "Belgium",
+    "rating": 5,
+    "placeRating": 5,
+    "placeId": "anthropic.com",
+    "authorName": "redha bm",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+    "duration": 27,
+    "createdAt": "2026-10-20T21:24:42.229Z",
+    "createdAtMs": 1792531482229,
+    "likesCount": 4,
+    "likes": 4,
+    "bookmarksCount": 0,
+    "bookmarks": 0,
+    "sharesCount": 0,
+    "shares": 0,
+    "viewsCount": 93,
+    "views": 93,
+    "author": {
+      "name": "redha bm",
+      "handle": "@redhabm",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "redha",
+      "lastName": "bm"
+    },
+    "businessName": "Anthropic",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
+      "/api/videos/stream/rev-1792531482229-aux2t.mp4"
+    ],
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
+    "placeWebsite": "https://anthropic.com",
+    "placeAddress": "2026 Public Benefit Report",
+    "placePhone": "",
+    "placeCategory": "Verified Business",
+    "comments": [],
+    "commentsCount": 0,
+    "isBookmarked": false,
+    "isLiked": false,
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1,
+    "userId": "benmeddourridha7@gmail.com",
+    "userEmail": "benmeddourridha7@gmail.com",
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeEmail": "",
+    "placeDescription": "Anthropic · verified business · anthropic.com",
+    "durationSeconds": 27,
+    "dishOrItem": "Anthropic",
+    "repostsCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
+    "updatedAt": 1792588096031,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
+  },
+  {
+    "id": "rev-1792505354614-j01wo",
+    "userId": "krtpcq@gmail.com",
+    "userEmail": "krtpcq@gmail.com",
+    "createdAtMs": 1792505354615,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "zara.com",
+    "placeName": "Zara",
+    "placeCategory": "Real Estate",
+    "placeAddress": "Online",
+    "placeCity": "Online",
+    "placeCountry": "Belgium",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://www.zara.com/",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "placeDescription": "Zara · real estate · Online",
+    "author": {
+      "name": "Kert P",
+      "handle": "@kertp",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Kert",
+      "lastName": "P"
+    },
+    "rating": 5,
+    "durationSeconds": 23,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
+      "/api/videos/stream/rev-1792505354614-j01wo.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
+    "caption": "Long-lasting winter scent matching my style perfectly!",
+    "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
+    "segments": [
+      {
+        "start": 1.31,
+        "end": 3.87,
+        "text": "I found another Zara perfume",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.03,
+        "end": 6.56,
+        "text": "that I am obsessed with",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.82,
+        "end": 11.24,
+        "text": "it's called night for a home",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.87,
+        "end": 13.21,
+        "text": "version to winter",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.21,
+        "end": 15.31,
+        "text": "and it matches my style perfectly",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.31,
+        "end": 16.75,
+        "text": "and honestly it lasts",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.83,
+        "end": 18.12,
+        "text": "way longer than anything else",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.12,
+        "end": 20.03,
+        "text": "I have tried at this price point",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.03,
+        "end": 20.95,
+        "text": "so you should you",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Zara",
+    "businessName": "Zara",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 72,
+    "viewsCount": 72,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
+    "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "authorName": "Kert P",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 23,
+    "createdAt": "2026-10-20T14:09:14.615Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
+    "updatedAt": 1792514318491,
+    "aiTitle": "Long-lasting winter scent matching my style perfectly!",
+    "title": "Long-lasting winter scent matching my style perfectly!",
+    "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
+    "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
+    "isProcessing": false,
+    "isReady": true,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
+  },
+  {
+    "id": "rev-1792505047137-smiho",
+    "userId": "krtpcq@gmail.com",
+    "userEmail": "krtpcq@gmail.com",
+    "createdAtMs": 1792505047138,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "zara.com",
+    "placeName": "Zara",
+    "placeCategory": "Real Estate",
+    "placeAddress": "Online",
+    "placeCity": "Online",
+    "placeCountry": "Belgium",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://www.zara.com/",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "placeDescription": "Zara · real estate · Online",
+    "author": {
+      "name": "Kert P",
+      "handle": "@kertp",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Kert",
+      "lastName": "P"
+    },
+    "rating": 5,
+    "durationSeconds": 14,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
+      "/api/videos/stream/rev-1792505047137-smiho.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
+    "caption": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
+    "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
+    "segments": [
+      {
+        "start": 0.92,
+        "end": 4.12,
+        "text": "This Zara perfume is my new favorite.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.65,
+        "end": 6.29,
+        "text": "It fits my vibe perfectly.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.47,
+        "end": 8.12,
+        "text": "And unlike any other brands at",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.21,
+        "end": 8.69,
+        "text": "this price,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.19,
+        "end": 11.04,
+        "text": "it actually lasts all day.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.08,
+        "end": 12.04,
+        "text": "So you have to give it",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.04,
+        "end": 12.44,
+        "text": "a try.",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Zara",
+    "businessName": "Zara",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 56,
+    "viewsCount": 56,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": true,
+    "aspectRatio": "landscape",
+    "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "authorName": "Kert P",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 14,
+    "createdAt": "2026-10-20T14:04:07.138Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
+    "title": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
+    "aiTitle": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
+    "isReady": true,
+    "isProcessing": false,
+    "hasHardwareSilenceSync": true,
+    "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
+    "hasOfficialBunnyTitle": true,
+    "description": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity."
+  },
+  {
+    "id": "rev-1792404298362-hrk2f",
+    "userId": "edjofrancisramos18@gmail.com",
+    "userEmail": "edjofrancisramos18@gmail.com",
+    "createdAtMs": 1792409252000,
+    "isLocalUpload": false,
+    "placeId": "guard-slip-cafe-by-lgip.bayombong",
+    "placeName": "Guard Slip Cafe By Lgip",
+    "placeCategory": "Cafe",
+    "placeAddress": "Bayombong, Nueva Vizcaya, Philippines",
+    "placeCity": "Bayombong",
+    "placeCountry": "Philippines",
+    "placeRating": 5,
+    "placeWebsite": "https://guard-slip-cafe-by-lgip.bayombong",
+    "author": {
+      "name": "Edjo Francis Ramos",
+      "handle": "@edjofrancisramos",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 2,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Edjo",
+      "lastName": "Francis Ramos"
+    },
+    "rating": 5,
+    "durationSeconds": 41,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/cd931352-79b9-4067-8a33-828601661a22.mp4",
+      "/api/videos/stream/rev-1792404298362-hrk2f.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/thumbnail.jpg",
+    "title": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "aiTitle": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "caption": "Affordable drinks and pastries at Guard Slip Cafe by LGIP in Bayombong",
+    "transcriptText": "Hello everyone, so I'm here to do my review with the Garza Lip Cafe by LGIT, located in Bayambonheva, Vizcaya. So, do visit the store, the cafe, in which they do offer affordable drinks and freshly baked pastries and breads with affordable price it is a very cozy place the ambiance is very good and at the same time um lip cafe by lgit do supports okay the nova biscayano local beans so once again if you have time drop by at lip café by LGIT",
+    "segments": [
+      {
+        "start": 0.64,
+        "end": 1.69,
+        "text": "Hello everyone,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 1.69,
+        "end": 3.35,
+        "text": "so I'm here to do my",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.45,
+        "end": 5.85,
+        "text": "review with the Garza Lip Cafe",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.2,
+        "end": 6.71,
+        "text": "by LGIT,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 6.84,
+        "end": 8.7,
+        "text": "located in Bayambonheva, Vizcaya.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 9.12,
+        "end": 10.75,
+        "text": "So, do visit the store,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.22,
+        "end": 12.1,
+        "text": "the cafe,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.44,
+        "end": 15.72,
+        "text": "in which they do offer affordable drinks",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.14,
+        "end": 17.31,
+        "text": "and freshly baked pastries",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.06,
+        "end": 21.2,
+        "text": "and breads with affordable price it",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 21.73,
+        "end": 24.17,
+        "text": "is a very cozy",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.29,
+        "end": 26.04,
+        "text": "place the ambiance is very good",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 26.49,
+        "end": 28.33,
+        "text": "and at the same time um",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 28.81,
+        "end": 30.5,
+        "text": "lip cafe by lgit do supports",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 30.63,
+        "end": 34,
+        "text": "okay the nova biscayano local beans",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 34.27,
+        "end": 35.6,
+        "text": "so once again",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 36.01,
+        "end": 38.43,
+        "text": "if you have time",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 38.47,
+        "end": 39.92,
+        "text": "drop by at lip café",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39.92,
+        "end": 40.49,
+        "text": "by LGIT",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Guard Slip Cafe by LGIP",
+    "businessName": "Guard Slip Cafe By Lgip",
+    "likes": 4,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 101,
+    "viewsCount": 101,
+    "sharesCount": 0,
+    "tags": [
+      "Cafe"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "cd931352-79b9-4067-8a33-828601661a22",
+    "bunnyGuid": "cd931352-79b9-4067-8a33-828601661a22",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/cd931352-79b9-4067-8a33-828601661a22/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bunnyDescription": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
+    "description": "In this video, the reviewer talks about their experience at Guard Slip Cafe by LGIP in Bayombong, Nueva Vizcaya. The cafe offers affordable drinks, freshly baked pastries, and bread. The ambiance is cozy and welcoming. LGIP supports local businesses in Nova Vizcaya. The reviewer recommends visiting the cafe to enjoy the good atmosphere and support local vendors. So, if you're in the area, make sure to drop by Guard Slip Cafe by LGIP for a delightful experience.",
+    "authorName": "Edjo Francis Ramos",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 41,
+    "createdAt": "2026-10-19 11:27:32",
+    "likesCount": 4,
+    "bookmarks": 0,
+    "shares": 0,
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1501339847302-ac426a4a7cbb%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "placePhone": "",
+    "reviewsCount": 1,
+    "reviewCount": 1,
+    "totalReviews": 1,
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "isProcessing": false,
+    "isReady": true,
+    "updatedAt": 1792514315862,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
+  },
+  {
+    "id": "rev-1792405036441-zqqwp",
+    "userId": "edjofrancisramos18@gmail.com",
+    "userEmail": "edjofrancisramos18@gmail.com",
+    "createdAtMs": 1792405036443,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "jollibee.com.ph",
+    "placeName": "Jollibee",
+    "placeCategory": "Verified Business",
+    "placeAddress": "",
+    "placeCity": "Online",
+    "placeCountry": "",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://jollibee.com.ph",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "placeDescription": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "author": {
+      "name": "Edjo Francis Ramos",
+      "handle": "@edjofrancisramos",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 1,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Edjo",
+      "lastName": "Francis Ramos"
+    },
+    "rating": 5,
+    "durationSeconds": 42,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/fd5fe606-4b22-4621-9cd7-3efa7591a424.mp4",
+      "/api/videos/stream/rev-1792405036441-zqqwp.mp4"
+    ],
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/thumbnail.jpg",
+    "caption": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "transcriptText": "Hello, so for this one is Jollibee Philippines, I gave you 5 stars for the review. Because basically they do offer the famous iconic chicken joint, crispy on the outside and at the same time juicy on inside. And always be served with the iconic smooth style spaghetti. loaded with hot dog slices and cheese and at the same time also it's very convenient because the majority of their store is open 24 hours maybe as your go-to for your late night cravings or at same for any morning breakfast. So, see you there in Jao de Philippines!",
+    "segments": [
+      {
+        "start": 1.06,
+        "end": 2.06,
+        "text": "Hello, so for this one is",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 2.06,
+        "end": 3.83,
+        "text": "Jollibee Philippines,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 3.83,
+        "end": 5.36,
+        "text": "I gave you 5 stars",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 5.36,
+        "end": 5.76,
+        "text": "for the review.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.64,
+        "end": 8.81,
+        "text": "Because basically they do offer the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 8.81,
+        "end": 11.93,
+        "text": "famous iconic chicken joint,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.93,
+        "end": 12.88,
+        "text": "crispy on the outside",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 12.88,
+        "end": 14.27,
+        "text": "and at the same time juicy",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 14.27,
+        "end": 14.67,
+        "text": "on inside.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.45,
+        "end": 18.07,
+        "text": "And always be served with the",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.39,
+        "end": 20.05,
+        "text": "iconic smooth style spaghetti.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.85,
+        "end": 22.39,
+        "text": "loaded with hot dog slices",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 22.97,
+        "end": 24.25,
+        "text": "and cheese and at the same",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 24.64,
+        "end": 25.93,
+        "text": "time also it's very convenient",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 27.38,
+        "end": 29.16,
+        "text": "because the majority of their store",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 29.28,
+        "end": 32.59,
+        "text": "is open 24 hours maybe as your",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 33.23,
+        "end": 34.68,
+        "text": "go-to for your late night cravings",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 34.68,
+        "end": 37.32,
+        "text": "or at same for any morning breakfast.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 39.67,
+        "end": 40.24,
+        "text": "So, see you there in Jao",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 40.24,
+        "end": 40.64,
+        "text": "de Philippines!",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Jollibee Philippines",
+    "businessName": "Jollibee",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 92,
+    "viewsCount": 92,
+    "sharesCount": 0,
+    "tags": [
+      "Verified Business"
+    ],
+    "recordedAt": "Just now",
+    "bunnyVideoId": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
+    "bunnyGuid": "fd5fe606-4b22-4621-9cd7-3efa7591a424",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/fd5fe606-4b22-4621-9cd7-3efa7591a424/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "aiTitle": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "bunnyDescription": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
+    "description": "In this video summary, a reviewer gives Jollibee Philippines a 5-star rating for its iconic crispy chicken and sweet spaghetti. The menu includes loaded options with apple slices and cheese. The majority of stores are open 24 hours, making it convenient for late-night cravings or morning breakfast. Jollibee is recommended as a go-to spot for delicious food in the Philippines. Enjoy the iconic dishes and the convenience of 24-hour service at Jollibee!",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "likesCount": 0,
+    "authorName": "Edjo Francis Ramos",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 42,
+    "createdAt": "2026-10-19T10:17:16.443Z",
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 2,
+    "reviewCount": 2,
+    "totalReviews": 2,
+    "title": "5-star review for iconic crispy chicken, sweet spaghetti, 24-hr convenience. Enjoy! 🇵🇭",
+    "isProcessing": false,
+    "isReady": true,
+    "updatedAt": 1792514327833,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
   }
 ];

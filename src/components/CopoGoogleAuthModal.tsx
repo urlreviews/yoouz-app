@@ -4,7 +4,7 @@ import { generateGoogleLetterAvatarSvg, getAvatarColor, getFirstLetter } from ".
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { locationData } from "../utils/locationData";
-import { KNOWN_COMMUNITY_USERS, unrecordDeletedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage } from "../utils/placeUtils";
+import { KNOWN_COMMUNITY_USERS, unrecordDeletedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, updateUserRegistry } from "../utils/placeUtils";
 import { cachedCountry, cachedState, cachedCity } from "../utils/locationCache";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -567,6 +567,7 @@ export const CopoAuthPrompt: React.FC<{
       if (userObj) {
         unrecordDeletedUsersInLocalStorage([userObj.email, userObj.uid, userObj.id, userObj.name, userObj.handle]);
         unrecordDeactivatedUsersInLocalStorage([userObj.email, userObj.uid, userObj.id, userObj.name, userObj.handle]);
+        updateUserRegistry(userObj);
       }
       localStorage.setItem("copo_user", JSON.stringify(userObj));
       localStorage.setItem("copo_user_profile", JSON.stringify(userObj));

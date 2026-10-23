@@ -2189,23 +2189,44 @@ export function updateUserRegistry(users: any[] | any): void {
   list.forEach((u) => {
     if (!u) return;
     const emailKey = (u.email || "").toLowerCase().trim();
-    const nameKey = (u.name || "").toLowerCase().replace(/^@+/, "").trim();
-    const handleKey = (u.handle || "").toLowerCase().replace(/^@+/, "").trim();
+    const emailPrefix = emailKey.includes("@") ? emailKey.split("@")[0] : "";
     const uidKey = (u.uid || u.userId || u.id || "").toLowerCase().trim();
 
+    const candidateFullName = (
+      (u.firstName && u.lastName)
+        ? `${String(u.firstName).trim()} ${String(u.lastName).trim()}`.trim()
+        : (u.name || "")
+    ).trim();
+
+    const prevEntry = (emailKey && memoryUserRegistry[emailKey]) || (uidKey && memoryUserRegistry[uidKey]) || null;
+    const prevName = String(prevEntry?.name || "").trim();
+    const prevIsFull = prevName.includes(" ") && (!emailPrefix || prevName.toLowerCase() !== emailPrefix);
+    const candIsFull = candidateFullName.includes(" ") && (!emailPrefix || candidateFullName.toLowerCase() !== emailPrefix);
+
+    // Never allow an email-prefix or single-word placeholder to overwrite an already-known full First + Last Name
+    const resolvedName = candIsFull
+      ? candidateFullName
+      : (prevIsFull ? prevName : (candidateFullName || prevName));
+
+    const nameKey = (resolvedName || u.name || "").toLowerCase().replace(/^@+/, "").trim();
+    const handleKey = (u.handle || "").toLowerCase().replace(/^@+/, "").trim();
+
     const entry = {
-      name: u.name,
-      handle: u.handle || (u.name ? `@${u.name.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "@user"),
-      avatar: u.avatar,
-      bio: u.bio,
-      banner: u.banner,
-      location: u.location,
-      city: u.city,
-      country: u.country,
-      email: u.email
+      name: resolvedName,
+      firstName: u.firstName || prevEntry?.firstName || (resolvedName.includes(" ") ? resolvedName.split(" ")[0] : resolvedName),
+      lastName: u.lastName || prevEntry?.lastName || (resolvedName.includes(" ") ? resolvedName.split(" ").slice(1).join(" ") : ""),
+      handle: (resolvedName.includes(" ") ? `@${resolvedName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "") || u.handle || prevEntry?.handle || (resolvedName ? `@${resolvedName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "@user"),
+      avatar: u.avatar || prevEntry?.avatar,
+      bio: u.bio || prevEntry?.bio,
+      banner: u.banner || prevEntry?.banner,
+      location: u.location || prevEntry?.location,
+      city: u.city || prevEntry?.city,
+      country: u.country || prevEntry?.country,
+      email: u.email || prevEntry?.email
     };
 
     if (emailKey) memoryUserRegistry[emailKey] = entry;
+    if (emailPrefix) memoryUserRegistry[emailPrefix] = entry;
     if (nameKey) memoryUserRegistry[nameKey] = entry;
     if (handleKey) memoryUserRegistry[handleKey] = entry;
     if (uidKey) memoryUserRegistry[uidKey] = entry;
@@ -2362,9 +2383,13 @@ export function resolveSafeAuthor(
   }
 
   const authorObj = (video?.author && typeof video.author === "object") ? video.author : ({} as any);
-  
+  const authorFirstLast = ((authorObj as any).firstName && (authorObj as any).lastName)
+    ? `${String((authorObj as any).firstName).trim()} ${String((authorObj as any).lastName).trim()}`.trim()
+    : "";
+
   // 1. Determine raw name candidate
   let rawName = (
+    authorFirstLast ||
     authorObj.name ||
     (video as any)?.authorName ||
     (video as any)?.author_name ||
@@ -2386,7 +2411,7 @@ export function resolveSafeAuthor(
   let activeUser = currentUserOverride;
   if (!activeUser && typeof window !== "undefined") {
     try {
-      const stored = localStorage.getItem("copo_user_profile");
+      const stored = localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user");
       if (stored) activeUser = JSON.parse(stored);
     } catch (e) {}
   }
@@ -2394,9 +2419,10 @@ export function resolveSafeAuthor(
   // 3. Match against known community users and user registry (if not deleted)
   const nameKey = rawName.toLowerCase().replace(/^@+/, "");
   const userKey = (video?.userId || video?.userEmail || (authorObj as any).userId || (authorObj as any).email || "").toLowerCase().trim();
+  const emailPrefixKey = userKey.includes("@") ? userKey.split("@")[0] : (video?.userEmail?.includes("@") ? video.userEmail.split("@")[0].toLowerCase() : "");
   const handleKey = (authorObj.handle || "").toLowerCase().replace(/^@+/, "");
 
-  let registryMatch = getUserFromRegistry(userKey) || getUserFromRegistry(nameKey) || getUserFromRegistry(handleKey);
+  let registryMatch = getUserFromRegistry(userKey) || (emailPrefixKey ? getUserFromRegistry(emailPrefixKey) : null) || getUserFromRegistry(nameKey) || getUserFromRegistry(handleKey);
   let knownMatch = KNOWN_COMMUNITY_USERS[nameKey] || KNOWN_COMMUNITY_USERS[userKey] || KNOWN_COMMUNITY_USERS[handleKey];
 
   if (isUserDeleted(registryMatch) || isUserDeleted(userKey) || isUserDeleted(nameKey) || isUserDeleted(handleKey)) {
@@ -2406,12 +2432,65 @@ export function resolveSafeAuthor(
     knownMatch = undefined;
   }
 
-  let finalName = registryMatch?.name || knownMatch?.name || (rawName && rawName.toLowerCase() !== "reviewer" ? rawName : "Yoouz Reviewer");
-  let finalHandle = registryMatch?.handle || knownMatch?.handle || authorObj.handle || `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
+  // Check if active user matches this video
+  let isActiveUserMatch = false;
+  const activeUserEmail = (activeUser?.email || "").toLowerCase().trim();
+  const activeUserEmailPrefix = activeUserEmail.includes("@") ? activeUserEmail.split("@")[0] : "";
+  const activeUserFullName = (
+    ((activeUser as any)?.firstName && (activeUser as any)?.lastName)
+      ? `${String((activeUser as any).firstName).trim()} ${String((activeUser as any).lastName).trim()}`.trim()
+      : (activeUser?.name || "")
+  ).trim();
+
+  if (activeUser && (
+    (activeUserEmail && (activeUserEmail === userKey || activeUserEmail === (video?.userEmail || "").toLowerCase().trim())) ||
+    (activeUserEmailPrefix && (activeUserEmailPrefix === nameKey || activeUserEmailPrefix === emailPrefixKey)) ||
+    (activeUser.id && String(activeUser.id).toLowerCase() === userKey) ||
+    (activeUserFullName && activeUserFullName.toLowerCase() === nameKey)
+  )) {
+    isActiveUserMatch = true;
+  }
+
+  // Helper to prefer a full First + Last Name (containing a space and not equal to email prefix) over a single-word email handle
+  const isFullHumanName = (n?: string | null) => {
+    if (!n) return false;
+    const clean = n.trim();
+    const low = clean.toLowerCase();
+    if (!clean || low === "reviewer" || low === "verified reviewer" || low === "yoouz reviewer" || low === "user") return false;
+    return clean.includes(" ") && (!emailPrefixKey || low !== emailPrefixKey);
+  };
+
+  const registryFirstLast = (registryMatch?.firstName && registryMatch?.lastName)
+    ? `${String(registryMatch.firstName).trim()} ${String(registryMatch.lastName).trim()}`.trim()
+    : "";
+
+  const nameCandidates = [
+    isActiveUserMatch ? activeUserFullName : "",
+    registryFirstLast,
+    registryMatch?.name,
+    knownMatch?.name,
+    authorFirstLast,
+    authorObj.name,
+    (video as any)?.authorName,
+    rawName && rawName.toLowerCase() !== "reviewer" ? rawName : ""
+  ].filter(Boolean) as string[];
+
+  let finalName =
+    nameCandidates.find((c) => isFullHumanName(c)) ||
+    nameCandidates.find((c) => c.toLowerCase() !== emailPrefixKey && c.toLowerCase() !== "verified reviewer" && c.toLowerCase() !== "yoouz reviewer") ||
+    nameCandidates[0] ||
+    "Yoouz Reviewer";
+
+  let finalHandle =
+    (finalName.includes(" ") ? `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "") ||
+    registryMatch?.handle ||
+    knownMatch?.handle ||
+    authorObj.handle ||
+    `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}`;
   if (!finalHandle.startsWith("@")) finalHandle = `@${finalHandle}`;
 
   // 4. Resolve authentic candidate avatar
-  let candidateAvatar = registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
+  let candidateAvatar = (isActiveUserMatch && activeUser?.avatar) || registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
 
   // Strict canonical identity verification (ONLY if rawName is generic or absent)
   const isGeneric = !rawName || rawName.toLowerCase() === "reviewer" || rawName.toLowerCase() === "verified reviewer" || rawName.toLowerCase() === "yoouz reviewer";
@@ -2449,18 +2528,6 @@ export function resolveSafeAuthor(
     candidateAvatar = "";
   }
 
-  // Check if active user matches this video
-  let isActiveUserMatch = false;
-  if (activeUser && (
-    (activeUser.email && (activeUser.email.toLowerCase() === userKey || activeUser.email.toLowerCase() === (video?.userEmail || "").toLowerCase())) ||
-    (activeUser.name && activeUser.name.toLowerCase() === finalName.toLowerCase()) ||
-    (activeUser.name && activeUser.name.toLowerCase() === nameKey)
-  )) {
-    isActiveUserMatch = true;
-    if (activeUser.name) finalName = activeUser.name;
-    if (activeUser.avatar) candidateAvatar = activeUser.avatar;
-  }
-
   if (!candidateAvatar && knownMatch?.avatar) {
     candidateAvatar = knownMatch.avatar;
   }
@@ -2494,8 +2561,13 @@ export function resolveSafeAuthor(
   const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
   const isVerifiedUser = authorObj.isVerified !== undefined ? authorObj.isVerified : (reviewCount > 0 || !!registryMatch?.isVerified);
 
+  const resolvedFirstName = (isActiveUserMatch && (activeUser as any)?.firstName) || registryMatch?.firstName || authorObj.firstName || (finalName.includes(" ") ? finalName.split(" ")[0] : finalName);
+  const resolvedLastName = (isActiveUserMatch && (activeUser as any)?.lastName) || registryMatch?.lastName || authorObj.lastName || (finalName.includes(" ") ? finalName.split(" ").slice(1).join(" ") : "");
+
   return {
     name: finalName,
+    firstName: resolvedFirstName,
+    lastName: resolvedLastName,
     handle: finalHandle,
     avatar: finalAvatar,
     isVerified: isVerifiedUser,
