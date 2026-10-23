@@ -310,6 +310,15 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "bk.com": "Burger King",
+  "www.bk.com": "Burger King",
+  "burgerking.com": "Burger King",
+  "www.burgerking.com": "Burger King",
+  "burgerking": "Burger King",
+  "burger king": "Burger King",
+  "cetaphil.com": "Cetaphil",
+  "www.cetaphil.com": "Cetaphil",
+  "cetaphil": "Cetaphil",
   "whatsapp": "WhatsApp",
   "whatsapp.com": "WhatsApp",
   "www.whatsapp.com": "WhatsApp",
@@ -563,8 +572,6 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "dominos": "Domino's Pizza",
   "kfc.com": "KFC",
   "kfc": "KFC",
-  "burgerking.com": "Burger King",
-  "bk.com": "Burger King",
   "subway.com": "Subway",
   "subway": "Subway",
   "tesla.com": "Tesla",

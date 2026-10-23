@@ -25,7 +25,7 @@ import {
 import { Place, UserProfile, VideoReview } from "../types";
 import { saveVideoBlobToIndexedDB, uploadVideoResumableWithProgress } from "../lib/videoStorage";
 import { cleanUndefinedFields, cleanData } from "../utils/cleanData";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isBadBanner } from "../utils/logoUtils";
 import { formatBusinessName, resolveSafeAuthor, getSafeAvatarUrl, extractCleanDomain, getDisplayUrlAsDomain, getEffectivePlaceDescription, generateSmartPlaceDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { CopoMobileSearchView } from "./CopoMobileSearchView";
 import { triggerHaptic } from "../utils/haptics";
@@ -215,9 +215,91 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
   }, [preselectedPlace]);
 
+  // Keep selectedPlace synchronized if background place enrichment populates bannerUrl or logoUrl while user is recording
+  useEffect(() => {
+    if (!selectedPlace) return;
+    const match = places.find(
+      (p) =>
+        p.id === selectedPlace.id ||
+        (selectedPlace.brandDomain && p.brandDomain && p.brandDomain.toLowerCase() === selectedPlace.brandDomain.toLowerCase())
+    );
+    if (match) {
+      const nextBanner = (!isBadBanner(match.bannerUrl) ? match.bannerUrl : "") || (!isBadBanner(selectedPlace.bannerUrl) ? selectedPlace.bannerUrl : "");
+      const nextLogo = (match.logoUrl && !match.logoUrl.includes("/api/favicon") ? match.logoUrl : "") || selectedPlace.logoUrl || match.logoUrl || "";
+      if (
+        (nextBanner && nextBanner !== selectedPlace.bannerUrl) ||
+        (nextLogo && nextLogo !== selectedPlace.logoUrl) ||
+        (match.name && match.name !== selectedPlace.name && match.name.length > 2)
+      ) {
+        setSelectedPlace((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: match.name || prev.name,
+                bannerUrl: nextBanner || prev.bannerUrl,
+                ogImage: nextBanner || prev.ogImage,
+                logoUrl: nextLogo || prev.logoUrl,
+                avatarUrl: nextLogo || prev.avatarUrl,
+                address: match.address && match.address !== "Verified Location" ? match.address : prev.address,
+                city: match.city && match.city !== "Online" ? match.city : prev.city,
+                country: match.country || prev.country,
+                description: match.description || prev.description,
+              }
+            : prev
+        );
+      }
+    }
+  }, [places, selectedPlace]);
+
+  // Proactively enrich selectedPlace via /api/url-metadata as soon as user selects a place to record
+  useEffect(() => {
+    if (!selectedPlace) return;
+    const needsBanner = !selectedPlace.bannerUrl || isBadBanner(selectedPlace.bannerUrl);
+    const needsLogo = !selectedPlace.logoUrl || selectedPlace.logoUrl.includes("/api/favicon");
+    if (!needsBanner && !needsLogo) return;
+
+    const rawDomain = selectedPlace.brandDomain || (selectedPlace.id?.includes(".") ? selectedPlace.id : "");
+    const targetUrl = selectedPlace.website || (rawDomain ? `https://${rawDomain}` : "");
+    if (!targetUrl && !selectedPlace.name) return;
+
+    let cancelled = false;
+    const queryParam = targetUrl
+      ? `url=${encodeURIComponent(targetUrl)}&name=${encodeURIComponent(selectedPlace.name || "")}`
+      : `name=${encodeURIComponent(selectedPlace.name || "")}`;
+    fetch(`/api/url-metadata?${queryParam}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((meta) => {
+        if (cancelled || !meta) return;
+        const enrichedBanner = !isBadBanner(meta.image) ? meta.image : "";
+        const enrichedLogo = meta.logo && !meta.logo.includes("/api/favicon") ? meta.logo : "";
+        if (enrichedBanner || enrichedLogo) {
+          setSelectedPlace((prev) => {
+            if (!prev || prev.id !== selectedPlace.id) return prev;
+            return {
+              ...prev,
+              name: meta.title && meta.title.length > 1 ? meta.title : prev.name,
+              bannerUrl: (!isBadBanner(prev.bannerUrl) ? prev.bannerUrl : "") || enrichedBanner || prev.bannerUrl,
+              ogImage: (!isBadBanner(prev.ogImage) ? prev.ogImage : "") || enrichedBanner || prev.ogImage,
+              logoUrl: (prev.logoUrl && !prev.logoUrl.includes("/api/favicon") ? prev.logoUrl : "") || enrichedLogo || prev.logoUrl,
+              avatarUrl: (prev.avatarUrl && !prev.avatarUrl.includes("/api/favicon") ? prev.avatarUrl : "") || enrichedLogo || prev.avatarUrl,
+              address: meta.address || prev.address,
+              city: meta.city || prev.city,
+              country: meta.country || prev.country,
+              description: meta.description || prev.description,
+            };
+          });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPlace?.id]);
+
   useEffect(() => {
     setRating(0);
-  }, [selectedPlace]);
+  }, [selectedPlace?.id]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -1342,12 +1424,30 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     if (selectedPlace?.id) {
       const placeDocId = selectedPlace.id;
-      const updatedPlaceData = {
+      const updatedPlaceData: Record<string, any> = {
         ...selectedPlace,
         id: placeDocId,
         totalReviews: (selectedPlace.totalReviews || 0) + 1,
         rating: rating
       };
+      if (!updatedPlaceData.bannerUrl || isBadBanner(updatedPlaceData.bannerUrl)) {
+        delete updatedPlaceData.bannerUrl;
+      }
+      if (!updatedPlaceData.ogImage || isBadBanner(updatedPlaceData.ogImage)) {
+        delete updatedPlaceData.ogImage;
+      }
+      if (!updatedPlaceData.logoUrl || updatedPlaceData.logoUrl.includes("/api/favicon")) {
+        delete updatedPlaceData.logoUrl;
+      }
+      if (!updatedPlaceData.avatarUrl || updatedPlaceData.avatarUrl.includes("/api/favicon")) {
+        delete updatedPlaceData.avatarUrl;
+      }
+      if (Array.isArray(updatedPlaceData.photos)) {
+        updatedPlaceData.photos = updatedPlaceData.photos.filter((p: string) => p && !isBadBanner(p));
+        if (updatedPlaceData.photos.length === 0) {
+          delete updatedPlaceData.photos;
+        }
+      }
       fetch(`/api/nosql/places/${placeDocId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -58,13 +58,28 @@ export function isValidImageUrl(url?: string | null): boolean {
 export function isBadBanner(url?: string | null): boolean {
   if (!url || typeof url !== "string") return true;
   if (!isValidImageUrl(url)) return true;
-  const u = url.toLowerCase();
+  let u = url.toLowerCase();
+  try {
+    u = decodeURIComponent(u).toLowerCase();
+  } catch (e) {}
   return (
     u.includes('yoouz.com/og-banner.png') ||
     u.includes('unsplash.com') ||
     u.includes('placeholder') ||
     u.includes('mock') ||
     u.includes('1789810172562') ||
+    u.includes('demdex.net') ||
+    u.includes('demconf') ||
+    u.includes('adobedtm') ||
+    u.includes('omtrdc.net') ||
+    u.includes('doubleclick.net') ||
+    u.includes('googletagmanager') ||
+    u.includes('google-analytics') ||
+    u.includes('facebook.com/tr') ||
+    u.includes('bat.bing.com') ||
+    u.includes('beacon') ||
+    u.includes('1x1') ||
+    u.includes('spacer') ||
     u.includes('favicon') ||
     u.includes('avatar') ||
     u.includes('badge') ||
@@ -76,6 +91,7 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('transparent') ||
     u.includes('blank.gif') ||
     u.includes('pixel.gif') ||
+    u.includes('pixel.') ||
     u.includes('glass1.png') ||
     u.includes('dummy.png') ||
     u.includes('blocked') ||
@@ -850,11 +866,27 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <path d="M26 65 C40 55, 80 55, 94 65 L94 82 C80 94, 40 94, 26 82 Z" fill="#10b981"/>
       <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
       <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
-    </svg>`)
+    </svg>`),
+  "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "burgerking": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "bk.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
+  "www.bk.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
+  "burgerking.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
+  "www.burgerking.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
+  "burgerking": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
+  "cetaphil.com": "https://www.cetaphil.com/dw/image/v2/bggn_prd/on/demandware.static/-/Library-Sites-RefArchSharedLibrary/default/dw1fe4b889/Homepage/Nourishing-Allure-Banner.jpg?sw=1200",
+  "www.cetaphil.com": "https://www.cetaphil.com/dw/image/v2/bggn_prd/on/demandware.static/-/Library-Sites-RefArchSharedLibrary/default/dw1fe4b889/Homepage/Nourishing-Allure-Banner.jpg?sw=1200",
+  "cetaphil": "https://www.cetaphil.com/dw/image/v2/bggn_prd/on/demandware.static/-/Library-Sites-RefArchSharedLibrary/default/dw1fe4b889/Homepage/Nourishing-Allure-Banner.jpg?sw=1200",
   "yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "www.yoouz.com": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",
   "yoouz": "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg",

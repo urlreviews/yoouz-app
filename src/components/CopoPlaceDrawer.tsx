@@ -602,19 +602,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   // Check if any video review for this place has a high quality banner or logo
   const reviewBannerUrl = React.useMemo(() => {
-    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !place.bannerUrl.includes("placeholder") && !place.bannerUrl.includes("mock")) return place.bannerUrl;
-    if (place.ogImage && !place.ogImage.startsWith("blob:") && place.ogImage.trim() !== "" && !place.ogImage.includes("placeholder") && !place.ogImage.includes("mock")) return place.ogImage;
+    if (place.bannerUrl && !place.bannerUrl.startsWith("blob:") && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl)) return place.bannerUrl;
+    if (place.ogImage && !place.ogImage.startsWith("blob:") && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) return place.ogImage;
     for (const v of rawPlaceVideos) {
       const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
       if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
-        if (!b.includes("placeholder") && !b.includes("mock")) return b;
+        if (!isBadBanner(b)) return b;
       }
     }
     for (const v of (allVideos || [])) {
       if (isPlaceReviewMatch(v, place)) {
         const b = (v as any).placeBannerUrl || (v as any).bannerUrl || (v as any).ogImage;
         if (b && typeof b === "string" && !b.startsWith("blob:") && (b.startsWith("http://") || b.startsWith("https://") || b.startsWith("/api/") || b.startsWith("data:image/"))) {
-          if (!b.includes("placeholder") && !b.includes("mock")) return b;
+          if (!isBadBanner(b)) return b;
         }
       }
     }
@@ -640,8 +640,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     
     // If we already successfully fetched data for this key, don't re-run unless it was a partial failure
     const hasCoreData = Boolean(
-      place.logoUrl && !place.logoUrl.includes('tap/0.png') &&
-      place.bannerUrl && !isBadBanner(place.bannerUrl) &&
+      place.logoUrl && !place.logoUrl.includes('tap/0.png') && !isFaviconUrl(place.logoUrl) &&
+      place.bannerUrl && !isBadBanner(place.bannerUrl) && !bannerError &&
       place.address && place.address !== "Verified Location"
     );
     
@@ -669,7 +669,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const isSlugDomain = drawerDomain && !drawerDomain.includes(".");
 
-    const needsBanner = !reviewBannerUrl && !place.bannerUrl && !place.ogImage;
+    const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
@@ -1290,7 +1290,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
         </div>
 
-        {(hasAuthenticPhoto || effectiveBanner) && (!bannerError || Boolean(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner)) ? (
+        {(hasAuthenticPhoto || effectiveBanner) && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner) ? (
           <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img

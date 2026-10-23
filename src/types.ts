@@ -142,6 +142,8 @@ export interface VideoReview {
   placeRating?: number;
   placeWebsite?: string;
   placeLogoUrl?: string;
+  placeAvatarUrl?: string;
+  brandDomain?: string;
   logoUrl?: string;
   placeBannerUrl?: string;
   placeDescription?: string;
@@ -186,6 +188,7 @@ export interface VideoReview {
   title?: string;
   aiTitle?: string;
   hasBunnySmartCaptions?: boolean;
+  hasOfficialBunnyTitle?: boolean;
   hasHardwareSilenceSync?: boolean;
   isProcessing?: boolean;
   isReady?: boolean;

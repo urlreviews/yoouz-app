@@ -262,6 +262,19 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("transparent") ||
       decoded.includes("blank.gif") ||
       decoded.includes("pixel.gif") ||
+      decoded.includes("pixel.") ||
+      decoded.includes("demdex.net") ||
+      decoded.includes("demconf") ||
+      decoded.includes("adobedtm") ||
+      decoded.includes("omtrdc.net") ||
+      decoded.includes("doubleclick.net") ||
+      decoded.includes("googletagmanager") ||
+      decoded.includes("google-analytics") ||
+      decoded.includes("facebook.com/tr") ||
+      decoded.includes("bat.bing.com") ||
+      decoded.includes("beacon") ||
+      decoded.includes("1x1") ||
+      decoded.includes("spacer") ||
       decoded.includes("mock") ||
       decoded.includes("og-banner.png") ||
       decoded.includes("yoouz.com/og-banner") ||
@@ -293,7 +306,7 @@ function isBadBanner(url?: string | null): boolean {
       decoded.endsWith(".ico")
     );
   } catch (e) {
-    return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit");
+    return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit") || url.includes("demdex");
   }
 }
 
@@ -8372,6 +8385,24 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
               const curDataRaw = (existingRow.rows[0] as any).data;
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
+              // Never allow an empty or tracking-pixel banner or generic favicon logo to overwrite an existing authentic banner/logo on places
+              if (colName === 'places' || colName === 'business_profiles') {
+                if (curData.bannerUrl && !isBadBanner(curData.bannerUrl) && (!finalDataObj.bannerUrl || isBadBanner(finalDataObj.bannerUrl))) {
+                  delete finalDataObj.bannerUrl;
+                }
+                if (curData.ogImage && !isBadBanner(curData.ogImage) && (!finalDataObj.ogImage || isBadBanner(finalDataObj.ogImage))) {
+                  delete finalDataObj.ogImage;
+                }
+                if (curData.logoUrl && !curData.logoUrl.includes('/api/favicon') && (!finalDataObj.logoUrl || finalDataObj.logoUrl.includes('/api/favicon'))) {
+                  delete finalDataObj.logoUrl;
+                }
+                if (curData.avatarUrl && !curData.avatarUrl.includes('/api/favicon') && (!finalDataObj.avatarUrl || finalDataObj.avatarUrl.includes('/api/favicon'))) {
+                  delete finalDataObj.avatarUrl;
+                }
+                if (Array.isArray(curData.photos) && curData.photos.length > 0 && (!Array.isArray(finalDataObj.photos) || finalDataObj.photos.length === 0)) {
+                  delete finalDataObj.photos;
+                }
+              }
               finalDataObj = mergeDeep(curData, finalDataObj);
               if (colName === 'chats' || (data?.history && Array.isArray(data.history))) {
                 const existingHist = Array.isArray(curData.history) ? curData.history : [];
@@ -29053,7 +29084,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "avis.vo": "Avis is a leading global car rental agency offering premium car rentals, commercial vehicle solutions, and reliable airport transit worldwide.",
         "businessplace.com": "Businessplace is a premier business directory and service platform connecting consumers with verified local professionals and corporate services.",
         "plomberiebruxelles24.be": "Service de plomberie et dépannage d'urgence 24h/24 et 7j/7 à Bruxelles et environs.",
-        "hertz.com": "Hertz is a premier global car rental company offering passenger and commercial vehicle rentals in over 160 countries worldwide."
+        "hertz.com": "Hertz is a premier global car rental company offering passenger and commercial vehicle rentals in over 160 countries worldwide.",
+        "bk.com": "Burger King is a global quick-service restaurant brand famous for its flame-grilled Whopper sandwiches, burgers, fries, and shakes.",
+        "burgerking.com": "Burger King is a global quick-service restaurant brand famous for its flame-grilled Whopper sandwiches, burgers, fries, and shakes.",
+        "cetaphil.com": "Cetaphil is a dermatologist-recommended skincare brand offering gentle cleansers, moisturizers, and sensitive skin treatments."
       };
 
       if (!description || description.toLowerCase() === "home" || description.toLowerCase() === "welcome" || description.includes("Verified Yoouz business listing")) {
@@ -29076,6 +29110,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       };
 
       const serverBrandLogos: Record<string, string> = {
+        "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+        "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+        "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+        "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+        "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+        "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
         "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
         "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
         "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
@@ -29107,6 +29147,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = "";
       } else if (logo) {
         logo = sanitizeProxy(logo);
+      }
+
+      // If SPA website or anti-bot firewall prevented HTML banner/logo extraction, fetch authentic media via DuckDuckGo fallback
+      if ((!image || isBadBanner(image)) || (!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo))) {
+        try {
+          const ddgMedia = await Promise.race([
+            fetchDuckDuckGoMediaAndInfo(cleanDomain, title || cleanDomain),
+            new Promise<any>((resolve) => setTimeout(() => resolve(null), 4200))
+          ]);
+          if (ddgMedia) {
+            if ((!image || isBadBanner(image)) && ddgMedia.banner && !isBadBanner(ddgMedia.banner)) {
+              image = sanitizeProxy(ddgMedia.banner);
+            }
+            if ((!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) && ddgMedia.logo && !isFaviconUrl(ddgMedia.logo) && !isGenericOrPlaceholderLogo(ddgMedia.logo)) {
+              logo = sanitizeProxy(ddgMedia.logo);
+            }
+            if (!description && ddgMedia.description) {
+              description = ddgMedia.description;
+            }
+          }
+        } catch (ddgErr) {}
       }
       console.log("[TRACE METADATA 1] domain:", cleanDomain, "image:", image, "logo:", logo);
 
@@ -30080,7 +30141,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const sendDefaultFavicon = (domainName: string) => {
       const cleanSvg = generateCustomBrandLogo(domainName);
       res.setHeader("Content-Type", "image/svg+xml");
-      res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "no-cache, max-age=60");
       res.setHeader("Access-Control-Allow-Origin", "*");
       return res.status(200).send(cleanSvg);
     };
@@ -30101,6 +30162,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     const KNOWN_FAVICON_LOGOS: Record<string, string> = {
+      "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+      "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+      "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+      "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+      "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+      "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
       "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
       "www.proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
       "proximus": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
@@ -30132,7 +30199,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
           },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
         });
         const cType = (s2Resp.headers.get('content-type') || '').toLowerCase();
         if (s2Resp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
@@ -30146,6 +30213,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
       } catch (s2Err) {}
+
+      // Fallback 2: DuckDuckGo icon service if Google s2 timed out
+      try {
+        const ddgIconUrl = `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`;
+        const ddgResp = await fetch(ddgIconUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+          },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+        });
+        if (ddgResp.ok) {
+          const ddgBuf = Buffer.from(await ddgResp.arrayBuffer());
+          if (ddgBuf.length > 200) {
+            res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(ddgBuf);
+          }
+        }
+      } catch (ddgErr) {}
     }
 
     return sendDefaultFavicon(cleanDomain);
