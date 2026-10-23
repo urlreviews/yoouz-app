@@ -14177,6 +14177,27 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
                 body: JSON.stringify({ generateTitle: true, generateDescription: true }),
                 signal: AbortSignal.timeout(5000)
               }).catch(() => {});
+
+              // Post-upload watchdog to prevent any encoder pipeline stalling:
+              setTimeout(async () => {
+                try {
+                  const checkResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}`, {
+                    headers: { 'AccessKey': bunnyStreamKey, 'accept': 'application/json' },
+                    signal: AbortSignal.timeout(8000)
+                  });
+                  if (checkResp.ok) {
+                    const checkData: any = await checkResp.json();
+                    if (checkData.status === 2 && checkData.encodeProgress < 100) {
+                      console.log(`⏱️ [Bunny Upload Watchdog] Video ${bunnyVideoId} still processing after 45s. Triggering re-encode kick...`);
+                      await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bunnyVideoId}/reencode`, {
+                        method: 'POST',
+                        headers: { 'AccessKey': bunnyStreamKey, 'accept': 'application/json' },
+                        signal: AbortSignal.timeout(8000)
+                      }).catch(() => {});
+                    }
+                  }
+                } catch (e) {}
+              }, 45000);
             } else {
               console.warn(`⚠️ 🐰 [Bunny Stream] PUT failed, attempting fetch ingest fallback...`);
               try {
@@ -24568,7 +24589,50 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       for (const item of items) {
         const guid = item.guid;
-        if (!guid || item.status !== 4) continue; // Must be completed/ready
+        if (!guid) continue;
+
+        // Auto-heal stuck videos in Bunny Stream (status 2 = Processing, 1 = Uploaded, 0 = Created)
+        if (item.status !== 4) {
+          const uploadTime = item.dateUploaded ? new Date(item.dateUploaded).getTime() : 0;
+          const ageMinutes = uploadTime ? (Date.now() - uploadTime) / 60000 : 999;
+          
+          if (ageMinutes > 2) {
+            console.log(`⏱️ [Bunny Watchdog] Video ${guid} ("${item.title}") has status ${item.status} (${ageMinutes.toFixed(1)} mins old). Checking deep status...`);
+            try {
+              const detailResp = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${guid}`, {
+                headers: { "AccessKey": apiKey, "accept": "application/json" },
+                signal: AbortSignal.timeout(8000)
+              });
+              if (detailResp.ok) {
+                const detail: any = await detailResp.json();
+                if (detail.status === 4) {
+                  console.log(`✅ [Bunny Watchdog] Video ${guid} is finished in storage (status 4). Reconciling...`);
+                  item.status = 4;
+                  item.storageSize = detail.storageSize;
+                  recoveredCount++;
+                  details.push(`Reconciled stuck video ${guid} to finished`);
+                } else if (detail.status === 2 || detail.status === 1) {
+                  console.log(`⚡ [Bunny Watchdog] Video ${guid} is stalled in Bunny queue. Triggering re-encode worker recovery...`);
+                  const reencodeResp = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${guid}/reencode`, {
+                    method: 'POST',
+                    headers: { "AccessKey": apiKey, "accept": "application/json" },
+                    signal: AbortSignal.timeout(8000)
+                  });
+                  if (reencodeResp.ok) {
+                    recoveredCount++;
+                    details.push(`Triggered re-encode worker recovery for stuck video ${guid}`);
+                    console.log(`🚀 [Bunny Watchdog] Successfully unpinned stuck video ${guid}`);
+                  }
+                }
+              }
+            } catch (healErr) {
+              console.warn(`[Bunny Watchdog] Notice checking video ${guid}:`, healErr);
+            }
+          }
+          if (item.status !== 4) {
+            continue; // Video is being re-encoded, will be finalized in subsequent cycle
+          }
+        }
 
         // Find existing review matching this Bunny Video GUID
         let existingIdx = list.findIndex((v: any) => v && (v.bunnyVideoId === guid || v.bunnyGuid === guid || v.id === guid));
