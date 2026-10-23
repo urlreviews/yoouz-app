@@ -147,18 +147,22 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     return deduplicatedCues;
   }, [segments, transcriptText, duration]);
 
-  // 🎯 Direct hardware timeupdate event listener on the active video element for precise lockstep sync
+  // 🎯 High-frequency 60fps hardware clock + event listener on the active video element for zero-jitter lockstep sync on all devices
   const [exactCurrentTime, setExactCurrentTime] = useState<number>(() => currentTime || 0);
+  const lastReportedTimeRef = useRef<number>(currentTime || 0);
 
-  // Instantly sync when high-frequency 60Hz RAF loop passes updated time from CopoVideoPlayer
+  // Instantly sync when CopoVideoPlayer passes updated time
   useEffect(() => {
     if (typeof currentTime === 'number' && !isNaN(currentTime)) {
-      setExactCurrentTime(currentTime);
+      if (Math.abs(currentTime - lastReportedTimeRef.current) >= 0.015) {
+        lastReportedTimeRef.current = currentTime;
+        setExactCurrentTime(currentTime);
+      }
     }
   }, [currentTime]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || isLiveRecording) return;
 
     const findTargetVideo = (): HTMLVideoElement | null => {
       if (videoElement) return videoElement;
@@ -173,17 +177,27 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     };
 
     let targetVid = findTargetVideo();
+    let rafId: number | null = null;
 
     const syncTimeFromHardware = () => {
-      if (!targetVid) {
+      if (!targetVid || !targetVid.isConnected) {
         targetVid = findTargetVideo();
       }
       if (targetVid && typeof targetVid.currentTime === 'number' && !isNaN(targetVid.currentTime)) {
-        setExactCurrentTime(targetVid.currentTime);
+        const t = targetVid.currentTime;
+        if (Math.abs(t - lastReportedTimeRef.current) >= 0.015) {
+          lastReportedTimeRef.current = t;
+          setExactCurrentTime(t);
+        }
       }
     };
 
-    syncTimeFromHardware();
+    const tick = () => {
+      syncTimeFromHardware();
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
 
     const attachListeners = (vid: HTMLVideoElement) => {
       vid.addEventListener('timeupdate', syncTimeFromHardware, { passive: true });
@@ -206,42 +220,37 @@ export const SubtitleOverlay: React.FC<SubtitleOverlayProps> = ({
     }
 
     const interval = setInterval(() => {
-      if (!targetVid) {
-        targetVid = findTargetVideo();
-        if (targetVid) {
+      if (!targetVid || !targetVid.isConnected) {
+        const nextVid = findTargetVideo();
+        if (nextVid) {
+          if (targetVid) detachListeners(targetVid);
+          targetVid = nextVid;
           attachListeners(targetVid);
           syncTimeFromHardware();
         }
       }
-    }, 400);
+    }, 300);
 
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
       clearInterval(interval);
       if (targetVid) {
         detachListeners(targetVid);
       }
     };
-  }, [isActive, slotId, videoElement]);
+  }, [isActive, isLiveRecording, slotId, videoElement]);
 
   const effectiveTime = isLiveRecording ? (currentTime || 0) : exactCurrentTime;
 
-  // Compute active cue with acoustic voice onset calibration (+200ms delay & display pacing)
+  // Match active cue directly against hardware-aligned [cue.start, cue.end] boundaries
+  // Silence gaps between cues remain genuinely blank so subtitles never linger while speaker is silent
   const activeCue = useMemo<SubtitleCue | null>(() => {
     if (!isActive || cues.length === 0) return null;
     if (isLiveRecording) return cues[cues.length - 1] || null;
 
-    const ACOUSTIC_OFFSET = 0.20; // 200ms acoustic voice onset calibration
-
     for (let i = 0; i < cues.length; i++) {
       const cue = cues[i];
-      const nextCue = cues[i + 1];
-
-      // Shift display window by acoustic offset so phrase switches when speaker actually vocalizes
-      const displayStart = Math.max(0, cue.start + ACOUSTIC_OFFSET);
-      const nextStart = nextCue ? Math.max(displayStart + 1.2, nextCue.start + ACOUSTIC_OFFSET) : cue.end + ACOUSTIC_OFFSET + 0.3;
-      const displayEnd = Math.max(displayStart + 1.6, Math.max(cue.end + ACOUSTIC_OFFSET, nextStart));
-
-      if (effectiveTime >= displayStart && effectiveTime < displayEnd) {
+      if (effectiveTime >= cue.start && effectiveTime <= cue.end) {
         return cue;
       }
     }
