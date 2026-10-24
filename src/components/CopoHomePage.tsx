@@ -395,6 +395,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     type="button"
                     onClick={() => {
                       setQuery("");
+                      setSuggestions([]);
                       setShowDropdown(false);
                       setSelectedIndex(-1);
                       searchInputRef.current?.focus();
@@ -411,7 +412,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
           {/* Autocomplete Dropdown: No scrollbar on mobile PWA, smooth custom thin scrollbar on desktop */}
           {showDropdown && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin md:[scrollbar-width:thin] md:scrollbar-thumb-zinc-700/60 hover:md:scrollbar-thumb-zinc-500 md:scrollbar-track-transparent animate-in fade-in duration-150 overscroll-contain">
+            <div className="absolute top-full left-0 right-0 mt-2.5 bg-zinc-900/98 backdrop-blur-2xl border border-zinc-800/90 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.9)] overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin md:[scrollbar-width:thin] md:scrollbar-thumb-zinc-700/60 hover:md:scrollbar-thumb-zinc-500 md:scrollbar-track-transparent animate-in fade-in duration-150 overscroll-contain">
               {suggestions.map((item, idx) => (
                 <button
                   key={idx}
@@ -446,12 +447,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </div>
 
-        {/* 4. Trending Video Reviews Grid / Carousel */}
-        <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4">
-          <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
-            <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-              Trending Video Reviews
-            </h2>
+        {/* 4. Trending Video Reviews Grid / Carousel - Hidden while typing so search results sit on a clean canvas */}
+        {!query.trim() && (
+          <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
+              <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
+                Trending Video Reviews
+              </h2>
             <button
               type="button"
               onClick={() => {
@@ -568,6 +570,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             </div>
           </div>
         </section>
+        )}
       </main>
     </div>
   );
