@@ -13,6 +13,7 @@ RUN npm install --no-audit --no-fund || npm ci --no-audit --no-fund
  COPY . .
 RUN mkdir -p /app/uploads /app/public /app/dist
 RUN npm run build
+RUN rm -rf /app/dist/*.map /app/dist/assets/*.map /app/public/assets/aistudio /app/dist/assets/aistudio
 
 # Remove development dependencies to keep production image lean and fast
 RUN npm prune --production

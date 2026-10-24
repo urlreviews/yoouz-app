@@ -7,3 +7,8 @@ dist
 *.log
 npm-debug.log*
 .DS_Store
+.aistudio
+public/assets
+public/assets/**
+uploads
+*.map
