@@ -8,6 +8,7 @@ import { CopoSidebar } from "./components/CopoSidebar";
 import { SEOTags } from "./components/SEOTags";
 import { AEOBlock } from "./components/AEOBlock";
 import { CopoVideoPlayer } from "./components/CopoVideoPlayer";
+import { CopoHomePage } from "./components/CopoHomePage";
 // QR Widget intentionally removed per user request
 import { CopoSearchView } from "./components/CopoSearchView";
 import { CopoMobileSearchView } from "./components/CopoMobileSearchView";
@@ -611,6 +612,7 @@ export function App() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
   const [searchResetKey, setSearchResetKey] = useState<number>(0);
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
+  const [isWatchingVideo, setIsWatchingVideo] = useState<boolean>(false);
 
   // Background Upload state for in-app navigation & bottom progress bar
   const [backgroundUpload, setBackgroundUpload] = useState<{
@@ -4769,6 +4771,7 @@ export function App() {
     videoId: string,
     source?: "profile" | "creator" | "place" | "general"
   ) => {
+    setIsWatchingVideo(true);
     const targetVid = videos.find((v) => v.id === videoId);
     if (!targetVid) return;
 
@@ -4911,6 +4914,7 @@ export function App() {
 
   // Go to main Home Feed (resetting all filters, drawers, and context)
   const handleGoHome = () => {
+    setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -7703,8 +7707,8 @@ export function App() {
 
       {/* 2. Main Stage Content Switcher */}
       <div className="copo-has-bottom-nav flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
-        {/* If in Feed View (Home) or Place / Creator drawer views: Display center video player */}
-        {(isPlaceView || isCreatorView || activeSection === "home") && (
+        {/* If in Video Player mode (watching specific review, place/creator view, or full-screen feed context) */}
+        {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
             <CopoVideoPlayer
               commentsOpen={Boolean(activeCommentVideo)}
               isPaused={Boolean(
@@ -7776,7 +7780,10 @@ export function App() {
                     }
                   : fullscreenFeedContext
                   ? handleFeedGoBack
-                  : undefined
+                  : () => {
+                      setIsWatchingVideo(false);
+                      setFullscreenFeedContext(null);
+                    }
               }
               onCloseEmbed={
                 embedTargetId
@@ -7808,6 +7815,36 @@ export function App() {
               onRecordView={handleRecordVideoView}
               unreadCount={effectiveUnreadNotifsCount + calculateUnreadMessagesCount(messages, currentUser)}
             />
+        )}
+
+        {/* Premium Minimalist Homepage (See the Truth Before You Buy) */}
+        {activeSection === "home" && !isWatchingVideo && !fullscreenFeedContext && !isPlaceView && !isCreatorView && (
+          <CopoHomePage
+            places={places}
+            videos={videos}
+            onSelectVideo={(vidId) => {
+              setIsWatchingVideo(true);
+              handleSelectVideoById(vidId);
+            }}
+            onOpenPlace={handleOpenPlaceDrawer}
+            onOpenCreator={handleOpenCreatorDrawer}
+            onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+            onViewAll={() => {
+              setIsWatchingVideo(true);
+              if (videos.length > 0) handleSelectVideoById(videos[0].id);
+            }}
+            onRecordReview={(place) => {
+              if (!currentUser) {
+                setAuthIntent('record');
+                setPreselectedPlaceForRecording(place || null);
+                setIsAuthModalOpen(true);
+              } else {
+                setPreselectedPlaceForRecording(place || null);
+                setIsCreateModalOpen(true);
+              }
+            }}
+            currentUser={currentUser}
+          />
         )}
 
         {/* Search Test Sandbox Route (/searchtest) */}

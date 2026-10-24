@@ -789,12 +789,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {/* Title & Subtitle */}
           {!isMobileModal && (
             <>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-3">
-                {t("search.title", "Review Any Business")}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight text-center mb-3">
+                See the Truth Before You Buy
               </h1>
               
-              <p className="text-zinc-400 text-sm md:text-base text-center max-w-md mb-8 leading-relaxed font-medium px-4">
-                {t("search.subtitle", "Search any business to watch authentic video reviews or record your own.")}
+              <p className="text-zinc-400 text-sm sm:text-base md:text-lg text-center max-w-lg mb-8 leading-relaxed font-normal px-4">
+                Watch authentic video reviews of any business, or record your own.
               </p>
             </>
           )}
@@ -829,136 +829,78 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </div>
           )}
 
-          {/* Recent & Trending Searches (Matching Phone Layout Exactly) */}
+          {/* Trending Video Reviews Grid (Recent Searches completely removed per user request) */}
           {!query.trim() && (
-            <div className="w-full max-w-xl mt-6 space-y-5 text-left animate-in fade-in duration-200">
-              {/* 1. Recent Searches */}
-              {recentSearches.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="text-zinc-400 text-sm font-bold">{t("search.recentSearches", "Recent Searches")}</h3>
-                    <button
-                      type="button"
-                      onClick={clearRecentSearches}
-                      className="text-xs text-zinc-500 hover:text-white font-medium cursor-pointer transition-colors"
+            <div className="w-full max-w-4xl mt-8 sm:mt-10 space-y-4 text-left animate-in fade-in duration-200">
+              <div className="flex items-center justify-between w-full px-1">
+                <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
+                  Trending Video Reviews
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (videos.length > 0) onSelectVideo(videos[0].id);
+                  }}
+                  className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 hover:text-white uppercase transition-colors cursor-pointer"
+                >
+                  View All
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                {videos.slice(0, 8).map((video) => {
+                  const bName = video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
+                  const aName = video.author?.firstName || video.author?.name?.split(" ")[0] || video.authorName || "Reviewer";
+                  const rating = typeof video.rating === "number" ? video.rating : 5.0;
+                  const thumb = video.thumbnailUrl;
+
+                  return (
+                    <div
+                      key={video.id}
+                      onClick={() => onSelectVideo(video.id)}
+                      className="relative aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                     >
-                      {t("common.clear", "Clear")}
-                    </button>
-                  </div>
-                  <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
-                    {recentSearches.map((term, idx) => {
-                      const place = findMatchingPlace(term);
-                      const cleanUrl = getCleanDomainUrl(place || term) || (isValidDomainUrl(term) ? extractCleanDomain(term) : "");
-                      const title = place?.name 
-                        || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-                        || (cleanUrl ? formatBusinessName(cleanUrl) : formatBusinessName(term));
-                      const logoUrl = getItemLogoUrl(term, place) || place?.logoUrl || place?.avatarUrl;
-
-                      return (
-                        <div
-                          key={`recent-${idx}`}
-                          onClick={() => {
-                            if (place) {
-                              if (onOpenPlace) onOpenPlace(place.id);
-                            } else {
-                              setQuery(cleanUrl || term);
-                              handleSearch(undefined, cleanUrl || term, title);
-                            }
-                          }}
-                          className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
-                        >
-                          <div className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
-                            <CopoBrandLogo
-                              domain={cleanUrl || place?.brandDomain || term}
-                              name={title}
-                              website={place?.website || (cleanUrl ? `https://${cleanUrl}` : "")}
-                              logoUrl={logoUrl}
-                              bannerUrl={place?.bannerUrl || place?.ogImage}
-                              className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
-                              imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-                              fallbackTextClassName="font-extrabold text-xs text-zinc-950 uppercase"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
-                              {title}
-                            </div>
-                            {cleanUrl && cleanUrl.toLowerCase() !== title.toLowerCase() ? (
-                              <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
-                                <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
-                                <span>{cleanUrl.toLowerCase()}</span>
-                              </div>
-                            ) : null}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => removeRecentSearch(term, e)}
-                            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800/80 transition-colors shrink-0 ml-auto"
-                            title={t("common.delete", "Remove search")}
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                      {thumb ? (
+                        <img
+                          src={thumb}
+                          alt={`${bName} review by ${aName}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center">
+                          <Building2 className="w-8 h-8 text-zinc-700" />
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                      )}
 
-              {/* 2. Trending Searches */}
-              <div className="space-y-2">
-                <div className="px-1">
-                  <h3 className="text-zinc-400 text-sm font-bold">{t("search.trendingSearches", "Trending Searches")}</h3>
-                </div>
-                <div className="flex flex-col divide-y divide-zinc-900/80 bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden">
-                  {trending.map((place) => {
-                    const cleanUrl = getCleanDomainUrl(place) || extractCleanDomain(place.brandDomain || place.website || place.id) || "";
-                    const title = place.name || (cleanUrl && KNOWN_OFFICIAL_NAMES[cleanUrl]) || formatBusinessName(cleanUrl || place.id);
-                    const logoUrl = getItemLogoUrl(cleanUrl || place.name, place) || place.logoUrl || place.avatarUrl;
+                      {/* Top-Left Star Badge: ⭐ 5.0 */}
+                      <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
+                          {rating.toFixed(1)}
+                        </span>
+                      </div>
 
-                    return (
-                      <button
-                        key={place.id}
-                        type="button"
-                        onClick={() => {
-                          saveRecentSearch(cleanUrl || title);
-                          if (place.id && !place.id.includes(".")) {
-                            if (onOpenPlace) onOpenPlace(place.id);
-                          } else {
-                            setQuery(cleanUrl || title);
-                            handleSearch(undefined, cleanUrl || title, title);
-                          }
-                        }}
-                        className="flex items-center gap-3.5 p-3 text-left cursor-pointer hover:bg-zinc-800/80 transition-colors group"
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-white p-1 border border-zinc-200/60 shrink-0 shadow-xs flex items-center justify-center overflow-hidden">
-                          <CopoBrandLogo
-                            domain={cleanUrl || place.brandDomain}
-                            name={title}
-                            website={place.website || (cleanUrl ? `https://${cleanUrl}` : "")}
-                            logoUrl={logoUrl}
-                            bannerUrl={place.bannerUrl || place.ogImage}
-                            className="w-full h-full flex items-center justify-center p-0 overflow-hidden bg-transparent"
-                            imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-                            fallbackTextClassName="font-extrabold text-xs text-zinc-950 uppercase"
-                          />
+                      {/* Centered Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-white text-[15px] font-bold tracking-tight truncate group-hover:text-zinc-200 transition-colors">
-                            {title}
-                          </div>
-                          {cleanUrl ? (
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-400 truncate mt-0.5 font-medium">
-                              <Globe className="w-2.5 h-2.5 text-zinc-500 shrink-0" />
-                              <span>{cleanUrl.toLowerCase()}</span>
-                            </div>
-                          ) : null}
+                      </div>
+
+                      {/* Bottom Dark Gradient Scrim: Business Name & "by [Creator]" */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
+                        <div className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
+                          {bName}
                         </div>
-                        <TrendingUp className="w-4 h-4 text-zinc-500 ml-auto shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    );
-                  })}
-                </div>
+                        <div className="text-zinc-400 text-[11px] sm:text-xs font-medium truncate mt-0.5">
+                          by {aName}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
