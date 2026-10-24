@@ -96,141 +96,59 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
   return (
     <div className={`w-full relative ${className}`} ref={containerRef}>
       <form onSubmit={handleSubmit} className="w-full">
-        
-        {/* ========================================================================= */}
-        {/* Desktop View (>= 640px) - Luxury Glassmorphic Unified Search Bar          */}
-        {/* ========================================================================= */}
-        <div className="flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
-            <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
-            <input
-              ref={bizInputRef}
-              type="text"
-              dir="auto"
-              value={businessName}
-              onChange={(e) => {
-                const val = e.target.value;
-                setBusinessName(val);
-                if (onQueryChange) {
-                  onQueryChange(val);
-                }
-                if (val.trim()) {
-                  setShowSuggestions(true);
-                } else {
-                  setShowSuggestions(false);
-                }
-              }}
-              onFocus={() => {
-                if (onQueryChange) {
-                  onQueryChange(businessName);
-                }
+        <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
+          <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
+          <input
+            ref={bizInputRef}
+            type="text"
+            dir="auto"
+            enterKeyHint="search"
+            value={businessName}
+            onChange={(e) => {
+              const val = e.target.value;
+              setBusinessName(val);
+              if (onQueryChange) {
+                onQueryChange(val);
+              }
+              if (val.trim()) {
                 setShowSuggestions(true);
-              }}
-              placeholder={t("search.placeholder", "Search any business, service, or place...")}
-              className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
-              autoFocus={autoFocus}
-            />
-            {/* Right Side: Spinner, Clear, Action Button or Shortcut */}
-            <div className="flex items-center gap-1.5 shrink-0 ml-1">
-              {isSearching && (
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-400 pointer-events-none" />
-              )}
-              {!isSearching && businessName ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBusinessName("");
-                      setShowSuggestions(false);
-                      if (onQueryChange) {
-                        onQueryChange("");
-                      }
-                      bizInputRef.current?.focus();
-                    }}
-                    className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                    title={t("common.clear", "Clear")}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
-                  >
-                    <span>Search</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              ) : (
-                <div className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-400 pointer-events-none">
-                  <span className="text-xs">⌘</span>
-                  <span>K</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-        {/* ========================================================================= */}
-        {/* Mobile View (< 640px) - Clean Rounded Pill Search Bar                      */}
-        {/* ========================================================================= */}
-        <div className="flex sm:hidden items-center w-full">
-          <div className="w-full h-12 bg-zinc-900 border border-zinc-800 rounded-full px-4 flex items-center gap-2.5 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-white/10 transition-all shadow-inner relative">
-            <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0 pointer-events-none" />
-            
-            <input
-              ref={mobileBizInputRef}
-              type="text"
-              dir="auto"
-              enterKeyHint="search"
-              value={businessName}
-              onChange={(e) => {
-                const val = e.target.value;
-                setBusinessName(val);
-                if (onQueryChange) {
-                  onQueryChange(val);
-                }
-                if (val.trim()) {
-                  setShowSuggestions(true);
-                } else {
-                  setShowSuggestions(false);
-                }
-              }}
-              onFocus={() => {
-                if (onQueryChange) {
-                  onQueryChange(businessName);
-                }
+              } else {
+                setShowSuggestions(false);
+              }
+            }}
+            onFocus={() => {
+              if (onQueryChange) {
+                onQueryChange(businessName);
+              }
+              if (businessName.trim()) {
                 setShowSuggestions(true);
-              }}
-              placeholder={t("search.placeholder", "Search any business, service, or place...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-1 truncate"
-              autoFocus={autoFocus}
-            />
-
-            {isSearching && (
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-400 shrink-0" />
+              }
+            }}
+            placeholder={t("search.placeholder", "Search any business, service, or place...")}
+            className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
+            autoFocus={autoFocus}
+          />
+          {/* Right Side: Subtle Spinner / Clear Button */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-1">
+            {(isSearching || isLoadingSuggest) && (
+              <Loader2 className="w-4 h-4 text-zinc-400 animate-spin pointer-events-none" />
             )}
-            {!isSearching && businessName && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBusinessName("");
-                    setShowSuggestions(false);
-                    if (onQueryChange) {
-                      onQueryChange("");
-                    }
-                    mobileBizInputRef.current?.focus();
-                  }}
-                  className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                  title={t("common.clear", "Clear")}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <button
-                  type="submit"
-                  className="p-1 px-2.5 rounded-full bg-white text-zinc-950 font-bold text-xs shrink-0 cursor-pointer flex items-center gap-0.5 shadow-sm"
-                >
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {businessName.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBusinessName("");
+                  setShowSuggestions(false);
+                  if (onQueryChange) {
+                    onQueryChange("");
+                  }
+                  bizInputRef.current?.focus();
+                }}
+                className="p-1 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition-colors cursor-pointer"
+                title={t("common.clear", "Clear")}
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
         </div>

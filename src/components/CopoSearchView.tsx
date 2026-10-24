@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor } from "../utils/placeUtils";
+import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
@@ -47,6 +48,35 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Active trending videos (matching CopoHomePage exactly)
+  const trendingVideos = useMemo(() => {
+    if (!Array.isArray(videos)) return [];
+    const seenPlaces = new Set<string>();
+    const filtered: VideoReview[] = [];
+    const sorted = [...videos].sort((a, b) => {
+      const aScore = (a.rating || 5) * 10 + (a.thumbnailUrl ? 5 : 0) + (a.caption ? 3 : 0);
+      const bScore = (b.rating || 5) * 10 + (b.thumbnailUrl ? 5 : 0) + (b.caption ? 3 : 0);
+      return bScore - aScore;
+    });
+    for (const v of sorted) {
+      if (!v || !v.id) continue;
+      const pKey = (v.placeName || v.placeId || v.businessName || "").toLowerCase().trim();
+      if (!seenPlaces.has(pKey)) {
+        seenPlaces.add(pKey);
+        filtered.push(v);
+      }
+    }
+    return filtered.length > 0 ? filtered : sorted.slice(0, 10);
+  }, [videos]);
+
+  const scrollCarousel = (direction: "left" | "right") => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === "left" ? -400 : 400;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
@@ -783,27 +813,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const totalReviewsCount = placeVideos.length;
 
   return (
-    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center select-none ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))]' : 'p-6 pt-8 md:pt-12 pb-[calc(env(safe-area-inset-bottom,16px)+88px)]'}`}>
+    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none scroll-smooth ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))] items-center' : searchedPlace ? 'p-6 pt-8 md:pt-12 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] items-center' : 'pb-[calc(env(safe-area-inset-bottom,16px)+95px)] md:pb-12'}`}>
       {!searchedPlace ? (
-        <div className={`w-full max-w-xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-2' : 'mt-4 md:mt-8'}`}>
-          {/* Title & Subtitle */}
+        <main className={isMobileModal ? "w-full max-w-xl flex flex-col items-center mt-2" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-5 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center"}>
+          {/* 2. Hero Copy - Identical to CopoHomePage */}
           {!isMobileModal && (
-            <>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight text-center mb-3 leading-[1.12]">
+            <div className="w-full text-center max-w-2xl mx-auto mb-4 xs:mb-5 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
+              <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
                 <span className="block">See the Truth</span>
-                <span className="block mt-1">Before You Decide</span>
+                <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
               </h1>
-              
-              <p className="text-zinc-400 text-sm sm:text-base md:text-lg text-center max-w-lg mb-8 leading-relaxed font-normal px-4">
-                Watch authentic video reviews of any place, product, or service—or record your own.
+              <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
+                Watch authentic video reviews of any place, product, or service, or record your own.
               </p>
-            </>
+            </div>
           )}
 
-          {/* Loading indicator removed for premium clean UI */}
-
+          {/* 3. Search Component - Identical width & spacing to CopoHomePage */}
           {!hideSearchBar && (
-            <div className="w-full max-w-xl px-2 sm:px-0 relative" ref={dropdownRef}>
+            <div className="w-full max-w-2xl relative mx-auto mb-7 xs:mb-9 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
               <CopoLocationSearchBar
                 initialQuery={query}
                 isSearching={isSearching}
@@ -830,17 +858,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </div>
           )}
 
-          {/* Trending Video Reviews Grid (Recent Searches completely removed per user request) */}
+          {/* 4. Trending Video Reviews Carousel - Identical to CopoHomePage */}
           {!query.trim() && (
-            <div className="w-full max-w-4xl mt-8 sm:mt-10 space-y-4 text-left animate-in fade-in duration-200">
-              <div className="flex items-center justify-between w-full px-1">
+            <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4">
+              <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
                 <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
                   Trending Video Reviews
                 </h2>
                 <button
                   type="button"
                   onClick={() => {
-                    if (videos.length > 0) onSelectVideo(videos[0].id);
+                    if (trendingVideos.length > 0) onSelectVideo(trendingVideos[0].id);
                   }}
                   className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 hover:text-white uppercase transition-colors cursor-pointer"
                 >
@@ -848,64 +876,111 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                {videos.slice(0, 8).map((video) => {
-                  const bName = video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
-                  const aName = video.author?.firstName || video.author?.name?.split(" ")[0] || video.authorName || "Reviewer";
-                  const rating = typeof video.rating === "number" ? video.rating : 5.0;
-                  const thumb = video.thumbnailUrl;
-
-                  return (
-                    <div
-                      key={video.id}
-                      onClick={() => onSelectVideo(video.id)}
-                      className="relative aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+              <div className="relative group/carousel">
+                {/* Desktop Carousel Navigation Arrows */}
+                {trendingVideos.length > 4 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => scrollCarousel("left")}
+                      className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 items-center justify-center text-white shadow-2xl opacity-80 hover:opacity-100 transition-all z-20 cursor-pointer active:scale-95"
+                      aria-label="Previous videos"
                     >
-                      {thumb ? (
-                        <img
-                          src={thumb}
-                          alt={`${bName} review by ${aName}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center">
-                          <Building2 className="w-8 h-8 text-zinc-700" />
-                        </div>
-                      )}
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollCarousel("right")}
+                      className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 items-center justify-center text-white shadow-2xl opacity-80 hover:opacity-100 transition-all z-20 cursor-pointer active:scale-95"
+                      aria-label="Next videos"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
 
-                      {/* Top-Left Star Badge: ⭐ 5.0 */}
-                      <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
-                          {rating.toFixed(1)}
-                        </span>
-                      </div>
+                {/* Carousel Wrapper: Single horizontal row on desktop and mobile */}
+                <div
+                  ref={carouselRef}
+                  className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
+                >
+                  {trendingVideos.slice(0, 10).map((video) => {
+                    const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
+                    const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
 
-                      {/* Centered Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                        </div>
-                      </div>
+                    const author = resolveSafeAuthor(video, null);
+                    const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
+                    const rating = typeof video.rating === "number" ? video.rating : 5.0;
+                    const posterUrl = resolveVideoPosterUrl(video);
 
-                      {/* Bottom Dark Gradient Scrim: Business Name & "by [Creator]" */}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
-                        <div className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
-                          {bName}
+                    return (
+                      <div
+                        key={video.id}
+                        onClick={() => onSelectVideo(video.id)}
+                        className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                      >
+                        {/* Video Thumbnail */}
+                        {posterUrl ? (
+                          <img
+                            src={posterUrl}
+                            alt={`${businessName} review - ${creatorFullName}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                            loading="lazy"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
+                                target.dataset.triedProxy = "true";
+                                target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
+                              } else if (!target.dataset.triedBanner && video.placeBannerUrl) {
+                                target.dataset.triedBanner = "true";
+                                target.src = video.placeBannerUrl;
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center">
+                            <Building2 className="w-8 h-8 text-zinc-700" />
+                          </div>
+                        )}
+
+                        {/* Top-Left Star Badge: ⭐ 5.0 */}
+                        <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
+                            {rating.toFixed(1)}
+                          </span>
                         </div>
-                        <div className="text-zinc-400 text-[11px] sm:text-xs font-medium truncate mt-0.5">
-                          by {aName}
+
+                        {/* Centered Play Button */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
+                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                          </div>
+                        </div>
+
+                        {/* Clean Bottom Scrim: Business Name & Creator Full Name */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-10 pb-3 px-2.5 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-white text-[13px] sm:text-base font-bold tracking-tight truncate leading-tight">
+                              {businessName}
+                            </span>
+                            <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                          </div>
+                          <div className="text-white/85 text-[10.5px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
+                            <span className="truncate text-white/85">{creatorFullName}</span>
+                            {author?.isVerified !== false && (
+                              <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </section>
           )}
-        </div>
+        </main>
       ) : (
         <div className="w-full max-w-4xl flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
           {!isMobileModal && !hideSearchBar && (
