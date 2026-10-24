@@ -674,17 +674,15 @@ export function App() {
   const [activeShareVideo, setActiveShareVideo] = useState<VideoReview | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(() => {
-    try {
-      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
-      return (pathname === "/search" || pathname.startsWith("/search/")) && typeof window !== "undefined" && window.innerWidth < 768;
-    } catch {
-      return false;
-    }
-  });
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const handleOpenSearchModal = () => {
     setSearchResetKey((prev) => prev + 1);
-    setIsSearchModalOpen(true);
+    setIsSearchModalOpen(false);
+    setSelectedPlaceIdForDrawer(null);
+    setSelectedAuthorForDrawer(null);
+    setIsWatchingVideo(false);
+    setFullscreenFeedContext(null);
+    setActiveSection("search");
   };
   const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState<boolean>(false);
   const [isMobileNavDrawerOpen, setIsMobileNavDrawerOpen] = useState<boolean>(false);
@@ -7640,9 +7638,13 @@ export function App() {
           onSelectSection={(section) => {
             if (section === "search") {
               setSearchResetKey((prev) => prev + 1);
+              setIsWatchingVideo(false);
+              setFullscreenFeedContext(null);
             }
             if (section === "record_review") {
               setRecordReviewResetKey((prev) => prev + 1);
+              setIsWatchingVideo(false);
+              setFullscreenFeedContext(null);
             }
              if (section === "home" || section === "more") {
               setSelectedPlaceIdForDrawer(null);
@@ -7654,6 +7656,8 @@ export function App() {
                     window.history.replaceState(null, "", buildLocalizedPath("/", language));
                   } catch (e) {}
                 }
+                setIsWatchingVideo(false);
+                setFullscreenFeedContext(null);
                 setCurrentVideoIndex(0);
                 setActiveSubTab("discover");
                 setActiveSection("home");
@@ -7900,49 +7904,67 @@ export function App() {
           />
         ) : !isPlaceView && !isCreatorView && (
           <>
-            {/* Search View (Desktop Live Search Places, Businesses, Addresses & Videos) */}
+            {/* Search View (100% identical to CopoHomePage on Desktop and Mobile) */}
             {activeSection === "search" && (
-              <CopoSearchView
-                key={searchResetKey}
+              <CopoHomePage
+                key={`search-${searchResetKey}`}
                 places={places}
                 videos={videos}
-                savedPlaceIds={savedPlaceIds}
-                onSelectVideo={handleSelectVideoById}
+                onSelectVideo={(vidId) => {
+                  setIsWatchingVideo(true);
+                  handleSelectVideoById(vidId);
+                }}
                 onOpenPlace={handleOpenPlaceDrawer}
-                onToggleGrabPlace={handleToggleGrabPlace}
-                onRecordForPlace={(place) => {
+                onAddPlace={handleUpdatePlace}
+                onOpenCreator={handleOpenCreatorDrawer}
+                onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+                onViewAll={() => {
+                  setIsWatchingVideo(true);
+                  if (videos.length > 0) handleSelectVideoById(videos[0].id);
+                }}
+                onRecordReview={(place) => {
                   if (!currentUser) {
                     setAuthIntent('record');
-                    setPreselectedPlaceForRecording(place);
+                    setPreselectedPlaceForRecording(place || null);
                     setIsAuthModalOpen(true);
                   } else {
-                    setPreselectedPlaceForRecording(place);
+                    setPreselectedPlaceForRecording(place || null);
                     setIsCreateModalOpen(true);
                   }
                 }}
-                onAddPlace={handleUpdatePlace}
+                onOpenLegal={handleOpenLegal}
+                currentUser={currentUser}
               />
             )}
             {activeSection === "record_review" && (
-              <CopoSearchView
-                key={recordReviewResetKey}
+              <CopoHomePage
+                key={`record-review-${recordReviewResetKey}`}
                 places={places}
                 videos={videos}
-                savedPlaceIds={savedPlaceIds}
-                onSelectVideo={handleSelectVideoById}
+                onSelectVideo={(vidId) => {
+                  setIsWatchingVideo(true);
+                  handleSelectVideoById(vidId);
+                }}
                 onOpenPlace={handleOpenPlaceDrawer}
-                onToggleGrabPlace={handleToggleGrabPlace}
-                onRecordForPlace={(place) => {
+                onAddPlace={handleUpdatePlace}
+                onOpenCreator={handleOpenCreatorDrawer}
+                onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+                onViewAll={() => {
+                  setIsWatchingVideo(true);
+                  if (videos.length > 0) handleSelectVideoById(videos[0].id);
+                }}
+                onRecordReview={(place) => {
                   if (!currentUser) {
                     setAuthIntent('record');
-                    setPreselectedPlaceForRecording(place);
+                    setPreselectedPlaceForRecording(place || null);
                     setIsAuthModalOpen(true);
                   } else {
-                    setPreselectedPlaceForRecording(place);
+                    setPreselectedPlaceForRecording(place || null);
                     setIsCreateModalOpen(true);
                   }
                 }}
-                onAddPlace={handleUpdatePlace}
+                onOpenLegal={handleOpenLegal}
+                currentUser={currentUser}
               />
             )}
 
@@ -8556,6 +8578,8 @@ export function App() {
           if (section === "home") {
             setSelectedPlaceIdForDrawer(null);
             setSelectedAuthorForDrawer(null);
+            setIsWatchingVideo(false);
+            setFullscreenFeedContext(null);
             setCurrentVideoIndex(0);
             setActiveSubTab("discover");
             setActiveSection("home");
@@ -8650,6 +8674,8 @@ export function App() {
             if (section === "home") {
               setSelectedPlaceIdForDrawer(null);
               setSelectedAuthorForDrawer(null);
+              setIsWatchingVideo(false);
+              setFullscreenFeedContext(null);
               setCurrentVideoIndex(0);
               setActiveSubTab("discover");
               setActiveSection("home");
