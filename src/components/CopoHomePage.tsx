@@ -255,7 +255,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+115px)] md:pb-12 scroll-smooth">
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+95px)] md:pb-12 scroll-smooth">
       {/* 1. Header (Mobile Only) - Hamburger on Left, Official Dark Mode Icon & 'Yoouz' Wordmark, Balanced Right Spacer */}
       <header className="w-full flex md:hidden items-center justify-between px-4 pt-3.5 pb-2.5 shrink-0 select-none z-20 border-b border-zinc-900/60 bg-zinc-950/80 backdrop-blur-md sticky top-0">
         <button
@@ -293,7 +293,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
           </h1>
           <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
-            Watch authentic video reviews of any place, product, or service—or record your own.
+            Watch authentic video reviews of any place, product, or service, or record your own.
           </p>
         </div>
 

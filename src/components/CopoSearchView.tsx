@@ -1116,37 +1116,60 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       </div>
 
           {placeVideos.length > 0 && (
-            <div className="w-full">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Play className="w-5 h-5 text-white fill-current" />
-                <span>{t("search.reviews", "Reviews")} ({placeVideos.length})</span>
+            <div className="w-full mt-8">
+              <h3 className="text-sm font-bold tracking-wider text-zinc-400 uppercase mb-4 px-1">
+                {t("search.reviews", "Video Reviews")} ({placeVideos.length})
               </h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {placeVideos.map(video => (
-                  <div 
-                    key={video.id}
-                    onClick={() => onSelectVideo(video.id)}
-                    className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group bg-zinc-900 border border-zinc-800"
-                  >
-                    <CopoVideoThumbnail
-                      video={video}
-                      alt={video.caption || "Thumbnail"}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 pointer-events-none"
-                    />
-                    {/* Top-Left Star Badge */}
-                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[10px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10 z-10">
-                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                      <span>{video.rating ? video.rating.toFixed(1) : "5.0"}</span>
+                {placeVideos.map(video => {
+                  const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
+                  const bName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
+                  const rating = typeof video.rating === "number" ? video.rating : 5.0;
+                  const posterUrl = video.thumbnailUrl || video.videoUrl || "";
+
+                  return (
+                    <div 
+                      key={video.id}
+                      onClick={() => onSelectVideo(video.id)}
+                      className="relative aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+                    >
+                      <CopoVideoThumbnail
+                        video={video}
+                        alt={video.caption || "Thumbnail"}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                      />
+                      {/* Top-Left Star Badge: ⭐ 5.0 */}
+                      <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
+                          {rating.toFixed(1)}
+                        </span>
+                      </div>
+
+                      {/* Centered Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Clean Bottom Scrim: Business Name & Creator Name */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
+                            {bName}
+                          </span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                        </div>
+                        <div className="text-white/85 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
+                          <span className="truncate text-white/85">{video.authorName || "Reviewer"}</span>
+                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
+                        </div>
+                      </div>
                     </div>
-                    {/* Bottom Gradient Overlay & Meta */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex flex-col justify-end p-3 pointer-events-none">
-                      <span className="text-xs text-white font-bold drop-shadow-md leading-tight line-clamp-2 truncate">
-                        {video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
