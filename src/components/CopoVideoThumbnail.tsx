@@ -56,7 +56,6 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
         loading="eager"
         decoding="async"
         fetchPriority="high"
-        referrerPolicy="no-referrer"
         onLoad={() => setIsLoaded(true)}
         onError={() => {
           if (errorStage < 2) {
@@ -64,12 +63,6 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
           }
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none opacity-80" />
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] font-semibold text-white/90 pointer-events-none">
-        <span className="truncate bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
-          {video.placeName || "Review"}
-        </span>
-      </div>
     </div>
   );
 };

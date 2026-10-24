@@ -1400,13 +1400,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                             <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
                           </div>
-                          {/* Bottom Meta Info (2-Line Domain + Views - Clean & Premium) */}
-                          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                            <span className="text-[9.5px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
-                              {getDisplayUrlAsDomain(v)}
+                          {/* Bottom Meta Info - Business Name & Views */}
+                          <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
+                            <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
+                              {v.placeName || formatBusinessName(v.placeId) || "Business"}
                             </span>
-                            <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
-                              <Play className="w-2.5 h-2.5 fill-white shrink-0" />
+                            <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
+                              <Play className="w-2.5 h-2.5 fill-current shrink-0" />
                               <span>{formattedViews}</span>
                             </div>
                           </div>
@@ -1472,13 +1472,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <Trash2 className="w-2.5 h-2.5" />
                           </button>
                         )}
-                        {/* Bottom Meta Info (2-Line Domain + Views - Clean & Premium) */}
-                        <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                          <span className="text-[9.5px] text-zinc-100 font-bold drop-shadow-md leading-[1.15] line-clamp-2 break-all">
-                            {getDisplayUrlAsDomain(v)}
+                        {/* Bottom Meta Info - Business Name & Views */}
+                        <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
+                          <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
+                            {v.placeName || formatBusinessName(v.placeId) || "Business"}
                           </span>
-                          <div className="flex items-center gap-1 text-white text-[10px] font-black drop-shadow-md">
-                            <Play className="w-2.5 h-2.5 fill-white shrink-0" />
+                          <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
+                            <Play className="w-2.5 h-2.5 fill-current shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
                         </div>
