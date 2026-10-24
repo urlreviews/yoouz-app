@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, Loader2, CheckCircle, Globe } from "lucide-react";
+import { Search, X, Loader2, CheckCircle, Globe, ArrowRight } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { extractCleanDomain, isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
@@ -100,11 +100,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         {/* ========================================================================= */}
         {/* Desktop View (>= 640px) - Luxury Glassmorphic Unified Search Bar          */}
         {/* ========================================================================= */}
-        {/* ========================================================================= */}
-        {/* Desktop View (>= 640px) - Luxury Glassmorphic Unified Search Bar          */}
-        {/* ========================================================================= */}
-        <div className="hidden sm:flex items-center bg-zinc-950/90 backdrop-blur-2xl border border-zinc-800 hover:border-zinc-700 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-white/10 rounded-full px-4 py-2.5 shadow-2xl transition-all duration-300 ring-1 ring-white/5 w-full">
-          <div className="flex items-center relative w-full px-2 py-1">
+        <div className="hidden sm:flex items-center bg-zinc-950/90 backdrop-blur-2xl border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 py-2.5 shadow-2xl transition-all duration-200 ring-1 ring-white/5 w-full">
+          <div className="flex items-center relative w-full px-1">
             <Search className="w-5 h-5 shrink-0 mr-3 text-zinc-400 focus-within:text-white transition-colors pointer-events-none" />
             <input
               ref={bizInputRef}
@@ -130,32 +127,46 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setShowSuggestions(true);
               }}
               placeholder={t("search.placeholder", "Search business...")}
-              className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-8"
+              className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-2"
               autoFocus={autoFocus}
             />
-            {isSearching && (
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-400 absolute right-2 pointer-events-none" />
-            )}
-            {!isSearching && businessName && (
-              <button
-                type="button"
-                onClick={() => {
-                  setBusinessName("");
-                  setShowSuggestions(false);
-                  if (onQueryChange) {
-                    onQueryChange("");
-                  }
-                  bizInputRef.current?.focus();
-                }}
-                className="absolute right-1 p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                title={t("common.clear", "Clear")}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-            {!isSearching && !businessName && (
-              <Search className="w-4 h-4 text-zinc-600 absolute right-2 pointer-events-none" />
-            )}
+            {/* Right Side: Spinner, Clear, Action Button or Shortcut */}
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              {isSearching && (
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-400 pointer-events-none" />
+              )}
+              {!isSearching && businessName ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBusinessName("");
+                      setShowSuggestions(false);
+                      if (onQueryChange) {
+                        onQueryChange("");
+                      }
+                      bizInputRef.current?.focus();
+                    }}
+                    className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
+                    title={t("common.clear", "Clear")}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
+                  >
+                    <span>Search</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              ) : (
+                <div className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-400 pointer-events-none">
+                  <span className="text-xs">⌘</span>
+                  <span>K</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -163,7 +174,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         {/* Mobile View (< 640px) - Clean Rounded Pill Search Bar                      */}
         {/* ========================================================================= */}
         <div className="flex sm:hidden items-center w-full">
-          <div className="w-full h-12 bg-zinc-900 border border-zinc-800 rounded-full px-4 flex items-center gap-3 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-white/10 transition-all shadow-inner relative">
+          <div className="w-full h-12 bg-zinc-900 border border-zinc-800 rounded-full px-4 flex items-center gap-2.5 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-white/10 transition-all shadow-inner relative">
             <Search className="w-4.5 h-4.5 text-zinc-400 shrink-0 pointer-events-none" />
             
             <input
@@ -191,7 +202,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setShowSuggestions(true);
               }}
               placeholder={t("search.placeholder", "Search business...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium pr-7"
+              className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium pr-1"
               autoFocus={autoFocus}
             />
 
@@ -199,24 +210,29 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               <Loader2 className="w-4 h-4 animate-spin text-zinc-400 shrink-0" />
             )}
             {!isSearching && businessName && (
-              <button
-                type="button"
-                onClick={() => {
-                  setBusinessName("");
-                  setShowSuggestions(false);
-                  if (onQueryChange) {
-                    onQueryChange("");
-                  }
-                  mobileBizInputRef.current?.focus();
-                }}
-                className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
-                title={t("common.clear", "Clear")}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-            {!isSearching && !businessName && (
-              <Search className="w-4 h-4 text-zinc-600 shrink-0 pointer-events-none" />
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBusinessName("");
+                    setShowSuggestions(false);
+                    if (onQueryChange) {
+                      onQueryChange("");
+                    }
+                    mobileBizInputRef.current?.focus();
+                  }}
+                  className="p-1 text-zinc-400 hover:text-white active:scale-95 transition-colors cursor-pointer shrink-0 rounded-full hover:bg-zinc-800"
+                  title={t("common.clear", "Clear")}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <button
+                  type="submit"
+                  className="p-1 px-2.5 rounded-full bg-white text-zinc-950 font-bold text-xs shrink-0 cursor-pointer flex items-center gap-0.5 shadow-sm"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -224,7 +240,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
 
       {/* Autocomplete / Live Business Suggestions Dropdown */}
       {!hideDropdown && showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto animate-in fade-in duration-150">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 divide-y divide-zinc-800/80 max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin md:[scrollbar-width:thin] md:scrollbar-thumb-zinc-700/60 hover:md:scrollbar-thumb-zinc-500 md:scrollbar-track-transparent overscroll-contain animate-in fade-in duration-150">
           {suggestions.map((item, idx) => {
             const rawDomain = item.domain || (typeof item === 'string' ? item : (item.brandDomain || item.website || ""));
             let targetDomain = isValidDomainUrl(rawDomain) ? extractCleanDomain(rawDomain) : "";

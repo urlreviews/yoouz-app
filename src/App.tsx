@@ -7843,6 +7843,7 @@ export function App() {
                 setIsCreateModalOpen(true);
               }
             }}
+            onOpenLegal={handleOpenLegal}
             currentUser={currentUser}
           />
         )}
