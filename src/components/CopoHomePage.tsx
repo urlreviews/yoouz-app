@@ -282,10 +282,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-4 sm:pt-8 md:pt-12 flex flex-col items-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-6 sm:pt-10 md:pt-16 lg:pt-20 flex flex-col items-center">
         
         {/* 2. Hero Copy */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-6 sm:mb-8 animate-in fade-in duration-300">
+        <div className="w-full text-center max-w-2xl mx-auto mb-8 sm:mb-10 animate-in fade-in duration-300">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
             See the Truth Before You Buy
           </h1>
@@ -294,8 +294,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component */}
-        <div className="w-full max-w-xl relative mx-auto mb-10 sm:mb-14" ref={dropdownRef}>
+        {/* 3. Search Component - Positioned lower with generous breathing room */}
+        <div className="w-full max-w-xl relative mx-auto mb-12 sm:mb-16" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 py-2.5 sm:py-3 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-3 pointer-events-none" />
@@ -475,19 +475,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
                     </div>
 
-                    {/* Clean Bottom Scrim: Business Name (Prominent White Badge) & Creator Name (Light White Subtle Badge) */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
+                    {/* Clean Bottom Scrim: Single Line Business Name with Verified Badge */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
                           {businessName}
                         </span>
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
-                      </div>
-                      <div className="text-zinc-400 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
-                        <span className="truncate text-zinc-400">{creatorFullName}</span>
-                        {author?.isVerified !== false && (
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-zinc-300 text-zinc-950 shrink-0 inline-block opacity-85" />
-                        )}
                       </div>
                     </div>
                   </div>
