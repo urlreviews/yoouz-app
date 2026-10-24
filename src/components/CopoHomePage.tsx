@@ -419,7 +419,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             {/* Carousel Wrapper: Single horizontal row on desktop and mobile */}
             <div
               ref={carouselRef}
-              className="grid grid-flow-col auto-cols-[calc(46%-6px)] sm:auto-cols-[calc(30%-8px)] md:auto-cols-[calc(25%-12px)] gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory px-0.5 scroll-smooth"
+              className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory px-0.5 scroll-smooth"
             >
               {trendingVideos.slice(0, 10).map((video) => {
                 const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
@@ -434,7 +434,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative h-[275px] sm:h-[315px] md:h-[350px] aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[calc(46%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (
