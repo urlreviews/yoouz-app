@@ -255,9 +255,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+90px)] md:pb-12">
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+85px)] md:pb-12 scroll-smooth">
       {/* 1. Header (Mobile Only) - Hamburger on Left, Official Dark Mode Icon & 'Yoouz' Wordmark, Balanced Right Spacer */}
-      <header className="w-full flex md:hidden items-center justify-between px-3.5 pt-3 pb-2 shrink-0 select-none z-20">
+      <header className="w-full flex md:hidden items-center justify-between px-4 pt-3.5 pb-2.5 shrink-0 select-none z-20 border-b border-zinc-900/60 bg-zinc-950/80 backdrop-blur-md sticky top-0">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -284,21 +284,21 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-2 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-4 xs:pt-6 sm:pt-10 md:pt-16 lg:pt-22 flex flex-col items-center">
         
         {/* 2. Hero Copy */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-4 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
-          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+        <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
+          <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
             <span className="block">See the Truth</span>
             <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
           </h1>
-          <p className="text-zinc-200/90 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-1.5 sm:mt-4 leading-relaxed max-w-xl mx-auto font-normal text-balance">
+          <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
             Watch authentic video reviews of any place, product, or service—or record your own.
           </p>
         </div>
 
         {/* 3. Search Component - Optically centered with balanced breathing room */}
-        <div className="w-full max-w-2xl relative mx-auto mb-5 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
+        <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-7 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
@@ -378,8 +378,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 4. Trending Video Reviews Grid / Carousel */}
-        <section className="w-full relative mt-0 sm:mt-4">
-          <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
+        <section className="w-full relative mt-1 sm:mt-4">
+          <div className="flex items-center justify-between w-full mb-3 sm:mb-4 px-1">
             <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
               Trending Video Reviews
             </h2>
@@ -422,7 +422,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             {/* Carousel Wrapper: Single horizontal row on desktop and mobile */}
             <div
               ref={carouselRef}
-              className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory px-0.5 scroll-smooth"
+              className="flex items-stretch gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
             >
               {trendingVideos.slice(0, 10).map((video) => {
                 const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
@@ -437,7 +437,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative shrink-0 w-[calc(43%-4px)] xs:w-[calc(44%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[160px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[285px] xs:h-[330px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (
@@ -464,7 +464,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     )}
 
                     {/* Top-Left Star Badge: ⭐ 5.0 */}
-                    <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
+                    <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
                         {rating.toFixed(1)}
