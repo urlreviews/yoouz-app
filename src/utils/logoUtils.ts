@@ -1379,27 +1379,8 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
-export function getCategoryThematicBanner(category?: string | null, name?: string | null): string {
-  const text = `${category || ""} ${name || ""}`.toLowerCase();
-  if (text.includes("hotel") || text.includes("resort") || text.includes("stay") || text.includes("lodging") || text.includes("suite")) {
-    return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
-  }
-  if (text.includes("restaurant") || text.includes("dining") || text.includes("food") || text.includes("cafe") || text.includes("coffee") || text.includes("pizza") || text.includes("burger") || text.includes("bakery")) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
-  }
-  if (text.includes("auto") || text.includes("garage") || text.includes("car") || text.includes("repair") || text.includes("mechanic") || text.includes("anhangwagen")) {
-    return "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1200&q=80";
-  }
-  if (text.includes("medical") || text.includes("dental") || text.includes("pharmacy") || text.includes("doctor") || text.includes("health") || text.includes("hospital")) {
-    return "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1200&q=80";
-  }
-  if (text.includes("law") || text.includes("legal") || text.includes("attorney") || text.includes("lawyer") || text.includes("cpa") || text.includes("tax")) {
-    return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=80";
-  }
-  if (text.includes("travel") || text.includes("tour") || text.includes("flight")) {
-    return "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
-  }
-  return "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
+export function getCategoryThematicBanner(_category?: string | null, _name?: string | null): string {
+  return "";
 }
 
 /**
@@ -1436,7 +1417,7 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
     return getProxiedImageUrl(place.ogImage);
   }
 
-  return getCategoryThematicBanner(place.category, place.name);
+  return "";
 }
 
 

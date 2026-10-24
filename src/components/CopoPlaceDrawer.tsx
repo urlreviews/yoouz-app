@@ -465,15 +465,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [rawPlaceVideos, starFilter, reviewSort]);
 
   const drawerDomain = React.useMemo(() => {
-    if (place.brandDomain) return extractCleanDomain(place.brandDomain);
+    if (place.brandDomain) {
+      const d = extractCleanDomain(place.brandDomain);
+      if (d && isValidDomainUrl(d)) return d;
+    }
     if (place.website) {
       const d = extractCleanDomain(place.website);
-      if (d && d.includes(".")) return d;
+      if (d && isValidDomainUrl(d)) return d;
     }
     const cleanFromId = extractCleanDomain(place.id);
-    if (cleanFromId && cleanFromId.includes(".")) return cleanFromId;
+    if (cleanFromId && isValidDomainUrl(cleanFromId)) return cleanFromId;
     const cleanFromName = extractCleanDomain(place.name);
-    if (cleanFromName && cleanFromName.includes(".")) return cleanFromName;
+    if (cleanFromName && isValidDomainUrl(cleanFromName)) return cleanFromName;
     return null;
   }, [place]);
 
@@ -597,7 +600,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const raw = effectiveWebsite || drawerDomain || place.brandDomain || place.website || place.id;
     if (!raw) return null;
     const clean = extractCleanDomain(raw);
-    return clean && isValidDomainUrl(clean) ? clean : (clean || null);
+    return clean && isValidDomainUrl(clean) ? clean : null;
   }, [effectiveWebsite, drawerDomain, place.brandDomain, place.website, place.id]);
 
   // Check if any video review for this place has a high quality banner or logo
@@ -667,7 +670,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.name.toLowerCase().includes("untitled") ||
       place.name.toLowerCase() === "website";
 
-    const isSlugDomain = drawerDomain && !drawerDomain.includes(".");
+    const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 
     const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
     const hasValidLogo = Boolean(
@@ -683,8 +686,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsPhone = !hasGenuinePhone;
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    // If core media (logo & banner) already exists and name is non-generic, do NOT re-enrich on refresh
-    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl));
+    // If core media (logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
+    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl) && !isSlugDomain);
     if (hasCoreMedia && !isGenericName && !isGenericDesc) {
       return;
     }
@@ -728,16 +731,30 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 if (isRealPhoto(resolvedBanner)) {
                   setFetchedBannerUrl(resolvedBanner);
                 }
+                const resolvedDomainClean = (data.domain && isValidDomainUrl(data.domain))
+                  ? extractCleanDomain(data.domain)
+                  : (drawerDomain && isValidDomainUrl(drawerDomain) ? drawerDomain : (place.brandDomain && isValidDomainUrl(place.brandDomain) ? extractCleanDomain(place.brandDomain) : undefined));
+                const isSearchPhraseName = Boolean(
+                  place.name && (
+                    /\s+in\s+/i.test(place.name) ||
+                    place.name.toLowerCase() === (place.id || "").toLowerCase()
+                  )
+                );
+                const resolvedTitle = (data.siteName || data.title) ? formatBusinessName(data.siteName || data.title, resolvedDomainClean) : "";
+                const bestPlaceName = (place as any).selectedName ||
+                  ((!isGenericName && !isSearchPhraseName && place.name) ? place.name : (resolvedTitle || data.title || place.name));
+
                 const updatedPlaceObj = {
                   ...place,
-                  name: (place as any).selectedName || (!isGenericName && place.name ? place.name : (data.title || place.name)),
+                  id: resolvedDomainClean || place.id,
+                  name: bestPlaceName,
                   description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || ""),
-                  address: (data.address && needsLocation) ? data.address : (place.address || data.address || ""),
+                  address: (data.address && (needsLocation || /\b\d+\s*reviews?\b/i.test(place.address || ""))) ? data.address : (place.address || data.address || ""),
                   city: (data.city && (!place.city || place.city === "Online")) ? data.city : (place.city || data.city || ""),
                   country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
                   phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
                   email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
-                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General")) ? data.category : (place.category || data.category || ""),
+                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General" || place.category === "Local Business")) ? data.category : (place.category || data.category || ""),
                   openingHours: data.openingHours || place.openingHours || "",
                   locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
                   lat: data.lat || place.lat || 0,
@@ -746,17 +763,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ogImage: resolvedBanner || place.ogImage || "",
                   logoUrl: resolvedLogo || place.logoUrl || "",
                   avatarUrl: resolvedLogo || place.avatarUrl || "",
-                  brandDomain: place.brandDomain || data.domain || drawerDomain || undefined,
-                  website: place.website || data.url || (data.domain ? `https://${data.domain}` : ""),
+                  brandDomain: resolvedDomainClean || undefined,
+                  website: (place.website && isValidDomainUrl(place.website)) ? place.website : (data.url || (resolvedDomainClean ? `https://${resolvedDomainClean}` : "")),
                   photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
                 };
                 if (onUpdatePlace) {
                   onUpdatePlace(updatedPlaceObj);
                 }
-                // Persist directly to database
+                // Persist directly to database ONLY if we have a valid canonical domain ID
                 try {
-                  const saveTargetId = (place.brandDomain || data.domain || drawerDomain || place.id || "").toLowerCase().trim();
-                  if (saveTargetId) {
+                  const saveTargetId = (resolvedDomainClean || "").toLowerCase().trim();
+                  if (saveTargetId && isValidDomainUrl(saveTargetId)) {
                     fetch(`/api/nosql/places/${encodeURIComponent(saveTargetId)}`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -816,8 +833,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     cleanFetchedBanner ||
     activeBanner ||
     cleanReviewBanner ||
-    (isYoouzPlace ? YOOUZ_CDN_BANNER : "") ||
-    getCategoryThematicBanner(place.category, place.name);
+    (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
 
   // Check if photos are authentic place photos
   const allPhotos = React.useMemo(() => {
@@ -1334,25 +1350,31 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {/* Overlapping Business Logo - Clean white squircle frame matching video player & search */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
-          <CopoBrandLogo
-            key={`logo-${place.id}`}
-            domain={drawerDomain || place.brandDomain}
-            name={displayedPlaceName}
-            website={place.website}
-            logoUrl={primaryLogoUrl || place.logoUrl}
-            bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-            className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
-            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-            onLoad={() => setLogoLoaded(true)}
-          />
-        </div>
+        {/* Overlapping Business Logo - Only render when an authentic logo is available */}
+        {hasAuthenticLogo && !logoError && (
+          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
+            <CopoBrandLogo
+              key={`logo-${place.id}-${primaryLogoUrl || place.logoUrl || ""}`}
+              domain={drawerDomain || undefined}
+              name={displayedPlaceName}
+              website={effectiveWebsite}
+              logoUrl={primaryLogoUrl || place.logoUrl}
+              bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+              className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+              imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+              fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+              onLoad={() => {
+                setLogoLoaded(true);
+                setLogoError(false);
+              }}
+              onError={() => setLogoError(true)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className="px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 pt-12 sm:pt-16">
+      <div className={`px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 ${hasAuthenticLogo && !logoError ? "pt-12 sm:pt-16" : "pt-5 sm:pt-6"}`}>
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">

@@ -4317,7 +4317,7 @@ export function App() {
           found = {
             id: searchId,
             name: isRealDomain ? formatBusinessName(domain) : searchId,
-            brandDomain: domain || undefined,
+            brandDomain: isRealDomain ? domain : undefined,
             category: isRealDomain ? "Verified Business" : "Local Business",
             categoryType: "all",
             address: "",
@@ -4459,10 +4459,16 @@ export function App() {
           });
         }
 
-        if (!hasCoreMedia) {
-          // If not in database or missing rich banner/contact data, enrich immediately from /api/url-metadata BEFORE review recording
-          const targetUrl = (fetchedPlace && fetchedPlace.website) || cleanId;
-          fetch(`/api/url-metadata?url=${encodeURIComponent(targetUrl)}`)
+        if (!hasCoreMedia || !isValidDomainUrl(cleanId)) {
+          // If not in database or missing rich banner/contact data or non-domain query, enrich immediately from /api/url-metadata
+          const validFetchedWeb = fetchedPlace?.website && isValidDomainUrl(fetchedPlace.website) ? fetchedPlace.website : "";
+          const validFetchedDom = fetchedPlace?.brandDomain && isValidDomainUrl(fetchedPlace.brandDomain) ? fetchedPlace.brandDomain : "";
+          const targetDomainOrUrl = validFetchedWeb || validFetchedDom || (isValidDomainUrl(cleanId) ? cleanId : "");
+          const metadataEndpoint = targetDomainOrUrl
+            ? `/api/url-metadata?url=${encodeURIComponent(targetDomainOrUrl)}`
+            : `/api/url-metadata?q=${encodeURIComponent((fetchedPlace && fetchedPlace.name) || cleanId)}`;
+
+          fetch(metadataEndpoint)
             .then(r => r.ok ? r.json() : null)
             .then(metaData => {
               if (metaData && (metaData.title || metaData.domain)) {
@@ -4472,9 +4478,10 @@ export function App() {
                   return true;
                 };
                 const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
-                const fetchedLogo = existingValidLogo || (isValidLogo(metaData.logo) ? metaData.logo : (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
-                const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (metaData.domain && KNOWN_OFFICIAL_NAMES[metaData.domain]);
-                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, metaData.domain || cleanId) || cleanId));
+                const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
+                const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]);
+                const isFetchedNameSearchQuery = Boolean(fetchedPlace?.name && (/\s+in\s+/i.test(fetchedPlace.name) || fetchedPlace.name.toLowerCase() === cleanId.toLowerCase()));
+                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, resolvedDom || cleanId) || cleanId));
                 const cleanBanner = (url?: string | null): string => {
                   if (!url || typeof url !== "string") return "";
                   const u = url.toLowerCase();
@@ -4487,13 +4494,15 @@ export function App() {
                   : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
                 const effectiveLogoCandidate = (isValidLogo(metaData.logo)) 
                   ? metaData.logo 
-                  : (existingValidLogo || (getCleanLogoUrl(null, metaData.domain || cleanId) || ''));
+                  : (existingValidLogo || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom) || '') : ''));
+                const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
+                const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {
-                  id: (metaData.domain || cleanId).toLowerCase(),
+                  id: canonicalId,
                   name: preservedName,
                   category: (metaData.category && metaData.category !== "Website") ? metaData.category : (fetchedPlace?.category || "Website"),
                   categoryType: "all",
-                  address: metaData.address || fetchedPlace?.address || "",
+                  address: metaData.address || (fetchedPlace?.address && !/\b\d+\s*reviews?\b/i.test(fetchedPlace.address) ? fetchedPlace.address : ""),
                   city: (metaData.city && metaData.city !== "Online") ? metaData.city : (fetchedPlace?.city || "Online"),
                   country: metaData.country || fetchedPlace?.country || "",
                   lat: metaData.lat || fetchedPlace?.lat || 0,
@@ -4510,7 +4519,7 @@ export function App() {
                   isOpen: true,
                   phone: metaData.phone || fetchedPlace?.phone || "",
                   email: metaData.email || fetchedPlace?.email || "",
-                  website: metaData.url || fetchedPlace?.website || `https://${cleanId}`,
+                  website: metaData.url || validFetchedWeb || (isCanonicalValidDomain ? `https://${canonicalId}` : ""),
                   priceRange: "N/A",
                   plusCode: "",
                   description: metaData.description || fetchedPlace?.description || "",
@@ -4518,27 +4527,35 @@ export function App() {
                   amenities: [],
                   topDishes: [],
                   locations: (metaData.locations && metaData.locations.length > 0) ? metaData.locations : (fetchedPlace?.locations || []),
-                  brandDomain: metaData.domain || cleanId
+                  brandDomain: isCanonicalValidDomain ? canonicalId : undefined
                 };
-                const canonicalId = (metaData.domain || cleanId).toLowerCase().trim();
                 setPlaces(prev => {
-                  const exists = prev.some(p => p.id === enriched.id || p.id === cleanId);
+                  const filtered = (canonicalId !== cleanId && isCanonicalValidDomain)
+                    ? prev.filter(p => p.id !== cleanId)
+                    : prev;
+                  const exists = filtered.some(p => p.id === canonicalId);
                   if (exists) {
-                    return prev.map(p => (p.id === enriched.id || p.id === cleanId) ? { ...p, ...enriched, id: canonicalId } : p);
+                    return filtered.map(p => p.id === canonicalId ? { ...p, ...enriched, id: canonicalId } : p);
                   }
-                  return [enriched, ...prev];
+                  return [enriched, ...filtered];
                 });
 
-                // Persist enriched place so it sticks across refresh
-                try {
-                  fetch(`/api/nosql/places/${encodeURIComponent(canonicalId)}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ data: enriched, merge: true })
-                  }).catch(() => {});
-                } catch(e) {}
+                // Persist enriched place ONLY if canonicalId is a valid domain
+                if (isCanonicalValidDomain) {
+                  try {
+                    fetch(`/api/nosql/places/${encodeURIComponent(canonicalId)}`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ data: enriched, merge: true })
+                    }).catch(() => {});
+                  } catch(e) {}
+                }
 
-                if (canonicalId && canonicalId !== cleanId && canonicalId.includes('.')) {
+                // If cleanId was a non-domain search phrase, delete the corrupted record and redirect to canonicalId
+                if (canonicalId && canonicalId !== cleanId && isCanonicalValidDomain) {
+                  if (!isValidDomainUrl(cleanId)) {
+                    fetch(`/api/nosql/places/${encodeURIComponent(cleanId)}`, { method: "DELETE" }).catch(() => {});
+                  }
                   setSelectedPlaceIdForDrawer(canonicalId);
                   try {
                     const cleanPath = buildLocalizedPath(`/reviews/${encodeURIComponent(canonicalId)}`, language);
@@ -6725,24 +6742,39 @@ export function App() {
       return finalList;
     });
 
+    if (selectedPlaceIdForDrawer && !isValidDomainUrl(selectedPlaceIdForDrawer) && updatedPlace.id && isValidDomainUrl(updatedPlace.id)) {
+      const oldNonDomainId = selectedPlaceIdForDrawer;
+      setSelectedPlaceIdForDrawer(updatedPlace.id);
+      fetch(`/api/nosql/places/${encodeURIComponent(oldNonDomainId)}`, { method: "DELETE" }).catch(() => {});
+      try {
+        const cleanPath = buildLocalizedPath(`/reviews/${encodeURIComponent(updatedPlace.id)}`, language);
+        if (window.location.pathname !== cleanPath) {
+          window.history.replaceState(null, "", cleanPath);
+        }
+      } catch (e) {}
+    }
+
     if (skipServerSync) return;
 
-    // Mirror updates to BunnyDB so they persist forever
+    // Mirror updates to BunnyDB ONLY if updatedPlace.id is a valid canonical domain
+    const canonicalSaveId = extractCleanDomain(updatedPlace.id || updatedPlace.brandDomain || "");
+    if (!canonicalSaveId || !isValidDomainUrl(canonicalSaveId)) return;
+
     try {
-      const payload = { data: { ...updatedPlace, customEdited: true }, merge: true };
-      fetch(`/api/nosql/places/${encodeURIComponent(updatedPlace.id)}`, {
+      const payload = { data: { ...updatedPlace, id: canonicalSaveId, brandDomain: canonicalSaveId, customEdited: true }, merge: true };
+      fetch(`/api/nosql/places/${encodeURIComponent(canonicalSaveId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).catch((e) => console.error("Error updating place in BunnyDB:", e));
 
-      fetch(`/api/nosql/business_profiles/${encodeURIComponent(updatedPlace.id)}`, {
+      fetch(`/api/nosql/business_profiles/${encodeURIComponent(canonicalSaveId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).catch(() => {});
 
-      if (updatedPlace.id.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
+      if (canonicalSaveId.includes('yoouz') || updatedPlace.name?.toLowerCase() === 'yoouz') {
         fetch(`/api/nosql/places/yoouz.com`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -7827,6 +7859,7 @@ export function App() {
               handleSelectVideoById(vidId);
             }}
             onOpenPlace={handleOpenPlaceDrawer}
+            onAddPlace={handleUpdatePlace}
             onOpenCreator={handleOpenCreatorDrawer}
             onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
             onViewAll={() => {

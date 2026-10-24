@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -10,6 +10,7 @@ interface CopoHomePageProps {
   videos: VideoReview[];
   onSelectVideo: (videoId: string) => void;
   onOpenPlace: (placeId: string) => void;
+  onAddPlace?: (place: Place) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
   onOpenMenu?: () => void;
   onViewAll?: () => void;
@@ -32,6 +33,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   videos,
   onSelectVideo,
   onOpenPlace,
+  onAddPlace,
   onOpenCreator,
   onOpenMenu,
   onViewAll,
@@ -43,6 +45,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
+  const [isResolvingPlace, setIsResolvingPlace] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -181,20 +184,98 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const resolveAndOpenBusiness = async (rawQuery: string) => {
+    const trimmed = rawQuery.trim();
+    if (!trimmed) return;
+
+    const cleanCandidate = extractCleanDomain(trimmed);
+    if (cleanCandidate && isValidDomainUrl(cleanCandidate)) {
+      onOpenPlace(cleanCandidate);
+      return;
+    }
+
+    const qLow = trimmed.toLowerCase();
+    const match = places.find(p => {
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+      if (!pDom || !isValidDomainUrl(pDom)) return false;
+      return (
+        (p.name || "").toLowerCase() === qLow ||
+        pDom.toLowerCase() === qLow ||
+        (p.website || "").toLowerCase().includes(qLow)
+      );
+    });
+    if (match) {
+      onOpenPlace(match.id);
+      return;
+    }
+
+    setIsResolvingPlace(true);
+    try {
+      const endpoint = isValidDomainUrl(trimmed)
+        ? `/api/url-metadata?url=${encodeURIComponent(trimmed)}`
+        : `/api/url-metadata?q=${encodeURIComponent(trimmed)}`;
+      const res = await fetch(endpoint);
+      if (res.ok) {
+        const meta = await res.json();
+        const resolvedDomain = extractCleanDomain(meta.domain || meta.url || "");
+        if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
+          const officialName = formatBusinessName(meta.siteName || meta.title || trimmed, resolvedDomain) || trimmed;
+          const newPlace: Place = {
+            id: resolvedDomain,
+            name: officialName,
+            brandDomain: resolvedDomain,
+            category: meta.category || "Verified Business",
+            categoryType: "all",
+            address: meta.address || "",
+            city: meta.city || "",
+            country: meta.country || "",
+            lat: meta.lat || 0,
+            lng: meta.lng || 0,
+            rating: 5.0,
+            totalReviews: 0,
+            ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+            avatarUrl: meta.logo || "",
+            logoUrl: meta.logo || "",
+            bannerUrl: meta.image || "",
+            ogImage: meta.image || "",
+            photos: meta.image ? [meta.image] : [],
+            openingHours: meta.openingHours || "",
+            isOpen: true,
+            phone: meta.phone || "",
+            email: meta.email || "",
+            website: meta.url || `https://${resolvedDomain}`,
+            priceRange: "N/A",
+            plusCode: "",
+            description: meta.description || "",
+            popularKeywords: [],
+            amenities: [],
+            topDishes: [],
+            locations: meta.locations || []
+          };
+          onAddPlace?.(newPlace);
+          onOpenPlace(resolvedDomain);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to resolve business query:", err);
+    } finally {
+      setIsResolvingPlace(false);
+    }
+    onOpenPlace(trimmed);
+  };
+
   const handleSelectSuggestion = (item: SuggestionItem) => {
     setShowDropdown(false);
     setQuery(item.title);
-    if (item.id) {
-      onOpenPlace(item.id);
-    } else if (item.domain) {
-      onOpenPlace(item.domain);
+    const candidateId = extractCleanDomain(item.id || "");
+    const candidateDom = extractCleanDomain(item.domain || "");
+    if (candidateId && isValidDomainUrl(candidateId)) {
+      onOpenPlace(candidateId);
+    } else if (candidateDom && isValidDomainUrl(candidateDom)) {
+      onOpenPlace(candidateDom);
     } else {
-      const match = places.find(p => (p.name || "").toLowerCase() === item.title.toLowerCase());
-      if (match) {
-        onOpenPlace(match.id);
-      } else {
-        onOpenPlace(item.title);
-      }
+      resolveAndOpenBusiness(item.title || item.domain || item.id || "");
     }
   };
 
@@ -203,19 +284,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     const trimmed = query.trim();
     if (!trimmed) return;
     setShowDropdown(false);
-    
-    // Try exact or partial match
-    const qLow = trimmed.toLowerCase();
-    const match = places.find(p => 
-      (p.name || "").toLowerCase() === qLow || 
-      (p.brandDomain || "").toLowerCase() === qLow ||
-      (p.website || "").toLowerCase().includes(qLow)
-    );
-    if (match) {
-      onOpenPlace(match.id);
-    } else {
-      onOpenPlace(trimmed);
-    }
+    resolveAndOpenBusiness(trimmed);
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -318,7 +387,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
               {/* Right Side: Subtle Spinner / Clear Button */}
               <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                {isLoadingSuggest && (
+                {(isLoadingSuggest || isResolvingPlace) && (
                   <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
                 )}
                 {query.trim() && (

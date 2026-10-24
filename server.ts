@@ -26699,30 +26699,32 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             }
           }
 
-          // Case B: Comma-separated or tokenized address line (e.g. "אולמי נוף, א.י. שחראי 12, ירושלים, 9647028" or "Battelsesteenweg 282, 2800 Mechelen")
+          // Case B: Comma-separated or tokenized address line (e.g. "אולמי נוף, א.י. שחראי 12, ירושלים, 9647028", "Battelsesteenweg 282, 2800 Mechelen", or "De Ruijterkade 112, 1011 AB Amsterdam")
           if (line.includes(",") || /\d+/.test(line)) {
             const parts = line.split(/[,–—]+/).map(p => p.trim()).filter(Boolean);
             if (parts.length >= 2) {
-              // Find part with street and building number (e.g. "א.י. שחראי 12" or "1535 Broadway")
-              const streetPart = parts.find(p => /[\p{L}\.']+\s+\d+[\p{L}]?|\d+\s+[\p{L}\.']+/u.test(p) && !p.includes("@") && !p.toLowerCase().includes("tel") && !p.toLowerCase().includes("phone") && !p.toLowerCase().includes("טלפון"));
+              // Find part with street and building number (e.g. "א.י. שחראי 12" or "De Ruijterkade 112" or "1535 Broadway")
+              const streetPart = parts.find(p =>
+                /[\p{L}\.']+\s+\d+[\p{L}]?|\d+\s+[\p{L}\.']+/u.test(p) &&
+                !p.includes("@") &&
+                !/\b(tel|phone|טלפון|reviews?|beoordelingen|klanten|clients|years?|jaar|stars?|rating|score)\b/i.test(p)
+              );
               const cityPart = parts.find(p => {
-                const pClean = p.replace(/\d+/g, "").trim();
-                return Object.keys(knownCitiesHebrew).some(hc => p.includes(hc)) || /^(Jerusalem|Tel Aviv|Haifa|Eilat|Brussels|Antwerp|Gent|Leuven|Paris|London|New York|Phoenix|Las Vegas|Madrid|Amsterdam)$/i.test(pClean);
+                // Strip Dutch/UK alphanumeric postal codes (e.g. "1011 AB") as well as numeric postal codes
+                const pClean = p.replace(/\b\d{4}\s*[A-Z]{2}\b/gi, "").replace(/\d+/g, "").trim();
+                return Object.keys(knownCitiesHebrew).some(hc => p.includes(hc)) || /^(Jerusalem|Tel Aviv|Haifa|Eilat|Brussels|Antwerp|Gent|Leuven|Mechelen|Paris|London|New York|Phoenix|Las Vegas|Madrid|Amsterdam|Rotterdam|The Hague|Den Haag|Utrecht|Eindhoven|Groningen|Berlin|Munich|Frankfurt|Hamburg|Vienna|Zurich|Geneva|Milan|Rome|Barcelona|Lisbon|Dublin)$/i.test(pClean);
               });
 
               if (streetPart && cityPart) {
-                if (!address) {
-                  // Build clean address with street and city (and postal code if present)
-                  const postalPart = parts.find(p => /^\d{5,7}$/.test(p.trim()));
-                  address = postalPart ? `${streetPart}, ${cityPart} ${postalPart}` : `${streetPart}, ${cityPart}`;
-                }
+                const postalPart = parts.find(p => /^\d{5,7}$/.test(p.trim()));
+                address = postalPart ? `${streetPart}, ${cityPart} ${postalPart}` : `${streetPart}, ${cityPart}`;
                 if (!city) {
                   const matchedHeb = Object.keys(knownCitiesHebrew).find(hc => cityPart.includes(hc));
                   if (matchedHeb) {
                     city = knownCitiesHebrew[matchedHeb];
                     if (!country) country = "Israel";
                   } else {
-                    city = cityPart.replace(/\d+/g, "").trim();
+                    city = cityPart.replace(/\b\d{4}\s*[A-Z]{2}\b/gi, "").replace(/\d+/g, "").trim();
                   }
                 }
                 break;
@@ -26732,17 +26734,16 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
           // Case C: Standard street pattern followed by postal/city on next line
           const streetPattern = /^([\p{L}][\p{L}\p{N}\s\.\-']+\s+\d+[\p{L}]?|\d{1,5}\s+[\p{L}][\p{L}\p{N}\s\.\-']+)$/u;
-          const postalCityPattern = /^(?:[\p{L}]{2}-?)?(\d{4,7})\s+([\p{L}\s\-]+)$/u;
+          const postalCityPattern = /^(?:[\p{L}]{2}-?)?(\d{4,7}(?:\s*[A-Z]{2})?)\s+([\p{L}\s\-]+)$/iu;
+          const isFalsePositiveMetric = /\b(reviews?|beoordelingen|klanten|clients|years?|jaar|stars?|sterren|rating|score|views|followers|employees|medewerkers|telefoon|telephone|fax|openingsuren|btw|kvk|email|januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|january|february|march|may|june|july|august|october)\b/i.test(line) || /\b20\d{2}$/.test(line.trim());
 
-          if (streetPattern.test(line) && !line.toLowerCase().includes("telefoon") && !line.toLowerCase().includes("telephone") && !line.toLowerCase().includes("fax") && !line.toLowerCase().includes("openingsuren") && !line.toLowerCase().includes("btw") && !line.toLowerCase().includes("email")) {
+          if (streetPattern.test(line) && !isFalsePositiveMetric) {
             const nextLine = domLines[i + 1] || "";
             const postalMatch = nextLine.match(postalCityPattern);
             if (postalMatch) {
-              if (!address) address = line;
+              if (!address) address = `${line}, ${nextLine.trim()}`;
               if (!city) city = postalMatch[2].trim();
               break;
-            } else if (!address && line.length > 5 && line.length < 50) {
-              address = line;
             }
           }
         }
@@ -27885,7 +27886,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const dHtml = scrapeData.html;
               const d$ = cheerio.load(dHtml);
               
-              const ogTitle = d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeData.metadata?.title;
+              const ogSiteName = d$('meta[property="og:site_name"]').attr('content') || '';
+              let jsonLdBrandName = '';
+              d$('script[type="application/ld+json"]').each((_: any, el: any) => {
+                try {
+                  const parsed = JSON.parse(d$(el).html() || '{}');
+                  const items = Array.isArray(parsed) ? parsed : (parsed['@graph'] && Array.isArray(parsed['@graph']) ? parsed['@graph'] : [parsed]);
+                  for (const item of items) {
+                    const t = String(item?.['@type'] || '').toLowerCase();
+                    if ((t.includes('organization') || t.includes('localbusiness') || t.includes('legalservice') || t.includes('attorney') || t.includes('website')) && typeof item?.name === 'string' && item.name.trim().length > 1) {
+                      if (!jsonLdBrandName || t.includes('organization') || t.includes('localbusiness')) {
+                        jsonLdBrandName = item.name.trim();
+                      }
+                    }
+                  }
+                } catch {}
+              });
+              const ogTitle = jsonLdBrandName || ogSiteName || d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeData.metadata?.title;
               if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
                 domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
               }
@@ -27900,13 +27917,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
               
-              const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage;
-              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.includes('#') && !ogImg.includes('paint0_linear') && !isBadBanner(ogImg)) {
+              const ogImg = d$('meta[property="og:image"]').attr('content') || d$('meta[name="twitter:image"]').attr('content') || scrapeData.metadata?.ogImage || d$('link[rel="preload"][as="image"]').attr('href');
+              if (ogImg && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.includes('#') && !ogImg.includes('paint0_linear') && !isBadBanner(ogImg) && !isLogoOrIconUrl(ogImg)) {
                 try {
                   domPhoto = new URL(ogImg, targetUrl).toString();
                 } catch(e) {
                   domPhoto = ogImg;
                 }
+              }
+              if (!domPhoto) {
+                d$('img[fetchpriority="high"], main img, .hero img, .banner img, section img, img[src*="/wp-content/"], img[src*="/cdn/shop/files/"]').each((_: any, el: any) => {
+                  if (domPhoto) return;
+                  const src = d$(el).attr('src') || d$(el).attr('data-src') || d$(el).attr('data-lazy-src');
+                  if (src && !isBadBanner(src) && !isLogoOrIconUrl(src)) {
+                    try {
+                      domPhoto = new URL(src, targetUrl).toString();
+                    } catch {
+                      domPhoto = src;
+                    }
+                  }
+                });
               }
 
               // Extract high-resolution Logo from img tags inside webpage HTML (never favicons)
@@ -28358,7 +28388,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (scHtml) {
             const sc$ = cheerio.load(scHtml);
             const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeMetadata?.title;
-            const pubName = sc$('[itemprop="publisher"] [itemprop="name"]').attr('content') ||
+            const ogSiteN = sc$('meta[property="og:site_name"]').attr('content') || '';
+            let jsonLdOrg = '';
+            sc$('script[type="application/ld+json"]').each((_: any, el: any) => {
+              try {
+                const parsed = JSON.parse(sc$(el).html() || '{}');
+                const items = Array.isArray(parsed) ? parsed : (parsed['@graph'] && Array.isArray(parsed['@graph']) ? parsed['@graph'] : [parsed]);
+                for (const item of items) {
+                  const t = String(item?.['@type'] || '').toLowerCase();
+                  if ((t.includes('organization') || t.includes('localbusiness') || t.includes('legalservice') || t.includes('attorney') || t.includes('website')) && typeof item?.name === 'string' && item.name.trim().length > 1) {
+                    if (!jsonLdOrg || t.includes('organization') || t.includes('localbusiness')) {
+                      jsonLdOrg = item.name.trim();
+                    }
+                  }
+                }
+              } catch {}
+            });
+            const pubName = jsonLdOrg ||
+                            ogSiteN ||
+                            sc$('[itemprop="publisher"] [itemprop="name"]').attr('content') ||
                             sc$('[itemprop="publisher"] [itemprop="name"]').text() ||
                             sc$('[itemprop="name"]').first().attr('content') ||
                             sc$('[itemprop="name"]').first().text();
@@ -28406,13 +28454,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             extractedLogo = extractAuthenticWebsiteLogo(sc$, scHtml, discoveredUrl, discoveredDom);
 
             // Banner Extraction (STRICTLY NO LOGOS OR SMALL ICONS IN BANNER)
-            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeMetadata?.ogImage;
+            const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeMetadata?.ogImage || sc$('link[rel="preload"][as="image"]').attr('href');
             if (metaImg && !isBadBanner(metaImg) && !isLogoOrIconUrl(metaImg) && metaImg !== 'none') {
               extractedBanner = makeAbsolute(metaImg);
             }
 
             if (!extractedBanner) {
-              sc$('main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/uploads/"], article img').each((_: any, el: any) => {
+              sc$('img[fetchpriority="high"], main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/"], article img').each((_: any, el: any) => {
                 if (extractedBanner) return;
                 const src = sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
                 if (src) {

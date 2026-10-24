@@ -1,5 +1,54 @@
 [
   {
+    "id": "kroesadvocaten.nl",
+    "name": "Kroes Advocaten",
+    "category": "Legal Services",
+    "categoryType": "all",
+    "address": "De Ruijterkade 112, 1011 AB Amsterdam",
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://www.kroesadvocaten.nl/wp-content/uploads/2021/06/logo.png",
+    "logoUrl": "https://www.kroesadvocaten.nl/wp-content/uploads/2021/06/logo.png",
+    "bannerUrl": "https://www.kroesadvocaten.nl/wp-content/smush-webp/2021/06/featured-1600x1076.jpg.webp",
+    "ogImage": "https://www.kroesadvocaten.nl/wp-content/smush-webp/2021/06/featured-1600x1076.jpg.webp",
+    "photos": [
+      "https://www.kroesadvocaten.nl/wp-content/smush-webp/2021/06/featured-1600x1076.jpg.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+31 20 520 7050",
+    "email": "info@kroesadvocaten.nl",
+    "website": "https://www.kroesadvocaten.nl/nl/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Gespecialiseerde immigratieadvocaten voor werk- en verblijfsvergunningen. Snel, efficiënt en deskundig geregeld voor werkgevers en expats.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "kroesadvocaten.nl"
+  },
+  {
     "id": "cetaphil.com",
     "name": "Cetaphil",
     "category": "Skincare & Beauty",
@@ -82,8 +131,8 @@
           "/default-review.mp4"
         ],
         "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/thumbnail.jpg",
-        "caption": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
-        "title": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
+        "caption": "Perfect Hydration for Soft & Smooth Skin",
+        "title": "Perfect Hydration for Soft & Smooth Skin",
         "transcriptText": "Hey, so if you have been looking for a perfect moisturize where it leaves your skin like with a babe touch, I think I found the perfect one. Cetaphil has been in my skincare routine a long time and it's simple, effective and in love.",
         "segments": [
           {
@@ -170,10 +219,10 @@
         "bunnyGuid": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
         "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
         "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/captions/en-auto.vtt",
-        "aiTitle": "Hey, so if you have been looking for a perfect moisturize where it leaves y...",
+        "aiTitle": "Perfect Hydration for Soft & Smooth Skin",
         "isReady": true,
         "isProcessing": false,
-        "hasOfficialBunnyTitle": false,
+        "hasOfficialBunnyTitle": true,
         "hasHardwareSilenceSync": true
       }
     ],
@@ -289,50 +338,50 @@
         "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
         "segments": [
           {
-            "start": 1.52,
-            "end": 2.96,
+            "start": 2.13,
+            "end": 3.54,
             "text": "I want to share my experience",
             "isHardwareTimed": true
           },
           {
-            "start": 2.96,
-            "end": 3.98,
+            "start": 3.54,
+            "end": 3.94,
             "text": "with Burger King.",
             "isHardwareTimed": true
           },
           {
-            "start": 4,
-            "end": 8.06,
+            "start": 4.31,
+            "end": 7.74,
             "text": "I always have been really satisfied",
             "isHardwareTimed": true
           },
           {
-            "start": 8.06,
-            "end": 9.24,
+            "start": 7.98,
+            "end": 8.63,
             "text": "with the combos,",
             "isHardwareTimed": true
           },
           {
-            "start": 9.24,
-            "end": 10.95,
+            "start": 9.93,
+            "end": 11.42,
             "text": "with crispy fries",
             "isHardwareTimed": true
           },
           {
-            "start": 10.95,
-            "end": 12.73,
+            "start": 11.65,
+            "end": 13.45,
             "text": "and bananas is one of my",
             "isHardwareTimed": true
           },
           {
-            "start": 12.73,
-            "end": 16.21,
+            "start": 14.33,
+            "end": 16.1,
             "text": "favorite hamburgers in the whole world.",
             "isHardwareTimed": true
           },
           {
-            "start": 16.77,
-            "end": 17.22,
+            "start": 16.81,
+            "end": 17.26,
             "text": "Love that.",
             "isHardwareTimed": true
           }
@@ -469,50 +518,50 @@
         "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
         "segments": [
           {
-            "start": 1.52,
-            "end": 2.96,
+            "start": 2.13,
+            "end": 3.54,
             "text": "I want to share my experience",
             "isHardwareTimed": true
           },
           {
-            "start": 2.96,
-            "end": 3.98,
+            "start": 3.54,
+            "end": 3.94,
             "text": "with Burger King.",
             "isHardwareTimed": true
           },
           {
-            "start": 4,
-            "end": 8.06,
+            "start": 4.31,
+            "end": 7.74,
             "text": "I always have been really satisfied",
             "isHardwareTimed": true
           },
           {
-            "start": 8.06,
-            "end": 9.24,
+            "start": 7.98,
+            "end": 8.63,
             "text": "with the combos,",
             "isHardwareTimed": true
           },
           {
-            "start": 9.24,
-            "end": 10.95,
+            "start": 9.93,
+            "end": 11.42,
             "text": "with crispy fries",
             "isHardwareTimed": true
           },
           {
-            "start": 10.95,
-            "end": 12.73,
+            "start": 11.65,
+            "end": 13.45,
             "text": "and bananas is one of my",
             "isHardwareTimed": true
           },
           {
-            "start": 12.73,
-            "end": 16.21,
+            "start": 14.33,
+            "end": 16.1,
             "text": "favorite hamburgers in the whole world.",
             "isHardwareTimed": true
           },
           {
-            "start": 16.77,
-            "end": 17.22,
+            "start": 16.81,
+            "end": 17.26,
             "text": "Love that.",
             "isHardwareTimed": true
           }

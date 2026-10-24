@@ -15,6 +15,7 @@ interface CopoBrandLogoProps {
   loading?: "eager" | "lazy";
   fetchPriority?: "high" | "low" | "auto";
   onLoad?: () => void;
+  onError?: () => void;
 }
 
 // Global in-memory cache to lock verified brand logos across browser transitions
@@ -31,7 +32,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   fallbackTextClassName,
   loading = "eager",
   fetchPriority = "high",
-  onLoad
+  onLoad,
+  onError
 }) => {
   const [candidateIdx, setCandidateIdx] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -99,7 +101,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       !isGenericOrPlaceholderLogo(logoUrl) &&
       (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon.svg") || logoUrl.includes("sz=128") || logoUrl.includes("size=256"))
     ) {
-      candidates.push(logoUrl);
+      const proxiedLogo = getProxiedImageUrl(logoUrl);
+      if (proxiedLogo) candidates.push(proxiedLogo);
+      if (logoUrl !== proxiedLogo) candidates.push(logoUrl);
     }
 
     // 3. High-resolution authentic domain brand logo via server proxy (100% 200 OK guaranteed)
@@ -163,7 +167,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           onLoad={(e) => {
             const img = e.currentTarget;
             if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
-              setCandidateIdx((prev) => prev + 1);
+              setCandidateIdx((prev) => {
+                const next = prev + 1;
+                if (next >= candidateUrls.length) onError?.();
+                return next;
+              });
               return;
             }
             if (currentSrc) {
@@ -176,7 +184,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             onLoad?.();
           }}
           onError={() => {
-            setCandidateIdx((prev) => prev + 1);
+            setCandidateIdx((prev) => {
+              const next = prev + 1;
+              if (next >= candidateUrls.length) onError?.();
+              return next;
+            });
           }}
         />
       ) : null}
