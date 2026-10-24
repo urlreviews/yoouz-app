@@ -255,7 +255,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+85px)] md:pb-12 scroll-smooth">
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+75px)] md:pb-12 scroll-smooth">
       {/* 1. Header (Mobile Only) - Hamburger on Left, Official Dark Mode Icon & 'Yoouz' Wordmark, Balanced Right Spacer */}
       <header className="w-full flex md:hidden items-center justify-between px-4 pt-3.5 pb-2.5 shrink-0 select-none z-20 border-b border-zinc-900/60 bg-zinc-950/80 backdrop-blur-md sticky top-0">
         <button
@@ -284,23 +284,23 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-4 xs:pt-6 sm:pt-10 md:pt-16 lg:pt-22 flex flex-col items-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-5 xs:pt-7 sm:pt-10 md:pt-16 lg:pt-22 flex flex-col justify-between sm:justify-start items-center min-h-[calc(100vh-120px)] sm:min-h-0">
         
         {/* 2. Hero Copy */}
         <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
-          <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+          <h1 className="text-[28px] xs:text-[32px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
             <span className="block">See the Truth</span>
             <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
           </h1>
-          <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
+          <p className="text-zinc-300 text-[13.5px] xs:text-[15px] sm:text-lg md:text-[19px] mt-2.5 sm:mt-4 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
             Watch authentic video reviews of any place, product, or service—or record your own.
           </p>
         </div>
 
         {/* 3. Search Component - Optically centered with balanced breathing room */}
-        <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-7 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
+        <div className="w-full max-w-2xl relative mx-auto mb-7 xs:mb-8 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
-            <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
+            <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4.5 sm:px-5 py-3 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
@@ -313,7 +313,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
                 placeholder={t("search.placeholder", "Search any business, service, or place...")}
-                className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
+                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               />
 
               {/* Right Side: Subtle Spinner / Clear Button */}
@@ -378,7 +378,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 4. Trending Video Reviews Grid / Carousel */}
-        <section className="w-full relative mt-1 sm:mt-4">
+        <section className="w-full relative mt-2 sm:mt-4 mb-2 sm:mb-0">
           <div className="flex items-center justify-between w-full mb-3 sm:mb-4 px-1">
             <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
               Trending Video Reviews
@@ -437,7 +437,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative shrink-0 w-[160px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[285px] xs:h-[330px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[175px] xs:w-[200px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[335px] xs:h-[380px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (
