@@ -100,9 +100,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
         {/* ========================================================================= */}
         {/* Desktop View (>= 640px) - Luxury Glassmorphic Unified Search Bar          */}
         {/* ========================================================================= */}
-        <div className="hidden sm:flex items-center bg-zinc-950/90 backdrop-blur-2xl border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 py-2.5 shadow-2xl transition-all duration-200 ring-1 ring-white/5 w-full">
-          <div className="flex items-center relative w-full px-1">
-            <Search className="w-5 h-5 shrink-0 mr-3 text-zinc-400 focus-within:text-white transition-colors pointer-events-none" />
+        <div className="flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
+            <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
             <input
               ref={bizInputRef}
               type="text"
@@ -127,7 +126,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 setShowSuggestions(true);
               }}
               placeholder={t("search.placeholder", "Search any business, service, or place...")}
-              className="w-full bg-transparent text-white text-[14px] sm:text-[15px] lg:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
+              className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               autoFocus={autoFocus}
             />
             {/* Right Side: Spinner, Clear, Action Button or Shortcut */}
@@ -168,7 +167,6 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
               )}
             </div>
           </div>
-        </div>
 
         {/* ========================================================================= */}
         {/* Mobile View (< 640px) - Clean Rounded Pill Search Bar                      */}
