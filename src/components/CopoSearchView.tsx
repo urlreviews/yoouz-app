@@ -789,8 +789,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {/* Title & Subtitle */}
           {!isMobileModal && (
             <>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight text-center mb-3">
-                See the Truth Before You Decide
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight text-center mb-3 leading-[1.12]">
+                <span className="block">See the Truth</span>
+                <span className="block mt-1">Before You Decide</span>
               </h1>
               
               <p className="text-zinc-400 text-sm sm:text-base md:text-lg text-center max-w-lg mb-8 leading-relaxed font-normal px-4">

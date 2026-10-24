@@ -286,8 +286,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         
         {/* 2. Hero Copy */}
         <div className="w-full text-center max-w-2xl mx-auto mb-8 sm:mb-11 animate-in fade-in duration-300">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-tight">
-            See the Truth Before You Decide
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+            <span className="block">See the Truth</span>
+            <span className="block mt-1 sm:mt-1.5">Before You Decide</span>
           </h1>
           <p className="text-zinc-200/90 text-base sm:text-lg md:text-[19px] mt-3 sm:mt-4 leading-relaxed max-w-xl mx-auto font-normal text-balance">
             Watch authentic video reviews of any place, product, or service—or record your own.
@@ -483,10 +484,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                         </span>
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
                       </div>
-                      <div className="text-zinc-400 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
-                        <span className="truncate text-zinc-400">{creatorFullName}</span>
+                      <div className="text-white/85 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
+                        <span className="truncate text-white/85">{creatorFullName}</span>
                         {author?.isVerified !== false && (
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-zinc-300 text-zinc-950 shrink-0 inline-block opacity-85" />
+                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
                         )}
                       </div>
                     </div>
