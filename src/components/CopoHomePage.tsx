@@ -475,7 +475,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
                     </div>
 
-                    {/* Clean Bottom Scrim: Business Name (with Verified Badge) & Creator Full Name (with Verified Badge) */}
+                    {/* Clean Bottom Scrim: Business Name (Prominent White Badge) & Creator Name (Light White Subtle Badge) */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
@@ -483,10 +483,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                         </span>
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
                       </div>
-                      <div className="text-zinc-300 text-[11px] sm:text-xs font-medium truncate mt-0.5 flex items-center gap-1">
-                        <span className="truncate">{creatorFullName}</span>
+                      <div className="text-zinc-400 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
+                        <span className="truncate text-zinc-400">{creatorFullName}</span>
                         {author?.isVerified !== false && (
-                          <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-zinc-300 text-zinc-950 shrink-0 inline-block opacity-85" />
                         )}
                       </div>
                     </div>
