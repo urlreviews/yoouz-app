@@ -255,9 +255,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+80px)] md:pb-12">
-      {/* 1. Header (Mobile Only) - Hamburger on Left, Minimal Centered 'yoouz BETA', Balanced Right Spacer */}
-      <header className="w-full flex md:hidden items-center justify-between px-3.5 pt-3 pb-2.5 shrink-0 select-none z-20">
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+90px)] md:pb-12">
+      {/* 1. Header (Mobile Only) - Hamburger on Left, Official Dark Mode Icon & 'Yoouz' Wordmark, Balanced Right Spacer */}
+      <header className="w-full flex md:hidden items-center justify-between px-3.5 pt-3 pb-2 shrink-0 select-none z-20">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -267,13 +267,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           <Menu className="w-6 h-6 stroke-[2.2]" />
         </button>
 
-        {/* Minimal Clean yoouz Brand Wordmark */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xl font-black tracking-tight text-white font-['Google_Sans',sans-serif]">
-            yoouz
-          </span>
-          <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700/80 text-[9px] text-zinc-300 font-extrabold uppercase tracking-wider">
-            BETA
+        {/* Official Dark Mode Yoouz Brand Logo */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-zinc-900 shadow-md shrink-0 border border-zinc-800">
+            <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-white">
+              <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+            </svg>
+          </div>
+          <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+            Yoouz
           </span>
         </div>
 
@@ -282,21 +284,21 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-8 sm:pt-14 md:pt-20 lg:pt-24 flex flex-col items-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-2 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center">
         
         {/* 2. Hero Copy */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-8 sm:mb-11 animate-in fade-in duration-300">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+        <div className="w-full text-center max-w-2xl mx-auto mb-4 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
+          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
             <span className="block">See the Truth</span>
-            <span className="block mt-1 sm:mt-1.5">Before You Decide</span>
+            <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
           </h1>
-          <p className="text-zinc-200/90 text-base sm:text-lg md:text-[19px] mt-3 sm:mt-4 leading-relaxed max-w-xl mx-auto font-normal text-balance">
+          <p className="text-zinc-200/90 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-1.5 sm:mt-4 leading-relaxed max-w-xl mx-auto font-normal text-balance">
             Watch authentic video reviews of any place, product, or service—or record your own.
           </p>
         </div>
 
         {/* 3. Search Component - Optically centered with balanced breathing room */}
-        <div className="w-full max-w-2xl relative mx-auto mb-14 sm:mb-18 md:mb-20" ref={dropdownRef}>
+        <div className="w-full max-w-2xl relative mx-auto mb-5 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
@@ -376,8 +378,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 4. Trending Video Reviews Grid / Carousel */}
-        <section className="w-full relative mt-2 sm:mt-4">
-          <div className="flex items-center justify-between w-full mb-4 px-1">
+        <section className="w-full relative mt-0 sm:mt-4">
+          <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
             <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
               Trending Video Reviews
             </h2>
@@ -435,7 +437,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative shrink-0 w-[calc(46%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[calc(43%-4px)] xs:w-[calc(44%-6px)] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (
