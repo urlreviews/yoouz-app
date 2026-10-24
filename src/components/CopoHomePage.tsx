@@ -298,7 +298,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 3. Search Component - Optically centered with balanced breathing room */}
-        <div className="w-full max-w-2xl relative mx-auto mb-5 xs:mb-6 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
+        <div className="w-full max-w-2xl relative mx-auto mb-7 xs:mb-9 sm:mb-12 md:mb-18 lg:mb-20" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
@@ -378,7 +378,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 4. Trending Video Reviews Grid / Carousel */}
-        <section className="w-full relative mt-0 sm:mt-4">
+        <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4">
           <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
             <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
               Trending Video Reviews
@@ -437,7 +437,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div
                     key={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative shrink-0 w-[155px] xs:w-[175px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[270px] xs:h-[305px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (
