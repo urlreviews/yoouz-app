@@ -790,11 +790,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {!isMobileModal && (
             <>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight text-center mb-3">
-                See the Truth Before You Buy
+                See the Truth Before You Decide
               </h1>
               
               <p className="text-zinc-400 text-sm sm:text-base md:text-lg text-center max-w-lg mb-8 leading-relaxed font-normal px-4">
-                Watch authentic video reviews of any business, or record your own.
+                Watch authentic video reviews of any place, product, or service—or record your own.
               </p>
             </>
           )}

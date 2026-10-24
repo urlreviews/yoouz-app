@@ -287,18 +287,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 2. Hero Copy */}
         <div className="w-full text-center max-w-2xl mx-auto mb-8 sm:mb-11 animate-in fade-in duration-300">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-tight">
-            See the Truth Before You Buy
+            See the Truth Before You Decide
           </h1>
           <p className="text-zinc-200/90 text-base sm:text-lg md:text-[19px] mt-3 sm:mt-4 leading-relaxed max-w-xl mx-auto font-normal text-balance">
-            Watch authentic video reviews of any business, or record your own.
+            Watch authentic video reviews of any place, product, or service—or record your own.
           </p>
         </div>
 
         {/* 3. Search Component - Optically centered with balanced breathing room */}
         <div className="w-full max-w-2xl relative mx-auto mb-14 sm:mb-18 md:mb-20" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
-            <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-5 py-3 sm:py-3.5 shadow-2xl transition-all duration-200">
-              <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-3 pointer-events-none" />
+            <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
+              <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -309,8 +309,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 onFocus={() => {
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
-                placeholder={t("search.placeholder", "Search business...")}
-                className="w-full bg-transparent text-white text-[15px] sm:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-2"
+                placeholder={t("search.placeholder", "Search any business, service, or place...")}
+                className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               />
 
               {/* Right Side: Subtle Spinner / Clear Button */}

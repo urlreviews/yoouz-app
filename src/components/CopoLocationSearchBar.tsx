@@ -126,8 +126,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.placeholder", "Search business...")}
-              className="w-full bg-transparent text-white text-[15px] lg:text-base placeholder:text-zinc-500 focus:outline-none font-medium pr-2"
+              placeholder={t("search.placeholder", "Search any business, service, or place...")}
+              className="w-full bg-transparent text-white text-[14px] sm:text-[15px] lg:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               autoFocus={autoFocus}
             />
             {/* Right Side: Spinner, Clear, Action Button or Shortcut */}
@@ -201,8 +201,8 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
                 }
                 setShowSuggestions(true);
               }}
-              placeholder={t("search.placeholder", "Search business...")}
-              className="flex-1 min-w-0 bg-transparent text-white text-[15px] placeholder:text-zinc-500 focus:outline-none font-medium pr-1"
+              placeholder={t("search.placeholder", "Search any business, service, or place...")}
+              className="flex-1 min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-1 truncate"
               autoFocus={autoFocus}
             />
 
