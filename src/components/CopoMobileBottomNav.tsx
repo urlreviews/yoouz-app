@@ -101,7 +101,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           </span>
         </button>
 
-        {/* 3. CENTER ACTION: Record Review */}
+        {/* 3. CENTER ACTION: Record Review - Elevated Floating CTA */}
         <button
           id="mobile-nav-record-btn"
           onClick={() => {
@@ -112,10 +112,10 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             }
           }}
           aria-label="Record 60-Second Video Review"
-          className="flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer"
+          className="relative -mt-5 flex flex-col items-center justify-center px-2 flex-1 group active:scale-95 transition-transform duration-200 cursor-pointer z-10"
         >
-          <div className="flex items-center justify-center w-[32px] h-[32px] rounded-full bg-white text-zinc-950 shadow-sm border border-zinc-950 hover:bg-zinc-200">
-            <Video className="w-[16px] h-[16px] stroke-[2.5]" />
+          <div className="flex items-center justify-center w-[44px] h-[44px] rounded-full bg-white text-zinc-950 ring-4 ring-zinc-950 shadow-[0_8px_25px_rgba(255,255,255,0.22)] group-hover:bg-zinc-200 transition-all">
+            <Video className="w-[20px] h-[20px] stroke-[2.5]" />
           </div>
           <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[76px]">
             {t("nav.record_review", "Video Review")}
