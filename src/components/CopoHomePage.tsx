@@ -470,13 +470,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
                     </div>
 
-                    {/* Clean Bottom Scrim: Business Name & Creator Full Name Only */}
+                    {/* Clean Bottom Scrim: Business Name & Creator Full Name with Verified Badge */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-12 pb-3.5 px-3 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
                       <div className="text-white text-sm sm:text-base font-bold tracking-tight truncate leading-tight">
                         {businessName}
                       </div>
-                      <div className="text-zinc-400 text-[11px] sm:text-xs font-medium truncate mt-0.5">
-                        by {creatorFullName}
+                      <div className="text-zinc-300 text-[11px] sm:text-xs font-medium truncate mt-0.5 flex items-center gap-1">
+                        <span className="truncate">by {creatorFullName}</span>
+                        {author?.isVerified !== false && (
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                        )}
                       </div>
                     </div>
                   </div>
