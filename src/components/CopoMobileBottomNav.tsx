@@ -101,7 +101,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           </span>
         </button>
 
-        {/* 3. CENTER ACTION: Record Review - Elevated Floating CTA */}
+        {/* 3. CENTER ACTION: Record Review - In-Line Flush Hero Action */}
         <button
           id="mobile-nav-record-btn"
           onClick={() => {
@@ -112,10 +112,10 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             }
           }}
           aria-label="Record 60-Second Video Review"
-          className="relative -mt-5 flex flex-col items-center justify-center px-2 flex-1 group active:scale-95 transition-transform duration-200 cursor-pointer z-10"
+          className="flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl group active:scale-90 transition-all duration-200 cursor-pointer"
         >
-          <div className="flex items-center justify-center w-[44px] h-[44px] rounded-full bg-white text-zinc-950 ring-4 ring-zinc-950 shadow-[0_8px_25px_rgba(255,255,255,0.22)] group-hover:bg-zinc-200 transition-all">
-            <Video className="w-[20px] h-[20px] stroke-[2.5]" />
+          <div className="flex items-center justify-center w-[28px] h-[28px] rounded-full bg-white text-zinc-950 shadow-md group-hover:bg-zinc-200 transition-colors">
+            <Video className="w-4 h-4 stroke-[2.8]" />
           </div>
           <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[76px]">
             {t("nav.record_review", "Video Review")}
@@ -125,15 +125,9 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
         {/* 4. Inbox / Messages */}
         <button
           id="mobile-nav-inbox-btn"
-          onClick={() => {
-            if (unreadNotifsCount > 0 && unreadMessagesCount === 0) {
-              onSelectSection("notifications");
-            } else {
-              onSelectSection("messages");
-            }
-          }}
+          onClick={() => onSelectSection("messages")}
           className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "messages" || activeSection === "notifications"
+            activeSection === "messages"
               ? "text-white"
               : "text-zinc-100 hover:text-white"
           }`}
@@ -141,20 +135,20 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           <div className="relative">
             <Mail
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                activeSection === "messages" || activeSection === "notifications"
+                activeSection === "messages"
                   ? "scale-110 stroke-[2.5] text-white"
                   : "stroke-[2.2] text-zinc-100"
               }`}
             />
-            {(unreadMessagesCount + unreadNotifsCount) > 0 && (
+            {unreadMessagesCount > 0 && (
               <span className="absolute -top-1.5 -right-2.5 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[10px] font-black rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-lg">
-                {(unreadMessagesCount + unreadNotifsCount) > 9 ? "9+" : (unreadMessagesCount + unreadNotifsCount)}
+                {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
               </span>
             )}
           </div>
           <span
             className={`text-[10px] tracking-tight mt-1 ${
-              activeSection === "messages" || activeSection === "notifications"
+              activeSection === "messages"
                 ? "font-bold text-white"
                 : "font-medium text-zinc-100"
             }`}
