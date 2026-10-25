@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle } from "lucide-react";
+import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -13,6 +13,8 @@ interface CopoHomePageProps {
   onAddPlace?: (place: Place) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
   onOpenMenu?: () => void;
+  onOpenNotifications?: () => void;
+  unreadNotifsCount?: number;
   onViewAll?: () => void;
   onRecordReview?: (place?: Place | null) => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
@@ -36,6 +38,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   onAddPlace,
   onOpenCreator,
   onOpenMenu,
+  onOpenNotifications,
+  unreadNotifsCount = 0,
   onViewAll,
   onRecordReview,
   onOpenLegal,
@@ -348,8 +352,22 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </span>
         </div>
 
-        {/* Symmetrical right spacer for optical centering */}
-        <div className="w-10 h-10 -mr-1" aria-hidden="true" />
+        {/* Right: Notification Bell Button (Mobile Only) */}
+        <button
+          type="button"
+          onClick={onOpenNotifications}
+          className="relative w-10 h-10 -mr-1 rounded-full flex items-center justify-center text-zinc-100 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
+          aria-label={t("nav.notifications", "Notifications")}
+          title={t("nav.notifications", "Notifications")}
+        >
+          <Bell className="w-5.5 h-5.5 stroke-[2.1]" />
+          {unreadNotifsCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-zinc-950" />
+            </span>
+          )}
+        </button>
       </header>
 
       {/* Main Content Area */}

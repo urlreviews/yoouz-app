@@ -10,6 +10,8 @@ interface CopoMobileSearchViewProps {
   onRecordForPlace?: (place: Place) => void;
   onAddPlace?: (place: Place) => void;
   onClose: () => void;
+  onOpenNotifications?: () => void;
+  unreadNotifsCount?: number;
 }
 
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
@@ -19,7 +21,9 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   onOpenPlace,
   onRecordForPlace,
   onAddPlace,
-  onClose
+  onClose,
+  onOpenNotifications,
+  unreadNotifsCount = 0
 }) => {
   return (
     <div className="fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans">
@@ -30,6 +34,13 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         onOpenPlace={onOpenPlace}
         onAddPlace={onAddPlace}
         onOpenMenu={onClose}
+        onOpenNotifications={() => {
+          onClose();
+          if (onOpenNotifications) {
+            onOpenNotifications();
+          }
+        }}
+        unreadNotifsCount={unreadNotifsCount}
         onViewAll={() => {
           if (videos.length > 0) onSelectVideo(videos[0].id);
         }}

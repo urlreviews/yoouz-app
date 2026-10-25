@@ -684,6 +684,23 @@ export function App() {
     setFullscreenFeedContext(null);
     setActiveSection("search");
   };
+  const handleOpenNotifications = () => {
+    if (!currentUser) {
+      setAuthIntent('notifications');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsSearchModalOpen(false);
+    setIsMobileNavDrawerOpen(false);
+    setSelectedPlaceIdForDrawer(null);
+    setSelectedAuthorForDrawer(null);
+    setIsWatchingVideo(false);
+    setFullscreenFeedContext(null);
+    setActiveSection("notifications");
+    try {
+      window.history.pushState(null, "", buildLocalizedPath("/notifications", language));
+    } catch (err) {}
+  };
   const [isDiscoverModalOpen, setIsDiscoverModalOpen] = useState<boolean>(false);
   const [isMobileNavDrawerOpen, setIsMobileNavDrawerOpen] = useState<boolean>(false);
   const [hiddenVideoIds, setHiddenVideoIds] = useState<string[]>(() => {
@@ -7539,6 +7556,8 @@ export function App() {
                 setIsCreateModalOpen(true);
               }
             }}
+            onOpenNotifications={handleOpenNotifications}
+            unreadNotifsCount={effectiveUnreadNotifsCount}
             onClose={() => setIsSearchModalOpen(false)}
           />
         )}
@@ -7882,6 +7901,8 @@ export function App() {
             }}
             onOpenLegal={handleOpenLegal}
             currentUser={currentUser}
+            onOpenNotifications={handleOpenNotifications}
+            unreadNotifsCount={effectiveUnreadNotifsCount}
           />
         )}
 
@@ -7934,6 +7955,8 @@ export function App() {
                 }}
                 onOpenLegal={handleOpenLegal}
                 currentUser={currentUser}
+                onOpenNotifications={handleOpenNotifications}
+                unreadNotifsCount={effectiveUnreadNotifsCount}
               />
             )}
             {activeSection === "record_review" && (
@@ -7965,6 +7988,8 @@ export function App() {
                 }}
                 onOpenLegal={handleOpenLegal}
                 currentUser={currentUser}
+                onOpenNotifications={handleOpenNotifications}
+                unreadNotifsCount={effectiveUnreadNotifsCount}
               />
             )}
 
@@ -8764,6 +8789,8 @@ export function App() {
               return Array.from(map.values());
             });
           }}
+          onOpenNotifications={handleOpenNotifications}
+          unreadNotifsCount={effectiveUnreadNotifsCount}
           onClose={() => setIsSearchModalOpen(false)}
         />
       )}
@@ -8869,6 +8896,11 @@ export function App() {
           setIsAuthModalOpen(false);
           if (authIntent === 'record') {
             setIsCreateModalOpen(true);
+          } else if (authIntent === 'notifications') {
+            setActiveSection('notifications');
+            try {
+              window.history.pushState(null, "", buildLocalizedPath("/notifications", language));
+            } catch (err) {}
           }
           setAuthIntent('general');
         }}
