@@ -683,6 +683,7 @@ export function App() {
     setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setActiveSection("search");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const handleOpenNotifications = () => {
     if (!currentUser) {
@@ -7931,6 +7932,8 @@ export function App() {
                 key={`search-${searchResetKey}`}
                 places={places}
                 videos={videos}
+                autoFocusSearch={true}
+                searchMode="general"
                 onSelectVideo={(vidId) => {
                   setIsWatchingVideo(true);
                   handleSelectVideoById(vidId);
@@ -7944,14 +7947,8 @@ export function App() {
                   if (videos.length > 0) handleSelectVideoById(videos[0].id);
                 }}
                 onRecordReview={(place) => {
-                  if (!currentUser) {
-                    setAuthIntent('record');
-                    setPreselectedPlaceForRecording(place || null);
-                    setIsAuthModalOpen(true);
-                  } else {
-                    setPreselectedPlaceForRecording(place || null);
-                    setIsCreateModalOpen(true);
-                  }
+                  setPreselectedPlaceForRecording(place || null);
+                  setIsCreateModalOpen(true);
                 }}
                 onOpenLegal={handleOpenLegal}
                 currentUser={currentUser}
@@ -7964,11 +7961,17 @@ export function App() {
                 key={`record-review-${recordReviewResetKey}`}
                 places={places}
                 videos={videos}
+                autoFocusSearch={true}
+                searchMode="review"
                 onSelectVideo={(vidId) => {
                   setIsWatchingVideo(true);
                   handleSelectVideoById(vidId);
                 }}
-                onOpenPlace={handleOpenPlaceDrawer}
+                onOpenPlace={(placeId) => {
+                  const p = places.find(p => p.id === placeId || p.brandDomain === placeId);
+                  setPreselectedPlaceForRecording(p || null);
+                  setIsCreateModalOpen(true);
+                }}
                 onAddPlace={handleUpdatePlace}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
@@ -7977,14 +7980,8 @@ export function App() {
                   if (videos.length > 0) handleSelectVideoById(videos[0].id);
                 }}
                 onRecordReview={(place) => {
-                  if (!currentUser) {
-                    setAuthIntent('record');
-                    setPreselectedPlaceForRecording(place || null);
-                    setIsAuthModalOpen(true);
-                  } else {
-                    setPreselectedPlaceForRecording(place || null);
-                    setIsCreateModalOpen(true);
-                  }
+                  setPreselectedPlaceForRecording(place || null);
+                  setIsCreateModalOpen(true);
                 }}
                 onOpenLegal={handleOpenLegal}
                 currentUser={currentUser}
@@ -8663,13 +8660,8 @@ export function App() {
         unreadNotifsCount={effectiveUnreadNotifsCount}
         unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
         onOpenCreateModal={() => {
-          if (!currentUser) {
-            setAuthIntent('record');
-            setIsAuthModalOpen(true);
-          } else {
-            setPreselectedPlaceForRecording(null);
-            setIsCreateModalOpen(true);
-          }
+          setPreselectedPlaceForRecording(null);
+          setIsCreateModalOpen(true);
         }}
         onOpenSearch={handleOpenSearchModal}
         onOpenAuth={(intent) => {
@@ -8729,13 +8721,8 @@ export function App() {
           }}
           onOpenSearch={handleOpenSearchModal}
           onOpenCreateModal={() => {
-            if (!currentUser) {
-              setAuthIntent('record');
-              setIsAuthModalOpen(true);
-            } else {
-              setPreselectedPlaceForRecording(null);
-              setIsCreateModalOpen(true);
-            }
+            setPreselectedPlaceForRecording(null);
+            setIsCreateModalOpen(true);
           }}
         />
       )}

@@ -1665,8 +1665,25 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       <CopoMobileSearchView
         places={places}
         videos={videos || []}
+        searchMode="review"
+        autoFocusSearch={true}
         onSelectVideo={() => {}}
-        onOpenPlace={() => {}}
+        onOpenPlace={(placeIdOrDomain) => {
+          const clean = extractCleanDomain(placeIdOrDomain) || placeIdOrDomain;
+          const matched = places.find(p =>
+            p.id.toLowerCase() === clean.toLowerCase() ||
+            p.id.toLowerCase() === placeIdOrDomain.toLowerCase() ||
+            (p.brandDomain && p.brandDomain.toLowerCase() === clean.toLowerCase()) ||
+            (p.website && p.website.toLowerCase().includes(clean.toLowerCase())) ||
+            (p.name && p.name.toLowerCase() === placeIdOrDomain.toLowerCase())
+          );
+          if (matched) {
+            setSelectedPlace(matched);
+            setRating(0);
+          } else {
+            handleSearchMetadata(placeIdOrDomain);
+          }
+        }}
         onRecordForPlace={(place) => {
           setSelectedPlace(place);
           setRating(0);

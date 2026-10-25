@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell } from "lucide-react";
+import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -19,6 +19,11 @@ interface CopoHomePageProps {
   onRecordReview?: (place?: Place | null) => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
   currentUser?: UserProfile | null;
+  autoFocusSearch?: boolean;
+  searchMode?: "general" | "review";
+  headerTitle?: string;
+  headerSubtitle?: string;
+  onClose?: () => void;
 }
 
 interface SuggestionItem {
@@ -43,7 +48,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   onViewAll,
   onRecordReview,
   onOpenLegal,
-  currentUser
+  currentUser,
+  autoFocusSearch = false,
+  searchMode = "general",
+  headerTitle,
+  headerSubtitle,
+  onClose
 }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -75,6 +85,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Auto-focus search input when requested (e.g. tapping Search or Review in mobile bottom nav)
+  useEffect(() => {
+    if (autoFocusSearch) {
+      const timer = setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocusSearch]);
 
   // Active trending videos (prioritizing videos with real titles and creators)
   const trendingVideos = useMemo(() => {
@@ -194,6 +216,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
     const cleanCandidate = extractCleanDomain(trimmed);
     if (cleanCandidate && isValidDomainUrl(cleanCandidate)) {
+      if (searchMode === "review" && onRecordReview) {
+        const existing = places.find(p => {
+          const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+          return pDom?.toLowerCase() === cleanCandidate.toLowerCase();
+        });
+        if (existing) {
+          onRecordReview(existing);
+          return;
+        }
+      }
       onOpenPlace(cleanCandidate);
       return;
     }
@@ -209,7 +241,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       );
     });
     if (match) {
-      onOpenPlace(match.id);
+      if (searchMode === "review" && onRecordReview) {
+        onRecordReview(match);
+      } else {
+        onOpenPlace(match.id);
+      }
       return;
     }
 
@@ -257,7 +293,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             locations: meta.locations || []
           };
           onAddPlace?.(newPlace);
-          onOpenPlace(resolvedDomain);
+          if (searchMode === "review" && onRecordReview) {
+            onRecordReview(newPlace);
+          } else {
+            onOpenPlace(resolvedDomain);
+          }
           return;
         }
       }
@@ -266,12 +306,41 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     } finally {
       setIsResolvingPlace(false);
     }
-    onOpenPlace(trimmed);
+
+    if (searchMode === "review" && onRecordReview) {
+      const fallback = places.find(p => p.id.toLowerCase() === trimmed.toLowerCase() || (p.name || "").toLowerCase() === trimmed.toLowerCase());
+      if (fallback) {
+        onRecordReview(fallback);
+      } else {
+        onOpenPlace(trimmed);
+      }
+    } else {
+      onOpenPlace(trimmed);
+    }
   };
 
   const handleSelectSuggestion = (item: SuggestionItem) => {
     setShowDropdown(false);
     setQuery(item.title);
+
+    if (searchMode === "review") {
+      const qLow = (item.title || "").toLowerCase().trim();
+      const domLow = extractCleanDomain(item.domain || item.id || "")?.toLowerCase() || "";
+      const match = places.find(p => {
+        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id)?.toLowerCase() || "";
+        const pName = (p.name || "").toLowerCase().trim();
+        return (domLow && pDom === domLow) || (qLow && pName === qLow) || (item.id && p.id === item.id);
+      });
+      if (match) {
+        if (onRecordReview) {
+          onRecordReview(match);
+        } else {
+          onOpenPlace(match.id);
+        }
+        return;
+      }
+    }
+
     const candidateId = extractCleanDomain(item.id || "");
     const candidateDom = extractCleanDomain(item.domain || "");
     if (candidateId && isValidDomainUrl(candidateId)) {
@@ -333,41 +402,66 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       <header className="w-full flex md:hidden items-center justify-between px-4 pt-3.5 pb-2.5 shrink-0 select-none z-20 border-b border-zinc-900/60 bg-zinc-950/80 backdrop-blur-md sticky top-0">
         <button
           type="button"
-          onClick={onOpenMenu}
+          onClick={onClose || onOpenMenu}
           className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
-          aria-label={t("nav.openMenu", "Open menu")}
+          aria-label={onClose ? t("common.close", "Close") : t("nav.openMenu", "Open menu")}
         >
-          <Menu className="w-6 h-6 stroke-[2.2]" />
-        </button>
-
-        {/* Official Dark Mode Yoouz Brand Logo */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-zinc-900 shadow-md shrink-0 border border-zinc-800">
-            <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-white">
-              <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-            </svg>
-          </div>
-          <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-            Yoouz
-          </span>
-        </div>
-
-        {/* Right: Notification Bell Button (Mobile Only) */}
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          className="relative w-10 h-10 -mr-1 rounded-full flex items-center justify-center text-zinc-100 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
-          aria-label={t("nav.notifications", "Notifications")}
-          title={t("nav.notifications", "Notifications")}
-        >
-          <Bell className="w-5.5 h-5.5 stroke-[2.1]" />
-          {unreadNotifsCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-zinc-950" />
-            </span>
+          {onClose ? (
+            <X className="w-6 h-6 stroke-[2.2]" />
+          ) : (
+            <Menu className="w-6 h-6 stroke-[2.2]" />
           )}
         </button>
+
+        {/* Official Dark Mode Yoouz Brand Logo or Review Mode Title */}
+        {searchMode === "review" ? (
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center w-[30px] h-[30px] rounded-[10px] bg-red-600/20 border border-red-500/30 text-red-500 shadow-sm shrink-0">
+              <Video className="w-4 h-4 stroke-[2.5]" />
+            </div>
+            <span className="text-white text-[17px] font-bold tracking-tight">
+              {headerTitle || "Select Business"}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-zinc-900 shadow-md shrink-0 border border-zinc-800">
+              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-white">
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+              </svg>
+            </div>
+            <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+              Yoouz
+            </span>
+          </div>
+        )}
+
+        {/* Right Action: Notifications or Close Cancel Button */}
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs font-semibold text-zinc-400 hover:text-white px-2 py-1.5 rounded-lg active:scale-95 transition-all cursor-pointer"
+          >
+            {t("common.cancel", "Cancel")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenNotifications}
+            className="relative w-10 h-10 -mr-1 rounded-full flex items-center justify-center text-zinc-100 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
+            aria-label={t("nav.notifications", "Notifications")}
+            title={t("nav.notifications", "Notifications")}
+          >
+            <Bell className="w-5.5 h-5.5 stroke-[2.1]" />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-zinc-950" />
+              </span>
+            )}
+          </button>
+        )}
       </header>
 
       {/* Main Content Area */}
@@ -376,11 +470,23 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 2. Hero Copy */}
         <div className="w-full text-center max-w-2xl mx-auto mb-6 xs:mb-8 sm:mb-10 md:mb-12 animate-in fade-in duration-300">
           <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
-            <span className="block">See the Truth</span>
-            <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
+            {searchMode === "review" ? (
+              <>
+                <span className="block">Find a Business</span>
+                <span className="block mt-0.5 sm:mt-1.5">To Review</span>
+              </>
+            ) : (
+              <>
+                <span className="block">See the Truth</span>
+                <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
+              </>
+            )}
           </h1>
           <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[19px] mt-2.5 sm:mt-4 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
-            Watch authentic video reviews of any place, product, or service, or record your own.
+            {searchMode === "review"
+              ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
+              : "Watch authentic video reviews of any place, product, or service, or record your own."
+            }
           </p>
         </div>
 
@@ -399,7 +505,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 onFocus={() => {
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
-                placeholder={t("search.placeholder", "Search any business, service, or place...")}
+                placeholder={
+                  searchMode === "review"
+                    ? "Search business name, place, or website to review..."
+                    : t("search.placeholder", "Search any business, service, or place...")
+                }
                 className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               />
 
