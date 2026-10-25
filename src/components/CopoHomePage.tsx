@@ -379,7 +379,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             <span className="block">See the Truth</span>
             <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
           </h1>
-          <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
+          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[19px] mt-2.5 sm:mt-4 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
             Watch authentic video reviews of any place, product, or service, or record your own.
           </p>
         </div>
@@ -388,7 +388,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         <div className="w-full max-w-2xl relative mx-auto mb-12 xs:mb-14 sm:mb-16 md:mb-20 lg:mb-24" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/70 hover:bg-zinc-900/85 backdrop-blur-xl border border-zinc-800/80 hover:border-zinc-700/80 focus-within:border-zinc-500 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
-              <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
+              <Search className="w-5 h-5 text-zinc-300 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -400,7 +400,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
                 placeholder={t("search.placeholder", "Search any business, service, or place...")}
-                className="w-full min-w-0 bg-transparent text-white text-[13.5px] xs:text-[14.5px] sm:text-base placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
+                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               />
 
               {/* Right Side: Subtle Spinner / Clear Button */}

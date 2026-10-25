@@ -49,19 +49,19 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "home"
               ? "text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              : "text-zinc-200 hover:text-white"
           }`}
         >
           <Home
             className={`w-[22px] h-[22px] transition-transform duration-200 ${
               activeSection === "home"
                 ? "scale-105 stroke-[2.4] text-white"
-                : "stroke-[1.9] text-zinc-400"
+                : "stroke-[2] text-zinc-200"
             }`}
           />
           <span
             className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-400"
+              activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-200"
             }`}
           >
             {t("nav.home", "Home")}
@@ -78,7 +78,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "search" || activeSection === "discover"
               ? "text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              : "text-zinc-200 hover:text-white"
           }`}
         >
           <div className="relative">
@@ -86,7 +86,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "search" || activeSection === "discover"
                   ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[1.9] text-zinc-400"
+                  : "stroke-[2] text-zinc-200"
               }`}
             />
           </div>
@@ -94,14 +94,14 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             className={`text-[10px] tracking-tight mt-1 transition-colors ${
               activeSection === "search" || activeSection === "discover"
                 ? "font-bold text-white"
-                : "font-medium text-zinc-400"
+                : "font-medium text-zinc-200"
             }`}
           >
             {t("nav.search", "Search")}
           </span>
         </button>
 
-        {/* 3. CENTER ACTION: Record Review - Unified Dark Mode Hero Action */}
+        {/* 3. CENTER ACTION: Record Review - Single-Word "Review" on exact baseline */}
         <button
           id="mobile-nav-record-btn"
           onClick={() => {
@@ -115,7 +115,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "record_review"
               ? "text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              : "text-zinc-200 hover:text-white"
           }`}
         >
           <div className="relative">
@@ -123,16 +123,16 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "record_review"
                   ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[1.9] text-zinc-400"
+                  : "stroke-[2] text-zinc-200"
               }`}
             />
           </div>
           <span
             className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "record_review" ? "font-bold text-white" : "font-medium text-zinc-400"
+              activeSection === "record_review" ? "font-bold text-white" : "font-medium text-zinc-200"
             }`}
           >
-            {t("nav.record_review", "Video Review")}
+            {t("nav.review", "Review")}
           </span>
         </button>
 
@@ -143,7 +143,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "messages"
               ? "text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              : "text-zinc-200 hover:text-white"
           }`}
         >
           <div className="relative">
@@ -151,7 +151,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "messages"
                   ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[1.9] text-zinc-400"
+                  : "stroke-[2] text-zinc-200"
               }`}
             />
             {unreadMessagesCount > 0 && (
@@ -164,7 +164,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             className={`text-[10px] tracking-tight mt-1 transition-colors ${
               activeSection === "messages"
                 ? "font-bold text-white"
-                : "font-medium text-zinc-400"
+                : "font-medium text-zinc-200"
             }`}
           >
             {t("nav.messages", "Inbox")}
@@ -178,7 +178,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "profile" || activeSection === "more"
               ? "text-white"
-              : "text-zinc-400 hover:text-zinc-200"
+              : "text-zinc-200 hover:text-white"
           }`}
         >
           {currentUser?.avatar ? (
@@ -188,7 +188,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               className={`w-[22px] h-[22px] rounded-full object-cover ring-1 transition-all ${
                 activeSection === "profile" || activeSection === "more"
                   ? "ring-2 ring-white scale-105 opacity-100"
-                  : "ring-zinc-700/80 opacity-80"
+                  : "ring-zinc-600/80 opacity-90"
               }`}
               referrerPolicy="no-referrer"
               onError={(e) => {
@@ -204,13 +204,13 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "profile" || activeSection === "more"
                   ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[1.9] text-zinc-400"
+                  : "stroke-[2] text-zinc-200"
               }`}
             />
           )}
           <span
             className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-400"
+              activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-200"
             }`}
           >
             {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
