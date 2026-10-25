@@ -49,19 +49,19 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "home"
               ? "text-white"
-              : "text-zinc-100 hover:text-white"
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
           <Home
             className={`w-[22px] h-[22px] transition-transform duration-200 ${
               activeSection === "home"
-                ? "scale-110 fill-white/20 stroke-[2.5] text-white"
-                : "stroke-[2.2] text-zinc-100"
+                ? "scale-105 stroke-[2.4] text-white"
+                : "stroke-[1.9] text-zinc-400"
             }`}
           />
           <span
-            className={`text-[10px] tracking-tight mt-1 ${
-              activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-100"
+            className={`text-[10px] tracking-tight mt-1 transition-colors ${
+              activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.home", "Home")}
@@ -78,30 +78,30 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "search" || activeSection === "discover"
               ? "text-white"
-              : "text-zinc-100 hover:text-white"
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
           <div className="relative">
             <Search
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "search" || activeSection === "discover"
-                  ? "scale-110 stroke-[2.5] text-white"
-                  : "stroke-[2.2] text-zinc-100"
+                  ? "scale-105 stroke-[2.4] text-white"
+                  : "stroke-[1.9] text-zinc-400"
               }`}
             />
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 ${
+            className={`text-[10px] tracking-tight mt-1 transition-colors ${
               activeSection === "search" || activeSection === "discover"
                 ? "font-bold text-white"
-                : "font-medium text-zinc-100"
+                : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.search", "Search")}
           </span>
         </button>
 
-        {/* 3. CENTER ACTION: Record Review - In-Line Flush Hero Action */}
+        {/* 3. CENTER ACTION: Record Review - Unified Dark Mode Hero Action */}
         <button
           id="mobile-nav-record-btn"
           onClick={() => {
@@ -112,12 +112,26 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             }
           }}
           aria-label="Record 60-Second Video Review"
-          className="flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl group active:scale-90 transition-all duration-200 cursor-pointer"
+          className={`flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
+            activeSection === "record_review"
+              ? "text-white"
+              : "text-zinc-400 hover:text-zinc-200"
+          }`}
         >
-          <div className="flex items-center justify-center w-[28px] h-[28px] rounded-full bg-white text-zinc-950 shadow-md group-hover:bg-zinc-200 transition-colors">
-            <Video className="w-4 h-4 stroke-[2.8]" />
+          <div className="relative">
+            <Video
+              className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                activeSection === "record_review"
+                  ? "scale-105 stroke-[2.4] text-white"
+                  : "stroke-[1.9] text-zinc-400"
+              }`}
+            />
           </div>
-          <span className="text-[10px] tracking-tight mt-1 font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[76px]">
+          <span
+            className={`text-[10px] tracking-tight mt-1 transition-colors ${
+              activeSection === "record_review" ? "font-bold text-white" : "font-medium text-zinc-400"
+            }`}
+          >
             {t("nav.record_review", "Video Review")}
           </span>
         </button>
@@ -129,28 +143,28 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "messages"
               ? "text-white"
-              : "text-zinc-100 hover:text-white"
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
           <div className="relative">
             <Mail
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "messages"
-                  ? "scale-110 stroke-[2.5] text-white"
-                  : "stroke-[2.2] text-zinc-100"
+                  ? "scale-105 stroke-[2.4] text-white"
+                  : "stroke-[1.9] text-zinc-400"
               }`}
             />
             {unreadMessagesCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[10px] font-black rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-lg">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-red-500 text-white border-2 border-zinc-950 shadow-md">
                 {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
               </span>
             )}
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 ${
+            className={`text-[10px] tracking-tight mt-1 transition-colors ${
               activeSection === "messages"
                 ? "font-bold text-white"
-                : "font-medium text-zinc-100"
+                : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.messages", "Inbox")}
@@ -164,17 +178,17 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "profile" || activeSection === "more"
               ? "text-white"
-              : "text-zinc-100 hover:text-white"
+              : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
           {currentUser?.avatar ? (
             <img
               src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, currentUser.handle || currentUser.email)}
               alt={currentUser.name || "Profile"}
-              className={`w-[22px] h-[22px] rounded-full object-cover ring-2 transition-all ${
+              className={`w-[22px] h-[22px] rounded-full object-cover ring-1 transition-all ${
                 activeSection === "profile" || activeSection === "more"
-                  ? "ring-white scale-110"
-                  : "ring-white/40"
+                  ? "ring-2 ring-white scale-105 opacity-100"
+                  : "ring-zinc-700/80 opacity-80"
               }`}
               referrerPolicy="no-referrer"
               onError={(e) => {
@@ -189,14 +203,14 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             <User
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "profile" || activeSection === "more"
-                  ? "scale-110 stroke-[2.5] text-white"
-                  : "stroke-[2.2] text-zinc-100"
+                  ? "scale-105 stroke-[2.4] text-white"
+                  : "stroke-[1.9] text-zinc-400"
               }`}
             />
           )}
           <span
-            className={`text-[10px] tracking-tight mt-1 ${
-              activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-100"
+            className={`text-[10px] tracking-tight mt-1 transition-colors ${
+              activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
