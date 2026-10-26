@@ -4586,7 +4586,7 @@ async function startServer() {
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>CONFIDENTIAL MEMORANDUM</span>
       </div>
-      <span class="text-xs font-mono text-zinc-500">A4 • 14 Pages • PDF</span>
+      <span class="text-xs font-mono text-zinc-500">A4 • 18 Pages • Full Product Book</span>
     </div>
 
     <!-- Title & Pitch -->
@@ -4594,26 +4594,26 @@ async function startServer() {
       Yoouz Investor Pitch &amp; Product Memorandum
     </h1>
     <p class="text-zinc-400 text-sm sm:text-base mt-3 leading-relaxed">
-      A comprehensive, institutional-grade book detailing the Yoouz platform architecture, the $152B fake review crisis, our mandatory 60-second live camera protocol, full B2B monetization engine ($149/mo), and unit economics.
+      A comprehensive, institutional-grade book detailing the Yoouz platform architecture, the $152B fake review crisis, our mandatory 60-second live camera protocol, full B2B monetization engine ($149/mo), and unit economics with authentic application UI walkthroughs.
     </p>
 
     <!-- Key Sections Breakdown Grid -->
     <div class="grid grid-cols-2 gap-3 my-6 text-xs text-zinc-300">
       <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-        <span class="font-bold text-white block mb-0.5">01-03: The Crisis &amp; Protocol</span>
-        <span class="text-zinc-400">Why legacy text reviews are broken and our unhackable video model.</span>
+        <span class="font-bold text-white block mb-0.5">01–04: Macro Crisis &amp; Protocol</span>
+        <span class="text-zinc-400">The $152B fake review crisis and the unhackable 60-second video protocol.</span>
       </div>
       <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-        <span class="font-bold text-white block mb-0.5">04-07: Feature Walkthrough</span>
-        <span class="text-zinc-400">Front camera studio, feed, comparison mode, and map discovery.</span>
+        <span class="font-bold text-white block mb-0.5">05–09: Live Product Suite</span>
+        <span class="text-zinc-400">Mobile PWA, vertical player, comments drawer, and business profile portal.</span>
       </div>
       <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-        <span class="font-bold text-white block mb-0.5">08-10: B2B SaaS &amp; Ad Suite</span>
-        <span class="text-zinc-400">Verified claims, QR table stands, video widgets, and ad exports.</span>
+        <span class="font-bold text-white block mb-0.5">10–13: Studio &amp; B2B Virality</span>
+        <span class="text-zinc-400">Front camera hardware lock, video map, claiming, and tabletop QR stands.</span>
       </div>
       <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
-        <span class="font-bold text-white block mb-0.5">11-14: Financials &amp; Moat</span>
-        <span class="text-zinc-400">Bunny edge economics, $149/mo tier, TAM, and defensibility.</span>
+        <span class="font-bold text-white block mb-0.5">14–18: Financials &amp; Defensibility</span>
+        <span class="text-zinc-400">Bunny.net edge streaming, $149/mo B2B SaaS ARR, TAM, and competitive moat.</span>
       </div>
     </div>
 
