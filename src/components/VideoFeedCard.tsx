@@ -18,8 +18,6 @@ import {
   Menu,
   ChevronRight,
   ChevronLeft,
-  ChevronUp,
-  ChevronDown,
   Loader2,
   MapPin,
   RotateCcw,
@@ -104,10 +102,6 @@ interface VideoFeedCardProps {
   isBusinessOwnerView?: boolean;
   onOpenOwnerReply?: (video: VideoReview) => void;
   onCloseEmbed?: () => void;
-  onPrevVideo?: () => void;
-  onNextVideo?: () => void;
-  isAtLastVideo?: boolean;
-  hideFloatingNav?: boolean;
 }
 
 export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
@@ -165,11 +159,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   isEmbed = false,
   isBusinessOwnerView = false,
   onOpenOwnerReply,
-  onCloseEmbed,
-  onPrevVideo,
-  onNextVideo,
-  isAtLastVideo = false,
-  hideFloatingNav = false
+  onCloseEmbed
 }) => {
   const { t, language } = useLanguage();
   const safeAuthor = resolveSafeAuthor(video, currentUser, allUsers);
@@ -1449,58 +1439,15 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       )}
       </div>
 
-      {/* 2. DESKTOP ONLY: Action Buttons Column + Card-Anchored Floating Nav */}
+      {/* 2. DESKTOP ONLY: Action Buttons Column (OUTSIDE the video player box, directly to the right, exactly like TikTok) */}
       {!isEmbed && (
-        <div className="hidden md:flex flex-row items-center gap-3.5 ml-3.5 mb-2.5 z-30 shrink-0 select-none text-white pointer-events-auto">
-          <aside
-            id={`copo-desktop-actions-${video.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="flex flex-col items-center gap-3.5"
-          >
-            {renderActionButtons(true)}
-          </aside>
-
-          {/* Floating Up/Down Navigation Buttons (Desktop Only) - Card-anchored beside the action rail */}
-          {!hideFloatingNav && isActive && (
-            <div
-              id={`copo-floating-nav-buttons-${video.id}`}
-              className="flex flex-col gap-2.5 z-40 select-none ml-1.5"
-            >
-              {/* Up arrow to scroll to previous video */}
-              <button
-                id="btn-scroll-prev-video"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPrevVideo?.();
-                }}
-                className="w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border border-zinc-700/80 bg-zinc-800/90 hover:bg-zinc-700/90 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl shadow-black/80 flex items-center justify-center transition-all"
-                title="Previous Video (Up Arrow)"
-                aria-label="Previous Video"
-              >
-                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-              </button>
-
-              {/* Down arrow to scroll to next video */}
-              <button
-                id="btn-scroll-next-video"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNextVideo?.();
-                }}
-                disabled={isAtLastVideo}
-                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtLastVideo
-                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
-                }`}
-                title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
-                aria-label="Next Video"
-              >
-                <ChevronDown className="w-6 h-6 stroke-[2.5]" />
-              </button>
-            </div>
-          )}
-        </div>
+        <aside
+          id={`copo-desktop-actions-${video.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="hidden md:flex flex-col items-center gap-3.5 ml-3.5 mb-2.5 z-30 shrink-0 select-none text-white pointer-events-auto"
+        >
+          {renderActionButtons(true)}
+        </aside>
       )}
     </div>
     </>
