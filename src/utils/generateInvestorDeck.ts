@@ -109,34 +109,34 @@ export function generateInvestorDeck(outputPath: string): Promise<string> {
     doc.circle(80, pageHeight - 120, 180).fillOpacity(0.03).fill(C.accentGold);
     doc.restore();
 
-    // Brand Banner / Header
-    safeImage('public/og-banner.png', marginX, 42, { width: 180 });
+    // Official Yoouz Brand Header Lockup (Star Badge + yoouz.com + Tagline)
+    safeImage('public/yoouz-brand-header.png', marginX, 36, { width: 235 });
     
     // Top Confidential Badge
-    drawBadge(pageWidth - marginX - 190, 48, 'CONFIDENTIAL • SERIES SEED', '#162238', C.accentGold, 190, 24);
+    drawBadge(pageWidth - marginX - 190, 44, 'CONFIDENTIAL • SERIES SEED', '#162238', C.accentGold, 190, 24);
 
     // Main Title & Hook
-    doc.fontSize(40).font('Helvetica-Bold').fillColor(C.textWhite).text('See the Truth\nBefore You Decide.', marginX, 150, { lineGap: 6 });
+    doc.fontSize(38).font('Helvetica-Bold').fillColor(C.textWhite).text('See the Truth\nBefore You Decide.', marginX, 122, { lineGap: 6 });
     
-    doc.fontSize(14).font('Helvetica').fillColor('#94A3B8').text(
+    doc.fontSize(13.5).font('Helvetica').fillColor('#94A3B8').text(
       'The Next-Generation Video Review & Trust Protocol for Local Commerce, Consumer Places, and E-Commerce.',
-      marginX, 252, { width: 480, lineGap: 4 }
+      marginX, 224, { width: 480, lineGap: 4 }
     );
 
     // Cyan/Blue Accent Bar
-    doc.rect(marginX, 310, 64, 4).fill(C.primary);
+    doc.rect(marginX, 282, 64, 4).fill(C.primary);
 
     // Executive Thesis Highlight Card
-    drawCard(marginX, 335, contentWidth, 195, '#0E1729', '#1E2C4A', 12);
-    doc.fontSize(11).font('Helvetica-Bold').fillColor(C.primary).text('EXECUTIVE THESIS & FOUNDATIONAL MANDATE', marginX + 24, 355);
+    drawCard(marginX, 305, contentWidth, 205, '#0E1729', '#1E2C4A', 12);
+    doc.fontSize(10.5).font('Helvetica-Bold').fillColor(C.primary).text('EXECUTIVE THESIS & FOUNDATIONAL MANDATE • YOOUZ.COM', marginX + 24, 325);
     doc.fontSize(9.5).font('Helvetica').fillColor('#CBD5E1').text(
-      'Online text reviews have suffered an irreversible crisis of trust. With generative AI models, automated click-farms, and negative reputation extortion, consumers can no longer distinguish authentic opinions from fraudulent propaganda.\n\nYoouz solves this $152B global trust crisis through an unbreachable hardware-level protocol: mandatory 60-second front-camera live video reviews, zero gallery uploads, and instant edge streaming powered by Bunny.net. By replacing static text with verified human faces and real-time voice, Yoouz creates the immutable proof-of-authenticity standard for modern commerce.',
-      marginX + 24, 375, { width: contentWidth - 48, lineGap: 3.5 }
+      'Online text reviews have suffered an irreversible crisis of trust. With generative AI models, automated click-farms, and negative reputation extortion, consumers can no longer distinguish authentic opinions from fraudulent propaganda.\n\nYoouz (yoouz.com) solves this $152B global trust crisis through an unbreachable hardware-level protocol: mandatory 60-second front-camera live video reviews, zero gallery uploads, and instant edge streaming powered by Bunny.net. By replacing static text with verified human faces and real-time voice, Yoouz creates the immutable proof-of-authenticity standard for modern commerce.',
+      marginX + 24, 348, { width: contentWidth - 48, lineGap: 3.5 }
     );
 
     // 4 Key Pillars at Bottom of Cover
     const col4W = (contentWidth - 30) / 4;
-    const coverCardsY = 550;
+    const coverCardsY = 530;
     const coverPillars = [
       { label: 'AUTHENTICITY', val: '100% Live', sub: 'Zero gallery uploads, front camera only' },
       { label: 'VIDEO PROTOCOL', val: '60 Seconds', sub: 'High-signal, maximum retention format' },
@@ -153,11 +153,11 @@ export function generateInvestorDeck(outputPath: string): Promise<string> {
     });
 
     // Executive Footer Stamp
-    drawCard(marginX, 665, contentWidth, 85, '#0B1220', '#18243C', 8);
-    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.accentGold).text('INVESTOR HIGHLIGHT • CONFIDENTIAL COMPREHENSIVE MEMORANDUM', marginX + 16, 680);
+    drawCard(marginX, 645, contentWidth, 85, '#0B1220', '#18243C', 8);
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.accentGold).text('INVESTOR HIGHLIGHT • CONFIDENTIAL COMPREHENSIVE MEMORANDUM', marginX + 16, 660);
     doc.fontSize(8.5).font('Helvetica').fillColor('#94A3B8').text(
-      'Yoouz Inc. • Head of Product & Executive Engineering • Web Application Live: yoouz.com\nStrictly Confidential. Presented to Select Institutional Investors, Venture Partners, and Strategic Acquirers.',
-      marginX + 16, 698, { width: contentWidth - 32, lineGap: 3 }
+      'Yoouz Inc. • Head of Product & Executive Engineering • Official Web Application: yoouz.com\nStrictly Confidential. Presented to Select Institutional Investors, Venture Partners, and Strategic Acquirers.',
+      marginX + 16, 678, { width: contentWidth - 32, lineGap: 3 }
     );
 
     // =========================================================================
@@ -447,37 +447,44 @@ export function generateInvestorDeck(outputPath: string): Promise<string> {
     doc.addPage({ size: 'A4', margins: { top: 0, bottom: 0, left: 0, right: 0 } });
     drawHeader('Community, Creator Profiles & Direct Sharing', '06 • Social Architecture', 'Building an organic social graph where consumers follow trusted human taste-makers.');
 
-    // 3 Value Pillars
+    // Left Column: 3 Value Pillars
+    const socColW = 280;
     const socCards = [
       {
         title: '1. Verified Creator Profiles & Local Guides',
         badge: 'TRUSTED IDENTITY',
-        desc: 'Every reviewer on Yoouz has a public verified profile showcasing their review history, favorite places, total video count, and authenticity score. Reviewers earn verified badges and build loyal audiences who trust their specific culinary or travel recommendations.'
+        desc: 'Every reviewer on Yoouz has an authentic public profile showcasing their video review history, verified Local Guide status, and aggregate trust score. Reviewers earn followers who trust their specific taste.'
       },
       {
-        title: '2. Frictionless Social Following Graph',
+        title: '2. Frictionless Following Graph',
         badge: 'NETWORK EFFECT',
-        desc: 'Unlike Yelp where reviews exist in isolation, Yoouz allows users to follow trusted creators with a single tap of the "+" button. Their personalized "Following" feed surfaces reviews exclusively from people whose taste they admire.'
+        desc: 'Unlike Yelp where reviews exist in isolation, Yoouz allows users to follow creators with a single tap of "+". Their personalized Following feed surfaces recommendations exclusively from trusted humans.'
       },
       {
-        title: '3. Direct Sharing vs. Static Text Links',
+        title: '3. Direct Video Sharing (iMessage / WhatsApp)',
         badge: 'VIRAL MULTIPLIER',
-        desc: 'Sharing a Yoouz review sends an interactive video preview directly into iMessage, WhatsApp, Instagram DM, or Telegram. Recipients instantly watch the 60-second video without needing to create an account or install an app.'
+        desc: 'Sharing sends an interactive video link directly into iMessage, WhatsApp, or Instagram DM. Recipients immediately watch the 60-second video without needing to create an account.'
       }
     ];
 
     let socY = 98;
     socCards.forEach(sc => {
-      drawCard(marginX, socY, contentWidth, 105, C.white, C.borderLight, 8);
-      drawBadge(marginX + 16, socY + 14, sc.badge, C.primaryLight, C.primary, 110, 18);
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(C.textHeading).text(sc.title, marginX + 135, socY + 16);
-      doc.fontSize(8.5).font('Helvetica').fillColor(C.textBody).text(sc.desc, marginX + 16, socY + 42, { width: contentWidth - 32, lineGap: 2.8 });
-      socY += 118;
+      drawCard(marginX, socY, socColW, 98, C.white, C.borderLight, 8);
+      drawBadge(marginX + 12, socY + 12, sc.badge, C.primaryLight, C.primary, 105, 18);
+      doc.fontSize(9.5).font('Helvetica-Bold').fillColor(C.textHeading).text(sc.title, marginX + 12, socY + 34, { width: socColW - 24 });
+      doc.fontSize(8).font('Helvetica').fillColor(C.textBody).text(sc.desc, marginX + 12, socY + 48, { width: socColW - 24, lineGap: 1.8 });
+      socY += 108;
     });
 
-    // Comparison Callout Box
-    drawCard(marginX, 470, contentWidth, 280, '#0F172A', '#1E293B', 10);
-    doc.fontSize(11).font('Helvetica-Bold').fillColor(C.textWhite).text('WHY CONSUMERS CHOOSE YOOUZ OVER TRADITIONAL CHANNELS', marginX + 20, 488);
+    // Right Column: Actual Vertical Video Player Screenshot (Burger King / Sophie Cielo)
+    const socImgX = marginX + socColW + 16;
+    const socImgW = contentWidth - socColW - 16; // ~219 pt
+    drawCard(socImgX - 3, 95, socImgW + 6, 320, '#0A0F1D', '#1E293B', 10);
+    safeImage('public/assets/aistudio/Screenshot_2026-10-26_at_17.57.56_b0beb67e.png', socImgX, 98, { width: socImgW });
+
+    // Comparison Callout Box at Bottom
+    drawCard(marginX, 435, contentWidth, 305, '#0F172A', '#1E293B', 10);
+    doc.fontSize(11).font('Helvetica-Bold').fillColor(C.textWhite).text('WHY CONSUMERS CHOOSE YOOUZ OVER TRADITIONAL CHANNELS', marginX + 20, 452);
 
     const compRows = [
       { f: 'Review Format', old: 'Anonymous 3-paragraph text', yoouz: 'Authentic 60s live video testimonial' },
@@ -486,13 +493,13 @@ export function generateInvestorDeck(outputPath: string): Promise<string> {
       { f: 'Community Connection', old: 'Zero ongoing engagement', yoouz: 'Follow creators, ask questions, get video replies' }
     ];
 
-    let crY = 520;
+    let crY = 482;
     compRows.forEach((cr) => {
-      drawCard(marginX + 16, crY, contentWidth - 32, 42, '#141E33', '#1F3052', 6);
+      drawCard(marginX + 16, crY, contentWidth - 32, 44, '#141E33', '#1F3052', 6);
       doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.accentGold).text(cr.f, marginX + 28, crY + 14, { width: 120 });
       doc.fontSize(8).font('Helvetica').fillColor('#94A3B8').text('Legacy: ' + cr.old, marginX + 155, crY + 14, { width: 170 });
       doc.fontSize(8).font('Helvetica-Bold').fillColor(C.accentGreen).text('Yoouz: ' + cr.yoouz, marginX + 335, crY + 14, { width: 170 });
-      crY += 48;
+      crY += 50;
     });
 
     // =========================================================================
