@@ -1830,16 +1830,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full ${
-            commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-auto touch-pan-y"
-          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
+          className={`w-full h-full overflow-y-auto touch-pan-y snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
             isEmbed
               ? "gap-3 p-1 justify-center"
               : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(93vh,860px)] md:w-auto md:gap-4"
           }`}
           style={{
             WebkitOverflowScrolling: "touch",
-            scrollSnapType: commentsOpen ? "none" : "y mandatory",
+            scrollSnapType: "y mandatory",
             overscrollBehaviorY: "contain",
             scrollbarWidth: "none",
             msOverflowStyle: "none",
@@ -1919,52 +1917,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isBusinessOwnerView={isBusinessOwnerView}
                 onOpenOwnerReply={onOpenOwnerReply}
                 onCloseEmbed={onCloseEmbed}
+                onPrevVideo={handlePrev}
+                onNextVideo={handleNext}
+                isAtLastVideo={!shouldLoop && activeCardIndex >= displayItems.length - 1 && displayItems.length > 1}
+                hideFloatingNav={hideFloatingNav}
               />
             );
           })}
         </div>
-
-        {/* Floating Up/Down Navigation Buttons (Desktop Only) - Positioned on far right edge ("super right") like TikTok */}
-        {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
-          const isAtFirstVideo = activeCardIndex <= 0;
-          const isAtLastVideo = !shouldLoop && activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
-
-          return (
-            <div
-              id="copo-floating-nav-buttons"
-              className={`hidden md:flex flex-col gap-2.5 z-50 select-none fixed top-1/2 -translate-y-1/2 md:transition-all md:duration-200 ${
-                commentsOpen ? "right-[456px] lg:right-[464px]" : "right-4 lg:right-8"
-              }`}
-            >
-              {/* Up arrow to scroll to previous video */}
-              <button
-                id="btn-scroll-prev-video"
-                onClick={handlePrev}
-                className="w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border border-zinc-700/80 bg-zinc-800/90 hover:bg-zinc-700/90 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl shadow-black/80 flex items-center justify-center transition-all"
-                title="Previous Video (Up Arrow)"
-                aria-label="Previous Video"
-              >
-                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-              </button>
-
-              {/* Down arrow to scroll to next video */}
-              <button
-                id="btn-scroll-next-video"
-                onClick={handleNext}
-                disabled={isAtLastVideo}
-                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtLastVideo
-                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
-                }`}
-                title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
-                aria-label="Next Video"
-              >
-                <ChevronDown className="w-6 h-6 stroke-[2.5]" />
-              </button>
-            </div>
-          );
-        })()}
       </div>
 
       {/* More Options Modal */}
