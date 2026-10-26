@@ -676,7 +676,6 @@ export function App() {
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const handleOpenSearchModal = () => {
-    setSearchResetKey((prev) => prev + 1);
     setIsSearchModalOpen(false);
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
@@ -684,6 +683,10 @@ export function App() {
     setFullscreenFeedContext(null);
     setActiveSection("search");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    const input = document.getElementById("copo-main-search-input") as HTMLInputElement | null;
+    if (input) {
+      input.focus();
+    }
   };
   const handleOpenNotifications = () => {
     if (!currentUser) {
@@ -7873,11 +7876,14 @@ export function App() {
             />
         )}
 
-        {/* Premium Minimalist Homepage (See the Truth Before You Buy) */}
-        {activeSection === "home" && !isWatchingVideo && !fullscreenFeedContext && !isPlaceView && !isCreatorView && (
+        {/* Premium Minimalist Homepage & Search View */}
+        {(activeSection === "home" || activeSection === "search") && !isWatchingVideo && !fullscreenFeedContext && !isPlaceView && !isCreatorView && (
           <CopoHomePage
+            key="copo-main-home-search"
             places={places}
             videos={videos}
+            autoFocusSearch={activeSection === "search"}
+            searchMode="general"
             onSelectVideo={(vidId) => {
               setIsWatchingVideo(true);
               handleSelectVideoById(vidId);
@@ -7891,14 +7897,8 @@ export function App() {
               if (videos.length > 0) handleSelectVideoById(videos[0].id);
             }}
             onRecordReview={(place) => {
-              if (!currentUser) {
-                setAuthIntent('record');
-                setPreselectedPlaceForRecording(place || null);
-                setIsAuthModalOpen(true);
-              } else {
-                setPreselectedPlaceForRecording(place || null);
-                setIsCreateModalOpen(true);
-              }
+              setPreselectedPlaceForRecording(place || null);
+              setIsCreateModalOpen(true);
             }}
             onOpenLegal={handleOpenLegal}
             currentUser={currentUser}
@@ -7926,36 +7926,6 @@ export function App() {
           />
         ) : !isPlaceView && !isCreatorView && (
           <>
-            {/* Search View (100% identical to CopoHomePage on Desktop and Mobile) */}
-            {activeSection === "search" && (
-              <CopoHomePage
-                key={`search-${searchResetKey}`}
-                places={places}
-                videos={videos}
-                autoFocusSearch={true}
-                searchMode="general"
-                onSelectVideo={(vidId) => {
-                  setIsWatchingVideo(true);
-                  handleSelectVideoById(vidId);
-                }}
-                onOpenPlace={handleOpenPlaceDrawer}
-                onAddPlace={handleUpdatePlace}
-                onOpenCreator={handleOpenCreatorDrawer}
-                onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
-                onViewAll={() => {
-                  setIsWatchingVideo(true);
-                  if (videos.length > 0) handleSelectVideoById(videos[0].id);
-                }}
-                onRecordReview={(place) => {
-                  setPreselectedPlaceForRecording(place || null);
-                  setIsCreateModalOpen(true);
-                }}
-                onOpenLegal={handleOpenLegal}
-                currentUser={currentUser}
-                onOpenNotifications={handleOpenNotifications}
-                unreadNotifsCount={effectiveUnreadNotifsCount}
-              />
-            )}
             {activeSection === "record_review" && (
               <CopoHomePage
                 key={`record-review-${recordReviewResetKey}`}

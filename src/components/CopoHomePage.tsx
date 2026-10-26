@@ -416,11 +416,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* Official Dark Mode Yoouz Brand Logo or Review Mode Title */}
         {searchMode === "review" ? (
           <div className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-[30px] h-[30px] rounded-[10px] bg-red-600/20 border border-red-500/30 text-red-500 shadow-sm shrink-0">
-              <Video className="w-4 h-4 stroke-[2.5]" />
+            <div className="relative flex items-center justify-center w-[32px] h-[32px] rounded-[11px] bg-zinc-900 border border-zinc-800 text-white shadow-md shrink-0">
+              <Video className="w-4 h-4 stroke-[2.2] text-white" />
             </div>
             <span className="text-white text-[17px] font-bold tracking-tight">
-              {headerTitle || "Select Business"}
+              {headerTitle || "Search Business"}
             </span>
           </div>
         ) : (
@@ -436,15 +436,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
         )}
 
-        {/* Right Action: Notifications or Close Cancel Button */}
+        {/* Right Action: Notifications or Balanced Spacer */}
         {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs font-semibold text-zinc-400 hover:text-white px-2 py-1.5 rounded-lg active:scale-95 transition-all cursor-pointer"
-          >
-            {t("common.cancel", "Cancel")}
-          </button>
+          <div className="w-10 h-10 -mr-1" aria-hidden="true" />
         ) : (
           <button
             type="button"
@@ -497,6 +491,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               <Search className="w-5 h-5 text-zinc-300 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
               <input
                 ref={searchInputRef}
+                id="copo-main-search-input"
                 type="text"
                 dir="auto"
                 value={query}
@@ -510,7 +505,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     ? "Search business name, place, or website to review..."
                     : t("search.placeholder", "Search any business, service, or place...")
                 }
-                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
+                style={{ caretColor: "#007aff" }}
+                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate caret-[#007aff]"
               />
 
               {/* Right Side: Subtle Spinner / Clear Button */}

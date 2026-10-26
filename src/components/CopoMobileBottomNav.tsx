@@ -72,8 +72,15 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
         <button
           id="mobile-nav-search-btn"
           onClick={() => {
-            if (onOpenSearch) onOpenSearch();
-            else onSelectSection("search");
+            if (onOpenSearch) {
+              onOpenSearch();
+            } else {
+              onSelectSection("search");
+            }
+            const input = document.getElementById("copo-main-search-input") as HTMLInputElement | null;
+            if (input) {
+              input.focus();
+            }
           }}
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "search" || activeSection === "discover"
