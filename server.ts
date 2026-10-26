@@ -38,6 +38,7 @@ import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
 import { alignBunnyCuesWithHardwareSilences, AudioSilenceInterval } from "./src/utils/subtitleSync.ts";
+import { generateInvestorDeck } from "./src/utils/generateInvestorDeck.ts";
 
 dotenv.config();
 
@@ -4514,6 +4515,129 @@ async function startServer() {
       return res.status(204).end();
     }
     next();
+  });
+
+  // ==========================================
+  // PRIVATE INVESTOR DECK ENDPOINTS (CONFIDENTIAL)
+  // Protected with noindex/noarchive, not linked in public UI/sitemaps
+  // ==========================================
+  const getDeckPdfPath = async () => {
+    const pdfPath = path.resolve(process.cwd(), 'public', 'Yoouz_Investor_Pitch_Memorandum.pdf');
+    if (!fs.existsSync(pdfPath)) {
+      await generateInvestorDeck(pdfPath);
+    }
+    return pdfPath;
+  };
+
+  // Direct File Download (Attachment)
+  app.get(['/api/private-download/yoouz-investor-deck.pdf', '/api/private-download/deck.pdf', '/download/deck'], async (_req, res) => {
+    try {
+      const pdfPath = await getDeckPdfPath();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="Yoouz_Investor_Pitch_Memorandum.pdf"');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      return res.sendFile(pdfPath);
+    } catch (err: any) {
+      console.error('[Investor Deck Download Error]:', err);
+      return res.status(500).send('Error generating or retrieving investor deck.');
+    }
+  });
+
+  // Direct Inline Browser View
+  app.get('/api/private-download/view', async (_req, res) => {
+    try {
+      const pdfPath = await getDeckPdfPath();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="Yoouz_Investor_Pitch_Memorandum.pdf"');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+      res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+      return res.sendFile(pdfPath);
+    } catch (err: any) {
+      console.error('[Investor Deck View Error]:', err);
+      return res.status(500).send('Error generating or retrieving investor deck.');
+    }
+  });
+
+  // Private Investor Portal Page (Direct User Download Hub)
+  app.get(['/investor-deck', '/deck', '/private-pitch'], async (_req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>Yoouz • Confidential Investor Deck & Product Memorandum</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 font-sans antialiased selection:bg-blue-600 selection:text-white">
+  <div class="max-w-2xl w-full bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+    <!-- Accent Gradient Glow -->
+    <div class="absolute -top-24 -right-24 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Top Badge -->
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs font-bold text-zinc-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>CONFIDENTIAL MEMORANDUM</span>
+      </div>
+      <span class="text-xs font-mono text-zinc-500">A4 • 14 Pages • PDF</span>
+    </div>
+
+    <!-- Title & Pitch -->
+    <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+      Yoouz Investor Pitch &amp; Product Memorandum
+    </h1>
+    <p class="text-zinc-400 text-sm sm:text-base mt-3 leading-relaxed">
+      A comprehensive, institutional-grade book detailing the Yoouz platform architecture, the $152B fake review crisis, our mandatory 60-second live camera protocol, full B2B monetization engine ($149/mo), and unit economics.
+    </p>
+
+    <!-- Key Sections Breakdown Grid -->
+    <div class="grid grid-cols-2 gap-3 my-6 text-xs text-zinc-300">
+      <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
+        <span class="font-bold text-white block mb-0.5">01-03: The Crisis &amp; Protocol</span>
+        <span class="text-zinc-400">Why legacy text reviews are broken and our unhackable video model.</span>
+      </div>
+      <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
+        <span class="font-bold text-white block mb-0.5">04-07: Feature Walkthrough</span>
+        <span class="text-zinc-400">Front camera studio, feed, comparison mode, and map discovery.</span>
+      </div>
+      <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
+        <span class="font-bold text-white block mb-0.5">08-10: B2B SaaS &amp; Ad Suite</span>
+        <span class="text-zinc-400">Verified claims, QR table stands, video widgets, and ad exports.</span>
+      </div>
+      <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800/80">
+        <span class="font-bold text-white block mb-0.5">11-14: Financials &amp; Moat</span>
+        <span class="text-zinc-400">Bunny edge economics, $149/mo tier, TAM, and defensibility.</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+      <a href="/api/private-download/yoouz-investor-deck.pdf" download="Yoouz_Investor_Pitch_Memorandum.pdf" class="flex-1 py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-center transition-all shadow-lg shadow-blue-600/25 active:scale-98 flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <span>Download PDF (Direct)</span>
+      </a>
+      <a href="/api/private-download/view" target="_blank" rel="noopener noreferrer" class="py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-center border border-zinc-700 transition-all flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        <span>View in Browser</span>
+      </a>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="mt-6 pt-5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500">
+      <span>Private &amp; Confidential • Not Indexed Online</span>
+      <span>yoouz.com</span>
+    </div>
+  </div>
+</body>
+</html>`;
+    return res.send(html);
   });
 
   app.post('/api/upgrade-request', express.json(), async (req, res) => {

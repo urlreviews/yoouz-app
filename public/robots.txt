@@ -4,6 +4,8 @@
 User-agent: *
 Allow: /
 Disallow: /api/private/
+Disallow: /api/private-download/
+Disallow: /investor-deck/
 Disallow: /admin/
 
 # Explicitly Allow All Major AI Models, LLM Crawlers, and RAG Bots
