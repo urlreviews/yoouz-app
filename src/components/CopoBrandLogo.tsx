@@ -136,10 +136,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       : "";
     return (
       <div
-        className={`relative flex items-center justify-center ${shapeRadius} bg-white border border-white/10 shadow-sm shrink-0 overflow-hidden [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-white print:border-zinc-200 ${cleanCls}`}
+        className={`relative flex items-center justify-center ${shapeRadius} bg-zinc-950 border border-white/20 shadow-sm shrink-0 overflow-hidden [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 ${cleanCls}`}
         id="copo-brand-logo-yoouz"
       >
-        <span className="text-zinc-950 font-black tracking-tighter select-none" style={{ fontSize: '50%' }}>Y</span>
+        <svg viewBox="0 0 24 24" className="w-full h-full p-[14%] fill-white print:fill-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+          <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+        </svg>
       </div>
     );
   }

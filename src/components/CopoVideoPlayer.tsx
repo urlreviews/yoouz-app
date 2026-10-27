@@ -1817,7 +1817,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[680px]" : "md:mr-0"
+        commentsOpen ? "md:mr-[440px] md:pr-[56px]" : "md:mr-0"
       } ${
         isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"
       }`}
@@ -1933,7 +1933,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <div
               id="copo-floating-nav-buttons"
               className={`hidden md:flex flex-col gap-2.5 z-50 select-none fixed top-1/2 -translate-y-1/2 md:transition-all md:duration-200 ${
-                commentsOpen ? "right-[456px] lg:right-[464px]" : "right-4 lg:right-8"
+                commentsOpen ? "right-[452px]" : "right-4 lg:right-8"
               }`}
             >
               {/* Up arrow to scroll to previous video */}
