@@ -458,8 +458,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         )}
       </header>
 
-      {/* Main Content Area - Mobile anchors content to bottom for thumb reach with premium top spacing, desktop strictly locked via md: */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-4 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-3 md:pb-12 relative">
+      {/* Main Content Area - Mobile centers search bar cleanly in middle, anchors videos to bottom, desktop locked */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-4 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-start items-center pb-2 md:pb-12 relative">
         {/* Subtle OLED ambient glow behind masthead for depth on mobile */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-b from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none md:hidden" aria-hidden="true" />
         
@@ -486,8 +486,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Anchored down into the golden thumb reach zone right above trending videos */}
-        <div className="w-full max-w-2xl relative mx-auto mt-auto md:mt-0 mb-3 sm:mb-8 md:mb-8 lg:mb-10 relative z-10" ref={dropdownRef}>
+        {/* 3. Search Component - Centered in middle between headline and videos, shifts to top when typing for keyboard clearance */}
+        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "my-auto"} md:my-0 md:mb-8 lg:mb-10 relative z-30`} ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
               <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
