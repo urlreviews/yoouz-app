@@ -458,12 +458,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         )}
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-5 xs:pt-7 sm:pt-10 md:pt-16 lg:pt-22 flex flex-col items-center">
+      {/* Main Content Area - Optimized compact vertical spacing so videos sit higher up on desktop */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-4 sm:pt-6 md:pt-6 lg:pt-8 flex flex-col items-center">
         
         {/* 2. Hero Copy */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-6 xs:mb-8 sm:mb-10 md:mb-12 animate-in fade-in duration-300">
-          <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+        <div className="w-full text-center max-w-2xl mx-auto mb-4 xs:mb-5 sm:mb-6 md:mb-6 animate-in fade-in duration-300">
+          <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.12]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -476,7 +476,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[19px] mt-2.5 sm:mt-4 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
+          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2 sm:mt-3 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
@@ -484,8 +484,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Optically centered with generous breathing room and smoked glass styling */}
-        <div className="w-full max-w-2xl relative mx-auto mb-12 xs:mb-14 sm:mb-16 md:mb-20 lg:mb-24" ref={dropdownRef}>
+        {/* 3. Search Component - Compact margins so Trending Video Reviews sits higher up on desktop */}
+        <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/70 hover:bg-zinc-900/85 backdrop-blur-xl border border-zinc-800/80 hover:border-zinc-700/80 focus-within:border-zinc-500 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-300 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
@@ -573,8 +573,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 4. Trending Video Reviews Grid / Carousel - Hidden while typing so search results sit on a clean canvas */}
         {!query.trim() && (
-          <section className="w-full relative mt-4 xs:mt-6 sm:mt-8 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
+          <section className="w-full relative mt-1 xs:mt-2 sm:mt-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between w-full mb-2.5 sm:mb-3 px-1">
               <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
                 Trending Video Reviews
               </h2>
