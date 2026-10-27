@@ -108,15 +108,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             onClick={() => onSelectSection("home")}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
           >
-            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-              </svg>
+            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.05)] group-hover:shadow-[0_6px_20px_rgba(255,255,255,0.1)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-white/10">
+              <span className="text-zinc-950 text-xl font-black tracking-tighter select-none">Y</span>
             </div>
             <div className="flex flex-col justify-center pt-0.5 min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-                  Yoouz
+                  yoouz.com
                 </span>
                 <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
                   Beta
@@ -250,11 +248,9 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
           {/* Logo Icon Only */}
           <div
             onClick={() => onSelectSection("home")}
-            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-zinc-800"
+            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white shadow-[0_4px_16px_rgba(255,255,255,0.05)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-white/10"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-              <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-            </svg>
+            <span className="text-zinc-950 text-xl font-black tracking-tighter select-none">Y</span>
           </div>
 
           {/* Navigation items list (Icons Only) */}

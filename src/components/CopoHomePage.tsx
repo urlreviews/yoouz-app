@@ -425,13 +425,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-zinc-900 shadow-md shrink-0 border border-zinc-800">
-              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-white">
-                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-              </svg>
+            <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-white shadow-md shrink-0 border border-white/10">
+              <span className="text-zinc-950 text-base font-black tracking-tighter select-none">Y</span>
             </div>
             <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-              Yoouz
+              yoouz.com
             </span>
           </div>
         )}

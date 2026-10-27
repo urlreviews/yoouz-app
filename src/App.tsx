@@ -4802,6 +4802,17 @@ export function App() {
     }
   }, [activeFeedVideos, pendingVideoId]);
 
+  // Auto-sync comments drawer when the active video in the feed changes (Option A)
+  // This ensures that if the comments section is open, it automatically refreshes to match the video currently on screen
+  useEffect(() => {
+    if (activeCommentVideo && activeFeedVideos[currentVideoIndex]) {
+      const newVideo = activeFeedVideos[currentVideoIndex];
+      if (activeCommentVideo.id !== newVideo.id) {
+        setActiveCommentVideo(newVideo);
+      }
+    }
+  }, [currentVideoIndex, activeFeedVideos, activeCommentVideo]);
+
   // Handle Video Selection from search/map/profile/bookmarks or place/creator drawer
   const handleSelectVideoById = (
     videoId: string,

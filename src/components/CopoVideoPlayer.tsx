@@ -1817,7 +1817,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[440px]" : "md:mr-0"
+        commentsOpen ? "md:mr-[680px]" : "md:mr-0"
       } ${
         isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"
       }`}
