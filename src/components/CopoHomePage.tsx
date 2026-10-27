@@ -458,12 +458,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         )}
       </header>
 
-      {/* Main Content Area - Bold high-impact mobile hero typography with balanced top spacing, desktop strictly preserved via md: */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-4 xs:pt-6 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-2 md:pb-12">
+      {/* Main Content Area - Mobile hero text sits directly under logo bar with bold 32-36px typography, desktop strictly preserved via md: */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-2 xs:pt-3 sm:pt-4 md:pt-6 lg:pt-8 flex flex-col items-center pb-4 md:pb-12">
         
-        {/* 2. Hero Copy - Large bold mobile typography filling top space elegantly */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-7 md:mb-6 animate-in fade-in duration-300">
-          <h1 className="text-[31px] xs:text-[35px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.08]">
+        {/* 2. Hero Copy - Large ultra-bold mobile typography sitting directly under top logo bar */}
+        <div className="w-full text-center max-w-2xl mx-auto mb-4 xs:mb-5 sm:mb-6 md:mb-6 animate-in fade-in duration-300">
+          <h1 className="text-[32px] xs:text-[36px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.05]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -476,7 +476,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-200 text-[15px] xs:text-[16.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-3.5 leading-relaxed max-w-[350px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
+          <p className="text-zinc-200 text-[15px] xs:text-[16.5px] sm:text-lg md:text-[18px] mt-2 sm:mt-3 leading-relaxed max-w-[350px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
@@ -484,8 +484,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Positioned for easy thumb reach on mobile, compact on desktop */}
-        <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10" ref={dropdownRef}>
+        {/* 3. Search Component - Positioned cleanly under hero title, desktop compact via md: */}
+        <div className="w-full max-w-2xl relative mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-8 lg:mb-10" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/70 hover:bg-zinc-900/85 backdrop-blur-xl border border-zinc-800/80 hover:border-zinc-700/80 focus-within:border-zinc-500 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
               <Search className="w-5 h-5 text-zinc-300 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
