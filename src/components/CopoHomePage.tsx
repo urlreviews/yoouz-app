@@ -458,12 +458,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         )}
       </header>
 
-      {/* Main Content Area - Anchors search bar & video cards at bottom on mobile near bottom nav bar, desktop strictly top-aligned via md: */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-10 xs:pt-12 sm:pt-16 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-2 md:pb-12">
+      {/* Main Content Area - Bold high-impact mobile hero typography with balanced top spacing, desktop strictly preserved via md: */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-4 xs:pt-6 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-2 md:pb-12">
         
-        {/* 2. Hero Copy */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-6 xs:mb-7 sm:mb-8 md:mb-6 animate-in fade-in duration-300">
-          <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.12]">
+        {/* 2. Hero Copy - Large bold mobile typography filling top space elegantly */}
+        <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-7 md:mb-6 animate-in fade-in duration-300">
+          <h1 className="text-[31px] xs:text-[35px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.08]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -476,7 +476,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-3.5 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
+          <p className="text-zinc-200 text-[15px] xs:text-[16.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-3.5 leading-relaxed max-w-[350px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
