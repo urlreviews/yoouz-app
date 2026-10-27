@@ -609,10 +609,30 @@ export function App() {
     return "home";
   });
   const [activeSubTab, setActiveSubTab] = useState<FeedSubTab>("discover");
-  const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(() => {
+    try {
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
+      const revMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
+      const videoId = revMatch ? revMatch[1] : null;
+      if (videoId && typeof window !== "undefined" && (window as any).__INITIAL_FEED_VIDEOS__) {
+        const initVideos = (window as any).__INITIAL_FEED_VIDEOS__;
+        if (Array.isArray(initVideos)) {
+          const idx = initVideos.findIndex((v: any) => v && v.id === videoId);
+          if (idx >= 0) return idx;
+        }
+      }
+    } catch (e) {}
+    return 0;
+  });
   const [searchResetKey, setSearchResetKey] = useState<number>(0);
   const [recordReviewResetKey, setRecordReviewResetKey] = useState<number>(0);
-  const [isWatchingVideo, setIsWatchingVideo] = useState<boolean>(false);
+  const [isWatchingVideo, setIsWatchingVideo] = useState<boolean>(() => {
+    try {
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
+      return pathname.startsWith("/review/") || pathname.startsWith("/video/") || pathname.startsWith("/v/") || /(rev-[a-zA-Z0-9_\-]+)/i.test(pathname);
+    } catch (e) {}
+    return false;
+  });
 
   // Background Upload state for in-app navigation & bottom progress bar
   const [backgroundUpload, setBackgroundUpload] = useState<{
@@ -636,14 +656,18 @@ export function App() {
   }, [backgroundUpload?.isPublishing]);
 
   // 3. Drawers & Modals States
-    const previousSectionRef = useRef<NavSection | null>(null);
+  const previousSectionRef = useRef<NavSection | null>(null);
   const previousVideoIndexRef = useRef<number>(0);
   const savedHomeVideoIndexRef = useRef<number>(0);
   const [selectedPlaceIdForDrawer, setSelectedPlaceIdForDrawer] = useState<string | null>(() => {
     try {
-      const pathname = window.location.pathname;
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
       if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
         return "sample";
+      }
+      const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
+      if (pMatch && pMatch[2]) {
+        return decodeURIComponent(pMatch[2]);
       }
     } catch (e) {}
     return null;
@@ -1261,6 +1285,7 @@ export function App() {
           const idx = videosRef.current.findIndex((v) => v.id === targetVidId);
           if (idx !== -1) {
             setCurrentVideoIndex(idx);
+            setIsWatchingVideo(true);
           } else {
             // Fetch from server API to ensure seed JSON data is merged with BunnyDB
             fetch(`/api/nosql/videoReviews/${targetVidId}`)
@@ -1272,6 +1297,7 @@ export function App() {
                     return [vidData as VideoReview, ...prev];
                   });
                   setCurrentVideoIndex(0);
+                  setIsWatchingVideo(true);
                 }
               }).catch(() => {});
           }
@@ -1821,6 +1847,12 @@ export function App() {
           const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
           const placeName = formatBusinessName(currentVid.placeName || domainSlug);
           title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+        } else if (isDirectVideoRoute) {
+          // Keep video route preserved while initial video data finishes resolving
+          return;
+        } else if (!selectedPlaceIdForDrawer && window.location.pathname.startsWith("/reviews/")) {
+          // Keep business reviews route preserved while place data resolves
+          return;
         } else {
           path = "/";
           title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";

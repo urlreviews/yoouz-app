@@ -81,9 +81,9 @@ Allow: /
 User-agent: Amazonbot
 Allow: /
 
-# Sitemaps and LLM Knowledge Files
 Sitemap: https://www.yoouz.com/sitemap.xml
 Sitemap: https://www.yoouz.com/video-sitemap.xml
+Sitemap: https://www.yoouz.com/sitemap-index.xml
 
 # LLMs.txt Standard Machine-Readable Endpoints (https://llmstxt.org)
 # Core LLM Summary: https://yoouz.com/llms.txt
