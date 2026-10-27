@@ -589,7 +589,7 @@ export function App() {
       if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
       if (pathname === "/discover") return "discover";
       if (pathname === "/following") return "following";
-      if (pathname === "/search") return "search";
+      if (pathname === "/search" || pathname.startsWith("/trade/") || pathname.startsWith("/category/") || pathname === "/categories") return "search";
       if (pathname === "/map") return "map";
       if (pathname === "/notifications") return "notifications";
       if (pathname === "/messages" || pathname.startsWith("/messages/")) return "messages";

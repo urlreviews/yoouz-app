@@ -13686,6 +13686,24 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     }
   });
 
+  // Explicitly return HTTP 404 + noindex for legacy trade category URLs (e.g. /trade/auto-repair) to force Googlebot de-indexing
+  app.use(['/trade', '/trade/*'], (_req: any, res: any) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    return res.status(404).send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>404 Page Not Found - Yoouz</title>
+</head>
+<body>
+  <h1>404 - Category Page Not Found</h1>
+  <p>Yoouz uses direct business and domain search. Category trade URLs are no longer active.</p>
+  <a href="/">Return to Homepage</a>
+</body>
+</html>`);
+  });
+
   // Dynamic Google Search Console Sitemap Ping & IndexNow Ping Route
   app.all('/api/seo/ping-index', async (_req: any, res: any) => {
     try {
