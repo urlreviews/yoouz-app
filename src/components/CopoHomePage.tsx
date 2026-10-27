@@ -458,8 +458,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         )}
       </header>
 
-      {/* Main Content Area - Mobile-first thumb reach spacing, desktop strictly locked with md: overrides */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-6 xs:pt-8 sm:pt-10 md:pt-6 lg:pt-8 flex flex-col items-center">
+      {/* Main Content Area - Anchors search bar & video cards at bottom on mobile near bottom nav bar, desktop strictly top-aligned via md: */}
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-10 xs:pt-12 sm:pt-16 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-2 md:pb-12">
         
         {/* 2. Hero Copy */}
         <div className="w-full text-center max-w-2xl mx-auto mb-6 xs:mb-7 sm:mb-8 md:mb-6 animate-in fade-in duration-300">
@@ -476,7 +476,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2 sm:mt-3 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
+          <p className="text-zinc-200 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-3.5 leading-relaxed max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
@@ -484,7 +484,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Ergonomic mobile thumb reach, compact desktop via md: */}
+        {/* 3. Search Component - Positioned for easy thumb reach on mobile, compact on desktop */}
         <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
             <div className="relative flex items-center w-full bg-zinc-900/70 hover:bg-zinc-900/85 backdrop-blur-xl border border-zinc-800/80 hover:border-zinc-700/80 focus-within:border-zinc-500 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
