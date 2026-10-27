@@ -459,11 +459,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area - Mobile anchors content to bottom for thumb reach with premium top spacing, desktop strictly locked via md: */}
-            <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-2 xs:pt-3 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-2 md:pb-12">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-8 xs:pt-10 sm:pt-12 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-4 md:pb-12">
         
-        {/* 2. Hero Copy - Large bold mobile typography with premium top spacing on mobile */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-4 xs:mb-6 sm:mb-14 md:mb-6 animate-in fade-in duration-300">
-          <h1 className="text-[34px] xs:text-[40px] sm:text-4xl md:text-5xl lg:text-[50px] font-black text-white tracking-tight leading-[1.05]">
+        {/* 2. Hero Copy - Large bold mobile typography with refined tracking and tighter spacing */}
+        <div className="w-full text-center max-w-2xl mx-auto mb-3 xs:mb-4 sm:mb-10 md:mb-6 animate-in fade-in duration-300">
+          <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-5xl lg:text-[50px] font-black text-white tracking-tighter leading-[1.02]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -476,7 +476,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-200 text-[16px] xs:text-[18px] sm:text-lg md:text-[18px] mt-2 sm:mt-4 leading-relaxed max-w-[360px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance">
+          <p className="text-zinc-300/90 text-[16px] xs:text-[18px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-4 leading-relaxed max-w-[360px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance opacity-90">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
@@ -484,11 +484,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Positioned low for thumb reach on mobile, compact on desktop */}
-        <div className="w-full max-w-2xl relative mx-auto mb-6 xs:mb-8 sm:mb-14 md:mb-8 lg:mb-10" ref={dropdownRef}>
+        {/* 3. Search Component - Taller, high-end glass effect for a more premium feel */}
+        <div className="w-full max-w-2xl relative mx-auto mb-4 xs:mb-6 sm:mb-10 md:mb-8 lg:mb-10" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
-            <div className="relative flex items-center w-full bg-zinc-900/70 hover:bg-zinc-900/85 backdrop-blur-xl border border-zinc-800/80 hover:border-zinc-700/80 focus-within:border-zinc-500 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
-              <Search className="w-5 h-5 text-zinc-300 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
+            <div className="relative flex items-center w-full bg-white/[0.03] hover:bg-white/[0.06] backdrop-blur-3xl border border-white/10 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 sm:py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out">
+              <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
               <input
                 ref={searchInputRef}
                 id="copo-main-search-input"
