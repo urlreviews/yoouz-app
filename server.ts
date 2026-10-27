@@ -13309,6 +13309,36 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
     return res.send(xml);
   });
 
+function formatW3cDate(d: any): { iso: string; dateOnly: string } {
+  const fallback = new Date();
+  if (!d) return { iso: fallback.toISOString(), dateOnly: fallback.toISOString().split('T')[0] };
+  try {
+    let dateObj: Date;
+    if (typeof d === 'number') {
+      dateObj = new Date(d);
+    } else if (typeof d === 'string') {
+      const trimmed = d.trim();
+      if (!trimmed) {
+        dateObj = fallback;
+      } else if (!trimmed.includes('T') && trimmed.includes(' ')) {
+        dateObj = new Date(trimmed.replace(' ', 'T') + 'Z');
+      } else {
+        dateObj = new Date(trimmed);
+      }
+    } else if (d instanceof Date) {
+      dateObj = d;
+    } else {
+      dateObj = fallback;
+    }
+
+    if (isNaN(dateObj.getTime())) dateObj = fallback;
+    const iso = dateObj.toISOString();
+    return { iso, dateOnly: iso.split('T')[0] };
+  } catch (_) {
+    return { iso: fallback.toISOString(), dateOnly: fallback.toISOString().split('T')[0] };
+  }
+}
+
   // Dedicated Google Video XML Sitemap (/video-sitemap.xml & /sitemap-video.xml)
   app.get(['/video-sitemap.xml', '/sitemap-video.xml'], async (_req: any, res: any) => {
     try {
@@ -13370,14 +13400,14 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         const thumb = `${baseUrl}/api/videos/stream/${encodeURIComponent(v.id)}.jpg`;
         const contentUrl = `${baseUrl}/api/videos/stream/${encodeURIComponent(v.id)}.mp4`;
         const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
-        const pubDate = v.createdAt 
-          ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
-          : now;
+        const dateInfo = formatW3cDate(v.createdAt);
+        const pubDateIso = dateInfo.iso;
+        const lastModDate = dateInfo.dateOnly;
         const viewCount = v.views || v.viewCount || (v.likesCount ? v.likesCount * 3 + 12 : 24);
 
         xml += `  <url>
     <loc>${escapeXml(videoPageUrl)}</loc>
-    <lastmod>${escapeXml(pubDate.split('T')[0] || nowDate)}</lastmod>
+    <lastmod>${escapeXml(lastModDate)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <video:video>
@@ -13389,7 +13419,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       <video:duration>60</video:duration>
       <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
       <video:view_count>${viewCount}</video:view_count>
-      <video:publication_date>${escapeXml(pubDate)}</video:publication_date>
+      <video:publication_date>${escapeXml(pubDateIso)}</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
       <video:tag>${escapeXml(placeName)}</video:tag>
       <video:tag>video review</video:tag>
@@ -13619,14 +13649,14 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
         const thumb = `${baseUrl}/api/videos/stream/${encodeURIComponent(v.id)}.jpg`;
         const contentUrl = `${baseUrl}/api/videos/stream/${encodeURIComponent(v.id)}.mp4`;
         const playerUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
-        const pubDate = v.createdAt 
-          ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt))
-          : new Date().toISOString();
+        const dateInfo = formatW3cDate(v.createdAt);
+        const pubDateIso = dateInfo.iso;
+        const lastModDate = dateInfo.dateOnly;
         const viewCount = v.views || v.viewCount || (v.likesCount ? v.likesCount * 3 + 12 : 24);
 
         xml += `  <url>
     <loc>${escapeXml(videoUrl)}</loc>
-    <lastmod>${escapeXml(pubDate.split('T')[0] || now)}</lastmod>
+    <lastmod>${escapeXml(lastModDate)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <video:video>
@@ -13638,7 +13668,7 @@ Sitemap: https://www.yoouz.com/sitemap-index.xml
       <video:duration>60</video:duration>
       <video:rating>${Number(v.rating || 5).toFixed(1)}</video:rating>
       <video:view_count>${viewCount}</video:view_count>
-      <video:publication_date>${escapeXml(pubDate)}</video:publication_date>
+      <video:publication_date>${escapeXml(pubDateIso)}</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
       <video:uploader info="${baseUrl}/@${encodeURIComponent(cleanAuthorHandle)}">${escapeXml(authorName)}</video:uploader>
     </video:video>
