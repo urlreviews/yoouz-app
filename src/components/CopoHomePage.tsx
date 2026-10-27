@@ -459,11 +459,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Area - Mobile anchors content to bottom for thumb reach with premium top spacing, desktop strictly locked via md: */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-8 xs:pt-10 sm:pt-12 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-4 md:pb-12">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-4 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-end md:justify-start items-center pb-3 md:pb-12 relative">
+        {/* Subtle OLED ambient glow behind masthead for depth on mobile */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-b from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none md:hidden" aria-hidden="true" />
         
-        {/* 2. Hero Copy - Large bold mobile typography with refined tracking and tighter spacing */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-3 xs:mb-4 sm:mb-10 md:mb-6 animate-in fade-in duration-300">
-          <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-5xl lg:text-[50px] font-black text-white tracking-tighter leading-[1.02]">
+        {/* 2. Hero Copy - Anchored tight under logo with luxury editorial typography */}
+        <div className="w-full text-center max-w-2xl mx-auto mb-6 xs:mb-8 sm:mb-10 md:mb-6 animate-in fade-in duration-300 relative z-10">
+          <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-5xl lg:text-[50px] font-black text-white tracking-[-0.035em] leading-[1.02]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -476,7 +478,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </>
             )}
           </h1>
-          <p className="text-zinc-300/90 text-[16px] xs:text-[18px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-4 leading-relaxed max-w-[360px] xs:max-w-md sm:max-w-xl mx-auto font-medium text-balance opacity-90">
+          <p className="text-zinc-400 text-[14.5px] xs:text-[16px] sm:text-[17px] md:text-[18px] mt-2 sm:mt-3 leading-snug max-w-[330px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance tracking-tight">
             {searchMode === "review"
               ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
               : "Watch authentic video reviews of any place, product, or service, or record your own."
@@ -484,10 +486,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </p>
         </div>
 
-        {/* 3. Search Component - Taller, high-end glass effect for a more premium feel */}
-        <div className="w-full max-w-2xl relative mx-auto mb-4 xs:mb-6 sm:mb-10 md:mb-8 lg:mb-10" ref={dropdownRef}>
+        {/* 3. Search Component - Floated slightly lower into the golden thumb reach zone with ultra-premium glass styling */}
+        <div className="w-full max-w-2xl relative mx-auto mb-4 xs:mb-5 sm:mb-10 md:mb-8 lg:mb-10 relative z-10" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full">
-            <div className="relative flex items-center w-full bg-white/[0.03] hover:bg-white/[0.06] backdrop-blur-3xl border border-white/10 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 sm:py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 ease-out">
+            <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
               <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
               <input
                 ref={searchInputRef}
