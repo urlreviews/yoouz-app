@@ -15,6 +15,7 @@ import {
   PanelLeft
 } from "lucide-react";
 import { INVESTOR_PITCH_PAGES } from "../data/investorPitchPages";
+import { InvestorPitchSlide } from "./InvestorPitchSlides";
 import { parseLocaleFromPath, buildLocalizedPath } from "../i18n/urlLocalization";
 
 interface YoouzInvestorPitchViewProps {
@@ -475,7 +476,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800">
               Pages ({TOTAL_PAGES})
             </div>
-            {INVESTOR_PITCH_PAGES.map((pageSrc, idx) => {
+            {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
               const pageNum = idx + 1;
               const isActive = currentPage === pageNum;
               const sec = SECTIONS[idx];
@@ -493,13 +494,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                       : "hover:bg-zinc-800/50"
                   }`}
                 >
-                  <div className="w-32 aspect-[595/842] rounded overflow-hidden bg-white shadow-md border border-zinc-700 relative">
-                    <img
-                      src={pageSrc}
-                      alt={`Page ${pageNum}`}
-                      draggable={false}
-                      className="w-full h-full object-contain block pointer-events-none select-none"
-                    />
+                  <div className="w-32 aspect-[595/842] rounded overflow-hidden shadow-md border border-zinc-700 relative scale-[0.98] pointer-events-none">
+                    <InvestorPitchSlide pageNum={pageNum} />
                   </div>
                   <div className="w-full text-center px-1">
                     <span className={`text-[11px] font-semibold ${isActive ? "text-white" : "text-zinc-400"}`}>
@@ -522,7 +518,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           ref={scrollContainerRef}
           className="flex-1 h-full overflow-y-auto overflow-x-auto bg-[#18191d] px-2 sm:px-6 md:px-10 py-4 sm:py-8 flex flex-col items-center gap-4 sm:gap-6"
         >
-          {INVESTOR_PITCH_PAGES.map((pageDataUri, idx) => {
+          {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
             const pageNum = idx + 1;
 
             return (
@@ -537,96 +533,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
               >
                 {/* Exact A4 PDF Page Sheet */}
                 <div 
-                  className="w-full aspect-[595/842] relative bg-white shadow-[0_10px_35px_rgba(0,0,0,0.65)] ring-1 ring-black/40 overflow-hidden"
+                  className="w-full aspect-[595/842] relative shadow-[0_10px_35px_rgba(0,0,0,0.65)] ring-1 ring-zinc-800 overflow-hidden"
                 >
-                  <img
-                    src={pageDataUri}
-                    alt={`Page ${pageNum}`}
-                    draggable={false}
-                    className="w-full h-full object-contain block select-none pointer-events-none"
-                  />
-
-                  {/* Clean Mask Over Repetitive "CONFIDENTIAL" Running Header & Footer */}
-                  {pageNum === 1 ? (
-                    <>
-                      {/* Top-right badge mask on Page 1 */}
-                      <div
-                        className="absolute bg-white pointer-events-none select-none flex items-center justify-end"
-                        style={{
-                          top: "4.2%",
-                          right: "6.7%",
-                          width: "35%",
-                          height: "3.5%",
-                        }}
-                      >
-                        <div className="px-3 py-1 bg-[#162238] rounded-md text-[10px] font-semibold text-[#f59e0b] tracking-wider uppercase">
-                          SERIES SEED
-                        </div>
-                      </div>
-
-                      {/* Bottom highlight mask on Page 1 */}
-                      <div
-                        className="absolute bg-white pointer-events-none select-none flex items-center"
-                        style={{
-                          top: "77.5%",
-                          left: "6.7%",
-                          width: "80%",
-                          height: "2.8%",
-                        }}
-                      >
-                        <span className="text-[11px] font-bold text-[#162238]">
-                          INVESTOR HIGHLIGHT • EXECUTIVE MEMORANDUM
-                        </span>
-                      </div>
-
-                      {/* Bottom legal line mask on Page 1 */}
-                      <div
-                        className="absolute bg-white pointer-events-none select-none flex items-center"
-                        style={{
-                          top: "80.5%",
-                          left: "6.7%",
-                          width: "86%",
-                          height: "3.2%",
-                        }}
-                      >
-                        <span className="text-[10px] text-slate-500">
-                          Presented to Select Institutional Investors, Venture Partners, and Strategic Partners.
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Top-right running header mask on Pages 2-18 */}
-                      <div
-                        className="absolute bg-white pointer-events-none select-none flex items-center justify-end"
-                        style={{
-                          top: "4.2%",
-                          right: "6.7%",
-                          width: "44%",
-                          height: "2.6%",
-                        }}
-                      >
-                        <span className="text-[10px] font-medium tracking-wider text-slate-400 uppercase">
-                          YOOUZ
-                        </span>
-                      </div>
-
-                      {/* Bottom-left running footer mask on Pages 2-18 */}
-                      <div
-                        className="absolute bg-white pointer-events-none select-none flex items-center"
-                        style={{
-                          bottom: "3.2%",
-                          left: "6.7%",
-                          width: "52%",
-                          height: "2.8%",
-                        }}
-                      >
-                        <span className="text-[10px] font-normal text-slate-400">
-                          Yoouz Inc. • yoouz.com
-                        </span>
-                      </div>
-                    </>
-                  )}
+                  <InvestorPitchSlide pageNum={pageNum} />
 
                   {/* Transparent Protection Layer (Silently blocks Save Image As, Dragging, Touch-Hold) */}
                   <div 
