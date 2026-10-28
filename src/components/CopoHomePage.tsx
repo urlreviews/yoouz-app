@@ -89,6 +89,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   // Auto-focus search input when requested (e.g. tapping Search or Review in mobile bottom nav)
   useEffect(() => {
     if (autoFocusSearch) {
+      setQuery("");
+      setSuggestions([]);
+      setShowDropdown(false);
+      setSelectedIndex(-1);
       const timer = setTimeout(() => {
         if (searchInputRef.current) {
           searchInputRef.current.focus();
@@ -488,14 +492,22 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 3. Search Component - Centered in middle between headline and videos, shifts to top when typing for keyboard clearance */}
         <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "my-auto"} md:my-0 md:mb-8 lg:mb-10 relative z-30`} ref={dropdownRef}>
-          <form onSubmit={handleSearchSubmit} className="w-full">
+          <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
             <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
               <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
               <input
                 ref={searchInputRef}
                 id="copo-main-search-input"
-                type="text"
+                name="yoouz_search_query"
+                type="search"
                 dir="auto"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
+                aria-autocomplete="none"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}

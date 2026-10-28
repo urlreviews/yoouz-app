@@ -706,9 +706,11 @@ export function App() {
     setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setActiveSection("search");
+    setSearchResetKey((prev) => prev + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
     const input = document.getElementById("copo-main-search-input") as HTMLInputElement | null;
     if (input) {
+      input.value = "";
       input.focus();
     }
   };
@@ -7922,7 +7924,7 @@ export function App() {
         {/* Premium Minimalist Homepage & Search View */}
         {(activeSection === "home" || activeSection === "search") && !isWatchingVideo && !fullscreenFeedContext && !isPlaceView && !isCreatorView && (
           <CopoHomePage
-            key="copo-main-home-search"
+            key={`copo-main-home-search-${searchResetKey}`}
             places={places}
             videos={videos}
             autoFocusSearch={activeSection === "search"}

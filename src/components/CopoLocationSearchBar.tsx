@@ -95,13 +95,21 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
 
   return (
     <div className={`w-full relative ${className}`} ref={containerRef}>
-      <form onSubmit={handleSubmit} className="w-full">
+      <form onSubmit={handleSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
         <div className="relative flex items-center w-full bg-zinc-900/95 hover:bg-zinc-900 border border-zinc-700/60 hover:border-zinc-500/80 focus-within:border-white/50 focus-within:ring-4 focus-within:ring-white/5 rounded-full px-4 sm:px-5 py-2.5 sm:py-3.5 shadow-2xl transition-all duration-200">
           <Search className="w-5 h-5 text-zinc-400 shrink-0 ml-0.5 mr-2.5 sm:mr-3 pointer-events-none" />
           <input
             ref={bizInputRef}
-            type="text"
+            name="yoouz_location_query"
+            type="search"
             dir="auto"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
+            aria-autocomplete="none"
             enterKeyHint="search"
             value={businessName}
             onChange={(e) => {

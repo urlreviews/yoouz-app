@@ -19,6 +19,27 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent !important;
 }
 
+/* Prevent browser autofill background tint, blue box, and native suggestion highlight */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #007aff !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Remove native browser search cancel 'x', magnifying glass duplicate, and decoration symbols */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+
 /* Global Dark Theme Scrollbar for general desktop overflow */
 * {
   scrollbar-width: thin;
