@@ -15,6 +15,7 @@ import {
   PanelLeft
 } from "lucide-react";
 import { INVESTOR_PITCH_PAGES } from "../data/investorPitchPages";
+import { parseLocaleFromPath, buildLocalizedPath } from "../i18n/urlLocalization";
 
 interface YoouzInvestorPitchViewProps {
   onBackToApp?: () => void;
@@ -84,7 +85,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Enforce noindex dynamically on mount
+  // Enforce noindex dynamically on mount & synchronize address bar URL to /pitch
   useEffect(() => {
     let metaTag = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
     const originalRobots = metaTag ? metaTag.content : "";
@@ -98,6 +99,14 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
 
     const originalTitle = document.title;
     document.title = "Investor Memorandum | Yoouz";
+
+    // Set browser address bar URL path explicitly to /pitch
+    try {
+      const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname);
+      if (pathWithoutLocale !== "/pitch") {
+        window.history.replaceState(null, "", buildLocalizedPath("/pitch", "en"));
+      }
+    } catch (e) {}
 
     return () => {
       if (metaTag) {
@@ -237,11 +246,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>Return to Yoouz</span>
           </button>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-400">
-            <Lock className="w-3 h-3 text-zinc-500" />
-            <span>yoouz.com/pitch</span>
-          </div>
         </header>
 
         {/* Center Sign-In Card */}
@@ -338,12 +342,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </main>
 
-        {/* Minimal Footer */}
-        <footer className="w-full max-w-4xl flex items-center justify-center py-3 relative z-10">
-          <span className="text-[11px] text-zinc-600 font-mono">
-            https://yoouz.com/pitch
-          </span>
-        </footer>
+        {/* Minimal Spacer Footer */}
+        <div className="w-full py-3 relative z-10" />
       </div>
     );
   }
