@@ -4531,8 +4531,7 @@ async function startServer() {
       p === "/investors" || p.startsWith("/investors/") ||
       p === "/deck" || p.startsWith("/deck/") ||
       p === "/memorandum" || p.startsWith("/memorandum/") ||
-      p.includes("yoouz_investor_pitch_memorandum") ||
-      p.startsWith("/assets/pitch_pages")
+      p.includes("yoouz_investor_pitch_memorandum")
     ) {
       res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
       res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
@@ -4540,7 +4539,7 @@ async function startServer() {
     next();
   });
 
-  // Dedicated endpoint to reliably serve pitch memorandum page images with instant fallback
+  // Dedicated endpoint to reliably serve pitch memorandum page images with instant response and immutable caching
   app.get(["/assets/pitch_pages/:file", "/pitch_pages/:file"], (req, res) => {
     const filename = path.basename(req.params.file || "");
     const candidates = [
@@ -4551,8 +4550,8 @@ async function startServer() {
     ];
     for (const p of candidates) {
       if (fs.existsSync(p)) {
-        res.setHeader("Content-Type", "image/png");
-        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.setHeader("Content-Type", filename.endsWith(".webp") ? "image/webp" : "image/png");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
         return res.sendFile(p);
       }

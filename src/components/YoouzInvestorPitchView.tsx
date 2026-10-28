@@ -81,10 +81,18 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [loadedPages, setLoadedPages] = useState<Record<number, boolean>>({});
 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Pre-warm browser cache immediately on component mount for all 18 slides so zero loading occurs
+  useEffect(() => {
+    for (let i = 1; i <= TOTAL_PAGES; i++) {
+      const pageStr = String(i).padStart(2, "0");
+      const img = new Image();
+      img.src = `/assets/pitch_pages/page_${pageStr}.png`;
+    }
+  }, []);
 
   // Enforce noindex dynamically on mount
   useEffect(() => {
@@ -483,12 +491,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           <span className="hidden sm:inline text-zinc-500">18 Pages</span>
         </div>
 
-        {/* All 18 Pages - Seamless Continuous Vertical Scroll */}
+        {/* All 18 Pages - Seamless Continuous Vertical Scroll (Instant Zero-Loading) */}
         {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
           const pageNum = idx + 1;
           const pageStr = String(pageNum).padStart(2, "0");
           const pageInfo = SECTIONS[idx];
-          const isLoaded = loadedPages[pageNum];
 
           return (
             <div
@@ -503,38 +510,23 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
               {/* Page Container with crisp border and view-only protection shield */}
               <div 
                 className="w-full relative rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800/80 shadow-2xl"
-                style={{ minHeight: isLoaded ? "auto" : "500px" }}
               >
-                {/* Skeleton shimmer before image loads */}
-                {!isLoaded && (
-                  <div className="w-full aspect-[1/1.414] bg-zinc-900/60 animate-pulse flex flex-col items-center justify-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-600">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs text-zinc-600 font-medium">Loading Page {pageNum}...</span>
-                  </div>
-                )}
-
-                {/* Page Image */}
+                {/* Immediate High-Resolution Page Presentation - Zero Loading Delays */}
                 <img
                   src={`/assets/pitch_pages/page_${pageStr}.png`}
-                  alt={`Memorandum Page ${pageNum}`}
-                  loading={pageNum <= 3 ? "eager" : "lazy"}
+                  alt={`Memorandum Page ${pageNum}: ${pageInfo?.title}`}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority={pageNum <= 3 ? "high" : "auto"}
                   draggable={false}
-                  onLoad={() => {
-                    setLoadedPages((prev) => ({ ...prev, [pageNum]: true }));
-                  }}
                   onError={(e) => {
-                    // Fallback to secondary route if primary path encounters network quirk
                     const target = e.currentTarget;
                     if (!target.dataset.triedFallback) {
                       target.dataset.triedFallback = "true";
                       target.src = `/pitch_pages/page_${pageStr}.png`;
                     }
                   }}
-                  className={`w-full h-auto object-contain block transition-opacity duration-300 ${
-                    isLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
-                  }`}
+                  className="w-full h-auto object-contain block select-none pointer-events-none"
                 />
 
                 {/* View-Only Protection Overlay: Completely intercepts right click, drag, and touch hold */}
