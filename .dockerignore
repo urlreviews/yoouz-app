@@ -8,7 +8,7 @@ dist
 npm-debug.log*
 .DS_Store
 .aistudio
-public/assets
-public/assets/**
+public/assets/aistudio
+public/assets/aistudio/**
 uploads
 *.map

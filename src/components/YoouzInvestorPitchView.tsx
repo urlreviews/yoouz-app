@@ -5,8 +5,6 @@ import {
   User,
   Eye, 
   EyeOff, 
-  List, 
-  X, 
   CheckCircle, 
   ShieldCheck, 
   ZoomIn, 
@@ -14,8 +12,12 @@ import {
   Maximize2, 
   Minimize2, 
   ArrowLeft,
-  ChevronUp
+  ChevronUp,
+  ChevronDown,
+  FileText,
+  PanelLeft
 } from "lucide-react";
+import { INVESTOR_PITCH_PAGES } from "../data/investorPitchPages";
 
 interface YoouzInvestorPitchViewProps {
   onBackToApp?: () => void;
@@ -42,7 +44,7 @@ const SECTIONS = [
   { page: 18, title: "Execution Roadmap & Investment Opportunity", subtitle: "Venture Investment Thesis & Capital Allocation" },
 ];
 
-const TOTAL_PAGES = 18;
+const TOTAL_PAGES = INVESTOR_PITCH_PAGES.length || 18;
 const STORAGE_KEY = "yoouz_investor_auth_seed_2026";
 const AUTHORIZED_USERNAMES = [
   "investor",
@@ -78,21 +80,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const [authError, setAuthError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isTocOpen, setIsTocOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Pre-warm browser cache immediately on component mount for all 18 slides so zero loading occurs
-  useEffect(() => {
-    for (let i = 1; i <= TOTAL_PAGES; i++) {
-      const pageStr = String(i).padStart(2, "0");
-      const img = new Image();
-      img.src = `/assets/pitch_pages/page_${pageStr}.png`;
-    }
-  }, []);
 
   // Enforce noindex dynamically on mount
   useEffect(() => {
@@ -107,7 +100,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     metaTag.content = "noindex, nofollow, noarchive";
 
     const originalTitle = document.title;
-    document.title = "Yoouz • Confidential Series Seed Investor Memorandum";
+    document.title = "Yoouz_Investor_Pitch_Memorandum.pdf";
 
     return () => {
       if (metaTag) {
@@ -121,7 +114,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     };
   }, []);
 
-  // Track currently visible page during continuous scroll via IntersectionObserver
+  // Track currently visible PDF page during continuous vertical scroll
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -138,7 +131,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       },
       {
         root: scrollContainerRef.current,
-        threshold: 0.25,
+        threshold: 0.35,
       }
     );
 
@@ -149,7 +142,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     return () => observer.disconnect();
   }, [isAuthenticated]);
 
-  // Document security: Block Print, Save, Copy keyboard shortcuts
+  // Document security: Block Print, Save, View-Source keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       if (
@@ -210,11 +203,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   };
 
   const scrollToPage = (pageNum: number) => {
-    const targetEl = pageRefs.current[pageNum - 1];
+    const clamped = Math.max(1, Math.min(TOTAL_PAGES, pageNum));
+    const targetEl = pageRefs.current[clamped - 1];
     if (targetEl && scrollContainerRef.current) {
       targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      setCurrentPage(pageNum);
-      setIsTocOpen(false);
+      setCurrentPage(clamped);
     }
   };
 
@@ -250,14 +243,14 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
 
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-            Confidential Document
+            Confidential PDF
           </div>
         </header>
 
         {/* Center Access Card */}
         <main className="w-full max-w-md my-auto relative z-10 py-6">
           <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            {/* Brand Logo & Lock Icon */}
+            {/* Brand Logo */}
             <div className="flex flex-col items-center text-center mb-6">
               <div className="relative mb-4">
                 <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg">
@@ -271,14 +264,13 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                 Investor Memorandum
               </h1>
               <p className="text-zinc-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                Enter your authorized credentials to view the 18-page Series Seed institutional memorandum.
+                Enter your authorized credentials to open the 18-page Series Seed PDF memorandum.
               </p>
             </div>
 
             {/* Authentication Form (Username + Password) */}
             <form onSubmit={handleAuthSubmit} className="space-y-4">
               <div className={`space-y-3.5 transition-transform duration-100 ${isShaking ? "animate-shake" : ""}`}>
-                {/* Username Input - Clean, NO hints or examples */}
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5">
                     Username
@@ -288,7 +280,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                     <input
                       type="text"
                       autoFocus
-                      autoComplete="username"
+                      autoComplete="off"
                       autoCorrect="off"
                       autoCapitalize="off"
                       spellCheck={false}
@@ -303,7 +295,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                   </div>
                 </div>
 
-                {/* Password Input - Clean, NO hints or examples */}
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5">
                     Password
@@ -312,7 +303,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                     <Key className="w-4 h-4 text-zinc-500 shrink-0 mr-2.5 pointer-events-none" />
                     <input
                       type={showPassword ? "text" : "password"}
-                      autoComplete="current-password"
+                      autoComplete="off"
                       autoCorrect="off"
                       autoCapitalize="off"
                       spellCheck={false}
@@ -343,13 +334,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                 )}
               </div>
 
-              {/* Monochrome Pure-White/Black Premium Button (Zero Gold) */}
               <button
                 type="submit"
                 className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-sm tracking-normal transition-all cursor-pointer flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>View Memorandum</span>
+                <span>Open PDF Memorandum</span>
               </button>
             </form>
 
@@ -357,9 +347,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <div className="mt-6 pt-5 border-t border-zinc-800/80 text-[11px] text-zinc-500 space-y-1 text-center">
               <p className="flex items-center justify-center gap-1.5 text-zinc-400 font-medium">
                 <CheckCircle className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Confidential Institutional Presentation</span>
+                <span>Protected Read-Only PDF Viewer</span>
               </p>
-              <p>Strictly confidential. Unauthorized copying or redistribution is prohibited.</p>
+              <p>Strictly confidential. Downloading, printing, or redistribution is disabled.</p>
             </div>
           </div>
         </main>
@@ -373,104 +363,124 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   }
 
   // -------------------------------------------------------------
-  // 2. CONTINUOUS VERTICAL SCROLL VIEWER (Pure Dark Mode, High-End)
+  // 2. NATIVE PDF READER EXPERIENCE (Instant 0ms Embedded Pages)
   // -------------------------------------------------------------
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
-      className="fixed inset-0 z-[9999] bg-[#07080b] text-white flex flex-col font-sans select-none overflow-hidden"
+      className="fixed inset-0 z-[9999] bg-[#18191d] text-white flex flex-col font-sans select-none overflow-hidden print:hidden"
     >
-      {/* Institutional Top Navigation Bar */}
-      <header className="w-full bg-zinc-950 border-b border-zinc-800/90 px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 z-40 select-none">
-        {/* Left: Brand & Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+      {/* Native PDF Reader Top Toolbar */}
+      <header className="w-full h-13 bg-[#202227] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md">
+        {/* Left: Back, Sidebar Toggle, PDF Filename */}
+        <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={onBackToApp || (() => window.location.href = "/")}
-            className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
             title="Return to Yoouz"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-6 h-6 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white">
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white">
-                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-              </svg>
-            </div>
-            <span className="font-bold text-sm tracking-tight hidden xs:inline">
-              Yoouz
-            </span>
-          </div>
-
-          <div className="h-4 w-px bg-zinc-800 hidden sm:block shrink-0" />
-
-          <div className="min-w-0">
-            <h2 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">
-              Series Seed Investor Memorandum
-            </h2>
-            <p className="text-[11px] text-zinc-400 truncate hidden md:block leading-none mt-0.5">
-              {SECTIONS[currentPage - 1]?.title || "18-Section Presentation"}
-            </p>
-          </div>
-        </div>
-
-        {/* Center: Live Page Position Pill */}
-        <div className="flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-zinc-300">
-          <span>Page {currentPage} of {TOTAL_PAGES}</span>
-        </div>
-
-        {/* Right: Actions (Sections Drawer, Zoom, Lock) */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Table of Contents Button */}
           <button
             type="button"
-            onClick={() => setIsTocOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
-            title="Jump to Section"
+            onClick={() => setIsSidebarOpen((v) => !v)}
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+              isSidebarOpen
+                ? "bg-white text-black border-white"
+                : "bg-zinc-800/80 hover:bg-zinc-700 border-zinc-700/80 text-zinc-300 hover:text-white"
+            }`}
+            title="Toggle Page Thumbnails"
           >
-            <List className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Sections</span>
+            <PanelLeft className="w-4 h-4" />
           </button>
 
-          {/* Zoom Controls (Desktop only) */}
-          <div className="hidden lg:flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1">
+          <div className="h-4 w-px bg-zinc-700/80 mx-0.5 hidden xs:block shrink-0" />
+
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="w-4 h-4 text-zinc-400 shrink-0 hidden sm:block" />
+            <span className="text-xs sm:text-sm font-medium text-zinc-100 truncate">
+              Yoouz_Investor_Pitch_Memorandum.pdf
+            </span>
+            <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 shrink-0">
+              Read-Only
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Native PDF Page Stepper & Zoom Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Page Navigation */}
+          <div className="flex items-center bg-[#141519] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
-              onClick={() => setZoomLevel((z) => Math.max(75, z - 15))}
+              onClick={() => scrollToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="p-1 text-zinc-400 hover:text-white disabled:opacity-30 transition-colors cursor-pointer"
+              title="Previous Page"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs font-medium text-zinc-200 px-1.5 tabular-nums whitespace-nowrap">
+              {currentPage} <span className="text-zinc-500">/</span> {TOTAL_PAGES}
+            </span>
+            <button
+              type="button"
+              onClick={() => scrollToPage(currentPage + 1)}
+              disabled={currentPage >= TOTAL_PAGES}
+              className="p-1 text-zinc-400 hover:text-white disabled:opacity-30 transition-colors cursor-pointer"
+              title="Next Page"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="hidden md:flex items-center bg-[#141519] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
+            <button
+              type="button"
+              onClick={() => setZoomLevel((z) => Math.max(60, z - 15))}
               className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-medium text-zinc-400 min-w-[34px] text-center">{zoomLevel}%</span>
             <button
               type="button"
-              onClick={() => setZoomLevel((z) => Math.min(140, z + 15))}
+              onClick={() => setZoomLevel(100)}
+              className="text-xs font-medium text-zinc-300 hover:text-white min-w-[42px] text-center tabular-nums cursor-pointer"
+              title="Reset Zoom to 100%"
+            >
+              {zoomLevel}%
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel((z) => Math.min(160, z + 15))}
               className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
+        </div>
 
-          {/* Fullscreen Button */}
+        {/* Right: Fullscreen & Lock */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="hidden sm:flex w-8 h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="hidden sm:flex w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
 
-          {/* Lock / Exit Session */}
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
-            title="Lock document"
+            className="h-8 px-2.5 sm:px-3 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-300 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
+            title="Lock PDF"
           >
             <Lock className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Lock</span>
@@ -478,166 +488,110 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
         </div>
       </header>
 
-      {/* Main Continuous Vertical Scroll Canvas */}
-      <div 
-        ref={scrollContainerRef}
-        className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-6 md:p-8 flex flex-col items-center gap-6 sm:gap-8 scroll-smooth"
-      >
-        {/* Confidential Document Notice */}
-        <div className="w-full max-w-4xl flex items-center justify-between text-xs text-zinc-500 px-2">
-          <span className="font-medium tracking-wide text-zinc-400">
-            Confidential Series Seed Investment Memorandum • View Only
-          </span>
-          <span className="hidden sm:inline text-zinc-500">18 Pages</span>
-        </div>
-
-        {/* All 18 Pages - Seamless Continuous Vertical Scroll (Instant Zero-Loading) */}
-        {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
-          const pageNum = idx + 1;
-          const pageStr = String(pageNum).padStart(2, "0");
-          const pageInfo = SECTIONS[idx];
-
-          return (
-            <div
-              key={pageNum}
-              ref={(el) => { pageRefs.current[idx] = el; }}
-              data-page-num={pageNum}
-              className="w-full flex flex-col items-center"
-              style={{
-                maxWidth: `${Math.round(880 * (zoomLevel / 100))}px`,
-              }}
-            >
-              {/* Page Container with crisp border and view-only protection shield */}
-              <div 
-                className="w-full relative rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800/80 shadow-2xl"
-              >
-                {/* Immediate High-Resolution Page Presentation - Zero Loading Delays */}
-                <img
-                  src={`/assets/pitch_pages/page_${pageStr}.png`}
-                  alt={`Memorandum Page ${pageNum}: ${pageInfo?.title}`}
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority={pageNum <= 3 ? "high" : "auto"}
-                  draggable={false}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.dataset.triedFallback) {
-                      target.dataset.triedFallback = "true";
-                      target.src = `/pitch_pages/page_${pageStr}.png`;
-                    }
+      {/* PDF Workspace Body (Optional Left Thumbnail Rail + Main Continuous PDF Page Scroll) */}
+      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+        {/* Left Collapsible PDF Page Thumbnails Sidebar */}
+        {isSidebarOpen && (
+          <aside className="w-60 sm:w-64 bg-[#1c1e24] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-2.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800">
+              Pages ({TOTAL_PAGES})
+            </div>
+            {INVESTOR_PITCH_PAGES.map((pageSrc, idx) => {
+              const pageNum = idx + 1;
+              const isActive = currentPage === pageNum;
+              const sec = SECTIONS[idx];
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => {
+                    scrollToPage(pageNum);
+                    if (window.innerWidth < 640) setIsSidebarOpen(false);
                   }}
-                  className="w-full h-auto object-contain block select-none pointer-events-none"
-                />
+                  className={`w-full p-2 rounded-lg flex flex-col items-center gap-1.5 text-left transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-zinc-800 ring-1 ring-white/40"
+                      : "hover:bg-zinc-800/50"
+                  }`}
+                >
+                  <div className="w-32 aspect-[595/842] rounded overflow-hidden bg-white shadow-md border border-zinc-700 relative">
+                    <img
+                      src={pageSrc}
+                      alt={`Page ${pageNum}`}
+                      draggable={false}
+                      className="w-full h-full object-contain block pointer-events-none select-none"
+                    />
+                  </div>
+                  <div className="w-full text-center px-1">
+                    <span className={`text-[11px] font-semibold ${isActive ? "text-white" : "text-zinc-400"}`}>
+                      Page {pageNum}
+                    </span>
+                    {sec && (
+                      <p className="text-[10px] text-zinc-500 truncate mt-0.5">
+                        {sec.title}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </aside>
+        )}
 
-                {/* View-Only Protection Overlay: Completely intercepts right click, drag, and touch hold */}
+        {/* Main Continuous PDF Scroll View (Acts & Looks Identical to a Native PDF Viewer) */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 h-full overflow-y-auto overflow-x-auto bg-[#18191d] px-2 sm:px-6 md:px-10 py-4 sm:py-8 flex flex-col items-center gap-4 sm:gap-6"
+        >
+          {INVESTOR_PITCH_PAGES.map((pageDataUri, idx) => {
+            const pageNum = idx + 1;
+
+            return (
+              <div
+                key={pageNum}
+                ref={(el) => { pageRefs.current[idx] = el; }}
+                data-page-num={pageNum}
+                className="w-full flex flex-col items-center shrink-0"
+                style={{
+                  maxWidth: `${Math.round(794 * (zoomLevel / 100))}px`,
+                }}
+              >
+                {/* Exact A4 PDF Page Sheet */}
                 <div 
-                  className="absolute inset-0 z-20 bg-transparent cursor-default pointer-events-auto"
-                  onContextMenu={(e) => e.preventDefault()}
-                  draggable={false}
-                />
+                  className="w-full aspect-[595/842] relative bg-white shadow-[0_10px_35px_rgba(0,0,0,0.65)] ring-1 ring-black/40 overflow-hidden"
+                >
+                  <img
+                    src={pageDataUri}
+                    alt={`Page ${pageNum}`}
+                    draggable={false}
+                    className="w-full h-full object-contain block select-none pointer-events-none"
+                  />
 
-                {/* Subtle corner watermark tag */}
-                <div className="absolute bottom-2.5 right-3 z-30 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm border border-zinc-800 text-[10px] font-medium text-zinc-400 pointer-events-none">
-                  Page {pageNum} of {TOTAL_PAGES}
+                  {/* Transparent Read-Only Shield (Blocks Save Image As, Dragging, Touch-Hold) */}
+                  <div 
+                    className="absolute inset-0 z-20 bg-transparent cursor-default"
+                    onContextMenu={(e) => e.preventDefault()}
+                    draggable={false}
+                  />
                 </div>
               </div>
+            );
+          })}
 
-              {/* Page Caption */}
-              <div className="w-full flex items-center justify-between px-2 pt-2 text-[11px] text-zinc-500 font-medium">
-                <span className="truncate max-w-[80%] text-zinc-400">
-                  {pageNum}. {pageInfo?.title}
-                </span>
-                <span className="shrink-0 text-zinc-600">
-                  {pageNum} / {TOTAL_PAGES}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-
-        {/* End of Memorandum Footer */}
-        <div className="w-full max-w-4xl mt-8 pb-16 text-center border-t border-zinc-800/80 pt-8 text-xs text-zinc-500 space-y-3">
-          <p className="font-semibold text-zinc-300 text-sm">
-            Yoouz Inc. • Series Seed Investment Memorandum
-          </p>
-          <p className="max-w-md mx-auto text-zinc-500 text-xs">
-            For approved institutional partners and authorized venture investors only.
-          </p>
-          <div className="pt-2">
+          {/* Subtle End-of-Document Footer */}
+          <div className="w-full max-w-2xl py-6 text-center text-xs text-zinc-500 flex flex-col items-center gap-3">
+            <span>End of Document • 18 Pages</span>
             <button
               type="button"
               onClick={() => scrollToPage(1)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#202227] hover:bg-zinc-800 border border-zinc-700/80 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
             >
-              <ChevronUp className="w-4 h-4" />
-              <span>Back to Top</span>
+              <ChevronUp className="w-3.5 h-3.5" />
+              <span>Top of Document</span>
             </button>
           </div>
         </div>
       </div>
-
-      {/* Slide-Over Sections Drawer */}
-      {isTocOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setIsTocOpen(false)}
-        >
-          <div 
-            className="w-full max-w-sm h-full bg-zinc-950 border-l border-zinc-800 flex flex-col shadow-2xl animate-in slide-in-from-right duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Drawer Header */}
-            <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-              <h3 className="font-semibold text-white text-sm">Memorandum Sections</h3>
-              <button
-                type="button"
-                onClick={() => setIsTocOpen(false)}
-                className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Sections List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {SECTIONS.map((sec) => {
-                const isActive = currentPage === sec.page;
-                return (
-                  <button
-                    key={sec.page}
-                    type="button"
-                    onClick={() => scrollToPage(sec.page)}
-                    className={`w-full p-2.5 rounded-lg flex items-start gap-3 text-left transition-colors cursor-pointer ${
-                      isActive 
-                        ? "bg-zinc-800 text-white" 
-                        : "hover:bg-zinc-900 text-zinc-400 hover:text-white"
-                    }`}
-                  >
-                    <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-semibold shrink-0 ${
-                      isActive ? "bg-white text-black" : "bg-zinc-900 border border-zinc-800 text-zinc-400"
-                    }`}>
-                      {sec.page}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-medium truncate leading-tight ${isActive ? "text-white" : "text-zinc-300"}`}>
-                        {sec.title}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                        {sec.subtitle}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="p-3 border-t border-zinc-800 bg-zinc-950 text-center text-[11px] text-zinc-500">
-              Yoouz • Confidential Series Seed Memorandum
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
