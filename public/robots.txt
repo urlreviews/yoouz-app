@@ -6,6 +6,16 @@ Allow: /
 Disallow: /api/private/
 Disallow: /api/private-download/
 Disallow: /investor-deck/
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /investors
+Disallow: /investors/
+Disallow: /deck
+Disallow: /deck/
+Disallow: /memorandum
+Disallow: /memorandum/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
+Disallow: /assets/pitch_pages/
 Disallow: /admin/
 
 # Explicitly Allow All Major AI Models, LLM Crawlers, and RAG Bots

@@ -39,6 +39,7 @@ import { CopoNotificationSettingsModal } from "./components/CopoNotificationSett
 import { CopoEmbedView } from "./components/CopoEmbedView";
 import { CopoTestEmbedView } from "./components/CopoTestEmbedView";
 import { CopoSearchTestView } from "./components/CopoSearchTestView";
+import { YoouzInvestorPitchView } from "./components/YoouzInvestorPitchView";
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
@@ -633,6 +634,20 @@ export function App() {
     } catch (e) {}
     return false;
   });
+
+  const isPitchRoute = useMemo(() => {
+    try {
+      const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
+      return (
+        pathname === "/pitch" || pathname.startsWith("/pitch/") ||
+        pathname === "/investors" || pathname.startsWith("/investors/") ||
+        pathname === "/deck" || pathname.startsWith("/deck/") ||
+        pathname === "/memorandum" || pathname.startsWith("/memorandum/")
+      );
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Background Upload state for in-app navigation & bottom progress bar
   const [backgroundUpload, setBackgroundUpload] = useState<{
@@ -7621,6 +7636,18 @@ export function App() {
     >
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
+
+      {/* Confidential Investor Pitch Memorandum View (Password Protected & Zero Indexing) */}
+      {isPitchRoute && (
+        <YoouzInvestorPitchView
+          onBackToApp={() => {
+            try {
+              window.history.pushState(null, "", buildLocalizedPath("/", language));
+            } catch (e) {}
+            window.location.href = "/";
+          }}
+        />
+      )}
       
 
       

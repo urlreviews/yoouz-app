@@ -4516,6 +4516,30 @@ async function startServer() {
     next();
   });
 
+  // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers globally & protect direct downloads
+  app.use((req, res, next) => {
+    const p = (req.path || "").toLowerCase();
+    // Block direct PDF downloads to ensure investors experience the deck interactively on yoouz.com
+    if (
+      p.endsWith(".pdf") && (p.includes("pitch") || p.includes("memorandum") || p.includes("deck") || p.includes("investor"))
+    ) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+      return res.redirect(302, "/pitch");
+    }
+    if (
+      p === "/pitch" || p.startsWith("/pitch/") ||
+      p === "/investors" || p.startsWith("/investors/") ||
+      p === "/deck" || p.startsWith("/deck/") ||
+      p === "/memorandum" || p.startsWith("/memorandum/") ||
+      p.includes("yoouz_investor_pitch_memorandum") ||
+      p.startsWith("/assets/pitch_pages")
+    ) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+      res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    }
+    next();
+  });
+
   app.post('/api/upgrade-request', express.json(), async (req, res) => {
     const { businessName, ownerEmail, placeId, timestamp } = req.body;
     if (!businessName || !ownerEmail) {
@@ -13702,6 +13726,13 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
   <a href="/">Return to Homepage</a>
 </body>
 </html>`);
+  });
+
+  // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers
+  app.use(['/pitch', '/pitch/*', '/investors', '/investors/*', '/deck', '/deck/*', '/memorandum', '/memorandum/*', '/Yoouz_Investor_Pitch_Memorandum.pdf'], (_req: any, res: any, next: any) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    next();
   });
 
   // Dynamic Google Search Console Sitemap Ping & IndexNow Ping Route
@@ -34817,8 +34848,19 @@ function injectOpenGraphTags(html: string, meta: any) {
     let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
     let robots = "";
     let canonicalVideoUrl = "";
-    if (cleanPathname === "/yoouzadmin" || cleanPathname.startsWith("/yoouzadmin/")) {
-      robots = "noindex, nofollow";
+    if (
+      cleanPathname === "/yoouzadmin" || cleanPathname.startsWith("/yoouzadmin/") ||
+      cleanPathname === "/pitch" || cleanPathname.startsWith("/pitch/") ||
+      cleanPathname === "/investors" || cleanPathname.startsWith("/investors/") ||
+      cleanPathname === "/deck" || cleanPathname.startsWith("/deck/") ||
+      cleanPathname === "/memorandum" || cleanPathname.startsWith("/memorandum/") ||
+      cleanPathname.includes("Yoouz_Investor_Pitch_Memorandum")
+    ) {
+      robots = "noindex, nofollow, noarchive";
+      if (cleanPathname.includes("pitch") || cleanPathname.includes("investor") || cleanPathname.includes("deck") || cleanPathname.includes("memorandum")) {
+        title = "Yoouz Confidential Series Seed Investor Memorandum";
+        description = "Confidential institutional investment memorandum. Unauthorized reproduction or sharing is prohibited.";
+      }
     }
 
     const hasSpecialQuery = !!(params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r') || params.get('place') || params.get('creator') || params.get('user') || params.get('handle'));
