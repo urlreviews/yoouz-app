@@ -97,7 +97,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     metaTag.content = "noindex, nofollow, noarchive";
 
     const originalTitle = document.title;
-    document.title = "Yoouz";
+    document.title = "Investor Memorandum | Yoouz";
 
     return () => {
       if (metaTag) {
@@ -235,23 +235,31 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Yoouz</span>
+            <span>Return to Yoouz</span>
           </button>
+
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-400">
+            <Lock className="w-3 h-3 text-zinc-500" />
+            <span>yoouz.com/pitch</span>
+          </div>
         </header>
 
         {/* Center Sign-In Card */}
         <main className="w-full max-w-sm my-auto relative z-10 py-6">
           <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            {/* Brand Logo */}
+            {/* Brand Logo & Title Header */}
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg mb-3.5">
                 <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
                   <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
                 </svg>
               </div>
-              <h1 className="text-xl font-bold tracking-tight text-white">
-                Yoouz
+              <h1 className="text-xl font-bold tracking-tight text-white mb-1">
+                Investor Memorandum
               </h1>
+              <p className="text-xs text-zinc-400 font-medium">
+                Yoouz Pitch Deck & Strategic Overview
+              </p>
             </div>
 
             {/* Authentication Form (Username + Password) */}
@@ -330,8 +338,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </main>
 
-        {/* Minimal Spacer */}
-        <div className="h-6" />
+        {/* Minimal Footer */}
+        <footer className="w-full max-w-4xl flex items-center justify-center py-3 relative z-10">
+          <span className="text-[11px] text-zinc-600 font-mono">
+            https://yoouz.com/pitch
+          </span>
+        </footer>
       </div>
     );
   }
@@ -352,7 +364,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             type="button"
             onClick={onBackToApp || (() => window.location.href = "/")}
             className="w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
-            title="Back"
+            title="Back to App"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -370,9 +382,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <PanelLeft className="w-4 h-4" />
           </button>
 
-          <span className="text-sm font-semibold text-zinc-100 ml-1 truncate">
-            Yoouz
-          </span>
+          <div className="flex items-center gap-1.5 ml-1 truncate">
+            <span className="text-sm font-bold text-zinc-100">Yoouz</span>
+            <span className="text-zinc-600 text-xs">•</span>
+            <span className="text-xs font-medium text-zinc-400 truncate">Investor Memorandum</span>
+          </div>
         </div>
 
         {/* Center: Page Stepper & Zoom Controls */}
